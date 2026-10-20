@@ -26,6 +26,7 @@ async function run(origin) {
   const problems = [];
   const errors = new Set();
   const outcomes = new Set();
+  const widgetPages = new Set();
   let changed = false;
 
   const open = async view => {
@@ -54,6 +55,10 @@ async function run(origin) {
   for (const view of VIEWS) {
     const { ctx, page } = await open(view);
     await page.goto(`${origin}/`, { waitUntil: 'networkidle' });
+    for (const frame of page.frames()) {
+      const u = new URL(frame.url(), origin);
+      if (u.pathname.startsWith('/widgets/')) widgetPages.add(u.pathname + u.search);
+    }
     const before = await widgetText(page);
     await page.waitForTimeout(25_000);
     if ((await widgetText(page)) !== before) changed = true;
@@ -154,7 +159,14 @@ async function run(origin) {
   }
 
   await browser.close();
-  return { exchanges, problems, errors: [...errors].sort(), outcomes: [...outcomes].sort(), changed };
+  return {
+    exchanges,
+    problems,
+    errors: [...errors].sort(),
+    outcomes: [...outcomes].sort(),
+    widgetPages: [...widgetPages].sort(),
+    changed,
+  };
 }
 
 /** @param {import('@playwright/test').Page} page */
@@ -206,7 +218,12 @@ async function main() {
     }
     fs.writeFileSync(
       tourFile,
-      JSON.stringify({ exchanges: result.exchanges, errors: result.errors, outcomes: result.outcomes }),
+      JSON.stringify({
+        exchanges: result.exchanges,
+        errors: result.errors,
+        outcomes: result.outcomes,
+        widgetPages: result.widgetPages,
+      }),
     );
     console.log(`${result.exchanges.length} API exchanges, ${result.errors.length} console errors on the container`);
     console.log(result.outcomes.join('\n'));
@@ -223,6 +240,12 @@ async function main() {
       if (!seen.has(o)) problems.push(`the container showed "${o}", the static demo did not`);
     for (const o of result.outcomes)
       if (!container.outcomes.includes(o)) problems.push(`the static demo showed "${o}"`);
+    if (!result.widgetPages.length) problems.push('the static demo loaded no widget page');
+    for (const p of result.widgetPages) {
+      if (container.widgetPages.includes(p)) {
+        problems.push(`${p} is the image's address, so a browser that saw the image keeps its cached page`);
+      }
+    }
     if (!result.changed) problems.push('no widget changed in 25 seconds');
     problems.push(...(await checkHeaders(origin, JSON.parse(fs.readFileSync(recordingFile, 'utf8')))));
     if (problems.length) {
