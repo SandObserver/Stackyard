@@ -70,6 +70,12 @@ import { THEME_KEY, applyTheme, prefersDark, readMode, resolveTheme } from '/js/
 
 ensureSprite();
 
+if (!('GestureEvent' in window)) {
+  const viewport = document.querySelector('meta[name="viewport"]');
+  if (viewport)
+    viewport.setAttribute('content', `${viewport.getAttribute('content')},interactive-widget=resizes-content`);
+}
+
 /* Recomputed, never stored: the window can cross the breakpoint after load. */
 let MOB = isMobileLayout();
 
