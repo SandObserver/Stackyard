@@ -57,18 +57,6 @@ const BESPOKE = new Map(
     '#E5E5EA': 'Analog clock dial in the dark theme',
     '#007CA6': 'Jellyfin brand',
     '#4CAF50': 'Emby brand',
-    /* An embedded illustration set, one path list per condition. Artwork, not
-       interface colour. */
-    '#DAD6CB': 'weather illustration',
-    '#E9E5D9': 'weather illustration',
-    '#3E4962': 'weather illustration',
-    '#5C6C91': 'weather illustration',
-    '#7388B6': 'weather illustration',
-    '#A2BFFF': 'weather illustration',
-    '#1F9FB0': 'weather illustration',
-    '#BEBEBE': 'weather illustration',
-    '#A2A2A2': 'weather, cloud by day',
-    '#BCBCBC': 'weather, cloud by night',
     '#F0852A': 'weather, temperature reading',
     /* Drawn from the title when a book has no colour of its own. */
     '#E7E0D2': 'books, spine',
