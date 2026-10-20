@@ -1,0 +1,12 @@
+{
+  "$schema": "https://unpkg.com/wrangler@4.151.3/config-schema.json",
+  "name": "stackyard-demo",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": "./site",
+    "html_handling": "none",
+    "not_found_handling": "none"
+  }
+}

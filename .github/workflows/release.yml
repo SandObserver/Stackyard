@@ -400,3 +400,19 @@ jobs:
             exit 1
           fi
           echo 'Documentation site rebuild requested.'
+
+  demo:
+    needs: [build-and-push, release-page]
+    if: needs.release-page.outputs.prerelease == 'false'
+    concurrency:
+      group: stackyard-demo-deploy
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    uses: ./.github/workflows/demo.yml
+    with:
+      digest: ${{ needs.build-and-push.outputs.digest }}
+      version: ${{ needs.build-and-push.outputs.version }}
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
