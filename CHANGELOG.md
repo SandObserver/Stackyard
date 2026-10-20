@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Redraw the Weather widget artwork as frosted glass with gentle motion that
   pauses off screen.
 
+- Choose the icon colour style (Dark, White, Auto, Clear or Color) from a
+  drop-down; colours and sliders show only under Color.
+
+- Badge and wallpaper colour swatches sit together at the end of their row, all
+  one size.
+
 ### Fixed
 
 - Name a widget without a manifest for re-entry when a port map change clears
