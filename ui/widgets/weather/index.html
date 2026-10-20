@@ -29,7 +29,7 @@
   .wx-bolt{animation:wxbolt 6.5s linear infinite}
   .wx-draw{stroke-dasharray:1}
   .ico.off *{animation-play-state:paused}
-  @media(prefers-reduced-motion:reduce){.ico *{animation:none}}
+  @media(prefers-reduced-motion:reduce){.ico *{animation:none}.ico .wx-drop{transform:translate(-3.75px,7.6px)}.ico .wx-flake{transform:translate(1px,6px)}}
   .ico .ph{fill:rgba(235,235,245,0.16)}
   html[data-theme="light"] .ico .ph{fill:rgba(60,60,67,0.12)}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
@@ -95,9 +95,10 @@ const over=(day,orbAt,x,y,W)=>orb(day,...orbAt)+cloud(day,x,y,W,false,`<g filter
 const PC=[8,-3,84],BASE=f(PC[1]+.702*PC[2]),SKY=[78,27,31],LANE=[30,64];
 const rnd=(lo,hi)=>f(lo+Math.random()*(hi-lo));
 function falling(n,shape,cls,[lo,hi],op=1){
-  return Array.from({length:n},()=>{
+  const step=(LANE[1]-LANE[0])/n;
+  return Array.from({length:n},(_,i)=>{
     const d=rnd(lo,hi);
-    return `<g class="wx-pos" data-lo="${LANE[0]}" data-hi="${LANE[1]}" transform="translate(${rnd(...LANE)} 0)"><g class="${cls}" style="animation-duration:${d}s;animation-delay:-${rnd(0,d)}s"${op<1?` opacity="${op}"`:''}>${shape}</g></g>`;
+    return `<g class="wx-pos" data-lo="${LANE[0]}" data-hi="${LANE[1]}" transform="translate(${f(LANE[0]+(i+.5)*step)} 0)"${op<1?` opacity="${op}"`:''}><g class="${cls}" style="animation-duration:${d}s;animation-delay:-${rnd(0,d)}s">${shape}</g></g>`;
   }).join('');
 }
 const drop=(k,w)=>`<path d="M0 ${f(BASE-2)}l${f(-4.2*k)} ${f(8.5*k)}" stroke="#00D2E0" stroke-width="${w}" stroke-linecap="round"/>`;
@@ -112,7 +113,7 @@ function snow(day){
 function storm(day){
   const z=`M4 ${f(BASE-6)}L-6 ${f(BASE+10)}L4 ${f(BASE+11)}L-8 ${f(BASE+30)}`;
   const bolt=`<g class="wx-pos wx-flip" data-lo="40" data-hi="58" transform="translate(50 0)"><g class="wx-bolt"><path class="wx-draw" pathLength="1" d="${z}" fill="none" stroke="#FFD600" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/></g></g>`;
-  return bolt+cloud(day,...PC)+`<path class="wx-flash" d="${cloudPath(...PC)}" fill="#FFFFFF" opacity="0"/>`;
+  return bolt+cloud(day,...PC)+`<path class="wx-flash wx-front" d="${cloudPath(...PC)}" fill="#FFFFFF" opacity="0"/>`;
 }
 function mist(day){
   const c=day?'#8E8E93':'#FFFFFF';

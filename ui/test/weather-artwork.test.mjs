@@ -43,7 +43,7 @@ test('no part with its own transform gets a centred transform origin', () => {
 });
 
 test('css motion stops for reduced motion and while the card is off screen', () => {
-  assert.match(page, /@media\(prefers-reduced-motion:reduce\)\{\.ico \*\{animation:none\}\}/);
+  assert.match(page, /@media\(prefers-reduced-motion:reduce\)\{\.ico \*\{animation:none\}/);
   assert.match(page, /\.ico\.off \*\{animation-play-state:paused\}/);
   assert.match(
     page,
@@ -107,7 +107,7 @@ test('every falling part starts inside its lane', () => {
       const svg = buildIcon(cond, day);
       const parts = [
         ...svg.matchAll(
-          /<g class="wx-pos[^"]*" data-lo="([\d.]+)" data-hi="([\d.]+)" transform="translate\(([\d.]+) 0\)"><g class="wx-(?:drop|flake|bolt)/g,
+          /<g class="wx-pos[^"]*" data-lo="([\d.]+)" data-hi="([\d.]+)" transform="translate\(([\d.]+) 0\)"(?: opacity="[\d.]+")?><g class="wx-(?:drop|flake|bolt)/g,
         ),
       ];
       assert.ok(parts.length, `${cond} has no falling parts`);
@@ -154,5 +154,43 @@ test('a falling part restarts at a new spot inside its lane', () => {
 });
 
 test('the lightning flash is hidden at rest', () => {
-  for (const day of [true, false]) assert.match(buildIcon('thunder', day), /<path class="wx-flash"[^>]*opacity="0"/);
+  for (const day of [true, false])
+    assert.match(buildIcon('thunder', day), /<path class="wx-flash[^"]*"[^>]*opacity="0"/);
+});
+
+test('the lightning flash drifts with the cloud it lights', () => {
+  for (const day of [true, false]) assert.match(buildIcon('thunder', day), /<path class="wx-flash wx-front"/);
+});
+
+test('a faint far layer keeps its opacity off the animated element', () => {
+  for (const cond of ['shower', 'rain', 'snow'])
+    for (const day of [true, false]) {
+      const svg = buildIcon(cond, day);
+      assert.match(svg, /<g class="wx-pos"[^>]*opacity="0\.5+"/, `${cond} has no faint far layer`);
+      assert.doesNotMatch(
+        svg,
+        /<g class="wx-(?:drop|flake)"[^>]*opacity=/,
+        `${cond}: the animation overrides the faint layer`,
+      );
+    }
+});
+
+test('falling parts start in separate lanes, so a still picture shows each one', () => {
+  for (const cond of ['shower', 'rain', 'snow'])
+    for (const day of [true, false]) {
+      const near = [...buildIcon(cond, day).matchAll(/<g class="wx-pos" [^>]*translate\(([\d.]+) 0\)"><g/g)].map(
+        m => +m[1],
+      );
+      const gaps = near
+        .sort((a, b) => a - b)
+        .slice(1)
+        .map((x, i) => x - near[i]);
+      assert.ok(Math.min(...gaps) >= 8, `${cond}: two parts start ${Math.min(...gaps)} apart`);
+    }
+});
+
+test('reduced motion shows rain and snow below the cloud, not behind it', () => {
+  const still = /@media\(prefers-reduced-motion:reduce\)\{([^@]*?)\}\s*\n/.exec(page)?.[1];
+  assert.match(still, /\.ico \.wx-drop\{transform:translate\(-?[\d.]+px,[\d.]+px\)\}/);
+  assert.match(still, /\.ico \.wx-flake\{transform:translate\(-?[\d.]+px,[\d.]+px\)\}/);
 });
