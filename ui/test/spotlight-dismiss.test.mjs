@@ -100,8 +100,10 @@ test('closing puts both edges back', () => {
   assert.match(fn[1], /classList\.remove\('kb'\)/);
 });
 
-test('the browser is asked to resize the page for the keyboard', () => {
-  assert.match(html, /name="viewport"[^>]*interactive-widget=resizes-content/);
+test('the browser is asked to resize the page for the keyboard, except where the key is unknown', () => {
+  assert.doesNotMatch(html, /interactive-widget/, 'Safari logs an error for the key in the page');
+  const dash = read('js/dashboard.js');
+  assert.match(dash, /if \(!\('GestureEvent' in window\)\) \{[\s\S]{0,200}interactive-widget=resizes-content/);
 });
 
 test('the list drops the status-bar inset once the keyboard has moved it', () => {
