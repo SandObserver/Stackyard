@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Colour swatches no longer spread across the row on small tablets.
+
 ## [1.19.0] - 2026-10-20
 
 ### Added
