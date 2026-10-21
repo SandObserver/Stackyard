@@ -25,8 +25,9 @@ const HEADER = `# Stackyard
 **A self-hosted homelab dashboard you actually want to look at.**
 
 [![ghcr.io](https://img.shields.io/badge/ghcr.io-stackyard-2496ED?logo=github&logoColor=white)](https://github.com/${REPO}/pkgs/container/stackyard)
-[![Docker Hub](https://img.shields.io/badge/docker%20hub-stackyard-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/${HUB_IMAGE})
 [![Latest release](https://img.shields.io/github/v/release/${REPO})](https://github.com/${REPO}/releases)
+[![Tests Status](https://img.shields.io/github/actions/workflow/status/${REPO}/test.yml?branch=main&label=tests)](https://github.com/${REPO}/actions/workflows/test.yml)
+[![OpenSSF Best Practices](https://img.shields.io/cii/level/14462?label=openssf%20best%20practices)](https://www.bestpractices.dev/projects/14462)
 
 ![Stackyard dashboard](${RAW}/docs/screenshot.png)
 
