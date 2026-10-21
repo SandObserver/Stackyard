@@ -6,7 +6,32 @@ const page = fs.readFileSync(new URL('../widgets/weather/index.html', import.met
 const art = /\/\* ---- artwork[\s\S]*?\nfunction buildIcon\([\s\S]*?\n\}/.exec(page)?.[0];
 const { buildIcon, cloudPath } = new Function(`${art}; return { buildIcon, cloudPath };`)();
 
-const CONDITIONS = ['clear', 'few', 'scattered', 'broken', 'mist', 'shower', 'rain', 'thunder', 'snow'];
+const CONDITIONS = [
+  'clear',
+  'few',
+  'scattered',
+  'broken',
+  'mist',
+  'shower',
+  'rain',
+  'thunder',
+  'snow',
+  'drizzle',
+  'fdrizzle',
+  'frain',
+  'sleet',
+  'rainsnow',
+  'grains',
+  'hail',
+  'thinmist',
+  'rime',
+  'haze',
+  'smoke',
+  'dust',
+  'ash',
+  'squall',
+  'tornado',
+];
 
 test('every condition draws by day and by night', () => {
   assert.ok(art, 'the artwork block is not in the weather page');
@@ -16,6 +41,23 @@ test('every condition draws by day and by night', () => {
       assert.ok(svg.length > 100, `${cond} drew nothing`);
       assert.doesNotMatch(svg, /NaN|undefined/, `${cond} ${day ? 'day' : 'night'} has a broken value`);
     }
+});
+
+const mapSource = /\nfunction mapCode\([\s\S]*?\n\}/.exec(page)?.[0];
+const mapCode = new Function('wt', `${mapSource}; return mapCode;`)((_key, fallback) => fallback);
+
+test('every weather code the providers send has its own artwork', () => {
+  const codes = [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 18, 19, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 68, 69, 71, 73, 75, 77, 79,
+    80, 81, 82, 85, 86, 95, 96, 99,
+  ];
+  for (const code of codes) assert.ok(CONDITIONS.includes(mapCode(code).cond), `code ${code}`);
+  assert.deepEqual(mapCode(56), { cond: 'fdrizzle', label: 'Freezing Drizzle' });
+  assert.deepEqual(mapCode(79), { cond: 'sleet', label: 'Sleet' });
+  assert.deepEqual(mapCode(96), { cond: 'hail', label: 'Hailstorm' });
+  assert.deepEqual(mapCode(4, 'ash'), { cond: 'ash', label: 'Volcanic Ash' });
+  assert.deepEqual(mapCode(7, 'sand'), { cond: 'dust', label: 'Sand' });
+  assert.deepEqual(mapCode(19), { cond: 'tornado', label: 'Tornado' });
 });
 
 test('the cloud rests both puffs on a flat base', () => {
@@ -176,11 +218,12 @@ test('a faint far layer keeps its opacity off the animated element', () => {
 });
 
 test('falling parts start in separate lanes, so a still picture shows each one', () => {
-  for (const cond of ['shower', 'rain', 'snow'])
+  const still = { 'wx-drop': -6, 'wx-flake': 1, 'wx-pellet': -1.5, 'wx-bolt': -2 };
+  for (const cond of ['shower', 'rain', 'snow', 'fdrizzle', 'frain', 'sleet', 'rainsnow', 'hail'])
     for (const day of [true, false]) {
-      const near = [...buildIcon(cond, day).matchAll(/<g class="wx-pos" [^>]*translate\(([\d.]+) 0\)"><g/g)].map(
-        m => +m[1],
-      );
+      const near = [
+        ...buildIcon(cond, day).matchAll(/<g class="wx-pos[^"]*" [^>]*translate\(([\d.]+) 0\)"><g class="([\w-]+)/g),
+      ].map(m => +m[1] + still[m[2]]);
       const gaps = near
         .sort((a, b) => a - b)
         .slice(1)

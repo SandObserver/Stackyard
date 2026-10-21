@@ -131,8 +131,19 @@ test('openweather condition ids map onto the WMO codes the page draws', async ()
     [511, 66],
     [521, 80],
     [601, 71],
+    [612, 79],
+    [615, 68],
     [621, 85],
+    [701, 10],
+    [711, 4],
+    [721, 5],
+    [731, 8],
     [741, 45],
+    [751, 7],
+    [761, 6],
+    [762, 4],
+    [771, 18],
+    [781, 19],
     [800, 0],
     [801, 1],
     [802, 2],
@@ -141,6 +152,18 @@ test('openweather condition ids map onto the WMO codes the page draws', async ()
   for (const [id, code] of cases) {
     const { ctx } = ctxFor({ provider: 'openweather', owKey: 'k', lat: 1, lon: 2 }, '', OW(id, '01d'));
     assert.equal((await dataFn(ctx)).code, code, `id ${id}`);
+  }
+});
+
+test('openweather names sand and volcanic ash, which share a WMO code', async () => {
+  for (const [id, condition] of [
+    [751, 'sand'],
+    [762, 'ash'],
+    [761, undefined],
+    [711, undefined],
+  ]) {
+    const { ctx } = ctxFor({ provider: 'openweather', owKey: 'k', lat: 1, lon: 2 }, '', OW(id, '01d'));
+    assert.equal((await dataFn(ctx)).condition, condition, `id ${id}`);
   }
 });
 
