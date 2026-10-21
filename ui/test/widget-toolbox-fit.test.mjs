@@ -7,6 +7,10 @@ globalThis.location = { search: '?id=test' };
 globalThis.window = { matchMedia: () => ({ matches: false }) };
 globalThis.document = { documentElement: { getAttribute: () => 'dark' } };
 globalThis.getComputedStyle = () => ({ fontSize: '44px' });
+const listeners = {};
+globalThis.addEventListener = (type, fn) => {
+  listeners[type] = fn;
+};
 
 const { fitText } = await import('../js/widget-toolbox.js');
 
@@ -14,6 +18,7 @@ const { fitText } = await import('../js/widget-toolbox.js');
 const figure = (chars, box) => ({
   style: { fontSize: '' },
   clientWidth: box,
+  isConnected: true,
   get scrollWidth() {
     return Math.round((parseFloat(this.style.fontSize) || 44) * chars * 0.6);
   },
@@ -44,5 +49,23 @@ test('each call starts again from the stylesheet size', () => {
   fitText(el);
   el.clientWidth = 1000;
   fitText(el);
+  assert.equal(el.style.fontSize, '');
+});
+
+test('a resize fits the figure again', () => {
+  const el = figure(8, 1000);
+  fitText(el);
+  assert.equal(el.style.fontSize, '');
+  el.clientWidth = 130;
+  listeners.resize();
+  assert.ok(el.scrollWidth <= el.clientWidth);
+});
+
+test('a resize leaves a removed figure alone', () => {
+  const el = figure(8, 1000);
+  fitText(el);
+  el.isConnected = false;
+  el.clientWidth = 130;
+  listeners.resize();
   assert.equal(el.style.fontSize, '');
 });

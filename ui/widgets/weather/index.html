@@ -52,7 +52,7 @@
   <div class="sr-only" id="sr"></div>
 </div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText } from '/js/widget-toolbox.js?v=49800e75';
+import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText } from '/js/widget-toolbox.js?v=ce372f4d';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('widget.label', 'Weather'));
 const API='/api';
@@ -103,25 +103,28 @@ function cloud(day,x,y,W,back,glow=''){
 const over=(day,orbAt,x,y,W)=>orb(day,...orbAt)+cloud(day,x,y,W,false,`<g filter="url(#wx-blur)">${orb(day,...orbAt)}</g>`);
 const PC=[8,-3,84],BASE=f(PC[1]+.702*PC[2]),SKY=[78,27,31],LANE=[30,64];
 const rnd=(lo,hi)=>f(lo+Math.random()*(hi-lo));
-function falling(n,shape,cls,[lo,hi],{op=1,lane=LANE,shift=.5}={}){
-  const step=(lane[1]-lane[0])/n;
+function falling(n,shape,cls,[lo,hi],{op=1,lane=LANE,shift=.5,slots=n,at=i=>i}={}){
+  const step=(lane[1]-lane[0])/slots;
   return Array.from({length:n},(_,i)=>{
     const d=rnd(lo,hi);
-    return `<g class="wx-pos" data-lo="${lane[0]}" data-hi="${lane[1]}" transform="translate(${f(lane[0]+(i+shift)*step)} 0)"${op<1?` opacity="${op}"`:''}><g class="${cls}" style="animation-duration:${d}s;animation-delay:-${rnd(0,d)}s">${shape}</g></g>`;
+    return `<g class="wx-pos" data-lo="${lane[0]}" data-hi="${lane[1]}" transform="translate(${f(lane[0]+(at(i)+shift)*step)} 0)"${op<1?` opacity="${op}"`:''}><g class="${cls}" style="animation-duration:${d}s;animation-delay:-${rnd(0,d)}s">${shape}</g></g>`;
   }).join('');
 }
 const drop=(k,w)=>`<path d="M0 ${f(BASE-2)}l${f(-4.2*k)} ${f(8.5*k)}" stroke="#00D2E0" stroke-width="${w}" stroke-linecap="round"/>`;
 const rain=()=>falling(2,drop(.7,2.2),'wx-drop',[1.6,2],{op:.5})+falling(4,drop(1,3.6),'wx-drop',[.95,1.25]);
-const drops=n=>falling(n,drop(1,3.6),'wx-drop',[.95,1.25],{shift:.25});
-const drizzle=n=>falling(n,drop(.38,3.2),'wx-drop',[1.5,2],{shift:.25});
-const pellets=(day,n,r,dur,lane)=>falling(n,`<circle cx="0" cy="${f(BASE+2)}" r="${r}" fill="${day?'#3CD3FE':'#FFFFFF'}"/>`,'wx-pellet',dur,{lane,shift:.75});
+const STILL={drop:-6,drizzle:-4.5,flake:1,pellet:-1.5};
+const mix=(lane,slots,at,part)=>({lane,slots,at,shift:.5-STILL[part]*slots/(lane[1]-lane[0])});
+const WIDE=[20,80],even=i=>2*i,odd=i=>2*i+1;
+const drops=(n,o)=>falling(n,drop(1,3.6),'wx-drop',[.95,1.25],o);
+const drizzle=(n,o)=>falling(n,drop(.38,3.2),'wx-drop',[1.5,2],o);
+const pellets=(day,n,r,dur,o)=>falling(n,`<circle cx="0" cy="${f(BASE+2)}" r="${r}" fill="${day?'#3CD3FE':'#FFFFFF'}"/>`,'wx-pellet',dur,o);
 function flake(cx,cy,r,w,c){
   return [0,60,120].map(a=>`<path d="M${cx} ${f(cy-r)}v${f(2*r)}" transform="rotate(${a} ${cx} ${cy})" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`).join('');
 }
-const flakes=(n,r,w,c)=>falling(n,flake(0,f(BASE+3),r,w,c),'wx-flake',[3.6,4.8],{shift:.75});
+const flakes=(n,r,w,c,o)=>falling(n,flake(0,f(BASE+3),r,w,c),'wx-flake',[3.6,4.8],o);
 function snow(day){
   const c=day?'#00D2E0':'#FFFFFF',y=f(BASE+3);
-  return falling(2,flake(0,y,2.8,1.8,c),'wx-flake',[5.5,7.5],{op:.55})+flakes(3,4.6,2.6,c);
+  return falling(2,flake(0,y,2.8,1.8,c),'wx-flake',[5.5,7.5],{op:.55})+flakes(3,4.6,2.6,c,{shift:.75});
 }
 function storm(day){
   const z=`M4 ${f(BASE-6)}L-6 ${f(BASE+10)}L4 ${f(BASE+11)}L-8 ${f(BASE+30)}`;
@@ -159,13 +162,13 @@ function buildIcon(cond,day){
     case 'thunder':   return BLUR+storm(day);
     case 'snow':      return BLUR+snow(day)+over(day,SKY,...PC);
     case 'mist':      return BLUR+haze([grey(day)],day?.6:.7);
-    case 'drizzle':   return BLUR+drizzle(6)+cloud(day,...PC);
-    case 'fdrizzle':  return BLUR+drizzle(4)+flakes(2,3.2,2,'#3CD3FE')+cloud(day,...PC);
-    case 'frain':     return BLUR+drops(3)+flakes(2,4,2.2,'#3CD3FE')+cloud(day,...PC);
-    case 'sleet':     return BLUR+drops(3)+pellets(day,3,2.3,[1.3,1.7])+cloud(day,...PC);
-    case 'rainsnow':  return BLUR+drops(3)+flakes(2,4.6,2.6,day?'#00D2E0':'#FFFFFF')+cloud(day,...PC);
-    case 'grains':    return BLUR+pellets(day,5,1.8,[1.6,2.2])+cloud(day,...PC);
-    case 'hail':      return BLUR+pellets(day,3,2.6,[1.1,1.4],[24,70])+storm(day);
+    case 'drizzle':   return BLUR+drizzle(6,{shift:.25})+cloud(day,...PC);
+    case 'fdrizzle':  return BLUR+drizzle(4,mix(WIDE,6,i=>[0,2,3,5][i],'drizzle'))+flakes(2,3.2,2,'#3CD3FE',mix(WIDE,6,i=>[1,4][i],'flake'))+cloud(day,...PC);
+    case 'frain':     return BLUR+drops(3,mix(WIDE,5,even,'drop'))+flakes(2,4,2.2,'#3CD3FE',mix(WIDE,5,odd,'flake'))+cloud(day,...PC);
+    case 'sleet':     return BLUR+drops(3,mix(WIDE,6,even,'drop'))+pellets(day,3,2.3,[1.3,1.7],mix(WIDE,6,odd,'pellet'))+cloud(day,...PC);
+    case 'rainsnow':  return BLUR+drops(3,mix(WIDE,5,even,'drop'))+flakes(2,4.6,2.6,day?'#00D2E0':'#FFFFFF',mix(WIDE,5,odd,'flake'))+cloud(day,...PC);
+    case 'grains':    return BLUR+pellets(day,5,1.8,[1.6,2.2],{shift:.75})+cloud(day,...PC);
+    case 'hail':      return BLUR+pellets(day,4,2.6,[1.1,1.4],mix(WIDE,6,i=>[0,1,4,5][i],'pellet'))+storm(day);
     case 'thinmist':  return BLUR+haze([grey(day)],day?.5:.6,[[6,30,88,.55],[16,46,78,.75],[4,62,84,.5]]);
     case 'rime':      return BLUR+haze([grey(day),'#3CD3FE'],day?.6:.7);
     case 'haze':      return BLUR+orb(day,50,34,24)+haze([day?'#FF9230':'#8E8E93'],day?.55:.7,[[2,32,96,.45],[12,46,84,.7],[0,60,92,.55]]);

@@ -300,10 +300,23 @@ function reducedMotion() {
   }
 }
 
-/** Shrink a figure's type until its text fits its box, down to `min` px. The
-    element must clip its overflow. Starts again from the stylesheet size.
+const _fitted = new Map();
+function refit() {
+  for (const [el, min] of _fitted) el.isConnected ? fit(el, min) : _fitted.delete(el);
+}
+
+/** Shrink a figure's type until its text fits its box, down to `min` px, and
+    again whenever the page is resized. The element must clip its overflow.
+    Starts again from the stylesheet size.
     @param {HTMLElement} el @param {number} [min] */
 export function fitText(el, min = 20) {
+  if (!_fitted.size) addEventListener('resize', refit);
+  _fitted.set(el, min);
+  fit(el, min);
+}
+
+/** @param {HTMLElement} el @param {number} min */
+function fit(el, min) {
   el.style.fontSize = '';
   let size = parseFloat(getComputedStyle(el).fontSize) || min;
   while (el.scrollWidth > el.clientWidth && size > min) {

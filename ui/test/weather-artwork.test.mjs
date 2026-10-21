@@ -218,11 +218,12 @@ test('a faint far layer keeps its opacity off the animated element', () => {
 });
 
 test('falling parts start in separate lanes, so a still picture shows each one', () => {
-  for (const cond of ['shower', 'rain', 'snow'])
+  const still = { 'wx-drop': -6, 'wx-flake': 1, 'wx-pellet': -1.5, 'wx-bolt': -2 };
+  for (const cond of ['shower', 'rain', 'snow', 'fdrizzle', 'frain', 'sleet', 'rainsnow', 'hail'])
     for (const day of [true, false]) {
-      const near = [...buildIcon(cond, day).matchAll(/<g class="wx-pos" [^>]*translate\(([\d.]+) 0\)"><g/g)].map(
-        m => +m[1],
-      );
+      const near = [
+        ...buildIcon(cond, day).matchAll(/<g class="wx-pos[^"]*" [^>]*translate\(([\d.]+) 0\)"><g class="([\w-]+)/g),
+      ].map(m => +m[1] + still[m[2]]);
       const gaps = near
         .sort((a, b) => a - b)
         .slice(1)
