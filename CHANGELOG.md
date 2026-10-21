@@ -7,9 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Weather widget draws mist, rime fog, freezing drizzle, freezing rain, sleet,
+  rain and snow, snow grains, hail, haze, smoke, dust, sand, volcanic ash,
+  squalls and tornadoes.
+
+### Changed
+
+- Long weather condition labels shrink to fit before they are cut off.
+
 ### Fixed
 
 - Colour swatches no longer spread across the row on small tablets.
+
+- Chinese Weather widget labels drizzle as 毛毛雨 instead of light rain.
+
+- Large numbers in GitHub widgets fit again after the dashboard is resized.
 
 ## [1.19.0] - 2026-10-20
 
