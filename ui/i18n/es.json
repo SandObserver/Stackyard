@@ -31,8 +31,6 @@
     "chooseFiles": "Elegir archivos",
     "configured": "Configurado",
     "notSet": "Sin definir",
-    "show": "Mostrar",
-    "hide": "Ocultar",
     "moveUp": "Subir",
     "moveDown": "Bajar",
     "editNamed": "Editar {name}",
@@ -70,7 +68,6 @@
     "logError": "Errores",
     "passwordPh": "Nueva contraseña (mín. 8 caracteres)",
     "showSettingsAria": "Mostrar Ajustes en el panel",
-    "hideSettingsAria": "Ocultar Ajustes en el panel",
     "importJson": "Importar JSON de configuración",
     "importForeignFiles": "Importar configuración YAML de Homepage o Dashy"
   },
@@ -398,7 +395,9 @@
   },
   "list": {
     "empty": "Aún no hay aplicaciones. Haz clic en +Añadir.",
-    "noMatches": "Sin coincidencias."
+    "noMatches": "Sin coincidencias.",
+    "dockTip": "Aparece en la parte inferior de cada página.",
+    "dockEmpty": "Arrastra una aplicación aquí, o ábrela y activa «Mostrar en el Dock»."
   },
   "import": {
     "confirm_one": "¿Importar {count} elemento? Añadidos: {added}, actualizados: {updated}, eliminados: {deleted}.",

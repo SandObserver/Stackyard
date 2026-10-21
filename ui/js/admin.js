@@ -1,8 +1,14 @@
-import { buildAppForm, buildFolderForm, captureActLabels, serializeKvRows } from '/js/admin-app-form.js?v=f0da79cf';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=5246ff39';
+import {
+  buildAppForm,
+  buildFolderForm,
+  buildSettingsTileForm,
+  captureActLabels,
+  serializeKvRows,
+} from '/js/admin-app-form.js?v=ef927f27';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=4a0b94c5';
 import { recoveryShown } from '/js/config-recovery.js?v=85138697';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=411d6f37';
-import { resolveAdminSection } from '/js/admin-logic.js?v=1cca36f5';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=0edbb4c0';
+import { resolveAdminSection } from '/js/admin-logic.js?v=67e24cd3';
 import {
   afterImport,
   buildAppItem,
@@ -23,7 +29,7 @@ import {
   showBgFields,
   showWallpaperFile,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=4b374391';
+} from '/js/admin-settings.js?v=304b2a7d';
 import {
   apiGet,
   apiPost,
@@ -37,13 +43,13 @@ import {
   setReauthHandler,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=1c01be9a';
+} from '/js/admin-shared.js?v=d27d7ec7';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=1cb745cf';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=718ad9b4';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=f814170f';
+import { createListbox } from '/js/listbox.js?v=bcf3b016';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
 import { loadLocalIcons } from '/js/icons.js?v=5ac01d72';
@@ -344,6 +350,7 @@ function _renderEditBody(focusKind) {
   body.replaceChildren();
   if (state.ctype === 'widget') buildWidgetForm(body, state._evItem);
   else if (state.ctype === 'folder') buildFolderForm(body, state._evItem);
+  else if (state.ctype === 'settings') buildSettingsTileForm(body, state._evItem);
   else buildAppForm(body, state._evItem);
   if (!state._evIsEdit) body.insertBefore(buildAddNewCard(), body.firstChild);
   setTimeout(() => {
@@ -357,7 +364,7 @@ function openModal(idx) {
   const editing = idx != null ? state.items[idx] : null;
   state.eid = editing?.id ?? null;
   const item = editing ? structuredClone(editing) : null;
-  state.ctype = item?.type || 'app';
+  state.ctype = item?.system === 'settings' ? 'settings' : item?.type || 'app';
   state.siurl = item?.iconUrl || '';
   state.scol = item ? item.color || 'dark' : 'auto';
   state._customUrl = item?.url || '';
@@ -412,7 +419,7 @@ function openModal(idx) {
   const delBtn = el('ev-delete');
   const saveBtn = el('ev-save');
   if (delBtn) {
-    delBtn.classList.toggle('d-none', !isEdit);
+    delBtn.classList.toggle('d-none', !isEdit || state.ctype === 'settings');
     delBtn.onclick = () => _evDelete(item, idx);
   }
   if (saveBtn) {
@@ -660,6 +667,10 @@ async function doSave(orig) {
         };
         if (Object.keys(ifo).length) item.iframe = ifo;
       }
+    } else if (state.ctype === 'settings') {
+      item = { ...orig, dock: inp('f-dock')?.checked || false };
+      if (inp('f-shown')?.checked) delete item.hidden;
+      else item.hidden = true;
     } else if (state.ctype === 'folder') {
       const label = inp('f-fname')?.value?.trim();
       if (!label) {
@@ -719,6 +730,12 @@ async function doSave(orig) {
     }
     /* By id, never by position. */
     const before = snapshotItems(state.items);
+    /* A docked app must leave its folders, or the dashboard draws it twice. */
+    if (item.dock) {
+      state.items.forEach(f => {
+        if (f.type === 'folder') f.children = (f.children || []).filter(id => id !== item.id);
+      });
+    }
     const { replaced } = upsertItem(state.items, state.eid, item);
     /* The editor stays open on a failed write, with the form intact. */
     if (!(await saveOrRevert(before))) return;

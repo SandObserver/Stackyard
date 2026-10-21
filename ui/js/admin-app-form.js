@@ -18,7 +18,7 @@ import {
   failureIsMissingApiPath,
   nextActiveIndex,
   sameIconName,
-} from '/js/admin-logic.js?v=1cca36f5';
+} from '/js/admin-logic.js?v=67e24cd3';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import {
   toast,
@@ -31,10 +31,10 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=1c01be9a';
-import { createListbox } from '/js/listbox.js?v=f814170f';
+} from '/js/admin-shared.js?v=d27d7ec7';
+import { createListbox } from '/js/listbox.js?v=bcf3b016';
 import { MAX_LABELS } from '/js/badge-logic.js?v=5c72bd4c';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=4083ea3b';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=b2285dc7';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=b0881957';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=628341d4';
@@ -88,6 +88,22 @@ function _wireFolderApps(apps, children) {
   });
   state._folderApps = box;
   row.appendChild(box.el);
+}
+
+export function buildSettingsTileForm(body, item) {
+  const dockBlocked = isDockBlocked(state.items, item, DOCK_MAX);
+  const tog = (id, on, name) =>
+    html`<label class="tog"><input type="checkbox" id="${id}" ${on ? 'checked' : ''} aria-label="${name}"><div class="tr"></div></label>`;
+  setHtml(
+    body,
+    html`
+    <div class="grp">
+      <div class="row"><span class="rl">${t('general.showSettingsAria')}</span>${tog('f-shown', !item?.hidden, t('general.showSettingsAria'))}</div>
+      <div class="row"><span class="rl">${t('app.showInDock')}</span>${tog('f-dock', !!item?.dock, t('app.showInDock'))}</div>
+    </div>
+    ${dockBlocked ? html`<p class="grp-tip" id="dock-full-tip">${t('app.dockFull', { max: formatNumber(DOCK_MAX) })}</p>` : ''}`,
+  );
+  setTogDisabled(el('f-dock'), dockBlocked, 'dock-full-tip');
 }
 
 export function buildAppForm(body, item) {

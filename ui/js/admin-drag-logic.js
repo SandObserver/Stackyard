@@ -20,6 +20,23 @@ export function folderRowZone(y, rect) {
   return 'into';
 }
 
+/** The list group a top-level row is drawn in.
+    @param {any} item @returns {'dock' | 'home'} */
+export function listGroup(item) {
+  return item?.type === 'app' && item.dock ? 'dock' : 'home';
+}
+
+/** Whether the dragged item may land in a group. Only apps join the dock, and
+    only while it has room.
+    @param {any[]} items @param {any} src @param {'dock' | 'home'} group @param {number} max
+    @returns {boolean} */
+export function canDropInGroup(items, src, group, max) {
+  if (group !== 'dock') return true;
+  if (src?.type !== 'app') return false;
+  if (src.dock) return true;
+  return items.filter(i => listGroup(i) === 'dock').length < max;
+}
+
 export function dropTargetKind({ srcType, targetIsFolder = false, indent = false }) {
   if (canJoinFolder(srcType) && (targetIsFolder || indent)) return 'into-folder';
   return 'reorder';
@@ -31,10 +48,14 @@ export function dropTargetKind({ srcType, targetIsFolder = false, indent = false
      targetIsFolder, indent   the target is a folder, or sits inside one
      childIdx                 the target's index within its folder
      dropAbove                insert before rather than after (reorder only)
-   The child object stays in `items` throughout. Folders reference it by id. */
+     targetGroup, dockMax     the group dropped in, and the dock's size
+   The child object stays in `items` throughout. Folders reference it by id.
+   With no targetId the item goes to the end of the group. */
 export function applyDrop(items, d) {
   const src = items.find(i => i.id === d.srcId);
   if (!src || d.srcId === d.targetId) return false;
+  if (d.targetGroup && !canDropInGroup(items, src, d.targetGroup, d.dockMax ?? Infinity)) return false;
+  if (d.targetGroup && src.type === 'app') src.dock = d.targetGroup === 'dock';
 
   if (d.srcFolderId) {
     const sf = items.find(i => i.id === d.srcFolderId);

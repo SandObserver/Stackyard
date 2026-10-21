@@ -13,13 +13,16 @@
 
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
 import { snapshotItems } from '/js/admin-save-logic.js?v=5613a9fa';
-import { reorderItems } from '/js/admin-logic.js?v=1cca36f5';
-import { initDrag, wireRowDrag } from '/js/admin-drag.js?v=8fa6fbae';
-import { paintIcon } from '/js/admin-shared.js?v=1c01be9a';
+import { reorderItems, topLevelRows } from '/js/admin-logic.js?v=67e24cd3';
+import { listGroup } from '/js/admin-drag-logic.js?v=1e25ae0a';
+import { initDrag, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=3f39ff43';
+import { DOCK_MAX } from '/js/limits.js?v=31048a24';
+import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
+import { paintIcon, toast } from '/js/admin-shared.js?v=d27d7ec7';
 import { clr, el, focusFirst, initial, qa, setUserText } from '/js/utils.js?v=705ca896';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { sizeLabel } from '/js/admin-widget-form.js?v=1cb745cf';
+import { sizeLabel } from '/js/admin-widget-form.js?v=718ad9b4';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=b383b7c8';
 import { iconSvg } from '/js/icon-set.js?v=628341d4';
 
@@ -36,7 +39,7 @@ let _page = {
     @param {typeof _page} page @returns {void} */
 export function initList(page) {
   _page = page;
-  initDrag(page.save);
+  initDrag(page.save, () => toast(t('app.dockFull', { max: formatNumber(DOCK_MAX) })));
 }
 
 /* Constant markup only. No user data reaches these. */
@@ -64,6 +67,7 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
   const _filtering = !!(filter.q || filter.type !== 'all');
   row.draggable = !_filtering;
   row.dataset.itemId = item.id;
+  row.dataset.group = indent ? 'home' : listGroup(item);
   if (item.type === 'folder') row.dataset.isFolder = '1';
   if (indent) {
     row.dataset.indent = '1';
@@ -78,8 +82,7 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
     canUp = childIdx > 0;
     canDown = childIdx < n - 1;
   } else {
-    const inF = new Set(state.items.filter(i => i.type === 'folder').flatMap(ff => ff.children || []));
-    const top = state.items.filter(it => it.type === 'folder' || !inF.has(it.id));
+    const top = topLevelRows(state.items, listGroup(item) === 'dock');
     const p = top.indexOf(item);
     canUp = p > 0;
     canDown = p < top.length - 1;
@@ -144,7 +147,7 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
   const pb = document.createElement('div');
   pb.className = 'rpills';
   const pills = [];
-  if (item.dock) pills.push(html`<span class="pill p-dk">${t('app.dockPill')}</span>`);
+  if (item.dock && _filtering) pills.push(html`<span class="pill p-dk">${t('app.dockPill')}</span>`);
   if (item.type === 'widget') pills.push(html`<span class="pill p-wg">${t('type.widget')}</span>`);
   if (item.type === 'folder') pills.push(html`<span class="pill p-fl">${t('type.folder')}</span>`);
   if (item.monitoring?.healthcheck?.enabled || item.container)
@@ -169,28 +172,12 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
     return b;
   };
   if (!_filtering) ac.append(mkMove(-1, canUp), mkMove(1, canDown));
-  if (item.system === 'settings') {
-    const hb = document.createElement('button');
-    hb.className = 'btn bg sm';
-    hb.textContent = t(item.hidden ? 'common.show' : 'common.hide');
-    hb.dataset.act = 'hide';
-    const lbl = t(item.hidden ? 'general.showSettingsAria' : 'general.hideSettingsAria');
-    hb.title = lbl;
-    hb.setAttribute('aria-label', lbl);
-    hb.onclick = () => {
-      const before = snapshotItems(state.items);
-      item.hidden = !item.hidden;
-      _page.save(before);
-    };
-    ac.append(hb);
-  } else {
-    const ed = document.createElement('button');
-    ed.className = 'btn bg sm';
-    ed.textContent = t('common.edit');
-    ed.dataset.act = 'edit';
-    ed.onclick = () => _page.openModal(idx);
-    ac.append(ed);
-  }
+  const ed = document.createElement('button');
+  ed.className = 'btn bg sm';
+  ed.textContent = t('common.edit');
+  ed.dataset.act = 'edit';
+  ed.onclick = () => _page.openModal(idx);
+  ac.append(ed);
   row.append(handle, ico, inf, pb, ac);
   wireRowDrag(row, handle, { item, indent, folderId, childIdx });
   return row;
@@ -202,7 +189,7 @@ const FALLBACK = { up: ['up', 'down'], down: ['down', 'up'] };
 export function focusRow(itemId, act = 'edit') {
   const row = qa('.drow', el('al')).find(r => r.dataset.itemId === itemId);
   if (!row) return false;
-  const order = [...(FALLBACK[act] || [act]), 'edit', 'hide', 'toggle'];
+  const order = [...(FALLBACK[act] || [act]), 'edit', 'toggle'];
   return focusFirst(...order.map(a => row.querySelector(`[data-act="${a}"]`)));
 }
 
@@ -216,6 +203,34 @@ export function render() {
   draw(l);
   if (act === 'add-to') focusFirst(qa('.fp-add', l).find(b => b.dataset.folderId === id));
   else if (act) focusRow(id, act);
+}
+
+/** A heading and an empty group under it, added to the list.
+    @param {HTMLElement} l @param {'dock'|'home'} group @param {string} title @param {string} [count]
+    @returns {HTMLElement} the group */
+function listSection(l, group, title, count) {
+  const hdr = document.createElement('div');
+  hdr.className = 'grp-hdr-row al-hdr';
+  const h = document.createElement('p');
+  h.className = 'grp-hdr';
+  h.id = 'al-h-' + group;
+  h.setAttribute('role', 'heading');
+  h.setAttribute('aria-level', '2');
+  h.textContent = title;
+  hdr.appendChild(h);
+  if (count) {
+    const c = document.createElement('span');
+    c.className = 'al-count';
+    c.textContent = count;
+    hdr.appendChild(c);
+  }
+  const g = document.createElement('div');
+  g.className = 'grp';
+  g.dataset.group = group;
+  g.setAttribute('role', 'group');
+  g.setAttribute('aria-labelledby', h.id);
+  l.append(hdr, g);
+  return g;
 }
 
 function draw(l) {
@@ -252,18 +267,34 @@ function draw(l) {
       setHtml(l, html`<div class="empty"><p class="empty-msg">${t('list.noMatches')}</p></div>`);
       return;
     }
-    matches.forEach(item => l.appendChild(mkRow(item, state.items.indexOf(item))));
+    const g = document.createElement('div');
+    g.className = 'grp';
+    matches.forEach(item => g.appendChild(mkRow(item, state.items.indexOf(item))));
+    l.appendChild(g);
     return;
   }
-  const inFolder = new Set(state.items.filter(i => i.type === 'folder').flatMap(f => f.children || []));
-  state.items.forEach((item, idx) => {
-    if (item.type !== 'folder' && inFolder.has(item.id)) return;
-    l.appendChild(mkRow(item, idx));
+  const docked = topLevelRows(state.items, true);
+  const dockGrp = listSection(l, 'dock', t('home.dock'), `${formatNumber(docked.length)}/${formatNumber(DOCK_MAX)}`);
+  docked.forEach(item => dockGrp.appendChild(mkRow(item, state.items.indexOf(item))));
+  if (!docked.length) {
+    const zone = document.createElement('div');
+    zone.className = 'row al-dock-empty';
+    zone.textContent = t('list.dockEmpty');
+    dockGrp.appendChild(zone);
+    wireDockZone(zone);
+  }
+  const tip = document.createElement('p');
+  tip.className = 'grp-tip';
+  tip.textContent = t('list.dockTip');
+  l.appendChild(tip);
+  const homeGrp = listSection(l, 'home', t('home.homeScreen'));
+  topLevelRows(state.items, false).forEach(item => {
+    homeGrp.appendChild(mkRow(item, state.items.indexOf(item)));
     if (item.type === 'folder' && !collapsedFolders.has(item.id)) {
       (item.children || []).forEach((childId, ci) => {
         const childItem = state.items.find(i => i.id === childId);
-        if (!childItem) return;
-        l.appendChild(
+        if (!childItem || listGroup(childItem) === 'dock') return;
+        homeGrp.appendChild(
           mkRow(childItem, state.items.indexOf(childItem), { indent: true, childIdx: ci, folderId: item.id }),
         );
       });
@@ -274,7 +305,7 @@ function draw(l) {
       addRow.dataset.folderId = item.id;
       setHtml(addRow, html`<span>+</span> ${t('folder.addAppToFolder')}`);
       addRow.onclick = () => _page.openFolderPicker(null, item.id);
-      l.appendChild(addRow);
+      homeGrp.appendChild(addRow);
     }
   });
 }

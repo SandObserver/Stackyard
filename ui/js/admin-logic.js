@@ -229,7 +229,19 @@ export function groupBounds(field, size) {
   return { min, max };
 }
 
-/* Mutates `items` in place. */
+/** The top-level rows of one list group, in order. A docked app is drawn in
+    the dock group even when a folder lists it.
+    @param {any[]} items @param {boolean} docked @returns {any[]} */
+export function topLevelRows(items, docked) {
+  const inF = new Set(items.filter(i => i.type === 'folder').flatMap(ff => ff.children || []));
+  return items.filter(it => {
+    const isDocked = it.type === 'app' && !!it.dock;
+    if (isDocked !== docked) return false;
+    return docked || it.type === 'folder' || !inF.has(it.id);
+  });
+}
+
+/* Mutates `items` in place. A top-level row moves only within its group. */
 export function reorderItems(items, item, dir, { folderId = null, childIdx = null } = {}) {
   if (folderId != null) {
     const f = items.find(i => i.id === folderId);
@@ -240,8 +252,7 @@ export function reorderItems(items, item, dir, { folderId = null, childIdx = nul
     [ch[childIdx], ch[j]] = [ch[j], ch[childIdx]];
     return true;
   }
-  const inF = new Set(items.filter(i => i.type === 'folder').flatMap(ff => ff.children || []));
-  const top = items.filter(it => it.type === 'folder' || !inF.has(it.id));
+  const top = topLevelRows(items, item.type === 'app' && !!item.dock);
   const p = top.indexOf(item);
   const nb = top[p + dir];
   if (!nb) return false;

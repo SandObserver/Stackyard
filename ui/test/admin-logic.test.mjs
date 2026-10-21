@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   reorderItems,
+  topLevelRows,
   isDockBlocked,
   nextActiveIndex,
   sameIconName,
@@ -70,6 +71,46 @@ test('reorderItems skips items nested inside folders when ordering the top level
   assert.deepEqual(
     items.map(i => i.id),
     ['b', 'x', 'f'],
+  );
+});
+
+test('topLevelRows splits the list into the dock and the home screen', () => {
+  const items = [
+    { id: 'd1', type: 'app', dock: true },
+    { id: 'a', type: 'app' },
+    { id: 'f', type: 'folder', children: ['c', 'd2'] },
+    { id: 'c', type: 'app' },
+    { id: 'd2', type: 'app', dock: true },
+    { id: 'w', type: 'widget', dock: true },
+  ];
+  assert.deepEqual(
+    topLevelRows(items, true).map(i => i.id),
+    ['d1', 'd2'],
+  );
+  assert.deepEqual(
+    topLevelRows(items, false).map(i => i.id),
+    ['a', 'f', 'w'],
+  );
+});
+
+test('reorderItems moves a row only within its group', () => {
+  const items = [
+    { id: 'd1', type: 'app', dock: true },
+    { id: 'a', type: 'app' },
+    { id: 'd2', type: 'app', dock: true },
+    { id: 'b', type: 'app' },
+  ];
+  assert.equal(reorderItems(items, items[0], 1), true);
+  assert.deepEqual(
+    items.map(i => i.id),
+    ['d2', 'a', 'd1', 'b'],
+  );
+  assert.equal(reorderItems(items, items[2], 1), false);
+  assert.equal(reorderItems(items, items[1], -1), false);
+  assert.equal(reorderItems(items, items[1], 1), true);
+  assert.deepEqual(
+    items.map(i => i.id),
+    ['d2', 'b', 'd1', 'a'],
   );
 });
 

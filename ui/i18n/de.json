@@ -31,8 +31,6 @@
     "chooseFiles": "Dateien wählen",
     "configured": "Eingerichtet",
     "notSet": "Nicht festgelegt",
-    "show": "Anzeigen",
-    "hide": "Ausblenden",
     "moveUp": "Nach oben",
     "moveDown": "Nach unten",
     "editNamed": "{name} bearbeiten",
@@ -70,7 +68,6 @@
     "logError": "Fehler",
     "passwordPh": "Neues Passwort (mind. 8 Zeichen)",
     "showSettingsAria": "Einstellungen im Dashboard anzeigen",
-    "hideSettingsAria": "Einstellungen im Dashboard ausblenden",
     "importJson": "Konfigurations-JSON importieren",
     "importForeignFiles": "Homepage- oder Dashy-YAML-Konfiguration importieren"
   },
@@ -392,7 +389,9 @@
   },
   "list": {
     "empty": "Noch keine Apps. Klicke auf +Hinzufügen.",
-    "noMatches": "Keine Treffer."
+    "noMatches": "Keine Treffer.",
+    "dockTip": "Erscheint unten auf jeder Seite.",
+    "dockEmpty": "Ziehe eine App hierher oder öffne sie und aktiviere „Im Dock anzeigen“."
   },
   "import": {
     "confirm_one": "{count} Eintrag importieren? {added} hinzugefügt, {updated} aktualisiert, {deleted} gelöscht.",
