@@ -97,6 +97,25 @@ test.describe('on a touch screen', () => {
       expect(misfits).toEqual([]);
     });
   }
+
+  test('the icon colour swatches stay packed at 744px', async ({ page, request }) => {
+    await seedConfig(request, { items: [app('one', 'One')] });
+    await dismissSetupPrompt(request);
+    await page.setViewportSize({ width: 744, height: 900 });
+    await page.goto('/admin/#dashboard');
+    await page.locator('#al [data-act="edit"]').first().click();
+    await page.locator('#icon-col-style-btn').click();
+    await page.locator('#icon-col-style-list [data-val="color"]').click();
+    const hues = page.locator('#icon-color-slot .cc-hues');
+    await hues.waitFor({ state: 'visible' });
+    await animationsDone(page);
+    const gaps = await hues.evaluate(row => {
+      const sw = [...row.querySelectorAll('.cc-swatch')].map(n => n.getBoundingClientRect());
+      return sw.slice(1).flatMap((b, i) => (Math.abs(b.top - sw[i].top) < 1 ? [b.left - sw[i].right] : []));
+    });
+    expect(gaps.length).toBeGreaterThan(0);
+    for (const gap of gaps) expect(gap, 'swatches do not spread across the row').toBeLessThanOrEqual(16.5);
+  });
 });
 
 test('the colour sliders share one length', async ({ page, request }) => {
