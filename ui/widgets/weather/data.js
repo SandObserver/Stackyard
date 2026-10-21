@@ -1,6 +1,7 @@
 /* Open-Meteo (keyless) or OpenWeather (free API key). Returns
-   { temp, units, code, isDay, usedFeels, city }, where code is the WMO weather
-   code for both providers. The city search always uses Open-Meteo's geocoder. */
+   { temp, units, code, condition?, isDay, usedFeels, city }, where code is the
+   WMO weather code for both providers. condition names sand or volcanic ash,
+   which share a WMO code with dust or smoke. The city search always uses Open-Meteo's geocoder. */
 
 async function geocode(ctx) {
   const q = String(ctx.config.cityQuery || ctx.config.city || '').trim();
@@ -47,6 +48,9 @@ async function openMeteo(ctx, lat, lon, units) {
   };
 }
 
+const OW_ATMOSPHERE = { 701: 10, 711: 4, 721: 5, 731: 8, 741: 45, 751: 7, 761: 6, 762: 4, 771: 18, 781: 19 };
+const OW_CONDITION = { 751: 'sand', 762: 'ash' };
+
 /* OpenWeather condition id to the WMO code the page renders. */
 function wmoFromOpenWeather(id) {
   if (id >= 200 && id < 300) return 95;
@@ -54,9 +58,11 @@ function wmoFromOpenWeather(id) {
   if (id === 511) return 66;
   if (id >= 520 && id < 600) return 80;
   if (id >= 500 && id < 600) return 61;
+  if (id >= 611 && id <= 613) return 79;
+  if (id === 615 || id === 616) return 68;
   if (id >= 620 && id < 700) return 85;
   if (id >= 600 && id < 700) return 71;
-  if (id >= 700 && id < 800) return 45;
+  if (id >= 700 && id < 800) return OW_ATMOSPHERE[id] ?? 45;
   if (id === 800) return 0;
   if (id === 801) return 1;
   if (id === 802) return 2;
@@ -89,6 +95,7 @@ async function openWeather(ctx, lat, lon, units) {
     real,
     feels: d.main.feels_like != null ? d.main.feels_like : real,
     code: wmoFromOpenWeather(w.id),
+    condition: OW_CONDITION[w.id],
     isDay,
   };
 }
@@ -112,6 +119,7 @@ module.exports = async function (ctx) {
     usedFeels: useFeels,
     units: units,
     code: w.code,
+    ...(w.condition && { condition: w.condition }),
     isDay: w.isDay,
     city: config.city || '',
   };
