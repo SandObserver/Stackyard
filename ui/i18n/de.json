@@ -68,6 +68,7 @@
     "logError": "Fehler",
     "passwordPh": "Neues Passwort (mind. 8 Zeichen)",
     "showSettingsAria": "Einstellungen im Dashboard anzeigen",
+    "dockNeedsShown": "Aktiviere „Einstellungen im Dashboard anzeigen“, um sie ins Dock zu legen.",
     "importJson": "Konfigurations-JSON importieren",
     "importForeignFiles": "Homepage- oder Dashy-YAML-Konfiguration importieren"
   },

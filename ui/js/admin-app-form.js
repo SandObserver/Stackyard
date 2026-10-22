@@ -18,7 +18,7 @@ import {
   failureIsMissingApiPath,
   nextActiveIndex,
   sameIconName,
-} from '/js/admin-logic.js?v=67e24cd3';
+} from '/js/admin-logic.js?v=546d9ed7';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import {
   toast,
@@ -31,10 +31,10 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=d27d7ec7';
-import { createListbox } from '/js/listbox.js?v=bcf3b016';
+} from '/js/admin-shared.js?v=d479609c';
+import { createListbox } from '/js/listbox.js?v=58e59bd9';
 import { MAX_LABELS } from '/js/badge-logic.js?v=5c72bd4c';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=b2285dc7';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=43cc1b76';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=b0881957';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=628341d4';
@@ -101,9 +101,24 @@ export function buildSettingsTileForm(body, item) {
       <div class="row"><span class="rl">${t('general.showSettingsAria')}</span>${tog('f-shown', !item?.hidden, t('general.showSettingsAria'))}</div>
       <div class="row"><span class="rl">${t('app.showInDock')}</span>${tog('f-dock', !!item?.dock, t('app.showInDock'))}</div>
     </div>
-    ${dockBlocked ? html`<p class="grp-tip" id="dock-full-tip">${t('app.dockFull', { max: formatNumber(DOCK_MAX) })}</p>` : ''}`,
+    <p class="grp-tip d-none" id="dock-tip"></p>`,
   );
-  setTogDisabled(el('f-dock'), dockBlocked, 'dock-full-tip');
+  const shown = inpById('f-shown');
+  const dock = inpById('f-dock');
+  const tip = el('dock-tip');
+  const sync = () => {
+    const reason = !shown.checked
+      ? t('general.dockNeedsShown')
+      : dockBlocked
+        ? t('app.dockFull', { max: formatNumber(DOCK_MAX) })
+        : '';
+    if (!shown.checked) dock.checked = false;
+    tip.textContent = reason;
+    tip.classList.toggle('d-none', !reason);
+    setTogDisabled(dock, !!reason, 'dock-tip');
+  };
+  shown.addEventListener('change', sync);
+  sync();
 }
 
 export function buildAppForm(body, item) {

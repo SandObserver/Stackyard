@@ -13,16 +13,16 @@
 
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
 import { snapshotItems } from '/js/admin-save-logic.js?v=5613a9fa';
-import { reorderItems, topLevelRows } from '/js/admin-logic.js?v=67e24cd3';
-import { listGroup } from '/js/admin-drag-logic.js?v=1e25ae0a';
-import { initDrag, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=3f39ff43';
+import { isShownChild, reorderItems, shownChildren, topLevelRows } from '/js/admin-logic.js?v=546d9ed7';
+import { listGroup } from '/js/admin-drag-logic.js?v=1d1d553e';
+import { initDrag, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=73c3c8da';
 import { DOCK_MAX } from '/js/limits.js?v=31048a24';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { paintIcon, toast } from '/js/admin-shared.js?v=d27d7ec7';
+import { paintIcon, toast } from '/js/admin-shared.js?v=d479609c';
 import { clr, el, focusFirst, initial, qa, setUserText } from '/js/utils.js?v=705ca896';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { sizeLabel } from '/js/admin-widget-form.js?v=718ad9b4';
+import { sizeLabel } from '/js/admin-widget-form.js?v=29567d90';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=b383b7c8';
 import { iconSvg } from '/js/icon-set.js?v=628341d4';
 
@@ -77,10 +77,13 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
   let canUp = false,
     canDown = false;
   if (folderId != null) {
-    const cf = state.items.find(i => i.id === folderId);
-    const n = (cf?.children || []).length;
-    canUp = childIdx > 0;
-    canDown = childIdx < n - 1;
+    const shown = shownChildren(
+      state.items,
+      state.items.find(i => i.id === folderId),
+    );
+    const p = shown.indexOf(item);
+    canUp = p > 0;
+    canDown = p < shown.length - 1;
   } else {
     const top = topLevelRows(state.items, listGroup(item) === 'dock');
     const p = top.indexOf(item);
@@ -140,7 +143,8 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
     const wt = item.widgetType || 'custom';
     const wtLabel = state._widgetReg?.[wt]?.label || t('widgetCfg.typeCustom');
     mt.textContent = t('widgetCfg.meta', { type: wtLabel, size: sizeLabel(item.widgetSize || 'medium') });
-  } else if (item.type === 'folder') mt.textContent = t('folder.appsCount', { count: (item.children || []).length });
+  } else if (item.type === 'folder')
+    mt.textContent = t('folder.appsCount', { count: shownChildren(state.items, item).length });
   else if (item.system === 'settings') mt.textContent = t('home.opensSettings');
   else mt.textContent = item.href || '';
   inf.append(nm, mt);
@@ -292,8 +296,8 @@ function draw(l) {
     homeGrp.appendChild(mkRow(item, state.items.indexOf(item)));
     if (item.type === 'folder' && !collapsedFolders.has(item.id)) {
       (item.children || []).forEach((childId, ci) => {
+        if (!isShownChild(state.items, childId)) return;
         const childItem = state.items.find(i => i.id === childId);
-        if (!childItem || listGroup(childItem) === 'dock') return;
         homeGrp.appendChild(
           mkRow(childItem, state.items.indexOf(childItem), { indent: true, childIdx: ci, folderId: item.id }),
         );

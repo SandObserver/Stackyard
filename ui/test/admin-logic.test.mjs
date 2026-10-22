@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import {
   reorderItems,
   topLevelRows,
+  shownChildren,
+  settleDock,
   isDockBlocked,
   nextActiveIndex,
   sameIconName,
@@ -93,6 +95,49 @@ test('topLevelRows splits the list into the dock and the home screen', () => {
   );
 });
 
+test('shownChildren leaves out a docked app and a missing id', () => {
+  const items = [
+    { id: 'f', type: 'folder', children: ['c', 'd', 'gone', 'e'] },
+    { id: 'c', type: 'app' },
+    { id: 'd', type: 'app', dock: true },
+    { id: 'e', type: 'app' },
+  ];
+  assert.deepEqual(
+    shownChildren(items, items[0]).map(i => i.id),
+    ['c', 'e'],
+  );
+});
+
+test('a folder arrow steps over a docked child the list does not draw', () => {
+  const items = [
+    { id: 'f', type: 'folder', children: ['c', 'd', 'e'] },
+    { id: 'c', type: 'app' },
+    { id: 'd', type: 'app', dock: true },
+    { id: 'e', type: 'app' },
+  ];
+  assert.equal(reorderItems(items, items[1], 1, { folderId: 'f', childIdx: 0 }), true);
+  assert.deepEqual(items[0].children, ['e', 'd', 'c']);
+  items[0].children = ['c', 'd'];
+  assert.equal(reorderItems(items, items[1], 1, { folderId: 'f', childIdx: 0 }), false);
+  assert.deepEqual(items[0].children, ['c', 'd']);
+});
+
+test('settleDock takes docked apps out of folders and hidden apps out of the dock', () => {
+  const items = [
+    { id: 'f', type: 'folder', children: ['c', 'd'] },
+    { id: 'g', type: 'folder', children: ['d'] },
+    { id: 'c', type: 'app' },
+    { id: 'd', type: 'app', dock: true },
+    { id: 'settings', type: 'app', system: 'settings', hidden: true, dock: true },
+  ];
+  settleDock(items);
+  assert.deepEqual(items[0].children, ['c']);
+  assert.deepEqual(items[1].children, []);
+  assert.equal(items[3].dock, true);
+  assert.equal(items[4].dock, false);
+  assert.equal(items[4].hidden, true);
+});
+
 test('reorderItems moves a row only within its group', () => {
   const items = [
     { id: 'd1', type: 'app', dock: true },
@@ -115,7 +160,10 @@ test('reorderItems moves a row only within its group', () => {
 });
 
 test('reorderItems reorders a child within its folder', () => {
-  const items = [{ id: 'f', type: 'folder', children: ['x', 'y', 'z'] }];
+  const items = [
+    { id: 'f', type: 'folder', children: ['x', 'y', 'z'] },
+    ...['x', 'y', 'z'].map(id => ({ id, type: 'app' })),
+  ];
   assert.equal(reorderItems(items, null, 1, { folderId: 'f', childIdx: 0 }), true);
   assert.deepEqual(items[0].children, ['y', 'x', 'z']);
   assert.equal(reorderItems(items, null, -1, { folderId: 'f', childIdx: 0 }), false); // out of bounds

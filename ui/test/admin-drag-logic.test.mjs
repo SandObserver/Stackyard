@@ -299,3 +299,23 @@ test('a docked app dropped into a folder undocks and joins it', () => {
   assert.equal(items.find(i => i.id === 'd1').dock, false);
   assert.deepEqual(folder(items, 'f'), ['c', 'd1']);
 });
+
+test('a docked app still listed in a folder leaves it when dropped into another folder', () => {
+  const twoFolders = () => [
+    { id: 'x', type: 'app', dock: true },
+    { id: 'f1', type: 'folder', children: ['x'] },
+    { id: 'f2', type: 'folder', children: ['y'] },
+    { id: 'y', type: 'app' },
+  ];
+  let items = twoFolders();
+  assert.equal(drop(items, { srcId: 'x', targetId: 'f2', targetIsFolder: true, targetGroup: 'home' }), true);
+  assert.deepEqual(folder(items, 'f1'), []);
+  assert.deepEqual(folder(items, 'f2'), ['y', 'x']);
+  items = twoFolders();
+  assert.equal(
+    drop(items, { srcId: 'x', targetId: 'y', targetFolderId: 'f2', indent: true, childIdx: 0, targetGroup: 'home' }),
+    true,
+  );
+  assert.deepEqual(folder(items, 'f1'), []);
+  assert.deepEqual(folder(items, 'f2'), ['x', 'y']);
+});

@@ -42,6 +42,11 @@ export function dropTargetKind({ srcType, targetIsFolder = false, indent = false
   return 'reorder';
 }
 
+/* An app belongs to one folder, or the dashboard draws it twice. */
+function leaveFolders(items, id) {
+  for (const f of items) if (f.type === 'folder') f.children = (f.children || []).filter(c => c !== id);
+}
+
 /* Applies a drag move in place. `d` describes the dragged row and the target:
      srcId, srcFolderId       the dragged row, and its folder or null
      targetId, targetFolderId the row dropped on, and its folder
@@ -73,22 +78,18 @@ export function applyDrop(items, d) {
       items.push(src);
       return true;
     }
-    tf.children = (tf.children || []).filter(id => id !== src.id);
+    leaveFolders(items, src.id);
     if (!items.find(i => i.id === src.id)) items.push(src);
     tf.children.splice(d.childIdx, 0, src.id);
   } else if (kind === 'into-folder') {
     if (!items.find(i => i.id === src.id)) items.push(src);
     const tf = items.find(i => i.id === d.targetId);
     if (tf) {
-      tf.children = (tf.children || []).filter(id => id !== src.id);
+      leaveFolders(items, src.id);
       tf.children.push(src.id);
     }
   } else {
-    items
-      .filter(f => f.type === 'folder')
-      .forEach(f => {
-        f.children = (f.children || []).filter(id => id !== src.id);
-      });
+    leaveFolders(items, src.id);
     if (!items.find(i => i.id === src.id)) items.push(src);
     const si2 = items.indexOf(src);
     if (si2 >= 0) items.splice(si2, 1);

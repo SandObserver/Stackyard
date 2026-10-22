@@ -68,6 +68,7 @@
     "logError": "错误",
     "passwordPh": "新密码（至少 8 个字符）",
     "showSettingsAria": "在仪表板上显示设置",
+    "dockNeedsShown": "开启“在仪表板上显示设置”后，才能将其放入程序坞。",
     "importJson": "导入配置 JSON",
     "importForeignFiles": "导入 Homepage 或 Dashy 的 YAML 配置"
   },

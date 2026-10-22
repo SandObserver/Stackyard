@@ -68,6 +68,7 @@
     "logError": "Errors",
     "passwordPh": "New password (min 8 chars)",
     "showSettingsAria": "Show Settings on dashboard",
+    "dockNeedsShown": "Turn on Show Settings on dashboard to put it in the dock.",
     "importJson": "Import configuration JSON",
     "importForeignFiles": "Import Homepage or Dashy YAML config"
   },

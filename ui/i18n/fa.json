@@ -68,6 +68,7 @@
     "logError": "خطاها",
     "passwordPh": "رمز عبور جدید (حداقل ۸ کاراکتر)",
     "showSettingsAria": "نمایش تنظیمات در داشبورد",
+    "dockNeedsShown": "برای قرار دادن آن در داک، «نمایش تنظیمات در داشبورد» را روشن کنید.",
     "importJson": "وارد کردن JSON پیکربندی",
     "importForeignFiles": "وارد کردن پیکربندی YAML مربوط به Homepage یا Dashy"
   },

@@ -68,6 +68,7 @@
     "logError": "Errores",
     "passwordPh": "Nueva contraseña (mín. 8 caracteres)",
     "showSettingsAria": "Mostrar Ajustes en el panel",
+    "dockNeedsShown": "Activa «Mostrar Ajustes en el panel» para añadir Ajustes al Dock.",
     "importJson": "Importar JSON de configuración",
     "importForeignFiles": "Importar configuración YAML de Homepage o Dashy"
   },

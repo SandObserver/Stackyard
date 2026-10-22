@@ -241,3 +241,17 @@ test('resizing across the breakpoint switches the layout without a reload', asyn
   await expect(page.locator('#pages .dyn-mob-icon')).toHaveCount(0);
   expect(pageErrors, 'the rebuild threw').toEqual([]);
 });
+
+test('a docked Settings tile opens the admin in both layouts', async ({ page, request }) => {
+  await seedConfig(request, {
+    items: [app('alpha', 'Alpha'), { id: 'settings', type: 'app', system: 'settings', label: 'Settings', dock: true }],
+  });
+  await stubPolls(page);
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/');
+    const link = page.locator('#dock a[aria-label="Settings"]');
+    await expect(link).toHaveAttribute('href', '/admin/');
+    await expect(link).not.toHaveAttribute('target', /.+/);
+  }
+});

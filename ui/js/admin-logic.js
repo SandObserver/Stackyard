@@ -241,13 +241,45 @@ export function topLevelRows(items, docked) {
   });
 }
 
+/** Whether a folder child id is drawn under its folder. A docked app is drawn
+    in the dock instead.
+    @param {any[]} items @param {string} id @returns {boolean} */
+export function isShownChild(items, id) {
+  const it = items.find(i => i.id === id);
+  return !!it && !(it.type === 'app' && it.dock);
+}
+
+/** The folder's children drawn under it, in order.
+    @param {any[]} items @param {any} folder @returns {any[]} */
+export function shownChildren(items, folder) {
+  return (folder?.children || []).filter(id => isShownChild(items, id)).map(id => items.find(i => i.id === id));
+}
+
+/** Mutates `items` in place. A hidden app leaves the dock, and a docked app
+    leaves its folders.
+    @param {any[]} items @returns {void} */
+export function settleDock(items) {
+  const docked = new Set();
+  for (const it of items) {
+    if (it.type !== 'app' || !it.dock) continue;
+    if (it.hidden) it.dock = false;
+    else docked.add(it.id);
+  }
+  for (const f of items) {
+    if (f.type === 'folder' && (f.children || []).some(id => docked.has(id))) {
+      f.children = f.children.filter(id => !docked.has(id));
+    }
+  }
+}
+
 /* Mutates `items` in place. A top-level row moves only within its group. */
 export function reorderItems(items, item, dir, { folderId = null, childIdx = null } = {}) {
   if (folderId != null) {
     const f = items.find(i => i.id === folderId);
     if (!f) return false;
     const ch = f.children || [];
-    const j = childIdx + dir;
+    let j = childIdx + dir;
+    while (j >= 0 && j < ch.length && !isShownChild(items, ch[j])) j += dir;
     if (j < 0 || j >= ch.length) return false;
     [ch[childIdx], ch[j]] = [ch[j], ch[childIdx]];
     return true;

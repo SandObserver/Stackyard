@@ -4,11 +4,11 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=ef927f27';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=4a0b94c5';
+} from '/js/admin-app-form.js?v=adc67cb0';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=6adaedef';
 import { recoveryShown } from '/js/config-recovery.js?v=85138697';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=0edbb4c0';
-import { resolveAdminSection } from '/js/admin-logic.js?v=67e24cd3';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=0371c091';
+import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=546d9ed7';
 import {
   afterImport,
   buildAppItem,
@@ -29,7 +29,7 @@ import {
   showBgFields,
   showWallpaperFile,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=304b2a7d';
+} from '/js/admin-settings.js?v=b1897b60';
 import {
   apiGet,
   apiPost,
@@ -43,13 +43,13 @@ import {
   setReauthHandler,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=d27d7ec7';
+} from '/js/admin-shared.js?v=d479609c';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=718ad9b4';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=29567d90';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=bcf3b016';
+import { createListbox } from '/js/listbox.js?v=58e59bd9';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
 import { loadLocalIcons } from '/js/icons.js?v=5ac01d72';
@@ -172,6 +172,7 @@ async function writeItems(asked) {
     if (asked !== _replaced || JSON.stringify(full.items || []) !== _serverItems) {
       throw Object.assign(new Error('stale'), { status: 409 });
     }
+    settleDock(state.items);
     const sent = JSON.stringify(state.items);
     full.items = JSON.parse(sent);
     const r = await apiPost('/api/config', full);
@@ -668,8 +669,9 @@ async function doSave(orig) {
         if (Object.keys(ifo).length) item.iframe = ifo;
       }
     } else if (state.ctype === 'settings') {
-      item = { ...orig, dock: inp('f-dock')?.checked || false };
-      if (inp('f-shown')?.checked) delete item.hidden;
+      const shown = !!inp('f-shown')?.checked;
+      item = { ...orig, dock: shown && !!inp('f-dock')?.checked };
+      if (shown) delete item.hidden;
       else item.hidden = true;
     } else if (state.ctype === 'folder') {
       const label = inp('f-fname')?.value?.trim();
@@ -730,12 +732,6 @@ async function doSave(orig) {
     }
     /* By id, never by position. */
     const before = snapshotItems(state.items);
-    /* A docked app must leave its folders, or the dashboard draws it twice. */
-    if (item.dock) {
-      state.items.forEach(f => {
-        if (f.type === 'folder') f.children = (f.children || []).filter(id => id !== item.id);
-      });
-    }
     const { replaced } = upsertItem(state.items, state.eid, item);
     /* The editor stays open on a failed write, with the form intact. */
     if (!(await saveOrRevert(before))) return;

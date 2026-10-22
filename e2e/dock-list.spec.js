@@ -19,12 +19,12 @@ async function dragRow(from, to, where = 'above') {
   await from.dragTo(to, { targetPosition: { x: box.width / 2, y: where === 'above' ? 4 : box.height - 4 } });
 }
 
-/** Ids of the docked items the server holds, in order. */
 /** Flip a switch the way a person does. The checkbox itself is drawn hidden. */
 function flip(page, id) {
   return page.locator(`label.tog:has(#${id})`).click();
 }
 
+/** Ids of the docked items the server holds, in order. */
 async function savedDock(request) {
   return (await readConfig(request)).items.filter(i => i.dock).map(i => i.id);
 }
@@ -181,12 +181,65 @@ test('Settings can be hidden and shown again from its editor', async ({ page, re
   expect((await readConfig(request)).items.find(i => i.system === 'settings').hidden).toBeUndefined();
 });
 
+test('hiding Settings takes it out of the dock and locks Show in Dock', async ({ page, request }) => {
+  await seedConfig(request, { items: [app('alpha', 'Alpha')] });
+  await openDashboardList(page);
+  await rowByName(page, 'Settings').getByRole('button', { name: 'Edit' }).click();
+  const dock = page.locator('#f-dock');
+  const tip = page.locator('#dock-tip');
+  await expect(tip).toBeHidden();
+  await flip(page, 'f-dock');
+  await flip(page, 'f-shown');
+  await expect(dock).not.toBeChecked();
+  await expect(dock).toHaveAttribute('aria-disabled', 'true');
+  await expect(dock).toHaveAttribute('aria-describedby', 'dock-tip');
+  await expect(tip).toHaveText('Turn on Show Settings on dashboard to put it in the dock.');
+  await page.locator('label.tog:has(#f-dock)').click({ force: true });
+  await expect(dock).not.toBeChecked();
+  await saveEditor(page);
+  const s = (await readConfig(request)).items.find(i => i.system === 'settings');
+  expect(s.hidden).toBe(true);
+  expect(s.dock).toBe(false);
+
+  await rowByName(page, 'Settings').getByRole('button', { name: 'Edit' }).click();
+  await flip(page, 'f-shown');
+  await expect(dock).toHaveAttribute('aria-disabled', 'false');
+  await expect(dock).not.toBeChecked();
+  await expect(tip).toBeHidden();
+});
+
+test('a save clears a docked app left in a folder and a hidden Settings left in the dock', async ({
+  page,
+  request,
+}) => {
+  await seedConfig(request, {
+    items: [
+      { id: 'box', type: 'folder', label: 'Box', children: ['alpha', 'dee', 'bravo'] },
+      app('alpha', 'Alpha'),
+      docked('dee', 'Dee'),
+      app('bravo', 'Bravo'),
+      app('charlie', 'Charlie'),
+      { id: 'settings', type: 'app', system: 'settings', label: 'Settings', hidden: true, dock: true },
+    ],
+  });
+  await openDashboardList(page);
+  await rowByName(page, 'Box').locator('.rnm').click();
+  await expect(rowByName(page, 'Box').locator('.rmt')).toHaveText('2 apps');
+  const saved = waitForSave(page);
+  await rowByName(page, 'Alpha').getByRole('button', { name: 'Move down: Alpha' }).click();
+  expect((await saved).status()).toBe(200);
+  const cfg = await readConfig(request);
+  expect(cfg.items.find(i => i.id === 'box').children).toEqual(['bravo', 'alpha']);
+  expect(cfg.items.find(i => i.system === 'settings').dock).toBe(false);
+  expect(await savedDock(request)).toEqual(['dee']);
+});
+
 test('Settings cannot join a full dock from its editor', async ({ page, request }) => {
   const four = ['d1', 'd2', 'd3', 'd4'].map(id => docked(id, id.toUpperCase()));
   await seedConfig(request, { items: four });
   await openDashboardList(page);
   await rowByName(page, 'Settings').getByRole('button', { name: 'Edit' }).click();
-  await expect(page.locator('#dock-full-tip')).toBeVisible();
+  await expect(page.locator('#dock-tip')).toBeVisible();
   await expect(page.locator('#f-dock')).toHaveAttribute('aria-disabled', 'true');
   await page.locator('label.tog:has(#f-dock)').click({ force: true });
   await expect(page.locator('#f-dock')).not.toBeChecked();
