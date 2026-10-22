@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Let the Settings tile go in the dock from its new editor.
 
+- Sign in to a live badge's API with a username and password.
+
 ### Changed
 
 - Long weather condition labels shrink to fit before they are cut off.
