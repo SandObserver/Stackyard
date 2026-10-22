@@ -261,3 +261,54 @@ test('a row with an empty value is not sent as a header', () => {
   ]);
   assert.deepEqual({ ...out }, { Accept: 'application/json' });
 });
+
+const basic = (u, p) => 'Basic ' + Buffer.from(`${u}:${p}`).toString('base64');
+
+test('a login becomes a Basic Authorization header', () => {
+  const item = { badge: { login: { username: 'monitor', password: 'pw' } } };
+  assert.deepEqual(requestParts(item).headers, { Authorization: basic('monitor', 'pw') });
+});
+
+test('a login without a username sends nothing', () => {
+  for (const login of [{ username: '', password: 'pw' }, { password: 'pw' }, 'monitor:pw', null]) {
+    assert.deepEqual(requestParts({ badge: { login } }).headers, {}, JSON.stringify(login));
+  }
+});
+
+test('an Authorization header row replaces the login', () => {
+  const item = {
+    badge: {
+      login: { username: 'monitor', password: 'pw' },
+      headers: [{ key: 'Authorization', value: 'Bearer T', secret: true }],
+    },
+  };
+  assert.deepEqual(requestParts(item).headers, { Authorization: 'Bearer T' });
+});
+
+test('scrub hides the login password and keeps the username', () => {
+  const item = { monitoring: { activity: { login: { username: 'monitor', password: 'pw' } } } };
+  scrubItemBadgeSecrets(item);
+  assert.deepEqual(item.monitoring.activity.login, { username: 'monitor', passwordSet: true });
+});
+
+test('scrub drops a login without a username', () => {
+  const item = { badge: { login: { password: 'pw' } } };
+  scrubItemBadgeSecrets(item);
+  assert.equal(item.badge.login, undefined);
+});
+
+test('preserve refills an omitted login password and keeps a retyped one', () => {
+  const old = { badge: { login: { username: 'monitor', password: 'stored' } } };
+  const kept = { badge: { login: { username: 'monitor', passwordSet: true } } };
+  preserveItemBadgeSecrets(kept, old);
+  assert.deepEqual(kept.badge.login, { username: 'monitor', password: 'stored' });
+  const retyped = { badge: { login: { username: 'monitor', password: 'new' } } };
+  preserveItemBadgeSecrets(retyped, old);
+  assert.deepEqual(retyped.badge.login, { username: 'monitor', password: 'new' });
+});
+
+test('clearing the username removes the stored login', () => {
+  const item = { badge: { login: { username: '' } } };
+  preserveItemBadgeSecrets(item, { badge: { login: { username: 'monitor', password: 'stored' } } });
+  assert.equal(item.badge.login, undefined);
+});

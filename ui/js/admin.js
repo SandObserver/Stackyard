@@ -4,11 +4,11 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=adc67cb0';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=6adaedef';
+} from '/js/admin-app-form.js?v=0888b695';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=9082bfd5';
 import { recoveryShown } from '/js/config-recovery.js?v=85138697';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=0371c091';
-import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=546d9ed7';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=95504ae8';
+import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=b3befae4';
 import {
   afterImport,
   buildAppItem,
@@ -21,7 +21,7 @@ import {
   serialWrites,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=5613a9fa';
+} from '/js/admin-save-logic.js?v=2de65cd5';
 import {
   loadSettings,
   savedWallpaperUrl,
@@ -29,7 +29,7 @@ import {
   showBgFields,
   showWallpaperFile,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=b1897b60';
+} from '/js/admin-settings.js?v=e1d92487';
 import {
   apiGet,
   apiPost,
@@ -43,13 +43,13 @@ import {
   setReauthHandler,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=d479609c';
+} from '/js/admin-shared.js?v=7b3a1dac';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=29567d90';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=28393455';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=58e59bd9';
+import { createListbox } from '/js/listbox.js?v=95e9b354';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
 import { loadLocalIcons } from '/js/icons.js?v=5ac01d72';
@@ -63,7 +63,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=3b635c16';
+} from '/js/import-foreign.js?v=fee60cb7';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6b0320bd';
 import {
@@ -709,6 +709,7 @@ async function doSave(orig) {
         actInt: Math.min(3600, Math.max(10, parseInt(inp('f-bint')?.value || '30', 10))),
         actParams: serializeKvRows(state._bpar),
         actHeaders: serializeKvRows(state._bhdr),
+        actLogin: { username: inp('f-buser')?.value?.trim() || '', password: inp('f-bpass')?.value || '' },
         staticEn: inp('static-en')?.checked || false,
         staticLabel: inp('f-static-label')?.value?.trim() || '',
         staticColor: inp('static-col-val')?.value || 'info',

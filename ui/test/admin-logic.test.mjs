@@ -27,6 +27,7 @@ import {
   toastMs,
   toastHoldMs,
   isBareHostUrl,
+  urlHasLogin,
   failureIsMissingApiPath,
   createDirtyTracker,
   BLOCK,
@@ -757,4 +758,13 @@ test('an empty string or nothing is no choice otherwise', () => {
   assert.deepEqual(singleChoice(null, opts), []);
   assert.deepEqual(singleChoice(undefined, opts), []);
   assert.deepEqual(singleChoice(3, [{ value: 3 }]), ['3']);
+});
+
+test('urlHasLogin spots a username or password before the host', () => {
+  for (const u of ['http://admin:pw@adguard.lan/control/stats', 'https://key@opnsense.lan/api', 'user:pw@host/api']) {
+    assert.equal(urlHasLogin(u), true, u);
+  }
+  for (const u of ['http://adguard.lan/control/stats', 'http://host/api?u=a@b', '', 'http://', undefined]) {
+    assert.equal(urlHasLogin(u), false, String(u));
+  }
 });

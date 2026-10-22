@@ -12,7 +12,7 @@
 import { applyDrop, canDropInGroup, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=1d1d553e';
 import { DOCK_MAX } from '/js/limits.js?v=31048a24';
 import { state } from '/js/admin-state.js?v=af772a1b';
-import { snapshotItems } from '/js/admin-save-logic.js?v=5613a9fa';
+import { snapshotItems } from '/js/admin-save-logic.js?v=2de65cd5';
 import { qa } from '/js/utils.js?v=705ca896';
 
 /** @type {(before: unknown) => void} */
