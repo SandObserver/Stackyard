@@ -23,6 +23,10 @@
         {
           "value": "truenas",
           "label": "diskProvider.opt.truenas"
+        },
+        {
+          "value": "unraid",
+          "label": "diskProvider.opt.unraid"
         }
       ]
     },
@@ -89,6 +93,39 @@
       "showIf": {
         "field": "diskProvider",
         "equals": "truenas"
+      },
+      "cosmetic": true
+    },
+    {
+      "key": "unraidUrl",
+      "type": "text",
+      "label": "unraidUrl.label",
+      "placeholder": "unraidUrl.placeholder",
+      "showIf": {
+        "field": "diskProvider",
+        "equals": "unraid"
+      }
+    },
+    {
+      "key": "unraidApiKey",
+      "type": "secret",
+      "label": "unraidApiKey.label",
+      "hint": "unraidApiKey.hint",
+      "showIf": {
+        "field": "diskProvider",
+        "equals": "unraid"
+      }
+    },
+    {
+      "key": "unraidHref",
+      "type": "text",
+      "label": "unraidHref.label",
+      "placeholder": "unraidHref.placeholder",
+      "hint": "unraidHref.hint",
+      "optional": true,
+      "showIf": {
+        "field": "diskProvider",
+        "equals": "unraid"
       },
       "cosmetic": true
     },
