@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add Proxmox VE as a System Summary source.
 
+- Add Unraid as a Disk Health source.
+
 ### Changed
 
 - Long weather condition labels shrink to fit before they are cut off.
