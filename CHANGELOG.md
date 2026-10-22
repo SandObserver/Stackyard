@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Long weather condition labels shrink to fit before they are cut off.
 
+- Read numbers sent as text in live badges.
+
 ### Fixed
 
 - Colour swatches no longer spread across the row on small tablets.
