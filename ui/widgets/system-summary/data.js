@@ -644,8 +644,8 @@ async function systemSummaryProxmox(ctx) {
   const mounts = new Set();
   for (const s of slots) {
     if (s.type !== 'disk') continue;
-    mounts.add(isRootFs(s.primary) ? '' : s.primary);
-    if (s.secondary) mounts.add(isRootFs(s.secondary) ? '' : s.secondary);
+    mounts.add(isRootFs(s.primary) ? '/' : s.primary);
+    if (s.secondary) mounts.add(isRootFs(s.secondary) ? '/' : s.secondary);
   }
 
   let name = ctx.config.proxmoxNode;
@@ -656,7 +656,7 @@ async function systemSummaryProxmox(ctx) {
   }
 
   const node = encodeURIComponent(name);
-  const wantsStorage = [...mounts].some(m => m);
+  const wantsStorage = [...mounts].some(m => m !== '/');
   const [status, storage] = await Promise.all([
     proxmoxGet(ctx, `/nodes/${node}/status`),
     wantsStorage ? proxmoxGet(ctx, `/nodes/${node}/storage`) : null,
@@ -668,7 +668,7 @@ async function systemSummaryProxmox(ctx) {
   });
   const stores = Array.isArray(storage) ? storage : [];
   const disk = mount => {
-    if (!mount) {
+    if (mount === '/') {
       const fs = status?.rootfs || {};
       return { usedPct: pct(fs.used, fs.total), totalGb: (Number(fs.total) || 0) / GB };
     }

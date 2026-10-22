@@ -40,6 +40,13 @@ test('each header Save is driven by its own unsaved-change check', () => {
   assert.match(fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8'), /addEventListener\('beforeunload'/);
 });
 
+test('a saved Proxmox secret leaves General with nothing unsaved', () => {
+  const src = fs.readFileSync(new URL('../js/admin-settings.js', import.meta.url), 'utf8');
+  const save = src.slice(src.indexOf('async function saveServer'));
+  assert.ok(save.indexOf('clearPveSecretInput();') >= 0);
+  assert.ok(save.indexOf('clearPveSecretInput();') < save.indexOf('_srvTrack?.reset();'));
+});
+
 /* An import writes the config itself. Without this the page warns about
    unsaved changes that are already on the server. */
 test('an import records what it saved', () => {

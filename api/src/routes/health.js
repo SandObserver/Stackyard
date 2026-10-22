@@ -259,10 +259,13 @@ on('GET', '/api/health', async (req, res) => {
           detail.pingError = r.error;
         }
         if (vmid != null) {
-          const r = guestsReady ? await guestsReady : { error: 'Proxmox is not set up in Settings.' };
+          const r = guestsReady
+            ? await guestsReady
+            : { error: 'Proxmox is not set up in Settings.', code: 'invalid.proxmox-missing' };
           if ('error' in r) {
             unhealthy = true;
             detail.proxmoxError = r.error;
+            if (r.code) detail.proxmoxCode = r.code;
           } else {
             const g = r.guests.get(vmid);
             detail.guestState = g ? g.status : 'missing';

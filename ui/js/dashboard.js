@@ -47,7 +47,7 @@ import {
   resetMobileChrome,
   mkFolderGlyph,
 } from '/js/ui.js?v=c66ab377';
-import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=fa038b56';
+import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=85b1bc96';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=23793736';
 import { observeGlass } from '/js/glass-rim.js?v=3faec233';

@@ -41,9 +41,6 @@ const badToken = () =>
   new ProxmoxError('The token ID must look like user@realm!name.', KIND.INVALID, 'invalid.proxmox-token');
 const badUrl = () => new ProxmoxError('That is not a valid URL.', KIND.INVALID, 'invalid.url');
 
-/** @param {unknown} e */
-const reasonOf = e => (e instanceof ProxmoxError ? e.message : pingErrorText(e));
-
 /** @param {{ url: string, tokenId: string, secret: string, skipTlsVerify: boolean }} conn @param {string} path */
 async function pveGet(conn, path, timeout = BATCH_MS) {
   if (!TOKEN_ID.test(conn.tokenId) || !SECRET.test(conn.secret)) throw badToken();
@@ -94,12 +91,15 @@ async function listGuests(conn, timeout) {
     .sort((a, b) => a.vmid - b.vmid);
 }
 
-/** @returns {Promise<{ guests: Map<number, { status: string }> } | { error: string }>} */
+/** @returns {Promise<{ guests: Map<number, { status: string }> } | { error: string, code?: string }>} */
 async function guestStates(conn) {
   const key = `proxmox:${conn.url}|${conn.tokenId}|${conn.skipTlsVerify}`;
   const o = await latest(key, () => listGuests(conn, BATCH_MS), { holdMs: BATCH_MS, keepMs: GUESTS_KEEP_MS });
-  if (!o) return { error: 'Proxmox did not answer in time.' };
-  if (!o.ok) return { error: reasonOf(o.error) };
+  if (!o) return { error: 'Proxmox did not answer in time.', code: 'timeout.no-answer' };
+  if (!o.ok)
+    return o.error instanceof ProxmoxError
+      ? { error: o.error.message, code: o.error.apiCode }
+      : { error: pingErrorText(o.error) };
   return { guests: new Map(o.value.map(g => [g.vmid, { status: g.status }])) };
 }
 

@@ -660,10 +660,10 @@ async function saveServer() {
         pwEl.value = '';
       }
     }
+    clearPveSecretInput();
     _srvTrack?.reset();
     const after = await apiGet('/api/config').catch(() => null);
     if (after) showPveSecretState(!!after.settings?.server?.proxmox?.secretSet);
-    clearPveSecretInput();
     toast(socketWarning || t('toast.saved'), socketWarning ? 'err' : 'ok');
     if (langChanged) {
       location.reload();

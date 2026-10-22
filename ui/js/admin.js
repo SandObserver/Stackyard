@@ -4,7 +4,7 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=58a115ae';
+} from '/js/admin-app-form.js?v=ee3bdd9a';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=8138c219';
 import { recoveryShown } from '/js/config-recovery.js?v=85138697';
 import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=1ae9a956';
@@ -31,7 +31,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=c28e308c';
+} from '/js/admin-settings.js?v=6f79a26b';
 import {
   apiGet,
   apiPost,

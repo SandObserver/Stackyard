@@ -1,5 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 const path = require('node:path');
 const { normalizeBase } = require('../src/widget-data');
 const { dispatchProvider } = require('../src/provider-dispatch');
@@ -75,10 +76,23 @@ test('the node status maps onto the shape the widget renders', async () => {
   assert.equal(r.iowait, 2);
   assert.equal(r.uptime, 90000);
   assert.deepEqual(r.disks, [
-    { mount: '', usedPct: 25, totalGb: 100 },
+    { mount: '/', usedPct: 25, totalGb: 100 },
     { mount: 'local-lvm', usedPct: 75, totalGb: 400 },
   ]);
   assert.equal(r.link, 'https://pve.local:8006');
+});
+
+test('a blank or / slot reads the root filesystem under the mount the widget looks up', async () => {
+  const widget = fs.readFileSync(
+    path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'index.html'),
+    'utf8',
+  );
+  assert.match(widget, /byMount\.get\(slot\.primary \|\| '\/'\)/);
+  for (const primary of ['', '/']) {
+    const { ctx } = ctxFor({ slots: [{ type: 'disk', primary }] });
+    const byMount = new Map((await dataFn(ctx)).disks.map(d => [d.mount, d]));
+    assert.equal(byMount.get(primary || '/')?.usedPct, 25, JSON.stringify(primary));
+  }
 });
 
 test('a chosen node is read with one request, or two with storage', async () => {

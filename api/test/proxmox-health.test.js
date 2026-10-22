@@ -141,6 +141,7 @@ test('a refused token turns the tile red with the reason', async () => {
   const r = (await request('GET', '/api/health')).body;
   assert.equal(r.a.unhealthy, true);
   assert.equal(r.a.proxmoxError, 'Proxmox refused the token.');
+  assert.equal(r.a.proxmoxCode, 'upstream.proxmox-refused');
 });
 
 test('a tile set to Proxmox with no connection says so', async () => {
@@ -148,6 +149,7 @@ test('a tile set to Proxmox with no connection says so', async () => {
   const r = (await request('GET', '/api/health')).body;
   assert.equal(r.a.unhealthy, true);
   assert.match(r.a.proxmoxError, /not set up/);
+  assert.equal(r.a.proxmoxCode, 'invalid.proxmox-missing');
   assert.equal(seen.length, 0);
 });
 

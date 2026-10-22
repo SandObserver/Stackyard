@@ -26,10 +26,24 @@ const EN = {
   'status.guestStopped': 'Guest stopped',
   'status.guestState': 'Guest {state}',
   'status.proxmoxFailed': 'Proxmox: {error}',
+  'adminError.proxmoxToken': 'Check the token ID and secret. The token ID looks like user@realm!name.',
+  'adminError.proxmoxRefused': 'Proxmox refused the token. Check the token ID and secret.',
+  'adminError.proxmoxPermission': 'The token cannot read this. Give it the PVEAuditor role.',
+  'adminError.notProxmox': 'Something answered there, but it is not Proxmox.',
+  'adminError.proxmoxMissing': 'Enter the Proxmox address, token ID and secret under Health Checks in General.',
+  'adminError.timedOut': 'The service did not answer in time.',
 };
 
 const GUEST_STATES = {
   stopped: 'status.guestStopped',
+};
+
+const PROXMOX_ERRORS = {
+  'invalid.proxmox-token': 'adminError.proxmoxToken',
+  'invalid.proxmox-missing': 'adminError.proxmoxMissing',
+  'upstream.proxmox-refused': 'adminError.proxmoxRefused',
+  'upstream.proxmox-permission': 'adminError.proxmoxPermission',
+  'upstream.not-proxmox': 'adminError.notProxmox',
 };
 
 const CONTAINER_STATES = {
@@ -133,10 +147,13 @@ export function healthReason(detail, translate) {
     parts.push(_clip(tr('status.pingFailed', { error: _clip(detail.pingError, room) }), REASON_MAX));
   } else if (detail.pingStatus >= 400) parts.push(tr('status.pingReturned', { status: detail.pingStatus }));
 
-  if (detail.proxmoxError) {
+  const pveKey = PROXMOX_ERRORS[detail.proxmoxCode];
+  if (pveKey) parts.push(_clip(tr(pveKey), REASON_MAX));
+  else if (detail.proxmoxError) {
+    const error = detail.proxmoxCode === 'timeout.no-answer' ? tr('adminError.timedOut') : detail.proxmoxError;
     const around = tr('status.proxmoxFailed', { error: '' }).length;
     const room = Math.max(8, REASON_MAX - around);
-    parts.push(_clip(tr('status.proxmoxFailed', { error: _clip(detail.proxmoxError, room) }), REASON_MAX));
+    parts.push(_clip(tr('status.proxmoxFailed', { error: _clip(error, room) }), REASON_MAX));
   } else if (detail.guestState === 'missing') parts.push(tr('status.guestNotFound'));
   else if (detail.guestState === 'unknown') parts.push(tr('status.guestNoData'));
   else if (typeof detail.guestState === 'string' && detail.guestState !== 'running') {
