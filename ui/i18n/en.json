@@ -45,9 +45,8 @@
     "allowedHostsTip": "While no password is set, Stackyard answers only on IP addresses, local names such as <code>nas</code> or <code>nas.local</code>, and the addresses listed here. Separate them with commas.",
     "monitoring": "Monitoring",
     "loggingLevel": "Logging Level",
-    "dockerHealth": "Docker Container Health Checks",
     "hideHealthy": "Hide Healthy Badge",
-    "socketUrl": "Socket URL",
+    "socketUrl": "Docker Socket URL",
     "loggingTip": "Setting this to Errors logs warnings and errors only. Security events are always logged.",
     "socketTip": "Use the URL of a <strong>socket proxy</strong> container, never the Docker socket itself. A name such as <code>http://socket-proxy:2375</code> works only when this container and the proxy share a Docker network; an IP address works only when the proxy publishes its port beyond the host’s own loopback.",
     "security": "Security",
@@ -70,7 +69,15 @@
     "showSettingsAria": "Show Settings on dashboard",
     "dockNeedsShown": "Turn on Show Settings on dashboard to put it in the dock.",
     "importJson": "Import configuration JSON",
-    "importForeignFiles": "Import Homepage or Dashy YAML config"
+    "importForeignFiles": "Import Homepage or Dashy YAML config",
+    "healthChecks": "Health Checks",
+    "healthChecksTip": "Shows a badge on apps whose container, address or Proxmox guest is down.",
+    "proxmoxUrl": "Proxmox Address",
+    "proxmoxTokenId": "Token ID",
+    "proxmoxSecret": "Secret",
+    "proxmoxTip": "For Proxmox checks. Use an API token with the PVEAuditor role. If Privilege Separation is on, give the role to the token itself.",
+    "proxmoxConnected_one": "Connected · {count} guest",
+    "proxmoxConnected_other": "Connected · {count} guests"
   },
   "appearance": {
     "appTitle": "App Title",
@@ -179,7 +186,7 @@
     "dockFull": "Dock full ({max}/{max}). Remove an app first.",
     "badge": "Badge",
     "healthCheck": "Health Check",
-    "healthGlobalOff": "Container checks need Docker Container Health Checks turned on in General. URL checks work without it.",
+    "healthGlobalOff": "Health checks are off. Turn them on in General.",
     "type": "Type",
     "container": "Container",
     "ping": "Ping",
@@ -245,7 +252,12 @@
     "needsApiPath": "Connected, but this address has no API path. Enter the service's full API URL.",
     "needsApiPathError": "This address has no API path. Enter the service's full API URL.",
     "foundValues_one": "Found {count} value",
-    "foundValues_other": "Found {count} values"
+    "foundValues_other": "Found {count} values",
+    "proxmox": "Proxmox",
+    "guest": "Guest",
+    "chooseGuest": "Choose a guest",
+    "noGuests": "No VMs or containers found.",
+    "loadingGuests": "Loading guests…"
   },
   "adminError": {
     "sessionExpired": "Your session has expired. Sign in again to continue.",
@@ -285,7 +297,12 @@
     "selfSignedPublic": "The service uses a self-signed certificate. Allowing a self-signed certificate only applies to addresses on your own network.",
     "tlsExpired": "The service's certificate has expired.",
     "timedOut": "The service did not answer in time.",
-    "demoOutbound": "Checks are turned off in the live demo."
+    "demoOutbound": "Checks are turned off in the live demo.",
+    "proxmoxToken": "Check the token ID and secret. The token ID looks like user@realm!name.",
+    "proxmoxRefused": "Proxmox refused the token. Check the token ID and secret.",
+    "proxmoxPermission": "The token cannot read this. Give it the PVEAuditor role.",
+    "notProxmox": "Something answered there, but it is not Proxmox.",
+    "proxmoxMissing": "Enter the Proxmox address, token ID and secret under Health Checks in General."
   },
   "home": {
     "search": "Search",
@@ -364,7 +381,6 @@
     "importUnknownFormat": "{file} is not a gethomepage or Dashy config.",
     "importTooLarge": "{file} has too many entries to import.",
     "secretsWithheld": "Enter the credential again for: {items}. It was not kept, because the request it belongs to changed.",
-    "socketUrlMissing": "Enter the socket proxy address, or turn Docker monitoring off.",
     "socketUrlBad": "Socket proxy not saved: {reason}",
     "socketUrlUnverified": "Saved, but the socket proxy did not answer: {reason}",
     "socketHintSharedNetwork": "That name is resolved by Docker, which answers only for containers on a shared network. Put both on the same network, or use an address the proxy publishes.",
@@ -422,7 +438,12 @@
     "containerNotFound": "Container not found",
     "containerState": "Container {state}",
     "pingFailed": "Ping failed: {error}",
-    "pingReturned": "Ping returned {status}"
+    "pingReturned": "Ping returned {status}",
+    "guestNotFound": "Guest not found",
+    "guestNoData": "No data from Proxmox",
+    "guestStopped": "Guest stopped",
+    "guestState": "Guest {state}",
+    "proxmoxFailed": "Proxmox: {error}"
   },
   "setup": {
     "title": "Set a dashboard password?",

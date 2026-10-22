@@ -19,8 +19,19 @@ const { latest } = require('../latest');
 const { IS_DEMO } = require('../demo');
 const demoData = require('../demo-data');
 const log = require('../log');
+const proxmox = require('../proxmox');
+const { RETYPE_MESSAGE } = require('../secret-scope');
+const { errorBody } = require('../api-error');
 const SOCKET_PROXY_URL_DEFAULT = process.env.SOCKET_PROXY_URL || '';
 const CONTAINERS_KEEP_MS = 2 * 60 * 1000;
+
+/** @param {any} item */
+function guestOf(item) {
+  const hc = item?.monitoring?.healthcheck;
+  if (!hc?.enabled) return null;
+  const id = Number(hc.proxmoxGuest);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
 
 function socketProxyUrl(cfg) {
   return cfg.settings?.server?.socketProxyUrl || SOCKET_PROXY_URL_DEFAULT;
@@ -139,6 +150,55 @@ on('POST', '/api/docker/test', async (req, res) => {
   }
 });
 
+const MISSING = Object.freeze({
+  error: 'Enter the Proxmox address, token ID and secret.',
+  kind: KIND.INVALID,
+  code: 'invalid.proxmox-missing',
+});
+
+/* A test that leaves the secret blank uses the stored one, but only for the
+   address and token it was stored for. */
+on('POST', '/api/proxmox/test', async (req, res) => {
+  if (!checkOrigin(req, res)) return;
+  const limited = rateLimit(getIp(req), 'proxmox-test', 20, 60_000);
+  if (limited) return json(res, 429, { ok: false, error: limited, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
+  let body;
+  try {
+    body = JSON.parse(await readBody(req));
+  } catch {
+    return json(res, 400, { ok: false, error: 'url and tokenId required', kind: KIND.INVALID });
+  }
+  const server = {
+    proxmox: { url: body?.url, tokenId: body?.tokenId, secret: body?.secret, skipTlsVerify: body?.skipTlsVerify },
+  };
+  const dropped = proxmox.preserveProxmox(server, loadConfig().settings?.server, false);
+  if (!server.proxmox.secret && dropped)
+    return json(res, 200, { ok: false, error: RETYPE_MESSAGE, kind: KIND.INVALID, code: 'invalid.retype' });
+  const conn = proxmox.connectionOf(server);
+  if (!conn) return json(res, 200, { ok: false, ...MISSING });
+  if (IS_DEMO) return json(res, 200, { ok: true, guests: 0 });
+  try {
+    const guests = await proxmox.listGuests(conn, proxmox.TEST_MS);
+    json(res, 200, { ok: true, guests: guests.length });
+  } catch (e) {
+    json(res, 200, { ok: false, ...errorBody(e) });
+  }
+});
+
+on('GET', '/api/proxmox/guests', async (req, res) => {
+  const limited = rateLimit(getIp(req), 'proxmox-guests', 30, 60_000);
+  if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
+  if (IS_DEMO) return json(res, 200, { guests: demoData.demoProxmoxGuests() });
+  const conn = proxmox.connectionOf(loadConfig().settings?.server);
+  if (!conn) return json(res, 400, MISSING);
+  try {
+    const guests = await proxmox.listGuests(conn, proxmox.TEST_MS);
+    json(res, 200, { guests: guests.map(({ vmid, name, type, node }) => ({ vmid, name, type, node })) });
+  } catch (e) {
+    json(res, 502, errorBody(e));
+  }
+});
+
 on('GET', '/health', (_, res) => json(res, 200, { ok: true }));
 
 on('GET', '/api/health', async (req, res) => {
@@ -149,6 +209,7 @@ on('GET', '/api/health', async (req, res) => {
     return json(res, 200, demoData.demoHealth(cfg.items));
   }
   const cfg = loadConfig();
+  if (cfg.settings?.server?.healthChecks === false) return json(res, 200, {});
   const socketUrl = socketProxyUrl(cfg);
   /* Without a proxy address every container lookup misses, which would report
      every container-backed app as unhealthy. */
@@ -158,6 +219,9 @@ on('GET', '/api/health', async (req, res) => {
         keepMs: CONTAINERS_KEEP_MS,
       }).then(o => (o?.ok ? o.value : Object.create(null)))
     : Promise.resolve(Object.create(null));
+  const pve = proxmox.connectionOf(cfg.settings?.server);
+  const wantsGuests = cfg.items.some(i => i.type === 'app' && guestOf(i) != null);
+  const guestsReady = pve && wantsGuests ? proxmox.guestStates(pve) : null;
   const result = Object.create(null);
   await Promise.allSettled(
     cfg.items
@@ -166,6 +230,7 @@ on('GET', '/api/health', async (req, res) => {
         const mon = item.monitoring?.healthcheck || {};
         const cName = socketUrl ? mon.container || item.container || '' : '';
         const ping = mon.pingUrl || item.ping || '';
+        const vmid = guestOf(item);
         /* Build the entry up rather than replace it. An item can have both a
            container and a ping, and the tile needs the detail from each. */
         let unhealthy = false;
@@ -193,7 +258,18 @@ on('GET', '/api/health', async (req, res) => {
           detail.pingStatus = r.status;
           detail.pingError = r.error;
         }
-        if (cName || ping) result[item.id] = { unhealthy, ...detail };
+        if (vmid != null) {
+          const r = guestsReady ? await guestsReady : { error: 'Proxmox is not set up in Settings.' };
+          if ('error' in r) {
+            unhealthy = true;
+            detail.proxmoxError = r.error;
+          } else {
+            const g = r.guests.get(vmid);
+            detail.guestState = g ? g.status : 'missing';
+            if (detail.guestState !== 'running') unhealthy = true;
+          }
+        }
+        if (cName || ping || vmid != null) result[item.id] = { unhealthy, ...detail };
       }),
   );
   json(res, 200, result);

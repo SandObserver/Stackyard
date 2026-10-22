@@ -55,6 +55,9 @@ const SAME_ON_PURPOSE = {
     'color.cyan',
     'color.indigo',
     'color.pink',
+    /* A product name, alone or before an error it did not write. */
+    'app.proxmox',
+    'status.proxmoxFailed',
   ]),
   'es.json': new Set([
     'appearance.sourceUnsplash',
@@ -69,6 +72,9 @@ const SAME_ON_PURPOSE = {
     'home.dock',
     /* "Error" is the Spanish word too. */
     'toast.error',
+    /* A product name, alone or before an error it did not write. */
+    'app.proxmox',
+    'status.proxmoxFailed',
   ]),
   'fr.json': new Set([
     /* Colour and role names French writes the same way. */
@@ -96,14 +102,17 @@ const SAME_ON_PURPOSE = {
     'app.ping',
     'app.badge',
     'app.secret',
+    'general.proxmoxSecret',
     'app.dockPill',
     'app.badgePill',
     'home.dock',
     /* "Saturation" is the French word too. */
     'appearance.saturation',
+    /* A product name, alone or before an error it did not write. */
+    'app.proxmox',
   ]),
-  'fa.json': new Set(['appearance.sourceUnsplash']),
-  'zh-Hans.json': new Set(['app.ping', 'appearance.sourceUnsplash']),
+  'fa.json': new Set(['appearance.sourceUnsplash', 'app.proxmox', 'status.proxmoxFailed']),
+  'zh-Hans.json': new Set(['app.ping', 'appearance.sourceUnsplash', 'app.proxmox']),
 };
 
 const en = Object.fromEntries(flat(read('en.json')));
@@ -269,6 +278,8 @@ const LATIN_OK = [
   'Stackyard',
   'Docker',
   'Unsplash',
+  'Proxmox',
+  'PVEAuditor',
   'GitHub',
   'Plex',
   'Homepage',
@@ -324,6 +335,8 @@ const LATIN_OK = [
   'api',
   'read',
   'user',
+  /* The token ID shape user@realm!name is typed, not read. */
+  'realm',
   'min',
   'max',
   /* The ALLOW_PRIVATE_IPS=true assignment is typed, not read. */

@@ -11,18 +11,18 @@
    The filter and the collapsed folders are in admin-state.js, because the page
    reads and writes them too. */
 
-import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { snapshotItems } from '/js/admin-save-logic.js?v=2de65cd5';
+import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
+import { snapshotItems } from '/js/admin-save-logic.js?v=32cb6aeb';
 import { isShownChild, reorderItems, shownChildren, topLevelRows } from '/js/admin-logic.js?v=b3befae4';
 import { listGroup } from '/js/admin-drag-logic.js?v=1d1d553e';
-import { initDrag, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=e18422ae';
+import { initDrag, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=2f953e63';
 import { DOCK_MAX } from '/js/limits.js?v=31048a24';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { paintIcon, toast } from '/js/admin-shared.js?v=7b3a1dac';
+import { paintIcon, toast } from '/js/admin-shared.js?v=c28805e1';
 import { clr, el, focusFirst, initial, qa, setUserText } from '/js/utils.js?v=705ca896';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { sizeLabel } from '/js/admin-widget-form.js?v=28393455';
+import { sizeLabel } from '/js/admin-widget-form.js?v=6728c3b0';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=b383b7c8';
 import { iconSvg } from '/js/icon-set.js?v=628341d4';
 

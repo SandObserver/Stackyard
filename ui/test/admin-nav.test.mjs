@@ -118,16 +118,16 @@ test('a stored section from an older version does not blank the page', () => {
 
 /* ── A group footer explains the row above it ─────────────────────────────── */
 
-/* The logging tip sat after four rows and described the first, with the Docker
-   health toggle between them. A footer that is not adjacent to its row reads as
+/* The logging tip sat after four rows and described the first, with the health
+   checks toggle between them. A footer that is not adjacent to its row reads as
    describing whatever it follows. */
 test('the logging tip follows the logging row, not the group below it', () => {
   const level = html.indexOf('id="log-level"');
   const tip = html.indexOf('data-i18n="general.loggingTip"');
-  const docker = html.indexOf('id="rl-srv-docker-en"');
-  assert.ok(level > -1 && tip > -1 && docker > -1, 'the Monitoring group has moved');
+  const health = html.indexOf('id="rl-srv-hc-en"');
+  assert.ok(level > -1 && tip > -1 && health > -1, 'the Monitoring group has moved');
   assert.ok(tip > level, 'the tip comes before the row it explains');
-  assert.ok(tip < docker, 'a row it does not describe sits between them');
+  assert.ok(tip < health, 'a row it does not describe sits between them');
 });
 
 /* "Errors shows warnings and errors only" used the option name as a bare

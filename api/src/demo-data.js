@@ -73,6 +73,12 @@ function demoHealth(items) {
   return out;
 }
 
+const demoProxmoxGuests = () => [
+  { vmid: 100, name: 'home-assistant', type: 'qemu', node: 'pve' },
+  { vmid: 101, name: 'docker-host', type: 'qemu', node: 'pve' },
+  { vmid: 200, name: 'pihole', type: 'lxc', node: 'pve' },
+];
+
 const helpers = { wave, round };
 
-module.exports = { metrics, helpers, demoBadges, demoHealth, CURVES };
+module.exports = { metrics, helpers, demoBadges, demoHealth, demoProxmoxGuests, CURVES };

@@ -45,9 +45,8 @@
     "allowedHostsTip": "Mientras no haya contraseña, Stackyard solo responde en direcciones IP, nombres locales como <code>nas</code> o <code>nas.local</code>, y las direcciones de esta lista. Sepáralas con comas.",
     "monitoring": "Monitorización",
     "loggingLevel": "Nivel de registro",
-    "dockerHealth": "Comprobaciones de estado de contenedores Docker",
     "hideHealthy": "Ocultar insignia de estado correcto",
-    "socketUrl": "URL del socket",
+    "socketUrl": "URL del socket de Docker",
     "loggingTip": "Con el nivel en Errores solo se registran advertencias y errores. Los eventos de seguridad siempre se registran.",
     "socketTip": "Usa la URL de un contenedor <strong>proxy de socket</strong>, nunca el socket de Docker. Un nombre como <code>http://socket-proxy:2375</code> solo funciona si este contenedor y el proxy comparten una red de Docker; una dirección IP solo funciona si el proxy publica su puerto fuera de la interfaz de loopback del host.",
     "security": "Seguridad",
@@ -70,7 +69,16 @@
     "showSettingsAria": "Mostrar Ajustes en el panel",
     "dockNeedsShown": "Activa «Mostrar Ajustes en el panel» para añadir Ajustes al Dock.",
     "importJson": "Importar JSON de configuración",
-    "importForeignFiles": "Importar configuración YAML de Homepage o Dashy"
+    "importForeignFiles": "Importar configuración YAML de Homepage o Dashy",
+    "healthChecks": "Comprobaciones de estado",
+    "healthChecksTip": "Muestra una insignia en las apps cuyo contenedor, dirección o invitado de Proxmox no funciona.",
+    "proxmoxUrl": "Dirección de Proxmox",
+    "proxmoxTokenId": "ID del token",
+    "proxmoxSecret": "Secreto",
+    "proxmoxTip": "Para las comprobaciones de Proxmox. Usa un token de API con el rol PVEAuditor. Si la separación de privilegios está activada, asigna el rol al propio token.",
+    "proxmoxConnected_one": "Conectado · {count} invitado",
+    "proxmoxConnected_many": "Conectado · {count} invitados",
+    "proxmoxConnected_other": "Conectado · {count} invitados"
   },
   "appearance": {
     "appTitle": "Título de la aplicación",
@@ -181,7 +189,7 @@
     "dockFull": "Dock lleno ({max}/{max}). Quita primero una aplicación del Dock.",
     "badge": "Insignia",
     "healthCheck": "Comprobación de estado",
-    "healthGlobalOff": "Las comprobaciones de contenedor requieren activar «Comprobaciones de estado de contenedores Docker» en General. Las comprobaciones de URL funcionan sin ello.",
+    "healthGlobalOff": "Las comprobaciones de estado están desactivadas. Actívalas en General.",
     "type": "Tipo",
     "container": "Contenedor",
     "ping": "Ping",
@@ -250,7 +258,12 @@
     "needsApiPathError": "Esta dirección no tiene ruta de API. Introduce la URL de API completa del servicio.",
     "foundValues_one": "{count} valor encontrado",
     "foundValues_many": "{count} de valores encontrados",
-    "foundValues_other": "{count} valores encontrados"
+    "foundValues_other": "{count} valores encontrados",
+    "proxmox": "Proxmox",
+    "guest": "Invitado",
+    "chooseGuest": "Elige un invitado",
+    "noGuests": "No se encontraron VM ni contenedores.",
+    "loadingGuests": "Cargando invitados…"
   },
   "adminError": {
     "sessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión para continuar.",
@@ -290,7 +303,12 @@
     "selfSignedPublic": "El servicio usa un certificado autofirmado. Permitir un certificado autofirmado solo se aplica a direcciones de tu propia red.",
     "tlsExpired": "El certificado del servicio ha caducado.",
     "timedOut": "El servicio no respondió a tiempo.",
-    "demoOutbound": "Las comprobaciones están desactivadas en la demo en vivo."
+    "demoOutbound": "Las comprobaciones están desactivadas en la demo en vivo.",
+    "proxmoxToken": "Revisa el ID del token y el secreto. El ID del token tiene la forma user@realm!name.",
+    "proxmoxRefused": "Proxmox rechazó el token. Revisa el ID del token y el secreto.",
+    "proxmoxPermission": "El token no puede leer esto. Dale el rol PVEAuditor.",
+    "notProxmox": "Algo respondió ahí, pero no es Proxmox.",
+    "proxmoxMissing": "Introduce la dirección de Proxmox, el ID del token y el secreto en Comprobaciones de estado, en General."
   },
   "home": {
     "search": "Buscar",
@@ -370,7 +388,6 @@
     "importUnknownFormat": "{file} no es una configuración de gethomepage ni de Dashy.",
     "importTooLarge": "{file} tiene demasiadas entradas para importarlas.",
     "secretsWithheld": "Vuelve a introducir la credencial de: {items}. No se conservó porque cambió la solicitud a la que pertenece.",
-    "socketUrlMissing": "Introduce la dirección del proxy de socket o desactiva la monitorización de Docker.",
     "socketUrlBad": "Proxy de socket no guardado: {reason}",
     "socketUrlUnverified": "Guardado, pero el proxy de socket no respondió: {reason}",
     "socketHintSharedNetwork": "Ese nombre lo resuelve Docker, que solo responde para contenedores en una red compartida. Ponlos en la misma red o usa una dirección que el proxy publique.",
@@ -431,7 +448,12 @@
     "containerNotFound": "Contenedor no encontrado",
     "containerState": "Contenedor {state}",
     "pingFailed": "Ping fallido: {error}",
-    "pingReturned": "El ping devolvió {status}"
+    "pingReturned": "El ping devolvió {status}",
+    "guestNotFound": "Invitado no encontrado",
+    "guestNoData": "Sin datos de Proxmox",
+    "guestStopped": "Invitado detenido",
+    "guestState": "Invitado {state}",
+    "proxmoxFailed": "Proxmox: {error}"
   },
   "setup": {
     "title": "¿Establecer una contraseña para el panel?",

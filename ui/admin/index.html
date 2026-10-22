@@ -84,14 +84,27 @@
       </div>
       <p class="grp-tip" data-i18n="general.loggingTip">Setting this to Errors logs warnings and errors only. Security events are always logged.</p>
       <div class="grp">
-        <div class="row"><span class="rl" id="rl-srv-docker-en" data-i18n="general.dockerHealth">Docker Container Health Checks</span><label class="tog"><input type="checkbox" id="srv-docker-en" aria-labelledby="rl-srv-docker-en"><div class="tr"></div></label></div>
-        <div class="row-wrap reveal" id="srv-docker-rows"><div class="reveal-in">
+        <div class="row"><span class="rl" id="rl-srv-hc-en" data-i18n="general.healthChecks">Health Checks</span><label class="tog"><input type="checkbox" id="srv-hc-en" aria-labelledby="rl-srv-hc-en"><div class="tr"></div></label></div>
+        <div class="row-wrap reveal" id="srv-hc-rows"><div class="reveal-in">
         <div class="row" id="srv-hide-healthy-row"><span class="rl" id="rl-srv-hide-healthy" data-i18n="general.hideHealthy">Hide Healthy Badge</span><label class="tog"><input type="checkbox" id="srv-hide-healthy" aria-labelledby="rl-srv-hide-healthy"><div class="tr"></div></label></div>
-        <div class="row ie-row" id="ie-socket"><span class="rl" data-i18n="general.socketUrl">Socket URL</span><span class="rv is-ph" id="ie-socket-v">http://socket-proxy:2375</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
         </div></div>
       </div>
-      <div class="reveal" id="socket-hint-wrap"><div class="reveal-in">
+      <div class="reveal" id="hc-off-wrap"><div class="reveal-in">
+      <p class="grp-tip" id="hc-off-hint" data-i18n="general.healthChecksTip">Shows a badge on apps whose container, address or Proxmox guest is down.</p>
+      </div></div>
+      <div class="reveal" id="hc-sources-wrap"><div class="reveal-in">
+      <div class="grp">
+        <div class="row ie-row" id="ie-socket"><span class="rl" data-i18n="general.socketUrl">Docker Socket URL</span><span class="rv is-ph" id="ie-socket-v">http://socket-proxy:2375</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+      </div>
       <p class="grp-tip" id="socket-hint" data-i18n-html="general.socketTip">Use the URL of a <strong>socket proxy</strong> container, never the Docker socket itself. A name such as <code>http://socket-proxy:2375</code> works only when this container and the proxy share a Docker network; an IP address works only when the proxy publishes its port beyond the host's own loopback.</p>
+      <div class="grp">
+        <div class="row ie-row" id="ie-pve-url"><span class="rl" data-i18n="general.proxmoxUrl">Proxmox Address</span><span class="rv is-ph" id="ie-pve-url-v">https://192.168.1.10:8006</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+        <div class="row ie-row" id="ie-pve-token"><span class="rl" data-i18n="general.proxmoxTokenId">Token ID</span><span class="rv is-ph" id="ie-pve-token-v">stackyard@pve!dashboard</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+        <div class="row ie-row" id="ie-pve-secret"><span class="rl" data-i18n="general.proxmoxSecret">Secret</span><span class="rv is-ph" id="ie-pve-secret-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+        <div class="row"><span class="rl" id="rl-srv-pve-tls" data-i18n="app.allowSelfSigned">Allow Self-Signed Certificates</span><label class="tog"><input type="checkbox" id="srv-pve-tls" aria-labelledby="rl-srv-pve-tls"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl"></span><span id="pve-status" class="row-status" role="status"></span><button type="button" class="row-btn" id="pve-test" data-i18n="app.test">Test</button></div>
+      </div>
+      <p class="grp-tip" id="pve-hint" data-i18n="general.proxmoxTip">For Proxmox checks. Use an API token with the PVEAuditor role.</p>
       </div></div>
 
       <div class="grp-hdr" role="heading" aria-level="2" data-i18n="general.security">Security</div>
@@ -254,6 +267,9 @@
 <!-- Hidden inputs mounted into ie-rows by JS -->
 <input id="srv-ip"    type="text"     class="d-none" autocomplete="off">
 <input id="srv-socket" type="text"   class="d-none" autocomplete="off">
+<input id="srv-pve-url" type="url"   class="d-none" autocomplete="off">
+<input id="srv-pve-token" type="text" class="d-none" autocomplete="off">
+<input id="srv-pve-secret" type="password" class="d-none" autocomplete="new-password">
 <input id="srv-hosts" type="text"    class="d-none" autocomplete="off">
 <input id="sec-pw"    type="password" class="d-none" autocomplete="new-password">
 <input id="bg-col"    type="text"    class="d-none" autocomplete="off">
@@ -302,6 +318,6 @@
   </div></div>
 </div>
 
-<script type="module" src="/js/admin.js?v=97387bfd"></script>
+<script type="module" src="/js/admin.js?v=62a4af95"></script>
 </body>
 </html>

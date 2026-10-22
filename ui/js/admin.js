@@ -4,10 +4,10 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=0888b695';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=9082bfd5';
+} from '/js/admin-app-form.js?v=58a115ae';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=8138c219';
 import { recoveryShown } from '/js/config-recovery.js?v=85138697';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=95504ae8';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=1ae9a956';
 import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=b3befae4';
 import {
   afterImport,
@@ -21,7 +21,7 @@ import {
   serialWrites,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=2de65cd5';
+} from '/js/admin-save-logic.js?v=32cb6aeb';
 import {
   loadSettings,
   savedWallpaperUrl,
@@ -29,7 +29,9 @@ import {
   showBgFields,
   showWallpaperFile,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=e1d92487';
+  wireProxmox,
+  applyHealthChecks,
+} from '/js/admin-settings.js?v=c28e308c';
 import {
   apiGet,
   apiPost,
@@ -43,9 +45,9 @@ import {
   setReauthHandler,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=7b3a1dac';
-import { collapsedFolders, filter, state } from '/js/admin-state.js?v=af772a1b';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=28393455';
+} from '/js/admin-shared.js?v=c28805e1';
+import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=6728c3b0';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
@@ -63,7 +65,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=fee60cb7';
+} from '/js/import-foreign.js?v=3582433f';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6b0320bd';
 import {
@@ -696,13 +698,15 @@ async function doSave(orig) {
       };
     } else {
       const isPing = inp('hc-type-ping')?.checked;
+      const isPve = inp('hc-type-pve')?.checked;
       captureActLabels();
       const v = {
         label: inp('f-lbl')?.value?.trim(),
         href: inp('f-href')?.value?.trim(),
         hcEn: inp('hc-en')?.checked,
-        hcCon: isPing ? '' : inp('hc-con')?.value?.trim() || '',
+        hcCon: isPing || isPve ? '' : inp('hc-con')?.value?.trim() || '',
         hcPing: isPing ? inp('hc-ping')?.value?.trim() || '' : '',
+        hcPve: isPve ? Number(state._pveGuest?.getValue()) || 0 : 0,
         skipTlsVerify: inp('f-skip-tls')?.checked || false,
         actEn: inp('act-en')?.checked,
         actUrl: inp('f-burl')?.value?.trim() || '',
@@ -777,6 +781,8 @@ function initNav() {
 function initAllInlineEdits() {
   initInlineEdit('ie-ip', 'srv-ip', { placeholder: '192.168.1.100' });
   initInlineEdit('ie-socket', 'srv-socket', { placeholder: 'http://socket-proxy:2375' });
+  initInlineEdit('ie-pve-url', 'srv-pve-url', { type: 'url', placeholder: 'https://192.168.1.10:8006' });
+  initInlineEdit('ie-pve-token', 'srv-pve-token', { placeholder: 'stackyard@pve!dashboard' });
   initInlineEdit('ie-hosts', 'srv-hosts', { placeholder: () => t('general.allowedHostsNone') });
 
   initInlineEdit('ie-pw', 'sec-pw', {
@@ -805,6 +811,7 @@ function initAllInlineEdits() {
   }
 
   wireUnsplashKey();
+  wireProxmox();
 
   const colInp = document.createElement('input');
   colInp.id = 'bg-col-inp';
@@ -889,15 +896,11 @@ function initSecToggle() {
   en.addEventListener('change', () => apply(en.checked));
 }
 
-function initDockerToggle() {
-  const en = inp('srv-docker-en');
+function initHealthChecksToggle() {
+  const en = inp('srv-hc-en');
   if (!en) return;
-  function apply(on, now = false) {
-    reveal(el('srv-docker-rows'), on, now);
-    reveal(el('socket-hint-wrap'), on, now);
-  }
-  apply(en.checked, true);
-  en.addEventListener('change', () => apply(en.checked));
+  applyHealthChecks(en.checked, true);
+  en.addEventListener('change', () => applyHealthChecks(en.checked));
 }
 
 function initBgType() {
@@ -1406,7 +1409,7 @@ initList({ openModal, openFolderPicker, save: saveOrRevert });
 initNav();
 initAllInlineEdits();
 initSecToggle();
-initDockerToggle();
+initHealthChecksToggle();
 initBgType();
 initBgFit();
 initWallpaperUpload();

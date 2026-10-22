@@ -222,6 +222,27 @@ test('a container running but failing its own healthcheck is reported', () => {
   assert.equal(healthReason({ state: 'running', status: 'Up 3 days (unhealthy)' }), 'Up 3 days (unhealthy)');
 });
 
+test('a stopped Proxmox guest says so', () => {
+  assert.equal(healthReason({ guestState: 'stopped' }), 'Guest stopped');
+});
+
+test('a Proxmox guest that is not listed is not found', () => {
+  assert.equal(healthReason({ guestState: 'missing' }), 'Guest not found');
+});
+
+test('a listed guest Proxmox has no figures for is not called missing', () => {
+  assert.equal(healthReason({ guestState: 'unknown' }), 'No data from Proxmox');
+});
+
+test('an unfamiliar guest state is named as Proxmox sent it', () => {
+  assert.equal(healthReason({ guestState: 'suspended' }), 'Guest suspended');
+});
+
+test('a Proxmox failure carries its reason, and a running guest none', () => {
+  assert.equal(healthReason({ proxmoxError: 'Proxmox refused the token.' }), 'Proxmox: Proxmox refused the token.');
+  assert.equal(healthReason({ guestState: 'running' }), '');
+});
+
 test('a healthy container produces no reason', () => {
   assert.equal(healthReason({ state: 'running', status: 'Up 3 days' }), '');
 });

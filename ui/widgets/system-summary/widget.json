@@ -33,6 +33,10 @@
         {
           "value": "unraid",
           "label": "statProvider.opt.unraid"
+        },
+        {
+          "value": "proxmox",
+          "label": "statProvider.opt.proxmox"
         }
       ]
     },
@@ -123,6 +127,56 @@
       "showIf": {
         "field": "statProvider",
         "equals": "unraid"
+      }
+    },
+    {
+      "key": "proxmoxUrl",
+      "type": "text",
+      "label": "proxmoxUrl.label",
+      "placeholder": "proxmoxUrl.placeholder",
+      "showIf": {
+        "field": "statProvider",
+        "equals": "proxmox"
+      }
+    },
+    {
+      "key": "proxmoxTokenId",
+      "type": "text",
+      "label": "proxmoxTokenId.label",
+      "placeholder": "proxmoxTokenId.placeholder",
+      "showIf": {
+        "field": "statProvider",
+        "equals": "proxmox"
+      }
+    },
+    {
+      "key": "proxmoxSecret",
+      "type": "secret",
+      "label": "proxmoxSecret.label",
+      "showIf": {
+        "field": "statProvider",
+        "equals": "proxmox"
+      }
+    },
+    {
+      "key": "proxmoxSkipTls",
+      "type": "toggle",
+      "label": "proxmoxSkipTls.label",
+      "default": false,
+      "showIf": {
+        "field": "statProvider",
+        "equals": "proxmox"
+      }
+    },
+    {
+      "key": "proxmoxNode",
+      "type": "select",
+      "label": "proxmoxNode.label",
+      "optionsFrom": "nodes",
+      "hint": "network.interface.hint",
+      "showIf": {
+        "field": "statProvider",
+        "equals": "proxmox"
       }
     },
     {
@@ -504,6 +558,75 @@
       "hint": "slots.unraidHint"
     },
     {
+      "key": "slots",
+      "type": "group",
+      "label": "slots.label",
+      "min": 3,
+      "max": 3,
+      "fields": [
+        {
+          "key": "type",
+          "type": "select",
+          "label": "slots.type.label",
+          "default": "cpu",
+          "options": [
+            {
+              "value": "cpu",
+              "label": "slots.type.opt.cpu"
+            },
+            {
+              "value": "ram",
+              "label": "slots.type.opt.ram"
+            },
+            {
+              "value": "disk",
+              "label": "slots.type.opt.disk"
+            },
+            {
+              "value": "iowait",
+              "label": "slots.type.opt.iowait"
+            }
+          ]
+        },
+        {
+          "key": "primary",
+          "type": "text",
+          "label": "slots.storagePrimary.label",
+          "placeholder": "slots.storagePrimary.placeholder",
+          "showIf": {
+            "field": "type",
+            "equals": "disk"
+          },
+          "hint": "slots.storage.hint",
+          "cosmetic": true
+        },
+        {
+          "key": "secondary",
+          "type": "text",
+          "label": "slots.storageSecondary.label",
+          "placeholder": "slots.storageSecondary.placeholder",
+          "optional": true,
+          "showIf": {
+            "field": "type",
+            "equals": "disk"
+          },
+          "cosmetic": true
+        },
+        {
+          "key": "color",
+          "type": "color",
+          "label": "slots.color.label",
+          "default": "#0091FF",
+          "cosmetic": true
+        }
+      ],
+      "showIf": {
+        "field": "statProvider",
+        "equals": "proxmox"
+      },
+      "hint": "slots.proxmoxHint"
+    },
+    {
       "key": "network",
       "type": "object",
       "label": "network.label",
@@ -921,6 +1044,98 @@
       "showIf": {
         "field": "statProvider",
         "equals": "unraid"
+      }
+    },
+    {
+      "key": "network",
+      "type": "object",
+      "label": "network.label",
+      "fields": [
+        {
+          "key": "enabled",
+          "type": "toggle",
+          "label": "network.enabled.label",
+          "default": false,
+          "cosmetic": true
+        },
+        {
+          "key": "mode",
+          "type": "select",
+          "variant": "pills",
+          "label": "network.mode.label",
+          "default": "speed",
+          "showIf": {
+            "field": "enabled",
+            "equals": true
+          },
+          "options": [
+            {
+              "value": "speed",
+              "label": "network.mode.opt.speed"
+            },
+            {
+              "value": "uptime",
+              "label": "network.mode.opt.uptime"
+            }
+          ],
+          "cosmetic": true
+        },
+        {
+          "key": "provider",
+          "type": "select",
+          "variant": "pills",
+          "label": "network.provider.label",
+          "default": "myspeed",
+          "showIf": {
+            "field": "mode",
+            "equals": "speed"
+          },
+          "options": [
+            {
+              "value": "myspeed",
+              "label": "network.provider.opt.myspeed"
+            },
+            {
+              "value": "speedtest-tracker",
+              "label": "network.provider.opt.speedtest-tracker"
+            }
+          ]
+        },
+        {
+          "key": "url",
+          "type": "text",
+          "label": "network.url.label",
+          "placeholder": "network.url.placeholder",
+          "showIf": {
+            "field": "mode",
+            "equals": "speed"
+          }
+        },
+        {
+          "key": "myspeedPass",
+          "type": "secret",
+          "label": "network.myspeedPass.label",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "myspeed"
+          }
+        },
+        {
+          "key": "stToken",
+          "type": "secret",
+          "label": "network.stToken.label",
+          "hint": "network.stToken.hint",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "speedtest-tracker"
+          }
+        }
+      ],
+      "showIf": {
+        "field": "statProvider",
+        "equals": "proxmox"
       }
     }
   ]

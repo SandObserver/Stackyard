@@ -35,7 +35,7 @@ import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=ed7c5565';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=85138697';
 import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=389e0ed0';
-import { setupErrorKey } from '/js/admin-error.js?v=b0881957';
+import { setupErrorKey } from '/js/admin-error.js?v=a60b17ac';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { DOCK_MAX } from '/js/limits.js?v=31048a24';
 import {
@@ -47,7 +47,7 @@ import {
   resetMobileChrome,
   mkFolderGlyph,
 } from '/js/ui.js?v=c66ab377';
-import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=5c72bd4c';
+import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=fa038b56';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=23793736';
 import { observeGlass } from '/js/glass-rim.js?v=3faec233';
@@ -178,7 +178,8 @@ function bupd(id) {
   const hideHealthy = S.server?.hideHealthyBadge !== false;
   const custom = item?.monitoring?.activity?.custom || {};
   const staticBdg = item?.monitoring?.staticBadge || {};
-  const hasHC = !!(item?.monitoring?.healthcheck?.enabled || item?.container || item?.ping);
+  const hasHC =
+    S.server?.healthChecks !== false && !!(item?.monitoring?.healthcheck?.enabled || item?.container || item?.ping);
 
   const act = item?.monitoring?.activity || {};
   const isFolder = item?.type === 'folder';

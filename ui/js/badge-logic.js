@@ -21,6 +21,15 @@ const EN = {
   'status.containerDead': 'Container failed',
   'status.pingFailed': 'Ping failed: {error}',
   'status.pingReturned': 'Ping returned {status}',
+  'status.guestNotFound': 'Guest not found',
+  'status.guestNoData': 'No data from Proxmox',
+  'status.guestStopped': 'Guest stopped',
+  'status.guestState': 'Guest {state}',
+  'status.proxmoxFailed': 'Proxmox: {error}',
+};
+
+const GUEST_STATES = {
+  stopped: 'status.guestStopped',
 };
 
 const CONTAINER_STATES = {
@@ -123,6 +132,17 @@ export function healthReason(detail, translate) {
     const room = Math.max(8, REASON_MAX - around);
     parts.push(_clip(tr('status.pingFailed', { error: _clip(detail.pingError, room) }), REASON_MAX));
   } else if (detail.pingStatus >= 400) parts.push(tr('status.pingReturned', { status: detail.pingStatus }));
+
+  if (detail.proxmoxError) {
+    const around = tr('status.proxmoxFailed', { error: '' }).length;
+    const room = Math.max(8, REASON_MAX - around);
+    parts.push(_clip(tr('status.proxmoxFailed', { error: _clip(detail.proxmoxError, room) }), REASON_MAX));
+  } else if (detail.guestState === 'missing') parts.push(tr('status.guestNotFound'));
+  else if (detail.guestState === 'unknown') parts.push(tr('status.guestNoData'));
+  else if (typeof detail.guestState === 'string' && detail.guestState !== 'running') {
+    const known = GUEST_STATES[detail.guestState];
+    parts.push(_clip(known ? tr(known) : tr('status.guestState', { state: detail.guestState }), REASON_MAX));
+  }
 
   return parts.join(' \u2022 ');
 }
