@@ -44,7 +44,7 @@ test('a row title and its subtitle share a leading edge', async ({ page, request
   await seedPersian(request, [app('latin', 'Backup and Storage')]);
   await page.goto('/admin/');
   await page.locator('.nl[data-sec="dashboard"]').click();
-  const row = page.locator('#al .row').first();
+  const row = page.locator('#al .drow').first();
   await row.waitFor({ state: 'visible' });
   /* Both boxes span the row, so their edges always agree. What moves is where
      the text sits inside them, which is the rect of the content itself. */

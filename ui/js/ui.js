@@ -797,7 +797,10 @@ export function buildMobile() {
   dk.replaceChildren();
   observeGlass(dk, Math.round(38 * sc), 0.6);
   dock.forEach(item => {
-    const a = mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
+    const a =
+      item.system === 'settings'
+        ? mk('a', { href: '/admin/' })
+        : mk('a', { href: item.href, target: '_blank', rel: 'noreferrer noopener' });
     a.className = 'dyn-dock-icon';
     const nm = item.label || item.id;
     a.setAttribute('aria-label', nm);

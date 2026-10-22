@@ -31,8 +31,6 @@
     "chooseFiles": "Choisir des fichiers",
     "configured": "Défini",
     "notSet": "Non défini",
-    "show": "Afficher",
-    "hide": "Masquer",
     "moveUp": "Monter",
     "moveDown": "Descendre",
     "editNamed": "Modifier {name}",
@@ -70,7 +68,7 @@
     "logError": "Erreurs",
     "passwordPh": "Nouveau mot de passe (8 caractères minimum)",
     "showSettingsAria": "Afficher les Réglages sur le tableau de bord",
-    "hideSettingsAria": "Masquer les Réglages sur le tableau de bord",
+    "dockNeedsShown": "Activez « Afficher les Réglages sur le tableau de bord » pour les placer dans le Dock.",
     "importJson": "Importer le JSON de configuration",
     "importForeignFiles": "Importer une configuration YAML Homepage ou Dashy"
   },
@@ -398,7 +396,9 @@
   },
   "list": {
     "empty": "Aucune application pour le moment. Cliquez sur +Ajouter.",
-    "noMatches": "Aucune correspondance."
+    "noMatches": "Aucune correspondance.",
+    "dockTip": "Affiché en bas de chaque page.",
+    "dockEmpty": "Faites glisser une application ici, ou ouvrez-la et activez « Afficher dans le Dock »."
   },
   "import": {
     "confirm_one": "Importer {count} élément ? Ajoutés : {added}, mis à jour : {updated}, supprimés : {deleted}.",

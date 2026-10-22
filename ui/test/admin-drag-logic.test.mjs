@@ -1,6 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { canJoinFolder, dropTargetKind, applyDrop, folderRowZone } from '../js/admin-drag-logic.js';
+import {
+  canJoinFolder,
+  canDropInGroup,
+  dropTargetKind,
+  applyDrop,
+  folderRowZone,
+  listGroup,
+} from '../js/admin-drag-logic.js';
 
 /* a, b, w top level; f is a folder holding c. */
 const model = () => [
@@ -197,4 +204,118 @@ test('a drop on a folder edge reorders instead of joining the folder', () => {
   });
   assert.deepEqual(folder(items, 'f'), ['c']);
   assert.deepEqual(order(items), ['b', 'a', 'f', 'c', 'w']);
+});
+
+/* d1, d2 docked; a, w and folder f (holding c) on the home screen. */
+const dockModel = () => [
+  { id: 'd1', type: 'app', dock: true },
+  { id: 'a', type: 'app' },
+  { id: 'd2', type: 'app', dock: true },
+  { id: 'f', type: 'folder', children: ['c'] },
+  { id: 'c', type: 'app' },
+  { id: 'w', type: 'widget' },
+];
+const dockOrder = items => items.filter(i => i.dock).map(i => i.id);
+const drop = (items, d) =>
+  applyDrop(items, { srcFolderId: null, targetFolderId: null, indent: false, childIdx: null, dockMax: 4, ...d });
+
+test('only a docked app is drawn in the dock group', () => {
+  assert.equal(listGroup({ type: 'app', dock: true }), 'dock');
+  assert.equal(listGroup({ type: 'app' }), 'home');
+  assert.equal(listGroup({ type: 'widget', dock: true }), 'home');
+  assert.equal(listGroup(undefined), 'home');
+});
+
+test('the dock takes apps only, and only while it has room', () => {
+  const items = dockModel();
+  const a = items[1];
+  assert.equal(canDropInGroup(items, a, 'dock', 4), true);
+  assert.equal(canDropInGroup(items, a, 'dock', 2), false);
+  assert.equal(canDropInGroup(items, items[0], 'dock', 2), true);
+  assert.equal(canDropInGroup(items, items[5], 'dock', 4), false);
+  assert.equal(canDropInGroup(items, items[3], 'dock', 4), false);
+  assert.equal(canDropInGroup(items, items[5], 'home', 0), true);
+});
+
+test('dropping an app on a dock row docks it at that place', () => {
+  const items = dockModel();
+  assert.equal(drop(items, { srcId: 'a', targetId: 'd2', dropAbove: true, targetGroup: 'dock' }), true);
+  assert.equal(items.find(i => i.id === 'a').dock, true);
+  assert.deepEqual(dockOrder(items), ['d1', 'a', 'd2']);
+});
+
+test('dropping a docked app on a home row undocks it', () => {
+  const items = dockModel();
+  assert.equal(drop(items, { srcId: 'd1', targetId: 'w', dropAbove: false, targetGroup: 'home' }), true);
+  assert.equal(items.find(i => i.id === 'd1').dock, false);
+  assert.deepEqual(order(items).slice(-1), ['d1']);
+  assert.deepEqual(dockOrder(items), ['d2']);
+});
+
+test('reordering inside the dock keeps every app docked', () => {
+  const items = dockModel();
+  drop(items, { srcId: 'd2', targetId: 'd1', dropAbove: true, targetGroup: 'dock' });
+  assert.deepEqual(dockOrder(items), ['d2', 'd1']);
+});
+
+test('a full dock refuses a new app and leaves the list as it was', () => {
+  const items = dockModel();
+  const before = JSON.stringify(items);
+  assert.equal(drop(items, { srcId: 'a', targetId: 'd1', dropAbove: true, targetGroup: 'dock', dockMax: 2 }), false);
+  assert.equal(JSON.stringify(items), before);
+});
+
+test('a widget or folder dropped on the dock is refused', () => {
+  for (const srcId of ['w', 'f']) {
+    const items = dockModel();
+    const before = JSON.stringify(items);
+    assert.equal(drop(items, { srcId, targetId: 'd1', dropAbove: true, targetGroup: 'dock' }), false);
+    assert.equal(JSON.stringify(items), before);
+  }
+});
+
+test('the empty dock target docks the app at the end of the dock', () => {
+  const items = dockModel();
+  assert.equal(drop(items, { srcId: 'a', targetId: null, targetGroup: 'dock' }), true);
+  assert.deepEqual(dockOrder(items), ['d1', 'd2', 'a']);
+});
+
+test('an app dragged from a folder into the dock leaves the folder', () => {
+  const items = dockModel();
+  assert.equal(
+    drop(items, { srcId: 'c', srcFolderId: 'f', targetId: 'd1', dropAbove: false, targetGroup: 'dock' }),
+    true,
+  );
+  assert.deepEqual(folder(items, 'f'), []);
+  assert.deepEqual(dockOrder(items), ['d1', 'c', 'd2']);
+});
+
+test('a docked app dropped into a folder undocks and joins it', () => {
+  const items = dockModel();
+  assert.equal(
+    drop(items, { srcId: 'd1', targetId: 'f', targetIsFolder: true, dropAbove: false, targetGroup: 'home' }),
+    true,
+  );
+  assert.equal(items.find(i => i.id === 'd1').dock, false);
+  assert.deepEqual(folder(items, 'f'), ['c', 'd1']);
+});
+
+test('a docked app still listed in a folder leaves it when dropped into another folder', () => {
+  const twoFolders = () => [
+    { id: 'x', type: 'app', dock: true },
+    { id: 'f1', type: 'folder', children: ['x'] },
+    { id: 'f2', type: 'folder', children: ['y'] },
+    { id: 'y', type: 'app' },
+  ];
+  let items = twoFolders();
+  assert.equal(drop(items, { srcId: 'x', targetId: 'f2', targetIsFolder: true, targetGroup: 'home' }), true);
+  assert.deepEqual(folder(items, 'f1'), []);
+  assert.deepEqual(folder(items, 'f2'), ['y', 'x']);
+  items = twoFolders();
+  assert.equal(
+    drop(items, { srcId: 'x', targetId: 'y', targetFolderId: 'f2', indent: true, childIdx: 0, targetGroup: 'home' }),
+    true,
+  );
+  assert.deepEqual(folder(items, 'f1'), []);
+  assert.deepEqual(folder(items, 'f2'), ['x', 'y']);
 });

@@ -31,8 +31,6 @@
     "chooseFiles": "选择文件",
     "configured": "已设置",
     "notSet": "未设置",
-    "show": "显示",
-    "hide": "隐藏",
     "moveUp": "上移",
     "moveDown": "下移",
     "editNamed": "编辑{name}",
@@ -70,7 +68,7 @@
     "logError": "错误",
     "passwordPh": "新密码（至少 8 个字符）",
     "showSettingsAria": "在仪表板上显示设置",
-    "hideSettingsAria": "在仪表板上隐藏设置",
+    "dockNeedsShown": "开启“在仪表板上显示设置”后，才能将其放入程序坞。",
     "importJson": "导入配置 JSON",
     "importForeignFiles": "导入 Homepage 或 Dashy 的 YAML 配置"
   },
@@ -386,7 +384,9 @@
   },
   "list": {
     "empty": "还没有应用。点击“+ 添加”。",
-    "noMatches": "没有匹配项。"
+    "noMatches": "没有匹配项。",
+    "dockTip": "显示在每页底部。",
+    "dockEmpty": "将应用拖到这里，或打开应用并开启“在程序坞中显示”。"
   },
   "import": {
     "confirm_other": "导入 {count} 个项目？新增 {added} 个，更新 {updated} 个，删除 {deleted} 个。",

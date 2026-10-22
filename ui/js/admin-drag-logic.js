@@ -20,9 +20,31 @@ export function folderRowZone(y, rect) {
   return 'into';
 }
 
+/** The list group a top-level row is drawn in.
+    @param {any} item @returns {'dock' | 'home'} */
+export function listGroup(item) {
+  return item?.type === 'app' && item.dock ? 'dock' : 'home';
+}
+
+/** Whether the dragged item may land in a group. Only apps join the dock, and
+    only while it has room.
+    @param {any[]} items @param {any} src @param {'dock' | 'home'} group @param {number} max
+    @returns {boolean} */
+export function canDropInGroup(items, src, group, max) {
+  if (group !== 'dock') return true;
+  if (src?.type !== 'app') return false;
+  if (src.dock) return true;
+  return items.filter(i => listGroup(i) === 'dock').length < max;
+}
+
 export function dropTargetKind({ srcType, targetIsFolder = false, indent = false }) {
   if (canJoinFolder(srcType) && (targetIsFolder || indent)) return 'into-folder';
   return 'reorder';
+}
+
+/* An app belongs to one folder, or the dashboard draws it twice. */
+function leaveFolders(items, id) {
+  for (const f of items) if (f.type === 'folder') f.children = (f.children || []).filter(c => c !== id);
 }
 
 /* Applies a drag move in place. `d` describes the dragged row and the target:
@@ -31,10 +53,14 @@ export function dropTargetKind({ srcType, targetIsFolder = false, indent = false
      targetIsFolder, indent   the target is a folder, or sits inside one
      childIdx                 the target's index within its folder
      dropAbove                insert before rather than after (reorder only)
-   The child object stays in `items` throughout. Folders reference it by id. */
+     targetGroup, dockMax     the group dropped in, and the dock's size
+   The child object stays in `items` throughout. Folders reference it by id.
+   With no targetId the item goes to the end of the group. */
 export function applyDrop(items, d) {
   const src = items.find(i => i.id === d.srcId);
   if (!src || d.srcId === d.targetId) return false;
+  if (d.targetGroup && !canDropInGroup(items, src, d.targetGroup, d.dockMax ?? Infinity)) return false;
+  if (d.targetGroup && src.type === 'app') src.dock = d.targetGroup === 'dock';
 
   if (d.srcFolderId) {
     const sf = items.find(i => i.id === d.srcFolderId);
@@ -52,22 +78,18 @@ export function applyDrop(items, d) {
       items.push(src);
       return true;
     }
-    tf.children = (tf.children || []).filter(id => id !== src.id);
+    leaveFolders(items, src.id);
     if (!items.find(i => i.id === src.id)) items.push(src);
     tf.children.splice(d.childIdx, 0, src.id);
   } else if (kind === 'into-folder') {
     if (!items.find(i => i.id === src.id)) items.push(src);
     const tf = items.find(i => i.id === d.targetId);
     if (tf) {
-      tf.children = (tf.children || []).filter(id => id !== src.id);
+      leaveFolders(items, src.id);
       tf.children.push(src.id);
     }
   } else {
-    items
-      .filter(f => f.type === 'folder')
-      .forEach(f => {
-        f.children = (f.children || []).filter(id => id !== src.id);
-      });
+    leaveFolders(items, src.id);
     if (!items.find(i => i.id === src.id)) items.push(src);
     const si2 = items.indexOf(src);
     if (si2 >= 0) items.splice(si2, 1);

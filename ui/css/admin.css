@@ -309,6 +309,10 @@ html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable}
 .row.drow.drag-above{box-shadow:0 -2px 0 0 var(--ac)}
 .row.drow.drag-below{box-shadow:0 2px 0 0 var(--ac)}
 .row.drow.drag-into{background:var(--row-drop);box-shadow:inset 0 0 0 2px var(--gn)}
+.al-hdr{align-items:baseline}
+.al-count{padding:26px 16px 6px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);font-variant-numeric:tabular-nums}
+.row.al-dock-empty{min-height:68px;justify-content:center;text-align:center;padding-block:10px;color:var(--dm);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
+.row.al-dock-empty.drag-into{background:var(--row-drop);box-shadow:inset 0 0 0 2px var(--gn);color:var(--tx)}
 /* touch-action:none, or a drag starting on the handle scrolls the list instead. */
 .rord{display:flex;align-items:center;justify-content:center;color:var(--dm);font-size:var(--fs-callout);line-height:var(--lh-callout);letter-spacing:var(--tr-callout);touch-action:none}
 .rico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--on-tint);flex-shrink:0;overflow:hidden;box-shadow:inset 0 0 0 1px var(--icon-ring)}

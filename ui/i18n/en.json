@@ -31,8 +31,6 @@
     "chooseFiles": "Choose files",
     "configured": "Configured",
     "notSet": "Not set",
-    "show": "Show",
-    "hide": "Hide",
     "moveUp": "Move up",
     "moveDown": "Move down",
     "editNamed": "Edit {name}",
@@ -70,7 +68,7 @@
     "logError": "Errors",
     "passwordPh": "New password (min 8 chars)",
     "showSettingsAria": "Show Settings on dashboard",
-    "hideSettingsAria": "Hide Settings on dashboard",
+    "dockNeedsShown": "Turn on Show Settings on dashboard to put it in the dock.",
     "importJson": "Import configuration JSON",
     "importForeignFiles": "Import Homepage or Dashy YAML config"
   },
@@ -392,7 +390,9 @@
   },
   "list": {
     "empty": "No apps yet. Click +Add.",
-    "noMatches": "No matches."
+    "noMatches": "No matches.",
+    "dockTip": "Shown at the bottom of every page.",
+    "dockEmpty": "Drag an app here, or open it and turn on Show in Dock."
   },
   "import": {
     "confirm_one": "Import {count} item? {added} added, {updated} updated, {deleted} deleted.",
