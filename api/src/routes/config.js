@@ -14,6 +14,7 @@ const backoff = require('../poll-backoff');
 const { stripDisabledCredentials } = require('../auth');
 const { pruneWallpapers } = require('./wallpaper');
 const { normalizeHostList } = require('../../../ui/js/host-names.js');
+const { scrubProxmox, preserveProxmox } = require('../proxmox');
 
 /* Real configs nest under 10 levels. Far deeper input is written to disk and
    then breaks every read of the config. */
@@ -29,6 +30,7 @@ function scrubSecrets(cfg) {
   const safe = structuredClone(cfg);
   scrubAllSecrets(safe);
   if (safe.settings?.background?.apiKey) delete safe.settings.background.apiKey;
+  scrubProxmox(safe.settings?.server);
   if (safe.settings?.auth) {
     delete safe.settings.auth.secret;
     delete safe.settings.auth.passwordHash;
@@ -204,6 +206,7 @@ on('POST', '/api/config', async (req, res) => {
       if (!list) return json(res, 400, { error: 'allowedHosts must be a list of host names', kind: KIND.INVALID });
       server.allowedHosts = list;
     }
+    const proxmoxDropped = preserveProxmox(server, existing.settings?.server, redirected);
     data.settings.server = server;
     /* Migrate first. A migration that renames a widget type after the refill
        stores secrets the new manifest does not scrub. */
@@ -211,6 +214,7 @@ on('POST', '/api/config', async (req, res) => {
     const { withheld } = preserveAllSecrets(data, existing);
     if (redirected && existing.settings?.background?.apiKey && !data.settings?.background?.apiKey)
       withheld.push({ id: 'background', label: 'Unsplash' });
+    if (proxmoxDropped) withheld.push({ id: 'proxmox', label: 'Proxmox' });
     ensureSystemItems(data);
     saveConfig(data);
     /* Only now: until the config points at it, the file being replaced is still

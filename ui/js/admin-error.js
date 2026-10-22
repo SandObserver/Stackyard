@@ -47,6 +47,11 @@ const BY_CODE = Object.freeze({
   'network.tls-expired': 'adminError.tlsExpired',
   'timeout.no-answer': 'adminError.timedOut',
   'blocked.demo': 'adminError.demoOutbound',
+  'invalid.proxmox-token': 'adminError.proxmoxToken',
+  'invalid.proxmox-missing': 'adminError.proxmoxMissing',
+  'upstream.proxmox-refused': 'adminError.proxmoxRefused',
+  'upstream.proxmox-permission': 'adminError.proxmoxPermission',
+  'upstream.not-proxmox': 'adminError.notProxmox',
 });
 
 const BY_KIND = Object.freeze({

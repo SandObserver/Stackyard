@@ -45,9 +45,8 @@
     "allowedHostsTip": "在未设置密码时，Stackyard 只在 IP 地址、<code>nas</code> 或 <code>nas.local</code> 这样的本地名称以及此处列出的地址上响应。多个地址用逗号分隔。",
     "monitoring": "监控",
     "loggingLevel": "日志级别",
-    "dockerHealth": "Docker 容器健康检查",
     "hideHealthy": "隐藏健康徽章",
-    "socketUrl": "套接字代理地址",
+    "socketUrl": "Docker 套接字代理地址",
     "loggingTip": "设为“错误”时只记录警告和错误。安全事件始终记录。",
     "socketTip": "请使用<strong>套接字代理</strong>容器的地址，而不是 Docker 套接字本身。像 <code>http://socket-proxy:2375</code> 这样的名称只有在本容器与代理位于同一个 Docker 网络时才有效；IP 地址只有在代理将端口发布到主机回环之外时才有效。",
     "security": "安全",
@@ -70,7 +69,14 @@
     "showSettingsAria": "在仪表板上显示设置",
     "dockNeedsShown": "开启“在仪表板上显示设置”后，才能将其放入程序坞。",
     "importJson": "导入配置 JSON",
-    "importForeignFiles": "导入 Homepage 或 Dashy 的 YAML 配置"
+    "importForeignFiles": "导入 Homepage 或 Dashy 的 YAML 配置",
+    "healthChecks": "健康检查",
+    "healthChecksTip": "当应用的容器、地址或 Proxmox 虚拟机停止运行时，在其上显示徽章。",
+    "proxmoxUrl": "Proxmox 地址",
+    "proxmoxTokenId": "令牌 ID",
+    "proxmoxSecret": "密钥",
+    "proxmoxTip": "用于 Proxmox 检查。请使用具有 PVEAuditor 角色的 API 令牌。如果开启了特权分离，请将该角色直接授予令牌。",
+    "proxmoxConnected_other": "已连接 · {count} 台虚拟机"
   },
   "appearance": {
     "appTitle": "应用标题",
@@ -177,7 +183,7 @@
     "dockFull": "程序坞已满（{max}/{max}）。请先从程序坞移除一个应用。",
     "badge": "徽章",
     "healthCheck": "健康检查",
-    "healthGlobalOff": "容器检查需要在“通用”中开启“Docker 容器健康检查”。网址检查无需开启即可使用。",
+    "healthGlobalOff": "健康检查已关闭。请在“通用”中开启。",
     "type": "类型",
     "container": "容器",
     "ping": "Ping",
@@ -240,7 +246,12 @@
     "connectedNoValues": "已连接，未找到数值",
     "needsApiPath": "已连接，但该地址没有 API 路径。请输入服务的完整 API 地址。",
     "needsApiPathError": "该地址没有 API 路径。请输入服务的完整 API 地址。",
-    "foundValues_other": "找到 {count} 个数值"
+    "foundValues_other": "找到 {count} 个数值",
+    "proxmox": "Proxmox",
+    "guest": "虚拟机",
+    "chooseGuest": "选择虚拟机",
+    "noGuests": "未找到虚拟机或容器。",
+    "loadingGuests": "正在加载虚拟机…"
   },
   "adminError": {
     "sessionExpired": "会话已过期，请重新登录。",
@@ -280,7 +291,12 @@
     "selfSignedPublic": "该服务使用自签名证书。允许自签名证书仅适用于你自己网络中的地址。",
     "tlsExpired": "该服务的证书已过期。",
     "timedOut": "服务未及时响应。",
-    "demoOutbound": "在线演示中已关闭检查功能。"
+    "demoOutbound": "在线演示中已关闭检查功能。",
+    "proxmoxToken": "请检查令牌 ID 和密钥。令牌 ID 的格式为 user@realm!name。",
+    "proxmoxRefused": "Proxmox 拒绝了该令牌。请检查令牌 ID 和密钥。",
+    "proxmoxPermission": "该令牌无权读取此内容。请为其分配 PVEAuditor 角色。",
+    "notProxmox": "该地址有响应，但不是 Proxmox。",
+    "proxmoxMissing": "请在“通用”的健康检查中填写 Proxmox 地址、令牌 ID 和密钥。"
   },
   "home": {
     "search": "搜索",
@@ -358,7 +374,6 @@
     "importUnknownFormat": "{file} 不是 gethomepage 或 Dashy 配置。",
     "importTooLarge": "{file} 的条目太多，无法导入。",
     "secretsWithheld": "请重新输入以下项的凭据：{items}。未保留凭据，因为它所属的请求已更改。",
-    "socketUrlMissing": "请输入套接字代理地址，或关闭 Docker 监控。",
     "socketUrlBad": "未保存套接字代理：{reason}",
     "socketUrlUnverified": "已保存，但套接字代理没有响应：{reason}",
     "socketHintSharedNetwork": "该名称由 Docker 解析，且只对处于同一网络的容器生效。请将两者放入同一网络，或改用代理已发布的地址。",
@@ -413,7 +428,12 @@
     "containerNotFound": "未找到容器",
     "containerState": "容器 {state}",
     "pingFailed": "Ping 失败：{error}",
-    "pingReturned": "Ping 返回 {status}"
+    "pingReturned": "Ping 返回 {status}",
+    "guestNotFound": "未找到虚拟机",
+    "guestNoData": "未收到 Proxmox 数据",
+    "guestStopped": "虚拟机已停止",
+    "guestState": "虚拟机 {state}",
+    "proxmoxFailed": "Proxmox：{error}"
   },
   "setup": {
     "title": "要设置仪表板密码吗？",

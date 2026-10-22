@@ -45,9 +45,8 @@
     "allowedHostsTip": "Tant qu’aucun mot de passe n’est défini, Stackyard ne répond qu’aux adresses IP, aux noms locaux comme <code>nas</code> ou <code>nas.local</code>, et aux adresses listées ici. Séparez-les par des virgules.",
     "monitoring": "Surveillance",
     "loggingLevel": "Niveau de journalisation",
-    "dockerHealth": "Vérifications de l’état des conteneurs Docker",
     "hideHealthy": "Masquer le badge d’état sain",
-    "socketUrl": "URL du socket",
+    "socketUrl": "URL du socket Docker",
     "loggingTip": "Avec le niveau Erreurs, seuls les avertissements et les erreurs sont journalisés. Les événements de sécurité le sont toujours.",
     "socketTip": "Utilisez l’URL d’un conteneur <strong>proxy de socket</strong>, jamais le socket Docker lui-même. Un nom tel que <code>http://socket-proxy:2375</code> ne fonctionne que si ce conteneur et le proxy partagent un réseau Docker ; une adresse IP ne fonctionne que si le proxy publie son port au-delà de la boucle locale de l’hôte.",
     "security": "Sécurité",
@@ -70,7 +69,16 @@
     "showSettingsAria": "Afficher les Réglages sur le tableau de bord",
     "dockNeedsShown": "Activez « Afficher les Réglages sur le tableau de bord » pour les placer dans le Dock.",
     "importJson": "Importer le JSON de configuration",
-    "importForeignFiles": "Importer une configuration YAML Homepage ou Dashy"
+    "importForeignFiles": "Importer une configuration YAML Homepage ou Dashy",
+    "healthChecks": "Vérifications de l’état",
+    "healthChecksTip": "Affiche un badge sur les apps dont le conteneur, l’adresse ou l’invité Proxmox ne répond pas.",
+    "proxmoxUrl": "Adresse Proxmox",
+    "proxmoxTokenId": "ID du jeton",
+    "proxmoxSecret": "Secret",
+    "proxmoxTip": "Pour les vérifications Proxmox. Utilisez un jeton d’API avec le rôle PVEAuditor. Si la séparation des privilèges est activée, attribuez le rôle au jeton lui-même.",
+    "proxmoxConnected_one": "Connecté · {count} invité",
+    "proxmoxConnected_many": "Connecté · {count} invités",
+    "proxmoxConnected_other": "Connecté · {count} invités"
   },
   "appearance": {
     "appTitle": "Titre de l’application",
@@ -181,7 +189,7 @@
     "dockFull": "Dock plein ({max}/{max}). Retirez d’abord une application.",
     "badge": "Badge",
     "healthCheck": "Vérification de l’état",
-    "healthGlobalOff": "Les vérifications de conteneur nécessitent d’activer « Vérifications de l’état des conteneurs Docker » dans Général. Les vérifications d’URL fonctionnent sans.",
+    "healthGlobalOff": "Les vérifications de l’état sont désactivées. Activez-les dans Général.",
     "type": "Type",
     "container": "Conteneur",
     "ping": "Ping",
@@ -250,7 +258,12 @@
     "needsApiPathError": "Cette adresse n’a pas de chemin d’API. Saisissez l’URL d’API complète du service.",
     "foundValues_one": "{count} valeur trouvée",
     "foundValues_many": "{count} de valeurs trouvées",
-    "foundValues_other": "{count} valeurs trouvées"
+    "foundValues_other": "{count} valeurs trouvées",
+    "proxmox": "Proxmox",
+    "guest": "Invité",
+    "chooseGuest": "Choisir un invité",
+    "noGuests": "Aucune VM ni aucun conteneur trouvé.",
+    "loadingGuests": "Chargement des invités…"
   },
   "adminError": {
     "sessionExpired": "Votre session a expiré. Reconnectez-vous pour continuer.",
@@ -290,7 +303,12 @@
     "selfSignedPublic": "Le service utilise un certificat auto-signé. Autoriser un certificat auto-signé ne vaut que pour les adresses de votre propre réseau.",
     "tlsExpired": "Le certificat du service a expiré.",
     "timedOut": "Le service n’a pas répondu à temps.",
-    "demoOutbound": "Les vérifications sont désactivées dans la démo en ligne."
+    "demoOutbound": "Les vérifications sont désactivées dans la démo en ligne.",
+    "proxmoxToken": "Vérifiez l’ID du jeton et le secret. L’ID du jeton a la forme user@realm!name.",
+    "proxmoxRefused": "Proxmox a refusé le jeton. Vérifiez l’ID du jeton et le secret.",
+    "proxmoxPermission": "Le jeton ne peut pas lire ceci. Donnez-lui le rôle PVEAuditor.",
+    "notProxmox": "Quelque chose a répondu, mais ce n’est pas Proxmox.",
+    "proxmoxMissing": "Saisissez l’adresse Proxmox, l’ID du jeton et le secret dans Vérifications de l’état, sous Général."
   },
   "home": {
     "search": "Rechercher",
@@ -370,7 +388,6 @@
     "importUnknownFormat": "{file} n’est pas une configuration gethomepage ou Dashy.",
     "importTooLarge": "{file} contient trop d’entrées pour être importé.",
     "secretsWithheld": "Saisissez à nouveau les identifiants pour : {items}. Ils n’ont pas été conservés, car la requête associée a changé.",
-    "socketUrlMissing": "Saisissez l’adresse du proxy de socket ou désactivez la surveillance Docker.",
     "socketUrlBad": "Proxy de socket non enregistré : {reason}",
     "socketUrlUnverified": "Enregistré, mais le proxy de socket n’a pas répondu : {reason}",
     "socketHintSharedNetwork": "Ce nom est résolu par Docker, qui ne répond que pour des conteneurs partageant un réseau. Placez les deux sur le même réseau, ou utilisez une adresse publiée par le proxy.",
@@ -431,7 +448,12 @@
     "containerNotFound": "Conteneur introuvable",
     "containerState": "Conteneur {state}",
     "pingFailed": "Échec du ping : {error}",
-    "pingReturned": "Le ping a renvoyé {status}"
+    "pingReturned": "Le ping a renvoyé {status}",
+    "guestNotFound": "Invité introuvable",
+    "guestNoData": "Aucune donnée de Proxmox",
+    "guestStopped": "Invité arrêté",
+    "guestState": "Invité {state}",
+    "proxmoxFailed": "Proxmox : {error}"
   },
   "setup": {
     "title": "Définir un mot de passe pour le tableau de bord ?",

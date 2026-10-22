@@ -222,6 +222,40 @@ test('a container running but failing its own healthcheck is reported', () => {
   assert.equal(healthReason({ state: 'running', status: 'Up 3 days (unhealthy)' }), 'Up 3 days (unhealthy)');
 });
 
+test('a stopped Proxmox guest says so', () => {
+  assert.equal(healthReason({ guestState: 'stopped' }), 'Guest stopped');
+});
+
+test('a Proxmox guest that is not listed is not found', () => {
+  assert.equal(healthReason({ guestState: 'missing' }), 'Guest not found');
+});
+
+test('a listed guest Proxmox has no figures for is not called missing', () => {
+  assert.equal(healthReason({ guestState: 'unknown' }), 'No data from Proxmox');
+});
+
+test('an unfamiliar guest state is named as Proxmox sent it', () => {
+  assert.equal(healthReason({ guestState: 'suspended' }), 'Guest suspended');
+});
+
+test('a Proxmox failure carries its reason, and a running guest none', () => {
+  assert.equal(healthReason({ proxmoxError: 'connect ECONNREFUSED' }), 'Proxmox: connect ECONNREFUSED');
+  assert.equal(healthReason({ guestState: 'running' }), '');
+});
+
+test("a Proxmox failure with a code is said in the reader's language", () => {
+  const tr = (k, v) => `[${k}${v ? ` ${JSON.stringify(v)}` : ''}]`;
+  const refused = { proxmoxError: 'Proxmox refused the token.', proxmoxCode: 'upstream.proxmox-refused' };
+  assert.equal(healthReason(refused, tr), '[adminError.proxmoxRefused]');
+  assert.equal(healthReason(refused), 'Proxmox refused the token. Check the token ID and secret.');
+  const missing = { proxmoxError: 'Proxmox is not set up in Settings.', proxmoxCode: 'invalid.proxmox-missing' };
+  assert.equal(healthReason(missing, tr), '[adminError.proxmoxMissing]');
+  const late = { proxmoxError: 'Proxmox did not answer in time.', proxmoxCode: 'timeout.no-answer' };
+  assert.equal(healthReason(late), 'Proxmox: The service did not answer in time.');
+  const status = { proxmoxError: 'Proxmox answered with HTTP 500.', proxmoxCode: 'upstream.status' };
+  assert.equal(healthReason(status), 'Proxmox: Proxmox answered with HTTP 500.');
+});
+
 test('a healthy container produces no reason', () => {
   assert.equal(healthReason({ state: 'running', status: 'Up 3 days' }), '');
 });

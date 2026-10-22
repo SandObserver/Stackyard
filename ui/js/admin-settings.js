@@ -1,5 +1,5 @@
-import { toast, apiGet, apiPost, errorText, reveal, swapContent, wireInlineEdit } from '/js/admin-shared.js?v=7b3a1dac';
-import { socketProbeAdvice } from '/js/admin-error.js?v=b0881957';
+import { toast, apiGet, apiPost, errorText, reveal, swapContent, wireInlineEdit } from '/js/admin-shared.js?v=c28805e1';
+import { socketProbeAdvice } from '/js/admin-error.js?v=a60b17ac';
 import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import {
@@ -13,8 +13,8 @@ import {
 import { confirmText, promptModal } from '/js/modal.js?v=6b0320bd';
 import { el, inp, setUserText } from '/js/utils.js?v=705ca896';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { serialWrites } from '/js/admin-save-logic.js?v=2de65cd5';
-import { renderColorControl } from '/js/admin-color-control.js?v=4cfe9a7b';
+import { serialWrites } from '/js/admin-save-logic.js?v=32cb6aeb';
+import { renderColorControl } from '/js/admin-color-control.js?v=2ba67671';
 import { BACKDROP } from '/js/background.js?v=25428bf2';
 import {
   ALLOWED_HOSTS_MAX,
@@ -34,6 +34,7 @@ let _srvTrack = null;
 let _bgTrack = null;
 let _savedWallpaperUrl = '';
 let _unsplashKeySet = false;
+let _pveSecretSet = false;
 
 /** The wallpaper link the server holds, for undoing a link that failed. */
 export const savedWallpaperUrl = () => _savedWallpaperUrl;
@@ -55,9 +56,13 @@ const _shown = id => {
 const readServerForm = () =>
   JSON.stringify([
     _val('srv-ip'),
-    _val('srv-docker-en'),
+    _val('srv-hc-en'),
     _val('srv-socket'),
     _val('srv-hide-healthy'),
+    _val('srv-pve-url'),
+    _val('srv-pve-token'),
+    _val('srv-pve-secret'),
+    _val('srv-pve-tls'),
     _val('srv-hosts'),
     _val('log-level'),
     _val('lang-sel'),
@@ -241,6 +246,9 @@ export function loadSettings(c) {
   };
   _sv('ie-ip-v', s.server?.hostIp, '192.168.1.100');
   _sv('ie-socket-v', s.server?.socketProxyUrl, 'http://socket-proxy:2375');
+  _sv('ie-pve-url-v', s.server?.proxmox?.url, 'https://192.168.1.10:8006');
+  _sv('ie-pve-token-v', s.server?.proxmox?.tokenId, 'stackyard@pve!dashboard');
+  showPveSecretState(!!s.server?.proxmox?.secretSet);
   _sv('ie-hosts-v', (s.server?.allowedHosts || []).join(', '), t('general.allowedHostsNone'));
   _sv('ie-pw-v', '', t('common.notSet')); /* set below after auth check */
   const _si = (id, v) => {
@@ -249,6 +257,10 @@ export function loadSettings(c) {
   };
   _si('srv-ip', s.server?.hostIp || '');
   _si('srv-socket', s.server?.socketProxyUrl || '');
+  _si('srv-pve-url', s.server?.proxmox?.url || '');
+  _si('srv-pve-token', s.server?.proxmox?.tokenId || '');
+  const pveTls = inp('srv-pve-tls');
+  if (pveTls) pveTls.checked = s.server?.proxmox?.skipTlsVerify === true;
   _si('srv-hosts', (s.server?.allowedHosts || []).join(', '));
   _sv('ie-bgcol-v', s.background?.collection, t('appearance.collectionId'));
   _si('bg-col-inp', s.background?.collection || '');
@@ -260,19 +272,12 @@ export function loadSettings(c) {
 
   const ipEl = inp('srv-ip');
   if (ipEl) ipEl.value = s.server?.hostIp || '';
-  const dockerEnEl = inp('srv-docker-en');
-  const dockerSubEl = el('srv-docker-sub');
+  const hcEnEl = inp('srv-hc-en');
   const socketEl = inp('srv-socket');
   const hideHealthyEl = inp('srv-hide-healthy');
-  if (dockerEnEl) {
-    dockerEnEl.checked = !!s.server?.socketProxyUrl;
-    const applyDocker = (v, now = false) => {
-      if (dockerSubEl) dockerSubEl.classList.toggle('open', v);
-      reveal(el('srv-docker-rows'), v, now);
-      reveal(el('socket-hint-wrap'), v, now);
-    };
-    applyDocker(dockerEnEl.checked, true);
-    dockerEnEl.addEventListener('change', () => applyDocker(dockerEnEl.checked));
+  if (hcEnEl) {
+    hcEnEl.checked = s.server?.healthChecks !== false;
+    applyHealthChecks(hcEnEl.checked, true);
   }
   if (hideHealthyEl) hideHealthyEl.checked = s.server?.hideHealthyBadge !== false;
   if (socketEl) socketEl.value = s.server?.socketProxyUrl || '';
@@ -347,6 +352,68 @@ export function showWallpaperFile(url) {
     node.textContent = t('appearance.noImage');
     node.classList.add('is-ph');
   }
+}
+
+export function applyHealthChecks(on, now = false) {
+  reveal(el('srv-hc-rows'), on, now);
+  reveal(el('hc-sources-wrap'), on, now);
+  reveal(el('hc-off-wrap'), !on, now);
+}
+
+const readProxmoxForm = () => ({
+  url: inp('srv-pve-url')?.value?.trim() || '',
+  tokenId: inp('srv-pve-token')?.value?.trim() || '',
+  secret: inp('srv-pve-secret')?.value?.trim() || undefined,
+  skipTlsVerify: inp('srv-pve-tls')?.checked === true,
+});
+
+const pveSecretLabel = () => t(_pveSecretSet ? 'common.configured' : 'common.notSet');
+
+function showPveSecretState(set) {
+  _pveSecretSet = set;
+  const vEl = el('ie-pve-secret-v');
+  if (vEl) {
+    vEl.textContent = pveSecretLabel();
+    vEl.classList.toggle('is-ph', !set);
+  }
+}
+
+function clearPveSecretInput() {
+  const node = inp('srv-pve-secret');
+  if (node) node.value = '';
+  const vEl = el('ie-pve-secret-v');
+  if (vEl) vEl.textContent = pveSecretLabel();
+}
+
+/** The secret opens empty. A blank secret keeps the stored one. */
+export function wireProxmox() {
+  const row = el('ie-pve-secret');
+  const secretInp = inp('srv-pve-secret');
+  if (row && secretInp) {
+    wireInlineEdit(row, secretInp, {
+      type: 'password',
+      placeholder: () => t(_pveSecretSet ? 'widgetCfg.replaceSecret' : 'common.notSet'),
+      fill: false,
+      render: (valEl, v) => {
+        valEl.textContent = v ? t('widgetCfg.newValueSet') : pveSecretLabel();
+      },
+    });
+  }
+  const btn = /** @type {HTMLButtonElement | null} */ (el('pve-test'));
+  const st = el('pve-status');
+  btn?.addEventListener('click', async () => {
+    if (!st) return;
+    btn.disabled = true;
+    st.textContent = t('app.testing');
+    try {
+      const r = await apiPost('/api/proxmox/test', readProxmoxForm());
+      st.textContent = r.ok ? '✓ ' + t('general.proxmoxConnected', { count: r.guests }) : '✗ ' + errorText(r);
+    } catch (e) {
+      st.textContent = '✗ ' + errorText(e);
+    } finally {
+      btn.disabled = false;
+    }
+  });
 }
 
 const unsplashKeyLabel = () => t(_unsplashKeySet ? 'common.configured' : 'common.notSet');
@@ -507,12 +574,9 @@ async function saveServer() {
 
   /* Asked with the other refusals, so a wrong address never reaches the
      config. */
-  if (inp('srv-docker-en')?.checked) {
-    const url = inp('srv-socket')?.value?.trim() || '';
-    if (!url) {
-      toast(t('toast.socketUrlMissing'), 'err');
-      return;
-    }
+  const socketUrlTyped = inp('srv-socket')?.value?.trim() || '';
+  if (inp('srv-hc-en')?.checked && socketUrlTyped) {
+    const url = socketUrlTyped;
     let probe;
     try {
       probe = await apiPost('/api/docker/test', { url });
@@ -574,13 +638,13 @@ async function saveServer() {
     const c = await apiGet('/api/config');
     c.settings = c.settings || {};
     const prevLang = c.settings.language || 'en';
-    const dockerEnabled = inp('srv-docker-en')?.checked || false;
-    const socketUrl = inp('srv-socket')?.value?.trim() || '';
     c.settings.server = {
       ...c.settings.server,
       hostIp: inp('srv-ip')?.value?.trim() || '',
-      socketProxyUrl: dockerEnabled ? socketUrl : '',
+      healthChecks: inp('srv-hc-en')?.checked !== false,
+      socketProxyUrl: socketUrlTyped,
       hideHealthyBadge: inp('srv-hide-healthy')?.checked !== false,
+      proxmox: readProxmoxForm(),
       allowedHosts,
     };
     c.settings.logLevel = inp('log-level')?.value || 'info';
@@ -596,7 +660,10 @@ async function saveServer() {
         pwEl.value = '';
       }
     }
+    clearPveSecretInput();
     _srvTrack?.reset();
+    const after = await apiGet('/api/config').catch(() => null);
+    if (after) showPveSecretState(!!after.settings?.server?.proxmox?.secretSet);
     toast(socketWarning || t('toast.saved'), socketWarning ? 'err' : 'ok');
     if (langChanged) {
       location.reload();

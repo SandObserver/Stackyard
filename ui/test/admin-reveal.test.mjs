@@ -70,7 +70,8 @@ test('the instant path suppresses the transition and then releases it', () => {
 test('state read back from the server opens instantly', () => {
   for (const call of [
     "reveal(el('ie-pw-wrap'), !!d.enabled, true)",
-    'applyDocker(dockerEnEl.checked, true)',
+    'applyHealthChecks(hcEnEl.checked, true)',
+    'applyHealthChecks(en.checked, true)',
     'apply(en.checked, true)',
   ]) {
     assert.ok(js.includes(call), `${call} is gone, so the page animates its own sections open after it paints`);

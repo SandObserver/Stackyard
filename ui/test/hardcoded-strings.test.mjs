@@ -177,6 +177,7 @@ const READS_AS_PROSE = v =>
   !(v === v.trim() && /^[a-z][a-z0-9-]*(?:;\s*[a-z][a-z0-9-]*)*$/.test(v)) &&
   !/^[a-z]\w*(?:\.\w+)+$/.test(v) /* a catalogue key */ &&
   !/^#[0-9a-fA-F]{3,8}$/.test(v) &&
+  !/^[\w.-]+@[\w.-]+![\w.-]+$/.test(v) /* a Proxmox token ID: user@realm!name */ &&
   !(/^[A-Za-z0-9_-]+$/.test(v) && /[a-z][A-Z]|[A-Z]{2}/.test(v)) /* an id: AGVpqBZnzUE */;
 
 const runtimeOffenders = (file, src) => {

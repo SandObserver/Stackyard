@@ -45,9 +45,8 @@
     "allowedHostsTip": "تا وقتی رمز عبوری تعیین نشده، Stackyard فقط در آدرس‌های IP، نام‌های محلی مانند <code>nas</code> یا <code>nas.local</code> و آدرس‌های این فهرست پاسخ می‌دهد. آن‌ها را با ویرگول جدا کنید.",
     "monitoring": "نظارت",
     "loggingLevel": "سطح گزارش",
-    "dockerHealth": "بررسی سلامت کانتینرهای Docker",
     "hideHealthy": "پنهان کردن وضعیت سلامت",
-    "socketUrl": "آدرس سوکت",
+    "socketUrl": "آدرس سوکت Docker",
     "loggingTip": "با تنظیم روی «خطاها» تنها هشدارها و خطاها ثبت می‌شوند. رویدادهای امنیتی همیشه ثبت می‌شوند.",
     "socketTip": "از آدرس یک کانتینر <strong>پراکسی سوکت</strong> استفاده کنید، نه خود سوکت Docker. نامی مانند <code>http://socket-proxy:2375</code> فقط زمانی کار می‌کند که این کانتینر و پراکسی در یک شبکه Docker باشند؛ آدرس IP فقط زمانی کار می‌کند که پراکسی درگاه خود را بیرون از لوپ‌بک میزبان منتشر کند.",
     "security": "امنیت",
@@ -70,7 +69,15 @@
     "showSettingsAria": "نمایش تنظیمات در داشبورد",
     "dockNeedsShown": "برای قرار دادن آن در داک، «نمایش تنظیمات در داشبورد» را روشن کنید.",
     "importJson": "وارد کردن JSON پیکربندی",
-    "importForeignFiles": "وارد کردن پیکربندی YAML مربوط به Homepage یا Dashy"
+    "importForeignFiles": "وارد کردن پیکربندی YAML مربوط به Homepage یا Dashy",
+    "healthChecks": "بررسی سلامت",
+    "healthChecksTip": "روی برنامه‌هایی که کانتینر، آدرس یا مهمان Proxmox آن‌ها از کار افتاده، نشان می‌گذارد.",
+    "proxmoxUrl": "آدرس Proxmox",
+    "proxmoxTokenId": "شناسه توکن",
+    "proxmoxSecret": "کلید محرمانه",
+    "proxmoxTip": "برای بررسی Proxmox. از یک توکن API با نقش PVEAuditor استفاده کنید. اگر جداسازی امتیازها روشن است، نقش را به خود توکن بدهید.",
+    "proxmoxConnected_one": "متصل · {count} مهمان",
+    "proxmoxConnected_other": "متصل · {count} مهمان"
   },
   "appearance": {
     "appTitle": "عنوان برنامه",
@@ -179,7 +186,7 @@
     "dockFull": "داک پر است ({max}/{max}). ابتدا یک برنامه را حذف کنید.",
     "badge": "نشان",
     "healthCheck": "بررسی سلامت",
-    "healthGlobalOff": "برای بررسی کانتینر، «بررسی سلامت کانتینرهای Docker» باید در بخش «عمومی» روشن باشد. بررسی آدرس بدون آن هم کار می‌کند.",
+    "healthGlobalOff": "بررسی سلامت خاموش است. آن را در بخش «عمومی» روشن کنید.",
     "type": "نوع",
     "container": "کانتینر",
     "ping": "پینگ",
@@ -245,7 +252,12 @@
     "needsApiPath": "متصل شد، اما این آدرس مسیر API ندارد. آدرس API کامل سرویس را وارد کنید.",
     "needsApiPathError": "این آدرس مسیر API ندارد. آدرس API کامل سرویس را وارد کنید.",
     "foundValues_one": "{count} مقدار یافت شد",
-    "foundValues_other": "{count} مقدار یافت شد"
+    "foundValues_other": "{count} مقدار یافت شد",
+    "proxmox": "Proxmox",
+    "guest": "مهمان",
+    "chooseGuest": "یک مهمان انتخاب کنید",
+    "noGuests": "هیچ ماشین مجازی یا کانتینری پیدا نشد.",
+    "loadingGuests": "در حال بارگذاری مهمان‌ها…"
   },
   "adminError": {
     "sessionExpired": "نشست شما منقضی شده است. برای ادامه دوباره وارد شوید.",
@@ -285,7 +297,12 @@
     "selfSignedPublic": "این سرویس از گواهی خودامضا استفاده می‌کند. پذیرش گواهی خودامضا فقط برای آدرس‌های شبکه خودتان کاربرد دارد.",
     "tlsExpired": "گواهی این سرویس منقضی شده است.",
     "timedOut": "سرویس به‌موقع پاسخ نداد.",
-    "demoOutbound": "بررسی‌ها در نسخه نمایشی آنلاین غیرفعال‌اند."
+    "demoOutbound": "بررسی‌ها در نسخه نمایشی آنلاین غیرفعال‌اند.",
+    "proxmoxToken": "شناسه توکن و کلید محرمانه را بررسی کنید. شناسه توکن به شکل user@realm!name است.",
+    "proxmoxRefused": "Proxmox توکن را رد کرد. شناسه توکن و کلید محرمانه را بررسی کنید.",
+    "proxmoxPermission": "این توکن اجازه خواندن این را ندارد. نقش PVEAuditor را به آن بدهید.",
+    "notProxmox": "چیزی در آن آدرس پاسخ داد، اما Proxmox نیست.",
+    "proxmoxMissing": "آدرس Proxmox، شناسه توکن و کلید محرمانه را در بخش «عمومی»، زیر بررسی سلامت، وارد کنید."
   },
   "home": {
     "search": "جستجو",
@@ -364,7 +381,6 @@
     "importUnknownFormat": "فایل {file} پیکربندی gethomepage یا Dashy نیست.",
     "importTooLarge": "فایل {file} موارد زیادی برای وارد کردن دارد.",
     "secretsWithheld": "اعتبارنامه این موارد را دوباره وارد کنید: {items}. چون درخواست مربوط به آن تغییر کرده، نگه داشته نشد.",
-    "socketUrlMissing": "آدرس پراکسی سوکت را وارد کنید یا نظارت Docker را خاموش کنید.",
     "socketUrlBad": "پراکسی سوکت ذخیره نشد: {reason}",
     "socketUrlUnverified": "ذخیره شد، اما پراکسی سوکت پاسخ نداد: {reason}",
     "socketHintSharedNetwork": "این نام را Docker فقط برای کانتینرهایی پاسخ می‌دهد که در یک شبکه مشترک هستند. هر دو را در یک شبکه بگذارید یا از آدرسی استفاده کنید که پراکسی منتشر می‌کند.",
@@ -422,7 +438,12 @@
     "containerNotFound": "کانتینر پیدا نشد",
     "containerState": "کانتینر {state}",
     "pingFailed": "پینگ ناموفق: {error}",
-    "pingReturned": "پینگ {status} برگرداند"
+    "pingReturned": "پینگ {status} برگرداند",
+    "guestNotFound": "مهمان پیدا نشد",
+    "guestNoData": "داده‌ای از Proxmox نرسید",
+    "guestStopped": "مهمان متوقف شده",
+    "guestState": "مهمان {state}",
+    "proxmoxFailed": "Proxmox: {error}"
   },
   "setup": {
     "title": "رمز عبوری برای داشبورد تنظیم شود؟",

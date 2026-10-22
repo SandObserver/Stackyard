@@ -8,7 +8,7 @@ import {
   splitIconRef,
   throughServer,
 } from '/js/icons.js?v=5ac01d72';
-import { state } from '/js/admin-state.js?v=af772a1b';
+import { state } from '/js/admin-state.js?v=064b9b85';
 import { DOCK_MAX } from '/js/limits.js?v=31048a24';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import {
@@ -33,11 +33,11 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=7b3a1dac';
+} from '/js/admin-shared.js?v=c28805e1';
 import { createListbox } from '/js/listbox.js?v=95e9b354';
-import { MAX_LABELS } from '/js/badge-logic.js?v=5c72bd4c';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=4cfe9a7b';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=b0881957';
+import { MAX_LABELS } from '/js/badge-logic.js?v=85b1bc96';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=2ba67671';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=a60b17ac';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=628341d4';
 
@@ -125,7 +125,7 @@ export function buildSettingsTileForm(body, item) {
 
 export function buildAppForm(body, item) {
   const dockBlocked = isDockBlocked(state.items, item, DOCK_MAX);
-  const globalHealthOn = !!inpById('srv-docker-en')?.checked;
+  const globalHealthOn = inpById('srv-hc-en')?.checked !== false;
   const mon = item?.monitoring || {};
   const hc = mon.healthcheck || {
     enabled: !!(item?.container || item?.ping),
@@ -139,7 +139,7 @@ export function buildAppForm(body, item) {
   };
   const staticBadge = mon.staticBadge || {};
   const hasStatic = !!staticBadge.enabled;
-  const isPing = !!hc.pingUrl;
+  const hcType = hc.proxmoxGuest ? 'pve' : hc.pingUrl ? 'ping' : 'con';
   const skipTls = !!item?.skipTlsVerify;
   const login = act.login?.username ? act.login : null;
   const hasAuth = !!(act.params?.length || act.headers?.length || login);
@@ -185,11 +185,16 @@ export function buildAppForm(body, item) {
       <div class="row"><span class="rl">${t('app.healthCheck')}</span>${tog('hc-en', hc.enabled, t('app.healthCheck'))}</div>
       <div id="hc-sub" class="reveal${hc.enabled ? ' open' : ''}"><div class="reveal-in">
         <div class="row"><span class="rl" id="hc-type-lbl">${t('app.type')}</span><div class="segr" role="group" aria-labelledby="hc-type-lbl">
-          <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-con" ${isPing ? '' : 'checked'}><span class="segr-dot"></span><span>${t('app.container')}</span></label>
-          <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-ping" ${isPing ? 'checked' : ''}><span class="segr-dot"></span><span>${t('app.ping')}</span></label>
+          <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-con" ${hcType === 'con' ? 'checked' : ''}><span class="segr-dot"></span><span>${t('app.container')}</span></label>
+          <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-ping" ${hcType === 'ping' ? 'checked' : ''}><span class="segr-dot"></span><span>${t('app.ping')}</span></label>
+          <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-pve" ${hcType === 'pve' ? 'checked' : ''}><span class="segr-dot"></span><span>${t('app.proxmox')}</span></label>
         </div></div>
-        <div id="hc-con-row" ${isPing ? 'hidden' : ''}>${ier('ie-hc-con', t('app.container'), 'hc-con', hc.container, t('app.containerPh'))}</div>
-        <div id="hc-ping-row" ${isPing ? '' : 'hidden'}>
+        <div id="hc-con-row" ${hcType === 'con' ? '' : 'hidden'}>${ier('ie-hc-con', t('app.container'), 'hc-con', hc.container, t('app.containerPh'))}</div>
+        <div id="hc-pve-row" ${hcType === 'pve' ? '' : 'hidden'}>
+          <div class="row"><span class="rl">${t('app.guest')}</span><div id="hc-pve-slot"></div></div>
+          <div class="row"><span class="rl"></span><span id="hc-pve-status" class="row-status" role="status"></span></div>
+        </div>
+        <div id="hc-ping-row" ${hcType === 'ping' ? '' : 'hidden'}>
           ${ier('ie-hc-ping', t('app.pingUrl'), 'hc-ping', hc.pingUrl, t('app.pingUrlPh'), 'url')}
           <div class="row"><span class="rl"></span><span id="hc-ping-status" class="row-status" role="status"></span><button type="button" class="row-btn" id="hc-ping-test">${t('app.test')}</button></div>
         </div>
@@ -306,13 +311,18 @@ export function buildAppForm(body, item) {
   hcEn?.addEventListener('change', e => {
     showHide('hc-sub', tgt(e).checked);
   });
+  const guests = wireGuestPicker(item?.monitoring?.healthcheck?.proxmoxGuest);
+  if (inpById('hc-type-pve')?.checked) guests.load();
   document.querySelectorAll('input[name="hc-type"]').forEach(r =>
     r.addEventListener('change', () => {
-      const ping = inpById('hc-type-ping')?.checked;
+      const ping = !!inpById('hc-type-ping')?.checked;
+      const pve = !!inpById('hc-type-pve')?.checked;
       swapContent(el('hc-con-row')?.parentElement, () => {
-        showHide('hc-con-row', !ping);
+        showHide('hc-con-row', !ping && !pve);
         showHide('hc-ping-row', ping);
+        showHide('hc-pve-row', pve);
       });
+      if (pve) guests.load();
     }),
   );
   el('hc-ping-test')?.addEventListener('click', testPing);
@@ -936,6 +946,42 @@ function updPrev(explicit) {
   };
   img.src = fallbacks[0];
   p.replaceChildren(img);
+}
+
+/** @param {unknown} saved */
+function wireGuestPicker(saved) {
+  const slot = el('hc-pve-slot');
+  const st = el('hc-pve-status');
+  const current = Number.isInteger(Number(saved)) && Number(saved) > 0 ? String(saved) : '';
+  const fallback = current ? [{ value: current, label: current }] : [];
+  const box = createListbox({
+    id: 'hc-pve',
+    label: t('app.guest'),
+    options: fallback,
+    value: current,
+    placeholder: t('app.chooseGuest'),
+    emptyText: t('app.noGuests'),
+  });
+  state._pveGuest = box;
+  slot?.appendChild(box.el);
+  let loaded = false;
+  return {
+    async load() {
+      if (loaded) return;
+      loaded = true;
+      if (st) st.textContent = t('app.loadingGuests');
+      try {
+        const r = await apiGet('/api/proxmox/guests');
+        const options = (r.guests || []).map(g => ({ value: String(g.vmid), label: `${g.name} (${g.vmid})` }));
+        if (current && !options.some(o => o.value === current)) options.unshift(...fallback);
+        box.setOptions(options, box.getValue() || current);
+        if (st) st.textContent = '';
+      } catch (e) {
+        loaded = false;
+        if (st) st.textContent = '✗ ' + errorText(e);
+      }
+    },
+  };
 }
 
 async function testPing() {

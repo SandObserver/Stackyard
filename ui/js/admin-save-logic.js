@@ -285,7 +285,12 @@ export function buildAppItem(v, orig, takenIds = []) {
       dock: v.dock || false,
       skipTlsVerify: v.skipTlsVerify || undefined,
       monitoring: {
-        healthcheck: { enabled: v.hcEn && (!!v.hcCon || !!v.hcPing), container: v.hcCon, pingUrl: v.hcPing },
+        healthcheck: {
+          enabled: v.hcEn && (!!v.hcCon || !!v.hcPing || !!v.hcPve),
+          container: v.hcCon,
+          pingUrl: v.hcPing,
+          proxmoxGuest: v.hcPve || undefined,
+        },
         activity: {
           enabled: v.actEn && !!v.actUrl,
           url: v.actUrl,

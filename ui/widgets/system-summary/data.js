@@ -7,6 +7,7 @@ module.exports = async function (ctx) {
   if (ctx.endpoint === 'speed') return speed(ctx);
   if (ctx.endpoint === 'sensors') return sensorOptions(ctx);
   if (ctx.endpoint === 'systems') return beszelSystemOptions(ctx);
+  if (ctx.endpoint === 'nodes') return proxmoxNodeOptions(ctx);
   if (ctx.endpoint === 'interfaces') return interfaceOptions(ctx);
   if (ctx.endpoint === 'throughput') return throughput(ctx);
   return systemSummary(ctx);
@@ -19,6 +20,7 @@ async function systemSummary(ctx) {
       glances: systemSummaryGlances,
       beszel: systemSummaryBeszel,
       unraid: systemSummaryUnraid,
+      proxmox: systemSummaryProxmox,
     },
     { field: 'statProvider', default: 'system' },
   );
@@ -29,6 +31,7 @@ function summaryLink(ctx) {
   const c = ctx.config;
   if (c.statProvider === 'glances') return ctx.serviceLink(c.href, c.glancesUrl);
   if (c.statProvider === 'unraid') return ctx.serviceLink(c.href, c.unraidUrl);
+  if (c.statProvider === 'proxmox') return ctx.serviceLink(c.href, proxmoxAddress(c.proxmoxUrl));
   if (c.statProvider !== 'beszel') return c.href || '';
   if (!c.beszelSystem) return ctx.serviceLink(c.href, c.beszelUrl);
   return ctx.serviceLink(c.href, c.beszelUrl, `/system/${encodeURIComponent(c.beszelSystem)}`);
@@ -580,6 +583,108 @@ async function systemSummaryUnraid(ctx) {
     iowait: null,
     procs: null,
     uptime,
+  };
+}
+
+/* ── Proxmox ─────────────────────────────────────────────────────────────── */
+
+/* Proxmox listens on HTTPS only, so a bare host gets https:// rather than the
+   http:// normalizeBase would add. */
+function proxmoxAddress(raw) {
+  const s = String(raw || '')
+    .trim()
+    .replace(/[?#].*$/, '');
+  return !s || /^[a-z][a-z0-9+.-]*:\/\//i.test(s) ? s : `https://${s}`;
+}
+
+function proxmoxBase(ctx) {
+  const address = proxmoxAddress(ctx.config.proxmoxUrl);
+  if (!address) ctx.fail('Enter the Proxmox URL first.', { kind: ctx.KIND.INVALID });
+  return ctx.normalizeBase(address);
+}
+
+async function proxmoxGet(ctx, path) {
+  const { config } = ctx;
+  const base = proxmoxBase(ctx);
+  const tokenId = String(config.proxmoxTokenId || '').trim();
+  const secret = String(config.proxmoxSecret || '').trim();
+  if (!tokenId || !secret) ctx.fail('Enter the token ID and secret first.', { kind: ctx.KIND.INVALID });
+  /* A line break in either would split the header. */
+  if (/[\s=]/.test(tokenId) || /[^A-Za-z0-9-]/.test(secret))
+    ctx.fail('The token ID must look like user@realm!name.', { kind: ctx.KIND.INVALID });
+  const r = await ctx.fetchJSON(`${base}/api2/json${path}`, {
+    headers: { Authorization: `PVEAPIToken=${tokenId}=${secret}` },
+    skipTls: config.proxmoxSkipTls === true,
+  });
+  if (r.status === 401) ctx.fail('Proxmox refused the token', { kind: ctx.KIND.AUTH });
+  if (r.status === 403) ctx.fail('The token needs the PVEAuditor role', { kind: ctx.KIND.AUTH });
+  if (r.status >= 400) ctx.fail('Proxmox HTTP ' + r.status);
+  if (!r.data || typeof r.data !== 'object' || !('data' in r.data)) ctx.fail('That address is not Proxmox');
+  return r.data.data;
+}
+
+async function proxmoxNodes(ctx) {
+  const list = await proxmoxGet(ctx, '/nodes');
+  return (Array.isArray(list) ? list : []).filter(n => n && typeof n.node === 'string');
+}
+
+async function proxmoxNodeOptions(ctx) {
+  const nodes = await proxmoxNodes(ctx);
+  return { options: nodes.map(n => ({ value: n.node, label: n.node })) };
+}
+
+const GB = 1024 ** 3;
+const pct = (used, total) => (Number(total) > 0 ? (Number(used) / Number(total)) * 100 : 0);
+
+/* A blank slot is the node's root filesystem. A named one is a storage ID. */
+const isRootFs = name => !name || name === '/';
+
+async function systemSummaryProxmox(ctx) {
+  const slots = ctx.config.slots || [];
+  const mounts = new Set();
+  for (const s of slots) {
+    if (s.type !== 'disk') continue;
+    mounts.add(isRootFs(s.primary) ? '/' : s.primary);
+    if (s.secondary) mounts.add(isRootFs(s.secondary) ? '/' : s.secondary);
+  }
+
+  let name = ctx.config.proxmoxNode;
+  if (!name) {
+    const nodes = await proxmoxNodes(ctx);
+    if (nodes.length === 1) name = nodes[0].node;
+    else ctx.fail('Choose a node first.', { kind: ctx.KIND.INVALID });
+  }
+
+  const node = encodeURIComponent(name);
+  const wantsStorage = [...mounts].some(m => m !== '/');
+  const [status, storage] = await Promise.all([
+    proxmoxGet(ctx, `/nodes/${node}/status`),
+    wantsStorage ? proxmoxGet(ctx, `/nodes/${node}/storage`) : null,
+  ]).catch(async e => {
+    const nodes = await proxmoxNodes(ctx).catch(() => null);
+    if (nodes && !nodes.some(n => n.node === name))
+      ctx.fail(`Proxmox has no node called ${name}.`, { kind: ctx.KIND.INVALID });
+    throw e;
+  });
+  const stores = Array.isArray(storage) ? storage : [];
+  const disk = mount => {
+    if (mount === '/') {
+      const fs = status?.rootfs || {};
+      return { usedPct: pct(fs.used, fs.total), totalGb: (Number(fs.total) || 0) / GB };
+    }
+    const s = stores.find(x => x?.storage === mount);
+    return { usedPct: pct(s?.used, s?.total), totalGb: (Number(s?.total) || 0) / GB };
+  };
+
+  return {
+    cpu: typeof status?.cpu === 'number' ? status.cpu * 100 : null,
+    ram: status?.memory ? pct(status.memory.used, status.memory.total) : null,
+    temp: null,
+    temps: {},
+    disks: [...mounts].map(mount => ({ mount, ...disk(mount) })),
+    iowait: typeof status?.wait === 'number' ? status.wait * 100 : null,
+    procs: null,
+    uptime: typeof status?.uptime === 'number' ? status.uptime : null,
   };
 }
 

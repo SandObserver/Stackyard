@@ -45,9 +45,8 @@
     "allowedHostsTip": "Solange kein Passwort festgelegt ist, antwortet Stackyard nur unter IP-Adressen, lokalen Namen wie <code>nas</code> oder <code>nas.local</code> und den hier aufgeführten Adressen. Trenne sie mit Kommas.",
     "monitoring": "Überwachung",
     "loggingLevel": "Protokollstufe",
-    "dockerHealth": "Docker-Container-Zustandsprüfungen",
     "hideHealthy": "„In Ordnung“-Badge ausblenden",
-    "socketUrl": "Socket-URL",
+    "socketUrl": "Docker-Socket-URL",
     "loggingTip": "Bei „Fehler“ werden nur Warnungen und Fehler protokolliert. Sicherheitsereignisse werden immer protokolliert.",
     "socketTip": "Verwende die URL eines <strong>Socket-Proxy</strong>-Containers, niemals den Docker-Socket selbst. Ein Name wie <code>http://socket-proxy:2375</code> funktioniert nur, wenn dieser Container und der Proxy dasselbe Docker-Netzwerk nutzen; eine IP-Adresse nur, wenn der Proxy seinen Port nicht nur auf dem Loopback des Hosts veröffentlicht.",
     "security": "Sicherheit",
@@ -70,7 +69,15 @@
     "showSettingsAria": "Einstellungen im Dashboard anzeigen",
     "dockNeedsShown": "Aktiviere „Einstellungen im Dashboard anzeigen“, um sie ins Dock zu legen.",
     "importJson": "Konfigurations-JSON importieren",
-    "importForeignFiles": "Homepage- oder Dashy-YAML-Konfiguration importieren"
+    "importForeignFiles": "Homepage- oder Dashy-YAML-Konfiguration importieren",
+    "healthChecks": "Zustandsprüfungen",
+    "healthChecksTip": "Zeigt ein Badge an Apps, deren Container, Adresse oder Proxmox-Gast nicht läuft.",
+    "proxmoxUrl": "Proxmox-Adresse",
+    "proxmoxTokenId": "Token-ID",
+    "proxmoxSecret": "Geheimer Schlüssel",
+    "proxmoxTip": "Für Proxmox-Prüfungen. Verwende ein API-Token mit der Rolle PVEAuditor. Ist die Privilegientrennung aktiv, gib die Rolle dem Token selbst.",
+    "proxmoxConnected_one": "Verbunden · {count} Gast",
+    "proxmoxConnected_other": "Verbunden · {count} Gäste"
   },
   "appearance": {
     "appTitle": "App-Titel",
@@ -179,7 +186,7 @@
     "dockFull": "Dock voll ({max}/{max}). Entferne zuerst eine App.",
     "badge": "Badge",
     "healthCheck": "Zustandsprüfung",
-    "healthGlobalOff": "Für Container-Prüfungen muss unter „Allgemein“ die Option „Docker-Container-Zustandsprüfungen“ aktiviert sein. URL-Prüfungen funktionieren auch ohne.",
+    "healthGlobalOff": "Zustandsprüfungen sind aus. Schalte sie unter „Allgemein“ ein.",
     "type": "Typ",
     "container": "Container",
     "ping": "Ping",
@@ -245,7 +252,12 @@
     "needsApiPath": "Verbunden, aber diese Adresse hat keinen API-Pfad. Gib die vollständige API-URL des Dienstes ein.",
     "needsApiPathError": "Diese Adresse hat keinen API-Pfad. Gib die vollständige API-URL des Dienstes ein.",
     "foundValues_one": "{count} Wert gefunden",
-    "foundValues_other": "{count} Werte gefunden"
+    "foundValues_other": "{count} Werte gefunden",
+    "proxmox": "Proxmox",
+    "guest": "Gast",
+    "chooseGuest": "Gast auswählen",
+    "noGuests": "Keine VMs oder Container gefunden.",
+    "loadingGuests": "Gäste werden geladen…"
   },
   "adminError": {
     "sessionExpired": "Deine Sitzung ist abgelaufen. Melde dich erneut an, um fortzufahren.",
@@ -285,7 +297,12 @@
     "selfSignedPublic": "Der Dienst verwendet ein selbstsigniertes Zertifikat. „Selbstsigniertes Zertifikat zulassen“ gilt nur für Adressen in deinem eigenen Netzwerk.",
     "tlsExpired": "Das Zertifikat des Dienstes ist abgelaufen.",
     "timedOut": "Der Dienst hat nicht rechtzeitig geantwortet.",
-    "demoOutbound": "In der Live-Demo sind Prüfungen deaktiviert."
+    "demoOutbound": "In der Live-Demo sind Prüfungen deaktiviert.",
+    "proxmoxToken": "Prüfe Token-ID und geheimen Schlüssel. Die Token-ID sieht so aus: user@realm!name.",
+    "proxmoxRefused": "Proxmox hat das Token abgelehnt. Prüfe Token-ID und geheimen Schlüssel.",
+    "proxmoxPermission": "Das Token darf das nicht lesen. Gib ihm die Rolle PVEAuditor.",
+    "notProxmox": "Dort hat etwas geantwortet, aber es ist kein Proxmox.",
+    "proxmoxMissing": "Gib unter „Allgemein“ bei den Zustandsprüfungen Proxmox-Adresse, Token-ID und geheimen Schlüssel ein."
   },
   "home": {
     "search": "Suchen",
@@ -364,7 +381,6 @@
     "importUnknownFormat": "{file} ist keine gethomepage- oder Dashy-Konfiguration.",
     "importTooLarge": "{file} enthält zu viele Einträge für einen Import.",
     "secretsWithheld": "Zugangsdaten erneut eingeben für: {items}. Sie wurden nicht übernommen, weil sich die zugehörige Anfrage geändert hat.",
-    "socketUrlMissing": "Adresse des Socket-Proxys eingeben oder Docker-Überwachung ausschalten.",
     "socketUrlBad": "Socket-Proxy nicht gespeichert: {reason}",
     "socketUrlUnverified": "Gespeichert, aber der Socket-Proxy hat nicht geantwortet: {reason}",
     "socketHintSharedNetwork": "Diesen Namen löst Docker nur für Container in einem gemeinsamen Netzwerk auf. Hänge beide in dasselbe Netzwerk oder verwende eine Adresse, die der Proxy veröffentlicht.",
@@ -422,7 +438,12 @@
     "containerNotFound": "Container nicht gefunden",
     "containerState": "Container {state}",
     "pingFailed": "Ping fehlgeschlagen: {error}",
-    "pingReturned": "Ping ergab {status}"
+    "pingReturned": "Ping ergab {status}",
+    "guestNotFound": "Gast nicht gefunden",
+    "guestNoData": "Keine Daten von Proxmox",
+    "guestStopped": "Gast gestoppt",
+    "guestState": "Gast {state}",
+    "proxmoxFailed": "Proxmox: {error}"
   },
   "setup": {
     "title": "Dashboard-Passwort festlegen?",
