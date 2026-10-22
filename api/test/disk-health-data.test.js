@@ -221,11 +221,9 @@ for (const endpoint of ['', 'devices']) {
 for (const [status, health] of [
   ['DISK_OK', 'healthy'],
   ['DISK_NEW', 'healthy'],
-  ['DISK_NP_MISSING', 'failed'],
   ['DISK_INVALID', 'failed'],
   ['DISK_WRONG', 'failed'],
   ['DISK_DSBL', 'failed'],
-  ['DISK_NP_DSBL', 'failed'],
   ['DISK_DSBL_NEW', 'failed'],
   ['SOMETHING_NEW', 'unknown'],
   [null, 'unknown'],
@@ -246,10 +244,13 @@ test('an Unraid drive reports its size in bytes and no temperature while spun do
   assert.equal(bay.device_name, 'disk1');
 });
 
-test('an Unraid bay whose slot is now unassigned is reported as not found', async () => {
-  const array = { disks: [{ name: 'disk1', device: '', status: 'DISK_NP' }] };
-  const [bay] = (await dataFn(makeCtx('', { ...UNRAID, bays: ['disk1'] }, unraidFetch(array)))).bays;
-  assert.equal(bay.error, 'not found');
+test('an Unraid bay left out of the reply is a failed drive, as Unraid omits a missing drive', async () => {
+  const array = { disks: [unraidSlot('disk1', 'DISK_OK')] };
+  const [, bay] = (await dataFn(makeCtx('', { ...UNRAID, bays: ['disk1', 'disk2'] }, unraidFetch(array)))).bays;
+  assert.equal(bay.error, undefined);
+  assert.equal(bay.hasSmart, true);
+  assert.equal(bay.device_status, 2);
+  assert.equal(bay.device_name, 'disk2');
 });
 
 test('a key without array access is reported as an auth failure', async () => {
@@ -265,7 +266,10 @@ test('the Unraid picker asks for the key before calling the server', async () =>
   const fetchJSON = async () => {
     called = true;
   };
-  await assert.rejects(dataFn(makeCtx('devices', { ...UNRAID, unraidApiKey: '' }, fetchJSON)), { kind: 'invalid' });
+  await assert.rejects(dataFn(makeCtx('devices', { ...UNRAID, unraidApiKey: '' }, fetchJSON)), {
+    kind: 'invalid',
+    message: 'Enter the Unraid API key first.',
+  });
   assert.equal(called, false);
 });
 
