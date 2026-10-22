@@ -20,11 +20,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Sign in to a live badge's API with a username and password.
 
+- Add a Proxmox health check that shows whether a VM or container is running.
+
+- Add Proxmox VE as a System Summary source.
+
 ### Changed
 
 - Long weather condition labels shrink to fit before they are cut off.
 
 - Read numbers sent as text in live badges.
+
+- Replace the Docker health checks switch with one Health Checks switch that
+  covers every check type.
 
 ### Fixed
 
