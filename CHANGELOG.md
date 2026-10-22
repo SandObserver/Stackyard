@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rain and snow, snow grains, hail, haze, smoke, dust, sand, volcanic ash,
   squalls and tornadoes.
 
+- Group the Dashboard list into Dock and Home screen, with drag and drop into
+  and out of the dock.
+
+- Let the Settings tile go in the dock from its new editor.
+
 ### Changed
 
 - Long weather condition labels shrink to fit before they are cut off.
