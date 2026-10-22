@@ -42,7 +42,7 @@ Widgets and the services they read:
 - **GitHub**: contribution graph and pull requests
 - **Books**: Audiobookshelf, Komga, Kavita
 - **System summary**: CPU, memory, disk, throughput, uptime, and network speed from SpeedTest Tracker or MySpeed. Reports on this machine, or on a host running Glances, Beszel, the Unraid API or Proxmox VE
-- **Disk health**: TrueNAS, Scrutiny
+- **Disk health**: TrueNAS, Unraid, Scrutiny
 - **Backup**: Duplicati, Kopia
 - **Connections**: Gluetun, Psiphon Conduit, Netbird, Plausible, Umami
 - **Dashboard switch**: links to your other Stackyard dashboards

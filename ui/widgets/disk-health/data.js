@@ -8,6 +8,7 @@ function diskDevices(ctx) {
     {
       scrutiny: scrutinyDeviceOptions,
       truenas: truenasPoolOptions,
+      unraid: unraidDiskOptions,
     },
     { field: 'diskProvider', default: 'scrutiny' },
   );
@@ -85,6 +86,7 @@ function diskHealth(ctx) {
     {
       scrutiny: diskHealthScrutiny,
       truenas: diskHealthTrueNas,
+      unraid: diskHealthUnraid,
     },
     { field: 'diskProvider', default: 'scrutiny' },
   );
@@ -165,4 +167,94 @@ async function diskHealthTrueNas(ctx) {
   });
 
   return { bays: result, href: ctx.serviceLink(config.truenasHref, url), provider: 'truenas' };
+}
+
+/* Unraid's own web server proxies the API at /graphql, and refuses GET unless
+   its sandbox is on, so every request here is a POST carrying the key. */
+async function unraidQuery(ctx, query) {
+  const { config, fetchJSON, normalizeBase } = ctx;
+  if (!config.unraidUrl) ctx.fail('Enter the Unraid URL first.', { kind: ctx.KIND.INVALID });
+  if (!config.unraidApiKey) ctx.fail('Enter the Unraid API key first.', { kind: ctx.KIND.INVALID });
+  const r = await fetchJSON(normalizeBase(config.unraidUrl) + '/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': config.unraidApiKey },
+    body: JSON.stringify({ query }),
+    timeout: 8000,
+  });
+  if (r.status === 401 || r.status === 403) ctx.fail('Unraid rejected the API key', { kind: ctx.KIND.AUTH });
+  if (r.status >= 400) ctx.fail('Unraid HTTP ' + r.status);
+  /* Both a refused key and a key without the role answer 200 with an errors
+     array, so the status code alone never reports an auth problem. */
+  const problem = r.data?.errors?.[0];
+  if (problem) {
+    const code = problem.extensions?.code;
+    const denied =
+      code === 'FORBIDDEN' ||
+      code === 'UNAUTHENTICATED' ||
+      /permission|forbidden|unauthor|api key/i.test(problem.message || '');
+    if (denied) ctx.fail('Unraid refused this API key or its role', { kind: ctx.KIND.AUTH });
+    ctx.fail('Unraid could not answer the query');
+  }
+  if (!r.data?.data) ctx.fail('Unraid returned no data');
+  return r.data.data;
+}
+
+const UNRAID_DISK = 'name device size status temp';
+const UNRAID_ARRAY = `{ array { parities { ${UNRAID_DISK} } disks { ${UNRAID_DISK} } caches { ${UNRAID_DISK} } } }`;
+
+async function unraidSlots(ctx) {
+  const array = (await unraidQuery(ctx, UNRAID_ARRAY)).array || {};
+  return [...(array.parities || []), ...(array.disks || []), ...(array.caches || [])].filter(
+    d => d && typeof d.name === 'string' && d.name && d.status !== 'DISK_NP',
+  );
+}
+
+async function unraidDiskOptions(ctx) {
+  const options = (await unraidSlots(ctx)).map(d => ({
+    value: d.name,
+    label: d.device ? `${d.name} (${d.device})` : d.name,
+  }));
+  return { options };
+}
+
+const UNRAID_HEALTHY = new Set(['DISK_OK', 'DISK_NEW']);
+const UNRAID_FAILED = new Set(['DISK_INVALID', 'DISK_WRONG', 'DISK_DSBL', 'DISK_DSBL_NEW']);
+
+async function diskHealthUnraid(ctx) {
+  const { config } = ctx;
+  if (!config.unraidUrl) ctx.fail('unraidUrl not configured', { kind: ctx.KIND.INVALID });
+  const bays = config.bays || [];
+
+  const byName = {};
+  for (const d of await unraidSlots(ctx)) byName[d.name] = d;
+
+  const result = bays.map(name => {
+    if (!name) return null;
+    const d = byName[name];
+    /* Unraid leaves a slot with no drive out of the reply, so a missing
+       drive is an absent bay. Reading it as not found hides a degraded array. */
+    if (!d)
+      return {
+        device_id: name,
+        device_status: 2,
+        hasSmart: true,
+        model_name: name,
+        device_name: name,
+        temp: null,
+        capacity: null,
+      };
+    const known = UNRAID_HEALTHY.has(d.status) || UNRAID_FAILED.has(d.status);
+    const kb = Number(d.size);
+    return {
+      device_id: name,
+      device_status: UNRAID_FAILED.has(d.status) ? 2 : 0,
+      hasSmart: known,
+      model_name: name,
+      device_name: name,
+      temp: Number.isFinite(d.temp) ? d.temp : null,
+      capacity: kb > 0 ? kb * 1024 : null,
+    };
+  });
+
+  return { bays: result, href: ctx.serviceLink(config.unraidHref, config.unraidUrl), provider: 'unraid' };
 }

@@ -174,3 +174,107 @@ for (const endpoint of ['', 'devices']) {
     assert.deepEqual(seen, [{ Authorization: 'Bearer tok' }, {}]);
   });
 }
+
+const UNRAID = { diskProvider: 'unraid', unraidUrl: 'http://tower.local', unraidApiKey: 'key' };
+
+const unraidSlot = (name, status, extra = {}) => ({
+  name,
+  device: 'sd' + name.at(-1),
+  size: 1000,
+  status,
+  temp: 30,
+  ...extra,
+});
+
+function unraidFetch(array, seen = []) {
+  return async (url, opts) => {
+    seen.push({ url, opts });
+    return { status: 200, data: { data: { array } } };
+  };
+}
+
+test('the Unraid bay picker lists parity, data and cache drives and skips unassigned slots', async () => {
+  const array = {
+    parities: [unraidSlot('parity', 'DISK_OK')],
+    disks: [unraidSlot('disk1', 'DISK_OK'), { name: 'disk2', device: '', status: 'DISK_NP' }],
+    caches: [unraidSlot('cache', 'DISK_OK', { device: 'nvme0n1' })],
+  };
+  const r = await dataFn(makeCtx('devices', UNRAID, unraidFetch(array)));
+  assert.deepEqual(r.options, [
+    { value: 'parity', label: 'parity (sdy)' },
+    { value: 'disk1', label: 'disk1 (sd1)' },
+    { value: 'cache', label: 'cache (nvme0n1)' },
+  ]);
+});
+
+for (const endpoint of ['', 'devices']) {
+  test(`${endpoint || 'the bay list'} posts the array query to Unraid with the key`, async () => {
+    const seen = [];
+    await dataFn(makeCtx(endpoint, { ...UNRAID, bays: [] }, unraidFetch({}, seen)));
+    assert.equal(seen[0].url, 'http://tower.local/graphql');
+    assert.equal(seen[0].opts.method, 'POST');
+    assert.equal(seen[0].opts.headers['x-api-key'], 'key');
+    assert.match(JSON.parse(seen[0].opts.body).query, /array \{ parities/);
+  });
+}
+
+for (const [status, health] of [
+  ['DISK_OK', 'healthy'],
+  ['DISK_NEW', 'healthy'],
+  ['DISK_INVALID', 'failed'],
+  ['DISK_WRONG', 'failed'],
+  ['DISK_DSBL', 'failed'],
+  ['DISK_DSBL_NEW', 'failed'],
+  ['SOMETHING_NEW', 'unknown'],
+  [null, 'unknown'],
+]) {
+  test(`Unraid state ${status} is a ${health} drive`, async () => {
+    const array = { disks: [unraidSlot('disk1', status)] };
+    const [bay] = (await dataFn(makeCtx('', { ...UNRAID, bays: ['disk1'] }, unraidFetch(array)))).bays;
+    assert.equal(bay.hasSmart, health !== 'unknown');
+    if (health !== 'unknown') assert.equal(bay.device_status, health === 'failed' ? 2 : 0);
+  });
+}
+
+test('an Unraid drive reports its size in bytes and no temperature while spun down', async () => {
+  const array = { disks: [unraidSlot('disk1', 'DISK_OK', { size: 1953514552, temp: null })] };
+  const [bay] = (await dataFn(makeCtx('', { ...UNRAID, bays: ['disk1'] }, unraidFetch(array)))).bays;
+  assert.equal(bay.capacity, 1953514552 * 1024);
+  assert.equal(bay.temp, null);
+  assert.equal(bay.device_name, 'disk1');
+});
+
+test('an Unraid bay left out of the reply is a failed drive, as Unraid omits a missing drive', async () => {
+  const array = { disks: [unraidSlot('disk1', 'DISK_OK')] };
+  const [, bay] = (await dataFn(makeCtx('', { ...UNRAID, bays: ['disk1', 'disk2'] }, unraidFetch(array)))).bays;
+  assert.equal(bay.error, undefined);
+  assert.equal(bay.hasSmart, true);
+  assert.equal(bay.device_status, 2);
+  assert.equal(bay.device_name, 'disk2');
+});
+
+test('a key without array access is reported as an auth failure', async () => {
+  const fetchJSON = async () => ({
+    status: 200,
+    data: { errors: [{ message: 'Forbidden resource', extensions: { code: 'FORBIDDEN' } }], data: null },
+  });
+  await assert.rejects(dataFn(makeCtx('', { ...UNRAID, bays: ['disk1'] }, fetchJSON)), { kind: 'auth' });
+});
+
+test('the Unraid picker asks for the key before calling the server', async () => {
+  let called = false;
+  const fetchJSON = async () => {
+    called = true;
+  };
+  await assert.rejects(dataFn(makeCtx('devices', { ...UNRAID, unraidApiKey: '' }, fetchJSON)), {
+    kind: 'invalid',
+    message: 'Enter the Unraid API key first.',
+  });
+  assert.equal(called, false);
+});
+
+test('with no link set the widget opens the Unraid address the browser can reach', async () => {
+  const r = await dataFn(makeCtx('', { ...UNRAID, unraidUrl: 'http://10.0.0.9', bays: [] }, unraidFetch({})));
+  assert.equal(r.href, 'http://10.0.0.9');
+  assert.equal(r.provider, 'unraid');
+});
