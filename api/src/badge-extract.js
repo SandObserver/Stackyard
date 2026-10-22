@@ -5,6 +5,17 @@ const BARE_KEY = /^[^.[\]()"]+$/;
 const keySeg = (path, k) =>
   BARE_KEY.test(k) && k !== '$count' && k !== '(root)' ? (path ? `${path}.${k}` : k) : `${path}[${JSON.stringify(k)}]`;
 const keyLabel = (label, k) => (label ? `${label}.${k}` : k);
+const NUMBER_TEXT = /^-?\d+(?:\.\d+)?$/;
+
+/** A JSON number, or text that is only a number, as a number. Anything else is undefined.
+    @param {unknown} v @returns {number|undefined} */
+function asNumber(v) {
+  if (typeof v === 'number') return v;
+  if (typeof v !== 'string' || !NUMBER_TEXT.test(v)) return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 const filterSeg = (field, bval) => `filter(${/^\w+$/.test(field) ? field : JSON.stringify(field)}==${bval})`;
 
 function collectNumbers(obj, path = '', out = [], _depth = 0, _state = { n: 0, scanned: 0 }, label = path) {
@@ -12,10 +23,11 @@ function collectNumbers(obj, path = '', out = [], _depth = 0, _state = { n: 0, s
     MAX_NODES = 256,
     MAX_SCANNED = 1_000_000;
   if (_state.n++ > MAX_NODES || _depth > MAX_DEPTH || obj == null) return out;
-  if (typeof obj === 'number') {
-    if (!Number.isFinite(obj)) return out;
+  const num = asNumber(obj);
+  if (num !== undefined) {
+    if (!Number.isFinite(num)) return out;
     const p = path || '(root)';
-    out.push(label && label !== p ? { path: p, value: obj, label } : { path: p, value: obj });
+    out.push(label && label !== p ? { path: p, value: num, label } : { path: p, value: num });
     return out;
   }
   if (Array.isArray(obj)) {
@@ -174,8 +186,7 @@ function computeLabelValues(data, labels) {
   return labels.map(l => {
     const path = typeof l === 'string' ? l : l?.path;
     if (typeof path !== 'string' || !path) return 0;
-    const v = extractPath(data, path);
-    return typeof v === 'number' ? v : 0;
+    return asNumber(extractPath(data, path)) ?? 0;
   });
 }
 
@@ -196,8 +207,7 @@ function computeBadgeValue(data, badge) {
     ? badge.extract.map(e => (typeof e === 'string' ? e : e.path))
     : [typeof badge.extract === 'string' ? badge.extract : badge.extract.path];
   return paths.reduce((s, p) => {
-    const v = extractPath(data, p);
-    return s + (typeof v === 'number' ? v : 0);
+    return s + (asNumber(extractPath(data, p)) ?? 0);
   }, 0);
 }
 

@@ -130,6 +130,45 @@ test('a path resolving to a non-number reads as zero', () => {
   assert.deepEqual(computeLabelValues(data, paths), [0, 0, 0, 0, 0]);
 });
 
+test('a number sent as text is offered and read as a number', () => {
+  const data = { state: '21.5', attributes: { offset: '-3', friendly_name: 'Living room' } };
+  const offered = collectNumbers(data);
+  assert.deepEqual(
+    offered.map(n => [n.path, n.value]),
+    [
+      ['state', 21.5],
+      ['attributes.offset', -3],
+    ],
+  );
+  for (const { path, value } of offered) assert.deepEqual(computeLabelValues(data, [{ path }]), [value]);
+  assert.equal(computeBadgeValue(data, { extract: ['state', 'attributes.offset'] }), 18.5);
+  assert.equal(computeBadgeValue('7', { extract: '(root)' }), 7);
+});
+
+test('text that is not only a number is neither offered nor read', () => {
+  const texts = [
+    '1,234',
+    '12 GB',
+    'unavailable',
+    '',
+    ' 5',
+    '5 ',
+    '+5',
+    '1e3',
+    '0x10',
+    '.5',
+    'Infinity',
+    '9'.repeat(400),
+  ];
+  const data = Object.fromEntries(texts.map((s, i) => [`k${i}`, s]));
+  assert.deepEqual(collectNumbers(data), []);
+  const paths = texts.map((_, i) => ({ path: `k${i}` }));
+  assert.deepEqual(
+    computeLabelValues(data, paths),
+    texts.map(() => 0),
+  );
+});
+
 test('a non-finite number is kept for the caller to report', () => {
   const got = computeLabelValues({ nan: Number.NaN, inf: Number.POSITIVE_INFINITY }, [
     { path: 'nan' },
