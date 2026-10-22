@@ -15,10 +15,11 @@ import {
   isDockBlocked,
   clearsStoredSecret,
   isBareHostUrl,
+  urlHasLogin,
   failureIsMissingApiPath,
   nextActiveIndex,
   sameIconName,
-} from '/js/admin-logic.js?v=546d9ed7';
+} from '/js/admin-logic.js?v=b3befae4';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import {
   toast,
@@ -28,13 +29,14 @@ import {
   apiPost,
   PE_SVG,
   initInlineEdit,
+  wireInlineEdit,
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=d479609c';
-import { createListbox } from '/js/listbox.js?v=58e59bd9';
+} from '/js/admin-shared.js?v=7b3a1dac';
+import { createListbox } from '/js/listbox.js?v=95e9b354';
 import { MAX_LABELS } from '/js/badge-logic.js?v=5c72bd4c';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=43cc1b76';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=4cfe9a7b';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=b0881957';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { iconSvg } from '/js/icon-set.js?v=628341d4';
@@ -139,6 +141,8 @@ export function buildAppForm(body, item) {
   const hasStatic = !!staticBadge.enabled;
   const isPing = !!hc.pingUrl;
   const skipTls = !!item?.skipTlsVerify;
+  const login = act.login?.username ? act.login : null;
+  const hasAuth = !!(act.params?.length || act.headers?.length || login);
 
   const ier = _ieRow;
   /* Split the string around its placeholder. Word order differs per language. */
@@ -207,8 +211,11 @@ export function buildAppForm(body, item) {
         ${ier('ie-burl', t('app.apiUrl'), 'f-burl', act.url, t('app.apiUrlPh'), 'url')}
         <div class="row"><span class="rl"></span><span id="bst" class="row-status" role="status"></span><button type="button" class="row-btn" id="bfetch">${t('app.fetch')}</button></div>
         <div id="auth-row-wrap">
-          <div class="row"><span class="rl">${t('app.authentication')}</span>${tog('auth-en', !!(act.params || act.headers), t('app.authentication'))}</div>
-          <div id="auth-sub" class="reveal${act.params?.length || act.headers?.length ? ' open' : ''}"><div class="reveal-in">
+          <div class="row"><span class="rl">${t('app.authentication')}</span>${tog('auth-en', !!(act.params || act.headers || login), t('app.authentication'))}</div>
+          <div id="auth-sub" class="reveal${hasAuth ? ' open' : ''}"><div class="reveal-in">
+            <div class="row kv-hdr"><span class="rl">${t('app.signIn')}</span></div>
+            ${ier('ie-buser', t('app.username'), 'f-buser', login?.username, t('common.notSet'))}
+            <div class="row ie-row" id="ie-bpass"><span class="rl">${t('app.password')}</span><span class="rv is-ph">${login?.passwordSet ? t('common.configured') : t('common.notSet')}</span><input id="f-bpass" type="password" autocomplete="new-password" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>
             <div class="row kv-hdr"><span class="rl">${t('app.addToUrl')} <span class="rl-sub">${t('app.queryParams')}</span></span></div>
             <div id="bpar-rows" class="kv-rows"></div>
             <div class="row kv-hdr"><span class="rl">${t('app.addToHeader')}</span></div>
@@ -245,7 +252,20 @@ export function buildAppForm(body, item) {
   initInlineEdit('ie-hc-con', 'hc-con', { placeholder: t('app.containerPh') });
   initInlineEdit('ie-hc-ping', 'hc-ping', { placeholder: t('app.pingUrlPh') });
   initInlineEdit('ie-static-label', 'f-static-label', { placeholder: t('app.labelPh') });
-  initInlineEdit('ie-burl', 'f-burl', { placeholder: t('app.apiUrlPh') });
+  initInlineEdit('ie-burl', 'f-burl', { placeholder: t('app.apiUrlPh'), onCommit: warnUrlLogin });
+  initInlineEdit('ie-buser', 'f-buser', { placeholder: t('common.notSet') });
+  const passSet = !!login?.passwordSet;
+  const passRow = el('ie-bpass');
+  const passInp = inpById('f-bpass');
+  if (passRow && passInp)
+    wireInlineEdit(passRow, passInp, {
+      type: 'password',
+      placeholder: passSet ? t('widgetCfg.replaceSecret') : '',
+      fill: false,
+      render: (valEl, v) => {
+        valEl.textContent = v ? t('widgetCfg.newValueSet') : passSet ? t('common.configured') : t('common.notSet');
+      },
+    });
 
   /* The markup carries no style attribute, so the preview is painted here. */
   const pv0 = el('ipv');
@@ -1027,6 +1047,25 @@ function kvRowEl(host, rows, row, ph) {
   return rowEl;
 }
 
+/** @returns {{ username: string, password?: string }|undefined} */
+function badgeLogin() {
+  const username = inpById('f-buser')?.value?.trim() || '';
+  const password = inpById('f-bpass')?.value || '';
+  return username ? { username, password: password || undefined } : undefined;
+}
+
+/** @returns {boolean} whether the warning is shown */
+function warnUrlLogin() {
+  const st = el('bst');
+  if (!st) return false;
+  const has = urlHasLogin(inpById('f-burl')?.value || '');
+  if (has) {
+    st.style.cssText = 'margin-top:4px;color:var(--warning)';
+    st.textContent = t('app.urlHasLogin');
+  } else if (st.textContent === t('app.urlHasLogin')) st.textContent = '';
+  return has;
+}
+
 async function fetchBadge() {
   const url = inpById('f-burl')?.value?.trim();
   const st = el('bst');
@@ -1035,6 +1074,7 @@ async function fetchBadge() {
     if (st) st.textContent = t('app.enterUrlFirst');
     return;
   }
+  if (warnUrlLogin()) return;
   if (st) {
     st.style.cssText = 'margin-top:4px;color:var(--dm)';
     st.textContent = t('app.fetching');
@@ -1049,6 +1089,7 @@ async function fetchBadge() {
       url,
       params,
       headers,
+      login: badgeLogin(),
       skipTls,
       itemId: state.eid ?? undefined,
     });

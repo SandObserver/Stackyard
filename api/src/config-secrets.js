@@ -2,7 +2,7 @@
    misses others leaks a stored credential. */
 
 const { scrubConfigSecrets, preserveConfigSecrets, secretSpec } = require('./widget-secrets');
-const { scrubItemBadgeSecrets, preserveItemBadgeSecrets, toRows } = require('./badge-headers');
+const { scrubItemBadgeSecrets, preserveItemBadgeSecrets, toRows, loginOf } = require('./badge-headers');
 const { badgeRequestMatchesSaved, alignSavedConfig, rewriteChanged, widgetTlsChanged } = require('./secret-scope');
 const { getRegistry } = require('./widgets');
 
@@ -19,10 +19,10 @@ function rowsHoldSecret(rows) {
 }
 
 function blockHoldsSecret(block) {
-  return !!block && (rowsHoldSecret(block.headers) || rowsHoldSecret(block.params));
+  return !!block && (rowsHoldSecret(block.headers) || rowsHoldSecret(block.params) || !!loginOf(block.login)?.password);
 }
 
-const asRequest = block => ({ url: block?.url, headers: block?.headers, params: block?.params });
+const asRequest = block => ({ url: block?.url, headers: block?.headers, params: block?.params, login: block?.login });
 
 function widgetHoldsSecret(config, entry) {
   if (!config || !entry) return false;

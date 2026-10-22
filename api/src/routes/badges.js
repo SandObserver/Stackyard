@@ -7,7 +7,14 @@ const { PING_MS, FETCH_MS, BATCH_MS } = require('../timeouts');
 const { IS_DEMO } = require('../demo');
 const demoData = require('../demo-data');
 const { collectNumbers, computeBadgeValue, computeLabelValues, firstFiringLabel } = require('../badge-extract');
-const { requestParts, toRows, preserveItemBadgeSecrets, rowsToObject, droppedRowCount } = require('../badge-headers');
+const {
+  requestParts,
+  toRows,
+  preserveItemBadgeSecrets,
+  rowsToObject,
+  requestHeaders,
+  droppedRowCount,
+} = require('../badge-headers');
 const log = require('../log');
 const { fail, KIND, errorBody } = require('../api-error');
 const { badgeRequestMatchesSaved, RETYPE_MESSAGE } = require('../secret-scope');
@@ -173,25 +180,29 @@ on('POST', '/api/badge-proxy', async (req, res) => {
        picks the URL while the server picks the credential. */
     let headerRows = toRows(body.headers);
     let paramRows = toRows(body.params);
+    let login = body.login;
     let declined = false;
     if (itemId) {
       const stored = loadConfig().items?.find(i => i && i.id === itemId);
       if (stored) {
         const oldSrc = stored.monitoring?.activity?.enabled ? stored.monitoring.activity : stored.badge;
         if (
-          badgeRequestMatchesSaved({ url, headers: headerRows, params: paramRows }, oldSrc) &&
+          badgeRequestMatchesSaved({ url, headers: headerRows, params: paramRows, login }, oldSrc) &&
           (skipTls === true) === (stored.skipTlsVerify === true)
         ) {
-          const shim = { badge: { headers: headerRows, params: paramRows } };
-          preserveItemBadgeSecrets(shim, { badge: { headers: oldSrc?.headers, params: oldSrc?.params } });
+          const shim = { badge: { headers: headerRows, params: paramRows, login } };
+          preserveItemBadgeSecrets(shim, {
+            badge: { headers: oldSrc?.headers, params: oldSrc?.params, login: oldSrc?.login },
+          });
           headerRows = shim.badge.headers;
           paramRows = shim.badge.params;
+          login = shim.badge.login;
         } else {
           declined = true;
         }
       }
     }
-    const headers = rowsToObject(headerRows);
+    const headers = requestHeaders(headerRows, login);
     const params = rowsToObject(paramRows);
     const fullUrl = Object.keys(params).length
       ? url + (url.includes('?') ? '&' : '?') + new URLSearchParams(params)

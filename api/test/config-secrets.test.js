@@ -387,3 +387,33 @@ test('without savedRow a removed row still withholds by position', () => {
   assert.equal(next.items[0].widgetConfig.slots[0].dupPass, undefined);
   assert.deepEqual(withheld, [{ id: 'b1', label: 'b1' }]);
 });
+
+const loginApp = (url, username, login = { username }) => ({
+  items: [{ id: 'l1', type: 'app', monitoring: { activity: { enabled: true, url, login } } }],
+});
+
+test('a login password survives a save that changed nothing about the request', () => {
+  const stored = loginApp('https://legit.example/api', 'monitor', { username: 'monitor', password: 'REAL' });
+  const incoming = loginApp('https://legit.example/api', 'monitor');
+  const { withheld } = preserveAllSecrets(incoming, stored);
+  assert.equal(incoming.items[0].monitoring.activity.login.password, 'REAL');
+  assert.deepEqual(withheld, []);
+});
+
+test('a login password is not refilled once the request points elsewhere', () => {
+  const stored = loginApp('https://legit.example/api', 'monitor', { username: 'monitor', password: 'REAL' });
+  const incoming = loginApp('https://attacker.example/collect', 'monitor');
+  const { withheld } = preserveAllSecrets(incoming, stored);
+  assert.equal(incoming.items[0].monitoring.activity.login.password, '');
+  assert.deepEqual(
+    withheld.map(w => w.id),
+    ['l1'],
+  );
+});
+
+test('a login password is not refilled for another username', () => {
+  const stored = loginApp('https://legit.example/api', 'monitor', { username: 'monitor', password: 'REAL' });
+  const incoming = loginApp('https://legit.example/api', 'admin');
+  preserveAllSecrets(incoming, stored);
+  assert.equal(incoming.items[0].monitoring.activity.login.password, '');
+});

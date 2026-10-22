@@ -4,7 +4,7 @@
    manifest marks cosmetic or transient are excluded. */
 
 const { SAVED_ROW, secretSpec, cosmeticSpec, transientSpec } = require('./widget-secrets');
-const { toRows } = require('./badge-headers');
+const { toRows, loginOf } = require('./badge-headers');
 
 function stableEqual(a, b) {
   if (a === b) return true;
@@ -125,6 +125,7 @@ function rowsMatch(newRows, oldRows) {
 function badgeRequestMatchesSaved(request, stored) {
   if (!stored) return false;
   if ((request.url || '') !== (stored.url || '')) return false;
+  if ((loginOf(request.login)?.username || '') !== (loginOf(stored.login)?.username || '')) return false;
   return rowsMatch(request.headers, stored.headers) && rowsMatch(request.params, stored.params);
 }
 

@@ -349,6 +349,21 @@ export function isBareHostUrl(url) {
   return parsed.pathname === '/';
 }
 
+/** True when the address carries a username or password before the host.
+
+    @param {string} url
+    @returns {boolean} */
+export function urlHasLogin(url) {
+  const raw = typeof url === 'string' ? url.trim() : '';
+  if (!raw) return false;
+  try {
+    const parsed = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : 'http://' + raw);
+    return !!(parsed.username || parsed.password);
+  } catch {
+    return false;
+  }
+}
+
 /** Whether a failed badge fetch should report the missing API path instead of
     the failure itself.
 

@@ -79,6 +79,15 @@ test('buildAppItem enables healthcheck and activity from their fields', () => {
   assert.equal(item.monitoring.activity.extract, 'stats.total');
 });
 
+test('buildAppItem keeps a login only when it has a username', () => {
+  const base = { label: 'A', href: 'http://x', actEn: true, actUrl: 'http://api', actInt: 30 };
+  const login = v => buildAppItem({ ...base, actLogin: v }, null).item.monitoring.activity.login;
+  assert.deepEqual(login({ username: 'monitor', password: 'pw' }), { username: 'monitor', password: 'pw' });
+  assert.deepEqual(login({ username: 'monitor', password: '' }), { username: 'monitor', password: undefined });
+  assert.equal(login({ username: '', password: 'pw' }), undefined);
+  assert.equal(login(undefined), undefined);
+});
+
 test('buildAppItem maps multiple extract paths to objects', () => {
   const { item } = buildAppItem({ label: 'A', href: 'http://x', spaths: ['a', 'b'] }, null);
   assert.deepEqual(item.monitoring.activity.extract, [{ path: 'a' }, { path: 'b' }]);

@@ -1,6 +1,6 @@
 /* Badge and activity header and query rows: { key, value, secret }. A secret
    row's value never leaves the server. A save that omits it keeps the stored
-   value. */
+   value. The same holds for the login password: { username, password }. */
 
 const SUBKEYS = ['headers', 'params'];
 
@@ -64,10 +64,30 @@ function rowsToObject(rows) {
   return out;
 }
 
+/* A login without a username counts as none. A save that clears the username
+   removes the stored password. */
+/** @param {unknown} login @returns {{ username: string, password: string }|null} */
+function loginOf(login) {
+  if (!login || typeof login !== 'object') return null;
+  const { username, password } = /** @type {{ username?: unknown, password?: unknown }} */ (login);
+  if (typeof username !== 'string' || !username) return null;
+  return { username, password: typeof password === 'string' ? password : '' };
+}
+
+/* Header rows go in after the login. A row named Authorization replaces it. */
+/** @param {any} rows @param {unknown} login @returns {Record<string,string>} */
+function requestHeaders(rows, login) {
+  /** @type {Record<string,string>} */
+  const out = Object.create(null);
+  const l = loginOf(login);
+  if (l) out.Authorization = 'Basic ' + Buffer.from(`${l.username}:${l.password}`).toString('base64');
+  return Object.assign(out, rowsToObject(rows));
+}
+
 function requestParts(item) {
   const src = item?.monitoring?.activity?.enabled ? item.monitoring.activity : item?.badge;
   return {
-    headers: rowsToObject(src?.headers),
+    headers: requestHeaders(src?.headers, src?.login),
     params: rowsToObject(src?.params),
   };
 }
@@ -96,6 +116,20 @@ function preserveRows(newRows, oldRows) {
   return nrows;
 }
 
+/** @param {unknown} login */
+function scrubLogin(login) {
+  const l = loginOf(login);
+  return l ? { username: l.username, passwordSet: l.password !== '' } : undefined;
+}
+
+/** @param {unknown} login @param {unknown} oldLogin */
+function preserveLogin(login, oldLogin) {
+  const l = loginOf(login);
+  if (!l) return undefined;
+  if (!l.password) l.password = loginOf(oldLogin)?.password || '';
+  return l;
+}
+
 function eachActivityLike(item, fn) {
   if (!item || typeof item !== 'object') return;
   if (item.badge) fn(item.badge);
@@ -105,6 +139,7 @@ function eachActivityLike(item, fn) {
 function scrubItemBadgeSecrets(item) {
   eachActivityLike(item, block => {
     for (const k of SUBKEYS) if (block[k] != null) block[k] = scrubRows(block[k]);
+    if (block.login != null) block.login = scrubLogin(block.login);
   });
 }
 
@@ -112,6 +147,7 @@ function preserveItemBadgeSecrets(newItem, oldItem) {
   const oldBlocks = { badge: oldItem?.badge, activity: oldItem?.monitoring?.activity };
   const apply = (block, old) => {
     for (const k of SUBKEYS) if (block[k] != null) block[k] = preserveRows(block[k], old?.[k]);
+    if (block.login != null) block.login = preserveLogin(block.login, old?.login);
   };
   if (newItem?.badge) apply(newItem.badge, oldBlocks.badge);
   if (newItem?.monitoring?.activity) apply(newItem.monitoring.activity, oldBlocks.activity);
@@ -135,6 +171,8 @@ module.exports = {
   droppedRowCount,
   firstMalformedRow,
   rowsToObject,
+  loginOf,
+  requestHeaders,
   requestParts,
   scrubRows,
   scrubItemBadgeSecrets,

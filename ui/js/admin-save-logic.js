@@ -291,6 +291,9 @@ export function buildAppItem(v, orig, takenIds = []) {
           url: v.actUrl,
           params: v.actParams?.length ? v.actParams : undefined,
           headers: v.actHeaders?.length ? v.actHeaders : undefined,
+          login: v.actLogin?.username
+            ? { username: v.actLogin.username, password: v.actLogin.password || undefined }
+            : undefined,
           extract: spaths.length === 1 ? spaths[0] : spaths.length > 1 ? spaths.map(p => ({ path: p })) : undefined,
           labels: combine ? undefined : labels,
           combine: combine || undefined,
