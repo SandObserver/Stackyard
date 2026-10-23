@@ -22,7 +22,7 @@ import { paintIcon, toast } from '/js/admin-shared.js?v=c28805e1';
 import { clr, el, focusFirst, initial, qa, setUserText } from '/js/utils.js?v=705ca896';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { sizeLabel } from '/js/admin-widget-form.js?v=6728c3b0';
+import { sizeLabel } from '/js/admin-widget-form.js?v=e766ff1d';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=b383b7c8';
 import { iconSvg } from '/js/icon-set.js?v=628341d4';
 

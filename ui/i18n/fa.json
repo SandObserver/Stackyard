@@ -498,6 +498,8 @@
     "empty": "خالی",
     "loaded_one": "{count} گزینه بارگذاری شد",
     "loaded_other": "{count} گزینه بارگذاری شد",
+    "loadedSome_one": "نخستین {count} گزینه نمایش داده می‌شود. سرور گزینه‌های بیشتری دارد.",
+    "loadedSome_other": "نخستین {count} گزینه نمایش داده می‌شود. سرور گزینه‌های بیشتری دارد.",
     "iframeUrl": "آدرس آی‌فریم",
     "referrerPolicy": "سیاست ارجاع‌دهنده",
     "referrerDefault": "پیش‌فرض",

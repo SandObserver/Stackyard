@@ -158,7 +158,13 @@ async function _fetchOptions(field, ctx) {
     if (d.detail && typeof d.detail === 'object') err.detail = d.detail;
     throw err;
   }
-  return Array.isArray(d.options) ? d.options : [];
+  return { options: Array.isArray(d.options) ? d.options : [], truncated: d.truncated === true };
+}
+
+/** @param {{ options: any[], truncated: boolean }} got */
+function _loadedText(got) {
+  if (!got.options.length) return t('widgetCfg.noOptions');
+  return t(got.truncated ? 'widgetCfg.loadedSome' : 'widgetCfg.loaded', { count: got.options.length });
 }
 
 function _picklist(field, value, ctx, size) {
@@ -229,10 +235,11 @@ function _picklist(field, value, ctx, size) {
       status.className = 'row-status';
       btn.disabled = true;
       try {
-        opts = await _fetchOptions(field, ctx);
+        const got = await _fetchOptions(field, ctx);
+        opts = got.options;
         paint();
-        status.textContent = opts.length ? t('widgetCfg.loaded', { count: opts.length }) : t('widgetCfg.noOptions');
-        status.className = 'row-status ok';
+        status.textContent = _loadedText(got);
+        status.className = 'row-status ' + (got.truncated ? 'warn' : 'ok');
       } catch (e) {
         const advice = optionsErrorAdvice(e);
         status.textContent = t(advice.key, advice.vars);
@@ -319,12 +326,13 @@ function _select(field, value, ctx, config = {}) {
       status.className = 'row-status';
       btn.disabled = true;
       try {
-        opts = await _fetchOptions(field, ctx);
+        const got = await _fetchOptions(field, ctx);
+        opts = got.options;
         chosen = lb.getValue() || chosen;
         paint();
         syncCarried();
-        status.textContent = opts.length ? t('widgetCfg.loaded', { count: opts.length }) : t('widgetCfg.noOptions');
-        status.className = 'row-status ok';
+        status.textContent = _loadedText(got);
+        status.className = 'row-status ' + (got.truncated ? 'warn' : 'ok');
       } catch (e) {
         const advice = optionsErrorAdvice(e);
         status.textContent = t(advice.key, advice.vars);

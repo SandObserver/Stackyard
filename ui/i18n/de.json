@@ -498,6 +498,8 @@
     "empty": "Leer",
     "loaded_one": "{count} Option geladen",
     "loaded_other": "{count} Optionen geladen",
+    "loadedSome_one": "Die erste {count} Option wird angezeigt. Der Server hat mehr.",
+    "loadedSome_other": "Die ersten {count} Optionen werden angezeigt. Der Server hat mehr.",
     "iframeUrl": "Iframe-URL",
     "referrerPolicy": "Referrer-Richtlinie",
     "referrerDefault": "Standard",

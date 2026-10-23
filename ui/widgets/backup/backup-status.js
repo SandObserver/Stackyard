@@ -84,13 +84,80 @@ function kopiaDeriveStatus(source) {
   if ((last.stats?.errorCount || 0) > 0) return 'error';
 
   const endTime = last.endTime ? new Date(last.endTime).getTime() : 0;
-  if (endTime && Date.now() - endTime > 25 * 60 * 60 * 1000) return 'warning';
+  if (endTime && Date.now() - endTime > STALE_MS) return 'warning';
 
   return 'healthy';
 }
 
 function kopiaSourceId(source) {
   return `${source.host}@${source.userName}:${source.path}`;
+}
+
+const STALE_MS = 25 * 60 * 60 * 1000;
+const MIN_MS = Date.UTC(2000, 0, 1);
+const MAX_MS = Date.UTC(2100, 0, 1);
+
+function plausibleMs(v) {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= MIN_MS && n < MAX_MS ? n : null;
+}
+
+const epochMs = s => (s == null || s === '' ? null : plausibleMs(Number(s) * 1000));
+
+function pbsGroupId(store, ns, group) {
+  return `${store}:${ns || ''}:${group['backup-type']}/${group['backup-id']}`;
+}
+
+function pbsParseGroupId(id) {
+  const m = /^([^:]+):([^:]*):(vm|ct|host)\/([^:/]+)$/.exec(String(id || ''));
+  return m ? { store: m[1], ns: m[2], type: m[3], id: m[4] } : null;
+}
+
+function pbsDeriveStatus(group, newest, tasks, now = Date.now()) {
+  const task = tasks?.[0];
+  if (task && !task.endtime) return 'running';
+  const lastMs = epochMs(group['last-backup']) || 0;
+  const startMs = task ? epochMs(task.starttime) : null;
+  if (startMs && startMs > lastMs && task.status !== 'OK' && !/^WARNINGS/.test(String(task.status || ''))) {
+    return 'error';
+  }
+  if (newest?.verification?.state === 'failed') return 'error';
+  if (!lastMs || now - lastMs > STALE_MS) return 'warning';
+  return 'healthy';
+}
+
+/* Recent backups are newest first. The 30-day history is oldest first. */
+function backrestLatest(summary) {
+  const rb = summary?.recentBackups || {};
+  const status = Array.isArray(rb.status) ? rb.status : [];
+  const i = status.findIndex(s => s !== 'STATUS_INPROGRESS');
+  if (i < 0) return null;
+  const at = Number(rb.timestampMs?.[i]) + Number(rb.durationMs?.[i] || 0);
+  return { status: status[i], finishedMs: plausibleMs(at) || 0 };
+}
+
+/* Task ids carry no namespace. Read it from the backup log line. */
+function pbsLogNamespace(lines) {
+  for (const line of lines) {
+    const m = /(?:^|: )starting new backup on datastore '[^']*'.*: "([^"]+)"$/.exec(String(line ?? ''));
+    if (!m) continue;
+    const parts = m[1].split('/');
+    const ns = [];
+    while (parts[0] === 'ns' && parts.length > 1) ns.push(parts.splice(0, 2)[1]);
+    return parts.length >= 2 ? ns.join('/') : null;
+  }
+  return null;
+}
+
+function backrestDeriveStatus(summary) {
+  if (summary?.recentBackups?.status?.[0] === 'STATUS_INPROGRESS') return 'running';
+  const history = summary?.historyLast30days;
+  if (Array.isArray(history) && history.at(-1)?.overdue) return 'missed';
+  const latest = backrestLatest(summary);
+  if (!latest) return 'warning';
+  if (latest.status === 'STATUS_ERROR') return 'error';
+  if (latest.status === 'STATUS_SUCCESS') return 'healthy';
+  return 'warning';
 }
 
 module.exports = {
@@ -105,4 +172,12 @@ module.exports = {
   dupDeriveStatus,
   kopiaDeriveStatus,
   kopiaSourceId,
+  pbsGroupId,
+  pbsParseGroupId,
+  pbsDeriveStatus,
+  pbsLogNamespace,
+  plausibleMs,
+  epochMs,
+  backrestLatest,
+  backrestDeriveStatus,
 };
