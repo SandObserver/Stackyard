@@ -84,6 +84,16 @@
       }
     },
     {
+      "key": "truenasSkipTls",
+      "type": "toggle",
+      "label": "truenasSkipTls.label",
+      "default": false,
+      "showIf": {
+        "field": "diskProvider",
+        "equals": "truenas"
+      }
+    },
+    {
       "key": "truenasHref",
       "type": "text",
       "label": "truenasHref.label",

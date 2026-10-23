@@ -1,7 +1,7 @@
 const path = require('path');
 const { on, json, readBody, checkOrigin, getIp } = require('./router');
 const { loadConfig } = require('./config');
-const { fetchChecked, fetchUnchecked, SsrfBlockedError } = require('./proxy');
+const { fetchChecked, fetchUnchecked, jsonRpcChecked, jsonRpcUnchecked, SsrfBlockedError } = require('./proxy');
 const { parsePrometheus } = require('./parse-prometheus');
 const { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds } = require('./metrics');
 const { getRegistry, WIDGETS_PATH } = require('./widgets');
@@ -52,13 +52,14 @@ const refuseUnreadable =
 
 const withinBudget =
   (fetch, deadline) =>
-  (url, opts = {}) => {
+  (url, opts = {}, ...rest) => {
     const left = deadline - Date.now();
     if (left <= 0) return Promise.reject(new Error('Timed out'));
-    return fetch(url, { ...opts, timeout: Math.min(opts.timeout || FETCH_MS, left) });
+    return fetch(url, { ...opts, timeout: Math.min(opts.timeout || FETCH_MS, left) }, ...rest);
   };
 
 function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
+  const deadline = Date.now() + WIDGET_BUDGET_MS;
   const ctx = {
     config: wc /* full widgetConfig, including secrets (server-side only) */,
     /* Non-secret keys only. The full settings object carries the session signing
@@ -69,7 +70,9 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
     params: searchParams,
     /* The caller supplies the fetcher to match the URL's provenance: unchecked
        for saved config, checked for a request-supplied preview config. */
-    fetchJSON: refuseUnreadable(withinBudget(fetch, Date.now() + WIDGET_BUDGET_MS)),
+    fetchJSON: refuseUnreadable(withinBudget(fetch, deadline)),
+    /* Follows the fetcher's provenance. Anything but saved config is checked. */
+    jsonRpc: withinBudget(fetch === fetchUnchecked ? jsonRpcUnchecked : jsonRpcChecked, deadline),
     parsePrometheus,
     metrics: IS_DEMO ? demoData.metrics : { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds },
     demo: IS_DEMO ? demoData.helpers : null,

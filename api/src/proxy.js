@@ -8,6 +8,7 @@ const { IS_DEMO } = require('./demo');
 const { parseXml } = require('./parse-xml');
 const log = require('./log');
 const { parsePrometheus } = require('./parse-prometheus');
+const websocket = require('./websocket');
 
 /* Addresses that are never a legitimate outbound target. */
 /** @type {Array<[string, number, string]>} */
@@ -399,6 +400,107 @@ function fetchJSON(raw, opts = {}) {
   });
 }
 
+/** @param {string} raw
+   @param {{ headers?: Record<string, string>, skipTls?: boolean, pinIp?: string|null,
+     maxBytes?: number, timeout?: number, signal?: AbortSignal }} [opts] */
+function openWebSocket(raw, opts = {}) {
+  return new Promise((resolve, reject) => {
+    let u;
+    try {
+      u = new URL(raw);
+    } catch (e) {
+      return reject(e);
+    }
+    const policy = urlPolicyError(u);
+    if (policy) return reject(Object.assign(new Error(policy), { kind: 'blocked', status: 403 }));
+    const signal = opts.signal;
+    if (signal?.aborted) return reject(signal.reason);
+    const secure = u.protocol === 'https:';
+    const { skip: skipTls, ignored: skipIgnored } = resolveSkipTls(u.hostname, opts.skipTls);
+    const key = websocket.handshakeKey();
+    /** @type {Record<string, string>} */
+    const headers = {
+      ...(opts.headers || {}),
+      Connection: 'Upgrade',
+      Upgrade: 'websocket',
+      'Sec-WebSocket-Version': '13',
+      'Sec-WebSocket-Key': key,
+    };
+    const pin = opts.pinIp && opts.pinIp !== u.hostname ? opts.pinIp : null;
+    if (pin) headers.Host = u.host;
+    let settled = false;
+    const settle = (fn, arg) => {
+      if (settled) return;
+      settled = true;
+      signal?.removeEventListener('abort', onAbort);
+      fn(arg);
+    };
+    const req = (secure ? https : http).request({
+      hostname: pin || u.hostname.replace(/^\[|\]$/g, ''),
+      port: u.port || (secure ? 443 : 80),
+      path: u.pathname + u.search,
+      headers,
+      servername: pin ? u.hostname : undefined,
+      lookup: resolver.lookupWithin(opts.timeout || FETCH_MS),
+      rejectUnauthorized: !skipTls,
+      agent: false,
+    });
+    function onAbort() {
+      req.destroy();
+      settle(reject, signal?.reason);
+    }
+    signal?.addEventListener('abort', onAbort, { once: true });
+    req.on('response', res => {
+      res.destroy();
+      req.destroy();
+      const sc = res.statusCode ?? 0;
+      settle(
+        reject,
+        Object.assign(new Error(`WebSocket upgrade refused (HTTP ${sc})`), { kind: 'upstream', status: sc }),
+      );
+    });
+    req.on('upgrade', (res, socket, head) => {
+      const accepted =
+        String(res.headers.upgrade || '').toLowerCase() === 'websocket' &&
+        res.headers['sec-websocket-accept'] === websocket.acceptFor(key);
+      if (!accepted || settled) {
+        socket.destroy();
+        return settle(reject, Object.assign(new Error('The WebSocket handshake failed.'), { kind: 'upstream' }));
+      }
+      const conn = websocket.wrapSocket(socket, head, { maxBytes: opts.maxBytes });
+      signal?.addEventListener('abort', () => conn.destroy(signal.reason), { once: true });
+      settle(resolve, conn);
+    });
+    req.on('error', (/** @type {unknown} */ e) => {
+      if (skipIgnored && TLS_ERROR_CODES.has(errCode(e) ?? '')) {
+        /** @type {{ vouchedMessage?: string }} */ (e).vouchedMessage = SKIP_TLS_IGNORED_MESSAGE;
+        /** @type {{ apiCode?: string }} */ (e).apiCode = 'network.tls-ignored';
+      }
+      settle(reject, e);
+    });
+    req.end();
+  });
+}
+
+/** @template T
+   @param {string} raw @param {NonNullable<Parameters<typeof openWebSocket>[1]>} opts
+   @param {(session: ReturnType<typeof websocket.rpcSession>) => Promise<T>} fn @returns {Promise<T>} */
+async function jsonRpc(raw, opts, fn) {
+  if (IS_DEMO) throw Object.assign(new Error('Outbound requests are disabled in demo mode'), { kind: 'blocked' });
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(new Error('Timed out')), opts.timeout || FETCH_MS);
+  timer.unref();
+  let conn = null;
+  try {
+    conn = await openWebSocket(raw, { ...opts, signal: ac.signal });
+    const session = websocket.rpcSession(conn);
+    return await Promise.race([fn(session), session.failed]);
+  } finally {
+    clearTimeout(timer);
+    conn?.close();
+  }
+}
+
 function statusDesc(code) {
   if (code === 0) return 'No response';
   if (code < 400) return 'OK';
@@ -588,6 +690,20 @@ function fetchUnchecked(url, opts = {}) {
   return fetchJSON(rewriteUrl(url), opts);
 }
 
+async function jsonRpcChecked(url, opts, fn) {
+  if (IS_DEMO) return jsonRpc(url, opts, fn);
+  const target = rewriteUrl(url);
+  const budget = opts.timeout || FETCH_MS;
+  const started = Date.now();
+  const guard = await guardSsrf(target, budget);
+  if (guard.error) throw new SsrfBlockedError(guard.error, guard.reason);
+  return jsonRpc(target, { ...opts, pinIp: guard.ip, timeout: Math.max(1, budget - (Date.now() - started)) }, fn);
+}
+
+function jsonRpcUnchecked(url, opts, fn) {
+  return jsonRpc(rewriteUrl(url), opts, fn);
+}
+
 function pingUnchecked(url, ms, skipTls) {
   return pingUrl(rewriteUrl(url), ms, skipTls);
 }
@@ -618,6 +734,8 @@ async function pingChecked(url, ms, skipTls) {
 module.exports = {
   fetchChecked,
   fetchUnchecked,
+  jsonRpcChecked,
+  jsonRpcUnchecked,
   pingChecked,
   pingUnchecked,
   SsrfBlockedError,
@@ -639,5 +757,5 @@ module.exports = {
   isBlockedIPv4,
   embeddedIPv4,
   BLOCKED_IPV4,
-  _internals: { fetchJSON, pingUrl, guardSsrf, withDeadline, PING_CODES },
+  _internals: { fetchJSON, openWebSocket, jsonRpc, pingUrl, guardSsrf, withDeadline, PING_CODES },
 };

@@ -15,6 +15,7 @@
   "truenasUrl.label": "URL TrueNAS",
   "truenasUrl.placeholder": "truenas.local",
   "truenasKey.label": "Clé d’API TrueNAS",
+  "truenasSkipTls.label": "Autoriser un certificat auto-signé",
   "truenasHref.label": "URL du lien",
   "truenasHref.placeholder": "http://truenas.local",
   "truenasHref.hint": "L’adresse que votre navigateur utilise pour ce service. Laissez vide pour utiliser celle ci-dessus, si votre navigateur peut l’atteindre.",

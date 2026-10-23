@@ -278,3 +278,125 @@ test('with no link set the widget opens the Unraid address the browser can reach
   assert.equal(r.href, 'http://10.0.0.9');
   assert.equal(r.provider, 'unraid');
 });
+
+const { fakeJsonRpc, refusedUpgrade } = require('../test-support/fake-json-rpc');
+
+const TRUENAS_KEY = '1-Qm9vdGVkVGhlS2V5';
+const POOLS = [
+  { name: 'tank', healthy: true, size: 4000 },
+  { name: 'backup', healthy: false, size: 1000 },
+];
+
+function truenasCtx(endpoint, config, { methods, jsonRpc, rest } = {}) {
+  const rpc = fakeJsonRpc(
+    methods || { 'auth.login_with_api_key': ([key]) => key === TRUENAS_KEY, 'pool.query': POOLS },
+  );
+  const fetched = [];
+  const ctx = makeCtx(
+    endpoint,
+    { diskProvider: 'truenas', truenasUrl: 'nas.local', truenasKey: TRUENAS_KEY, ...config },
+    async (url, opts) => {
+      fetched.push({ url, opts });
+      return rest ? rest(url) : { status: 404, data: null };
+    },
+  );
+  ctx.jsonRpc = jsonRpc || rpc.jsonRpc;
+  return { ctx, fetched, ...rpc };
+}
+
+test('TrueNAS pools are read over the WebSocket API at an https address', async () => {
+  const { ctx, opened, fetched } = truenasCtx('', { bays: ['tank', 'backup'], truenasSkipTls: true });
+  const r = await dataFn(ctx);
+  assert.equal(opened[0].url, 'https://nas.local/api/current');
+  assert.equal(opened[0].opts.skipTls, true);
+  assert.equal(fetched.length, 0);
+  assert.deepEqual(
+    r.bays.map(b => [b.device_id, b.device_status]),
+    [
+      ['tank', 0],
+      ['backup', 2],
+    ],
+  );
+  assert.equal(r.href, 'https://nas.local');
+});
+
+test('the TrueNAS bay picker lists pools from the WebSocket API', async () => {
+  const { ctx } = truenasCtx('devices', {});
+  assert.deepEqual((await dataFn(ctx)).options, [
+    { value: 'tank', label: 'tank' },
+    { value: 'backup', label: 'backup' },
+  ]);
+});
+
+test('an http TrueNAS address is refused before the key is sent', async () => {
+  const { ctx, opened, fetched } = truenasCtx('', { truenasUrl: 'http://nas.local', bays: ['tank'] });
+  await assert.rejects(
+    () => dataFn(ctx),
+    e => e.kind === 'invalid' && /https/.test(e.message),
+  );
+  assert.equal(opened.length + fetched.length, 0);
+});
+
+test('a refused TrueNAS key is an auth error and REST is not tried', async () => {
+  const { ctx, fetched } = truenasCtx('', { truenasKey: '1-wrong', bays: ['tank'] });
+  await assert.rejects(
+    () => dataFn(ctx),
+    e => e.kind === 'auth',
+  );
+  assert.equal(fetched.length, 0);
+});
+
+test('TrueNAS before 25.04 falls back to REST with the same key', async () => {
+  const { ctx, fetched } = truenasCtx(
+    '',
+    { bays: ['tank'] },
+    {
+      jsonRpc: async () => {
+        throw refusedUpgrade(404);
+      },
+      rest: () => ({ status: 200, data: POOLS }),
+    },
+  );
+  const r = await dataFn(ctx);
+  assert.equal(fetched[0].url, 'https://nas.local/api/v2.0/pool');
+  assert.equal(fetched[0].opts.headers.Authorization, 'Bearer ' + TRUENAS_KEY);
+  assert.equal(r.bays[0].device_status, 0);
+});
+
+test('a network failure on the WebSocket API does not fall back to REST', async () => {
+  const { ctx, fetched } = truenasCtx(
+    '',
+    { bays: ['tank'] },
+    {
+      jsonRpc: async () => {
+        throw Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' });
+      },
+    },
+  );
+  await assert.rejects(
+    () => dataFn(ctx),
+    e => e.code === 'ECONNREFUSED',
+  );
+  assert.equal(fetched.length, 0);
+});
+
+test('an address with neither TrueNAS API is named as not TrueNAS', async () => {
+  const { ctx } = truenasCtx(
+    '',
+    { bays: ['tank'] },
+    {
+      jsonRpc: async () => {
+        throw refusedUpgrade(404);
+      },
+    },
+  );
+  await assert.rejects(
+    () => dataFn(ctx),
+    e => /not TrueNAS/.test(e.message),
+  );
+});
+
+test('a TrueNAS pool that is gone reads as not found', async () => {
+  const { ctx } = truenasCtx('', { bays: ['gone'] });
+  assert.equal((await dataFn(ctx)).bays[0].error, 'not found');
+});

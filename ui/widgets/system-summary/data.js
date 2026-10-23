@@ -21,6 +21,7 @@ async function systemSummary(ctx) {
       beszel: systemSummaryBeszel,
       unraid: systemSummaryUnraid,
       proxmox: systemSummaryProxmox,
+      truenas: systemSummaryTrueNas,
     },
     { field: 'statProvider', default: 'system' },
   );
@@ -32,6 +33,7 @@ function summaryLink(ctx) {
   if (c.statProvider === 'glances') return ctx.serviceLink(c.href, c.glancesUrl);
   if (c.statProvider === 'unraid') return ctx.serviceLink(c.href, c.unraidUrl);
   if (c.statProvider === 'proxmox') return ctx.serviceLink(c.href, proxmoxAddress(c.proxmoxUrl));
+  if (c.statProvider === 'truenas') return ctx.serviceLink(c.href, truenasAddress(c.truenasUrl));
   if (c.statProvider !== 'beszel') return c.href || '';
   if (!c.beszelSystem) return ctx.serviceLink(c.href, c.beszelUrl);
   return ctx.serviceLink(c.href, c.beszelUrl, `/system/${encodeURIComponent(c.beszelSystem)}`);
@@ -686,6 +688,116 @@ async function systemSummaryProxmox(ctx) {
     procs: null,
     uptime: typeof status?.uptime === 'number' ? status.uptime : null,
   };
+}
+
+/* ── TrueNAS ─────────────────────────────────────────────────────────────── */
+
+/* Never send the key over http. TrueNAS revokes it. */
+function truenasAddress(raw) {
+  const s = String(raw || '')
+    .trim()
+    .replace(/[?#].*$/, '');
+  return !s || /^[a-z][a-z0-9+.-]*:\/\//i.test(s) ? s : `https://${s}`;
+}
+
+function truenasBase(ctx) {
+  const address = truenasAddress(ctx.config.truenasUrl);
+  if (!address) ctx.fail('Enter the TrueNAS URL first.', { kind: ctx.KIND.INVALID });
+  if (/^http:\/\//i.test(address))
+    ctx.fail('Use an https:// address. TrueNAS revokes an API key sent over http.', { kind: ctx.KIND.INVALID });
+  return ctx.normalizeBase(address);
+}
+
+const isDenied = e => e?.rpc?.data?.errname === 'EACCES';
+
+async function truenasSession(ctx, fn) {
+  const base = truenasBase(ctx);
+  const key = String(ctx.config.truenasKey || '').trim();
+  if (!key) ctx.fail('Enter the TrueNAS API key first.', { kind: ctx.KIND.INVALID });
+  try {
+    return await ctx.jsonRpc(`${base}/api/current`, { skipTls: ctx.config.truenasSkipTls === true }, async session => {
+      if ((await session.call('auth.login_with_api_key', [key])) !== true)
+        ctx.fail('TrueNAS refused the API key', { kind: ctx.KIND.AUTH });
+      return fn(session);
+    });
+  } catch (e) {
+    if (e?.kind === 'upstream' && typeof e.status === 'number') ctx.fail('That address is not TrueNAS 25.04 or later');
+    if (isDenied(e))
+      ctx.fail('The API key needs the REPORTING_READ, POOL_READ and DATASET_READ roles', { kind: ctx.KIND.AUTH });
+    throw e;
+  }
+}
+
+const REALTIME = 'reporting.realtime';
+
+function truenasRealtime(session) {
+  const next = session.notification('collection_update', p => p?.collection === REALTIME);
+  return session.call('core.subscribe', [REALTIME]).then(() => next.then(p => p?.fields || {}));
+}
+
+async function truenasPoolUsage(session, names) {
+  if (!names.length) return {};
+  const rows = await session.call('pool.dataset.query', [
+    [['id', 'in', names]],
+    { extra: { retrieve_children: false } },
+  ]);
+  const out = {};
+  for (const d of Array.isArray(rows) ? rows : []) {
+    const used = Number(d?.used?.parsed) || 0;
+    const total = used + (Number(d?.available?.parsed) || 0);
+    if (typeof d?.id === 'string') out[d.id] = { usedPct: pct(used, total), totalGb: total / GB };
+  }
+  return out;
+}
+
+const finite = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+
+async function systemSummaryTrueNas(ctx) {
+  const slots = ctx.config.slots || [];
+  const net = ctx.config.network || {};
+  const wantsUptime = net.enabled === true && net.mode === 'uptime';
+  /* The widget looks an empty slot up as '/'. Here that is the first pool. */
+  const mounts = new Set();
+  for (const s of slots) {
+    if (s.type !== 'disk') continue;
+    mounts.add(String(s.primary || '').trim() || '/');
+    const second = String(s.secondary || '').trim();
+    if (second) mounts.add(second);
+  }
+  const wantsFirstPool = mounts.has('/');
+
+  return truenasSession(ctx, async session => {
+    const [fields, pools, info] = await Promise.all([
+      truenasRealtime(session),
+      wantsFirstPool ? session.call('pool.query', [[], { select: ['name'] }]) : null,
+      wantsUptime ? session.call('system.info').catch(e => (isDenied(e) ? null : Promise.reject(e))) : null,
+    ]);
+    const first = (Array.isArray(pools) ? pools : []).find(p => typeof p?.name === 'string')?.name || '';
+    const poolOf = mount => (mount === '/' ? first : mount);
+    const usage = await truenasPoolUsage(session, [...new Set([...mounts].map(poolOf).filter(Boolean))]);
+    const disk = mount => usage[poolOf(mount)] || { usedPct: 0, totalGb: 0 };
+
+    const cpu = fields.cpu || {};
+    const cores = Object.entries(cpu).filter(([k]) => /^cpu\d+$/.test(k));
+    const coreTemps = cores.map(([, c]) => finite(c?.temp)).filter(t => t !== null);
+    const temp = finite(cpu.cpu?.temp) ?? (coreTemps.length ? Math.max(...coreTemps) : null);
+    const mem = fields.memory || {};
+    const total = finite(mem.physical_memory_total);
+    const available = finite(mem.physical_memory_available);
+    /* Available memory leaves out the ZFS cache, which TrueNAS frees on demand. */
+    const cache = finite(mem.arc_size) ?? 0;
+
+    return {
+      cpu: finite(cpu.cpu?.usage),
+      ram: total && available !== null ? pct(Math.max(0, total - available - cache), total) : null,
+      temp,
+      temps: temp === null ? {} : { 0: temp },
+      disks: [...mounts].map(mount => ({ mount, ...disk(mount) })),
+      iowait: null,
+      procs: null,
+      uptime: finite(info?.uptime_seconds) === null ? null : Math.floor(info.uptime_seconds),
+    };
+  });
 }
 
 /* A counter is not a rate. Sources that report totals are turned into one here,

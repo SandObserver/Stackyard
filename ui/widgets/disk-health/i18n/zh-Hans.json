@@ -15,6 +15,7 @@
   "truenasUrl.label": "TrueNAS 地址",
   "truenasUrl.placeholder": "truenas.local",
   "truenasKey.label": "TrueNAS API 密钥",
+  "truenasSkipTls.label": "允许自签名证书",
   "truenasHref.label": "链接地址",
   "truenasHref.placeholder": "http://truenas.local",
   "truenasHref.hint": "浏览器访问此服务所用的地址。留空则使用上方地址（前提是浏览器能访问它）。",
