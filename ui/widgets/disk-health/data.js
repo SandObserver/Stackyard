@@ -60,25 +60,57 @@ async function scrutinyDeviceOptions(ctx) {
   return { options };
 }
 
-function truenasStatus(ctx, r) {
-  if (r.status === 401 || r.status === 403) ctx.fail('TrueNAS auth failed, check API key', { kind: ctx.KIND.AUTH });
-  if (r.status === 404) ctx.fail('TrueNAS REST API not found (supported on 25.x only, or use Scrutiny)');
+/* Never send the key over http. TrueNAS revokes it. */
+function truenasBase(ctx) {
+  const raw = String(ctx.config.truenasUrl || '')
+    .trim()
+    .replace(/[?#].*$/, '');
+  if (!raw) ctx.fail('Enter the TrueNAS URL first.', { kind: ctx.KIND.INVALID });
+  if (/^http:\/\//i.test(raw))
+    ctx.fail('Use an https:// address. TrueNAS revokes an API key sent over http.', { kind: ctx.KIND.INVALID });
+  return ctx.normalizeBase(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`);
+}
+
+function truenasKey(ctx) {
+  const key = String(ctx.config.truenasKey || '').trim();
+  if (!key) ctx.fail('Enter the TrueNAS API key first.', { kind: ctx.KIND.INVALID });
+  return key;
+}
+
+function truenasRestStatus(ctx, r) {
+  if (r.status === 401 || r.status === 403) ctx.fail('TrueNAS refused the API key', { kind: ctx.KIND.AUTH });
+  if (r.status === 404) ctx.fail('That address is not TrueNAS');
   if (r.status >= 400) ctx.fail('TrueNAS HTTP ' + r.status);
 }
 
+/* Keep the REST read. TrueNAS before 25.04 has no WebSocket API. */
+async function truenasPools(ctx) {
+  const base = truenasBase(ctx);
+  const key = truenasKey(ctx);
+  const skipTls = ctx.config.truenasSkipTls === true;
+  let pools;
+  try {
+    pools = await ctx.jsonRpc(`${base}/api/current`, { skipTls }, async session => {
+      if ((await session.call('auth.login_with_api_key', [key])) !== true)
+        ctx.fail('TrueNAS refused the API key', { kind: ctx.KIND.AUTH });
+      return session.call('pool.query');
+    });
+  } catch (e) {
+    if (e?.kind !== 'upstream' || typeof e.status !== 'number') throw e;
+    const r = await ctx.fetchJSON(`${base}/api/v2.0/pool`, {
+      headers: { Authorization: 'Bearer ' + key },
+      skipTls,
+      timeout: 8000,
+    });
+    truenasRestStatus(ctx, r);
+    pools = r.data;
+  }
+  return (Array.isArray(pools) ? pools : []).filter(p => p && typeof p.name === 'string' && p.name);
+}
+
 async function truenasPoolOptions(ctx) {
-  const { config, fetchJSON, normalizeBase } = ctx;
-  if (!config.truenasUrl) ctx.fail('Enter the TrueNAS URL first.', { kind: ctx.KIND.INVALID });
-  if (!config.truenasKey) ctx.fail('Enter the TrueNAS API key first.', { kind: ctx.KIND.INVALID });
-  const r = await fetchJSON(normalizeBase(config.truenasUrl) + '/api/v2.0/pool', {
-    headers: { Authorization: 'Bearer ' + config.truenasKey },
-    timeout: 8000,
-  });
-  truenasStatus(ctx, r);
-  const options = (Array.isArray(r.data) ? r.data : [])
-    .filter(p => p && p.name)
-    .map(p => ({ value: p.name, label: p.name }));
-  return { options };
+  const pools = await truenasPools(ctx);
+  return { options: pools.map(p => ({ value: p.name, label: p.name })) };
 }
 
 function diskHealth(ctx) {
@@ -132,24 +164,10 @@ function scrutinyFailed(status) {
 /* A pool's `healthy` flag becomes the per-bay status, in the codes the widget
    already uses for Scrutiny. */
 async function diskHealthTrueNas(ctx) {
-  const { config, fetchJSON, normalizeBase } = ctx;
-  const url = config.truenasUrl;
-  const key = config.truenasKey;
-  if (!url) ctx.fail('truenasUrl not configured', { kind: ctx.KIND.INVALID });
-  if (!key) ctx.fail('TrueNAS API key not configured', { kind: ctx.KIND.INVALID });
+  const { config } = ctx;
   const bays = config.bays || [];
-
-  const base = normalizeBase(url);
-  const r = await fetchJSON(base + '/api/v2.0/pool', {
-    headers: { Authorization: 'Bearer ' + key },
-    timeout: 8000,
-  });
-  truenasStatus(ctx, r);
-
   const byName = {};
-  (Array.isArray(r.data) ? r.data : []).forEach(p => {
-    if (p && p.name) byName[p.name] = p;
-  });
+  for (const p of await truenasPools(ctx)) byName[p.name] = p;
 
   const result = bays.map(name => {
     if (!name) return null;
@@ -166,7 +184,7 @@ async function diskHealthTrueNas(ctx) {
     };
   });
 
-  return { bays: result, href: ctx.serviceLink(config.truenasHref, url), provider: 'truenas' };
+  return { bays: result, href: ctx.serviceLink(config.truenasHref, truenasBase(ctx)), provider: 'truenas' };
 }
 
 /* Unraid's own web server proxies the API at /graphql, and refuses GET unless

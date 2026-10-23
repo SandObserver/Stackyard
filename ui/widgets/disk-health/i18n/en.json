@@ -15,6 +15,7 @@
   "truenasUrl.label": "TrueNAS URL",
   "truenasUrl.placeholder": "truenas.local",
   "truenasKey.label": "TrueNAS API Key",
+  "truenasSkipTls.label": "Allow Self-Signed Certificate",
   "truenasHref.label": "Link URL",
   "truenasHref.placeholder": "http://truenas.local",
   "truenasHref.hint": "The address your browser uses for this service. Leave blank to use the one above, if your browser can reach it.",

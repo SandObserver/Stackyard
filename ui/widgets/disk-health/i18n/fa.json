@@ -15,6 +15,7 @@
   "truenasUrl.label": "آدرس TrueNAS",
   "truenasUrl.placeholder": "truenas.local",
   "truenasKey.label": "کلید API TrueNAS",
+  "truenasSkipTls.label": "پذیرش گواهی خودامضا",
   "truenasHref.label": "آدرس پیوند",
   "truenasHref.placeholder": "http://truenas.local",
   "truenasHref.hint": "آدرسی که مرورگرتان برای این سرویس استفاده می‌کند. اگر مرورگرتان به آدرس بالا دسترسی دارد، خالی بگذارید.",
