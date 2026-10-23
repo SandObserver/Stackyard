@@ -318,3 +318,201 @@ test('a token refresh that fails is not tried again on the next poll', async t =
   assert.deepEqual(await dataFn(ctx), [{ error: KIND.TIMEOUT }]);
   assert.equal(refreshes(), tried, 'the next poll logs in without the old refresh nonce');
 });
+
+function pbsCtx(config, endpoint, answer, row = null) {
+  const built = ctxFor(config, endpoint, {}, row);
+  built.ctx.fetchJSON = async (url, opts) => {
+    built.calls.push({ url, opts });
+    const u = new URL(url);
+    return answer(u.pathname.replace(/^\/api2\/json/, ''), u.searchParams, opts) || { status: 404, data: null };
+  };
+  return built;
+}
+
+const PBS_ROW = {
+  provider: 'pbs',
+  pbsUrl: 'https://10.0.0.7:8007',
+  pbsTokenId: 'stackyard@pbs!dash',
+  pbsSecret: '0b8f-11aa',
+  pbsSkipTls: true,
+};
+const NOW_S = Math.floor(Date.now() / 1000);
+
+test('pbs-groups lists every group in every store and namespace', async () => {
+  const { ctx, calls } = pbsCtx(
+    {},
+    'pbs-groups',
+    (p, q) => {
+      if (p === '/admin/datastore') return { status: 200, data: { data: [{ store: 'main' }] } };
+      if (p === '/admin/datastore/main/namespace')
+        return { status: 200, data: { data: [{ ns: '' }, { ns: 'site-b' }] } };
+      if (p === '/admin/datastore/main/groups' && !q.get('ns')) {
+        return { status: 200, data: { data: [{ 'backup-type': 'vm', 'backup-id': '100', comment: 'web' }] } };
+      }
+      if (p === '/admin/datastore/main/groups' && q.get('ns') === 'site-b') {
+        return { status: 200, data: { data: [{ 'backup-type': 'ct', 'backup-id': '200' }] } };
+      }
+    },
+    PBS_ROW,
+  );
+  const out = await dataFn(ctx);
+  assert.deepEqual(out.options, [
+    { value: 'main::vm/100', label: 'main: vm/100 (web)' },
+    { value: 'main:site-b:ct/200', label: 'main/site-b: ct/200' },
+  ]);
+  assert.equal(calls[0].opts.headers.Authorization, 'PBSAPIToken=stackyard@pbs!dash:0b8f-11aa');
+  assert.equal(calls[0].opts.skipTls, true);
+});
+
+test('pbs-groups refuses a token that would break the header', async () => {
+  const { ctx, calls } = pbsCtx({}, 'pbs-groups', () => null, { ...PBS_ROW, pbsSecret: 'abc\r\nX-Evil: 1' });
+  await assert.rejects(() => dataFn(ctx), /token ID/);
+  assert.equal(calls.length, 0);
+});
+
+test('pbs-groups reports a refused token as an auth failure', async () => {
+  const { ctx } = pbsCtx({}, 'pbs-groups', () => ({ status: 401, data: null }), PBS_ROW);
+  await assert.rejects(
+    () => dataFn(ctx),
+    e => e.kind === KIND.AUTH,
+  );
+});
+
+test('a PBS slot reads its group, newest snapshot and backup tasks', async () => {
+  const { ctx } = pbsCtx(
+    {
+      slots: [
+        { ...PBS_ROW, jobId: 'main::vm/100' },
+        { ...PBS_ROW, jobId: 'main:site-b:vm/100' },
+      ],
+    },
+    'slots',
+    (p, q) => {
+      if (p === '/admin/datastore/main/groups') {
+        return {
+          status: 200,
+          data: { data: [{ 'backup-type': 'vm', 'backup-id': '100', 'last-backup': NOW_S - 3600 }] },
+        };
+      }
+      if (p === '/admin/datastore/main/snapshots') {
+        assert.equal(q.get('backup-id'), '100');
+        const state = q.get('ns') === 'site-b' ? 'failed' : 'ok';
+        const older = { 'backup-time': NOW_S - 7200, comment: 'old name' };
+        const newest = { 'backup-time': NOW_S - 3600, comment: 'web', verification: { state } };
+        return { status: 200, data: { data: [older, newest] } };
+      }
+      if (p === '/nodes/localhost/tasks') {
+        assert.equal(q.get('store'), 'main');
+        assert.equal(q.get('typefilter'), 'backup');
+        return {
+          status: 200,
+          data: { data: [{ worker_type: 'backup', worker_id: 'main:vm/100', starttime: NOW_S - 10 }] },
+        };
+      }
+    },
+  );
+  const out = await dataFn(ctx);
+  assert.equal(out[0].status, 'running');
+  assert.equal(out[0].name, 'web');
+  assert.equal(out[0].lastFinished, new Date((NOW_S - 3600) * 1000).toISOString());
+  assert.equal(out[0].nextRun, null);
+  assert.equal(out[0].link, 'https://10.0.0.7:8007');
+  assert.equal(out[1].status, 'error');
+});
+
+test('a PBS slot still reads when the token cannot list tasks', async () => {
+  const { ctx } = pbsCtx({ slots: [{ ...PBS_ROW, jobId: 'main::host/nas' }] }, 'slots', p => {
+    if (p === '/admin/datastore/main/groups') {
+      return {
+        status: 200,
+        data: { data: [{ 'backup-type': 'host', 'backup-id': 'nas', 'last-backup': NOW_S - 600 }] },
+      };
+    }
+    if (p === '/admin/datastore/main/snapshots') return { status: 200, data: { data: [] } };
+    if (p === '/nodes/localhost/tasks') return { status: 403, data: null };
+  });
+  const out = await dataFn(ctx);
+  assert.equal(out[0].status, 'healthy');
+  assert.equal(out[0].name, 'host/nas');
+});
+
+test('a PBS group that is gone marks its slot invalid', async () => {
+  const { ctx } = pbsCtx({ slots: [{ ...PBS_ROW, jobId: 'main::vm/999' }] }, 'slots', p => {
+    if (p === '/admin/datastore/main/groups') return { status: 200, data: { data: [] } };
+    if (p === '/nodes/localhost/tasks') return { status: 200, data: { data: [] } };
+  });
+  const out = await dataFn(ctx);
+  assert.deepEqual(out, [{ error: KIND.INVALID }]);
+});
+
+const BACKREST_SUMMARY = {
+  status: 200,
+  data: {
+    planSummaries: [
+      {
+        id: 'photos',
+        nextBackupTimeMs: '1900000000000',
+        recentBackups: { status: ['STATUS_SUCCESS'], timestampMs: ['1800000000000'], durationMs: ['60000'] },
+        historyLast30days: [{ overdue: false }],
+      },
+    ],
+  },
+};
+
+test('backrest-plans posts to the summary call with basic auth when a user is set', async () => {
+  const { ctx, calls } = ctxFor(
+    {},
+    'backrest-plans',
+    { '/v1.Backrest/GetSummaryDashboard': BACKREST_SUMMARY },
+    { provider: 'backrest', backrestUrl: 'http://backrest:9898/', backrestUser: 'u', backrestPass: 'p' },
+  );
+  const out = await dataFn(ctx);
+  assert.deepEqual(out, { options: [{ value: 'photos', label: 'photos' }] });
+  assert.equal(calls[0].url, 'http://backrest:9898/v1.Backrest/GetSummaryDashboard');
+  assert.equal(calls[0].opts.method, 'POST');
+  assert.equal(calls[0].opts.body, '{}');
+  assert.match(calls[0].opts.headers.Authorization, /^Basic /);
+});
+
+test('backrest-plans sends no credentials when sign-in is off', async () => {
+  const { ctx, calls } = ctxFor(
+    {},
+    'backrest-plans',
+    { '/v1.Backrest/GetSummaryDashboard': BACKREST_SUMMARY },
+    { provider: 'backrest', backrestUrl: 'http://backrest:9898' },
+  );
+  await dataFn(ctx);
+  assert.equal(calls[0].opts.headers.Authorization, undefined);
+});
+
+test('a Backrest slot shows its plan with last and next run and a plan link', async () => {
+  const { ctx } = ctxFor(
+    {
+      slots: [
+        { provider: 'backrest', backrestUrl: 'http://10.0.0.8:9898', jobId: 'photos' },
+        { provider: 'backrest', backrestUrl: 'http://10.0.0.8:9898', jobId: 'deleted' },
+      ],
+    },
+    'slots',
+    { '/v1.Backrest/GetSummaryDashboard': BACKREST_SUMMARY },
+  );
+  const out = await dataFn(ctx);
+  assert.deepEqual(out[0], {
+    id: 'photos',
+    name: 'photos',
+    status: 'healthy',
+    lastFinished: new Date(1800000060000).toISOString(),
+    nextRun: new Date(1900000000000).toISOString(),
+    link: 'http://10.0.0.8:9898/#/plan/photos',
+  });
+  assert.deepEqual(out[1], { error: KIND.INVALID });
+});
+
+test('a Backrest login refused marks its cards as an auth failure', async () => {
+  const { ctx } = ctxFor(
+    { slots: [{ provider: 'backrest', backrestUrl: 'http://br-401:9898', jobId: 'photos' }] },
+    'slots',
+    { '/v1.Backrest/GetSummaryDashboard': { status: 401, data: null } },
+  );
+  assert.deepEqual(await dataFn(ctx), [{ error: KIND.AUTH }]);
+});

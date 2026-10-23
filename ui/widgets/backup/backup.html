@@ -394,7 +394,7 @@ async function boot() {
   /* Per-slot click URL — each card opens its own instance's link */
   _hrefs = Array.from({length: count}, (_,i) => {
     const sl = rawSlots[i]; if(!sl?.provider) return '';
-    return (sl.provider==='kopia' ? sl.kopiaHref : sl.dupHref) || '';
+    return ({ duplicati: sl.dupHref, kopia: sl.kopiaHref, pbs: sl.pbsHref, backrest: sl.backrestHref })[sl.provider] || '';
   });
   /* pollSec from first configured slot */
   const firstSlot = rawSlots.find(s=>s?.provider);

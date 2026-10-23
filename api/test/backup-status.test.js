@@ -78,3 +78,68 @@ test('kopiaDeriveStatus resolves its status chain', () => {
 test('kopiaSourceId composes host, user and path', () => {
   assert.equal(b.kopiaSourceId({ host: 'nas', userName: 'root', path: '/data' }), 'nas@root:/data');
 });
+
+test('pbsGroupId round-trips through pbsParseGroupId, with and without a namespace', () => {
+  const g = { 'backup-type': 'vm', 'backup-id': '100' };
+  assert.equal(b.pbsGroupId('main', '', g), 'main::vm/100');
+  assert.deepEqual(b.pbsParseGroupId('main::vm/100'), { store: 'main', ns: '', type: 'vm', id: '100' });
+  assert.deepEqual(b.pbsParseGroupId(b.pbsGroupId('main', 'site-a/pve', g)), {
+    store: 'main',
+    ns: 'site-a/pve',
+    type: 'vm',
+    id: '100',
+  });
+  assert.equal(b.pbsParseGroupId('main:vm/100'), null);
+  assert.equal(b.pbsParseGroupId(''), null);
+});
+
+test('pbsDeriveStatus resolves its status chain', () => {
+  const now = 1_800_000_000_000;
+  const fresh = { 'last-backup': now / 1000 - 3600 };
+  const old = { 'last-backup': now / 1000 - 26 * 3600 };
+  const ok = { verification: { state: 'ok' } };
+  assert.equal(b.pbsDeriveStatus(fresh, ok, [], now), 'healthy');
+  assert.equal(b.pbsDeriveStatus(fresh, ok, null, now), 'healthy');
+  assert.equal(b.pbsDeriveStatus(fresh, ok, [{ starttime: now / 1000 - 60 }], now), 'running');
+  const failedAfter = [{ starttime: now / 1000 - 60, endtime: now / 1000 - 30, status: 'connection error' }];
+  assert.equal(b.pbsDeriveStatus(fresh, ok, failedAfter, now), 'error');
+  const failedBefore = [{ starttime: now / 1000 - 7200, endtime: now / 1000 - 7100, status: 'connection error' }];
+  assert.equal(b.pbsDeriveStatus(fresh, ok, failedBefore, now), 'healthy');
+  const warned = [{ starttime: now / 1000 - 60, endtime: now / 1000 - 30, status: 'WARNINGS: 1' }];
+  assert.equal(b.pbsDeriveStatus(fresh, ok, warned, now), 'healthy');
+  assert.equal(b.pbsDeriveStatus(fresh, { verification: { state: 'failed' } }, [], now), 'error');
+  assert.equal(b.pbsDeriveStatus(old, ok, [], now), 'warning');
+  assert.equal(b.pbsDeriveStatus({}, null, null, now), 'warning');
+});
+
+test('backrestDeriveStatus reads the newest backup and today’s overdue flag', () => {
+  const plan = (status, extra = {}) => ({
+    recentBackups: {
+      status,
+      timestampMs: status.map((_, i) => String(2000 - i * 100)),
+      durationMs: status.map(() => '50'),
+    },
+    ...extra,
+  });
+  assert.equal(b.backrestDeriveStatus(plan(['STATUS_SUCCESS'])), 'healthy');
+  assert.equal(b.backrestDeriveStatus(plan(['STATUS_INPROGRESS', 'STATUS_ERROR'])), 'running');
+  assert.equal(b.backrestDeriveStatus(plan(['STATUS_ERROR', 'STATUS_SUCCESS'])), 'error');
+  assert.equal(b.backrestDeriveStatus(plan(['STATUS_WARNING'])), 'warning');
+  assert.equal(b.backrestDeriveStatus(plan(['STATUS_USER_CANCELLED'])), 'warning');
+  assert.equal(b.backrestDeriveStatus(plan([])), 'warning');
+  assert.equal(b.backrestDeriveStatus({}), 'warning');
+  const overdue = { historyLast30days: [{ overdue: false }, { overdue: true }] };
+  assert.equal(b.backrestDeriveStatus(plan(['STATUS_SUCCESS'], overdue)), 'missed');
+});
+
+test('backrestLatest skips a running backup and adds its duration', () => {
+  const p = {
+    recentBackups: {
+      status: ['STATUS_INPROGRESS', 'STATUS_SUCCESS'],
+      timestampMs: ['3000', '1000'],
+      durationMs: ['10', '500'],
+    },
+  };
+  assert.deepEqual(b.backrestLatest(p), { status: 'STATUS_SUCCESS', finishedMs: 1500 });
+  assert.equal(b.backrestLatest({ recentBackups: { status: ['STATUS_INPROGRESS'] } }), null);
+});

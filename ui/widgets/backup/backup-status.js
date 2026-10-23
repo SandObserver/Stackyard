@@ -84,13 +84,57 @@ function kopiaDeriveStatus(source) {
   if ((last.stats?.errorCount || 0) > 0) return 'error';
 
   const endTime = last.endTime ? new Date(last.endTime).getTime() : 0;
-  if (endTime && Date.now() - endTime > 25 * 60 * 60 * 1000) return 'warning';
+  if (endTime && Date.now() - endTime > STALE_MS) return 'warning';
 
   return 'healthy';
 }
 
 function kopiaSourceId(source) {
   return `${source.host}@${source.userName}:${source.path}`;
+}
+
+const STALE_MS = 25 * 60 * 60 * 1000;
+
+function pbsGroupId(store, ns, group) {
+  return `${store}:${ns || ''}:${group['backup-type']}/${group['backup-id']}`;
+}
+
+function pbsParseGroupId(id) {
+  const m = /^([^:]+):([^:]*):(vm|ct|host)\/([^:/]+)$/.exec(String(id || ''));
+  return m ? { store: m[1], ns: m[2], type: m[3], id: m[4] } : null;
+}
+
+function pbsDeriveStatus(group, newest, tasks, now = Date.now()) {
+  const task = tasks?.[0];
+  if (task && !task.endtime) return 'running';
+  const lastMs = (group['last-backup'] || 0) * 1000;
+  if (task && task.starttime * 1000 > lastMs && task.status !== 'OK' && !/^WARNINGS/.test(task.status || '')) {
+    return 'error';
+  }
+  if (newest?.verification?.state === 'failed') return 'error';
+  if (!lastMs || now - lastMs > STALE_MS) return 'warning';
+  return 'healthy';
+}
+
+/* Recent backups are newest first. The 30-day history is oldest first. */
+function backrestLatest(summary) {
+  const rb = summary?.recentBackups || {};
+  const status = Array.isArray(rb.status) ? rb.status : [];
+  const i = status.findIndex(s => s !== 'STATUS_INPROGRESS');
+  if (i < 0) return null;
+  const at = Number(rb.timestampMs?.[i]) + Number(rb.durationMs?.[i] || 0);
+  return { status: status[i], finishedMs: Number.isFinite(at) && at > 0 ? at : 0 };
+}
+
+function backrestDeriveStatus(summary) {
+  if (summary?.recentBackups?.status?.[0] === 'STATUS_INPROGRESS') return 'running';
+  const history = summary?.historyLast30days;
+  if (Array.isArray(history) && history.at(-1)?.overdue) return 'missed';
+  const latest = backrestLatest(summary);
+  if (!latest) return 'warning';
+  if (latest.status === 'STATUS_ERROR') return 'error';
+  if (latest.status === 'STATUS_SUCCESS') return 'healthy';
+  return 'warning';
 }
 
 module.exports = {
@@ -105,4 +149,9 @@ module.exports = {
   dupDeriveStatus,
   kopiaDeriveStatus,
   kopiaSourceId,
+  pbsGroupId,
+  pbsParseGroupId,
+  pbsDeriveStatus,
+  backrestLatest,
+  backrestDeriveStatus,
 };

@@ -27,7 +27,6 @@
         {
           "key": "provider",
           "type": "select",
-          "variant": "pills",
           "label": "slots.provider.label",
           "default": "",
           "options": [
@@ -42,6 +41,14 @@
             {
               "value": "kopia",
               "label": "slots.provider.opt.kopia"
+            },
+            {
+              "value": "pbs",
+              "label": "slots.provider.opt.pbs"
+            },
+            {
+              "value": "backrest",
+              "label": "slots.provider.opt.backrest"
             }
           ]
         },
@@ -158,6 +165,127 @@
           "cosmetic": true
         },
         {
+          "key": "pbsUrl",
+          "type": "text",
+          "label": "slots.pbsUrl.label",
+          "placeholder": "slots.pbsUrl.placeholder",
+          "showIf": {
+            "field": "provider",
+            "equals": "pbs"
+          }
+        },
+        {
+          "key": "pbsTokenId",
+          "type": "text",
+          "label": "slots.pbsTokenId.label",
+          "placeholder": "slots.pbsTokenId.placeholder",
+          "showIf": {
+            "field": "provider",
+            "equals": "pbs"
+          }
+        },
+        {
+          "key": "pbsSecret",
+          "type": "secret",
+          "label": "slots.pbsSecret.label",
+          "hint": "slots.pbsSecret.hint",
+          "showIf": {
+            "field": "provider",
+            "equals": "pbs"
+          }
+        },
+        {
+          "key": "pbsSkipTls",
+          "type": "toggle",
+          "label": "slots.pbsSkipTls.label",
+          "default": false,
+          "showIf": {
+            "field": "provider",
+            "equals": "pbs"
+          }
+        },
+        {
+          "key": "jobId",
+          "type": "select",
+          "label": "slots.jobId.label.pbs",
+          "optional": true,
+          "optionsFrom": "pbs-groups",
+          "hint": "slots.jobId.hint.pbs",
+          "showIf": {
+            "field": "provider",
+            "equals": "pbs"
+          }
+        },
+        {
+          "key": "pbsHref",
+          "type": "text",
+          "label": "slots.pbsHref.label",
+          "placeholder": "slots.pbsUrl.placeholder",
+          "hint": "slots.pbsHref.hint",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "pbs"
+          },
+          "cosmetic": true
+        },
+        {
+          "key": "backrestUrl",
+          "type": "text",
+          "label": "slots.backrestUrl.label",
+          "placeholder": "slots.backrestUrl.placeholder",
+          "showIf": {
+            "field": "provider",
+            "equals": "backrest"
+          }
+        },
+        {
+          "key": "backrestUser",
+          "type": "text",
+          "label": "slots.backrestUser.label",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "backrest"
+          }
+        },
+        {
+          "key": "backrestPass",
+          "type": "secret",
+          "label": "slots.backrestPass.label",
+          "hint": "slots.backrestPass.hint",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "backrest"
+          }
+        },
+        {
+          "key": "jobId",
+          "type": "select",
+          "label": "slots.jobId.label.backrest",
+          "optional": true,
+          "optionsFrom": "backrest-plans",
+          "hint": "slots.jobId.hint.backrest",
+          "showIf": {
+            "field": "provider",
+            "equals": "backrest"
+          }
+        },
+        {
+          "key": "backrestHref",
+          "type": "text",
+          "label": "slots.backrestHref.label",
+          "placeholder": "slots.backrestUrl.placeholder",
+          "hint": "slots.backrestHref.hint",
+          "optional": true,
+          "showIf": {
+            "field": "provider",
+            "equals": "backrest"
+          },
+          "cosmetic": true
+        },
+        {
           "key": "customName",
           "type": "text",
           "label": "slots.customName.label",
@@ -167,7 +295,9 @@
             "field": "provider",
             "in": [
               "duplicati",
-              "kopia"
+              "kopia",
+              "pbs",
+              "backrest"
             ]
           },
           "cosmetic": true
