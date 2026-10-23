@@ -35,7 +35,13 @@ async function mount(src) {
   };
   const saved = {};
   const fakes = {
-    document: { createElement: el, querySelectorAll: () => [], documentElement: { getAttribute: () => null } },
+    document: {
+      createElement: el,
+      querySelectorAll: () => [],
+      documentElement: { getAttribute: () => null },
+      addEventListener() {},
+      removeEventListener() {},
+    },
     window: { addEventListener() {}, removeEventListener() {} },
     location: { href: `${ORIGIN}/`, origin: ORIGIN },
     requestAnimationFrame: () => {},

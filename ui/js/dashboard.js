@@ -28,9 +28,9 @@ import {
   storeSet,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=705ca896';
+} from '/js/utils.js?v=fd0b5b07';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=ad660003';
+import { initSpotlight } from '/js/spotlight.js?v=7f345935';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=ed7c5565';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=85138697';
@@ -46,7 +46,7 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=c66ab377';
+} from '/js/ui.js?v=fc20cad0';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=85b1bc96';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=23793736';
@@ -59,12 +59,12 @@ import {
   restorePage,
   wheelPager,
 } from '/js/dashboard-logic.js?v=6a29cedc';
-import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=25428bf2';
+import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=26148fef';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=0b1ebb19';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=628341d4';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=393b5749';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { THEME_KEY, applyTheme, prefersDark, readMode, resolveTheme } from '/js/theme.js?v=eeafa4b5';
 

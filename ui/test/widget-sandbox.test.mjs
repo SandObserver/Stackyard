@@ -43,7 +43,12 @@ function harness() {
     ro: globalThis.ResizeObserver,
     timeout: globalThis.setTimeout,
   };
-  globalThis.document = { createElement: el, querySelectorAll: () => [] };
+  globalThis.document = {
+    createElement: el,
+    querySelectorAll: () => [],
+    addEventListener() {},
+    removeEventListener() {},
+  };
   globalThis.window = { addEventListener() {}, removeEventListener() {} };
   globalThis.location = { href: `${ORIGIN}/`, origin: ORIGIN };
   globalThis.requestAnimationFrame = () => {};

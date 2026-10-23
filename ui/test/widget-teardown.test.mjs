@@ -59,14 +59,17 @@ function harness() {
   };
 
   const docListeners = new Set();
+  const keyListeners = new Set();
   globalThis.document = {
     createElement: el,
     querySelectorAll: () => [],
     addEventListener(type, fn) {
       if (type === 'visibilitychange') docListeners.add(fn);
+      if (type === 'keydown') keyListeners.add(fn);
     },
     removeEventListener(type, fn) {
       if (type === 'visibilitychange') docListeners.delete(fn);
+      if (type === 'keydown') keyListeners.delete(fn);
     },
   };
   globalThis.window = { addEventListener() {}, removeEventListener() {} };
@@ -96,6 +99,7 @@ function harness() {
     counts,
     realSetTimeout,
     docListeners,
+    keyListeners,
     card: () => el('div'),
     done() {
       globalThis.document = restore.document;
@@ -148,6 +152,19 @@ test('repeated rebuilds do not accumulate observers or timers', async () => {
     teardownWidgets();
     assert.equal(h.counts.observers, 0);
     assert.equal(h.counts.timers, 0);
+  } finally {
+    h.done();
+  }
+});
+
+test('teardown removes the Escape hand-off of a bundled widget', async () => {
+  const h = harness();
+  try {
+    const { mountScaledWidget, teardownWidgets } = await import('../js/utils.js');
+    mountScaledWidget(h.card(), { ...OPTS, src: '/widgets/weather/index.html?id=w' });
+    assert.equal(h.keyListeners.size, 1, 'a bundled widget listens for Escape on the dashboard');
+    teardownWidgets();
+    assert.equal(h.keyListeners.size, 0, 'teardown leaves a keydown listener');
   } finally {
     h.done();
   }

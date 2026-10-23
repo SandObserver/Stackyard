@@ -12,6 +12,7 @@
   .widget{width:100%;height:100%;position:relative;border-radius:inherit}
   .widget.clickable{cursor:pointer}
   .widget.clickable:focus-visible{outline:2px solid #0091FF;outline-offset:-3px}
+  .widget[tabindex]:focus-visible{outline:2px solid #0091FF;outline-offset:-3px}
   .ico{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:62%;max-width:110px;aspect-ratio:1/1;display:block;overflow:visible}
   .meta{position:absolute;left:18px;right:18px;bottom:14px;display:flex;flex-direction:column;gap:2px}
   .cond{font-size:15px;font-weight:600;color:#2C2C2E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -38,6 +39,22 @@
   @media(prefers-reduced-motion:reduce){.ico *{animation:none}.ico .wx-drop{transform:translate(-3.75px,7.6px)}.ico .wx-flake{transform:translate(1px,6px)}.ico .wx-pellet{transform:translate(-1.5px,8px)}.ico .wx-flow{transform:translateX(calc(var(--d) * .4))}}
   .ico .ph{fill:rgba(235,235,245,0.16)}
   html[data-theme="light"] .ico .ph{fill:rgba(60,60,67,0.12)}
+  .aq{position:absolute;inset-block-start:4px;inset-inline-end:4px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:#2C2C2E}
+  .aq[hidden]{display:none}
+  .aq-hit{display:flex}
+  .aq-cap{position:absolute;inset-block-start:2px;inset-inline-end:2px;display:flex;align-items:center;gap:5px;padding-block:5px;padding-inline:10px 5px;border-radius:999px;font-size:13px;font-weight:600;line-height:18px;white-space:nowrap;color:#2C2C2E;background:rgba(255,255,255,0.82);box-shadow:0 1px 6px rgba(0,0,0,0.12);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s,visibility .2s}
+  .night .aq,.night .aq-cap{color:#FFFFFF}
+  .night .aq-cap{background:rgba(58,58,60,0.82);box-shadow:0 1px 6px rgba(0,0,0,0.4)}
+  @media(hover:hover){.widget:hover .aq-cap{opacity:1;visibility:visible}}
+  .widget:focus-visible .aq-cap,.widget.peek .aq-cap{opacity:1;visibility:visible}
+  .widget.hush .aq-cap{opacity:0;visibility:hidden}
+  @media(prefers-reduced-motion:reduce){.aq-cap{transition:none}}
+  .sy-sprite{position:absolute;width:0;height:0;overflow:hidden}
+  .sy-icon{flex-shrink:0}
+  .sy-i{fill:currentColor}
+  .sy-a{fill:var(--icon-accent,currentColor)}
+  .sy-is{stroke:currentColor}
+  .sy-as{stroke:var(--icon-accent,currentColor)}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 </head>
@@ -49,10 +66,15 @@
     <div class="temp" id="temp"></div>
     <div class="msg" id="msg" hidden></div>
   </div>
+  <div class="aq" id="aq" aria-hidden="true" hidden>
+    <span class="aq-hit" id="aq-hit"></span>
+    <span class="aq-cap"><span id="aq-val"></span><span id="aq-cap-ico"></span></span>
+  </div>
   <div class="sr-only" id="sr"></div>
 </div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText } from '/js/widget-toolbox.js?v=ce372f4d';
+import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, setHtml } from '/js/widget-toolbox.js?v=ce372f4d';
+import { ensureSprite } from '/js/icon-set.js?v=393b5749';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('widget.label', 'Weather'));
 const API='/api';
@@ -66,6 +88,10 @@ const condEl=document.getElementById('cond');
 const tempEl=document.getElementById('temp');
 const msgEl=document.getElementById('msg');
 const srEl=document.getElementById('sr');
+const aqEl=document.getElementById('aq');
+const aqValEl=document.getElementById('aq-val');
+const aqCapIcoEl=document.getElementById('aq-cap-ico');
+const aqHitEl=document.getElementById('aq-hit');
 
 /* ---- artwork, drawn in the icon's 100-unit box ---- */
 const f=n=>+n.toFixed(3);
@@ -232,6 +258,59 @@ function tempColor(temp,units,lightCard){
   return `hsl(${Math.round(hue)},${sat}%,${light}%)`;
 }
 
+/* ---- UV and air quality alerts ---- */
+const LEVEL_INK=[,'#FFD600','#FF9230','#FF4245','#DB34F2','#B78A66'];
+const LEVEL_INK_DAY=[,'#A88300','#E05A00','#FF4245','#DB34F2','#B78A66'];
+const BAND={
+  moderate:()=>wt('ui.moderate','moderate'),
+  high:()=>wt('ui.high','high'),
+  veryHigh:()=>wt('ui.veryHigh','very high'),
+  extreme:()=>wt('ui.extreme','extreme'),
+  sensitive:()=>wt('ui.sensitive','unhealthy for sensitive groups'),
+  unhealthy:()=>wt('ui.unhealthy','unhealthy'),
+  veryUnhealthy:()=>wt('ui.veryUnhealthy','very unhealthy'),
+  hazardous:()=>wt('ui.hazardous','hazardous'),
+  poor:()=>wt('ui.poor','poor'),
+  veryPoor:()=>wt('ui.veryPoor','very poor'),
+  extremelyPoor:()=>wt('ui.extremelyPoor','extremely poor'),
+};
+const validAlert=a=>a&&(a.kind==='uv'||a.kind==='air')&&Number.isFinite(a.value)&&Object.hasOwn(BAND,a.band)&&LEVEL_INK[a.level];
+function alertText(a){
+  const vars={value:formatNumber(a.value),level:BAND[a.band]()};
+  return a.kind==='uv'?wt('ui.uvAlert','UV index {value}, {level}',vars):wt('ui.airAlert','Air quality index {value}, {level}',vars);
+}
+let sprite=false,linked=false;
+function drawAlerts(alerts,lightCard){
+  const a=alerts[0];
+  aqEl.hidden=!a;
+  if(!linked){if(a)widgetEl.tabIndex=0;else widgetEl.removeAttribute('tabindex');}
+  if(!a)return;
+  if(!sprite){ensureSprite(document);sprite=true;}
+  aqEl.style.setProperty('--icon-accent',(lightCard?LEVEL_INK_DAY:LEVEL_INK)[a.level]);
+  const ico=()=>html`<svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-${a.kind}"/></svg>`;
+  setHtml(aqHitEl,ico());
+  setHtml(aqCapIcoEl,ico());
+  const value=formatNumber(a.value);
+  aqValEl.textContent=a.kind==='uv'?wt('ui.uvShort','UV {value}',{value}):wt('ui.airShort','AQI {value}',{value});
+}
+
+let tapType='',peekTimer=0;
+aqEl.addEventListener('pointerdown',e=>{tapType=e.pointerType;});
+aqEl.addEventListener('click',e=>{
+  if(tapType!=='touch'&&tapType!=='pen')return;
+  e.stopPropagation();
+  widgetEl.classList.remove('hush');
+  widgetEl.classList.add('peek');
+  clearTimeout(peekTimer);
+  peekTimer=setTimeout(()=>widgetEl.classList.remove('peek'),4000);
+});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  widgetEl.classList.remove('peek');
+  widgetEl.classList.add('hush');
+});
+for(const ev of ['mouseleave','focusout'])widgetEl.addEventListener(ev,()=>widgetEl.classList.remove('hush'));
+
 function render(d){
   state.ok();
   const m=mapCode(d.code,d.condition);
@@ -253,6 +332,9 @@ function render(d){
   /* set colors directly on the elements so nothing can override them */
   tempEl.style.color=tempColor(d.temp,d.units,lightCard);
   condEl.style.color = lightCard ? '#2C2C2E' : '#FFFFFF';
+  widgetEl.classList.toggle('night', !lightCard);
+  const alerts = Array.isArray(d.alerts) ? d.alerts.filter(validAlert) : [];
+  drawAlerts(alerts,lightCard);
   widgetEl.style.setProperty('--wt-cap-color', lightCard ? '#636366' : 'rgba(255,255,255,0.62)');
 
   /* HIG: full detail available on hover + to screen readers */
@@ -262,7 +344,7 @@ function render(d){
     condition:m.label,
     temp:d.usedFeels?wt('ui.feelsLikeTemp','{temp} (feels like)',{temp}):temp,
   });
-  _summary = summary;
+  _summary = alerts.reduce((s, a) => wt('ui.withAlert', '{summary}. {alert}', { summary: s, alert: alertText(a) }), summary);
   _fetchedAt = readingTime(d);
   describe();
 }
@@ -303,7 +385,7 @@ icoEl.addEventListener('animationiteration',e=>{
   if(flip)p.querySelector('.wx-draw').animate([{strokeDashoffset:1},{strokeDashoffset:0}],{duration:200,easing:'ease-out'});
 });
 
-const state=errorState({root:widgetEl,content:[icoEl,condEl,tempEl],caption:msgEl});
+const state=errorState({root:widgetEl,content:[icoEl,condEl,tempEl,aqEl],caption:msgEl});
 
 {
   const sun=document.createElementNS('http://www.w3.org/2000/svg','circle');
@@ -319,7 +401,7 @@ async function boot(){
   let cfg=null;
   try{const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);if(r.ok)cfg=await r.json();}catch(e){}
   const href=cfg&&cfg.widgetConfig&&cfg.widgetConfig.href;
-  linkTo(widgetEl,href);
+  linked=linkTo(widgetEl,href);
   /* poll keeps the last reading through a transient failure. onError runs when
      there is nothing good to keep. */
   poll({ fetch:wfetch, render, interval:TICK_MS,

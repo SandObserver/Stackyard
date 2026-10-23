@@ -1,5 +1,5 @@
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
-import { mk, clr, el, initial, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=705ca896';
+import { mk, clr, el, initial, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=fd0b5b07';
 import { t } from '/js/i18n.js?v=ed7c5565';
 
 /* Attached to the window so a re-open can undo the previous one. */

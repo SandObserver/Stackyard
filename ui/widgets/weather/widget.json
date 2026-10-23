@@ -49,7 +49,8 @@
       "optionsFrom": "geocode",
       "carries": [
         "lat",
-        "lon"
+        "lon",
+        "countryCode"
       ],
       "hint": "city.hint",
       "cosmetic": true
@@ -77,6 +78,14 @@
       "type": "toggle",
       "label": "feelsLike.label",
       "default": false,
+      "cosmetic": true
+    },
+    {
+      "key": "warnings",
+      "type": "toggle",
+      "label": "warnings.label",
+      "hint": "warnings.hint",
+      "default": true,
       "cosmetic": true
     },
     {

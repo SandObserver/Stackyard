@@ -88,6 +88,8 @@ const BESPOKE = new Map(
     '#0A84C8': 'digital clock hours on white, 4.1:1',
     '#E0246F': 'digital clock minutes on white, 4.5:1',
     '#4A2470': 'digital clock hours and minutes overlapping on white',
+    '#A88300': 'weather, moderate alert accent on white, 3.5:1',
+    '#E05A00': 'weather, high alert accent on white, 3.7:1',
     /* GitHub's own light contribution scale. */
     '#9BE9A8': 'GitHub light contribution scale, step 1',
     '#40C463': 'GitHub light contribution scale, step 2',
