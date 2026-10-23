@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add Unraid as a Disk Health source.
 
+- TrueNAS as a System Summary source.
+
+- Allow Self-Signed Certificate for TrueNAS disk health.
+
 ### Changed
 
 - Long weather condition labels shrink to fit before they are cut off.
@@ -34,6 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Replace the Docker health checks switch with one Health Checks switch that
   covers every check type.
+
+- TrueNAS disk health reads TrueNAS 25.04 and later over the WebSocket API, so
+  it keeps working on TrueNAS 27.
+
+- TrueNAS disk health refuses an http address, because TrueNAS revokes an API
+  key sent over http.
 
 ### Fixed
 
