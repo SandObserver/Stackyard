@@ -80,6 +80,14 @@
       "cosmetic": true
     },
     {
+      "key": "warnings",
+      "type": "toggle",
+      "label": "warnings.label",
+      "hint": "warnings.hint",
+      "default": true,
+      "cosmetic": true
+    },
+    {
       "key": "href",
       "type": "text",
       "label": "href.label",

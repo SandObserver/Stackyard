@@ -1,7 +1,8 @@
 /* Open-Meteo (keyless) or OpenWeather (free API key). Returns
-   { temp, units, code, condition?, isDay, usedFeels, city }, where code is the
+   { temp, units, code, condition?, isDay, usedFeels, city, alerts? }, where code is the
    WMO weather code for both providers. condition names sand or volcanic ash,
-   which share a WMO code with dust or smoke. The city search always uses Open-Meteo's geocoder. */
+   which share a WMO code with dust or smoke. The city search always uses Open-Meteo's geocoder.
+   alerts lists UV and air quality readings at or above their warning level, worst first. */
 
 async function geocode(ctx) {
   const q = String(ctx.config.cityQuery || ctx.config.city || '').trim();
@@ -100,6 +101,99 @@ async function openWeather(ctx, lat, lon, units) {
   };
 }
 
+/* Must match the geocoder's English country names. A mismatch silently picks the US index. */
+const EAQI_COUNTRIES = new Set([
+  'Austria',
+  'Belgium',
+  'Bulgaria',
+  'Croatia',
+  'Cyprus',
+  'Czechia',
+  'Czech Republic',
+  'Denmark',
+  'Estonia',
+  'Finland',
+  'France',
+  'Germany',
+  'Greece',
+  'Hungary',
+  'Iceland',
+  'Ireland',
+  'Italy',
+  'Latvia',
+  'Liechtenstein',
+  'Lithuania',
+  'Luxembourg',
+  'Malta',
+  'Netherlands',
+  'The Netherlands',
+  'Norway',
+  'Poland',
+  'Portugal',
+  'Romania',
+  'Slovakia',
+  'Slovenia',
+  'Spain',
+  'Sweden',
+  'Switzerland',
+  'United Kingdom',
+]);
+
+const airScale = city => (EAQI_COUNTRIES.has(String(city).split(',').pop().trim()) ? 'eu' : 'us');
+
+const UV_BANDS = [
+  [11, 'extreme', 4],
+  [8, 'veryHigh', 3],
+  [6, 'high', 2],
+  [3, 'moderate', 1],
+];
+const AIR_BANDS = {
+  us: [
+    [301, 'hazardous', 5],
+    [201, 'veryUnhealthy', 4],
+    [151, 'unhealthy', 3],
+    [101, 'sensitive', 2],
+  ],
+  eu: [
+    [100, 'extremelyPoor', 4],
+    [80, 'veryPoor', 3],
+    [60, 'poor', 2],
+  ],
+};
+const band = (bands, value) => bands.find(([min]) => value >= min);
+
+function alertsFrom(uv, aqi, scale) {
+  const out = [];
+  if (Number.isFinite(aqi)) {
+    const value = Math.round(aqi);
+    const b = band(AIR_BANDS[scale], value);
+    if (b) out.push({ kind: 'air', scale, value, band: b[1], level: b[2] });
+  }
+  if (Number.isFinite(uv)) {
+    const value = Math.round(uv);
+    const b = band(UV_BANDS, value);
+    if (b) out.push({ kind: 'uv', value, band: b[1], level: b[2] });
+  }
+  return out.sort((a, b) => b.level - a.level);
+}
+
+/* Keep the catch. An air quality outage must not blank the weather. */
+async function exposure(ctx, lat, lon, scale) {
+  const key = scale === 'eu' ? 'european_aqi' : 'us_aqi';
+  const url =
+    'https://air-quality-api.open-meteo.com/v1/air-quality' +
+    `?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}` +
+    `&current=uv_index,${key}&timezone=auto`;
+  try {
+    const r = await ctx.fetchJSON(url, { timeout: 8000 });
+    const cur = r.status < 400 && r.data && r.data.current;
+    if (!cur) return [];
+    return alertsFrom(cur.uv_index, cur[key], scale);
+  } catch {
+    return [];
+  }
+}
+
 module.exports = async function (ctx) {
   const { config } = ctx;
   if (ctx.endpoint === 'geocode') return await geocode(ctx);
@@ -110,6 +204,8 @@ module.exports = async function (ctx) {
 
   const read = config.provider === 'openweather' ? openWeather : openMeteo;
   const w = await read(ctx, lat, lon, units);
+  const warn = config.warnings !== false && config.warnings !== 'false';
+  const alerts = warn ? await exposure(ctx, lat, lon, airScale(config.city || '')) : [];
 
   const useFeels = config.feelsLike === true || config.feelsLike === 'true';
   const temp = useFeels ? w.feels : w.real;
@@ -122,5 +218,6 @@ module.exports = async function (ctx) {
     ...(w.condition && { condition: w.condition }),
     isDay: w.isDay,
     city: config.city || '',
+    ...(alerts.length && { alerts }),
   };
 };

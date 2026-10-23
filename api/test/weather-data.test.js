@@ -220,3 +220,95 @@ for (const [name, config, reply] of [
     await assert.rejects(dataFn(ctx), /no temperature/);
   });
 }
+
+const FORECAST = {
+  status: 200,
+  data: { current: { temperature_2m: 31, apparent_temperature: 33, weather_code: 0, is_day: 1 } },
+};
+
+function routed(config, air) {
+  const calls = [];
+  const ctx = {
+    config,
+    endpoint: '',
+    fetchJSON: async url => {
+      calls.push(url);
+      if (url.startsWith('https://air-quality-api.open-meteo.com/')) {
+        if (air instanceof Error) throw air;
+        return air;
+      }
+      return FORECAST;
+    },
+    ...errorParts(),
+  };
+  return { ctx, calls };
+}
+const PLACE = { city: 'Delhi, Delhi, India', lat: 28.65, lon: 77.23 };
+const airCalls = calls => calls.filter(u => u.startsWith('https://air-quality-api.open-meteo.com/'));
+
+test('alerts list UV and air at or above their warning level, worst first', async () => {
+  const { ctx, calls } = routed(PLACE, { status: 200, data: { current: { uv_index: 6.6, us_aqi: 184 } } });
+  const r = await dataFn(ctx);
+  assert.deepEqual(r.alerts, [
+    { kind: 'air', scale: 'us', value: 184, band: 'unhealthy', level: 3 },
+    { kind: 'uv', value: 7, band: 'high', level: 2 },
+  ]);
+  assert.match(airCalls(calls)[0], /current=uv_index,us_aqi/);
+  assert.match(airCalls(calls)[0], /latitude=28\.65&longitude=77\.23/);
+});
+
+test('UV warns from 3 and air above 100 on the US index', async () => {
+  const below = routed(PLACE, { status: 200, data: { current: { uv_index: 2.4, us_aqi: 100 } } });
+  assert.equal((await dataFn(below.ctx)).alerts, undefined);
+  const at = routed(PLACE, { status: 200, data: { current: { uv_index: 2.5, us_aqi: 101 } } });
+  assert.deepEqual(
+    (await dataFn(at.ctx)).alerts.map(a => [a.kind, a.band]),
+    [
+      ['air', 'sensitive'],
+      ['uv', 'moderate'],
+    ],
+  );
+});
+
+test('places in Europe read the European index and warn from Poor', async () => {
+  const config = { city: 'Amsterdam, North Holland, The Netherlands', lat: 52.37, lon: 4.89 };
+  const { ctx, calls } = routed(config, { status: 200, data: { current: { uv_index: 0, european_aqi: 60 } } });
+  const r = await dataFn(ctx);
+  assert.match(airCalls(calls)[0], /current=uv_index,european_aqi/);
+  assert.deepEqual(r.alerts, [{ kind: 'air', scale: 'eu', value: 60, band: 'poor', level: 2 }]);
+});
+
+test('a failed air quality reading leaves the weather intact', async () => {
+  for (const air of [new Error('Timed out'), { status: 503, data: null }, { status: 200, data: {} }]) {
+    const { ctx } = routed(PLACE, air);
+    const r = await dataFn(ctx);
+    assert.equal(r.temp, 31);
+    assert.equal(r.alerts, undefined);
+  }
+});
+
+test('warnings switched off make no air quality request', async () => {
+  const { ctx, calls } = routed({ ...PLACE, warnings: false }, { status: 200, data: { current: { uv_index: 9 } } });
+  const r = await dataFn(ctx);
+  assert.equal(r.alerts, undefined);
+  assert.equal(airCalls(calls).length, 0);
+});
+
+test('openweather places get alerts from the keyless air quality service', async () => {
+  const { ctx, calls } = routed(
+    { ...PLACE, provider: 'openweather', owKey: 'k' },
+    {
+      status: 200,
+      data: { current: { uv_index: 11.2, us_aqi: 40 } },
+    },
+  );
+  ctx.fetchJSON = (
+    orig => async url =>
+      url.includes('openweathermap')
+        ? { status: 200, data: { main: { temp: 30 }, weather: [{ id: 800, icon: '01d' }] } }
+        : orig(url)
+  )(ctx.fetchJSON);
+  const r = await dataFn(ctx);
+  assert.deepEqual(r.alerts, [{ kind: 'uv', value: 11, band: 'extreme', level: 4 }]);
+  assert.equal(airCalls(calls).length, 1);
+});

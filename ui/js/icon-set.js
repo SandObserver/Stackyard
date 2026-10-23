@@ -237,6 +237,14 @@ export const ICONS = {
     accentCut: [{ ...shape(CLOUD), grow: T.G }],
   },
 
+  uv: {
+    shapes: [circle(12, 12, 5, 'accent'), line('M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1 1M18 18l1 1M5 19l1-1M18 6l1-1')],
+  },
+  air: {
+    inkMask: false,
+    shapes: [line('M3 6q3-2 6 0t6 0t6 0'), line('M3 12q3-2 6 0t6 0t6 0', 'accent'), line('M3 18q3-2 6 0t6 0t6 0')],
+  },
+
   edit: { shapes: [shape('M14 5l5 5L9 20H4v-5z'), line('M12 7l5 5', 'cut')] },
   chevrons: { shapes: [line('M8 9l4-4 4 4'), line('M8 15l4 4 4-4')] },
   back: { shapes: [line('M15 5l-7 7 7 7')] },

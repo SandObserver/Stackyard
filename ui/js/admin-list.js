@@ -18,13 +18,13 @@ import { listGroup } from '/js/admin-drag-logic.js?v=1d1d553e';
 import { initDrag, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=2f953e63';
 import { DOCK_MAX } from '/js/limits.js?v=31048a24';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { paintIcon, toast } from '/js/admin-shared.js?v=c28805e1';
+import { paintIcon, toast } from '/js/admin-shared.js?v=9eced410';
 import { clr, el, focusFirst, initial, qa, setUserText } from '/js/utils.js?v=705ca896';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { sizeLabel } from '/js/admin-widget-form.js?v=e766ff1d';
-import { widgetGlyph } from '/js/widget-glyphs.js?v=b383b7c8';
-import { iconSvg } from '/js/icon-set.js?v=628341d4';
+import { sizeLabel } from '/js/admin-widget-form.js?v=d29fe167';
+import { widgetGlyph } from '/js/widget-glyphs.js?v=7824a4ae';
+import { iconSvg } from '/js/icon-set.js?v=393b5749';
 
 /** @type {{ openModal: (idx: number|null) => void,
              openFolderPicker: (appId: string|null, targetFolderId?: string|null) => void,

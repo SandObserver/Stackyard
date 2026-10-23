@@ -1,4 +1,4 @@
-import { toast, apiGet, apiPost, errorText, reveal, swapContent, wireInlineEdit } from '/js/admin-shared.js?v=c28805e1';
+import { toast, apiGet, apiPost, errorText, reveal, swapContent, wireInlineEdit } from '/js/admin-shared.js?v=9eced410';
 import { socketProbeAdvice } from '/js/admin-error.js?v=a60b17ac';
 import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
 import { t } from '/js/i18n.js?v=ed7c5565';
@@ -14,7 +14,7 @@ import { confirmText, promptModal } from '/js/modal.js?v=6b0320bd';
 import { el, inp, setUserText } from '/js/utils.js?v=705ca896';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { serialWrites } from '/js/admin-save-logic.js?v=32cb6aeb';
-import { renderColorControl } from '/js/admin-color-control.js?v=2ba67671';
+import { renderColorControl } from '/js/admin-color-control.js?v=e0eb461c';
 import { BACKDROP } from '/js/background.js?v=25428bf2';
 import {
   ALLOWED_HOSTS_MAX,
