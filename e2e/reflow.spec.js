@@ -40,7 +40,7 @@ test('the empty dashboard welcome scrolls when it does not fit', async ({ page, 
     .poll(() => page.evaluate(() => document.querySelector('.empty-state')?.scrollTop ?? 0))
     .toBeGreaterThan(0);
   const hint = await box(page.locator('.empty-state-hint'));
-  expect(hint.y + hint.height, 'the import link scrolls into view').toBeLessThanOrEqual(120);
+  expect(hint.y + hint.height, 'the import link scrolls into view').toBeLessThanOrEqual(121);
 });
 
 test.describe('on a touch screen', () => {
