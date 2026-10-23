@@ -486,6 +486,7 @@
     "noOptions": "未找到选项",
     "empty": "空",
     "loaded_other": "已加载 {count} 个选项",
+    "loadedSome_other": "仅显示前 {count} 个选项。服务器还有更多。",
     "iframeUrl": "Iframe 地址",
     "referrerPolicy": "来源地址策略",
     "referrerDefault": "默认",

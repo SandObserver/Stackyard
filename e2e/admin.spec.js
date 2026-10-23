@@ -211,6 +211,37 @@ test("a saved widget's Fetch sends its id and shows the server's advice", async 
   await expect(page.locator('#ev-body')).toContainText('the stored credential was not used');
 });
 
+test('a Fetch whose list was cut short says so', async ({ page, request }) => {
+  await seedConfig(request, {
+    items: [
+      {
+        id: 'wx',
+        type: 'widget',
+        widgetType: 'weather',
+        label: 'Weather',
+        widgetSize: 'small',
+        widgetConfig: { provider: 'openweather', owKey: 'stored-key', cityQuery: 'Berlin' },
+      },
+    ],
+  });
+  await page.route('**/api/widget-options/**', route =>
+    route.fulfill({
+      json: {
+        options: [
+          { value: 'a', label: 'A' },
+          { value: 'b', label: 'B' },
+        ],
+        truncated: true,
+      },
+    }),
+  );
+  await openDashboardList(page);
+  await rowByName(page, 'Weather').getByRole('button', { name: /^Edit/ }).first().click();
+  await page.locator('#ev-body').getByRole('button', { name: 'Fetch' }).first().click();
+  const status = page.locator('#ev-body .row-status', { hasText: 'Showing the first 2 options. The server has more.' });
+  await expect(status).toHaveClass(/\bwarn\b/);
+});
+
 test("a saved app's Live Activity Fetch sends its id with the stored header row", async ({ page, request }) => {
   await seedConfig(request, {
     items: [

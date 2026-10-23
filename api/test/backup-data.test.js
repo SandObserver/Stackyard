@@ -378,7 +378,62 @@ test('pbs-groups reports a refused token as an auth failure', async () => {
   );
 });
 
+let upidSeq = 0;
+
+function pbsTask(ns, groupPath, startS, extra = {}) {
+  const upid = `UPID:pbs:0000:${++upidSeq}:backup:main\\x3a${groupPath.replace('/', '-')}:root@pam:`;
+  const snapPath = [...(ns ? ns.split('/').flatMap(n => ['ns', n]) : []), groupPath, '2026-10-23T02:00:00Z'].join('/');
+  return {
+    task: {
+      upid,
+      worker_type: 'backup',
+      worker_id: `main:${groupPath}`,
+      starttime: startS,
+      endtime: startS + 30,
+      status: 'OK',
+      ...extra,
+    },
+    line: `2026-10-23T02:00:00+00:00: starting new backup on datastore 'main' from ::ffff:10.0.0.9: "${snapPath}"`,
+  };
+}
+
+const logPath = t => `/nodes/localhost/tasks/${encodeURIComponent(t.task.upid)}/log`;
+
+function pbsServer({ groups = {}, snaps = {}, runs = [], tasksStatus = 200 }) {
+  return (p, q) => {
+    if (p === '/admin/datastore/main/groups') {
+      const list = groups[q.get('ns') || ''];
+      return list ? { status: 200, data: { data: list } } : { status: 400, data: null };
+    }
+    if (p === '/admin/datastore/main/snapshots') return { status: 200, data: { data: snaps[q.get('ns') || ''] || [] } };
+    if (p === '/nodes/localhost/tasks') {
+      return tasksStatus === 200
+        ? { status: 200, data: { data: runs.map(r => r.task) } }
+        : { status: tasksStatus, data: null };
+    }
+    const run = runs.find(r => p === logPath(r));
+    if (run)
+      return {
+        status: 200,
+        data: {
+          data: [
+            { n: 1, t: run.line },
+            { n: 2, t: 'protocol upgrade done' },
+          ],
+        },
+      };
+  };
+}
+
+const group = (type, id, lastS, extra = {}) => ({
+  'backup-type': type,
+  'backup-id': id,
+  'last-backup': lastS,
+  ...extra,
+});
+
 test('a PBS slot reads its group, newest snapshot and backup tasks', async () => {
+  const running = pbsTask('', 'vm/100', NOW_S - 10, { endtime: undefined, status: undefined });
   const { ctx } = pbsCtx(
     {
       slots: [
@@ -388,27 +443,20 @@ test('a PBS slot reads its group, newest snapshot and backup tasks', async () =>
     },
     'slots',
     (p, q) => {
-      if (p === '/admin/datastore/main/groups') {
-        return {
-          status: 200,
-          data: { data: [{ 'backup-type': 'vm', 'backup-id': '100', 'last-backup': NOW_S - 3600 }] },
-        };
-      }
       if (p === '/admin/datastore/main/snapshots') {
         assert.equal(q.get('backup-id'), '100');
-        const state = q.get('ns') === 'site-b' ? 'failed' : 'ok';
-        const older = { 'backup-time': NOW_S - 7200, comment: 'old name' };
-        const newest = { 'backup-time': NOW_S - 3600, comment: 'web', verification: { state } };
-        return { status: 200, data: { data: [older, newest] } };
       }
       if (p === '/nodes/localhost/tasks') {
         assert.equal(q.get('store'), 'main');
         assert.equal(q.get('typefilter'), 'backup');
-        return {
-          status: 200,
-          data: { data: [{ worker_type: 'backup', worker_id: 'main:vm/100', starttime: NOW_S - 10 }] },
-        };
       }
+      const older = { 'backup-time': NOW_S - 7200, comment: 'old name' };
+      const newest = state => ({ 'backup-time': NOW_S - 3600, comment: 'web', verification: { state } });
+      return pbsServer({
+        groups: { '': [group('vm', '100', NOW_S - 3600)], 'site-b': [group('vm', '100', NOW_S - 3600)] },
+        snaps: { '': [older, newest('ok')], 'site-b': [older, newest('failed')] },
+        runs: [running],
+      })(p, q);
     },
   );
   const out = await dataFn(ctx);
@@ -418,6 +466,169 @@ test('a PBS slot reads its group, newest snapshot and backup tasks', async () =>
   assert.equal(out[0].nextRun, null);
   assert.equal(out[0].link, 'https://10.0.0.7:8007');
   assert.equal(out[1].status, 'error');
+});
+
+test('a PBS card takes only its own namespace’s backup tasks', async () => {
+  const rootFailed = pbsTask('', 'vm/100', NOW_S - 600, { status: 'connection error: not connected' });
+  const siteOk = pbsTask('site-b', 'vm/100', NOW_S - 300);
+  const innerRunning = pbsTask('site-b/inner', 'vm/100', NOW_S - 20, { endtime: undefined, status: undefined });
+  const last = NOW_S - 3 * 3600;
+  const { ctx } = pbsCtx(
+    {
+      slots: [
+        { ...PBS_ROW, jobId: 'main::vm/100' },
+        { ...PBS_ROW, jobId: 'main:site-b:vm/100' },
+        { ...PBS_ROW, jobId: 'main:site-b/inner:vm/100' },
+      ],
+    },
+    'slots',
+    pbsServer({
+      groups: {
+        '': [group('vm', '100', last)],
+        'site-b': [group('vm', '100', NOW_S - 300)],
+        'site-b/inner': [group('vm', '100', last)],
+      },
+      runs: [innerRunning, siteOk, rootFailed],
+    }),
+  );
+  const out = await dataFn(ctx);
+  assert.deepEqual(
+    out.map(c => c.status),
+    ['error', 'healthy', 'running'],
+  );
+});
+
+test('a PBS task log is read once, then remembered', async () => {
+  const run = pbsTask('site-b', 'host/nas', NOW_S - 300);
+  const config = { slots: [{ ...PBS_ROW, jobId: 'main:site-b:host/nas' }] };
+  const server = pbsServer({ groups: { 'site-b': [group('host', 'nas', NOW_S - 300)] }, runs: [run] });
+  const first = pbsCtx(config, 'slots', server);
+  await dataFn(first.ctx);
+  const second = pbsCtx(config, 'slots', server);
+  const out = await dataFn(second.ctx);
+  assert.equal(out[0].status, 'healthy');
+  const logReads = c => c.calls.filter(x => x.url.includes('/log')).length;
+  assert.equal(logReads(first), 1);
+  assert.equal(logReads(second), 0);
+});
+
+test('a PBS card shows no task status while other namespaces’ tasks are still unread', async () => {
+  const others = Array.from({ length: 6 }, (_, k) => pbsTask('site-b', 'vm/100', NOW_S - 60 - k));
+  const rootFailed = pbsTask('', 'vm/100', NOW_S - 600, { status: 'connection error' });
+  const config = { slots: [{ ...PBS_ROW, jobId: 'main::vm/100' }] };
+  const server = pbsServer({ groups: { '': [group('vm', '100', NOW_S - 3600)] }, runs: [...others, rootFailed] });
+  const first = await dataFn(pbsCtx(config, 'slots', server).ctx);
+  assert.equal(first[0].status, 'healthy', 'falls back to the last backup time, never another group’s task');
+  const second = await dataFn(pbsCtx(config, 'slots', server).ctx);
+  assert.equal(second[0].status, 'error', 'the next poll reads on and finds its own failed task');
+});
+
+test('a PBS task whose log cannot be read gives no task status', async () => {
+  const run = pbsTask('', 'vm/100', NOW_S - 60, { status: 'connection error' });
+  const { ctx } = pbsCtx({ slots: [{ ...PBS_ROW, jobId: 'main::vm/100' }] }, 'slots', (p, q) =>
+    p === logPath(run)
+      ? { status: 500, data: null }
+      : pbsServer({ groups: { '': [group('vm', '100', NOW_S - 3600)] }, runs: [run] })(p, q),
+  );
+  const out = await dataFn(ctx);
+  assert.equal(out[0].status, 'healthy');
+});
+
+test('one failing PBS request marks only its own card', async () => {
+  const slot = jobId => ({ ...PBS_ROW, jobId });
+  const { ctx } = pbsCtx(
+    { slots: [slot('main::vm/100'), slot('main:gone:vm/100'), slot('main::ct/200')] },
+    'slots',
+    (p, q) => {
+      if (p === '/admin/datastore/main/snapshots' && q.get('backup-id') === '200') return { status: 500, data: null };
+      return pbsServer({ groups: { '': [group('vm', '100', NOW_S - 60), group('ct', '200', NOW_S - 60)] } })(p, q);
+    },
+  );
+  const out = await dataFn(ctx);
+  assert.equal(out[0].status, 'healthy');
+  assert.deepEqual(out[1], { error: KIND.UPSTREAM });
+  assert.deepEqual(out[2], { error: KIND.UPSTREAM });
+});
+
+test('a PBS reply in the wrong shape marks its card as an upstream error', async () => {
+  const { ctx } = pbsCtx({ slots: [{ ...PBS_ROW, jobId: 'main::vm/100' }] }, 'slots', p =>
+    p === '/admin/datastore/main/groups' ? { status: 200, data: { data: { 'vm/100': {} } } } : null,
+  );
+  assert.deepEqual(await dataFn(ctx), [{ error: KIND.UPSTREAM }]);
+});
+
+test('an impossible PBS timestamp reads as unknown, not as a failed card', async () => {
+  const { ctx } = pbsCtx(
+    {
+      slots: [
+        { ...PBS_ROW, jobId: 'main::vm/100' },
+        { ...PBS_ROW, jobId: 'main::vm/101' },
+      ],
+    },
+    'slots',
+    pbsServer({ groups: { '': [group('vm', '100', 1e20), group('vm', '101', 'soon'), group('vm', '102', NOW_S)] } }),
+  );
+  const out = await dataFn(ctx);
+  for (const card of out) {
+    assert.equal(card.lastFinished, null);
+    assert.equal(card.status, 'warning');
+  }
+});
+
+test('pbs-groups reads at most 20 stores and says the list was cut short', async () => {
+  const stores = Array.from({ length: 25 }, (_, k) => ({ store: `s${k}` }));
+  const { ctx, calls } = pbsCtx(
+    {},
+    'pbs-groups',
+    p => {
+      if (p === '/admin/datastore') return { status: 200, data: { data: stores } };
+      if (p.endsWith('/namespace')) return { status: 200, data: { data: [{ ns: '' }] } };
+      if (p.endsWith('/groups')) return { status: 200, data: { data: [group('vm', '1', NOW_S)] } };
+    },
+    PBS_ROW,
+  );
+  const out = await dataFn(ctx);
+  assert.equal(out.options.length, 20);
+  assert.equal(out.truncated, true);
+  assert.ok(!calls.some(c => c.url.includes('/s20/')));
+});
+
+test('pbs-groups says the list was cut short past 20 namespaces', async () => {
+  const spaces = [{ ns: '' }, ...Array.from({ length: 24 }, (_, k) => ({ ns: `n${k}` }))];
+  const { ctx } = pbsCtx(
+    {},
+    'pbs-groups',
+    p => {
+      if (p === '/admin/datastore') return { status: 200, data: { data: [{ store: 'main' }] } };
+      if (p.endsWith('/namespace')) return { status: 200, data: { data: spaces } };
+      if (p.endsWith('/groups')) return { status: 200, data: { data: [group('vm', '1', NOW_S)] } };
+    },
+    PBS_ROW,
+  );
+  const out = await dataFn(ctx);
+  assert.equal(out.options.length, 20);
+  assert.equal(out.truncated, true);
+});
+
+test('pbs-groups leaves out entries that are not groups', async () => {
+  const { ctx } = pbsCtx(
+    {},
+    'pbs-groups',
+    p => {
+      if (p === '/admin/datastore') return { status: 200, data: { data: [null, { store: 7 }, { store: 'main' }] } };
+      if (p.endsWith('/groups')) {
+        return {
+          status: 200,
+          data: {
+            data: [null, 'vm/1', { 'backup-type': 'disk', 'backup-id': '1' }, group('vm', '1', NOW_S, { comment: {} })],
+          },
+        };
+      }
+    },
+    PBS_ROW,
+  );
+  const out = await dataFn(ctx);
+  assert.deepEqual(out, { options: [{ value: 'main::vm/1', label: 'main: vm/1' }] });
 });
 
 test('a PBS slot still reads when the token cannot list tasks', async () => {
@@ -515,4 +726,35 @@ test('a Backrest login refused marks its cards as an auth failure', async () => 
     { '/v1.Backrest/GetSummaryDashboard': { status: 401, data: null } },
   );
   assert.deepEqual(await dataFn(ctx), [{ error: KIND.AUTH }]);
+});
+
+test('an impossible Backrest next run reads as unknown and keeps the card', async () => {
+  const plan = { ...BACKREST_SUMMARY.data.planSummaries[0], nextBackupTimeMs: '1e20' };
+  const { ctx } = ctxFor(
+    { slots: [{ provider: 'backrest', backrestUrl: 'http://br-bad-time:9898', jobId: 'photos' }] },
+    'slots',
+    { '/v1.Backrest/GetSummaryDashboard': { status: 200, data: { planSummaries: [plan] } } },
+  );
+  const out = await dataFn(ctx);
+  assert.equal(out[0].status, 'healthy');
+  assert.equal(out[0].nextRun, null);
+});
+
+test('a Backrest reply in the wrong shape marks its cards as an upstream error', async () => {
+  const { ctx } = ctxFor(
+    { slots: [{ provider: 'backrest', backrestUrl: 'http://br-bad-shape:9898', jobId: 'photos' }] },
+    'slots',
+    { '/v1.Backrest/GetSummaryDashboard': { status: 200, data: { planSummaries: { photos: {} } } } },
+  );
+  assert.deepEqual(await dataFn(ctx), [{ error: KIND.UPSTREAM }]);
+});
+
+test('a Backrest with no plans lists none', async () => {
+  const { ctx } = ctxFor(
+    {},
+    'backrest-plans',
+    { '/v1.Backrest/GetSummaryDashboard': { status: 200, data: {} } },
+    { provider: 'backrest', backrestUrl: 'http://backrest-empty:9898' },
+  );
+  assert.deepEqual(await dataFn(ctx), { options: [] });
 });

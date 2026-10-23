@@ -109,6 +109,37 @@ test('the ctx a data function receives carries no secret settings', () => {
   assert.ok(!JSON.stringify(ctx.settings).includes('HASHED'));
 });
 
+test('a data function sends at most six requests at once to one service', async () => {
+  let active = 0;
+  let peak = 0;
+  const fetch = async () => {
+    active++;
+    peak = Math.max(peak, active);
+    await new Promise(r => setTimeout(r, 5));
+    active--;
+    return { status: 200, data: {} };
+  };
+  const ctx = dataFnContext({}, '', new URLSearchParams(), fetch);
+  await Promise.all([
+    ...Array.from({ length: 30 }, (_, k) => ctx.fetchJSON(`http://pbs:8007/${k}`)),
+    ctx.fetchJSON('http://other:80/'),
+  ]);
+  assert.equal(peak, 7);
+});
+
+test('a queued request gets its timeout when it is sent', async () => {
+  const timeouts = [];
+  const fetch = async (url, opts) => {
+    timeouts.push(opts.timeout);
+    await new Promise(r => setTimeout(r, 300));
+    return { status: 200, data: {} };
+  };
+  const ctx = dataFnContext({}, '', new URLSearchParams(), fetch);
+  await Promise.all(Array.from({ length: 7 }, () => ctx.fetchJSON('http://svc/', { timeout: 60000 })));
+  assert.equal(timeouts.length, 7);
+  assert.ok(timeouts[6] <= timeouts[0] - 250, `queued ${timeouts[6]} ms, first ${timeouts[0]} ms`);
+});
+
 test('a data function cannot read a reply that is not JSON as data', async () => {
   const fetchFor = data => async () => ({ status: 200, data });
   const ctx = dataFnContext({}, '', new URLSearchParams(), fetchFor('{"num_dns_queries": 12'));

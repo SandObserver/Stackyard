@@ -20,6 +20,9 @@ const LIMITS = require('./poll-limits');
 const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
 const { FETCH_MS, WIDGET_BUDGET_MS, WIDGET_HOLD_MS, WIDGET_KEEP_MS } = require('./timeouts');
 const { latest } = require('./latest');
+const { limitPerOrigin } = require('./origin-limit');
+
+const PER_ORIGIN = 6;
 
 function normalizeBase(raw) {
   if (!raw) return '';
@@ -70,7 +73,7 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
     params: searchParams,
     /* The caller supplies the fetcher to match the URL's provenance: unchecked
        for saved config, checked for a request-supplied preview config. */
-    fetchJSON: refuseUnreadable(withinBudget(fetch, deadline)),
+    fetchJSON: refuseUnreadable(limitPerOrigin(withinBudget(fetch, deadline), PER_ORIGIN)),
     /* Follows the fetcher's provenance. Anything but saved config is checked. */
     jsonRpc: withinBudget(fetch === fetchUnchecked ? jsonRpcUnchecked : jsonRpcChecked, deadline),
     parsePrometheus,

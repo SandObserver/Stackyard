@@ -94,6 +94,15 @@ function kopiaSourceId(source) {
 }
 
 const STALE_MS = 25 * 60 * 60 * 1000;
+const MIN_MS = Date.UTC(2000, 0, 1);
+const MAX_MS = Date.UTC(2100, 0, 1);
+
+function plausibleMs(v) {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= MIN_MS && n < MAX_MS ? n : null;
+}
+
+const epochMs = s => (s == null || s === '' ? null : plausibleMs(Number(s) * 1000));
 
 function pbsGroupId(store, ns, group) {
   return `${store}:${ns || ''}:${group['backup-type']}/${group['backup-id']}`;
@@ -107,8 +116,9 @@ function pbsParseGroupId(id) {
 function pbsDeriveStatus(group, newest, tasks, now = Date.now()) {
   const task = tasks?.[0];
   if (task && !task.endtime) return 'running';
-  const lastMs = (group['last-backup'] || 0) * 1000;
-  if (task && task.starttime * 1000 > lastMs && task.status !== 'OK' && !/^WARNINGS/.test(task.status || '')) {
+  const lastMs = epochMs(group['last-backup']) || 0;
+  const startMs = task ? epochMs(task.starttime) : null;
+  if (startMs && startMs > lastMs && task.status !== 'OK' && !/^WARNINGS/.test(String(task.status || ''))) {
     return 'error';
   }
   if (newest?.verification?.state === 'failed') return 'error';
@@ -123,7 +133,20 @@ function backrestLatest(summary) {
   const i = status.findIndex(s => s !== 'STATUS_INPROGRESS');
   if (i < 0) return null;
   const at = Number(rb.timestampMs?.[i]) + Number(rb.durationMs?.[i] || 0);
-  return { status: status[i], finishedMs: Number.isFinite(at) && at > 0 ? at : 0 };
+  return { status: status[i], finishedMs: plausibleMs(at) || 0 };
+}
+
+/* Task ids carry no namespace. Read it from the backup log line. */
+function pbsLogNamespace(lines) {
+  for (const line of lines) {
+    const m = /(?:^|: )starting new backup on datastore '[^']*'.*: "([^"]+)"$/.exec(String(line ?? ''));
+    if (!m) continue;
+    const parts = m[1].split('/');
+    const ns = [];
+    while (parts[0] === 'ns' && parts.length > 1) ns.push(parts.splice(0, 2)[1]);
+    return parts.length >= 2 ? ns.join('/') : null;
+  }
+  return null;
 }
 
 function backrestDeriveStatus(summary) {
@@ -152,6 +175,9 @@ module.exports = {
   pbsGroupId,
   pbsParseGroupId,
   pbsDeriveStatus,
+  pbsLogNamespace,
+  plausibleMs,
+  epochMs,
   backrestLatest,
   backrestDeriveStatus,
 };

@@ -136,10 +136,38 @@ test('backrestLatest skips a running backup and adds its duration', () => {
   const p = {
     recentBackups: {
       status: ['STATUS_INPROGRESS', 'STATUS_SUCCESS'],
-      timestampMs: ['3000', '1000'],
+      timestampMs: ['1800000003000', '1800000001000'],
       durationMs: ['10', '500'],
     },
   };
-  assert.deepEqual(b.backrestLatest(p), { status: 'STATUS_SUCCESS', finishedMs: 1500 });
+  assert.deepEqual(b.backrestLatest(p), { status: 'STATUS_SUCCESS', finishedMs: 1800000001500 });
   assert.equal(b.backrestLatest({ recentBackups: { status: ['STATUS_INPROGRESS'] } }), null);
+});
+
+test('backrestLatest reads an impossible finish time as unknown', () => {
+  const p = { recentBackups: { status: ['STATUS_SUCCESS'], timestampMs: ['1e20'], durationMs: ['0'] } };
+  assert.deepEqual(b.backrestLatest(p), { status: 'STATUS_SUCCESS', finishedMs: 0 });
+});
+
+test('pbsLogNamespace reads the namespace from the backup log line', () => {
+  const line = snapPath =>
+    `2026-10-23T14:09:01+00:00: starting new backup on datastore 'main' from ::ffff:10.0.2.2: "${snapPath}"`;
+  assert.equal(b.pbsLogNamespace([line('host/nas/2026-10-23T14:08:57Z')]), '');
+  assert.equal(b.pbsLogNamespace([line('ns/site-b/host/nas/2026-10-23T14:08:59Z')]), 'site-b');
+  assert.equal(b.pbsLogNamespace([line('ns/site-b/ns/inner/host/nas/2026-10-23T14:09:01Z')]), 'site-b/inner');
+  assert.equal(b.pbsLogNamespace(['protocol upgrade done', line('vm/100/2026-10-23T14:08:57Z')]), '');
+  assert.equal(b.pbsLogNamespace(['protocol upgrade done']), null);
+  assert.equal(b.pbsLogNamespace([line('ns/site-b')]), null);
+  assert.equal(b.pbsLogNamespace([null, 7]), null);
+});
+
+test('plausibleMs and epochMs accept only dates this century', () => {
+  assert.equal(b.plausibleMs('1800000000000'), 1800000000000);
+  assert.equal(b.plausibleMs(1e20), null);
+  assert.equal(b.plausibleMs('soon'), null);
+  assert.equal(b.plausibleMs(1500), null);
+  assert.equal(b.epochMs(1800000000), 1800000000000);
+  assert.equal(b.epochMs(null), null);
+  assert.equal(b.epochMs(''), null);
+  assert.equal(b.epochMs(1e17), null);
 });

@@ -498,6 +498,8 @@
     "empty": "Empty",
     "loaded_one": "Loaded {count} option",
     "loaded_other": "Loaded {count} options",
+    "loadedSome_one": "Showing the first {count} option. The server has more.",
+    "loadedSome_other": "Showing the first {count} options. The server has more.",
     "iframeUrl": "Iframe URL",
     "referrerPolicy": "Referrer Policy",
     "referrerDefault": "Default",

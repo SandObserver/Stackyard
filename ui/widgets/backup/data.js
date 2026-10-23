@@ -14,6 +14,9 @@ const {
   pbsGroupId,
   pbsParseGroupId,
   pbsDeriveStatus,
+  pbsLogNamespace,
+  plausibleMs,
+  epochMs,
   backrestLatest,
   backrestDeriveStatus,
 } = require('./backup-status');
@@ -108,8 +111,12 @@ function kopiaFetch(url, username, password, path, ctx) {
 
 const PBS_TOKEN_ID = /^[^\s:@!]+@[A-Za-z0-9_][A-Za-z0-9._-]*![A-Za-z0-9_][A-Za-z0-9._-]*$/;
 const PBS_SECRET = /^[A-Za-z0-9-]+$/;
+const PBS_MAX_STORES = 20;
 const PBS_MAX_NAMESPACES = 20;
 const PBS_TASK_WINDOW_S = 7 * 24 * 3600;
+const PBS_LOG_LINES = 5;
+const PBS_LOG_READS = 4;
+const PBS_TASK_NS_MAX = 2000;
 
 function pbsConn(row, ctx) {
   const url = (row.pbsUrl || '').trim();
@@ -123,7 +130,7 @@ function pbsConn(row, ctx) {
   return { base: dupNormalizeBase(url), tokenId, secret, skipTls: row.pbsSkipTls === true };
 }
 
-async function pbsGet(conn, path, ctx) {
+async function pbsGet(conn, path, ctx, keep) {
   const r = await ctx.fetchJSON(`${conn.base}/api2/json${path}`, {
     headers: { Authorization: `PBSAPIToken=${conn.tokenId}:${conn.secret}` },
     skipTls: conn.skipTls,
@@ -132,35 +139,87 @@ async function pbsGet(conn, path, ctx) {
   if (r.status === 401 || r.status === 403)
     ctx.fail('Proxmox Backup Server refused the token', { kind: ctx.KIND.AUTH });
   if (r.status !== 200) ctx.fail(`Proxmox Backup Server returned HTTP ${r.status}`);
-  return Array.isArray(r.data?.data) ? r.data.data : [];
+  if (!Array.isArray(r.data?.data)) {
+    ctx.fail('Proxmox Backup Server sent a reply in an unexpected shape', { kind: ctx.KIND.UPSTREAM });
+  }
+  return r.data.data.filter(x => x && typeof x === 'object' && !Array.isArray(x) && keep(x));
 }
+
+const isStr = v => typeof v === 'string';
+const PBS_KEEP = {
+  store: x => isStr(x.store) && x.store !== '',
+  ns: x => x.ns == null || isStr(x.ns),
+  group: x => ['vm', 'ct', 'host'].includes(x['backup-type']) && isStr(x['backup-id']) && x['backup-id'] !== '',
+  task: x => isStr(x.upid) && isStr(x.worker_id) && isStr(x.worker_type),
+  any: () => true,
+};
 
 const pbsStorePath = store => `/admin/datastore/${encodeURIComponent(store)}`;
 const pbsNsQuery = ns => (ns ? `?ns=${encodeURIComponent(ns)}` : '');
+const pbsComment = x => (isStr(x?.comment) ? x.comment : '');
 
 async function pbsGroups(row, ctx) {
   const conn = pbsConn(row, ctx);
-  const stores = await pbsGet(conn, '/admin/datastore', ctx);
+  const listed = await pbsGet(conn, '/admin/datastore', ctx, PBS_KEEP.store);
+  let truncated = listed.length > PBS_MAX_STORES;
   const perStore = await Promise.all(
-    stores.map(async ({ store }) => {
+    listed.slice(0, PBS_MAX_STORES).map(async ({ store }) => {
       let spaces = [''];
       try {
-        const listed = await pbsGet(conn, `${pbsStorePath(store)}/namespace`, ctx);
-        if (listed.length) spaces = listed.map(n => n.ns || '').slice(0, PBS_MAX_NAMESPACES);
+        const found = await pbsGet(conn, `${pbsStorePath(store)}/namespace`, ctx, PBS_KEEP.ns);
+        if (found.length) spaces = found.map(n => n.ns || '');
       } catch {}
+      if (spaces.length > PBS_MAX_NAMESPACES) truncated = true;
       const lists = await Promise.all(
-        spaces.map(async ns =>
-          (await pbsGet(conn, `${pbsStorePath(store)}/groups${pbsNsQuery(ns)}`, ctx)).map(g => ({ ns, g })),
+        spaces.slice(0, PBS_MAX_NAMESPACES).map(async ns =>
+          (await pbsGet(conn, `${pbsStorePath(store)}/groups${pbsNsQuery(ns)}`, ctx, PBS_KEEP.group)).map(g => ({
+            ns,
+            g,
+          })),
         ),
       );
       return lists.flat().map(({ ns, g }) => {
         const where = ns ? `${store}/${ns}` : store;
         const what = `${g['backup-type']}/${g['backup-id']}`;
-        return { value: pbsGroupId(store, ns, g), label: `${where}: ${what}${g.comment ? ` (${g.comment})` : ''}` };
+        const note = pbsComment(g);
+        return { value: pbsGroupId(store, ns, g), label: `${where}: ${what}${note ? ` (${note})` : ''}` };
       });
     }),
   );
-  return { options: perStore.flat() };
+  return truncated ? { options: perStore.flat(), truncated } : { options: perStore.flat() };
+}
+
+const _pbsTaskNs = new Map();
+
+function pbsTaskNs(conn, upid, ctx, mayRead) {
+  const key = `${conn.base}|${upid}`;
+  let p = _pbsTaskNs.get(key);
+  if (p || !mayRead) return p || null;
+  p = pbsGet(conn, `/nodes/localhost/tasks/${encodeURIComponent(upid)}/log?limit=${PBS_LOG_LINES}`, ctx, PBS_KEEP.any)
+    .then(lines => pbsLogNamespace(lines.map(l => l.t)))
+    .catch(() => null)
+    .then(ns => {
+      if (ns == null) _pbsTaskNs.delete(key);
+      return ns;
+    });
+  _pbsTaskNs.set(key, p);
+  while (_pbsTaskNs.size > PBS_TASK_NS_MAX) _pbsTaskNs.delete(_pbsTaskNs.keys().next().value);
+  return p;
+}
+
+async function pbsGroupTasks(conn, storeTasks, ref, ctx) {
+  if (!storeTasks) return null;
+  const workerId = `${ref.store}:${ref.type}/${ref.id}`;
+  let reads = 0;
+  for (const t of storeTasks) {
+    if (t.worker_type !== 'backup' || t.worker_id !== workerId) continue;
+    const cached = pbsTaskNs(conn, t.upid, ctx, false);
+    if (!cached && reads++ >= PBS_LOG_READS) return null;
+    const found = await (cached || pbsTaskNs(conn, t.upid, ctx, true));
+    if (found == null) return null;
+    if (found === ref.ns) return [t];
+  }
+  return [];
 }
 
 function backrestHeaders(user, pass) {
@@ -178,7 +237,12 @@ async function backrestSummary(url, user, pass, ctx) {
   });
   if (r.status === 401 || r.status === 403) ctx.fail('Backrest authentication failed', { kind: ctx.KIND.AUTH });
   if (r.status !== 200) ctx.fail(`Backrest returned HTTP ${r.status}`);
-  return Array.isArray(r.data?.planSummaries) ? r.data.planSummaries : [];
+  /* Keep the default. An empty dashboard omits the field. */
+  const plans = r.data?.planSummaries ?? [];
+  if (!r.data || typeof r.data !== 'object' || !Array.isArray(plans)) {
+    ctx.fail('Backrest sent a reply in an unexpected shape', { kind: ctx.KIND.UPSTREAM });
+  }
+  return plans.filter(p => p && typeof p === 'object' && isStr(p.id) && p.id !== '');
 }
 
 async function backrestPlans(row, ctx) {
@@ -340,52 +404,53 @@ async function slots(config, ctx) {
         const spaces = new Map();
         for (const { ref } of wanted) if (ref) spaces.set(`${ref.store}:${ref.ns}`, ref);
         const groupLists = new Map();
-        await Promise.all(
-          [...spaces].map(async ([key, { store, ns }]) => {
-            groupLists.set(key, await pbsGet(conn, `${pbsStorePath(store)}/groups${pbsNsQuery(ns)}`, ctx));
-          }),
-        );
-        /* Task ids carry no namespace. Matching them to namespaced groups shows
-           another group's result. */
-        const taskStores = [...new Set(wanted.filter(w => w.ref && !w.ref.ns).map(w => w.ref.store))];
+        for (const [key, { store, ns }] of spaces) {
+          groupLists.set(key, pbsGet(conn, `${pbsStorePath(store)}/groups${pbsNsQuery(ns)}`, ctx, PBS_KEEP.group));
+        }
+        const since = Math.floor(Date.now() / 1000) - PBS_TASK_WINDOW_S;
         const tasksByStore = new Map();
-        await Promise.all(
-          taskStores.map(async store => {
-            const since = Math.floor(Date.now() / 1000) - PBS_TASK_WINDOW_S;
-            const q = `?store=${encodeURIComponent(store)}&typefilter=backup&since=${since}&limit=500`;
-            try {
-              tasksByStore.set(store, await pbsGet(conn, `/nodes/localhost/tasks${q}`, ctx));
-            } catch {}
-          }),
-        );
+        for (const store of new Set(wanted.filter(w => w.ref).map(w => w.ref.store))) {
+          const q = `?store=${encodeURIComponent(store)}&typefilter=backup&since=${since}&limit=500`;
+          tasksByStore.set(
+            store,
+            pbsGet(conn, `/nodes/localhost/tasks${q}`, ctx, PBS_KEEP.task).catch(() => null),
+          );
+        }
         await Promise.all(
           wanted.map(async ({ i, ref, customName }) => {
-            const group =
-              ref &&
-              groupLists
-                .get(`${ref.store}:${ref.ns}`)
-                ?.find(g => g['backup-type'] === ref.type && g['backup-id'] === ref.id);
-            if (!group) {
-              result[i] = { error: ctx.KIND.INVALID };
-              return;
+            try {
+              if (!ref) {
+                result[i] = { error: ctx.KIND.INVALID };
+                return;
+              }
+              const groups = await groupLists.get(`${ref.store}:${ref.ns}`);
+              const group = groups.find(g => g['backup-type'] === ref.type && g['backup-id'] === ref.id);
+              if (!group) {
+                result[i] = { error: ctx.KIND.INVALID };
+                return;
+              }
+              const q = new URLSearchParams({ 'backup-type': ref.type, 'backup-id': ref.id });
+              if (ref.ns) q.set('ns', ref.ns);
+              const [snaps, storeTasks] = await Promise.all([
+                pbsGet(conn, `${pbsStorePath(ref.store)}/snapshots?${q}`, ctx, PBS_KEEP.any),
+                tasksByStore.get(ref.store),
+              ]);
+              const time = s => epochMs(s['backup-time']) || 0;
+              const newest = snaps.reduce((a, b) => (time(b) > (a ? time(a) : 0) ? b : a), null);
+              const tasks = await pbsGroupTasks(conn, storeTasks, ref, ctx);
+              const lastMs = epochMs(group['last-backup']);
+              result[i] = {
+                id: pbsGroupId(ref.store, ref.ns, group),
+                name: customName || pbsComment(newest) || pbsComment(group) || `${ref.type}/${ref.id}`,
+                status: pbsDeriveStatus(group, newest, tasks),
+                lastFinished: lastMs ? new Date(lastMs).toISOString() : null,
+                nextRun: null,
+                link: ctx.serviceLink(list[i].pbsHref, list[i].pbsUrl),
+              };
+            } catch (e) {
+              ctx.log.warn('backup: proxmox backup server slot failed', { url: row.pbsUrl, error: e.message });
+              result[i] = { error: thrownKind(e, ctx) };
             }
-            const q = new URLSearchParams({ 'backup-type': ref.type, 'backup-id': ref.id });
-            if (ref.ns) q.set('ns', ref.ns);
-            const snaps = await pbsGet(conn, `${pbsStorePath(ref.store)}/snapshots?${q}`, ctx);
-            const newest = snaps.reduce((a, b) => ((b['backup-time'] || 0) > (a?.['backup-time'] || 0) ? b : a), null);
-            const storeTasks = ref.ns ? null : tasksByStore.get(ref.store);
-            const workerId = `${ref.store}:${ref.type}/${ref.id}`;
-            const tasks = storeTasks
-              ? storeTasks.filter(t => t.worker_type === 'backup' && t.worker_id === workerId)
-              : null;
-            result[i] = {
-              id: pbsGroupId(ref.store, ref.ns, group),
-              name: customName || newest?.comment || group.comment || `${ref.type}/${ref.id}`,
-              status: pbsDeriveStatus(group, newest, tasks),
-              lastFinished: group['last-backup'] ? new Date(group['last-backup'] * 1000).toISOString() : null,
-              nextRun: null,
-              link: ctx.serviceLink(list[i].pbsHref, list[i].pbsUrl),
-            };
           }),
         );
       } catch (e) {
@@ -405,14 +470,14 @@ async function slots(config, ctx) {
             result[i] = { error: ctx.KIND.INVALID };
             return;
           }
-          const next = Number(p.nextBackupTimeMs);
+          const next = plausibleMs(p.nextBackupTimeMs);
           const finished = backrestLatest(p)?.finishedMs;
           result[i] = {
             id: p.id,
             name: customName || p.id,
             status: backrestDeriveStatus(p),
             lastFinished: finished ? new Date(finished).toISOString() : null,
-            nextRun: next > 0 ? new Date(next).toISOString() : null,
+            nextRun: next ? new Date(next).toISOString() : null,
             link: ctx.serviceLink(list[i].backrestHref, list[i].backrestUrl, `/#/plan/${encodeURIComponent(p.id)}`),
           };
         });
