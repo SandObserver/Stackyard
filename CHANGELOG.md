@@ -34,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show when a settings list from a service was cut short.
 
+- Weather shows an icon when UV or air quality calls for care, with the reading
+  on hover or tap.
+
 ### Changed
 
 - Long weather condition labels shrink to fit before they are cut off.
