@@ -12,6 +12,7 @@
   .widget{width:100%;height:100%;position:relative;border-radius:inherit}
   .widget.clickable{cursor:pointer}
   .widget.clickable:focus-visible{outline:2px solid #0091FF;outline-offset:-3px}
+  .widget[tabindex]:focus-visible{outline:2px solid #0091FF;outline-offset:-3px}
   .ico{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:62%;max-width:110px;aspect-ratio:1/1;display:block;overflow:visible}
   .meta{position:absolute;left:18px;right:18px;bottom:14px;display:flex;flex-direction:column;gap:2px}
   .cond{font-size:15px;font-weight:600;color:#2C2C2E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -259,6 +260,7 @@ function tempColor(temp,units,lightCard){
 
 /* ---- UV and air quality alerts ---- */
 const LEVEL_INK=[,'#FFD600','#FF9230','#FF4245','#DB34F2','#B78A66'];
+const LEVEL_INK_DAY=[,'#A88300','#E05A00','#FF4245','#DB34F2','#B78A66'];
 const BAND={
   moderate:()=>wt('ui.moderate','moderate'),
   high:()=>wt('ui.high','high'),
@@ -277,13 +279,14 @@ function alertText(a){
   const vars={value:formatNumber(a.value),level:BAND[a.band]()};
   return a.kind==='uv'?wt('ui.uvAlert','UV index {value}, {level}',vars):wt('ui.airAlert','Air quality index {value}, {level}',vars);
 }
-let sprite=false;
-function drawAlerts(alerts){
+let sprite=false,linked=false;
+function drawAlerts(alerts,lightCard){
   const a=alerts[0];
   aqEl.hidden=!a;
+  if(!linked){if(a)widgetEl.tabIndex=0;else widgetEl.removeAttribute('tabindex');}
   if(!a)return;
   if(!sprite){ensureSprite(document);sprite=true;}
-  aqEl.style.setProperty('--icon-accent',LEVEL_INK[a.level]);
+  aqEl.style.setProperty('--icon-accent',(lightCard?LEVEL_INK_DAY:LEVEL_INK)[a.level]);
   const ico=()=>html`<svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-${a.kind}"/></svg>`;
   setHtml(aqHitEl,ico());
   setHtml(aqCapIcoEl,ico());
@@ -331,7 +334,7 @@ function render(d){
   condEl.style.color = lightCard ? '#2C2C2E' : '#FFFFFF';
   widgetEl.classList.toggle('night', !lightCard);
   const alerts = Array.isArray(d.alerts) ? d.alerts.filter(validAlert) : [];
-  drawAlerts(alerts);
+  drawAlerts(alerts,lightCard);
   widgetEl.style.setProperty('--wt-cap-color', lightCard ? '#636366' : 'rgba(255,255,255,0.62)');
 
   /* HIG: full detail available on hover + to screen readers */
@@ -398,7 +401,7 @@ async function boot(){
   let cfg=null;
   try{const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);if(r.ok)cfg=await r.json();}catch(e){}
   const href=cfg&&cfg.widgetConfig&&cfg.widgetConfig.href;
-  linkTo(widgetEl,href);
+  linked=linkTo(widgetEl,href);
   /* poll keeps the last reading through a transient failure. onError runs when
      there is nothing good to keep. */
   poll({ fetch:wfetch, render, interval:TICK_MS,

@@ -11,10 +11,10 @@ const section = /\/\* ---- UV and air quality alerts ---- \*\/[\s\S]*?\nfunction
   page,
 )?.[0];
 const wt = (key, fallback, vars = {}) => fallback.replace(/\{(\w+)\}/g, (_, k) => vars[k]);
-const { BAND, LEVEL_INK, validAlert, alertText } = new Function(
+const { BAND, LEVEL_INK, LEVEL_INK_DAY, validAlert, alertText } = new Function(
   'wt',
   'formatNumber',
-  `${section}; return { BAND, LEVEL_INK, validAlert, alertText };`,
+  `${section}; return { BAND, LEVEL_INK, LEVEL_INK_DAY, validAlert, alertText };`,
 )(wt, String);
 
 const served = [...data.matchAll(/\[\d+, '(\w+)', (\d)\]/g)].map(([, band, level]) => ({ band, level: +level }));
@@ -30,6 +30,23 @@ test('every band the data function sends has a label, a colour and a string in e
     for (const key of ['ui.uvShort', 'ui.airShort', 'ui.uvAlert', 'ui.airAlert', 'ui.withAlert'])
       assert.ok(strings[key], `${file} has no ${key}`);
     for (const { band } of served) assert.ok(strings[`ui.${band}`], `${file} has no ui.${band}`);
+  }
+});
+
+const luminance = hex =>
+  [1, 3, 5]
+    .map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
+    .map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
+    .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+const contrast = (a, b) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+
+test('every severity colour keeps 3:1 against the card it is drawn on', () => {
+  for (const { band, level } of served) {
+    assert.ok(contrast(LEVEL_INK_DAY[level], '#ffffff') >= 3, `${band} on the day card`);
+    assert.ok(contrast(LEVEL_INK[level], '#1c1c1e') >= 3, `${band} on the night card`);
   }
 });
 

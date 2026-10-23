@@ -1,8 +1,8 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=9eced410';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=c1785fc2';
 import { initI18n, t } from '/js/i18n.js?v=ed7c5565';
 import { loginErrorKey } from '/js/admin-error.js?v=a60b17ac';
 import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
-import { el, inp as inpById, qa } from '/js/utils.js?v=705ca896';
+import { el, inp as inpById, qa } from '/js/utils.js?v=fd0b5b07';
 import { blockingScreenFor } from '/js/config-recovery.js?v=85138697';
 
 export async function checkAuth(onLogin) {

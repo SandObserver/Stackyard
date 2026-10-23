@@ -390,13 +390,38 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
       wheelWin = null;
     }
   };
+  /* Keys go to the focused document, not the hovered frame. Hand Escape to a
+     hovered bundled page, so it can dismiss its hover content. A frame never
+     matches :hover while the pointer is inside it. */
+  let hovered = false;
+  const enter = () => {
+    hovered = true;
+  };
+  const leave = () => {
+    hovered = false;
+  };
+  const forwardEscape = e => {
+    if (e.key !== 'Escape' || !hovered) return;
+    try {
+      const win = ifr.contentWindow;
+      win?.document.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    } catch {}
+  };
   ifr.addEventListener('load', applyDir);
   ifr.addEventListener('load', applyZoom);
-  if (zoomable) ifr.addEventListener('load', attachWheel);
+  if (zoomable) {
+    ifr.addEventListener('load', attachWheel);
+    ifr.addEventListener('pointerenter', enter);
+    ifr.addEventListener('pointerleave', leave);
+    document.addEventListener('keydown', forwardEscape);
+  }
   cleanups.push(() => {
     ifr.removeEventListener('load', applyDir);
     ifr.removeEventListener('load', applyZoom);
     ifr.removeEventListener('load', attachWheel);
+    ifr.removeEventListener('pointerenter', enter);
+    ifr.removeEventListener('pointerleave', leave);
+    document.removeEventListener('keydown', forwardEscape);
     try {
       if (wheelWin) wheelWin.removeEventListener('wheel', forwardWheel);
     } catch {}

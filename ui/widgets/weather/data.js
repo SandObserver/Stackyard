@@ -14,7 +14,7 @@ async function geocode(ctx) {
   const options = ((r.data && r.data.results) || []).map(p => ({
     value: [p.name, p.admin1, p.country].filter(Boolean).join(', '),
     label: [p.name, p.admin1, p.country].filter(Boolean).join(', '),
-    set: { lat: p.latitude, lon: p.longitude },
+    set: { lat: p.latitude, lon: p.longitude, countryCode: p.country_code },
   }));
   return { options };
 }
@@ -70,9 +70,10 @@ function wmoFromOpenWeather(id) {
   return 3;
 }
 
+const owKey = config => String(config.owKey || '').trim();
+
 async function openWeather(ctx, lat, lon, units) {
-  const key = String(ctx.config.owKey || '').trim();
-  if (!key) ctx.fail('Enter an OpenWeather API key.', { kind: ctx.KIND.INVALID });
+  const key = owKey(ctx.config);
   const url =
     'https://api.openweathermap.org/data/2.5/weather' +
     `?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}` +
@@ -101,7 +102,13 @@ async function openWeather(ctx, lat, lon, units) {
   };
 }
 
-/* Must match the geocoder's English country names. A mismatch silently picks the US index. */
+const EAQI_CODES = new Set(
+  'AT BE BG HR CY CZ DK EE FI FR DE GR HU IS IE IT LV LI LT LU MT NL NO PL PT RO SK SI ES SE CH GB RE GP MQ GF YT MF AX'.split(
+    ' ',
+  ),
+);
+
+/* For places saved without a country code. Must match the geocoder's English country names. A mismatch silently picks the US index. */
 const EAQI_COUNTRIES = new Set([
   'Austria',
   'Belgium',
@@ -139,7 +146,16 @@ const EAQI_COUNTRIES = new Set([
   'United Kingdom',
 ]);
 
-const airScale = city => (EAQI_COUNTRIES.has(String(city).split(',').pop().trim()) ? 'eu' : 'us');
+function airScale(config) {
+  if (typeof config.countryCode === 'string' && config.countryCode) {
+    return EAQI_CODES.has(config.countryCode.toUpperCase()) ? 'eu' : 'us';
+  }
+  const country = String(config.city || '')
+    .split(',')
+    .pop()
+    .trim();
+  return EAQI_COUNTRIES.has(country) ? 'eu' : 'us';
+}
 
 const UV_BANDS = [
   [11, 'extreme', 4],
@@ -202,10 +218,15 @@ module.exports = async function (ctx) {
   if (lat == null || lon == null || lat === '' || lon === '') ctx.fail('Location not set', { kind: ctx.KIND.INVALID });
   const units = config.units === 'f' ? 'f' : 'c';
 
-  const read = config.provider === 'openweather' ? openWeather : openMeteo;
-  const w = await read(ctx, lat, lon, units);
+  const ow = config.provider === 'openweather';
+  if (ow && !owKey(config)) ctx.fail('Enter an OpenWeather API key.', { kind: ctx.KIND.INVALID });
+
+  /* Keep both requests concurrent. In sequence they pass the API's hold time
+     and every poll shows the previous reading. */
   const warn = config.warnings !== false && config.warnings !== 'false';
-  const alerts = warn ? await exposure(ctx, lat, lon, airScale(config.city || '')) : [];
+  const air = warn ? exposure(ctx, lat, lon, airScale(config)) : [];
+  const w = await (ow ? openWeather : openMeteo)(ctx, lat, lon, units);
+  const alerts = await air;
 
   const useFeels = config.feelsLike === true || config.feelsLike === 'true';
   const temp = useFeels ? w.feels : w.real;
