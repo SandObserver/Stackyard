@@ -4,6 +4,7 @@ const crypto = require('crypto');
 
 const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 const MESSAGE_LIMIT = 4 * 1024 * 1024;
+const WRITE_BACKLOG_LIMIT = 64 * 1024;
 
 const OP = { CONTINUATION: 0, TEXT: 1, BINARY: 2, CLOSE: 8, PING: 9, PONG: 10 };
 
@@ -113,7 +114,10 @@ function wrapSocket(socket, head, opts = {}) {
   };
 
   const write = (/** @type {number} */ opcode, /** @type {Buffer} */ payload) => {
-    if (!closed && socket.writable) socket.write(encodeFrame(opcode, payload));
+    if (closed || !socket.writable) return;
+    socket.write(encodeFrame(opcode, payload));
+    if (socket.writableLength > WRITE_BACKLOG_LIMIT)
+      finish(protocolError('The service is not reading what it is sent.'));
   };
 
   const decode = frameDecoder(limit, (fin, opcode, payload) => {
@@ -123,7 +127,7 @@ function wrapSocket(socket, head, opts = {}) {
       else if (opcode === OP.CLOSE) {
         if (!closing) write(OP.CLOSE, payload.subarray(0, 2));
         finish(closing ? null : protocolError('The service closed the connection.'));
-      }
+      } else if (opcode !== OP.PONG) throw protocolError('The server sent an unknown frame type.');
       return;
     }
     if (opcode === OP.CONTINUATION) {
@@ -198,6 +202,13 @@ function rpcError(error) {
   });
 }
 
+/* Keep the catch. Every pending promise rejects when the connection ends. An
+   unhandled rejection exits the process. */
+const handled = (/** @type {Promise<any>} */ p) => {
+  p.catch(() => {});
+  return p;
+};
+
 /** @param {ReturnType<typeof wrapSocket>} conn */
 function rpcSession(conn) {
   let nextId = 1;
@@ -252,17 +263,21 @@ function rpcSession(conn) {
     call(method, params = []) {
       if (ended) return Promise.reject(ended);
       const id = nextId++;
-      return new Promise((resolve, reject) => {
-        pending.set(id, { resolve, reject });
-        conn.send(JSON.stringify({ jsonrpc: '2.0', id, method, params }));
-      });
+      return handled(
+        new Promise((resolve, reject) => {
+          pending.set(id, { resolve, reject });
+          conn.send(JSON.stringify({ jsonrpc: '2.0', id, method, params }));
+        }),
+      );
     },
     /** @param {string} method @param {(params: any) => boolean} [match] @returns {Promise<any>} */
     notification(method, match = () => true) {
       if (ended) return Promise.reject(ended);
-      return new Promise((resolve, reject) => {
-        waiters.add({ method, match, resolve, reject });
-      });
+      return handled(
+        new Promise((resolve, reject) => {
+          waiters.add({ method, match, resolve, reject });
+        }),
+      );
     },
     /* Rejects when the connection ends. Never resolves. */
     failed,

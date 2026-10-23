@@ -13,7 +13,7 @@ function fakeJsonRpc(methods = {}, events = {}) {
   const opened = [];
   const jsonRpc = async (url, opts, fn) => {
     opened.push({ url, opts });
-    /** @type {Array<{ method: string, match: Function, resolve: Function }>} */
+    /** @type {Array<{ method: string, match: Function, resolve: Function, reject: Function }>} */
     const waiters = [];
     const session = {
       async call(method, params = []) {
@@ -31,10 +31,16 @@ function fakeJsonRpc(methods = {}, events = {}) {
         return typeof m === 'function' ? m(params) : m;
       },
       notification(method, match = () => true) {
-        return new Promise(resolve => waiters.push({ method, match, resolve }));
+        const p = new Promise((resolve, reject) => waiters.push({ method, match, resolve, reject }));
+        p.catch(() => {});
+        return p;
       },
     };
-    return fn(session);
+    try {
+      return await fn(session);
+    } finally {
+      for (const w of waiters.splice(0)) w.reject(new Error('The connection closed.'));
+    }
   };
   return { jsonRpc, calls, opened };
 }

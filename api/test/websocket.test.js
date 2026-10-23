@@ -185,6 +185,51 @@ test('the service closing mid-call rejects the call', async t => {
   );
 });
 
+test('a wait and a call left pending when the session fails reject without an unhandled rejection', async t => {
+  const unhandled = [];
+  const onUnhandled = e => unhandled.push(e);
+  process.on('unhandledRejection', onUnhandled);
+  t.after(() => process.off('unhandledRejection', onUnhandled));
+  const url = await wsServer(t, {
+    onMessage: (text, socket) => {
+      if (JSON.parse(text).method === 'fail') echoRpc(text, socket);
+    },
+  });
+  await assert.rejects(
+    () =>
+      jsonRpcUnchecked(url, { timeout: 3000 }, s => {
+        s.notification('collection_update');
+        s.call('never');
+        return s.call('fail');
+      }),
+    e => e.rpc?.code === -32001,
+  );
+  await new Promise(r => setTimeout(r, 200));
+  assert.deepEqual(unhandled, []);
+});
+
+test('a service that sends pings but reads no pongs ends the session', async t => {
+  const url = await wsServer(t, {
+    onMessage: (_, socket) => {
+      socket.pause();
+      const ping = serverFrame(OP.PING, 'p'.repeat(125));
+      socket.write(Buffer.concat(Array(40000).fill(ping)));
+    },
+  });
+  await assert.rejects(
+    () => jsonRpcUnchecked(url, { timeout: 5000 }, s => s.call('x')),
+    e => e.kind === 'upstream' && /not reading/.test(e.message),
+  );
+});
+
+test('a reserved control frame ends the session', async t => {
+  const url = await wsServer(t, { onMessage: (_, socket) => socket.write(serverFrame(0x0b, '')) });
+  await assert.rejects(
+    () => jsonRpcUnchecked(url, { timeout: 3000 }, s => s.call('x')),
+    e => e.kind === 'upstream' && /unknown frame/.test(e.message),
+  );
+});
+
 test('a refused upgrade reports its HTTP status', async t => {
   const url = await wsServer(t, { refuse: 404 });
   await assert.rejects(

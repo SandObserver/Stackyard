@@ -75,7 +75,7 @@ test('CPU, memory without the ZFS cache, and temperature come from the realtime 
   assert.equal(r.cpu, 12.5);
   assert.equal(r.ram, 25);
   assert.equal(r.temp, 47);
-  assert.deepEqual(r.temps, { CPU: 47 });
+  assert.deepEqual(r.temps, { 0: 47 });
   assert.equal(r.iowait, null);
   assert.equal(r.procs, null);
 });

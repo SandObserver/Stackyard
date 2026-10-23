@@ -791,7 +791,7 @@ async function systemSummaryTrueNas(ctx) {
       cpu: finite(cpu.cpu?.usage),
       ram: total && available !== null ? pct(Math.max(0, total - available - cache), total) : null,
       temp,
-      temps: temp === null ? {} : { CPU: temp },
+      temps: temp === null ? {} : { 0: temp },
       disks: [...mounts].map(mount => ({ mount, ...disk(mount) })),
       iowait: null,
       procs: null,
