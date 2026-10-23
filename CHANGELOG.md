@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Allow Self-Signed Certificate for TrueNAS disk health.
 
+- Add Proxmox Backup Server and Backrest as Backup widget sources.
+
+- Show when a settings list from a service was cut short.
+
 ### Changed
 
 - Long weather condition labels shrink to fit before they are cut off.
@@ -44,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - TrueNAS disk health refuses an http address, because TrueNAS revokes an API
   key sent over http.
+
+- Show the Backup widget's Source setting as a drop-down.
 
 ### Fixed
 
