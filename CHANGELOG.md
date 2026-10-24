@@ -37,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Weather shows an icon when UV or air quality calls for care, with the reading
   on hover or tap.
 
+- Read pull requests and contributions from Gitea and Forgejo, and merge
+  requests from GitLab, in the Git widget.
+
 ### Changed
 
 - Long weather condition labels shrink to fit before they are cut off.
@@ -56,6 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Shrink the image by about 24 MB and run one nginx worker instead of one per
   CPU core.
+
+- Rename the GitHub widget to Git.
 
 ### Fixed
 
