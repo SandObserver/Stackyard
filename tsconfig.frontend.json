@@ -210,6 +210,12 @@
       "/js/host-names.js?v=*": [
         "./ui/js/host-names.js"
       ],
+      "/js/contribution-calendar.js": [
+        "./ui/js/contribution-calendar.js"
+      ],
+      "/js/contribution-calendar.js?v=*": [
+        "./ui/js/contribution-calendar.js"
+      ],
       "/js/service-link.js": [
         "./ui/js/service-link.js"
       ],

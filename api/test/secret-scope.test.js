@@ -229,6 +229,42 @@ test('changing the github view, user or filters keeps the stored token in scope'
   }
 });
 
+test('changing the git service or server URL takes the stored token out of scope', () => {
+  const github = getRegistry().github;
+  const saved = { githubService: 'gitea', githubUrl: 'https://git.a', githubUser: 'me', githubToken: 'STORED' };
+  for (const over of [{ githubService: 'forgejo' }, { githubUrl: 'https://git.b' }]) {
+    assert.equal(widgetConfigMatchesSaved({ ...saved, ...over }, saved, github), false, JSON.stringify(over));
+  }
+});
+
+test('a github widget saved before the service field keeps its token when the editor sends the default', () => {
+  const github = getRegistry().github;
+  const saved = { githubView: 'prs', githubUser: 'me', githubToken: 'STORED' };
+  const posted = { githubService: 'github', githubView: 'prs', githubUser: 'me' };
+  assert.equal(widgetConfigMatchesSaved(posted, saved, github), true);
+  assert.equal(alignSavedConfig(posted, saved, github).config.githubToken, 'STORED');
+  assert.equal(widgetConfigMatchesSaved({ ...posted, githubService: 'gitea' }, saved, github), false);
+});
+
+test('a row or object saved before a defaulted field keeps its secret when the editor sends the default', () => {
+  const saved = {
+    services: [{ id: 'a', url: 'http://vpn', token: 'STORED' }],
+    vpn: { url: 'http://vpn', apiKey: 'K' },
+  };
+  const posted = {
+    services: [{ id: 'a', url: 'http://vpn', type: 'gluetun' }],
+    vpn: { url: 'http://vpn', service: 'gluetun' },
+  };
+  assert.equal(widgetConfigMatchesSaved(posted, saved, connections), true);
+  assert.equal(alignSavedConfig(posted, saved, connections).config.services[0].token, 'STORED');
+  const moved = { ...posted, services: [{ ...posted.services[0], type: 'conduit' }] };
+  assert.equal(alignSavedConfig(moved, saved, connections).config.services[0].token, undefined);
+  assert.equal(
+    widgetConfigMatchesSaved({ ...posted, vpn: { ...posted.vpn, service: 'netbird' } }, saved, connections),
+    false,
+  );
+});
+
 test('a field that reaches the request still takes the stored credential out of scope', () => {
   const r = getRegistry();
   const cases = [

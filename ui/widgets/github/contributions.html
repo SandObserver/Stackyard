@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GitHub Contributions</title>
+<title>Git Contributions</title>
 <script src="/js/widget-theme.js?v=645f280f"></script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -81,11 +81,11 @@
 <div class="cap" id="cap"></div>
 <script type="module">
 import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, fitText, cssZoom } from '/js/widget-toolbox.js?v=ce372f4d';
+import { slotWeeks } from '/js/contribution-calendar.js?v=c88b8def';
 await loadStrings();
 
 const TICK_MS = 300000;
 const params = new URLSearchParams(location.search);
-const id = params.get('id') || '';
 const LANG = params.get('lang') || 'en';
 const MOBILE = params.get('mobile') === '1';
 const size = ['small', 'medium', 'large'].includes(params.get('size')) ? params.get('size') : 'small';
@@ -218,14 +218,16 @@ document.addEventListener('visibilitychange', endHover);
 
 let arrived = false;
 function render(data) {
-  const weeks = Array.isArray(data.weeks) ? data.weeks : [];
-  const total = formatNumber(Math.max(0, Number(data.totalContributions) || 0));
+  const cal = Array.isArray(data.slots) ? slotWeeks(data.slots) : data;
+  const weeks = Array.isArray(cal.weeks) ? cal.weeks : [];
+  const total = formatNumber(Math.max(0, Number(cal.totalContributions) || 0));
   endHover();
+  linkTo(linkEl, data.profileUrl);
   if (GRID.cols) drawGrid(weeks);
   num.textContent = total;
   fitText(num);
   sub.textContent = wt('ui.lastYear', 'Past 12 months');
-  name(wt('ui.contributionsAria', 'GitHub contributions: {total} in the past 12 months').replace('{total}', total));
+  name(wt('ui.contributionsAria', 'Contributions: {total} in the past 12 months').replace('{total}', total));
   if (!arrived) {
     arrived = true;
     w.classList.add('arrive');
@@ -235,18 +237,9 @@ function render(data) {
 
 const state = errorState({ root: document.body, caption: cap, content: () => [w] });
 
-async function boot() {
-  let href = '';
-  try {
-    const r = await fetch(`/api/widget-config/${encodeURIComponent(id)}`);
-    if (r.ok) {
-      const wc = (await r.json())?.widgetConfig || {};
-      href = wc.githubHref || (wc.githubUser ? `https://github.com/${encodeURIComponent(wc.githubUser)}` : '');
-    }
-  } catch {}
+function boot() {
   linkEl = MOBILE ? w : head;
-  const linked = linkTo(linkEl, href);
-  linkEl.setAttribute('role', linked ? 'link' : 'img');
+  linkEl.setAttribute('role', 'img');
   if (MOBILE) head.setAttribute('aria-hidden', 'true');
   name(wt('view.contributions.label', 'Contributions'));
   if (GRID.cols) drawGrid([]);

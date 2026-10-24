@@ -23,6 +23,44 @@
   },
   "fields": [
     {
+      "key": "githubService",
+      "type": "select",
+      "label": "githubService.label",
+      "default": "github",
+      "options": [
+        {
+          "value": "github",
+          "label": "githubService.opt.github"
+        },
+        {
+          "value": "gitea",
+          "label": "githubService.opt.gitea"
+        },
+        {
+          "value": "forgejo",
+          "label": "githubService.opt.forgejo"
+        },
+        {
+          "value": "gitlab",
+          "label": "githubService.opt.gitlab"
+        }
+      ]
+    },
+    {
+      "key": "githubUrl",
+      "type": "text",
+      "label": "githubUrl.label",
+      "placeholder": "githubUrl.placeholder",
+      "showIf": {
+        "field": "githubService",
+        "in": [
+          "gitea",
+          "forgejo",
+          "gitlab"
+        ]
+      }
+    },
+    {
       "key": "githubView",
       "type": "select",
       "variant": "pills",
@@ -37,7 +75,15 @@
           "label": "githubView.opt.contributions"
         }
       ],
-      "cosmetic": true
+      "cosmetic": true,
+      "showIf": {
+        "field": "githubService",
+        "in": [
+          "github",
+          "gitea",
+          "forgejo"
+        ]
+      }
     },
     {
       "key": "githubUser",
@@ -50,7 +96,34 @@
       "key": "githubToken",
       "type": "secret",
       "label": "githubToken.label",
-      "hint": "githubToken.hint"
+      "hint": "githubToken.hint",
+      "showIf": {
+        "field": "githubService",
+        "equals": "github"
+      }
+    },
+    {
+      "key": "githubToken",
+      "type": "secret",
+      "label": "githubToken.label",
+      "hint": "githubToken.hint.gitea",
+      "showIf": {
+        "field": "githubService",
+        "in": [
+          "gitea",
+          "forgejo"
+        ]
+      }
+    },
+    {
+      "key": "githubToken",
+      "type": "secret",
+      "label": "githubToken.label",
+      "hint": "githubToken.hint.gitlab",
+      "showIf": {
+        "field": "githubService",
+        "equals": "gitlab"
+      }
     },
     {
       "key": "githubHref",
@@ -84,6 +157,34 @@
         {
           "value": "mentioned",
           "label": "githubPrFilters.opt.mentioned"
+        },
+        {
+          "value": "review-requested",
+          "label": "githubPrFilters.opt.review-requested"
+        }
+      ],
+      "cosmetic": true
+    },
+    {
+      "key": "githubPrFilters",
+      "type": "multiselect",
+      "label": "githubPrFilters.label.gitlab",
+      "default": [
+        "created"
+      ],
+      "showIf": {
+        "field": "githubService",
+        "equals": "gitlab"
+      },
+      "hint": "githubPrFilters.hint.gitlab",
+      "options": [
+        {
+          "value": "created",
+          "label": "githubPrFilters.opt.created"
+        },
+        {
+          "value": "assigned",
+          "label": "githubPrFilters.opt.assigned"
         },
         {
           "value": "review-requested",

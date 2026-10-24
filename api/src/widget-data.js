@@ -10,6 +10,7 @@ const { preserveWidgetSecrets } = require('./widget-secrets');
 const { alignSavedConfig, leavesStoredSecretBlank, RETYPE_MESSAGE } = require('./secret-scope');
 const { dispatchProvider } = require('./provider-dispatch');
 const { widgetSettings } = require('./widget-settings');
+const { withManifestDefaults } = require('./widget-defaults');
 const { IS_DEMO } = require('./demo');
 const demoData = require('./demo-data');
 const log = require('./log');
@@ -128,7 +129,7 @@ function widgetParams(searchParams, manifest) {
 const KEPT_PER_WIDGET = 16;
 
 async function getWidgetData(item, entry, endpointName, searchParams, fetch, row = null, isOptions = false) {
-  const wc = item.widgetConfig || {};
+  const wc = withManifestDefaults(item.widgetConfig, entry);
   /* An options fetch must run the real path, or the editor shows fabricated
      options. */
   if (IS_DEMO && !isOptions && entry.hasDemoFn) {
