@@ -8,24 +8,33 @@ COPY nginx/ ./nginx/
 COPY scripts/bump-cache-busting.js ./scripts/bump-cache-busting.js
 RUN node scripts/bump-cache-busting.js
 
-FROM node:24-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f
+FROM node:24-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS base
 
-LABEL org.opencontainers.image.title="Stackyard" \
-      org.opencontainers.image.description="Self-hosted homelab dashboard" \
-      org.opencontainers.image.source="https://github.com/SandObserver/stackyard" \
-      org.opencontainers.image.licenses="Apache-2.0"
-
-# No package manager in the runtime image. The check fails the build if a base
-# image change makes a path stop matching.
+# No package manager and no C headers in the runtime image. The check fails the
+# build if a base image change makes a path stop matching.
 RUN rm -rf /usr/local/lib/node_modules/npm \
            /usr/local/lib/node_modules/corepack \
+           /usr/local/include/node \
            /opt/yarn-* && \
     rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
           /usr/local/bin/yarn /usr/local/bin/yarnpkg && \
     if command -v npm || command -v npx || command -v yarn || command -v corepack; then \
       echo "a package manager survived removal; check the base image layout" >&2; exit 1; \
     fi && \
-    node -e "process.exit(0)"
+    if [ -n "$(find / -xdev -name node.h)" ]; then \
+      echo "the C headers survived removal; check the base image layout" >&2; exit 1; \
+    fi && \
+    node -e "process.exit(0)" && \
+    find / -xdev \( -path /proc -o -path /sys -o -path /dev \) -prune -o -type d -exec touch -r /usr/local/bin/node {} +
+
+FROM scratch
+COPY --from=base / /
+ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+LABEL org.opencontainers.image.title="Stackyard" \
+      org.opencontainers.image.description="Self-hosted homelab dashboard" \
+      org.opencontainers.image.source="https://github.com/SandObserver/stackyard" \
+      org.opencontainers.image.licenses="Apache-2.0"
 
 # Keep `apk upgrade` first. The base image is pinned by digest and gets no
 # security updates without it.
@@ -41,6 +50,8 @@ RUN echo "packages upgraded for ${APP_VERSION}" && \
     apk upgrade --no-cache && \
     apk add --no-cache nginx supervisor && \
     rm -f /etc/nginx/conf.d/default.conf /etc/nginx/http.d/default.conf && \
+    sed -i 's/^worker_processes auto;$/worker_processes 1;/' /etc/nginx/nginx.conf && \
+    grep -qx 'worker_processes 1;' /etc/nginx/nginx.conf && \
     mkdir -p /var/log/nginx /var/log/supervisor /var/lib/nginx /run/nginx && \
     # Users mount volumes here. Owned by node so the API can write config and
     # icons without running as root.
