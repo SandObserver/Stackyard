@@ -1,14 +1,14 @@
 # Both stages are pinned by digest. Change both together.
 # This stage stamps the asset URLs. Assets are served immutable for a year, so an
 # unstamped tree keeps serving the old file after an upgrade.
-FROM node:24-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS assets
+FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS assets
 WORKDIR /src
 COPY ui/ ./ui/
 COPY nginx/ ./nginx/
 COPY scripts/bump-cache-busting.js ./scripts/bump-cache-busting.js
 RUN node scripts/bump-cache-busting.js
 
-FROM node:24-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS base
+FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS base
 
 # No package manager and no C headers in the runtime image. The check fails the
 # build if a base image change makes a path stop matching.
