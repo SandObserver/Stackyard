@@ -14,7 +14,9 @@ module.exports = async function (ctx) {
     if (config.githubView === 'contributions') return contributions(ctx, token, username);
     return pullRequests(ctx, token, username, config);
   }
-  const base = ctx.normalizeBase(config.githubUrl);
+  const raw = String(config.githubUrl || '').trim();
+  /* Never send the token over http unless the address says so. */
+  const base = ctx.normalizeBase(!raw || /^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`);
   if (!base) ctx.fail(`${name} URL not configured`, { kind: ctx.KIND.INVALID });
   if (service === 'gitlab') {
     if (config.githubView === 'contributions')
@@ -155,39 +157,9 @@ async function giteaPullRequests(ctx, base, token, config, name) {
     view: 'prs',
     totalCount: headerCount(r, 'x-total-count', items.length),
     filters: filterArr,
-    allUrl: ctx.serviceLink(config.githubHref, config.githubUrl, '/pulls'),
+    allUrl: ctx.serviceLink(config.githubHref, base, '/pulls'),
     items,
   };
-}
-
-function isoDay(d) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function giteaCalendar(slots, now = new Date()) {
-  const perDay = new Map();
-  for (const s of slots) {
-    const t = Number(s?.timestamp);
-    const c = Number(s?.contributions);
-    if (!Number.isFinite(t) || !Number.isFinite(c) || c <= 0) continue;
-    const day = isoDay(new Date(t * 1000));
-    perDay.set(day, (perDay.get(day) || 0) + c);
-  }
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
-  const day = new Date(today);
-  day.setDate(day.getDate() - 52 * 7 - today.getDay());
-  const weeks = [];
-  let total = 0;
-  while (day <= today) {
-    if (day.getDay() === 0) weeks.push({ contributionDays: [] });
-    const date = isoDay(day);
-    const count = perDay.get(date) || 0;
-    total += count;
-    weeks[weeks.length - 1].contributionDays.push({ contributionCount: count, date });
-    day.setDate(day.getDate() + 1);
-  }
-  return { weeks, totalContributions: total };
 }
 
 async function giteaContributions(ctx, base, token, username, name) {
@@ -197,10 +169,17 @@ async function giteaContributions(ctx, base, token, username, name) {
   });
   replyStatus(ctx, r, name);
   if (!Array.isArray(r.data)) ctx.fail(`${name} returned no contribution heatmap`);
+  const since = Date.now() / 1000 - 380 * 86400;
+  const slots = [];
+  for (const s of r.data) {
+    const t = Number(s?.timestamp);
+    const c = Number(s?.contributions);
+    if (Number.isFinite(t) && t >= since && Number.isFinite(c) && c > 0) slots.push([t, c]);
+  }
   return {
     view: 'contributions',
-    ...giteaCalendar(r.data),
-    profileUrl: ctx.serviceLink(ctx.config.githubHref, ctx.config.githubUrl, '/' + encodeURIComponent(username)),
+    slots,
+    profileUrl: ctx.serviceLink(ctx.config.githubHref, base, '/' + encodeURIComponent(username)),
   };
 }
 
@@ -239,9 +218,7 @@ async function gitlabMergeRequests(ctx, base, token, username, config) {
     view: 'prs',
     totalCount: headerCount(r, 'x-total', items.length),
     filters: filterArr,
-    allUrl: ctx.serviceLink(config.githubHref, config.githubUrl, '/dashboard/merge_requests'),
+    allUrl: ctx.serviceLink(config.githubHref, base, '/dashboard/merge_requests'),
     items,
   };
 }
-
-module.exports._internals = { giteaCalendar };

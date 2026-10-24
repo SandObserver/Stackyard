@@ -150,7 +150,7 @@ test('the pull request list holds list items', () => {
 test('the contributions summary uses the yearly total', () => {
   assert.match(
     widget('github/contributions.html'),
-    /const total = formatNumber\(Math\.max\(0, Number\(data\.totalContributions\) \|\| 0\)\);/,
+    /const total = formatNumber\(Math\.max\(0, Number\(cal\.totalContributions\) \|\| 0\)\);/,
   );
 });
 

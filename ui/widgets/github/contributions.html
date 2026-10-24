@@ -81,6 +81,7 @@
 <div class="cap" id="cap"></div>
 <script type="module">
 import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, fitText, cssZoom } from '/js/widget-toolbox.js?v=ce372f4d';
+import { slotWeeks } from '/js/contribution-calendar.js?v=c88b8def';
 await loadStrings();
 
 const TICK_MS = 300000;
@@ -217,8 +218,9 @@ document.addEventListener('visibilitychange', endHover);
 
 let arrived = false;
 function render(data) {
-  const weeks = Array.isArray(data.weeks) ? data.weeks : [];
-  const total = formatNumber(Math.max(0, Number(data.totalContributions) || 0));
+  const cal = Array.isArray(data.slots) ? slotWeeks(data.slots) : data;
+  const weeks = Array.isArray(cal.weeks) ? cal.weeks : [];
+  const total = formatNumber(Math.max(0, Number(cal.totalContributions) || 0));
   endHover();
   linkTo(linkEl, data.profileUrl);
   if (GRID.cols) drawGrid(weeks);

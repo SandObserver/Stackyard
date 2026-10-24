@@ -5,6 +5,7 @@
 
 const { SAVED_ROW, secretSpec, cosmeticSpec, transientSpec } = require('./widget-secrets');
 const { toRows, loginOf } = require('./badge-headers');
+const { withManifestDefaults } = require('./widget-defaults');
 
 function stableEqual(a, b) {
   if (a === b) return true;
@@ -89,7 +90,8 @@ function alignSavedConfig(newConfig, savedConfig, entry) {
 
 function widgetConfigMatchesSaved(newConfig, savedConfig, entry) {
   if (!entry) return false;
-  return stableEqual(stripWidgetSecrets(newConfig, entry), stripWidgetSecrets(savedConfig, entry));
+  const stripped = c => stripWidgetSecrets(withManifestDefaults(c, entry), entry);
+  return stableEqual(stripped(newConfig), stripped(savedConfig));
 }
 
 const blankStored = (obj, old, k) => !!old && old[k] != null && old[k] !== '' && !(obj && obj[k]);

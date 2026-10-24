@@ -123,34 +123,40 @@ for (const [status, kind] of [
   });
 }
 
-test('gitea contributions add the heatmap slots up per day', async () => {
-  const now = new Date();
-  const at = (daysAgo, hour) => {
-    const d = new Date(now);
-    d.setDate(d.getDate() - daysAgo);
-    d.setHours(hour, 15, 0, 0);
-    return Math.floor(d.getTime() / 1000);
-  };
+test('gitea contributions pass the recent heatmap slots on as pairs', async () => {
+  const now = Math.floor(Date.now() / 1000);
   const { ctx, calls } = recordingCtx(
     { ...GITEA, githubView: 'contributions' },
     {
       status: 200,
       data: [
-        { timestamp: at(0, 9), contributions: 2 },
-        { timestamp: at(0, 10), contributions: 3 },
-        { timestamp: at(3, 12), contributions: 4 },
-        { timestamp: at(400, 12), contributions: 9 },
+        { timestamp: now - 3600, contributions: 2 },
+        { timestamp: now - 3 * 86400, contributions: '4' },
+        { timestamp: now - 400 * 86400, contributions: 9 },
+        { timestamp: now, contributions: 0 },
+        { timestamp: 'x', contributions: 1 },
+        null,
       ],
     },
   );
   const r = await dataFn(ctx);
   assert.equal(calls[0].url.pathname, '/api/v1/users/me/heatmap');
   assert.equal(r.view, 'contributions');
-  assert.equal(r.totalContributions, 9);
-  const days = r.weeks.flatMap(w => w.contributionDays);
-  assert.equal(days.at(-1).contributionCount, 5);
-  assert.ok(r.weeks.every(w => new Date(w.contributionDays[0].date + 'T00:00:00Z').getUTCDay() === 0));
+  assert.deepEqual(r.slots, [
+    [now - 3600, 2],
+    [now - 3 * 86400, 4],
+  ]);
   assert.equal(r.profileUrl, 'https://git.lan/me');
+});
+
+test('a server address without a scheme is read and linked over https', async () => {
+  const { ctx, calls } = recordingCtx({ ...GITEA, githubUrl: 'git.lan' }, { status: 200, data: [] });
+  const r = await dataFn(ctx);
+  assert.equal(calls[0].url.origin, 'https://git.lan');
+  assert.equal(r.allUrl, 'https://git.lan/pulls');
+  const plain = recordingCtx({ ...GITEA, githubUrl: 'http://git.lan' }, { status: 200, data: [] });
+  await dataFn(plain.ctx);
+  assert.equal(plain.calls[0].url.origin, 'http://git.lan');
 });
 
 const GITLAB = { githubService: 'gitlab', githubUrl: 'https://gitlab.com', githubUser: 'me', githubToken: 't' };
