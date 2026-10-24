@@ -65,6 +65,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Large numbers in GitHub widgets fit again after the dashboard is resized.
 
+### Security
+
+- Update Node.js to 24.22.1 and nginx to 1.30.6 to fix CVE-2026-111497,
+  CVE-2026-15176, CVE-2026-93479 and CVE-2026-97205, and stop trusting the
+  compromised eMudhra certificate roots.
+
 ## [1.19.0] - 2026-10-20
 
 ### Added
