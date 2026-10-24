@@ -178,7 +178,9 @@ test('the rest of scripts/ is still kept out of the build context', () => {
 test('only the supervisor listener reaches the runtime image', () => {
   const runtime = read('Dockerfile')
     .split(/^FROM /m)
-    .pop();
+    .slice(1)
+    .filter(stage => !/^\S+ AS assets$/m.test(stage.split('\n')[0]))
+    .join('\n');
   const copied = [...runtime.matchAll(/^COPY (?:--\S+ )*(scripts\/\S+)/gm)].map(m => m[1]);
   assert.deepEqual(copied, ['scripts/exit-on-fatal.py']);
 });

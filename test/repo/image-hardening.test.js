@@ -6,8 +6,13 @@ const path = require('node:path');
 const root = path.join(__dirname, '..', '..');
 const dockerfile = fs.readFileSync(path.join(root, 'Dockerfile'), 'utf8');
 
-test('the Dockerfile removes npm, corepack and yarn', () => {
-  for (const target of ['/usr/local/lib/node_modules/npm', '/usr/local/lib/node_modules/corepack', '/opt/yarn-*']) {
+test('the Dockerfile removes npm, corepack, yarn and the C headers', () => {
+  for (const target of [
+    '/usr/local/lib/node_modules/npm',
+    '/usr/local/lib/node_modules/corepack',
+    '/opt/yarn-*',
+    '/usr/local/include/node',
+  ]) {
     assert.ok(dockerfile.includes(target), `${target} is no longer removed`);
   }
   for (const bin of ['/usr/local/bin/npm', '/usr/local/bin/npx', '/usr/local/bin/corepack', '/usr/local/bin/yarn']) {
@@ -18,6 +23,12 @@ test('the Dockerfile removes npm, corepack and yarn', () => {
 test('the removal is verified inside the build', () => {
   assert.match(dockerfile, /if command -v npm \|\| command -v npx \|\| command -v yarn \|\| command -v corepack; then/);
   assert.match(dockerfile, /a package manager survived removal/);
+  assert.match(dockerfile, /if \[ -n "\$\(find \/ -xdev -name node\.h\)" \]; then/);
+  assert.match(dockerfile, /the C headers survived removal/);
+});
+
+test('the copied base layer is the same for one base digest', () => {
+  assert.match(dockerfile, /-type d -exec touch -r \/usr\/local\/bin\/node \{\} \+$/m);
 });
 
 test('node itself is still checked to work afterwards', () => {
@@ -123,7 +134,11 @@ test('the upgrade cannot be served from a cache across releases', () => {
 /* The API runs as node. Code it owns, it can rewrite, and the change survives a
    restart. */
 test('the API cannot rewrite its own code', () => {
-  const runtime = dockerfile.split(/^FROM /m).pop();
+  const runtime = dockerfile
+    .split(/^FROM /m)
+    .slice(1)
+    .filter(stage => !/^\S+ AS assets$/m.test(stage.split('\n')[0]))
+    .join('\n');
   const copies = runtime.split('\n').filter(l => /^COPY .*\/app\//.test(l));
   assert.ok(copies.length > 0);
   for (const line of copies) assert.doesNotMatch(line, /--chown/, line);

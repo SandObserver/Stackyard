@@ -21,7 +21,11 @@ RUN rm -rf /usr/local/lib/node_modules/npm \
     if command -v npm || command -v npx || command -v yarn || command -v corepack; then \
       echo "a package manager survived removal; check the base image layout" >&2; exit 1; \
     fi && \
-    node -e "process.exit(0)"
+    if [ -n "$(find / -xdev -name node.h)" ]; then \
+      echo "the C headers survived removal; check the base image layout" >&2; exit 1; \
+    fi && \
+    node -e "process.exit(0)" && \
+    find / -xdev \( -path /proc -o -path /sys -o -path /dev \) -prune -o -type d -exec touch -r /usr/local/bin/node {} +
 
 FROM scratch
 COPY --from=base / /
