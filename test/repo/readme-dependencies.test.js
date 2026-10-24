@@ -24,5 +24,6 @@ test('the API declares no npm dependencies', () => {
 test('the image installs nginx and supervisor and no other package', () => {
   const adds = [...read('Dockerfile').matchAll(/apk add\s+((?:--\S+\s+)*)([^&\\\n]+)/g)].map(m => m[2].trim());
   assert.deepEqual(adds, ['nginx supervisor']);
-  assert.match(read('Dockerfile'), /^FROM node:\d+-alpine@sha256:[0-9a-f]{64}$/m);
+  assert.match(read('Dockerfile'), /^FROM node:\d+-alpine@sha256:[0-9a-f]{64} AS base$/m);
+  assert.match(read('Dockerfile'), /^COPY --from=base \/ \/$/m);
 });

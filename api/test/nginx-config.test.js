@@ -480,6 +480,12 @@ test('the image stamps assets itself, so a locally built image is not pinned to 
   );
 });
 
+test('the image runs one nginx worker, not one per host core', () => {
+  const dockerfile = fs.readFileSync(path.join(__dirname, '../../Dockerfile'), 'utf8');
+  assert.match(dockerfile, /sed -i 's\/\^worker_processes auto;\$\/worker_processes 1;\/' \/etc\/nginx\/nginx\.conf/);
+  assert.match(dockerfile, /grep -qx 'worker_processes 1;' \/etc\/nginx\/nginx\.conf/);
+});
+
 /* ── the API policy ───────────────────────────────────────────────────────── */
 
 /* /api/ sets its own headers, so the server-level policy does not reach it. The
