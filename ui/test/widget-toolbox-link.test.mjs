@@ -125,10 +125,9 @@ test('the DNS link is described by its summary', () => {
 });
 
 test('the pull request header link is named by its visible label first', () => {
-  assert.match(
-    widget('github/pullrequests.html'),
-    /'aria-label',\s*`\$\{wt\('ui\.pullRequests', 'Pull requests'\)\}, /,
-  );
+  const src = widget('github/pullrequests.html');
+  assert.match(src, /lbl\.textContent = noun;/);
+  assert.match(src, /'aria-label',\s*`\$\{noun\}, /);
 });
 
 test('a pull request row without a number is named without one', () => {

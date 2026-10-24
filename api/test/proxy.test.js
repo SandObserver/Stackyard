@@ -202,6 +202,23 @@ test('getHostIp returns an empty string when no config file exists', () => {
   assert.equal(getHostIp(), '');
 });
 
+test('fetchJSON returns response headers only when asked', async () => {
+  const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'X-Total-Count': '7', 'Set-Cookie': 'sid=1' });
+    res.end('[]');
+  });
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const port = server.address().port;
+  try {
+    const plain = await fetchJSON(`http://127.0.0.1:${port}/`, { timeout: 3000 });
+    assert.deepEqual(Object.keys(plain).sort(), ['data', 'status']);
+    const withHeaders = await fetchJSON(`http://127.0.0.1:${port}/`, { withHeaders: true, timeout: 3000 });
+    assert.equal(withHeaders.headers['x-total-count'], '7');
+  } finally {
+    server.close();
+  }
+});
+
 test('fetchJSON returns the untouched body with opts.raw, and auto-parses without it', async () => {
   const metrics = '# TYPE conduit_connected_clients gauge\nconduit_connected_clients 5\n';
   const server = http.createServer((req, res) => {

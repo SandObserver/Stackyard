@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GitHub Pull Requests</title>
+<title>Git Pull Requests</title>
 <script src="/js/widget-theme.js?v=645f280f"></script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -53,7 +53,7 @@
 </style>
 </head>
 <body>
-<div class="widget" id="widget" role="group" aria-label="GitHub pull requests"></div>
+<div class="widget" id="widget" role="group" aria-label="Pull requests"></div>
 <div class="cap" id="cap"></div>
 <script type="module">
 import { poll, fetchData, linkTo, loadStrings, wt, errorState, formatNumber, fitText, placeholder, formatList } from '/js/widget-toolbox.js?v=ce372f4d';
@@ -68,8 +68,9 @@ const ROWS = { small: 0, medium: 3, large: 4 }[size];
 const FILTER_FALLBACK = { created: 'Created', assigned: 'Assigned', mentioned: 'Mentioned', 'review-requested': 'Review requested' };
 
 const w = document.getElementById('widget');
-w.setAttribute('aria-label', wt('ui.prAria', 'GitHub pull requests'));
 let user = '';
+let gitlab = false;
+let noun = wt('ui.pullRequests', 'Pull requests');
 let arrived = false;
 
 function el(tag, cls, text) {
@@ -92,7 +93,8 @@ const fig = el('div', 'fig');
 const num = el('div', 'num');
 const sub = el('div', 'sub');
 fig.append(num, sub);
-head.append(el('div', 'lbl', wt('ui.pullRequests', 'Pull requests')), fig);
+const lbl = el('div', 'lbl', noun);
+head.append(lbl, fig);
 const list = el('div', 'list');
 w.className = 'widget size-' + size;
 w.append(head);
@@ -123,7 +125,7 @@ function render(data) {
   if (linkTo(target, data.allUrl))
     target.setAttribute(
       'aria-label',
-      `${wt('ui.pullRequests', 'Pull requests')}, ${total} ${label}, ${wt('ui.viewAll', 'view all')}`,
+      `${noun}, ${total} ${label}, ${wt('ui.viewAll', 'view all')}`,
     );
   if (!arrived) {
     arrived = true;
@@ -136,7 +138,7 @@ function render(data) {
   list.replaceChildren();
   if (!items.length) {
     list.removeAttribute('role');
-    list.append(el('div', 'none', wt('ui.noPrs', 'No open pull requests')));
+    list.append(el('div', 'none', gitlab ? wt('ui.noMrs', 'No open merge requests') : wt('ui.noPrs', 'No open pull requests')));
     return;
   }
   list.setAttribute('role', 'list');
@@ -160,8 +162,12 @@ async function boot() {
     if (r.ok) {
       const wc = (await r.json())?.widgetConfig || {};
       user = String(wc.githubUser || '');
+      gitlab = wc.githubService === 'gitlab';
     }
   } catch {}
+  if (gitlab) noun = wt('ui.mergeRequests', 'Merge requests');
+  lbl.textContent = noun;
+  w.setAttribute('aria-label', noun);
   poll({
     fetch: () => fetchData('data'),
     interval: TICK_MS,

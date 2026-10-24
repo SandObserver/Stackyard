@@ -357,12 +357,17 @@ function fetchJSON(raw, opts = {}) {
               contentType: (res.headers['content-type'] || '').toLowerCase(),
             });
           const body = Buffer.concat(bufs).toString('utf8');
-          if (opts.raw) return done(resolve, { status: res.statusCode, data: body });
+          /* Keep headers opt-in. Some widgets return the reply as is, and headers can carry cookies. */
+          const reply = data =>
+            opts.withHeaders
+              ? { status: res.statusCode, data, headers: res.headers }
+              : { status: res.statusCode, data };
+          if (opts.raw) return done(resolve, reply(body));
           const ct = (res.headers['content-type'] || '').toLowerCase();
           try {
-            done(resolve, { status: res.statusCode, data: JSON.parse(body) });
+            done(resolve, reply(JSON.parse(body)));
           } catch {
-            if (looksLikeMetrics(ct, body)) done(resolve, { status: res.statusCode, data: parsePrometheus(body) });
+            if (looksLikeMetrics(ct, body)) done(resolve, reply(parsePrometheus(body)));
             else if (ct.includes('xml') || body.trimStart().startsWith('<')) {
               const parsed = parseXml(body);
               if (parsed['#truncated']) {
@@ -373,8 +378,8 @@ function fetchJSON(raw, opts = {}) {
                   bytes: body.length,
                 });
               }
-              done(resolve, { status: res.statusCode, data: parsed });
-            } else done(resolve, { status: res.statusCode, data: body });
+              done(resolve, reply(parsed));
+            } else done(resolve, reply(body));
           }
         });
       },

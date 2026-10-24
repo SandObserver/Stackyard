@@ -229,6 +229,14 @@ test('changing the github view, user or filters keeps the stored token in scope'
   }
 });
 
+test('changing the git service or server URL takes the stored token out of scope', () => {
+  const github = getRegistry().github;
+  const saved = { githubService: 'gitea', githubUrl: 'https://git.a', githubUser: 'me', githubToken: 'STORED' };
+  for (const over of [{ githubService: 'forgejo' }, { githubUrl: 'https://git.b' }]) {
+    assert.equal(widgetConfigMatchesSaved({ ...saved, ...over }, saved, github), false, JSON.stringify(over));
+  }
+});
+
 test('a field that reaches the request still takes the stored credential out of scope', () => {
   const r = getRegistry();
   const cases = [
