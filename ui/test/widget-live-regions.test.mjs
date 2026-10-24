@@ -21,6 +21,7 @@ const ALLOWED = new Map([
   ['books/index.html#sr', 'the book under the pointer or the focus'],
   ['nowplaying/index.html#sr', 'the track the user moved to with previous or next'],
   ['disk-health/index.html#tip', 'the bay under the pointer or the focus'],
+  ['downloads/index.html#sr', 'the download the user moved to with previous or next'],
 ]);
 
 function widgetDocs() {

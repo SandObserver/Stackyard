@@ -106,6 +106,23 @@ const BESPOKE = new Map(
     '#96969E': 'connections VPN, idle dots',
     '#FAF6EE': 'books, title ink on a dark spine',
     '#E8E8EA': 'widget template, text in the dark theme',
+    '#0088FF': 'downloads, system blue on the light card (--sy-blue, light)',
+    '#B25000': 'downloads, stalled amber on white, 5.2:1 (--sy-yellow-hi, light)',
+    '#D70015': 'downloads, failed red on white, 5.4:1 (--sy-red-hi, light)',
+    '#248A3D': 'downloads, done green on white (--sy-green-hi palette step, light)',
+    '#C7C7CC': 'downloads, belt rail in the light theme (--sy-gray3, light)',
+    '#F2F2F7': 'downloads, pager and placeholder fill in the light theme (--sy-gray6, light)',
+    /* A drawn cardboard box: three shades, each with a top, front and side. */
+    '#E9BE85': 'downloads, kraft box top',
+    '#D4A062': 'downloads, kraft box front',
+    '#B5823F': 'downloads, kraft box side and seam',
+    '#D9A96C': 'downloads, darker kraft box top',
+    '#BE8746': 'downloads, darker kraft box front',
+    '#9C6A31': 'downloads, darker kraft box side',
+    '#F3D3A6': 'downloads, lighter kraft box top',
+    '#E3BB88': 'downloads, lighter kraft box front',
+    '#C49556': 'downloads, lighter kraft box side',
+    '#5A3A18': 'downloads, inside of a box, and a tape roll core',
   }).map(([k, v]) => [k.toUpperCase(), v]),
 );
 

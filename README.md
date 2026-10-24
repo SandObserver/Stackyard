@@ -44,6 +44,7 @@ Widgets and the services they read:
 - **System summary**: CPU, memory, disk, throughput, uptime, and network speed from SpeedTest Tracker or MySpeed. Reports on this machine, or on a host running Glances, Beszel, the Unraid API, Proxmox VE or TrueNAS
 - **Disk health**: TrueNAS, Unraid, Scrutiny
 - **Backup**: Duplicati, Kopia, Proxmox Backup Server, Backrest
+- **Downloads**: qBittorrent, Transmission, Deluge, SABnzbd, NZBGet
 - **Connections**: Gluetun, Psiphon Conduit, Netbird, Plausible, Umami
 - **Dashboard switch**: links to your other Stackyard dashboards
 

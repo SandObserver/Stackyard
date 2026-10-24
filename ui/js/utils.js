@@ -542,18 +542,17 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     const w = card.clientWidth,
       h = card.clientHeight;
     if (!w || !h) return;
-    /* Contain, not cover. With a matched aspect the two are the same and this
-       fills the card exactly. Where the card's aspect drifts from the design's,
-       cover crops the widget instead, and the card clips what it cropped. */
     const s = Math.min(w / dw, h / dh);
-    /* Whole pixels. A fractional offset or size blurs the page on a 1x screen. */
+    /* A bundled page fills the card and lays out at the card's shape, zoomed to
+       the design's scale. Contain leaves strips of card beside anything drawn to
+       the page edge. Whole pixels: a fractional size blurs on a 1x screen. */
     if (zoomable) {
-      const fw = Math.round(dw * s),
-        fh = Math.round(dh * s);
+      const fw = Math.round(w),
+        fh = Math.round(h);
       ifr.style.width = fw + 'px';
       ifr.style.height = fh + 'px';
       ifr.style.transform = `translate(${Math.round((w - fw) / 2)}px, ${Math.round((h - fh) / 2)}px)`;
-      ifr.setAttribute('data-zoom', String(fw / dw));
+      ifr.setAttribute('data-zoom', String(Math.min(fw / dw, fh / dh)));
       applyZoom();
     } else {
       ifr.style.transform = `translate(${Math.round((w - dw * s) / 2)}px, ${Math.round((h - dh * s) / 2)}px) scale(${s})`;

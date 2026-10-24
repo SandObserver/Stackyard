@@ -66,6 +66,12 @@ async function mount(src) {
 
 const whole = v => Number.isInteger(Number.parseFloat(v));
 
+test('a bundled widget fills its card, so nothing drawn to the page edge leaves a strip of card', async () => {
+  const { frame } = await mount('/widgets/downloads/index.html?id=1');
+  assert.equal(frame.style.width, '330px');
+  assert.equal(frame.style.height, '148px');
+});
+
 test('a bundled widget is sized to whole pixels and zoomed, not scaled', async () => {
   const { frame, root } = await mount('/widgets/connections/connections-map.html?id=1');
   assert.ok(whole(frame.style.width) && whole(frame.style.height), `${frame.style.width} x ${frame.style.height}`);
@@ -73,7 +79,7 @@ test('a bundled widget is sized to whole pixels and zoomed, not scaled', async (
   assert.ok(t, `unexpected transform ${frame.style.transform}`);
   assert.ok(whole(t[1]) && whole(t[2]), 'the frame sits at a fractional pixel');
   const zoom = Number(frame.getAttribute('data-zoom'));
-  assert.equal(zoom, Number.parseFloat(frame.style.width) / 360);
+  assert.equal(zoom, Math.min(Number.parseFloat(frame.style.width) / 360, Number.parseFloat(frame.style.height) / 170));
   assert.equal(root.style.zoom, String(zoom), 'the page is not zoomed');
 });
 

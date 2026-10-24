@@ -13,7 +13,7 @@ import { applyDrop, canDropInGroup, canJoinFolder, folderRowZone } from '/js/adm
 import { DOCK_MAX } from '/js/limits.js?v=31048a24';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { snapshotItems } from '/js/admin-save-logic.js?v=32cb6aeb';
-import { qa } from '/js/utils.js?v=fd0b5b07';
+import { qa } from '/js/utils.js?v=cfee1271';
 
 /** @type {(before: unknown) => void} */
 let _save = () => {};

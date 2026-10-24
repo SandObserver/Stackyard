@@ -1,0 +1,143 @@
+{
+  "name": "downloads",
+  "label": "widget.label",
+  "description": "widget.description",
+  "glyph": "parcel",
+  "sizes": [
+    "small",
+    "medium"
+  ],
+  "card": "dark",
+  "fields": [
+    {
+      "key": "service",
+      "type": "select",
+      "label": "service.label",
+      "default": "qbittorrent",
+      "options": [
+        {
+          "value": "qbittorrent",
+          "label": "service.opt.qbittorrent"
+        },
+        {
+          "value": "transmission",
+          "label": "service.opt.transmission"
+        },
+        {
+          "value": "deluge",
+          "label": "service.opt.deluge"
+        },
+        {
+          "value": "sabnzbd",
+          "label": "service.opt.sabnzbd"
+        },
+        {
+          "value": "nzbget",
+          "label": "service.opt.nzbget"
+        }
+      ]
+    },
+    {
+      "key": "url",
+      "type": "text",
+      "label": "url.label",
+      "placeholder": "url.placeholder"
+    },
+    {
+      "key": "apiKey",
+      "type": "secret",
+      "label": "apiKey.label",
+      "hint": "apiKey.hint.qbittorrent",
+      "showIf": {
+        "field": "service",
+        "equals": "qbittorrent"
+      }
+    },
+    {
+      "key": "apiKey",
+      "type": "secret",
+      "label": "apiKey.label",
+      "hint": "apiKey.hint.sabnzbd",
+      "showIf": {
+        "field": "service",
+        "equals": "sabnzbd"
+      }
+    },
+    {
+      "key": "username",
+      "type": "text",
+      "label": "username.label",
+      "optional": true,
+      "showIf": {
+        "field": "service",
+        "in": [
+          "nzbget",
+          "transmission"
+        ]
+      }
+    },
+    {
+      "key": "password",
+      "type": "secret",
+      "label": "password.label",
+      "hint": "password.hint.nzbget",
+      "optional": true,
+      "showIf": {
+        "field": "service",
+        "equals": "nzbget"
+      }
+    },
+    {
+      "key": "password",
+      "type": "secret",
+      "label": "password.label",
+      "optional": true,
+      "showIf": {
+        "field": "service",
+        "equals": "transmission"
+      }
+    },
+    {
+      "key": "password",
+      "type": "secret",
+      "label": "password.label",
+      "hint": "password.hint.deluge",
+      "showIf": {
+        "field": "service",
+        "equals": "deluge"
+      }
+    },
+    {
+      "key": "skipTls",
+      "type": "toggle",
+      "label": "skipTls.label",
+      "default": false
+    },
+    {
+      "key": "headerShows",
+      "type": "select",
+      "variant": "pills",
+      "label": "headerShows.label",
+      "default": "finish",
+      "cosmetic": true,
+      "options": [
+        {
+          "value": "finish",
+          "label": "headerShows.opt.finish"
+        },
+        {
+          "value": "left",
+          "label": "headerShows.opt.left"
+        }
+      ]
+    },
+    {
+      "key": "href",
+      "type": "text",
+      "label": "href.label",
+      "hint": "href.hint",
+      "optional": true,
+      "cosmetic": true
+    }
+  ]
+}
