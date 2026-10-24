@@ -54,6 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show the Backup widget's Source setting as a drop-down.
 
+- Shrink the image by about 24 MB and run one nginx worker instead of one per
+  CPU core.
+
 ### Fixed
 
 - Colour swatches no longer spread across the row on small tablets.
