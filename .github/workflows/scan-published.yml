@@ -34,3 +34,22 @@ jobs:
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: '1'
+
+      - name: Check out the repository
+        if: ${{ !cancelled() }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        if: ${{ !cancelled() }}
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Check the image's Node.js for missed security releases
+        if: ${{ !cancelled() }}
+        run: |
+          version=$(docker image inspect --format '{{range .Config.Env}}{{println .}}{{end}}' \
+            ghcr.io/sandobserver/stackyard:latest | sed -n 's/^NODE_VERSION=//p')
+          node scripts/node-security.js "$version"
