@@ -229,6 +229,16 @@ export const ICONS = {
       dot(17, 14, T.NODE, 'accent'),
     ],
   },
+  downloads: {
+    inkMask: false,
+    shapes: [
+      detail(2, 3, 11, 4, T.R_SM, 'accent'),
+      detail(15, 3, 7, 4, T.R_SM),
+      rect(3, 9, 18, 12, T.R_MD),
+      bar(6, 13, 9),
+      bar(6, 17, 5),
+    ],
+  },
   nowplaying: { shapes: [rect(3, 3, 18, 18, T.R_LG), shape('M10 8v8l6-4z', 'accent', { rj: true })] },
   system: { shapes: [line('M3 16 7 12 11 15 16 8'), dot(19, 6, T.NODE, 'accent')] },
   weather: {

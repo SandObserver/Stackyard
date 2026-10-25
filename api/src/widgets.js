@@ -25,6 +25,7 @@ const VALID_GLYPHS = new Set([
   'network',
   'merge',
   'panels',
+  'parcel',
 ]);
 const VALID_FIELDTYPES = new Set([
   'text',

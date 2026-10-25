@@ -4,10 +4,10 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=fa682069';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=e3d0591d';
+} from '/js/admin-app-form.js?v=896b8d1d';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=6466f02d';
 import { recoveryShown } from '/js/config-recovery.js?v=85138697';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=dc087df8';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=a0568eab';
 import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=b3befae4';
 import {
   afterImport,
@@ -31,7 +31,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=25c789ee';
+} from '/js/admin-settings.js?v=5709194e';
 import {
   apiGet,
   apiPost,
@@ -45,17 +45,17 @@ import {
   setReauthHandler,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=c1785fc2';
+} from '/js/admin-shared.js?v=a3e8bc29';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=07fe5842';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=2427cc08';
 import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=8b39e9d0';
-import { createListbox } from '/js/listbox.js?v=799754e6';
+import { createListbox } from '/js/listbox.js?v=9a579bea';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
 import { loadLocalIcons } from '/js/icons.js?v=5ac01d72';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=393b5749';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=941db5a1';
 import {
   clearSkipTls,
   convert,
@@ -90,8 +90,8 @@ import {
   storeGet,
   storeSet,
   tgt,
-} from '/js/utils.js?v=fd0b5b07';
-import { applyBackground, resolveBackground } from '/js/background.js?v=26148fef';
+} from '/js/utils.js?v=cfee1271';
+import { applyBackground, resolveBackground } from '/js/background.js?v=72db97ac';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
 
 ensureSprite();
