@@ -32,8 +32,11 @@ export function measurable(el) {
   return r.width > 0 && r.height > 0;
 }
 
-/** @param {Element} container @param {HTMLElement} pill @param {Element} item */
-export function placePill(container, pill, item) {
+/** Pass the page's CSS zoom when it has one. Rects include it and styles do
+    not, so the pill otherwise comes out that much too large and off its row.
+    @param {Element} container @param {HTMLElement} pill @param {Element} item
+    @param {number} [z] */
+export function placePill(container, pill, item, z = 1) {
   if (!measurable(container) || !measurable(item)) return false;
   const cr = container.getBoundingClientRect();
   const ir = item.getBoundingClientRect();
@@ -44,14 +47,14 @@ export function placePill(container, pill, item) {
     cs.borderBottomRightRadius,
     cs.borderBottomLeftRadius,
   ].join(' ');
-  pill.style.width = ir.width + 'px';
-  pill.style.height = ir.height + 'px';
+  pill.style.width = ir.width / z + 'px';
+  pill.style.height = ir.height / z + 'px';
   /* The pill is anchored at the inline start, so right-to-left measures from
      the right edge and travels the other way. None of these lists scroll
      sideways, so the rect difference is the whole inline offset. */
   const rtl = cs.direction === 'rtl';
-  const inline = (rtl ? cr.right - ir.right : ir.left - cr.left) - container.clientLeft;
-  const block = ir.top - cr.top - container.clientTop + container.scrollTop;
+  const inline = (rtl ? cr.right - ir.right : ir.left - cr.left) / z - container.clientLeft;
+  const block = (ir.top - cr.top) / z - container.clientTop + container.scrollTop;
   pill.style.transform = 'translate3d(' + (rtl ? -inline : inline) + 'px,' + block + 'px,0)';
   if (!pill.classList.contains('on')) {
     /* `.on` carries the transform transition, so it has to land in a later

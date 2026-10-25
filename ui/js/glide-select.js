@@ -4,7 +4,7 @@
    Not gated on a pointer: this is selection, not hover, so the phone tab bar
    gets it too. */
 
-import { ensurePill, measurable, placePill } from '/js/moving-pill.js?v=4e961dec';
+import { ensurePill, measurable, placePill } from '/js/moving-pill.js?v=afe204a3';
 
 const NAVS = [
   { container: '.sb-nav', item: '.nl', holdInk: true },

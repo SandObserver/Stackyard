@@ -1,5 +1,5 @@
 // @ts-check
-import { iconSvg } from '/js/icon-set.js?v=941db5a1';
+import { iconSvg } from '/js/icon-set.js?v=26655aca';
 
 /* Keys are the glyph names in widget.json files. Renaming one breaks that widget. */
 /** @type {Record<string, string>} */
@@ -16,6 +16,7 @@ const GLYPH_ICON = {
   merge: 'github',
   panels: 'switcher',
   parcel: 'downloads',
+  calendar: 'upnext',
 };
 
 /** The glyph names a manifest may declare. */

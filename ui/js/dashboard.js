@@ -29,8 +29,8 @@ import {
   teardownWidgets,
   titleWhenTruncated,
 } from '/js/utils.js?v=cfee1271';
-import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=e6c4a09a';
+import { initFluidHover } from '/js/fluid-hover.js?v=8b4aadd4';
+import { initSpotlight } from '/js/spotlight.js?v=06e7ef30';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=ed7c5565';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=85138697';
@@ -64,7 +64,7 @@ import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=0b1ebb19';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=941db5a1';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=26655aca';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { THEME_KEY, applyTheme, prefersDark, readMode, resolveTheme } from '/js/theme.js?v=eeafa4b5';
 

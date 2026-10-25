@@ -1,0 +1,105 @@
+{
+  "name": "upnext",
+  "label": "widget.label",
+  "description": "widget.description",
+  "glyph": "calendar",
+  "sizes": [
+    "small",
+    "medium",
+    "large"
+  ],
+  "fields": [
+    {
+      "key": "sources",
+      "type": "group",
+      "label": "sources.label",
+      "hint": "sources.hint",
+      "min": 1,
+      "max": 6,
+      "fields": [
+        {
+          "key": "app",
+          "type": "select",
+          "variant": "pills",
+          "label": "app.label",
+          "default": "sonarr",
+          "options": [
+            {
+              "value": "sonarr",
+              "label": "app.opt.sonarr"
+            },
+            {
+              "value": "radarr",
+              "label": "app.opt.radarr"
+            },
+            {
+              "value": "lidarr",
+              "label": "app.opt.lidarr"
+            }
+          ]
+        },
+        {
+          "key": "url",
+          "type": "text",
+          "label": "url.label",
+          "placeholder": "url.placeholder"
+        },
+        {
+          "key": "apiKey",
+          "type": "secret",
+          "label": "apiKey.label",
+          "hint": "apiKey.hint"
+        },
+        {
+          "key": "releases",
+          "type": "multiselect",
+          "label": "releases.label",
+          "default": [
+            "cinema",
+            "digital"
+          ],
+          "options": [
+            {
+              "value": "cinema",
+              "label": "releases.opt.cinema"
+            },
+            {
+              "value": "digital",
+              "label": "releases.opt.digital"
+            },
+            {
+              "value": "physical",
+              "label": "releases.opt.physical"
+            }
+          ],
+          "showIf": {
+            "field": "app",
+            "equals": "radarr"
+          },
+          "cosmetic": true
+        },
+        {
+          "key": "skipTls",
+          "type": "toggle",
+          "label": "skipTls.label",
+          "default": false
+        },
+        {
+          "key": "href",
+          "type": "text",
+          "label": "href.label",
+          "hint": "href.hint",
+          "optional": true,
+          "cosmetic": true
+        }
+      ]
+    },
+    {
+      "key": "unmonitored",
+      "type": "toggle",
+      "label": "unmonitored.label",
+      "default": false,
+      "cosmetic": true
+    }
+  ]
+}
