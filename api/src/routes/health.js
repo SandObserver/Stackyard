@@ -4,7 +4,6 @@ const { KIND } = require('../api-error');
 const LIMITS = require('../poll-limits');
 const { loadConfig } = require('../config');
 const {
-  fetchUnchecked,
   pingUnchecked,
   urlPolicyError,
   pingErrorText,
@@ -20,10 +19,13 @@ const { IS_DEMO } = require('../demo');
 const demoData = require('../demo-data');
 const log = require('../log');
 const proxmox = require('../proxmox');
+const { homepageLabels } = require('../docker-labels');
+const { dockerGet } = require('../docker-api');
 const { RETYPE_MESSAGE } = require('../secret-scope');
 const { errorBody } = require('../api-error');
 const SOCKET_PROXY_URL_DEFAULT = process.env.SOCKET_PROXY_URL || '';
 const CONTAINERS_KEEP_MS = 2 * 60 * 1000;
+const LABELS_MAX_BYTES = 16 * 1024 * 1024;
 
 /** @param {any} item */
 function guestOf(item) {
@@ -39,7 +41,7 @@ function socketProxyUrl(cfg) {
 
 async function fetchContainerHealth(socketUrl) {
   try {
-    const r = await fetchUnchecked(`${socketUrl}/containers/json?all=true`);
+    const r = await dockerGet(socketUrl, '/containers/json?all=true');
     if (!Array.isArray(r.data)) return Object.create(null);
     /* Null prototype. Keys are container names, so on an ordinary object a
        container called "constructor" matches an inherited value and one that
@@ -109,7 +111,7 @@ async function probeSocketProxy(url) {
   const policy = urlPolicyError(u);
   if (policy) return { ok: false, fatal: true, error: policy, code: 'invalid.url' };
   try {
-    const r = await fetchUnchecked(`${url.replace(/\/+$/, '')}/version`, { timeout: PING_MS });
+    const r = await dockerGet(url, '/version', { timeout: PING_MS });
     if (r.status === 401 || r.status === 403)
       return { ok: false, fatal: true, error: 'The socket proxy refused the request.', code: 'upstream.refused' };
     if (r.status >= 400)
@@ -147,6 +149,51 @@ on('POST', '/api/docker/test', async (req, res) => {
     json(res, 200, await probeSocketProxy(url.trim()));
   } catch {
     json(res, 400, { ok: false, error: 'url required', kind: KIND.INVALID });
+  }
+});
+
+on('GET', '/api/docker/labels', async (req, res) => {
+  const limited = rateLimit(getIp(req), 'docker-labels', 10, 60_000);
+  if (limited) return json(res, 429, { error: limited, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
+  if (IS_DEMO)
+    return json(res, 403, {
+      error: 'Outbound requests are disabled in demo mode',
+      kind: KIND.BLOCKED,
+      code: 'blocked.demo',
+    });
+  const socketUrl = socketProxyUrl(loadConfig());
+  if (!socketUrl)
+    return json(res, 400, { error: 'No socket proxy is set.', kind: KIND.INVALID, code: 'invalid.socket-missing' });
+  try {
+    const r = await dockerGet(socketUrl, '/containers/json?all=true', { maxBytes: LABELS_MAX_BYTES });
+    if (r.status === 401 || r.status === 403)
+      return json(res, 502, {
+        error: 'The socket proxy refused the request.',
+        kind: KIND.UPSTREAM,
+        code: 'upstream.refused',
+      });
+    if (r.status >= 400)
+      return json(res, 502, {
+        error: `The socket proxy answered with HTTP ${r.status}.`,
+        kind: KIND.UPSTREAM,
+        code: 'upstream.status',
+        detail: { status: r.status },
+      });
+    if (!Array.isArray(r.data))
+      return json(res, 502, {
+        error: 'Something is listening there, but it is not a Docker socket proxy.',
+        kind: KIND.UPSTREAM,
+        code: 'upstream.not-docker',
+      });
+    json(res, 200, { containers: homepageLabels(r.data) });
+  } catch (e) {
+    if (e.responseTooLarge)
+      return json(res, 502, {
+        error: 'The container list is too large to read.',
+        kind: KIND.UPSTREAM,
+        code: 'upstream.too-many-containers',
+      });
+    json(res, 502, errorBody(e));
   }
 });
 

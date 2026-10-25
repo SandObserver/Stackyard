@@ -1,12 +1,13 @@
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=8fec4e2f';
+import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=3e9cb9c8';
 import { createListbox } from '/js/listbox.js?v=3e47b403';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=7e48b5b8';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=78b9928c';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=b3befae4';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import { focusFirst, q, qi, qa } from '/js/utils.js?v=cfee1271';
 import { iconSvg } from '/js/icon-set.js?v=26655aca';
+import { NAME_MAX } from '/js/limits.js?v=ea61a441';
 
 const SIZES_WITH_ICONS = new Set(['small', 'medium', 'large', 'xlarge']);
 
@@ -59,7 +60,7 @@ function _renderWidgetForm(body) {
   setHtml(
     shell,
     html`
-    <div class="row ie-row" id="ie-wname"><span class="rl">${t('widgetCfg.name')}</span><span class="rv${state._wlabel ? '' : ' is-ph'}">${state._wlabel ? state._wlabel : t('widgetCfg.namePh')}</span><input id="f-wlabel" type="text" value="${state._wlabel}" class="d-none"><button class="pe" type="button" aria-label="${t('widgetCfg.editName')}">${raw(PE_SVG)}</button></div>
+    <div class="row ie-row" id="ie-wname"><span class="rl">${t('widgetCfg.name')}</span><span class="rv${state._wlabel ? '' : ' is-ph'}">${state._wlabel ? state._wlabel : t('widgetCfg.namePh')}</span><input id="f-wlabel" type="text" value="${state._wlabel}" maxlength="${NAME_MAX}" class="d-none"><button class="pe" type="button" aria-label="${t('widgetCfg.editName')}">${raw(PE_SVG)}</button></div>
     <div class="row" id="wtype-row"><span class="rl">${t('widgetCfg.type')}</span></div>`,
   );
   body.appendChild(shell);

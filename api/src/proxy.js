@@ -100,6 +100,10 @@ const isPrivateAddress = addr => inAddressSet(addr, _blockedV4, BLOCKED_IPV6_RE)
 
 /** Loopback, unspecified or link-local. @param {string} addr @returns {boolean} */
 const isSelfAddress = addr => inAddressSet(addr, _selfV4, SELF_IPV6_RE);
+
+const _linkLocalV4 = toRanges(BLOCKED_IPV4.filter(([base]) => base === '169.254.0.0'));
+/** @param {string} addr @returns {boolean} */
+const isLinkLocal = addr => inAddressSet(addr, _linkLocalV4, /^fe[89ab][0-9a-f]:/i);
 /* Never sniff this from the body alone. A plain-text line like "Version 1.2"
    matches the metric grammar exactly. */
 function looksLikeMetrics(ct, body) {
@@ -709,8 +713,36 @@ function jsonRpcUnchecked(url, opts, fn) {
   return jsonRpc(rewriteUrl(url), opts, fn);
 }
 
-function pingUnchecked(url, ms, skipTls) {
-  return pingUrl(rewriteUrl(url), ms, skipTls);
+const PING_LINK_LOCAL = Object.freeze({
+  ok: false,
+  status: 0,
+  error: 'Blocked: link-local address.',
+  kind: 'blocked',
+  code: 'blocked.link-local',
+});
+
+/* Keep the link-local refusal. 169.254.169.254 is the cloud metadata service. */
+async function pingUnchecked(url, ms, skipTls) {
+  if (IS_DEMO) return pingUrl(url, ms, skipTls);
+  const target = rewriteUrl(url);
+  let host;
+  try {
+    host = bareHost(new URL(target).hostname);
+  } catch {
+    return pingUrl(target, ms, skipTls);
+  }
+  if (net.isIP(host)) return isLinkLocal(host) ? { ...PING_LINK_LOCAL } : pingUrl(target, ms, skipTls);
+  const budget = ms || PING_MS;
+  const started = Date.now();
+  let address;
+  try {
+    ({ address } = await lookupWithin(host, budget));
+  } catch (e) {
+    if (e instanceof Error && e.message === 'Timed out') return { ...PING_TIMED_OUT };
+    return pingUrl(target, Math.max(1, budget - (Date.now() - started)), skipTls);
+  }
+  if (isLinkLocal(address)) return { ...PING_LINK_LOCAL };
+  return pingUrl(target, Math.max(1, budget - (Date.now() - started)), skipTls, address);
 }
 
 async function pingChecked(url, ms, skipTls) {

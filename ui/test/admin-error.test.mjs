@@ -233,6 +233,14 @@ test('an API refusal maps to its own sentence, not the per-kind one', () => {
   assert.equal(errorAdvice(new TypeError('Failed to fetch')).key, 'adminError.genericInternal');
 });
 
+test('a Docker label import failure maps to its own sentence', () => {
+  assert.equal(errorAdvice({ kind: 'invalid', code: 'invalid.socket-missing' }).key, 'adminError.socketMissing');
+  assert.equal(
+    errorAdvice({ kind: 'upstream', code: 'upstream.too-many-containers' }).key,
+    'toast.importDockerTooLarge',
+  );
+});
+
 test('a socket probe result maps to a sentence for each way it fails', () => {
   const probe = (code, extra = {}) => ({ ok: false, fatal: true, error: 'English prose', code, ...extra });
   assert.equal(socketProbeAdvice(probe('invalid.url')).key, 'adminError.invalidUrl');

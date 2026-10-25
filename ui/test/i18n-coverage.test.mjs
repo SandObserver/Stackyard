@@ -346,6 +346,8 @@ const LATIN_OK = [
   'true',
   'chars',
   'rrggbb',
+  /* The homepage.group Docker label is typed, not read. */
+  'group',
   'autoplay',
   'fullscreen',
 ];

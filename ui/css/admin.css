@@ -392,6 +392,7 @@ button.rnm{font-family:inherit;color:inherit;background:none;border:0;padding:0;
 .row-status.ok{color:var(--ok)}
 .row-status.err{color:var(--danger)}
 .row-status.warn{color:var(--warning)}
+.grp-tip.warn{color:var(--warning)}
 
 /* ── Textarea row (Add to URL / Add to Header) ── */
 .kv-hdr{padding-bottom:4px}
@@ -596,7 +597,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .dlg-lead{padding:0 8px 8px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body)}
 .dlg-sec{padding:12px 12px 4px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;color:var(--dm)}
 .dlg-ul{list-style:none;margin:0;padding:0 12px 8px;display:flex;flex-direction:column;gap:4px}
-.dlg-li{display:flex;align-items:baseline;gap:8px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
+.dlg-li{display:flex;align-items:baseline;gap:8px;overflow-wrap:anywhere;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 .dlg-li .dlg-why{color:var(--dm);font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1)}
 .dlg-choice{display:flex;align-items:flex-start;gap:8px;padding:0 12px 4px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);cursor:pointer}
 .dlg-choice input{margin-block-start:2px;flex:none}
