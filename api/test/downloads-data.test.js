@@ -133,15 +133,24 @@ test('SABnzbd: sizes and speed arrive as text; the queue speed goes to the first
     paused: false,
     kbpersec: '2048.00',
     slots: [
+      { filename: 'waiting', mb: '9', mbleft: '9', status: 'Propagating', timeleft: '0:00:00' },
       { filename: 'one', mb: '100.00', mbleft: '25.00', status: 'Downloading', timeleft: '0:01:30' },
       { filename: 'two', mb: '50.00', mbleft: '50.00', status: 'Downloading', timeleft: '1:00:00:00' },
       { filename: 'three', mb: '5', mbleft: '5', status: 'Queued', timeleft: '0:00:00' },
     ],
   };
   const out = items.sabItems(queue);
-  assert.equal(out.length, 2);
+  assert.deepEqual(
+    out.map(i => i.name),
+    ['one', 'two'],
+  );
   assert.deepEqual([out[0].progress, out[0].speed, out[0].eta], [0.75, 2048 * 1024, 90]);
-  assert.deepEqual([out[1].speed, out[1].eta], [0, null], 'a job not being fetched has no estimate');
+  assert.deepEqual([out[1].speed, out[1].eta], [0, 86400], 'a later job keeps the time SABnzbd gives it');
+  assert.equal(items.arrange(out).summary.seconds, 86400);
+  assert.deepEqual(
+    items.sabItems({ ...queue, kbpersec: '0' }).map(i => i.eta),
+    [null, null],
+  );
   assert.deepEqual(items.sabItems({ ...queue, paused: true }), []);
 });
 
@@ -170,6 +179,25 @@ test('NZBGet: joins 64-bit halves and gives the rate to the downloading job', ()
   assert.equal(out[0].progress, 0.5);
   assert.equal(out[0].eta, Math.round(2 ** 31 / 1000));
   assert.deepEqual(items.nzbgetItems([g('big', 'DOWNLOADING', 5)], { DownloadPaused: true }), []);
+});
+
+test('NZBGet: paused repair files do not count, and a later job finishes after the ones ahead', () => {
+  const g = (name, size, remaining, held) => ({
+    NZBName: name,
+    Status: 'DOWNLOADING',
+    FileSizeLo: size,
+    RemainingSizeLo: remaining,
+    PausedSizeLo: held,
+  });
+  const out = items.nzbgetItems([g('a', 1100, 100, 100), g('b', 3000, 2000, 0)], { DownloadRate: 100 });
+  assert.deepEqual(
+    out.map(i => [i.size, i.progress, i.eta]),
+    [
+      [1000, 1, 0],
+      [3000, 0.333, 20],
+    ],
+  );
+  assert.equal(items.arrange(out).summary.seconds, 20);
 });
 
 test('items: closest to done first, then stalled, then failed, capped', () => {
@@ -249,9 +277,15 @@ test('a username with a colon is refused: it would split the sign-in', async () 
 
 test('names lose direction and control characters that could disguise them', () => {
   const [item] = items.qbitItems([
-    { name: 'Movie \u202Eevil.exe\u202C\n.mkv', state: 'downloading', size: 1, amount_left: 1, eta: 1 },
+    {
+      name: 'Movie \u202Eevil.exe\u202C\n.mkv\u061C 2023\u0085',
+      state: 'downloading',
+      size: 1,
+      amount_left: 1,
+      eta: 1,
+    },
   ]);
-  assert.equal(item.name, 'Movie evil.exe.mkv');
+  assert.equal(item.name, 'Movie evil.exe.mkv 2023');
 });
 
 test('finished times keep the last 48 hours, newest first, in milliseconds', () => {
@@ -364,7 +398,11 @@ test('Transmission: a refused password is an auth failure', async () => {
   await assert.rejects(freshData()(ctx), e => e.kind === 'auth');
 });
 
-function delugeRoute({ connected = true, expireAfterLogin = false } = {}) {
+function delugeRoute({
+  connected = true,
+  expireAfterLogin = false,
+  hosts = [['hostid', '127.0.0.1', 58846, 'localclient']],
+} = {}) {
   let logins = 0;
   let served = 0;
   const route = (url, opts) => {
@@ -385,7 +423,7 @@ function delugeRoute({ connected = true, expireAfterLogin = false } = {}) {
     if (method === 'web.get_hosts')
       return {
         status: 200,
-        data: { result: [['hostid', '127.0.0.1', 58846, 'localclient']], error: null },
+        data: { result: hosts, error: null },
         headers: {},
       };
     if (method === 'web.connect') return { status: 200, data: { result: [], error: null }, headers: {} };
@@ -423,6 +461,19 @@ test('Deluge: logs in, connects the web UI to its daemon when needed, and reads 
   assert.deepEqual(methods, ['auth.login', 'web.connected', 'web.get_hosts', 'web.connect', 'web.update_ui']);
   assert.equal(calls[1].opts.headers.Cookie, '_session_id=s1');
   assert.equal(out.items[0].progress, 0.5);
+});
+
+test('Deluge: with several daemons listed, the widget connects to none of them', async () => {
+  const d = delugeRoute({
+    connected: false,
+    hosts: [
+      ['a', '10.0.0.1', 58846, 'x'],
+      ['b', '10.0.0.2', 58846, 'x'],
+    ],
+  });
+  const { ctx, calls } = ctxFor({ service: 'deluge', url: 'http://d:8112', password: 'deluge' }, d.route);
+  await assert.rejects(freshData()(ctx), e => e.kind === 'upstream' && /not connected/.test(e.message));
+  assert.ok(!calls.some(c => JSON.parse(c.opts.body).method === 'web.connect'));
 });
 
 test('Deluge: an expired session logs in again once', async () => {

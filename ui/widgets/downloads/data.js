@@ -251,8 +251,12 @@ async function deluge(ctx) {
   };
 
   if ((await authed('web.connected', [])) !== true) {
+    /* Connect only to the one daemon there is. The web UI's connection is
+       shared, so guessing among several moves every other user to it. */
     const hosts = await authed('web.get_hosts', []);
-    const host = Array.isArray(hosts) && Array.isArray(hosts[0]) ? hosts[0][0] : null;
+    const list = Array.isArray(hosts) ? hosts : [];
+    if (list.length > 1) ctx.fail('Deluge is not connected to a daemon', { kind: ctx.KIND.UPSTREAM });
+    const host = Array.isArray(list[0]) ? list[0][0] : null;
     if (typeof host !== 'string') ctx.fail('Deluge has no daemon to connect to', { kind: ctx.KIND.UPSTREAM });
     await authed('web.connect', [host]);
   }

@@ -42,10 +42,11 @@ function makeItem({ name, size, left, speed, eta, state = 'run', reason = '' }) 
 
 /* Direction controls can make a name read as something else: "evil\u202Eexe.txt". */
 const DISGUISE = new Set([
-  0x7f, 0x200e, 0x200f, 0x202a, 0x202b, 0x202c, 0x202d, 0x202e, 0x2066, 0x2067, 0x2068, 0x2069,
+  0x061c, 0x200e, 0x200f, 0x202a, 0x202b, 0x202c, 0x202d, 0x202e, 0x2066, 0x2067, 0x2068, 0x2069,
 ]);
+const control = n => n < 0x20 || (n >= 0x7f && n <= 0x9f);
 const clean = name =>
-  [...String(name || '')].filter(c => c.codePointAt(0) >= 0x20 && !DISGUISE.has(c.codePointAt(0))).join('');
+  [...String(name || '')].filter(c => !control(c.codePointAt(0)) && !DISGUISE.has(c.codePointAt(0))).join('');
 
 const RANK = { run: 0, stall: 1, error: 2 };
 
@@ -175,9 +176,6 @@ const delugeFinished = torrents =>
     .filter(t => t.is_finished === true)
     .map(t => t.completed_time);
 
-/* SABnzbd reports one speed for the whole queue. It belongs to the first job. */
-const SAB_RUN = new Set(['Downloading', 'Fetching', 'Grabbing', 'Propagating']);
-
 /** "1:02:03" or "2:01:02:03" as seconds, or null. */
 function clockSeconds(text) {
   if (typeof text !== 'string' || !/^\d+(:\d{1,2}){2,3}$/.test(text.trim())) return null;
@@ -188,23 +186,24 @@ function clockSeconds(text) {
     .reduce((acc, n, i, all) => acc + n * [1, 60, 3600, 86400][all.length - 1 - i], 0);
 }
 
+/* SABnzbd reports one speed for the whole queue. It belongs to the first job.
+   Each slot's time left already counts the jobs ahead of it. */
 function sabItems(queue) {
   if (!queue || typeof queue !== 'object' || queue.paused === true) return [];
   const speed = nonNeg(queue.kbpersec) * 1024;
   let speedGiven = false;
   const out = [];
   for (const s of list(queue.slots)) {
-    if (!SAB_RUN.has(str(s.status))) continue;
+    if (str(s.status) !== 'Downloading') continue;
     const mySpeed = speedGiven ? 0 : speed;
     speedGiven = true;
-    const eta = clockSeconds(s.timeleft);
     out.push(
       makeItem({
         name: str(s.filename),
         size: nonNeg(s.mb) * MIB,
         left: nonNeg(s.mbleft) * MIB,
         speed: mySpeed,
-        eta: mySpeed > 0 ? eta : null,
+        eta: speed > 0 ? clockSeconds(s.timeleft) : null,
       }),
     );
   }
@@ -216,7 +215,9 @@ const sabFinished = history =>
     .filter(h => str(h.status) === 'Completed')
     .map(h => h.completed);
 
-/* NZBGet reports one rate for the whole queue. It belongs to the first job. */
+/* NZBGet reports one rate for the whole queue. It belongs to the first job.
+   Jobs download in turn, so each one finishes after the jobs ahead of it.
+   Paused files are repair files NZBGet fetches only when needed. */
 function nzbgetItems(groups, status) {
   const rate =
     status && typeof status === 'object'
@@ -224,19 +225,22 @@ function nzbgetItems(groups, status) {
       : 0;
   const paused = !!(status && status.DownloadPaused === true);
   let rateGiven = false;
+  let ahead = 0;
   const out = [];
   for (const g of list(groups)) {
     if (paused || str(g.Status) !== 'DOWNLOADING') continue;
     const mySpeed = rateGiven ? 0 : rate;
     rateGiven = true;
-    const left = hiLo(g.RemainingSizeHi, g.RemainingSizeLo);
+    const held = hiLo(g.PausedSizeHi, g.PausedSizeLo);
+    const left = Math.max(0, hiLo(g.RemainingSizeHi, g.RemainingSizeLo) - held);
+    ahead += left;
     out.push(
       makeItem({
         name: str(g.NZBName),
-        size: hiLo(g.FileSizeHi, g.FileSizeLo),
+        size: Math.max(0, hiLo(g.FileSizeHi, g.FileSizeLo) - held),
         left,
         speed: mySpeed,
-        eta: mySpeed > 0 ? left / mySpeed : null,
+        eta: rate > 0 ? ahead / rate : null,
       }),
     );
   }

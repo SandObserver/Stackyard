@@ -45,7 +45,6 @@
   .pager button { position: relative; display: grid; place-items: center; width: 18px; height: 15px; border: 0;
     background: none; color: inherit; cursor: pointer; border-radius: 999px; }
   .pager button::after { content: ""; position: absolute; inset: -9px -7px; }
-  .pager button:disabled { opacity: 0.3; cursor: default; }
   .pager button:focus-visible { outline: 2px solid var(--run); outline-offset: 1px; }
   .pager .sy-icon { width: 10px; height: 10px; }
   .pager .next .sy-icon { transform: scaleX(-1); }
@@ -92,7 +91,7 @@
   <div class="hdr">
     <div class="lead"><span class="big" id="big"></span><span class="sub" id="sub"></span><span class="cap" id="cap"></span></div>
   </div>
-  <div class="pager" id="pager" hidden>
+  <div class="pager" id="pager" role="group" hidden>
     <button class="prev" id="prev" type="button"></button>
     <span class="count" id="count" aria-hidden="true"></span>
     <button class="next" id="next" type="button"></button>
@@ -481,14 +480,12 @@ function header(data, now) {
 
 function setPage(i, announce) {
   const pages = Math.ceil(shown.length / geom.per);
-  page = Math.max(0, Math.min(pages - 1, i));
+  page = (i + pages) % pages;
   const first = page * geom.per;
   const b = track.children[first];
   const offset = b ? Math.abs(b.offsetLeft - slotX(0)) : 0;
   track.style.transform = `translateX(${rtl() ? offset : -offset}px)`;
   countEl.textContent = localiseDigits(`${page + 1}/${pages}`);
-  prevBtn.disabled = page === 0;
-  nextBtn.disabled = page >= pages - 1;
   pager.setAttribute(
     'aria-label',
     geom.per > 1
@@ -570,12 +567,17 @@ async function start() {
   drawBelt(null);
   drawGhosts();
   let lastData = null;
+  let failedBelt;
   /* The dashboard sets the page's direction after it loads. */
   const redraw = () => {
     layout();
-    if (!lastData) return drawGhosts();
-    shown = [];
-    render(lastData);
+    if (lastData) {
+      shown = [];
+      return render(lastData);
+    }
+    if (failedBelt === undefined) return drawGhosts();
+    track.replaceChildren();
+    drawBelt(failedBelt);
   };
   window.addEventListener('resize', redraw);
   new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ['dir'] });
@@ -594,7 +596,8 @@ async function start() {
       if (!drawn) {
         bigEl.textContent = '';
         track.replaceChildren();
-        drawBelt(leftover(Math.floor(Date.now() / 1000)));
+        failedBelt = leftover(Math.floor(Date.now() / 1000));
+        drawBelt(failedBelt);
         pager.hidden = true;
       }
       subEl.hidden = true;
