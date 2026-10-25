@@ -45,6 +45,7 @@ Widgets and the services they read:
 - **Disk health**: TrueNAS, Unraid, Scrutiny
 - **Backup**: Duplicati, Kopia, Proxmox Backup Server, Backrest
 - **Downloads**: qBittorrent, Transmission, Deluge, SABnzbd, NZBGet
+- **Up Next**: the next episodes, films and albums from Sonarr, Radarr and Lidarr
 - **Connections**: Gluetun, Psiphon Conduit, Netbird, Plausible, Umami
 - **Dashboard switch**: links to your other Stackyard dashboards
 

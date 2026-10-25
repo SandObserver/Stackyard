@@ -417,3 +417,64 @@ test('a login password is not refilled for another username', () => {
   preserveAllSecrets(incoming, stored);
   assert.equal(incoming.items[0].monitoring.activity.login.password, '');
 });
+
+function upNextWith(sources, extra = {}) {
+  return { items: [{ id: 'u1', type: 'widget', widgetType: 'upnext', widgetConfig: { sources, ...extra } }] };
+}
+const SONARR = { app: 'sonarr', url: 'http://sonarr:8989', apiKey: 'SON', skipTls: false };
+const RADARR = {
+  app: 'radarr',
+  url: 'http://radarr:7878',
+  apiKey: 'RAD',
+  skipTls: false,
+  releases: ['cinema', 'digital'],
+};
+const sentAs = (row, savedRow) => {
+  const { apiKey, ...rest } = row;
+  return { ...rest, apiKeySet: true, savedRow };
+};
+
+test('Up Next: switching unmonitored, release types or a Link URL keeps every app key', () => {
+  const next = upNextWith(
+    [sentAs({ ...SONARR, href: 'https://tv.example' }, 0), sentAs({ ...RADARR, releases: ['physical'] }, 1)],
+    { unmonitored: true },
+  );
+  const { withheld } = preserveAllSecrets(next, upNextWith([SONARR, RADARR]));
+  assert.deepEqual(withheld, []);
+  assert.deepEqual(
+    next.items[0].widgetConfig.sources.map(r => r.apiKey),
+    ['SON', 'RAD'],
+  );
+});
+
+test('Up Next: removing the first app keeps the second app its own key', () => {
+  const next = upNextWith([sentAs(RADARR, 1)]);
+  const { withheld } = preserveAllSecrets(next, upNextWith([SONARR, RADARR]));
+  assert.deepEqual(withheld, []);
+  assert.equal(next.items[0].widgetConfig.sources[0].apiKey, 'RAD');
+});
+
+test('Up Next: an app whose address or app type changed loses only its own key', () => {
+  for (const change of [{ url: 'http://elsewhere:8989' }, { app: 'lidarr' }, { skipTls: true }]) {
+    const next = upNextWith([sentAs({ ...SONARR, ...change }, 0), sentAs(RADARR, 1)]);
+    const { withheld } = preserveAllSecrets(next, upNextWith([SONARR, RADARR]));
+    assert.deepEqual(withheld, [{ id: 'u1', label: 'u1' }], JSON.stringify(change));
+    assert.deepEqual(
+      next.items[0].widgetConfig.sources.map(r => r.apiKey),
+      [undefined, 'RAD'],
+      JSON.stringify(change),
+    );
+  }
+});
+
+test('Up Next: keys never reach the browser', () => {
+  const sent = scrubAllSecrets(structuredClone(upNextWith([SONARR, RADARR])));
+  const rows = sent.items[0].widgetConfig.sources;
+  assert.deepEqual(
+    rows.map(r => [r.apiKey, r.apiKeySet]),
+    [
+      [undefined, true],
+      [undefined, true],
+    ],
+  );
+});

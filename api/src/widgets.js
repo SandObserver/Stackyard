@@ -26,6 +26,7 @@ const VALID_GLYPHS = new Set([
   'merge',
   'panels',
   'parcel',
+  'calendar',
 ]);
 const VALID_FIELDTYPES = new Set([
   'text',

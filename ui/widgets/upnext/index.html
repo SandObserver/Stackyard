@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Up Next</title>
+<script src="/js/widget-theme.js?v=645f280f"></script>
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;overflow:hidden;background:transparent;
+    font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif;color:#FFFFFF}
+  .card{position:relative;width:100%;height:100%;padding:16px;border-radius:inherit;outline:none}
+  .card.clickable{cursor:pointer}
+  .card.clickable:focus-visible{box-shadow:inset 0 0 0 2px #00D2E0}
+  .rows{list-style:none;height:100%;display:grid;grid-template-rows:repeat(var(--rows,3),1fr);min-width:0}
+  .card.capped .rows>li:last-child{visibility:hidden}
+  .rows>li{display:flex;min-width:0}
+  .row{position:relative;flex:1;display:flex;align-items:center;gap:9px;min-width:0;border-radius:10px;outline:none}
+  .row.clickable{cursor:pointer}
+  .row.clickable:focus-visible{outline:2px solid #00D2E0;outline-offset:-1px}
+  .gt{flex:none;width:var(--gt,44px);text-align:end;line-height:1.2;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .gt b{display:block;font-size:13px;font-weight:600}
+  .gt small{display:block;font-size:11px;font-weight:500;color:#8E8E93}
+  .row.today .gt b{color:#FF4245}
+  .bar{flex:none;width:3px;align-self:stretch;margin-block:7px;border-radius:2px;background:#0091FF}
+  .film .bar{background:#FFD600}
+  .album .bar{background:#30D158}
+  .tx{flex:1;min-width:0}
+  .ttl{font-size:13px;font-weight:600;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sub{font-size:12px;line-height:16px;color:#8E8E93;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Keep each line dir=auto inside a shrink-to-fit column. Otherwise text in the other direction truncates at the wrong end. */
+  .tx{display:flex;flex-direction:column;align-items:flex-start}
+  .ttl,.sub{max-width:100%}
+  .ph-row{flex:1;display:flex;align-items:center;gap:9px}
+  .ph-gt{flex:none;width:44px;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+  .ph-tx{flex:1;display:flex;flex-direction:column;gap:6px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .wt-cap.note{position:absolute;inset-inline:16px;bottom:12px}
+  html[data-theme="light"] body{color:#000000}
+  html[data-theme="light"] .gt small,html[data-theme="light"] .sub{color:#6C6C70}
+  html[data-theme="light"] .row.today .gt b{color:#D70015}
+  html[data-theme="light"] .bar{background:#0088FF}
+  html[data-theme="light"] .film .bar{background:#B25000}
+  html[data-theme="light"] .album .bar{background:#248A3D}
+  html[data-theme="light"] .row.clickable:focus-visible{outline-color:#0088FF}
+  html[data-theme="light"] .card.clickable:focus-visible{box-shadow:inset 0 0 0 2px #0088FF}
+  @media (prefers-contrast: more) {
+    .gt small,.sub{color:#EBEBF5}
+    html[data-theme="light"] .gt small,html[data-theme="light"] .sub{color:#3C3C43}
+  }
+  @media (forced-colors: active) {
+    .bar{forced-color-adjust:none;background:CanvasText!important}
+    .row.today .gt b{color:Highlight}
+    .row.clickable:focus-visible{outline-color:Highlight}
+    .card.clickable:focus-visible{box-shadow:none;outline:2px solid Highlight;outline-offset:-3px}
+  }
+</style>
+</head>
+<body>
+<div class="card" id="card" role="group" aria-label="Up Next">
+  <ol class="rows" id="rows"></ol>
+  <div class="wt-cap note" id="note" hidden></div>
+</div>
+<script type="module">
+  import { poll, linkTo, loadStrings, wt, errorState, placeholder, localiseDigits, cssZoom } from '/js/widget-toolbox.js?v=c346a35b';
+  import { visibleItems, dayOffset, kindClass } from './upnext-logic.js';
+
+  await loadStrings();
+  const card = document.getElementById('card');
+  const rowsEl = document.getElementById('rows');
+  const noteEl = document.getElementById('note');
+  card.setAttribute('aria-label', wt('widget.label', 'Up Next'));
+
+  const ROWS = { small: 3, medium: 3, large: 7 };
+  const params = new URLSearchParams(location.search);
+  const size = Object.hasOwn(ROWS, params.get('size')) ? params.get('size') : 'small';
+  const count = ROWS[size];
+  const withName = size !== 'small';
+  rowsEl.style.setProperty('--rows', String(count));
+
+  const lang = params.get('lang') || 'en';
+  const hourCycle = (() => { try { return new Intl.DateTimeFormat(navigator.language || 'en', { hour: 'numeric' }).resolvedOptions().hourCycle; } catch { return undefined; } })();
+  const fmt = (o) => { try { return new Intl.DateTimeFormat(lang, o); } catch { return new Intl.DateTimeFormat('en', o); } };
+  const WEEKDAY = fmt({ weekday: 'short' });
+  const SHORT_DATE = fmt({ day: 'numeric', month: 'short' });
+  const DAY_NO = fmt({ day: 'numeric' });
+  const HOUR = fmt({ hour: 'numeric', hourCycle });
+  const HOUR_MIN = fmt({ hour: 'numeric', minute: '2-digit', hourCycle });
+  const timeOf = (d) => (d.getMinutes() ? HOUR_MIN : HOUR).format(d);
+  /* A day item's date is a calendar day: read it as local, never as UTC midnight. */
+  const dateOf = (i) => (i.at ? new Date(i.at) : new Date(i.day + 'T00:00:00'));
+
+  const ALBUM = { album: ['ui.album', 'Album'], ep: ['ui.ep', 'EP'], single: ['ui.single', 'Single'] };
+  const RELEASE = {
+    cinema: ['releases.opt.cinema', 'In cinemas'],
+    digital: ['releases.opt.digital', 'Digital release'],
+    physical: ['releases.opt.physical', 'Physical release'],
+  };
+  const APP = { sonarr: 'Sonarr', radarr: 'Radarr', lidarr: 'Lidarr' };
+
+  function episodeCode(i) {
+    if (i.season === 0) return wt('ui.special', 'Special');
+    if (i.season == null || i.episode == null) return '';
+    const n = (v) => localiseDigits(String(v));
+    return i.lastEpisode > i.episode
+      ? wt('ui.episodes', 'S{season} · E{first}–{last}', { season: n(i.season), first: n(i.episode), last: n(i.lastEpisode) })
+      : wt('ui.episode', 'S{season} · E{episode}', { season: n(i.season), episode: n(i.episode) });
+  }
+  function detail(i) {
+    if (i.kind === 'film') {
+      const [k, en] = RELEASE[i.release] || RELEASE.digital;
+      return wt(k, en);
+    }
+    if (i.kind === 'album') {
+      const type = ALBUM[i.albumType];
+      return [i.artist, type ? wt(type[0], type[1]) : ''].filter(Boolean).join(' · ');
+    }
+    const mark = i.premiere ? wt('ui.premiere', 'Premiere')
+      : i.finale === 'series' ? wt('ui.seriesFinale', 'Series finale')
+      : i.finale === 'season' ? wt('ui.seasonFinale', 'Season finale') : '';
+    const parts = [episodeCode(i), mark, withName && !mark ? i.name : ''].filter(Boolean);
+    return parts.length ? parts.join(' · ') : wt('ui.newEpisode', 'New episode');
+  }
+  function gutter(i, now) {
+    const d = dateOf(i);
+    const off = dayOffset(d, now);
+    const top = off === 0 ? wt('ui.today', 'Today') : WEEKDAY.format(d);
+    const bottom = i.at && off < 7 ? timeOf(d) : off < 7 ? DAY_NO.format(d) : SHORT_DATE.format(d);
+    return { top, bottom, today: off === 0 };
+  }
+
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function row(i, now) {
+    const g = gutter(i, now);
+    const li = el('li');
+    const r = el('div', `row ${kindClass(i)}${g.today ? ' today' : ''}`);
+    const gt = el('div', 'gt');
+    gt.append(el('b', '', g.top), el('small', '', g.bottom));
+    gt.setAttribute('aria-hidden', 'true');
+    const tx = el('div', 'tx');
+    const sub = detail(i);
+    const title = el('div', 'ttl', i.title);
+    const line = el('div', 'sub', sub);
+    title.dir = 'auto';
+    line.dir = 'auto';
+    tx.append(title, line);
+    tx.setAttribute('aria-hidden', 'true');
+    const said = el('span', 'sr', wt('ui.sayItem', '{title}, {detail}, {when}', { title: i.title, detail: sub, when: `${g.top} ${g.bottom}` }));
+    r.append(gt, el('i', 'bar'), tx, said);
+    linkTo(r, i.link);
+    li.append(r);
+    return li;
+  }
+
+  function loading() {
+    rowsEl.replaceChildren();
+    for (let n = 0; n < count; n++) {
+      const li = el('li', 'ph-row');
+      const gt = el('div', 'ph-gt');
+      gt.append(placeholder(30, 11), placeholder(22, 9));
+      const bar = placeholder(3, 0, 2);
+      bar.style.alignSelf = 'stretch';
+      bar.style.height = 'auto';
+      bar.style.margin = '7px 0';
+      const w = [78, 64, 86, 58, 72, 82, 66][n] * (size === 'small' ? 1 : 0.7);
+      const tx = el('div', 'ph-tx');
+      tx.append(placeholder(w + '%', 11), placeholder(Math.round(w * 0.6) + '%', 9));
+      li.append(gt, bar, tx);
+      rowsEl.append(li);
+    }
+  }
+
+  function fitGutter() {
+    rowsEl.style.setProperty('--gt', 'max-content');
+    const widest = Math.max(44, ...[...rowsEl.querySelectorAll('.gt')].map((g) => Math.ceil(g.getBoundingClientRect().width / cssZoom())));
+    rowsEl.style.setProperty('--gt', Math.min(widest, 76) + 'px');
+  }
+
+  const state = errorState({ root: card, content: rowsEl, place: 'auto' });
+  const nothing = errorState({ root: card, content: rowsEl, hideOnEmpty: true, place: 'center' });
+  const note = errorState({ root: card, content: () => [], caption: noteEl });
+  let last = null;
+  let failing = false;
+
+  function render(data) {
+    last = data;
+    const now = new Date();
+    const list = visibleItems(data.items, now).slice(0, count);
+    if (!list.length) {
+      rowsEl.replaceChildren();
+      if (!failing) state.ok();
+      linkTo(card, data.calendar || '');
+      nothing.empty(wt('ui.nothing', 'Nothing in the next {days} days', { days: localiseDigits(String(data.days || 90)) }));
+    } else {
+      linkTo(card, '');
+      rowsEl.replaceChildren(...list.map((i) => row(i, now)));
+      fitGutter();
+      nothing.ok();
+      if (!failing) state.ok();
+    }
+    const missing = Array.isArray(data.missing) ? data.missing : [];
+    if (missing.length && list.length && !failing) {
+      const line = note.fail({ kind: missing[0].kind }, { inert: false });
+      const apps = missing.map((m) => APP[m.app] || m.app).filter((a, n, all) => all.indexOf(a) === n).join(', ');
+      noteEl.querySelector('b').textContent = wt('ui.appProblem', '{app} · {problem}', { app: apps, problem: line });
+    } else note.ok();
+    card.classList.toggle('capped', failing || (missing.length > 0 && list.length > 0));
+  }
+
+  loading();
+  poll({
+    render: (data) => {
+      failing = false;
+      render(data);
+    },
+    onError: ({ error, everOk, stale, since }) => {
+      if (everOk && !stale) return;
+      failing = true;
+      note.ok();
+      nothing.ok();
+      state.fail(error, { since, inert: everOk });
+      card.classList.add('capped');
+    },
+    interval: 900000,
+  });
+  setInterval(() => {
+    if (last && !failing) render(last);
+  }, 60000);
+</script>
+</body>
+</html>

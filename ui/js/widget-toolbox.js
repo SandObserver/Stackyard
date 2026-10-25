@@ -581,7 +581,8 @@ const PH_STYLE_ID = 'wt-ph-css';
 const PH_CSS =
   '.wt-ph{display:inline-block;vertical-align:middle;flex:none;border-radius:4px;' +
   'background:var(--wt-ph,rgba(235,235,245,0.16))}' +
-  'html[data-theme="light"] .wt-ph{background:var(--wt-ph,rgba(60,60,67,0.12))}';
+  'html[data-theme="light"] .wt-ph{background:var(--wt-ph,rgba(60,60,67,0.12))}' +
+  '@media (forced-colors:active){.wt-ph{forced-color-adjust:none;background:GrayText}}';
 
 /** A soft rounded shape that stands in for content still loading. Set --wt-ph
     on an ancestor to recolour it for a light surface.

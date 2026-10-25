@@ -11,7 +11,7 @@ import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
 import { formatList } from '/js/format-number.js?v=abcd4ae4';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { qa } from '/js/utils.js?v=cfee1271';
-import { iconSvg } from '/js/icon-set.js?v=941db5a1';
+import { iconSvg } from '/js/icon-set.js?v=88ae97cc';
 
 const CHEV = iconSvg('chevrons', 22, 'solid', 'dd-chev');
 

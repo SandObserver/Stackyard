@@ -240,6 +240,18 @@ export const ICONS = {
     ],
   },
   nowplaying: { shapes: [rect(3, 3, 18, 18, T.R_LG), shape('M10 8v8l6-4z', 'accent', { rj: true })] },
+  upnext: {
+    gap: 0,
+    shapes: [
+      rect(2, 4, 20, 16, T.R_LG),
+      bar(5, 7, 3),
+      bar(10, 7, 9, 'accent'),
+      bar(5, 11, 3),
+      bar(10, 11, 7),
+      bar(5, 15, 3),
+      bar(10, 15, 8),
+    ],
+  },
   system: { shapes: [line('M3 16 7 12 11 15 16 8'), dot(19, 6, T.NODE, 'accent')] },
   weather: {
     inkMask: false,
