@@ -85,6 +85,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   CVE-2026-15176, CVE-2026-93479 and CVE-2026-97205, and stop trusting the
   compromised eMudhra certificate roots.
 
+- Mark CVE-2026-107891 as not affecting the Docker Hub image, which ships the
+  patched musl 1.2.6-r3.
+
 ## [1.19.0] - 2026-10-20
 
 ### Added
