@@ -44,6 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Up Next widget for Sonarr, Radarr and Lidarr.
 
+- Import apps and folders from gethomepage labels on Docker containers.
+
 ### Changed
 
 - Long weather condition labels shrink to fit before they are cut off.
@@ -66,6 +68,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Rename the GitHub widget to Git.
 
+- Limit app, folder and widget names to 64 characters.
+
+- Warn in the app form when a link holds a username and password.
+
 ### Fixed
 
 - Colour swatches no longer spread across the row on small tablets.
@@ -79,6 +85,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Widget loading placeholders show in high contrast mode.
 
+- Read the Docker API through socket proxies that allow only versioned paths.
+
+- Wrap long names in the import preview instead of scrolling sideways.
+
 ### Security
 
 - Update Node.js to 24.22.1 and nginx to 1.30.6 to fix CVE-2026-111497,
@@ -87,6 +97,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Mark CVE-2026-107891 as not affecting the Docker Hub image, which ships the
   patched musl 1.2.6-r3.
+
+- Refuse health check pings to link-local addresses, including the cloud
+  metadata service.
+
+- Remove usernames and passwords from links during import.
 
 ## [1.19.0] - 2026-10-20
 
