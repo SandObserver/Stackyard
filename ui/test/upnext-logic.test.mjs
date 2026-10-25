@@ -36,7 +36,7 @@ test('a timed item stays until it ends; a day item for its whole local day', () 
   ];
   assert.deepEqual(
     visibleItems(items, now).map(i => i.title),
-    ['Airing', 'Today', 'Later'],
+    ['Today', 'Airing', 'Later'],
   );
   assert.deepEqual(visibleItems('nope', now), []);
 });
@@ -46,4 +46,23 @@ test('kindClass maps every kind to a bar colour class', () => {
   assert.equal(kindClass({ kind: 'album' }), 'album');
   assert.equal(kindClass({ kind: 'episode' }), 'episode');
   assert.equal(kindClass({ kind: 'other' }), 'episode');
+});
+
+test('rows sort in local time: tonight’s episode comes before tomorrow’s film', () => {
+  const now = at(2026, 10, 25, 19);
+  const fromServer = [
+    { kind: 'film', title: 'Tomorrow', at: null, day: localDay(at(2026, 10, 26)), ends: '' },
+    {
+      kind: 'episode',
+      title: 'Tonight',
+      at: at(2026, 10, 25, 21).toISOString(),
+      day: '',
+      ends: at(2026, 10, 25, 22).toISOString(),
+    },
+    { kind: 'album', title: 'Today', at: null, day: localDay(now), ends: '' },
+  ];
+  assert.deepEqual(
+    visibleItems(fromServer, now).map(i => i.title),
+    ['Today', 'Tonight', 'Tomorrow'],
+  );
 });

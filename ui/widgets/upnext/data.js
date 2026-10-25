@@ -9,8 +9,10 @@ const ENOUGH = 8;
 const MAX_SOURCES = 6;
 const DEFAULT_RELEASES = Object.freeze(['cinema', 'digital']);
 const SERIES_TTL_MS = 6 * 3600 * 1000;
-/* Keep the bound. A preview can name any address. */
+/* Keep both bounds. A preview can name any address, and its reply sets the size. */
 const SERIES_KEPT = 500;
+const TEXT_KEPT = 300;
+const SERIES_TYPES = new Set(['standard', 'daily', 'anime']);
 
 const NAMES = Object.freeze({ sonarr: 'Sonarr', radarr: 'Radarr', lidarr: 'Lidarr' });
 
@@ -20,6 +22,7 @@ const TIMEOUT_CODES = new Set(['ETIMEDOUT', 'ESOCKETTIMEDOUT', 'UND_ERR_HEADERS_
 function kindOf(e, ctx) {
   if (e && typeof e.kind === 'string') return e.kind;
   if (e && e.name === 'SsrfBlockedError') return ctx.KIND.BLOCKED;
+  if (e && e.message === 'Timed out') return ctx.KIND.TIMEOUT;
   const code = e && e.code;
   if (TIMEOUT_CODES.has(code)) return ctx.KIND.TIMEOUT;
   if (typeof code === 'string' && code) return ctx.KIND.NETWORK;
@@ -62,6 +65,8 @@ async function calendar(ctx, row, path, from, to, extra = '') {
   return r.data;
 }
 
+const kept = v => (typeof v === 'string' ? v.slice(0, TEXT_KEPT) : '');
+
 const seriesCache = new Map();
 function remember(key, value) {
   seriesCache.delete(key);
@@ -85,9 +90,14 @@ async function sonarr(ctx, row, from, to, now) {
       if (r.status >= 400) ctx.fail(`Sonarr HTTP ${r.status}`);
       const s = r.data && typeof r.data === 'object' ? r.data : null;
       if (!s) return;
-      const kept = { title: s.title, titleSlug: s.titleSlug, runtime: s.runtime, seriesType: s.seriesType };
-      remember(key, kept);
-      series.set(id, kept);
+      const one = {
+        title: kept(s.title),
+        titleSlug: kept(s.titleSlug),
+        runtime: items.minutes(s.runtime),
+        seriesType: SERIES_TYPES.has(s.seriesType) ? s.seriesType : '',
+      };
+      remember(key, one);
+      series.set(id, one);
     }),
   );
   return items.sonarrItems(episodes, e => series.get(e.seriesId));
@@ -138,13 +148,13 @@ module.exports = async function (ctx) {
       now,
     ).length < ENOUGH
   ) {
-    days = LONG_DAYS;
     const longer = await readAll(
       ctx,
       ok.map(r => r.row),
       now,
-      days,
+      LONG_DAYS,
     );
+    if (longer.every(r => !r.error)) days = LONG_DAYS;
     results = longer.map((r, i) => (r.error ? ok[i] : r)).concat(results.filter(r => r.error));
   }
   const first = rows.find(r => ctx.serviceLink(r.href, r.url, '/calendar'));

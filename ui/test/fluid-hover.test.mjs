@@ -329,8 +329,26 @@ test('a detached container is not held', () => {
 test('a zoomed page places and sizes the pill in its own units', () => {
   install();
   const list = fake('ol', { rect: { left: 0, top: 0, width: 400, height: 300 } });
-  list.offsetWidth = 200;
   const row = fake('div', { rect: { left: 0, top: 100, width: 400, height: 80 } });
+  row.parent = list;
+  row._sel = ['.row.clickable'];
+  list._sel = ['#rows'];
+  let over;
+  mod.initFluidHover({ addEventListener: (t, fn) => t === 'pointerover' && (over = fn) }, [
+    { container: '#rows', item: '.row.clickable', zoom: () => 2 },
+  ]);
+  over({ pointerType: 'mouse', target: row });
+  const pill = list.children[0];
+  assert.equal(pill.style.width, '200px');
+  assert.equal(pill.style.height, '40px');
+  assert.equal(pill.style.transform, 'translate3d(0px,50px,0)');
+});
+
+test('an unzoomed list with a fractional width places the pill on its row', () => {
+  install();
+  const list = fake('ol', { rect: { left: 0, top: 0, width: 300.5, height: 6000 } });
+  list.offsetWidth = 301;
+  const row = fake('div', { rect: { left: 0, top: 5000, width: 300.5, height: 52 } });
   row.parent = list;
   row._sel = ['.row.clickable'];
   list._sel = ['#rows'];
@@ -340,9 +358,8 @@ test('a zoomed page places and sizes the pill in its own units', () => {
   ]);
   over({ pointerType: 'mouse', target: row });
   const pill = list.children[0];
-  assert.equal(pill.style.width, '200px');
-  assert.equal(pill.style.height, '40px');
-  assert.equal(pill.style.transform, 'translate3d(0px,50px,0)');
+  assert.equal(pill.style.width, '300.5px');
+  assert.equal(pill.style.transform, 'translate3d(0px,5000px,0)');
 });
 
 test('a list passed to initFluidHover is followed, and the built-in lists are not', () => {

@@ -16,13 +16,15 @@ export function dayOffset(d, now) {
   return Math.round((a - b) / 86400000);
 }
 
-/** Items still to come in the reader's own time zone. A timed item goes once it
-    ends; a day item stays for its whole local day.
+/** Items still to come in the reader's own time zone, soonest first. A timed
+    item goes once it ends; a day item stays for its whole local day and sorts at
+    its local start. The server sorts day items at UTC midnight.
     @param {unknown} items @param {Date} now @returns {Item[]} */
 export function visibleItems(items, now) {
   if (!Array.isArray(items)) return [];
   const today = localDay(now);
-  return items.filter(i => {
+  const when = (/** @type {Item} */ i) => (i.at ? Date.parse(i.at) : new Date(i.day + 'T00:00:00').getTime());
+  const kept = items.filter(i => {
     if (!i || typeof i !== 'object' || typeof i.title !== 'string') return false;
     if (typeof i.at === 'string' && i.at) {
       const ends = Date.parse(i.ends);
@@ -30,6 +32,7 @@ export function visibleItems(items, now) {
     }
     return typeof i.day === 'string' && i.day >= today;
   });
+  return kept.sort((a, b) => when(a) - when(b));
 }
 
 /** @param {Item} i @returns {string} */

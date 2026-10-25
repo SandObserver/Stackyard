@@ -72,8 +72,8 @@
   <div class="wt-cap note" id="note" hidden></div>
 </div>
 <script type="module">
-  import { poll, linkTo, loadStrings, wt, errorState, placeholder, localiseDigits, cssZoom } from '/js/widget-toolbox.js?v=c346a35b';
-  import { initFluidHover } from '/js/fluid-hover.js?v=d9fdf901';
+  import { poll, linkTo, loadStrings, wt, errorState, errorLine, placeholder, localiseDigits, cssZoom } from '/js/widget-toolbox.js?v=c346a35b';
+  import { initFluidHover } from '/js/fluid-hover.js?v=8b4aadd4';
   import { visibleItems, dayOffset, kindClass } from './upnext-logic.js';
 
   await loadStrings();
@@ -88,7 +88,7 @@
   const count = ROWS[size];
   const withName = size !== 'small';
   rowsEl.style.setProperty('--rows', String(count));
-  initFluidHover(document, [{ container: '#rows', item: '.row.clickable' }]);
+  initFluidHover(document, [{ container: '#rows', item: '.row.clickable', zoom: cssZoom }]);
 
   const lang = params.get('lang') || 'en';
   const hourCycle = (() => { try { return new Intl.DateTimeFormat(navigator.language || 'en', { hour: 'numeric' }).resolvedOptions().hourCycle; } catch { return undefined; } })();
@@ -151,6 +151,7 @@
     const g = gutter(i, now);
     const li = el('li');
     const r = el('div', `row ${kindClass(i)}${g.today ? ' today' : ''}`);
+    r.dataset.k = [i.kind, i.title, i.at || i.day, i.release || '', i.episode ?? ''].join('|');
     const gt = el('div', 'gt');
     gt.append(el('b', '', g.top), el('small', '', g.bottom));
     gt.setAttribute('aria-hidden', 'true');
@@ -198,30 +199,46 @@
   const note = errorState({ root: card, content: () => [], caption: noteEl });
   let last = null;
   let failing = false;
+  let shown = '';
 
   function render(data) {
     last = data;
     const now = new Date();
     const list = visibleItems(data.items, now).slice(0, count);
+    const missing = Array.isArray(data.missing) ? data.missing : [];
+    const rows = list.map((i) => row(i, now));
+    const sig = JSON.stringify([missing, data.calendar, data.days, rows.map((r) => r.outerHTML)]);
+    if (sig === shown) return;
+    shown = sig;
+    const focused = /** @type {HTMLElement|null} */ (document.activeElement);
+    const had = focused && rowsEl.contains(focused) ? focused.closest('.row')?.dataset.k : null;
     if (!list.length) {
       rowsEl.replaceChildren();
-      if (!failing) state.ok();
+      state.ok();
       linkTo(card, data.calendar || '');
       nothing.empty(wt('ui.nothing', 'Nothing in the next {days} days', { days: localiseDigits(String(data.days || 90)) }));
     } else {
       linkTo(card, '');
-      rowsEl.replaceChildren(...list.map((i) => row(i, now)));
+      rowsEl.replaceChildren(...rows);
       fitGutter();
       nothing.ok();
-      if (!failing) state.ok();
+      state.ok();
+      if (had) [...rowsEl.querySelectorAll('.row')].find((r) => r.dataset.k === had)?.focus();
     }
-    const missing = Array.isArray(data.missing) ? data.missing : [];
-    if (missing.length && list.length && !failing) {
-      const line = note.fail({ kind: missing[0].kind }, { inert: false });
-      const apps = missing.map((m) => APP[m.app] || m.app).filter((a, n, all) => all.indexOf(a) === n).join(', ');
-      noteEl.querySelector('b').textContent = wt('ui.appProblem', '{app} · {problem}', { app: apps, problem: line });
+    if (missing.length) {
+      const kinds = [...new Set(missing.map((m) => m.kind))];
+      const line = note.fail({ kind: kinds.length === 1 ? kinds[0] : 'network' }, { inert: false });
+      const apps = [...new Set(missing.map((m) => APP[m.app] || m.app))];
+      const b = noteEl.querySelector('b');
+      b.textContent = wt('ui.appProblem', '{app} · {problem}', { app: apps.join(', '), problem: line });
+      if (kinds.length > 1) {
+        b.setAttribute('aria-hidden', 'true');
+        noteEl.append(el('span', 'sr', missing
+          .map((m) => wt('ui.appProblem', '{app} · {problem}', { app: APP[m.app] || m.app, problem: errorLine({ kind: m.kind }) }))
+          .join(', ')));
+      }
     } else note.ok();
-    card.classList.toggle('capped', failing || (missing.length > 0 && list.length > 0));
+    card.classList.toggle('capped', missing.length > 0 && list.length > 0);
   }
 
   loading();
@@ -233,6 +250,7 @@
     onError: ({ error, everOk, stale, since }) => {
       if (everOk && !stale) return;
       failing = true;
+      shown = '';
       note.ok();
       nothing.ok();
       state.fail(error, { since, inert: everOk });

@@ -1,7 +1,7 @@
 /* A single highlight per list, moved instead of redrawn. It follows the
    pointer, and falls back to the keyboard cursor when the pointer leaves. */
 
-import { ensurePill, pillOf, placePill, restPill } from '/js/moving-pill.js?v=4ef92618';
+import { ensurePill, pillOf, placePill, restPill } from '/js/moving-pill.js?v=afe204a3';
 
 const FINE = '(hover: hover) and (pointer: fine)';
 
@@ -35,7 +35,7 @@ function selectable(item) {
 function stateFor(container) {
   let s = states.get(container);
   if (!s) {
-    s = { hover: null, kb: null, bound: false };
+    s = { hover: null, kb: null, bound: false, zoom: null };
     states.set(container, s);
   }
   return s;
@@ -50,7 +50,7 @@ function refresh(container) {
   if (target && target.isConnected && selectable(target)) {
     const pill = ensurePill(container, 'fh-hl');
     live.add(container);
-    placePill(container, pill, target);
+    placePill(container, pill, target, s.zoom ? s.zoom() : 1);
   } else {
     restPill(pillOf(container));
     live.delete(container);
@@ -105,7 +105,8 @@ export function fluidHoverClear(container) {
   refresh(container);
 }
 
-/** @param {Document} [root] @param {{ container: string, item: string }[]} [lists] */
+/** @param {Document} [root]
+    @param {{ container: string, item: string, zoom?: () => number }[]} [lists] */
 export function initFluidHover(root = document, lists = LISTS) {
   if (!fluidHoverSupported()) return;
   root.addEventListener(
@@ -119,7 +120,9 @@ export function initFluidHover(root = document, lists = LISTS) {
         if (!item) continue;
         const container = item.closest(cfg.container);
         if (!container || !selectable(item)) continue;
-        stateFor(container).hover = item;
+        const s = stateFor(container);
+        s.hover = item;
+        s.zoom = cfg.zoom || null;
         bind(container);
         refresh(container);
         return;

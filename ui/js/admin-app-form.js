@@ -34,11 +34,11 @@ import {
   setTogDisabled,
   swapContent,
 } from '/js/admin-shared.js?v=8fec4e2f';
-import { createListbox } from '/js/listbox.js?v=6f0a8c6a';
+import { createListbox } from '/js/listbox.js?v=3e47b403';
 import { MAX_LABELS } from '/js/badge-logic.js?v=85b1bc96';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=a114899c';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=d444b337';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=a60b17ac';
-import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=d9fdf901';
+import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=8b4aadd4';
 import { iconSvg } from '/js/icon-set.js?v=26655aca';
 
 export function buildFolderForm(body, item) {

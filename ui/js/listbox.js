@@ -7,7 +7,7 @@
    which exposes a strip of page canvas and misplaces the menu. */
 
 import { nextActiveIndex, singleChoice } from '/js/admin-logic.js?v=b3befae4';
-import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=d9fdf901';
+import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=8b4aadd4';
 import { formatList } from '/js/format-number.js?v=abcd4ae4';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { qa } from '/js/utils.js?v=cfee1271';

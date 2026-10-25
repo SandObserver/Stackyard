@@ -1,6 +1,11 @@
 const DAY_MS = 24 * 3600 * 1000;
 const MAX_ITEMS = 12;
 const DEFAULT_RUNTIME_MIN = 60;
+const MAX_RUNTIME_MIN = 24 * 60;
+const MAX_TIME = 8.64e15;
+/* Keep a day item until its day ends at UTC-12. The browser drops it at the
+   reader's own midnight. */
+const LAST_ZONE_MS = 12 * 3600 * 1000;
 const DATE_ONLY = /^(\d{4}-\d{2}-\d{2})/;
 const RELEASES = Object.freeze([
   ['inCinemas', 'cinema'],
@@ -11,6 +16,7 @@ const RELEASES = Object.freeze([
 const str = v => (typeof v === 'string' ? v.trim() : '');
 const list = v => (Array.isArray(v) ? v.filter(x => x && typeof x === 'object' && !Array.isArray(x)) : []);
 const whole = v => (Number.isInteger(v) && v >= 0 ? v : null);
+const minutes = v => (Number.isInteger(v) && v > 0 && v <= MAX_RUNTIME_MIN ? v : null);
 const ms = v => {
   const t = typeof v === 'string' ? Date.parse(v) : NaN;
   return Number.isFinite(t) ? t : null;
@@ -22,6 +28,7 @@ const dayOf = v => {
   return m ? m[1] : '';
 };
 const dayStartMs = day => Date.parse(day + 'T00:00:00Z');
+const dayUntil = day => dayStartMs(day) + DAY_MS + LAST_ZONE_MS;
 const slugPath = (prefix, slug) => (slug ? `${prefix}/${encodeURIComponent(slug)}` : '');
 
 /* "Mon, Oct 26, 2026" as an episode name. Engines parse loose text as dates too,
@@ -42,7 +49,7 @@ function makeItem({ kind, title, at = null, day = '', until, path = '', ...rest 
 function sonarrSeriesIds(episodes, now, limit) {
   const ids = [];
   const coming = list(episodes)
-    .map(e => ({ id: e.seriesId, t: ms(e.airDateUtc), runtime: whole(e.runtime) || DEFAULT_RUNTIME_MIN }))
+    .map(e => ({ id: e.seriesId, t: ms(e.airDateUtc), runtime: minutes(e.runtime) || DEFAULT_RUNTIME_MIN }))
     .filter(e => Number.isSafeInteger(e.id) && e.id > 0 && e.t != null && e.t + e.runtime * 60000 > now)
     .sort((a, b) => a.t - b.t);
   for (const e of coming) {
@@ -69,7 +76,7 @@ function sonarrItems(episodes, seriesOf = e => e.series) {
     const daily = str(s.seriesType) === 'daily' || whole(e.seasonNumber) >= 1900;
     const season = daily ? null : whole(e.seasonNumber);
     const episode = daily ? null : whole(e.episodeNumber);
-    const runtime = whole(e.runtime) || whole(s.runtime) || DEFAULT_RUNTIME_MIN;
+    const runtime = minutes(e.runtime) || minutes(s.runtime) || DEFAULT_RUNTIME_MIN;
     const name = str(e.title);
     rows.push(
       makeItem({
@@ -80,7 +87,7 @@ function sonarrItems(episodes, seriesOf = e => e.series) {
         season,
         episode,
         lastEpisode: episode,
-        name: name && name.toUpperCase() !== 'TBA' && !daily && !namesItsDate(name, t) ? name : '',
+        name: name && name.toUpperCase() !== 'TBA' && !namesItsDate(name, t) ? name : '',
         premiere: episode === 1 && season !== 0,
         finale: ['season', 'series'].includes(str(e.finaleType)) ? str(e.finaleType) : '',
         path: slugPath('/series', str(s.titleSlug)),
@@ -134,7 +141,7 @@ function radarrItems(movies, from, to, types) {
           kind: 'film',
           title,
           day,
-          until: start + DAY_MS,
+          until: dayUntil(day),
           release,
           year: whole(m.year),
           path: slugPath('/movie', str(m.titleSlug)),
@@ -161,7 +168,7 @@ function lidarrItems(albums) {
         kind: 'album',
         title,
         day,
-        until: dayStartMs(day) + DAY_MS,
+        until: dayUntil(day),
         artist,
         albumType: ALBUM_TYPES.has(type) ? type : '',
         path: slugPath('/album', str(a.foreignAlbumId)),
@@ -180,7 +187,7 @@ function mergeItems(groups, now) {
   const seen = new Set();
   const out = [];
   for (const i of groups.flat()) {
-    if (!(i.until > now) || seen.has(i.key)) continue;
+    if (!(i.until > now && i.until <= MAX_TIME) || seen.has(i.key)) continue;
     seen.add(i.key);
     out.push(i);
   }
@@ -188,4 +195,4 @@ function mergeItems(groups, now) {
   return out.slice(0, MAX_ITEMS).map(({ key, until, ...rest }) => ({ ...rest, ends: new Date(until).toISOString() }));
 }
 
-module.exports = { sonarrSeriesIds, sonarrItems, radarrItems, lidarrItems, mergeItems, MAX_ITEMS, DAY_MS };
+module.exports = { sonarrSeriesIds, sonarrItems, radarrItems, lidarrItems, mergeItems, minutes, MAX_ITEMS, DAY_MS };

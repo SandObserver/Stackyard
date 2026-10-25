@@ -32,16 +32,15 @@ export function measurable(el) {
   return r.width > 0 && r.height > 0;
 }
 
-/** @param {Element} container @param {HTMLElement} pill @param {Element} item */
-export function placePill(container, pill, item) {
+/** Pass the page's CSS zoom when it has one. Rects include it and styles do
+    not, so the pill otherwise comes out that much too large and off its row.
+    @param {Element} container @param {HTMLElement} pill @param {Element} item
+    @param {number} [z] */
+export function placePill(container, pill, item, z = 1) {
   if (!measurable(container) || !measurable(item)) return false;
   const cr = container.getBoundingClientRect();
   const ir = item.getBoundingClientRect();
   const cs = getComputedStyle(item);
-  /* Rects are in screen pixels and styles in the page's own. A zoomed widget
-     page differs by its zoom, and the pill comes out that much too large. */
-  const w = /** @type {HTMLElement} */ (container).offsetWidth;
-  const z = w ? cr.width / w : 1;
   pill.style.borderRadius = [
     cs.borderTopLeftRadius,
     cs.borderTopRightRadius,

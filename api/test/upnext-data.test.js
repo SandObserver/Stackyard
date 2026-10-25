@@ -72,7 +72,7 @@ test('Sonarr: a season dropped at once is one row with an episode range', () => 
   );
 });
 
-test('Sonarr: a daily show drops its date-based code and name', () => {
+test('Sonarr: a daily show drops its date-based code and name, and keeps any other name', () => {
   const [a, b] = items.sonarrItems([
     ep('Quiz Hour', '2026-10-26T23:00:00Z', 2026, 178, {
       series: { title: 'Quiz Hour', seriesType: 'daily' },
@@ -82,7 +82,8 @@ test('Sonarr: a daily show drops its date-based code and name', () => {
   ]);
   assert.deepEqual([a.season, a.episode, a.name, a.premiere], [null, null, '', false]);
   assert.notEqual(a.at, b.at, 'two daily episodes stay two rows');
-  assert.deepEqual([b.season, b.name], [null, ''], 'a season numbered by year is date-based too');
+  assert.deepEqual([b.season, b.episode], [null, null], 'a season numbered by year is date-based too');
+  assert.equal(b.name, 'Name 179', 'a guest list or topic is not a date');
   assert.equal(
     items.sonarrItems([ep('Talk', '2026-10-27T23:00:00Z', 3, 9, { title: 'October 27, 2026' })])[0].name,
     '',
@@ -314,7 +315,7 @@ test('worst case: a large calendar is cut to the list without a series lookup pe
   assert.ok(calls.filter(c => c.url.includes('/series/')).length <= items.MAX_ITEMS);
 });
 
-test('worst case: a timeout or refusal names that app, and a failed longer read keeps the shorter one', async t => {
+test('worst case: a timeout or refusal names that app, and a failed longer read keeps the shorter one and its days', async t => {
   t.mock.timers.enable({ apis: ['Date'], now: NOW });
   let radarrReads = 0;
   const { ctx } = ctxFor(
@@ -327,13 +328,13 @@ test('worst case: a timeout or refusal names that app, and a failed longer read 
     url => {
       if (url.includes('down.lan')) throw Object.assign(new Error('refused'), { code: 'ECONNREFUSED' });
       radarrReads++;
-      if (radarrReads > 1) throw Object.assign(new Error('slow'), { code: 'ETIMEDOUT' });
+      if (radarrReads > 1) throw new Error('Timed out');
       return { status: 200, data: [{ title: 'Glass Harbor', digitalRelease: '2026-10-27T00:00:00Z' }] };
     },
   );
   const out = await data(ctx);
   assert.deepEqual(out.missing, [{ app: 'lidarr', kind: 'network' }]);
-  assert.equal(out.days, 90);
+  assert.equal(out.days, 14, 'the empty state must not claim 90 days');
   assert.deepEqual(
     out.items.map(i => i.title),
     ['Glass Harbor'],
@@ -369,4 +370,78 @@ test('bad data: wrong types in a reply never throw', () => {
   assert.deepEqual(items.lidarrItems(junk), []);
   assert.deepEqual(items.sonarrSeriesIds(junk, NOW, 12), []);
   assert.deepEqual(items.sonarrItems('nope'), []);
+});
+
+test('data: a timeout from the proxy or the widget budget is named a timeout', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: NOW });
+  const { ctx } = ctxFor(
+    {
+      sources: [
+        { app: 'sonarr', url: 'sonarr.lan', apiKey: 'k' },
+        { app: 'radarr', url: 'slow.lan', apiKey: 'k' },
+      ],
+    },
+    url => {
+      if (url.includes('slow.lan')) throw new Error('Timed out');
+      return sonarrServe([ep('Northbound', '2026-10-25T21:00:00Z', 2, 4)])(url);
+    },
+  );
+  const out = await data(ctx);
+  assert.deepEqual(out.missing, [{ app: 'radarr', kind: 'timeout' }]);
+});
+
+test('time zones: a day item outlives UTC midnight until its day ends at UTC-12', () => {
+  const album = items.lidarrItems([
+    { title: 'Low Tide', releaseDate: '2026-10-30T00:00:00Z', artist: { artistName: 'A' } },
+  ]);
+  const film = items.radarrItems(
+    [{ title: 'Glass Harbor', digitalRelease: '2026-10-30T00:00:00Z' }],
+    Date.parse('2026-10-29T00:00:00Z'),
+    Date.parse('2026-11-30T00:00:00Z'),
+    ['digital'],
+  );
+  const losAngelesEvening = Date.parse('2026-10-31T00:30:00Z');
+  assert.equal(items.mergeItems([album, film], losAngelesEvening).length, 2);
+  const lastZoneMidnight = Date.parse('2026-10-31T12:00:00Z');
+  assert.equal(items.mergeItems([album, film], lastZoneMidnight).length, 0);
+});
+
+test('bad data: a runtime or air date past the Date range skips that row, not the widget', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: NOW });
+  const odd = [
+    ep('Forever', '2026-10-25T20:00:00Z', 1, 2, { runtime: 1e15 }),
+    ep('Far', '+275760-09-13T00:00:00Z', 1, 2),
+  ];
+  const { ctx } = ctxFor(
+    {
+      sources: [
+        { app: 'sonarr', url: 'sonarr.lan', apiKey: 'k' },
+        { app: 'radarr', url: 'radarr.lan', apiKey: 'k' },
+      ],
+    },
+    url =>
+      url.includes('radarr')
+        ? { status: 200, data: [{ title: 'Glass Harbor', digitalRelease: '2026-10-27T00:00:00Z' }] }
+        : sonarrServe(odd)(url),
+  );
+  const out = await data(ctx);
+  assert.deepEqual(
+    out.items.map(i => i.title),
+    ['Forever', 'Glass Harbor'],
+  );
+  assert.equal(out.items[0].ends, '2026-10-25T20:50:00.000Z', 'an impossible runtime falls back to the series runtime');
+});
+
+test('worst case: the series cache keeps short text only, whatever the reply size', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: NOW });
+  const huge = 'x'.repeat(100000);
+  const e = ep('Huge', '2026-10-25T21:00:00Z', 1, 2, {
+    seriesId: 424242,
+    series: { title: huge, titleSlug: huge, runtime: 1e15, seriesType: { a: huge } },
+  });
+  const { ctx } = ctxFor({ sources: [{ app: 'sonarr', url: 'huge.lan', apiKey: 'k' }] }, sonarrServe([e]));
+  const [row] = (await data(ctx)).items;
+  assert.equal(row.title.length, 300);
+  assert.ok(row.link.length < 400);
+  assert.equal(row.ends, '2026-10-25T22:00:00.000Z');
 });
