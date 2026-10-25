@@ -92,22 +92,29 @@ async function resolveHost(host, ms) {
   return (await resolveAll(host, ms))[0];
 }
 
+/** A `lookup` option for http.request that answers from `found` and never asks DNS.
+    @param {Address[] | Error} found */
+function lookupFrom(found) {
+  return (host, options, callback) => {
+    const cb = typeof options === 'function' ? options : callback;
+    const o = typeof options === 'object' && options ? options : {};
+    if (found instanceof Error) return cb(found);
+    const wanted = o.family === 4 || o.family === 6 ? found.filter(a => a.family === o.family) : found;
+    if (!wanted.length) return cb(failed('ENOTFOUND', host));
+    if (o.all) return cb(null, wanted);
+    cb(null, wanted[0].address, wanted[0].family);
+  };
+}
+
 /** A `lookup` option for http.request, bounded by `ms`.
     @param {number} ms */
 function lookupWithin(ms) {
   return (host, options, callback) => {
-    const cb = typeof options === 'function' ? options : callback;
-    const o = typeof options === 'object' && options ? options : {};
     resolveAll(host, ms).then(
-      list => {
-        const wanted = o.family === 4 || o.family === 6 ? list.filter(a => a.family === o.family) : list;
-        if (!wanted.length) return cb(failed('ENOTFOUND', host));
-        if (o.all) return cb(null, wanted);
-        cb(null, wanted[0].address, wanted[0].family);
-      },
-      e => cb(e),
+      list => lookupFrom(list)(host, options, callback),
+      e => lookupFrom(e)(host, options, callback),
     );
   };
 }
 
-module.exports = { resolveAll, resolveHost, lookupWithin, fromHosts };
+module.exports = { resolveAll, resolveHost, lookupWithin, lookupFrom, fromHosts };

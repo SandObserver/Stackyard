@@ -701,3 +701,27 @@ test('a username and password are removed from imported addresses and noted', ()
   assert.ok(!JSON.stringify(out).includes('hunter2'));
   assert.equal(out.notes.filter(n => n.code === NOTE.LOGIN_REMOVED).length, 2);
 });
+
+test('a protocol-relative link loses its username and password too', () => {
+  const out = convertDockerLabels([
+    container('nas', { name: 'NAS', group: 'Storage', href: '//admin:hunter2@nas.lan:5000/' }),
+  ]);
+  assert.equal(apps(out)[0].href, '//nas.lan:5000/');
+  assert.ok(!JSON.stringify(out).includes('hunter2'));
+  assert.equal(out.notes.filter(n => n.code === NOTE.LOGIN_REMOVED).length, 1);
+});
+
+test('no preview line shows a username and password', () => {
+  const out = convertDockerLabels([
+    container('a', { name: 'A', group: 'G', href: 'https://admin:hunter2@{{HOMEPAGE_VAR_HOST}}/' }),
+    container('b', { name: 'B', group: 'G', href: 'http://b.lan/', siteMonitor: '//admin:hunter2@b.lan/' }),
+    container('c', { name: 'C', group: 'G', href: 'http://c.lan/', ping: 'http://admin:hunter2@c.lan' }),
+  ]);
+  assert.equal(out.skipped.length, 1);
+  assert.ok(!JSON.stringify(out).includes('hunter2'), JSON.stringify(out));
+});
+
+test('a link is never cut past a backslash', () => {
+  const out = convertDockerLabels([container('x', { name: 'X', group: 'G', href: 'http://evil.lan\\@nas.lan/' })]);
+  assert.equal(apps(out)[0].href, 'http://evil.lan\\@nas.lan/');
+});

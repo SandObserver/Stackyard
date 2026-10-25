@@ -4,10 +4,10 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=592c677b';
+} from '/js/admin-app-form.js?v=aa7daaca';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=99cc620c';
 import { recoveryShown } from '/js/config-recovery.js?v=85138697';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=122e7499';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=6479edae';
 import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=b3befae4';
 import {
   afterImport,
@@ -47,7 +47,7 @@ import {
   withheldText,
 } from '/js/admin-shared.js?v=3e9cb9c8';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=1a2d4a3a';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=b45c44b7';
 import { initFluidHover } from '/js/fluid-hover.js?v=8b4aadd4';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=75a71ab4';
@@ -66,8 +66,9 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=c766baa0';
+} from '/js/import-foreign.js?v=961efd4d';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
+import { clampName } from '/js/limits.js?v=ea61a441';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6b0320bd';
 import {
   THEME_KEY,
@@ -591,13 +592,14 @@ function openFolderPicker(appId, targetFolderId = null) {
         cancelLabel: t('common.cancel'),
       });
       if (!name) return;
+      const label = clampName(name);
       const fid = newItemId(
-        name,
+        label,
         'folder',
         state.items.map(i => i.id),
       );
       const before = snapshotItems(state.items);
-      state.items.push({ id: fid, type: 'folder', label: name, children: [appId] });
+      state.items.push({ id: fid, type: 'folder', label, children: [appId] });
       state.items.forEach(f => {
         if (f.type === 'folder' && f.id !== fid) f.children = (f.children || []).filter(id => id !== appId);
       });
@@ -623,7 +625,7 @@ async function doSave(orig) {
     /** @type {Record<string, any>} */
     let item;
     if (state.ctype === 'widget') {
-      const wlabel = state._wlabel.trim() || state._widgetReg?.[state._wtype]?.label || t('type.widget');
+      const wlabel = clampName(state._wlabel.trim() || state._widgetReg?.[state._wtype]?.label || t('type.widget'));
       if (state._autoForm && state._autoFormType === state._wtype && state._widgetReg[state._wtype]) {
         const missing = state._autoForm.validate();
         if (missing.length) {
@@ -677,7 +679,7 @@ async function doSave(orig) {
       if (shown) delete item.hidden;
       else item.hidden = true;
     } else if (state.ctype === 'folder') {
-      const label = inp('f-fname')?.value?.trim();
+      const label = clampName(inp('f-fname')?.value?.trim() || '');
       if (!label) {
         toast(t('toast.nameRequired'), 'err');
         return;
@@ -702,7 +704,7 @@ async function doSave(orig) {
       const isPve = inp('hc-type-pve')?.checked;
       captureActLabels();
       const v = {
-        label: inp('f-lbl')?.value?.trim(),
+        label: clampName(inp('f-lbl')?.value?.trim() || ''),
         href: inp('f-href')?.value?.trim(),
         hcEn: inp('hc-en')?.checked,
         hcCon: isPing || isPve ? '' : inp('hc-con')?.value?.trim() || '',
@@ -1312,9 +1314,10 @@ el('imp-foreign').onchange = async e => {
   input.value = '';
 };
 
+let dockerImporting = false;
 el('btn-imp-docker').onclick = async () => {
-  const btn = /** @type {HTMLButtonElement} */ (el('btn-imp-docker'));
-  btn.disabled = true;
+  if (dockerImporting) return;
+  dockerImporting = true;
   try {
     const r = await apiGet('/api/docker/labels');
     let out;
@@ -1328,7 +1331,7 @@ el('btn-imp-docker').onclick = async () => {
   } catch (err) {
     toast(t('toast.importFailed', { err: errorText(err) }), 'err');
   }
-  btn.disabled = false;
+  dockerImporting = false;
 };
 
 /** @param {any[]} items @param {any[]} skipped @param {any[]} notes @param {string} nothingKey */

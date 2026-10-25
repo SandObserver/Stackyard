@@ -586,7 +586,7 @@ const PING_TIMED_OUT = Object.freeze({
   code: 'timeout.no-answer',
 });
 
-function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
+function pingUrl(raw, ms = PING_MS, skipTls, pinIp, lookup) {
   if (IS_DEMO) {
     return Promise.resolve({
       ok: false,
@@ -615,7 +615,7 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp) {
       port,
       path: u.pathname || '/',
       timeout: ms,
-      lookup: resolver.lookupWithin(ms),
+      lookup: lookup || resolver.lookupWithin(ms),
       rejectUnauthorized: !skip,
     };
     if (pin) {
@@ -734,15 +734,16 @@ async function pingUnchecked(url, ms, skipTls) {
   if (net.isIP(host)) return isLinkLocal(host) ? { ...PING_LINK_LOCAL } : pingUrl(target, ms, skipTls);
   const budget = ms || PING_MS;
   const started = Date.now();
-  let address;
+  let found;
   try {
-    ({ address } = await lookupWithin(host, budget));
+    found = await resolver.resolveAll(host, budget);
   } catch (e) {
     if (e instanceof Error && e.message === 'Timed out') return { ...PING_TIMED_OUT };
-    return pingUrl(target, Math.max(1, budget - (Date.now() - started)), skipTls);
+    found = e instanceof Error ? e : new Error(String(e));
   }
-  if (isLinkLocal(address)) return { ...PING_LINK_LOCAL };
-  return pingUrl(target, Math.max(1, budget - (Date.now() - started)), skipTls, address);
+  if (Array.isArray(found) && found.some(a => isLinkLocal(a.address))) return { ...PING_LINK_LOCAL };
+  /* Connect only to the addresses checked above. A second lookup is never checked. */
+  return pingUrl(target, Math.max(1, budget - (Date.now() - started)), skipTls, null, resolver.lookupFrom(found));
 }
 
 async function pingChecked(url, ms, skipTls) {

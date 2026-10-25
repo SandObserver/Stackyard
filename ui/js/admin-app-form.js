@@ -9,7 +9,7 @@ import {
   throughServer,
 } from '/js/icons.js?v=5ac01d72';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { DOCK_MAX, NAME_MAX } from '/js/limits.js?v=ea61a441';
+import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import {
   isDockBlocked,
@@ -58,7 +58,7 @@ export function buildFolderForm(body, item) {
       <div class="row ie-row" id="ie-fname">
         <span class="rl">${t('folder.name')}</span>
         <span class="rv${item?.label ? '' : ' is-ph'}">${item?.label || t('folder.namePh')}</span>
-        <input id="f-fname" type="text" value="${item?.label || ''}" maxlength="${NAME_MAX}" class="d-none">
+        <input id="f-fname" type="text" value="${item?.label || ''}" class="d-none">
         <button class="pe" type="button">${raw(PE_SVG)}</button>
       </div>
       <div class="row" id="folder-apps-row">
@@ -248,8 +248,6 @@ export function buildAppForm(body, item) {
     <p class="grp-tip">${t('app.selfSignedTip')}</p>`,
   );
 
-  const nameInput = inpById('f-lbl');
-  if (nameInput) nameInput.maxLength = NAME_MAX;
   initInlineEdit('ie-name', 'f-lbl', {
     placeholder: t('app.namePh'),
     onCommit() {

@@ -17,9 +17,31 @@ test('a link-local address is never pinged', async () => {
 });
 
 test('a name that resolves to a link-local address is never pinged', async t => {
-  t.mock.method(resolver, 'resolveHost', async () => ({ address: '169.254.169.254', family: 4 }));
+  t.mock.method(resolver, 'resolveAll', async () => [{ address: '169.254.169.254', family: 4 }]);
   const r = await pingUnchecked('http://metadata.google.internal/', 1000);
   assert.equal(r.code, 'blocked.link-local');
+});
+
+test('a name with one link-local address among others is never pinged', async t => {
+  t.mock.method(resolver, 'resolveAll', async () => [
+    { address: '192.168.1.10', family: 4 },
+    { address: 'fe80::1', family: 6 },
+  ]);
+  const r = await pingUnchecked('http://nas.example/', 1000);
+  assert.equal(r.code, 'blocked.link-local');
+});
+
+test('a failed lookup is never retried with an unchecked one', async t => {
+  const answers = [
+    () => Promise.reject(Object.assign(new Error('EAI_AGAIN rebind.example'), { code: 'EAI_AGAIN' })),
+    async () => [{ address: '169.254.169.254', family: 4 }],
+  ];
+  const lookup = t.mock.method(resolver, 'resolveAll', () => answers.shift()());
+  const resolveHost = t.mock.method(resolver, 'resolveHost', async () => ({ address: '169.254.169.254', family: 4 }));
+  const r = await pingUnchecked('http://rebind.example/', 1000);
+  assert.equal(r.code, 'network.not-found');
+  assert.equal(lookup.mock.callCount(), 1);
+  assert.equal(resolveHost.mock.callCount(), 0);
 });
 
 test('a private address is still pinged', async () => {
@@ -36,9 +58,24 @@ test('a private address is still pinged', async () => {
 test('a name that resolves to a private address is pinged at that address', async t => {
   const server = http.createServer((_, res) => res.end('ok'));
   await new Promise(r => server.listen(0, '127.0.0.1', r));
-  t.mock.method(resolver, 'resolveHost', async () => ({ address: '127.0.0.1', family: 4 }));
+  t.mock.method(resolver, 'resolveAll', async () => [{ address: '127.0.0.1', family: 4 }]);
   try {
     const r = await pingUnchecked(`http://nas.example:${server.address().port}/`, 2000);
+    assert.equal(r.ok, true);
+  } finally {
+    server.close();
+  }
+});
+
+test('a name is pinged at its next address when the first does not answer', async t => {
+  const server = http.createServer((_, res) => res.end('ok'));
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  t.mock.method(resolver, 'resolveAll', async () => [
+    { address: '127.0.0.2', family: 4 },
+    { address: '127.0.0.1', family: 4 },
+  ]);
+  try {
+    const r = await pingUnchecked(`http://nas.example:${server.address().port}/`, 3000);
     assert.equal(r.ok, true);
   } finally {
     server.close();

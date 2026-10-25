@@ -418,3 +418,24 @@ test('the menu stays put when the version arrives', async ({ page }) => {
   await expect(page.locator('#sidebar-version')).not.toBeEmpty();
   expect(await first.boundingBox()).toEqual(before);
 });
+
+test('a long name is cut to 64 characters on save, emoji counted as one each', async ({ page, request }) => {
+  await openDashboardList(page);
+  await page.locator('#btn-add').click();
+  await page.locator('#ie-name .rv').click();
+  await page.locator('#f-lbl').waitFor({ state: 'visible' });
+  await page.keyboard.type('\u{1F3AC}'.repeat(40));
+  await page.locator('#f-lbl').press('Enter');
+  await setInlineRow(page, 'ie-url', 'f-href', 'http://film.invalid');
+  await saveEditor(page);
+  const film = (await readConfig(request)).items.find(i => i.href === 'http://film.invalid');
+  expect(film.label).toBe('\u{1F3AC}'.repeat(40));
+
+  await page.locator('#btn-add').click();
+  await setInlineRow(page, 'ie-name', 'f-lbl', 'N'.repeat(70));
+  await setInlineRow(page, 'ie-url', 'f-href', 'http://long.invalid');
+  await saveEditor(page);
+  await expect.poll(() => rowNames(page)).toContain('N'.repeat(64));
+  const long = (await readConfig(request)).items.find(i => i.href === 'http://long.invalid');
+  expect(long.label).toBe('N'.repeat(64));
+});

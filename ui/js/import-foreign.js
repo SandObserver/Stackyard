@@ -69,19 +69,17 @@ function isAbsoluteLink(href) {
 /** @param {string} href @returns {string} `href` with http:// added when it is a bare host:port */
 const withScheme = href => (/^[a-z0-9.-]+:\d{1,5}(?:[/?#]|$)/i.test(href) ? `http://${href}` : href);
 
+/* Stop at a backslash. Browsers end the host there, so removing past it changes
+   where the link goes. */
+const LOGIN = '((?:[a-z][a-z0-9+.-]*:)?//)[^\\s/?#\\\\]*@';
+const LOGIN_AT_START = new RegExp(`^${LOGIN}`, 'i');
+const LOGIN_ANYWHERE = new RegExp(LOGIN, 'gi');
+
 /** @param {string} href @returns {string} */
-function withoutLogin(href) {
-  let u;
-  try {
-    u = new URL(href);
-  } catch {
-    return href;
-  }
-  if (!u.username && !u.password) return href;
-  u.username = '';
-  u.password = '';
-  return u.href;
-}
+const withoutLogin = href => href.replace(LOGIN_AT_START, '$1');
+
+/** @param {string} s @returns {string} */
+const withoutLoginInText = s => s.replace(LOGIN_ANYWHERE, '$1');
 
 /* A value Homepage or Dashy resolves from its own environment. */
 const hasPlaceholder = s => /\{\{[^}]*\}\}|\$\{[^}]*\}/.test(s);
@@ -184,11 +182,13 @@ function collector(takenIds) {
     /** @type {Array<{ code: string, name: string, group: string, detail?: string }>} */ notes: [],
     /** @param {string} reason @param {string} name @param {string} group @param {string} [detail] */
     skip(reason, name, group, detail) {
-      this.skipped.push(detail ? { reason, name, group, detail } : { reason, name, group });
+      name = withoutLoginInText(name);
+      this.skipped.push(detail ? { reason, name, group, detail: withoutLoginInText(detail) } : { reason, name, group });
     },
     /** @param {string} code @param {string} name @param {string} group @param {string} [detail] */
     note(code, name, group, detail) {
-      this.notes.push(detail ? { code, name, group, detail } : { code, name, group });
+      name = withoutLoginInText(name);
+      this.notes.push(detail ? { code, name, group, detail: withoutLoginInText(detail) } : { code, name, group });
     },
   };
 }
@@ -202,7 +202,7 @@ function addApp(col, group, { label: fullLabel, href: raw, iconUrl, container, p
   const label = clampName(fullLabel);
   const withHttp = withScheme(raw);
   if (!label) {
-    col.skip(SKIP.NO_LABEL, withoutLogin(withHttp) || '', group);
+    col.skip(SKIP.NO_LABEL, withHttp || '', group);
     return null;
   }
   if (!withHttp) {
@@ -219,13 +219,13 @@ function addApp(col, group, { label: fullLabel, href: raw, iconUrl, container, p
   }
   /* The server refuses the whole save over one unsafe link. */
   if (!isSafeLinkUrl(withHttp)) {
-    col.skip(SKIP.UNSAFE_HREF, label, group, withoutLogin(withHttp));
+    col.skip(SKIP.UNSAFE_HREF, label, group, withHttp);
     return null;
   }
   const href = withoutLogin(withHttp);
   let pingUrl = withScheme(rawPing);
   if (pingUrl && (hasPlaceholder(pingUrl) || !/^https?:\/\//i.test(pingUrl))) {
-    col.note(NOTE.HEALTH_URL_DROPPED, label, group, withoutLogin(rawPing));
+    col.note(NOTE.HEALTH_URL_DROPPED, label, group, rawPing);
     pingUrl = '';
   }
   const pingBare = withoutLogin(pingUrl);
@@ -252,7 +252,7 @@ function addApp(col, group, { label: fullLabel, href: raw, iconUrl, container, p
   }
   col.taken.add(built.item.id);
   col.items.push(built.item);
-  if (withHttp !== raw) col.note(NOTE.SCHEME_ADDED, label, group, withoutLogin(raw));
+  if (withHttp !== raw) col.note(NOTE.SCHEME_ADDED, label, group, raw);
   if (href !== withHttp) col.note(NOTE.LOGIN_REMOVED, label, group, href);
   if (pingBare !== pingUrl) col.note(NOTE.LOGIN_REMOVED, label, group, pingBare);
   if (label !== fullLabel) col.note(NOTE.NAME_SHORTENED, label, group);
