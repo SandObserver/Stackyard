@@ -245,3 +245,37 @@ test('the identity pattern matches the identity the release signs with', () => {
     assert.match(identity, new RegExp(pattern), `no signature can satisfy ${pattern}`);
   }
 });
+
+const vexSteps = steps.filter(s => /^Attach the VEX statements to /.test(s.name || ''));
+
+test('every published platform gets the VEX statements, without touching the image', () => {
+  assert.deepEqual(vexSteps.map(s => s.with.platform).sort(), [...publishedPlatforms].sort());
+  for (const s of vexSteps) {
+    assert.ok(indexOf('Prepare the VEX statements') < indexOf(s.name), `${s.name}: nothing to attach yet`);
+    assert.ok(indexOf('Build and push') < indexOf(s.name), `${s.name}: the image is not pushed yet`);
+    assert.equal(s.with.command, 'attestation-add');
+    assert.equal(s.with.referrer, true, 'attaching into the index changes the signed digest');
+    assert.match(s.with.image, /@\$\{\{ steps\.build\.outputs\.digest \}\}$/, `${s.name} should use the build digest`);
+    assert.equal(s.if, "steps.registries.outputs.dockerhub == 'true'");
+    assert.equal(s['continue-on-error'], true, 'a Scout outage must not fail a published release');
+  }
+});
+
+test('the VEX document is one Docker Scout accepts', () => {
+  const vex = JSON.parse(fs.readFileSync(path.join(root, '.github/vex/stackyard.vex.json'), 'utf8'));
+  assert.equal(vex['@context'], 'https://openvex.dev/ns/v0.2.0');
+  assert.ok(vex.author, 'Scout rejects a document without an author');
+  assert.ok(vex.statements.length > 0);
+  const justifications = [
+    'component_not_present',
+    'vulnerable_code_not_present',
+    'vulnerable_code_not_in_execute_path',
+    'vulnerable_code_cannot_be_controlled_by_adversary',
+    'inline_mitigations_already_exist',
+  ];
+  for (const s of vex.statements) {
+    assert.match(s.vulnerability.name, /^CVE-\d{4}-\d+$/);
+    assert.equal(s.status, 'not_affected', 'Scout suppresses nothing for any other status');
+    assert.ok(justifications.includes(s.justification), `${s.vulnerability.name}: ${s.justification}`);
+  }
+});

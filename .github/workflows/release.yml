@@ -229,6 +229,52 @@ jobs:
           VERSION: ${{ steps.meta.outputs.version }}
           DIGEST: ${{ steps.build.outputs.digest }}
 
+      # Every statement must hold for the image built here. A false one hides a
+      # real vulnerability from users.
+      - name: Prepare the VEX statements
+        if: steps.registries.outputs.dockerhub == 'true'
+        run: |
+          jq --arg product "pkg:docker/${NAMESPACE}/stackyard@${VERSION}" \
+            '.statements[].products = [{"@id": $product}]' \
+            .github/vex/stackyard.vex.json > "$RUNNER_TEMP/stackyard.vex.json"
+        env:
+          NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE || vars.DOCKERHUB_USERNAME }}
+          VERSION: ${{ steps.meta.outputs.version }}
+
+      # Keep referrer on. Attaching into the index changes the image digest, and
+      # the signature no longer matches it.
+      - name: Attach the VEX statements to amd64
+        if: steps.registries.outputs.dockerhub == 'true'
+        continue-on-error: true
+        uses: docker/scout-action@221e7f4860634eeb1579e3bd7ca232e577bd1864 # v1.26.0
+        with:
+          command: attestation-add
+          image: registry://docker.io/${{ vars.DOCKERHUB_NAMESPACE || vars.DOCKERHUB_USERNAME }}/stackyard@${{ steps.build.outputs.digest }}
+          platform: linux/amd64
+          file: ${{ runner.temp }}/stackyard.vex.json
+          predicate-type: https://openvex.dev/ns/v0.2.0
+          referrer: true
+          dockerhub-user: ${{ vars.DOCKERHUB_USERNAME }}
+          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry-write-user: ${{ vars.DOCKERHUB_USERNAME }}
+          registry-write-password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Attach the VEX statements to arm64
+        if: steps.registries.outputs.dockerhub == 'true'
+        continue-on-error: true
+        uses: docker/scout-action@221e7f4860634eeb1579e3bd7ca232e577bd1864 # v1.26.0
+        with:
+          command: attestation-add
+          image: registry://docker.io/${{ vars.DOCKERHUB_NAMESPACE || vars.DOCKERHUB_USERNAME }}/stackyard@${{ steps.build.outputs.digest }}
+          platform: linux/arm64
+          file: ${{ runner.temp }}/stackyard.vex.json
+          predicate-type: https://openvex.dev/ns/v0.2.0
+          referrer: true
+          dockerhub-user: ${{ vars.DOCKERHUB_USERNAME }}
+          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry-write-user: ${{ vars.DOCKERHUB_USERNAME }}
+          registry-write-password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       # After the push, and stable tags only. A pre-release must not rewrite the
       # page describing `latest`.
       - name: Generate the Docker Hub description
