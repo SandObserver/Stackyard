@@ -42,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Downloads widget for qBittorrent, Transmission, Deluge, SABnzbd and NZBGet.
 
+- Up Next widget for Sonarr, Radarr and Lidarr.
+
 ### Changed
 
 - Long weather condition labels shrink to fit before they are cut off.
@@ -74,6 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Widgets no longer show a strip of card at their sides when the card is wider
   than the widget's design.
+
+- Widget loading placeholders show in high contrast mode.
 
 ### Security
 
