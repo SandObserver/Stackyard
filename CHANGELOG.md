@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Read pull requests and contributions from Gitea and Forgejo, and merge
   requests from GitLab, in the Git widget.
 
+- Downloads widget for qBittorrent, Transmission, Deluge, SABnzbd and NZBGet.
+
 ### Changed
 
 - Long weather condition labels shrink to fit before they are cut off.
@@ -69,6 +71,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Chinese Weather widget labels drizzle as 毛毛雨 instead of light rain.
 
 - Large numbers in GitHub widgets fit again after the dashboard is resized.
+
+- Widgets no longer show a strip of card at their sides when the card is wider
+  than the widget's design.
 
 ### Security
 
