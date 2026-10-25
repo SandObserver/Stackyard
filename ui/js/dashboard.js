@@ -29,8 +29,8 @@ import {
   teardownWidgets,
   titleWhenTruncated,
 } from '/js/utils.js?v=cfee1271';
-import { initFluidHover } from '/js/fluid-hover.js?v=cb886e86';
-import { initSpotlight } from '/js/spotlight.js?v=e6c4a09a';
+import { initFluidHover } from '/js/fluid-hover.js?v=d9fdf901';
+import { initSpotlight } from '/js/spotlight.js?v=62f5af44';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=ed7c5565';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=85138697';

@@ -1,7 +1,7 @@
 /* A single highlight per list, moved instead of redrawn. It follows the
    pointer, and falls back to the keyboard cursor when the pointer leaves. */
 
-import { ensurePill, pillOf, placePill, restPill } from '/js/moving-pill.js?v=4e961dec';
+import { ensurePill, pillOf, placePill, restPill } from '/js/moving-pill.js?v=4ef92618';
 
 const FINE = '(hover: hover) and (pointer: fine)';
 
@@ -105,7 +105,8 @@ export function fluidHoverClear(container) {
   refresh(container);
 }
 
-export function initFluidHover(root = document) {
+/** @param {Document} [root] @param {{ container: string, item: string }[]} [lists] */
+export function initFluidHover(root = document, lists = LISTS) {
   if (!fluidHoverSupported()) return;
   root.addEventListener(
     'pointerover',
@@ -113,7 +114,7 @@ export function initFluidHover(root = document) {
       if (e.pointerType && e.pointerType !== 'mouse') return;
       const from = /** @type {Element} */ (e.target);
       if (!from || !from.closest) return;
-      for (const cfg of LISTS) {
+      for (const cfg of lists) {
         const item = from.closest(cfg.item);
         if (!item) continue;
         const container = item.closest(cfg.container);

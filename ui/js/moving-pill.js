@@ -38,20 +38,24 @@ export function placePill(container, pill, item) {
   const cr = container.getBoundingClientRect();
   const ir = item.getBoundingClientRect();
   const cs = getComputedStyle(item);
+  /* Rects are in screen pixels and styles in the page's own. A zoomed widget
+     page differs by its zoom, and the pill comes out that much too large. */
+  const w = /** @type {HTMLElement} */ (container).offsetWidth;
+  const z = w ? cr.width / w : 1;
   pill.style.borderRadius = [
     cs.borderTopLeftRadius,
     cs.borderTopRightRadius,
     cs.borderBottomRightRadius,
     cs.borderBottomLeftRadius,
   ].join(' ');
-  pill.style.width = ir.width + 'px';
-  pill.style.height = ir.height + 'px';
+  pill.style.width = ir.width / z + 'px';
+  pill.style.height = ir.height / z + 'px';
   /* The pill is anchored at the inline start, so right-to-left measures from
      the right edge and travels the other way. None of these lists scroll
      sideways, so the rect difference is the whole inline offset. */
   const rtl = cs.direction === 'rtl';
-  const inline = (rtl ? cr.right - ir.right : ir.left - cr.left) - container.clientLeft;
-  const block = ir.top - cr.top - container.clientTop + container.scrollTop;
+  const inline = (rtl ? cr.right - ir.right : ir.left - cr.left) / z - container.clientLeft;
+  const block = (ir.top - cr.top) / z - container.clientTop + container.scrollTop;
   pill.style.transform = 'translate3d(' + (rtl ? -inline : inline) + 'px,' + block + 'px,0)';
   if (!pill.classList.contains('on')) {
     /* `.on` carries the transform transition, so it has to land in a later

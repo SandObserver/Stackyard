@@ -12,11 +12,16 @@
   .card{position:relative;width:100%;height:100%;padding:16px;border-radius:inherit;outline:none}
   .card.clickable{cursor:pointer}
   .card.clickable:focus-visible{box-shadow:inset 0 0 0 2px #00D2E0}
-  .rows{list-style:none;height:100%;display:grid;grid-template-rows:repeat(var(--rows,3),1fr);min-width:0}
+  .rows{position:relative;list-style:none;height:100%;display:grid;grid-template-rows:repeat(var(--rows,3),1fr);min-width:0}
   .card.capped .rows>li:last-child{visibility:hidden}
   .rows>li{display:flex;min-width:0}
-  .row{position:relative;flex:1;display:flex;align-items:center;gap:9px;min-width:0;border-radius:10px;outline:none}
+  .row{position:relative;flex:1;display:flex;align-items:center;gap:9px;min-width:0;margin-inline:-8px;padding-inline:8px;border-radius:12px;outline:none;transition:background .12s}
   .row.clickable{cursor:pointer}
+  .row.clickable:active{background:rgba(255,255,255,.08)}
+  .mp{position:absolute;top:0;inset-inline-start:0;pointer-events:none;opacity:0;transition:opacity .14s ease}
+  .mp.on{opacity:1;transition:opacity .14s ease,transform .19s cubic-bezier(.22,1,.36,1),width .19s cubic-bezier(.22,1,.36,1),height .19s cubic-bezier(.22,1,.36,1)}
+  .fh-hl{background:rgba(255,255,255,.08)}
+  @media (prefers-reduced-motion: reduce){.mp,.mp.on{transition:none}}
   .row.clickable:focus-visible{outline:2px solid #00D2E0;outline-offset:-1px}
   .gt{flex:none;width:var(--gt,44px);text-align:end;line-height:1.2;font-variant-numeric:tabular-nums;white-space:nowrap}
   .gt b{display:block;font-size:13px;font-weight:600}
@@ -43,15 +48,20 @@
   html[data-theme="light"] .film .bar{background:#B25000}
   html[data-theme="light"] .album .bar{background:#248A3D}
   html[data-theme="light"] .row.clickable:focus-visible{outline-color:#0088FF}
+  html[data-theme="light"] .row.clickable:active{background:rgba(60,60,67,.08)}
+  html[data-theme="light"] .fh-hl{background:rgba(60,60,67,.07)}
   html[data-theme="light"] .card.clickable:focus-visible{box-shadow:inset 0 0 0 2px #0088FF}
   @media (prefers-contrast: more) {
     .gt small,.sub{color:#EBEBF5}
     html[data-theme="light"] .gt small,html[data-theme="light"] .sub{color:#3C3C43}
+    .fh-hl{background:rgba(255,255,255,.16)}
+    html[data-theme="light"] .fh-hl{background:rgba(60,60,67,.14)}
   }
   @media (forced-colors: active) {
     .bar{forced-color-adjust:none;background:CanvasText!important}
     .row.today .gt b{color:Highlight}
     .row.clickable:focus-visible{outline-color:Highlight}
+    .fh-hl{outline:1px solid Highlight;outline-offset:-1px}
     .card.clickable:focus-visible{box-shadow:none;outline:2px solid Highlight;outline-offset:-3px}
   }
 </style>
@@ -63,6 +73,7 @@
 </div>
 <script type="module">
   import { poll, linkTo, loadStrings, wt, errorState, placeholder, localiseDigits, cssZoom } from '/js/widget-toolbox.js?v=c346a35b';
+  import { initFluidHover } from '/js/fluid-hover.js?v=d9fdf901';
   import { visibleItems, dayOffset, kindClass } from './upnext-logic.js';
 
   await loadStrings();
@@ -77,6 +88,7 @@
   const count = ROWS[size];
   const withName = size !== 'small';
   rowsEl.style.setProperty('--rows', String(count));
+  initFluidHover(document, [{ container: '#rows', item: '.row.clickable' }]);
 
   const lang = params.get('lang') || 'en';
   const hourCycle = (() => { try { return new Intl.DateTimeFormat(navigator.language || 'en', { hour: 'numeric' }).resolvedOptions().hourCycle; } catch { return undefined; } })();
