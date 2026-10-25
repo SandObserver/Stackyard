@@ -42,6 +42,7 @@ jobs:
     outputs:
       digest: ${{ steps.build.outputs.digest }}
       version: ${{ steps.meta.outputs.version }}
+      dockerhub: ${{ steps.registries.outputs.dockerhub }}
     permissions:
       contents: read
       packages: write
@@ -229,52 +230,6 @@ jobs:
           VERSION: ${{ steps.meta.outputs.version }}
           DIGEST: ${{ steps.build.outputs.digest }}
 
-      # Every statement must hold for the image built here. A false one hides a
-      # real vulnerability from users.
-      - name: Prepare the VEX statements
-        if: steps.registries.outputs.dockerhub == 'true'
-        run: |
-          jq --arg product "pkg:docker/${NAMESPACE}/stackyard@${VERSION}" \
-            '.statements[].products = [{"@id": $product}]' \
-            .github/vex/stackyard.vex.json > "$RUNNER_TEMP/stackyard.vex.json"
-        env:
-          NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE || vars.DOCKERHUB_USERNAME }}
-          VERSION: ${{ steps.meta.outputs.version }}
-
-      # Keep referrer on. Attaching into the index changes the image digest, and
-      # the signature no longer matches it.
-      - name: Attach the VEX statements to amd64
-        if: steps.registries.outputs.dockerhub == 'true'
-        continue-on-error: true
-        uses: docker/scout-action@221e7f4860634eeb1579e3bd7ca232e577bd1864 # v1.26.0
-        with:
-          command: attestation-add
-          image: registry://docker.io/${{ vars.DOCKERHUB_NAMESPACE || vars.DOCKERHUB_USERNAME }}/stackyard@${{ steps.build.outputs.digest }}
-          platform: linux/amd64
-          file: ${{ runner.temp }}/stackyard.vex.json
-          predicate-type: https://openvex.dev/ns/v0.2.0
-          referrer: true
-          dockerhub-user: ${{ vars.DOCKERHUB_USERNAME }}
-          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
-          registry-write-user: ${{ vars.DOCKERHUB_USERNAME }}
-          registry-write-password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Attach the VEX statements to arm64
-        if: steps.registries.outputs.dockerhub == 'true'
-        continue-on-error: true
-        uses: docker/scout-action@221e7f4860634eeb1579e3bd7ca232e577bd1864 # v1.26.0
-        with:
-          command: attestation-add
-          image: registry://docker.io/${{ vars.DOCKERHUB_NAMESPACE || vars.DOCKERHUB_USERNAME }}/stackyard@${{ steps.build.outputs.digest }}
-          platform: linux/arm64
-          file: ${{ runner.temp }}/stackyard.vex.json
-          predicate-type: https://openvex.dev/ns/v0.2.0
-          referrer: true
-          dockerhub-user: ${{ vars.DOCKERHUB_USERNAME }}
-          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
-          registry-write-user: ${{ vars.DOCKERHUB_USERNAME }}
-          registry-write-password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       # After the push, and stable tags only. A pre-release must not rewrite the
       # page describing `latest`.
       - name: Generate the Docker Hub description
@@ -293,6 +248,84 @@ jobs:
           repository: ${{ vars.DOCKERHUB_NAMESPACE || vars.DOCKERHUB_USERNAME }}/stackyard
           readme-filepath: dockerhub-description.md
           short-description: A self-hosted homelab dashboard you actually want to look at.
+
+  # A failed or hung Scout call must not stop the jobs that describe the release.
+  vex:
+    needs: build-and-push
+    if: needs.build-and-push.outputs.dockerhub == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    permissions:
+      contents: read
+    env:
+      IMAGE: docker.io/${{ vars.DOCKERHUB_NAMESPACE || vars.DOCKERHUB_USERNAME }}/stackyard
+      DIGEST: ${{ needs.build-and-push.outputs.digest }}
+      VERSION: ${{ needs.build-and-push.outputs.version }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: docker.io
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Every statement must hold for the image it is attached to. A false one
+      # hides a real vulnerability from users. Keep the musl check.
+      - name: Prepare the VEX statements
+        run: |
+          for arch in amd64 arm64; do
+            digest=$(docker buildx imagetools inspect --raw "${IMAGE}@${DIGEST}" |
+              jq -r --arg a "$arch" '.manifests[] | select(.platform.os == "linux" and .platform.architecture == $a) | .digest')
+            [ -n "$digest" ] || { echo "no linux/$arch image in $DIGEST"; exit 1; }
+            cid=$(docker create --platform "linux/$arch" "${IMAGE}@${digest}")
+            musl=$(docker cp "$cid:/lib/apk/db/installed" - | tar -xO |
+              awk '/^P:/ { p = substr($0, 3) } /^V:/ && p == "musl" { print substr($0, 3) }')
+            docker rm "$cid" > /dev/null
+            if [ -z "$musl" ] || [ "$(printf '%s\n' "$MUSL_FIXED" "$musl" | sort -V | head -n 1)" != "$MUSL_FIXED" ]; then
+              echo "linux/$arch ships musl '${musl}', older than $MUSL_FIXED. Not attaching."
+              exit 1
+            fi
+            jq --arg id "https://github.com/SandObserver/Stackyard/releases/tag/${TAG}#vex-${arch}" \
+              --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              --arg product "pkg:docker/${IMAGE#docker.io/}@${VERSION}" \
+              --arg musl "$musl" --arg fixed "$MUSL_FIXED" \
+              '."@id" = $id | .timestamp = $now
+                | .statements[] |= (.products = [{"@id": $product}] | .timestamp = $now
+                  | .impact_statement = "This image ships musl \($musl). Alpine 3.24 ships the fix in musl \($fixed).")' \
+              .github/vex/stackyard.vex.json > "$RUNNER_TEMP/stackyard-$arch.vex.json"
+            echo "$digest" > "$RUNNER_TEMP/digest-$arch"
+          done
+        env:
+          MUSL_FIXED: 1.2.6-r3
+
+      # Keep --referrer. Attaching into the index changes the image digest, and
+      # the signature no longer matches it.
+      - name: Attach the VEX statements
+        run: |
+          for arch in amd64 arm64; do
+            docker run --rm --user "$(id -u):$(id -g)" \
+              -e HOME=/tmp -e DOCKER_SCOUT_NO_CACHE=true \
+              -e DOCKER_SCOUT_HUB_USER -e DOCKER_SCOUT_HUB_PASSWORD \
+              -e DOCKER_CONFIG=/docker-config -v "$HOME/.docker:/docker-config:ro" \
+              -v "$RUNNER_TEMP:/vex:ro" \
+              "$SCOUT_IMAGE" attestation add \
+              --file "/vex/stackyard-$arch.vex.json" \
+              --predicate-type https://openvex.dev/ns/v0.2.0 \
+              --referrer \
+              "registry://${IMAGE#docker.io/}@$(cat "$RUNNER_TEMP/digest-$arch")"
+          done
+        env:
+          # Pin by digest. This program holds the Docker Hub token.
+          SCOUT_IMAGE: docker.io/docker/scout-cli:1.26.0@sha256:ae97866ffbcc23a9bdb28beb3f11b46fa5f8b77380121f74b0eabfb637d63360
+          DOCKER_SCOUT_HUB_USER: ${{ vars.DOCKERHUB_USERNAME }}
+          DOCKER_SCOUT_HUB_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
 
   # The only gate that reads the published image. It cannot unpublish a bad one,
   # but it stops the release page and the downstream updates describing it.
