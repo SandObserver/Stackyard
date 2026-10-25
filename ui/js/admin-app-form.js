@@ -33,13 +33,13 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=1f6cf982';
-import { createListbox } from '/js/listbox.js?v=b4aef017';
+} from '/js/admin-shared.js?v=8fec4e2f';
+import { createListbox } from '/js/listbox.js?v=a1c5118c';
 import { MAX_LABELS } from '/js/badge-logic.js?v=85b1bc96';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=75b15192';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=8d54397d';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=a60b17ac';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=cb886e86';
-import { iconSvg } from '/js/icon-set.js?v=88ae97cc';
+import { iconSvg } from '/js/icon-set.js?v=26655aca';
 
 export function buildFolderForm(body, item) {
   const children = item?.children || [];
