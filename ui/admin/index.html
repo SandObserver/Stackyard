@@ -11,7 +11,7 @@
   <script src="/js/mobile-class.js?v=fe95da0d"></script>
   <script src="/js/admin-theme.js?v=66565254"></script>
   <link rel="stylesheet" href="/css/tokens.css?v=0f4ba0b8">
-  <link rel="stylesheet" href="/css/admin.css?v=a1bed03a">
+  <link rel="stylesheet" href="/css/admin.css?v=b6208027">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=53b91d5f">
   <link rel="stylesheet" href="/css/config-recovery.css?v=faa8f109">
 </head>
@@ -128,8 +128,9 @@
       <div class="grp">
         <div class="row"><span class="rl" data-i18n="general.importExport">Import / Export</span><div class="row-btns"><label class="btn bg sm cursor-ptr"><span data-i18n="common.import">Import</span><input type="file" id="imp" accept=".json" class="file-hidden" aria-label="Import configuration JSON" data-i18n-al="general.importJson"></label><button class="btn bg sm" id="btn-exp" type="button" data-i18n="common.export">Export</button></div></div>
         <div class="row"><span class="rl" data-i18n="general.importForeign">Import from another dashboard</span><div class="row-btns"><label class="btn bg sm cursor-ptr"><span data-i18n="common.chooseFiles">Choose files</span><input type="file" id="imp-foreign" accept=".yml,.yaml" multiple class="file-hidden" aria-label="Import Homepage or Dashy YAML config" data-i18n-al="general.importForeignFiles"></label></div></div>
+        <div class="row"><span class="rl" id="rl-imp-docker" data-i18n="general.importDocker">Import from Docker labels</span><div class="row-btns"><button class="btn bg sm" id="btn-imp-docker" type="button" aria-labelledby="rl-imp-docker" data-i18n="common.import">Import</button></div></div>
       </div>
-      <p class="grp-tip" data-i18n="general.importForeignTip">Reads gethomepage and Dashy YAML files. Links and folders are added to your dashboard; widgets from the other dashboard become plain links.</p>
+      <p class="grp-tip" data-i18n="general.importForeignTip">Reads gethomepage and Dashy YAML files, and gethomepage labels on your containers through the Docker Socket URL. Links and folders are added to your dashboard; widgets from the other dashboard become plain links.</p>
       <div class="signout-row"><button class="btn bd-btn d-none" id="sec-logout" type="button" data-i18n="general.signOut">Sign out</button></div>
     </section>
 
@@ -318,6 +319,6 @@
   </div></div>
 </div>
 
-<script type="module" src="/js/admin.js?v=8a8b8220"></script>
+<script type="module" src="/js/admin.js?v=a9ebdc25"></script>
 </body>
 </html>

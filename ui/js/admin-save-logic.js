@@ -11,6 +11,7 @@ export function cleanId(label, fallback = 'item') {
     String(label || '')
       .replace(/[^a-zA-Z0-9]/g, '_')
       .replace(/_+/g, '_')
+      .slice(0, 32)
       .replace(/^_|_$/g, '') || fallback
   );
 }

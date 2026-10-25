@@ -689,3 +689,8 @@ test('importCounts counts added, updated and deleted items', () => {
   ];
   assert.deepEqual(importCounts(live, file), { added: 1, updated: 1, deleted: 1 });
 });
+
+test('cleanId keeps at most 32 characters and no trailing separator', () => {
+  assert.equal(cleanId('N'.repeat(2000)).length, 32);
+  assert.equal(cleanId(`${'a'.repeat(31)} b`), 'a'.repeat(31));
+});

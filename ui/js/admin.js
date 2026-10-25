@@ -4,10 +4,10 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=6dfcf64d';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=9b2d4d17';
+} from '/js/admin-app-form.js?v=aa7daaca';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=99cc620c';
 import { recoveryShown } from '/js/config-recovery.js?v=85138697';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=9a75dcf8';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=6479edae';
 import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=b3befae4';
 import {
   afterImport,
@@ -21,7 +21,7 @@ import {
   serialWrites,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=32cb6aeb';
+} from '/js/admin-save-logic.js?v=b83791fb';
 import {
   loadSettings,
   savedWallpaperUrl,
@@ -31,7 +31,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=60c010a8';
+} from '/js/admin-settings.js?v=9f96f864';
 import {
   apiGet,
   apiPost,
@@ -45,9 +45,9 @@ import {
   setReauthHandler,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=8fec4e2f';
+} from '/js/admin-shared.js?v=3e9cb9c8';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=b0b45771';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=b45c44b7';
 import { initFluidHover } from '/js/fluid-hover.js?v=8b4aadd4';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=75a71ab4';
@@ -59,14 +59,16 @@ import { ensureSprite, iconSvg } from '/js/icon-set.js?v=26655aca';
 import {
   clearSkipTls,
   convert,
+  convertDockerLabels,
   detectSource,
   ImportTooLargeError,
   insecureApps,
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=3582433f';
+} from '/js/import-foreign.js?v=961efd4d';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
+import { clampName } from '/js/limits.js?v=ea61a441';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6b0320bd';
 import {
   THEME_KEY,
@@ -590,13 +592,14 @@ function openFolderPicker(appId, targetFolderId = null) {
         cancelLabel: t('common.cancel'),
       });
       if (!name) return;
+      const label = clampName(name);
       const fid = newItemId(
-        name,
+        label,
         'folder',
         state.items.map(i => i.id),
       );
       const before = snapshotItems(state.items);
-      state.items.push({ id: fid, type: 'folder', label: name, children: [appId] });
+      state.items.push({ id: fid, type: 'folder', label, children: [appId] });
       state.items.forEach(f => {
         if (f.type === 'folder' && f.id !== fid) f.children = (f.children || []).filter(id => id !== appId);
       });
@@ -622,7 +625,7 @@ async function doSave(orig) {
     /** @type {Record<string, any>} */
     let item;
     if (state.ctype === 'widget') {
-      const wlabel = state._wlabel.trim() || state._widgetReg?.[state._wtype]?.label || t('type.widget');
+      const wlabel = clampName(state._wlabel.trim() || state._widgetReg?.[state._wtype]?.label || t('type.widget'));
       if (state._autoForm && state._autoFormType === state._wtype && state._widgetReg[state._wtype]) {
         const missing = state._autoForm.validate();
         if (missing.length) {
@@ -676,7 +679,7 @@ async function doSave(orig) {
       if (shown) delete item.hidden;
       else item.hidden = true;
     } else if (state.ctype === 'folder') {
-      const label = inp('f-fname')?.value?.trim();
+      const label = clampName(inp('f-fname')?.value?.trim() || '');
       if (!label) {
         toast(t('toast.nameRequired'), 'err');
         return;
@@ -701,7 +704,7 @@ async function doSave(orig) {
       const isPve = inp('hc-type-pve')?.checked;
       captureActLabels();
       const v = {
-        label: inp('f-lbl')?.value?.trim(),
+        label: clampName(inp('f-lbl')?.value?.trim() || ''),
         href: inp('f-href')?.value?.trim(),
         hcEn: inp('hc-en')?.checked,
         hcCon: isPing || isPve ? '' : inp('hc-con')?.value?.trim() || '',
@@ -1223,6 +1226,7 @@ const SKIP_TEXT = {
   [SKIP.RELATIVE_HREF]: 'importForeign.skipRelativeHref',
   [SKIP.UNREADABLE]: 'importForeign.skipUnreadable',
   [SKIP.UNPARSABLE]: 'importForeign.skipUnparsable',
+  [SKIP.NO_NAME_OR_GROUP]: 'importForeign.skipNoNameOrGroup',
 };
 const NOTE_TEXT = {
   [NOTE.ICON_DROPPED]: 'importForeign.noteIcon',
@@ -1237,6 +1241,8 @@ const NOTE_TEXT = {
   [NOTE.PAGES_NOT_FOLLOWED]: 'importForeign.notePages',
   [NOTE.SCHEME_ADDED]: 'importForeign.noteSchemeAdded',
   [NOTE.HEALTH_URL_DROPPED]: 'importForeign.noteHealthUrl',
+  [NOTE.NAME_SHORTENED]: 'importForeign.noteNameShortened',
+  [NOTE.LOGIN_REMOVED]: 'importForeign.noteLoginRemoved',
 };
 
 /** One "Heading (n)" block followed by a line per entry.
@@ -1301,107 +1307,127 @@ el('imp-foreign').onchange = async e => {
       skipped.push(...parseErrorsAsSkipped(parseErrors, file.name), ...out.skipped);
       notes.push(...out.notes);
     }
-
-    const apps = items.filter(i => i.type === 'app').length;
-    const folders = items.length - apps;
-    if (!apps) {
-      toast(t('toast.importForeignNothing'), 'err');
-      input.value = '';
-      return;
-    }
-
-    const body = document.createElement('div');
-    const lead = document.createElement('p');
-    lead.className = 'dlg-lead';
-    lead.textContent = t('importForeign.lead');
-    body.appendChild(lead);
-    dlgSection(
-      body,
-      t('importForeign.willAdd'),
-      items
-        .filter(i => i.type === 'app')
-        .map(i => {
-          const ping = i.monitoring?.healthcheck?.pingUrl;
-          return {
-            name: i.label,
-            group: '',
-            why: ping ? `${i.href}  ${t('importForeign.monitors', { url: ping })}` : i.href,
-          };
-        }),
-    );
-    dlgSection(
-      body,
-      t('importForeign.willCreate'),
-      items
-        .filter(i => i.type === 'folder')
-        .map(i => ({
-          name: i.label,
-          group: '',
-          why: t('importForeign.appCount', { n: formatNumber(i.children.length) }),
-        })),
-    );
-    dlgSection(
-      body,
-      t('importForeign.changed'),
-      notes.map(n => ({ name: n.name, group: n.group, why: t(NOTE_TEXT[n.code], { detail: n.detail || '' }) })),
-    );
-    dlgSection(
-      body,
-      t('importForeign.notImported'),
-      skipped.map(s => ({ name: s.name, group: s.group, why: t(SKIP_TEXT[s.reason], { detail: s.detail || '' }) })),
-    );
-
-    /* Never take certificate skipping from the file on its say-so. It stays off
-       unless it is turned on here. */
-    const insecure = insecureApps(items);
-    /** @type {HTMLInputElement|null} */
-    let skipTlsChoice = null;
-    if (insecure.length) {
-      const heading = document.createElement('div');
-      heading.className = 'dlg-sec';
-      heading.textContent = `${t('app.allowSelfSigned')} (${formatNumber(insecure.length)})`;
-      const choice = document.createElement('label');
-      choice.className = 'dlg-choice';
-      skipTlsChoice = document.createElement('input');
-      skipTlsChoice.type = 'checkbox';
-      const why = document.createElement('span');
-      why.className = 'dlg-why';
-      why.textContent = t('app.selfSignedTip');
-      choice.append(skipTlsChoice, why);
-      const ul = document.createElement('ul');
-      ul.className = 'dlg-ul';
-      for (const item of insecure) {
-        const li = document.createElement('li');
-        li.className = 'dlg-li';
-        const nm = document.createElement('span');
-        setUserText(nm, item.label);
-        li.appendChild(nm);
-        ul.appendChild(li);
-      }
-      body.append(heading, choice, ul);
-    }
-
-    const ok = await confirmModal({
-      title: t('importForeign.title'),
-      body,
-      confirmLabel: t('common.import'),
-      cancelLabel: t('common.cancel'),
-      className: 'wide',
-    });
-    if (!ok) {
-      input.value = '';
-      return;
-    }
-    if (skipTlsChoice && !skipTlsChoice.checked) clearSkipTls(items);
-    /* Appended, never merged. An import must not rename, reorder or remove
-       anything already on the dashboard. */
-    await appendAndSave(items);
-    toast(t('toast.importForeignDone', { apps: formatNumber(apps), folders: formatNumber(folders) }));
+    await reviewImport(items, skipped, notes, 'toast.importForeignNothing');
   } catch (err) {
     toast(t('toast.importFailed', { err: errorText(err) }), 'err');
   }
   input.value = '';
 };
+
+let dockerImporting = false;
+el('btn-imp-docker').onclick = async () => {
+  if (dockerImporting) return;
+  dockerImporting = true;
+  try {
+    const r = await apiGet('/api/docker/labels');
+    let out;
+    try {
+      out = convertDockerLabels(r.containers, new Set(state.items.map(i => i.id)));
+    } catch (err) {
+      if (err instanceof ImportTooLargeError) throw new ShownError(t('toast.importDockerTooLarge'));
+      throw err;
+    }
+    await reviewImport(out.items, out.skipped, out.notes, 'toast.importDockerNothing');
+  } catch (err) {
+    toast(t('toast.importFailed', { err: errorText(err) }), 'err');
+  }
+  dockerImporting = false;
+};
+
+/** @param {any[]} items @param {any[]} skipped @param {any[]} notes @param {string} nothingKey */
+async function reviewImport(items, skipped, notes, nothingKey) {
+  const apps = items.filter(i => i.type === 'app').length;
+  const folders = items.length - apps;
+  if (!apps) {
+    toast(t(nothingKey), 'err');
+    return;
+  }
+
+  const body = document.createElement('div');
+  const lead = document.createElement('p');
+  lead.className = 'dlg-lead';
+  lead.textContent = t('importForeign.lead');
+  body.appendChild(lead);
+  dlgSection(
+    body,
+    t('importForeign.willAdd'),
+    items
+      .filter(i => i.type === 'app')
+      .map(i => {
+        const ping = i.monitoring?.healthcheck?.pingUrl;
+        return {
+          name: i.label,
+          group: '',
+          why: ping ? `${i.href}  ${t('importForeign.monitors', { url: ping })}` : i.href,
+        };
+      }),
+  );
+  dlgSection(
+    body,
+    t('importForeign.willCreate'),
+    items
+      .filter(i => i.type === 'folder')
+      .map(i => ({
+        name: i.label,
+        group: '',
+        why: t('importForeign.appCount', { n: formatNumber(i.children.length) }),
+      })),
+  );
+  dlgSection(
+    body,
+    t('importForeign.changed'),
+    notes.map(n => ({ name: n.name, group: n.group, why: t(NOTE_TEXT[n.code], { detail: n.detail || '' }) })),
+  );
+  dlgSection(
+    body,
+    t('importForeign.notImported'),
+    skipped.map(s => ({ name: s.name, group: s.group, why: t(SKIP_TEXT[s.reason], { detail: s.detail || '' }) })),
+  );
+
+  /* Never take certificate skipping from the file on its say-so. It stays off
+     unless it is turned on here. */
+  const insecure = insecureApps(items);
+  /** @type {HTMLInputElement|null} */
+  let skipTlsChoice = null;
+  if (insecure.length) {
+    const heading = document.createElement('div');
+    heading.className = 'dlg-sec';
+    heading.textContent = `${t('app.allowSelfSigned')} (${formatNumber(insecure.length)})`;
+    const choice = document.createElement('label');
+    choice.className = 'dlg-choice';
+    skipTlsChoice = document.createElement('input');
+    skipTlsChoice.type = 'checkbox';
+    const why = document.createElement('span');
+    why.className = 'dlg-why';
+    why.textContent = t('app.selfSignedTip');
+    choice.append(skipTlsChoice, why);
+    const ul = document.createElement('ul');
+    ul.className = 'dlg-ul';
+    for (const item of insecure) {
+      const li = document.createElement('li');
+      li.className = 'dlg-li';
+      const nm = document.createElement('span');
+      setUserText(nm, item.label);
+      li.appendChild(nm);
+      ul.appendChild(li);
+    }
+    body.append(heading, choice, ul);
+  }
+
+  const ok = await confirmModal({
+    title: t('importForeign.title'),
+    body,
+    confirmLabel: t('common.import'),
+    cancelLabel: t('common.cancel'),
+    className: 'wide',
+  });
+  if (!ok) return;
+  if (skipTlsChoice && !skipTlsChoice.checked) clearSkipTls(items);
+  /* Appended, never merged. An import must not rename, reorder or remove
+     anything already on the dashboard. */
+  await appendAndSave(items);
+  toast(t('toast.importForeignDone', { apps: formatNumber(apps), folders: formatNumber(folders) }));
+}
 
 el('btn-add').onclick = () => openModal(null);
 

@@ -31,6 +31,8 @@ const BY_CODE = Object.freeze({
   'invalid.url': 'adminError.invalidUrl',
   'upstream.refused': 'adminError.socketRefused',
   'upstream.not-docker': 'adminError.notSocketProxy',
+  'invalid.socket-missing': 'adminError.socketMissing',
+  'upstream.too-many-containers': 'toast.importDockerTooLarge',
   'blocked.unresolved': 'adminError.unreachable',
   'invalid.duplicate-id': 'adminError.duplicateId',
   'invalid.missing-children': 'adminError.missingChildren',

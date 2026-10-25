@@ -3,8 +3,9 @@
    only: a widget in the source becomes a plain app tile, never a Stackyard
    widget. Keep this module free of the DOM and of the network. */
 
-import { buildAppItem, newItemId } from '/js/admin-save-logic.js?v=32cb6aeb';
+import { buildAppItem, newItemId } from '/js/admin-save-logic.js?v=b83791fb';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
+import { clampName } from '/js/limits.js?v=ea61a441';
 
 export const SKIP = Object.freeze({
   NO_LABEL: 'no-label',
@@ -14,6 +15,7 @@ export const SKIP = Object.freeze({
   RELATIVE_HREF: 'relative-href',
   UNREADABLE: 'unreadable',
   UNPARSABLE: 'unparsable',
+  NO_NAME_OR_GROUP: 'no-name-or-group',
 });
 
 /* An alias is the same object as its anchor, so a short file can list millions
@@ -35,6 +37,8 @@ export const NOTE = Object.freeze({
   PAGES_NOT_FOLLOWED: 'pages-not-followed',
   SCHEME_ADDED: 'scheme-added',
   HEALTH_URL_DROPPED: 'health-url-dropped',
+  NAME_SHORTENED: 'name-shortened',
+  LOGIN_REMOVED: 'login-removed',
 });
 
 /* Fields with no equivalent on a Stackyard item. */
@@ -64,6 +68,18 @@ function isAbsoluteLink(href) {
 
 /** @param {string} href @returns {string} `href` with http:// added when it is a bare host:port */
 const withScheme = href => (/^[a-z0-9.-]+:\d{1,5}(?:[/?#]|$)/i.test(href) ? `http://${href}` : href);
+
+/* Stop at a backslash. Browsers end the host there, so removing past it changes
+   where the link goes. */
+const LOGIN = '((?:[a-z][a-z0-9+.-]*:)?//)[^\\s/?#\\\\]*@';
+const LOGIN_AT_START = new RegExp(`^${LOGIN}`, 'i');
+const LOGIN_ANYWHERE = new RegExp(LOGIN, 'gi');
+
+/** @param {string} href @returns {string} */
+const withoutLogin = href => href.replace(LOGIN_AT_START, '$1');
+
+/** @param {string} s @returns {string} */
+const withoutLoginInText = s => s.replace(LOGIN_ANYWHERE, '$1');
 
 /* A value Homepage or Dashy resolves from its own environment. */
 const hasPlaceholder = s => /\{\{[^}]*\}\}|\$\{[^}]*\}/.test(s);
@@ -166,11 +182,13 @@ function collector(takenIds) {
     /** @type {Array<{ code: string, name: string, group: string, detail?: string }>} */ notes: [],
     /** @param {string} reason @param {string} name @param {string} group @param {string} [detail] */
     skip(reason, name, group, detail) {
-      this.skipped.push(detail ? { reason, name, group, detail } : { reason, name, group });
+      name = withoutLoginInText(name);
+      this.skipped.push(detail ? { reason, name, group, detail: withoutLoginInText(detail) } : { reason, name, group });
     },
     /** @param {string} code @param {string} name @param {string} group @param {string} [detail] */
     note(code, name, group, detail) {
-      this.notes.push(detail ? { code, name, group, detail } : { code, name, group });
+      name = withoutLoginInText(name);
+      this.notes.push(detail ? { code, name, group, detail: withoutLoginInText(detail) } : { code, name, group });
     },
   };
 }
@@ -180,34 +198,37 @@ function collector(takenIds) {
     @param {{ label: string, href: string, iconUrl: string, container: string,
               pingUrl: string, skipTlsVerify?: boolean }} parts
     @returns {any|null} */
-function addApp(col, group, { label, href: raw, iconUrl, container, pingUrl: rawPing, skipTlsVerify }) {
-  const href = withScheme(raw);
+function addApp(col, group, { label: fullLabel, href: raw, iconUrl, container, pingUrl: rawPing, skipTlsVerify }) {
+  const label = clampName(fullLabel);
+  const withHttp = withScheme(raw);
   if (!label) {
-    col.skip(SKIP.NO_LABEL, href || '', group);
+    col.skip(SKIP.NO_LABEL, withHttp || '', group);
     return null;
   }
-  if (!href) {
+  if (!withHttp) {
     col.skip(SKIP.NO_HREF, label, group);
     return null;
   }
-  if (hasPlaceholder(href)) {
-    col.skip(SKIP.PLACEHOLDER_HREF, label, group, href);
+  if (hasPlaceholder(withHttp)) {
+    col.skip(SKIP.PLACEHOLDER_HREF, label, group, withHttp);
     return null;
   }
-  if (!isAbsoluteLink(href)) {
-    col.skip(SKIP.RELATIVE_HREF, label, group, href);
+  if (!isAbsoluteLink(withHttp)) {
+    col.skip(SKIP.RELATIVE_HREF, label, group, withHttp);
     return null;
   }
   /* The server refuses the whole save over one unsafe link. */
-  if (!isSafeLinkUrl(href)) {
-    col.skip(SKIP.UNSAFE_HREF, label, group, href);
+  if (!isSafeLinkUrl(withHttp)) {
+    col.skip(SKIP.UNSAFE_HREF, label, group, withHttp);
     return null;
   }
+  const href = withoutLogin(withHttp);
   let pingUrl = withScheme(rawPing);
   if (pingUrl && (hasPlaceholder(pingUrl) || !/^https?:\/\//i.test(pingUrl))) {
     col.note(NOTE.HEALTH_URL_DROPPED, label, group, rawPing);
     pingUrl = '';
   }
+  const pingBare = withoutLogin(pingUrl);
   const built = buildAppItem(
     {
       label,
@@ -216,7 +237,7 @@ function addApp(col, group, { label, href: raw, iconUrl, container, pingUrl: raw
       scol: 'dark',
       hcEn: !!(container || pingUrl),
       hcCon: container || '',
-      hcPing: pingUrl || '',
+      hcPing: pingBare || '',
       skipTlsVerify: skipTlsVerify || false,
       actEn: false,
       actUrl: '',
@@ -231,13 +252,18 @@ function addApp(col, group, { label, href: raw, iconUrl, container, pingUrl: raw
   }
   col.taken.add(built.item.id);
   col.items.push(built.item);
-  if (href !== raw) col.note(NOTE.SCHEME_ADDED, label, group, raw);
+  if (withHttp !== raw) col.note(NOTE.SCHEME_ADDED, label, group, raw);
+  if (href !== withHttp) col.note(NOTE.LOGIN_REMOVED, label, group, href);
+  if (pingBare !== pingUrl) col.note(NOTE.LOGIN_REMOVED, label, group, pingBare);
+  if (label !== fullLabel) col.note(NOTE.NAME_SHORTENED, label, group);
   return built.item;
 }
 
 /** Create the folder for a group, given the apps that landed in it. */
-function addFolder(col, label, childIds, at) {
+function addFolder(col, fullLabel, childIds, at) {
   if (!childIds.length) return;
+  const label = clampName(fullLabel);
+  if (label !== fullLabel) col.note(NOTE.NAME_SHORTENED, label, '');
   const id = newItemId(label, 'folder', col.taken);
   col.taken.add(id);
   col.items.splice(at, 0, { id, type: 'folder', label, children: childIds });
@@ -417,6 +443,37 @@ export function convertDashy(doc, takenIds = [], untitledFolder = 'Imported') {
     addFolder(col, groupLabel, children, at);
   }
   return result(col);
+}
+
+/** @param {Array<{ container: string, labels: Record<string, string>, widget: boolean }>} containers
+    @param {Iterable<string>} [takenIds] */
+export function convertDockerLabels(containers, takenIds = []) {
+  /** @type {Map<string, any[]>} */
+  const groups = new Map();
+  const incomplete = [];
+  for (const c of Array.isArray(containers) ? containers : []) {
+    const l = c?.labels || {};
+    const name = str(l.name);
+    const group = str(l.group);
+    if (!name || !group) {
+      incomplete.push({ reason: SKIP.NO_NAME_OR_GROUP, name: str(c?.container), group: '' });
+      continue;
+    }
+    if (!groups.has(group)) groups.set(group, []);
+    groups.get(group)?.push({ name, weight: Number(l.weight) || 0, c });
+  }
+  const byName = (a, b) => a.localeCompare(b);
+  const doc = [...groups.keys()].sort(byName).map(group => ({
+    [group]: (groups.get(group) || [])
+      .sort((a, b) => a.weight - b.weight || byName(a.name, b.name))
+      .map(({ name, c }) => {
+        const { name: _n, group: _g, weight: _w, ...fields } = c.labels;
+        return { [name]: { ...fields, container: str(c.container), ...(c.widget ? { widget: true } : {}) } };
+      }),
+  }));
+  const out = convertHomepageServices(doc, takenIds);
+  out.skipped.unshift(...incomplete);
+  return out;
 }
 
 function result(col) {

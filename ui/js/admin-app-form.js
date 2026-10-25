@@ -9,7 +9,7 @@ import {
   throughServer,
 } from '/js/icons.js?v=5ac01d72';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { DOCK_MAX } from '/js/limits.js?v=31048a24';
+import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import {
   isDockBlocked,
@@ -33,11 +33,11 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=8fec4e2f';
+} from '/js/admin-shared.js?v=3e9cb9c8';
 import { createListbox } from '/js/listbox.js?v=3e47b403';
 import { MAX_LABELS } from '/js/badge-logic.js?v=85b1bc96';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=d444b337';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=a60b17ac';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=8c27f165';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=1c258dc1';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=8b4aadd4';
 import { iconSvg } from '/js/icon-set.js?v=26655aca';
 
@@ -158,6 +158,7 @@ export function buildAppForm(body, item) {
       ${ier('ie-name', t('app.name'), 'f-lbl', item?.label, t('app.namePh'))}
       ${ier('ie-url', t('app.url'), 'f-href', item?.href, t('app.urlPh'), 'url')}
     </div>
+    <div id="href-login" class="reveal${urlHasLogin(item?.href || '') ? ' open' : ''}"><div class="reveal-in"><p class="grp-tip warn" id="href-login-tip">${t('app.hrefHasLogin')}</p></div></div>
 
     <p class="grp-hdr" role="heading" aria-level="2">${t('app.icon')}</p>
     <div class="grp" id="ipw">
@@ -253,7 +254,12 @@ export function buildAppForm(body, item) {
       updPrev();
     },
   });
-  initInlineEdit('ie-url', 'f-href', { placeholder: t('app.urlPh') });
+  initInlineEdit('ie-url', 'f-href', {
+    placeholder: t('app.urlPh'),
+    onCommit(value) {
+      reveal(el('href-login'), urlHasLogin(value));
+    },
+  });
   initInlineEdit('ie-hc-con', 'hc-con', { placeholder: t('app.containerPh') });
   initInlineEdit('ie-hc-ping', 'hc-ping', { placeholder: t('app.pingUrlPh') });
   initInlineEdit('ie-static-label', 'f-static-label', { placeholder: t('app.labelPh') });

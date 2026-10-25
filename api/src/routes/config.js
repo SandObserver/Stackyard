@@ -6,7 +6,7 @@ const { fail, KIND } = require('../api-error');
 /* Shared with the browser rather than copied. The Dockerfile places this file
    where the same relative path resolves inside the image. */
 const { firstUnsafeLink } = require('../../../ui/js/link-url.js');
-const { DOCK_MAX } = require('../../../ui/js/limits.js');
+const { DOCK_MAX, clampName } = require('../../../ui/js/limits.js');
 const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
 const { rewriteChanged } = require('../secret-scope');
 const { firstMalformedRow } = require('../badge-headers');
@@ -137,6 +137,7 @@ on('POST', '/api/config', async (req, res) => {
         });
       }
     }
+    for (const item of data.items) if (typeof item.label === 'string') item.label = clampName(item.label);
     if (data.items.filter(i => i.type === 'app' && i.dock).length > DOCK_MAX)
       return json(res, 400, {
         error: `at most ${DOCK_MAX} apps can be shown in the dock`,

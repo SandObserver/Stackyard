@@ -290,3 +290,25 @@ test('an open section inside a switched-off one takes no focus', async ({ page, 
   );
   expect(focusable).toBe(0);
 });
+
+test('closing the Docker label import returns focus to its button', async ({ page }) => {
+  await page.route('**/api/docker/labels', route =>
+    route.fulfill({
+      json: {
+        containers: [
+          { container: 'emby', labels: { name: 'Emby', group: 'Media', href: 'http://emby.invalid' }, widget: false },
+        ],
+      },
+    }),
+  );
+  await page.goto('/admin/');
+  await page.locator('body.authed').waitFor({ state: 'attached' });
+  await page.locator('.nl[data-sec="general"]').click();
+  const btn = page.locator('#btn-imp-docker');
+  await btn.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('dialog[open]')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('dialog[open]')).toHaveCount(0);
+  await expect(btn).toBeFocused();
+});

@@ -23,6 +23,7 @@ const {
   clearSkipTls,
   convertHomepageServices,
   convertHomepageBookmarks,
+  convertDockerLabels,
   parseErrorsAsSkipped,
   SKIP,
   NOTE,
@@ -618,4 +619,109 @@ test('a Dashy status check URL that is only a path is dropped', () => {
   const nas = out.items.find(i => i.type === 'app');
   assert.equal(nas.monitoring.healthcheck.pingUrl, '');
   assert.ok(out.notes.some(n => n.code === NOTE.HEALTH_URL_DROPPED && n.detail === '/status'));
+});
+
+const container = (name, labels, widget = false) => ({ container: name, labels, widget });
+
+test('Docker labels become folders by group and apps by weight then name', () => {
+  const out = convertDockerLabels([
+    container('sonarr', { name: 'Sonarr', group: 'Media', href: 'http://sonarr:8989' }),
+    container('pihole', { name: 'Pi-hole', group: 'Network', href: 'http://pihole/admin' }),
+    container('radarr', { name: 'Radarr', group: 'Media', href: 'http://radarr:7878', weight: '-1' }),
+    container('emby', { name: 'Emby', group: 'Media', href: 'http://emby:8096' }),
+  ]);
+  assert.deepEqual(
+    folders(out).map(f => f.label),
+    ['Media', 'Network'],
+  );
+  const media = folders(out)[0].children.map(id => out.items.find(i => i.id === id).label);
+  assert.deepEqual(media, ['Radarr', 'Emby', 'Sonarr']);
+});
+
+test('a Docker label app watches its own container', () => {
+  const out = convertDockerLabels([container('emby', { name: 'Emby', group: 'Media', href: 'http://emby:8096' })]);
+  const hc = apps(out)[0].monitoring.healthcheck;
+  assert.equal(hc.enabled, true);
+  assert.equal(hc.container, 'emby');
+});
+
+test('a container missing its name or group label is listed as not imported', () => {
+  const out = convertDockerLabels([
+    container('lan-only', {}),
+    container('nogroup', { name: 'X', href: 'http://x' }),
+    container('ok', { name: 'Ok', group: 'G', href: 'http://ok' }),
+  ]);
+  assert.equal(apps(out).length, 1);
+  assert.deepEqual(
+    out.skipped.map(s => [s.reason, s.name]),
+    [
+      [SKIP.NO_NAME_OR_GROUP, 'lan-only'],
+      [SKIP.NO_NAME_OR_GROUP, 'nogroup'],
+    ],
+  );
+});
+
+test('a Docker label widget is noted and its link kept', () => {
+  const out = convertDockerLabels([container('emby', { name: 'Emby', group: 'Media', href: 'http://emby' }, true)]);
+  assert.equal(apps(out).length, 1);
+  assert.ok(out.notes.some(n => n.code === NOTE.WIDGET_AS_LINK && n.name === 'Emby'));
+});
+
+test('a Docker label link that needs a gethomepage variable is skipped', () => {
+  const out = convertDockerLabels([
+    container('emby', { name: 'Emby', group: 'Media', href: 'http://{{HOMEPAGE_VAR_HOST}}:8096' }),
+  ]);
+  assert.equal(apps(out).length, 0);
+  assert.equal(out.skipped[0].reason, SKIP.PLACEHOLDER_HREF);
+});
+
+test('a name past the limit is shortened and noted', async () => {
+  const { NAME_MAX } = await import('/js/limits.js');
+  const out = convertDockerLabels([
+    container('long', { name: 'N'.repeat(500), group: 'G'.repeat(500), href: 'http://l.lan' }),
+  ]);
+  assert.equal(apps(out)[0].label.length, NAME_MAX);
+  assert.equal(folders(out)[0].label.length, NAME_MAX);
+  assert.equal(out.notes.filter(n => n.code === NOTE.NAME_SHORTENED).length, 2);
+  assert.ok(apps(out)[0].id.length < 60);
+});
+
+test('a username and password are removed from imported addresses and noted', () => {
+  const out = convertDockerLabels([
+    container('nas', {
+      name: 'NAS',
+      group: 'Storage',
+      href: 'http://admin:hunter2@nas.lan:5000/',
+      siteMonitor: 'http://admin:hunter2@nas.lan:5000/ping',
+    }),
+  ]);
+  const app = apps(out)[0];
+  assert.equal(app.href, 'http://nas.lan:5000/');
+  assert.equal(app.monitoring.healthcheck.pingUrl, 'http://nas.lan:5000/ping');
+  assert.ok(!JSON.stringify(out).includes('hunter2'));
+  assert.equal(out.notes.filter(n => n.code === NOTE.LOGIN_REMOVED).length, 2);
+});
+
+test('a protocol-relative link loses its username and password too', () => {
+  const out = convertDockerLabels([
+    container('nas', { name: 'NAS', group: 'Storage', href: '//admin:hunter2@nas.lan:5000/' }),
+  ]);
+  assert.equal(apps(out)[0].href, '//nas.lan:5000/');
+  assert.ok(!JSON.stringify(out).includes('hunter2'));
+  assert.equal(out.notes.filter(n => n.code === NOTE.LOGIN_REMOVED).length, 1);
+});
+
+test('no preview line shows a username and password', () => {
+  const out = convertDockerLabels([
+    container('a', { name: 'A', group: 'G', href: 'https://admin:hunter2@{{HOMEPAGE_VAR_HOST}}/' }),
+    container('b', { name: 'B', group: 'G', href: 'http://b.lan/', siteMonitor: '//admin:hunter2@b.lan/' }),
+    container('c', { name: 'C', group: 'G', href: 'http://c.lan/', ping: 'http://admin:hunter2@c.lan' }),
+  ]);
+  assert.equal(out.skipped.length, 1);
+  assert.ok(!JSON.stringify(out).includes('hunter2'), JSON.stringify(out));
+});
+
+test('a link is never cut past a backslash', () => {
+  const out = convertDockerLabels([container('x', { name: 'X', group: 'G', href: 'http://evil.lan\\@nas.lan/' })]);
+  assert.equal(apps(out)[0].href, 'http://evil.lan\\@nas.lan/');
 });
