@@ -1,0 +1,16 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://github.com/SandObserver/Stackyard/releases/tag/{tag}#vex",
+  "author": "SandObserver",
+  "timestamp": "2026-10-25T00:00:00Z",
+  "version": 1,
+  "statements": [
+    {
+      "vulnerability": { "name": "CVE-2026-107891" },
+      "products": [{ "@id": "pkg:docker/sandobserver/stackyard@{version}" }],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "Alpine 3.24 ships the fix in musl 1.2.6-r3."
+    }
+  ]
+}

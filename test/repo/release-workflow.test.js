@@ -245,3 +245,67 @@ test('the identity pattern matches the identity the release signs with', () => {
     assert.match(identity, new RegExp(pattern), `no signature can satisfy ${pattern}`);
   }
 });
+
+const vexJob = workflow.jobs.vex;
+const vexStep = name => {
+  const step = vexJob.steps.find(s => s.name === name);
+  assert.ok(step, `the ${name} step is gone`);
+  return step;
+};
+
+test('the VEX statements are attached in their own job, which cannot hold up the release', () => {
+  assert.deepEqual(vexJob.needs, 'build-and-push');
+  assert.equal(job.outputs.dockerhub, '${{ steps.registries.outputs.dockerhub }}');
+  assert.equal(vexJob.if, "needs.build-and-push.outputs.dockerhub == 'true'");
+  assert.equal(vexJob['continue-on-error'], true, 'a Scout failure must not fail a published release');
+  assert.ok(vexJob['timeout-minutes'] <= 10, 'a hung Scout call must end on its own');
+  assert.deepEqual(vexJob.permissions, { contents: 'read' });
+  for (const [name, other] of Object.entries(workflow.jobs)) {
+    assert.ok(![other.needs].flat().includes('vex'), `${name} must not wait for the VEX job`);
+  }
+  assert.equal(steps.filter(s => /scout/i.test(`${s.name} ${s.uses || ''}`)).length, 0);
+});
+
+test('a statement is attached only to an image that ships the patched musl', () => {
+  const prepare = vexStep('Prepare the VEX statements');
+  assert.match(prepare.env.MUSL_FIXED, /^\d+\.\d+\.\d+-r\d+$/);
+  for (const arch of publishedPlatforms) assert.match(prepare.run, new RegExp(`\\b${arch.split('/')[1]}\\b`));
+  assert.match(prepare.run, /\/lib\/apk\/db\/installed/);
+  assert.match(prepare.run, /sort -V/);
+  assert.match(prepare.run, /Not attaching\."\s*exit 1/);
+  assert.match(prepare.run, /"@id" = \$id \| \.timestamp = \$now/, 'each release needs its own document id and date');
+  assert.match(prepare.run, /\.products = \[\{"@id": \$product\}\]/);
+});
+
+test('the Scout program is pinned by digest and attaches by referrer', () => {
+  const prepare = vexJob.steps.indexOf(vexStep('Prepare the VEX statements'));
+  const attach = vexStep('Attach the VEX statements');
+  assert.ok(prepare < vexJob.steps.indexOf(attach), 'nothing to attach yet');
+  assert.match(attach.env.SCOUT_IMAGE, /^docker\.io\/docker\/scout-cli:[\d.]+@sha256:[0-9a-f]{64}$/);
+  assert.match(attach.run, /--referrer\b/, 'attaching into the index changes the signed digest');
+  assert.match(attach.run, /--predicate-type https:\/\/openvex\.dev\/ns\/v0\.2\.0/);
+  assert.match(attach.run, /--file "\/vex\/stackyard-\$arch\.vex\.json"/);
+  assert.match(vexStep('Prepare the VEX statements').run, /"\$RUNNER_TEMP\/stackyard-\$arch\.vex\.json"/);
+  for (const step of vexJob.steps.filter(s => s.uses)) assert.match(step.uses, /@[0-9a-f]{40}$/, step.uses);
+});
+
+test('the VEX document is one Docker Scout accepts, and names no real image by itself', () => {
+  const vex = JSON.parse(fs.readFileSync(path.join(root, '.github/vex/stackyard.vex.json'), 'utf8'));
+  assert.equal(vex['@context'], 'https://openvex.dev/ns/v0.2.0');
+  assert.ok(vex.author, 'Scout rejects a document without an author');
+  assert.match(vex['@id'], /\{tag\}/);
+  assert.ok(vex.statements.length > 0);
+  const justifications = [
+    'component_not_present',
+    'vulnerable_code_not_present',
+    'vulnerable_code_not_in_execute_path',
+    'vulnerable_code_cannot_be_controlled_by_adversary',
+    'inline_mitigations_already_exist',
+  ];
+  for (const s of vex.statements) {
+    assert.match(s.vulnerability.name, /^CVE-\d{4}-\d+$/);
+    assert.equal(s.status, 'not_affected', 'Scout suppresses nothing for any other status');
+    assert.ok(justifications.includes(s.justification), `${s.vulnerability.name}: ${s.justification}`);
+    for (const p of s.products) assert.match(p['@id'], /@\{version\}$/, 'unstamped, it would cover every release');
+  }
+});
