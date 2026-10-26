@@ -144,6 +144,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stop widgets from flashing grey on tap on iOS.
 
+- Show the phone home screen with a correctly sized Dock on phones held
+  sideways.
+
+- Stop iOS Safari from enlarging widget text in landscape.
+
+- Keep the Settings sidebar on short landscape screens and on large screens such
+  as an unfolded phone.
+
+- Stop the home screen from enlarging icons on screens wider than a phone.
+
 ### Security
 
 - Update Node.js to 24.22.1 and nginx to 1.30.6 to fix CVE-2026-111497,
