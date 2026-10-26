@@ -156,7 +156,7 @@ html,body{min-height:100vh;color:var(--tx);font-family:var(--font-ui);font-size:
    toolbar when a menu opens, which grows the visual viewport past that by the
    toolbar's height and exposes a strip of canvas at the top and the bottom. The
    canvas is this background; a different value here is a visible band. */
-html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable}
+html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable;-webkit-tap-highlight-color:transparent}
 
 /* ── Outer: wallpaper shows here, panel centered ── */
 .adm-outer{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:44px 0}
@@ -171,12 +171,14 @@ html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable}
 .sb-ver{font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2);color:var(--dm-strong);margin-top:1px;min-height:1lh}
 .sb-nav{list-style:none;display:flex;flex-direction:column;gap:0}
 .nl{display:flex;align-items:center;gap:8px;width:100%;padding-block:0;padding-inline:3px 8px;border-radius:22px;border:none;background:transparent;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:400;cursor:pointer;text-align:start;transition:background var(--t),color var(--t);min-height:44px;font-family:inherit}
-.nl:hover{background:var(--ov-soft)}
+@media (hover:hover) and (pointer:fine){.nl:hover{background:var(--ov-soft)}}
+.nl:not(.active):active{background:var(--fill-tertiary)}
 .nl.active{background:var(--nav-tint);font-weight:600}
 .mtab.active .ni{opacity:1}
 .ni{flex-shrink:0;opacity:.6}
 .nl .ni{opacity:1;color:var(--dm);margin-inline:7px}
-.nl:hover .ni,.nl.active .ni{color:var(--ac)}
+.nl.active .ni{color:var(--ac)}
+@media (hover:hover) and (pointer:fine){.nl:hover .ni{color:var(--ac)}}
 
 /* ── Content pane ── */
 .cp{flex:1;min-width:0;background:var(--pane)}
@@ -185,10 +187,10 @@ html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable}
 .sec{padding:20px 20px 48px}
 .sec[hidden]{display:none}
 .sec-hdr{display:flex;align-items:center;gap:12px;margin-bottom:18px}
-.sec-title{font-size:var(--fs-large-title);line-height:var(--lh-large-title);letter-spacing:var(--tr-large-title);font-weight:700;flex:1}
-.sec-hdr-actions{display:flex;gap:6px}
+.sec-title{font-size:var(--fs-large-title);line-height:var(--lh-large-title);letter-spacing:var(--tr-large-title);font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}
+.sec-hdr-actions{display:flex;gap:6px;flex-shrink:0}
 .ev-back{display:flex;align-items:center;justify-content:center;gap:3px;background:var(--glass-bg);-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);box-shadow:inset 0 0 0 .5px var(--glass-rim),var(--shadow-glass-btn);border:none;border-radius:999px;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;font-family:inherit;cursor:pointer;min-width:44px;min-height:44px;padding-block:0;padding-inline:10px 14px;flex-shrink:0}
-.ev-back:hover{opacity:.8}
+@media (hover:hover) and (pointer:fine){.ev-back:hover{opacity:.8}}
 
 /* ── Groups ── */
 /* Nothing left to show. It would otherwise draw its border as a stray rule
@@ -234,8 +236,9 @@ html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable}
 .grp > .row-wrap:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none):not(.reveal:not(.open)))) > .row:last-child,
 .grp > .reveal.open:not(:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none):not(.reveal:not(.open)))) > .reveal-in > .row:last-child{border-end-start-radius:var(--sy-radius-group);border-end-end-radius:var(--sy-radius-group)}
 .row-link{text-decoration:none;color:inherit;transition:background var(--t)}
-.row-link:hover{background:var(--ov-soft)}
-.grp:has(> .fh-hl.on) .row-link:hover{background:transparent}
+@media (hover:hover) and (pointer:fine){.row-link:hover{background:var(--ov-soft)}
+.grp:has(> .fh-hl.on) .row-link:hover{background:transparent}}
+.row-link:active{background:var(--fill-tertiary)}
 .rl{flex:0 1 auto;min-width:0;margin-inline-end:auto;overflow:hidden;text-overflow:ellipsis;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--tx);font-weight:400}
 .rv{flex:1 1 0;min-width:0;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--dm);text-align:end;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rv.is-ph{color:var(--dm)}
@@ -246,14 +249,16 @@ html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable}
 .ie-row.editing{background:var(--ov-soft)}
 .pe{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;border:none;background:transparent;color:var(--dm);cursor:pointer;flex-shrink:0;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);transition:color var(--t),background var(--t);position:relative}
 .pe::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px}
-.pe:hover{color:var(--tx);background:var(--ov-strong)}
+@media (hover:hover) and (pointer:fine){.pe:hover{color:var(--tx);background:var(--ov-strong)}}
+.pe:active{color:var(--tx);background:var(--fill-tertiary)}
 .row-btns{display:flex;gap:6px;flex-shrink:0}
 .signout-row{margin-top:12px;display:flex;justify-content:flex-start}
 
 /* ── Custom dropdown ── */
 .row-dd{position:relative;flex-shrink:0}
-.row-dd-btn{display:flex;align-items:center;gap:6px;background:transparent;border:none;color:var(--dm);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-family:inherit;cursor:pointer;padding:4px 8px;border-radius:6px;transition:color var(--t)}
-.row-dd-btn:hover{color:var(--tx)}
+.row-dd-btn{display:flex;align-items:center;gap:6px;background:transparent;border:none;color:var(--dm);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-family:inherit;cursor:pointer;padding:4px 8px;border-radius:6px;transition:color var(--t),opacity var(--t)}
+@media (hover:hover) and (pointer:fine){.row-dd-btn:hover{color:var(--tx)}}
+.row-dd-btn:active{opacity:.55}
 .dd-chev{flex-shrink:0;width:18px;height:18px;color:inherit}
 /* In the top layer, so it escapes the scrolling settings panel that used to
    clip it and the phone tab bar that used to cover it. The user-agent centres a
@@ -265,15 +270,18 @@ html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable}
 /* Off screen until place() sets the real position, so a frame drawn before it
    lands is not a flash somewhere else. 9000 clears the phone tab bar at 8000. */
 .row-dd-list[hidden]{display:none}
+.row-dd-list.dd-in{animation:pop-in calc(var(--t-reveal) * .9) var(--ease-reveal)}
+@keyframes pop-in{from{opacity:0;transform:scale(.97)}}
 .row-dd-list.checklist{min-width:200px}
 
 .row-dd-group{padding:4px 18px 10px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;color:var(--menu-ink-dim);cursor:default;text-transform:none}
 .row-dd-group ~ .row-dd-group{padding-top:14px;margin-top:10px;border-top:1px solid var(--row-sep)}
 .row-dd-empty{padding:10px 18px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--menu-ink-dim);cursor:default}
 .row-dd-list li{margin-inline:8px;border-radius:20px;padding-block:10px;padding-inline:6px 16px;min-height:40px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);color:var(--menu-ink);cursor:pointer;transition:background var(--t);display:flex;align-items:center;gap:8px}
-.row-dd-list li:hover,.row-dd-list li.kb-active{background:var(--ov-strong)}
-.row-dd-list:has(> .fh-hl.on) li:hover,
+.row-dd-list li.kb-active{background:var(--ov-strong)}
+@media (hover:hover) and (pointer:fine){.row-dd-list li:hover{background:var(--ov-strong)}}
 .row-dd-list:has(> .fh-hl.on) li.kb-active{background:transparent}
+@media (hover:hover) and (pointer:fine){.row-dd-list:has(> .fh-hl.on) li:hover{background:transparent}}
 .row-dd-list li:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
 .row-dd-list li[aria-selected="true"]::before{content:'✓';color:var(--menu-ink);font-weight:600;width:24px;flex-shrink:0;text-align:center}
 .row-dd-list li[aria-selected="false"]::before{content:'';width:24px;flex-shrink:0}
@@ -300,11 +308,11 @@ html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable}
 .al-chips{display:flex;flex-wrap:wrap;gap:5px}
 .chip{padding:7px 14px;min-height:36px;border-radius:999px;border:none;background:var(--btn-fill);color:var(--chip-text);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:500;cursor:pointer;transition:background var(--t),color var(--t);font-family:inherit}
 .chip.on{background:var(--ac);color:var(--on-fill);font-weight:600}
-.chip:hover:not(.on){color:var(--tx)}
+@media (hover:hover) and (pointer:fine){.chip:hover:not(.on){color:var(--tx)}}
 .row.drow{display:grid;grid-template-columns:20px 48px 1fr auto auto;gap:12px;padding:10px 16px;min-height:68px;cursor:grab;align-items:center}
 .row.drow[data-indent]{padding-inline-start:28px;background:rgba(255,255,255,.02);border-inline-start:2px solid var(--bd);margin-inline-start:8px;border-start-end-radius:var(--rs);border-end-end-radius:var(--rs)}
-.row.drow:hover{background:var(--ov-soft)}
-.grp:has(> .fh-hl.on) .row.drow:hover{background:transparent}
+@media (hover:hover) and (pointer:fine){.row.drow:hover{background:var(--ov-soft)}
+.grp:has(> .fh-hl.on) .row.drow:hover{background:transparent}}
 .row.drow.dragging{opacity:.4;cursor:grabbing}
 .row.drow.drag-above{box-shadow:0 -2px 0 0 var(--ac)}
 .row.drow.drag-below{box-shadow:0 2px 0 0 var(--ac)}
@@ -325,6 +333,9 @@ html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable}
    label. 24px is the WCAG 2.5.8 minimum; the coarse-pointer block raises it. */
 button.rnm{font-family:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;min-height:24px}
 .rmt{font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);color:var(--dm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* An address reads left to right in every language. In a right-to-left page the
+   ellipsis otherwise cuts the scheme and host. */
+.rmt-url{direction:ltr;unicode-bidi:isolate;align-self:flex-start;max-width:100%}
 .rpills{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 .pill{font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2);font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}
 .p-dk{background:var(--chip-dk-bg);color:var(--chip-dk-fg)}
@@ -337,13 +348,14 @@ button.rnm{font-family:inherit;color:inherit;background:none;border:0;padding:0;
 .ract{display:flex;gap:4px;align-items:center}
 .empty{padding:48px 24px;text-align:center;color:var(--dm)}
 .fp-add{width:100%;background:none;border:none;border-radius:var(--rs);color:var(--ac2);padding:8px 14px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;cursor:pointer;text-align:start;font-family:inherit}
-.fp-add:hover{background:var(--ov-soft)}
+@media (hover:hover) and (pointer:fine){.fp-add:hover{background:var(--ov-soft)}}
 
 /* ── Tile-group row (Add New selector, Widget Size selector) ── */
 .tile-row{padding-top:16px;padding-bottom:16px}
 .tile-grp{display:flex;flex:1;justify-content:center;gap:clamp(0px,calc(6vw - 20px),40px)}
 .tile-opt{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;background:none;border:none;border-radius:12px;padding:4px;cursor:pointer;font-family:inherit;color:var(--dm);transition:color var(--t)}
-.tile-opt:hover,.tile-opt.on{color:var(--tx)}
+.tile-opt.on{color:var(--tx)}
+@media (hover:hover) and (pointer:fine){.tile-opt:hover{color:var(--tx)}}
 .tile-opt:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .tile-ico{width:48px;height:48px;display:flex;align-items:center;justify-content:center;color:inherit}
 .tile-ico svg{width:38px;height:38px}
@@ -384,7 +396,7 @@ button.rnm{font-family:inherit;color:inherit;background:none;border:0;padding:0;
 
 /* ── In-row trailing button + status (Upload/Test/Fetch) ── */
 .row-btn{background:var(--btn-fill);border:none;color:var(--tx);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:500;font-family:inherit;padding:5px 12px;min-height:28px;border-radius:999px;cursor:pointer;flex-shrink:0;transition:background var(--t),opacity var(--t)}
-.row-btn:hover{opacity:.8}
+@media (hover:hover) and (pointer:fine){.row-btn:hover{opacity:.8}}
 /* A status row writes no label. The empty spacer still grows, so a failure
    message gets about half the width it could have. */
 .row .rl:empty{flex:0 0 auto}
@@ -417,7 +429,7 @@ input::placeholder,textarea::placeholder{color:var(--dm-strong)}
 .kv-cred-lbl{font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);color:var(--dm)}
 .kv-cred input:checked~.kv-cred-lbl{color:var(--tx)}
 .kv-del{flex-shrink:0;background:none;border:none;color:var(--dm);cursor:pointer;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);padding:4px;border-radius:6px}
-.kv-del:hover{color:var(--tx)}
+@media (hover:hover) and (pointer:fine){.kv-del:hover{color:var(--tx)}}
 .kv-add{background:none;border:none;color:var(--ac2);cursor:pointer;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:600;padding:4px 0}
 .dash-load-fail{padding:32px;text-align:center;color:var(--dm);font-size:14px}
 .dash-load-fail .retry-btn{padding:8px 20px;border-radius:16px;background:var(--btn-fill);border:0;color:var(--tx);cursor:pointer;font-size:14px;font-family:inherit}
@@ -447,13 +459,13 @@ input::placeholder,textarea::placeholder{color:var(--dm-strong)}
 .albl-hdr.albl-dragging .albl-grip{cursor:grabbing}
 .albl-ctl{display:flex;align-items:center;gap:2px;margin-inline-start:auto}
 .albl-move{display:inline-flex;align-items:center;background:none;border:none;color:var(--ac2);font-family:inherit;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);cursor:pointer;padding:3px 7px;border-radius:999px}
-.albl-move:hover:not(:disabled){background:var(--ov)}
+@media (hover:hover) and (pointer:fine){.albl-move:hover:not(:disabled){background:var(--ov)}}
 .albl-move:disabled{color:var(--dm);cursor:default;opacity:.45}
 .albl-move:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
 .albl-add-wrap{display:flex;justify-content:center;padding:10px 16px 4px}
 .albl-add{background:none;border:none;color:var(--ac2);font-family:inherit;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;cursor:pointer;padding:8px 14px;border-radius:999px}
 .albl-add::before{content:'+';margin-inline-end:6px;font-weight:600}
-.albl-add:hover{background:var(--ov)}
+@media (hover:hover) and (pointer:fine){.albl-add:hover{background:var(--ov)}}
 .albl-add:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
 .grp-hdr-rm:disabled{color:var(--dm);cursor:default}
 .wcf-add-row{display:flex;align-items:center;width:100%;min-height:52px;padding:0 16px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body)}
@@ -479,13 +491,14 @@ input::placeholder,textarea::placeholder{color:var(--dm-strong)}
 .tog input{position:absolute;opacity:0;width:0;height:0}
 .tr{width:64px;height:28px;border-radius:14px;background:var(--track-off);position:relative;transition:background .2s}
 .tog input:checked+.tr{background:var(--gn)}
-.tr::after{content:'';position:absolute;width:38px;height:24px;border-radius:12px;background:var(--control-knob);top:2px;inset-inline-start:2px;transition:transform .2s,width .2s;box-shadow:var(--shadow-tog)}
+.tr::after{content:'';position:absolute;width:38px;height:24px;border-radius:12px;background:var(--control-knob);top:2px;inset-inline-start:2px;transform-origin:left;transition:transform .2s var(--ease-reveal);box-shadow:var(--shadow-tog)}
+[dir="rtl"] .tr::after{transform-origin:right}
 .tog input:checked+.tr::after{transform:translateX(22px)}
 /* translateX has no logical form, so the travel is mirrored explicitly. */
 [dir="rtl"] .tog input:checked+.tr::after{transform:translateX(-22px)}
-.tog:active input:not(:disabled)+.tr::after{width:46px}
-.tog:active input:checked:not(:disabled)+.tr::after{transform:translateX(14px)}
-[dir="rtl"] .tog:active input:checked:not(:disabled)+.tr::after{transform:translateX(-14px)}
+.tog:active input:not(:disabled)+.tr::after{transform:scaleX(1.2105)}
+.tog:active input:checked:not(:disabled)+.tr::after{transform:translateX(14px) scaleX(1.2105)}
+[dir="rtl"] .tog:active input:checked:not(:disabled)+.tr::after{transform:translateX(-14px) scaleX(1.2105)}
 .tog input:focus-visible+.tr{outline:2px solid var(--ac);outline-offset:3px}
 /* Still focusable and announced, so it needs a real focus ring rather than
    pointer-events:none. */
@@ -510,12 +523,12 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .bp{background:var(--ac);color:var(--on-fill);font-weight:600}
 .bp:disabled{background:var(--btn-fill);color:var(--dm);opacity:1}
-.bp:hover:not(:disabled){background:var(--ac2)}
+@media (hover:hover) and (pointer:fine){.bp:hover:not(:disabled){background:var(--ac2)}}
 .bg{background:var(--btn-fill);color:var(--tx)}
-.bg:hover:not(:disabled){opacity:.8}
+@media (hover:hover) and (pointer:fine){.bg:hover:not(:disabled){opacity:.8}}
 .bg:disabled{opacity:1;color:var(--dm)}
 .bd-btn{background:var(--btn-danger-fill);color:var(--rd)}
-.bd-btn:hover:not(:disabled){background:var(--rd);color:var(--on-fill)}
+@media (hover:hover) and (pointer:fine){.bd-btn:hover:not(:disabled){background:var(--rd);color:var(--on-fill)}}
 .sm{padding:5px 12px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);min-height:28px}
 .sec-hdr-actions .btn{min-height:36px;padding:7px 16px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);box-shadow:var(--shadow-glass-btn)}
 .sec-hdr-actions .bg{background:var(--glass-bg);-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);box-shadow:inset 0 0 0 .5px var(--glass-rim),var(--shadow-glass-btn)}
@@ -579,6 +592,9 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
    no free space. The 48px is the gap it keeps from the viewport edge. */
 .dlg-box{margin:auto;background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-window);width:calc(100% - 48px);max-width:380px;max-height:70vh;display:flex;flex-direction:column;box-shadow:var(--shadow-pop);padding:0;color:var(--tx)}
 .dlg-box::backdrop{background:var(--scrim)}
+.dlg-box[open]{animation:pop-in var(--t-reveal) var(--ease-reveal)}
+.dlg-box[open]::backdrop{animation:swap-in var(--t-reveal) ease-out}
+@media (prefers-reduced-motion: reduce){.row-dd-list.dd-in,.dlg-box[open]{animation-name:swap-in}}
 .dlg-box.wide{max-width:560px;max-height:80vh}
 .dlg-hdr{padding:22px 22px 12px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline)}
 /* flex:1 sets flex-basis:0, so the body contributes nothing to a dialog that
@@ -603,7 +619,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .dlg-choice input{margin-block-start:2px;flex:none}
 .dlg-empty{padding:24px;text-align:center;color:var(--dm);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 .fp-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:20px;background:none;border:none;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);cursor:pointer;width:100%;text-align:start;font-family:inherit;transition:background var(--t)}
-.fp-row:hover{background:var(--ov)}
+@media (hover:hover) and (pointer:fine){.fp-row:hover{background:var(--ov)}}
 .fp-row.cur{background:var(--row-selected)}
 .fp-row.muted{color:var(--dm)}
 .fp-row.accent{color:var(--ac2)}
@@ -653,7 +669,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
   .login-pw:focus,.dlg-field .inp:focus{outline:2px solid Highlight}
 }
 .login-btn{background:var(--ac);color:var(--on-fill);border:none;border-radius:999px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline);min-height:48px;padding:13px;cursor:pointer;transition:background var(--t)}
-.login-btn:hover{background:var(--ac2)}
+@media (hover:hover) and (pointer:fine){.login-btn:hover{background:var(--ac2)}}
 .login-err{color:var(--rd);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);text-align:center;display:none}
 .setpw-screen{position:fixed;inset:0;z-index:8000;background:var(--scrim-strong);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
 .setpw-wrap{width:100%;max-width:360px;padding:24px}
@@ -667,7 +683,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .setpw-hint{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);min-height:16px}
 .setpw-err{color:var(--rd);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);display:none}
 .setpw-btn{background:var(--ac);color:var(--on-fill);border:none;border-radius:999px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline);min-height:48px;padding:13px;cursor:pointer;transition:background var(--t)}
-.setpw-btn:hover{background:var(--ac2)}
+@media (hover:hover) and (pointer:fine){.setpw-btn:hover{background:var(--ac2)}}
 
 /* ── Form inside push edit view (#ev-body) — restyle to match PSD ── */
 /* Do not use a sibling combinator below. The editor parks display:none helpers
@@ -753,6 +769,8 @@ html.is-mobile .sec-hdr-actions{margin-inline-start:auto}
 html.is-mobile .sec-hdr-actions .btn{min-height:44px;padding-inline:18px}
 html.is-mobile .m-back{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:var(--glass-bg);-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);box-shadow:inset 0 0 0 .5px var(--glass-rim),var(--shadow-glass-btn);color:var(--tx);text-decoration:none;flex-shrink:0}
 html.is-mobile .m-back:active{opacity:.7}
+/* Under 16px, iOS zooms the page on focus and does not zoom back. */
+html.is-mobile .kv-k,html.is-mobile .kv-v{font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body)}
 html.is-mobile body.authed .mtabbar{
   display:flex;position:fixed;left:21px;right:21px;bottom:21px;
   z-index:8000;justify-content:space-around;align-items:center;gap:2px;
@@ -760,10 +778,11 @@ html.is-mobile body.authed .mtabbar{
   border:.5px solid var(--glass-rim);border-radius:50px;
   padding:4px;box-shadow:var(--shadow-bar);
 }
-html.is-mobile .mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;background:none;border:none;border-radius:50px;white-space:nowrap;transition:background var(--t),color var(--t);color:var(--dm);font-size:10px;line-height:12px;letter-spacing:0;font-weight:600;cursor:pointer;padding:7px 2px 6px;min-height:54px;justify-content:center;font-family:inherit;-webkit-tap-highlight-color:transparent}
+html.is-mobile .mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;background:none;border:none;border-radius:50px;white-space:nowrap;transition:background var(--t),color var(--t);color:var(--dm);font-size:10px;line-height:12px;letter-spacing:0;font-weight:600;cursor:pointer;padding:7px 2px 6px;min-height:54px;justify-content:center;font-family:inherit}
 html.is-mobile .mtab .ni{width:26px;height:26px;flex-shrink:0}
 /* Keep the radius above half the height. Exactly half tears in WebKit on repaint. */
 html.is-mobile .mtab.active{background:var(--tab-pill);color:var(--ac2)}
+html.is-mobile .mtab:not(.active):active{background:var(--fill-tertiary)}
 
 /* The handle is the drag zone. It needs touch-action:none, or starting a drag
    on it scrolls the list. */
@@ -897,7 +916,8 @@ html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadlin
 .sy-as{stroke:var(--icon-accent,currentColor)}
 :root{--nav-tint:var(--sb-sel)}
 .nl .sy-icon,.mtab .sy-icon,.tile-opt .sy-icon{--icon-accent:color-mix(in srgb,currentColor 55%,transparent)}
-.nl:hover .sy-icon,.nl.active .sy-icon,.mtab.active .sy-icon,.tile-opt.on .sy-icon{--icon-accent:var(--ac)}
+.nl.active .sy-icon,.mtab.active .sy-icon,.tile-opt.on .sy-icon{--icon-accent:var(--ac)}
+@media (hover:hover) and (pointer:fine){.nl:hover .sy-icon{--icon-accent:var(--ac)}}
 .rico .sy-icon{--icon-accent:currentColor}
 @media (forced-colors:active){
   .sy-icon{--icon-accent:CanvasText}

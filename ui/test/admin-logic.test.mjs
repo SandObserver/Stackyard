@@ -8,6 +8,7 @@ import {
   settleDock,
   isDockBlocked,
   nextActiveIndex,
+  isPlainTextKey,
   sameIconName,
   groupBounds,
   visibleFieldKeys,
@@ -766,5 +767,23 @@ test('urlHasLogin spots a username or password before the host', () => {
   }
   for (const u of ['http://adguard.lan/control/stats', 'http://host/api?u=a@b', '', 'http://', undefined]) {
     assert.equal(urlHasLogin(u), false, String(u));
+  }
+});
+
+test('widget fields naming an address, a user or an id take no capitals', () => {
+  for (const key of [
+    'url',
+    'dnsUrl',
+    'githubHref',
+    'username',
+    'backrestUser',
+    'siteId',
+    'pbsTokenId',
+    'dnsNextdnsProfile',
+  ]) {
+    assert.equal(isPlainTextKey(key), true, key);
+  }
+  for (const key of ['name', 'label', 'customName', 'cityQuery', 'clockTimezone', 'primary', '', undefined]) {
+    assert.equal(isPlainTextKey(key), false, String(key));
   }
 });

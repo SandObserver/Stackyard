@@ -4,11 +4,11 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=aa7daaca';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=99cc620c';
+} from '/js/admin-app-form.js?v=eadcbbbe';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=706aec5f';
 import { recoveryShown } from '/js/config-recovery.js?v=85138697';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=6479edae';
-import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=b3befae4';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=9288d174';
+import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=69993191';
 import {
   afterImport,
   buildAppItem,
@@ -31,7 +31,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=9f96f864';
+} from '/js/admin-settings.js?v=0838bb7a';
 import {
   apiGet,
   apiPost,
@@ -45,13 +45,13 @@ import {
   setReauthHandler,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=3e9cb9c8';
+} from '/js/admin-shared.js?v=de497dcb';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=b45c44b7';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=e1aa4a66';
 import { initFluidHover } from '/js/fluid-hover.js?v=8b4aadd4';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=75a71ab4';
-import { createListbox } from '/js/listbox.js?v=3e47b403';
+import { createListbox } from '/js/listbox.js?v=1ea519c4';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
 import { loadLocalIcons } from '/js/icons.js?v=5ac01d72';
@@ -782,11 +782,11 @@ function initNav() {
 }
 
 function initAllInlineEdits() {
-  initInlineEdit('ie-ip', 'srv-ip', { placeholder: '192.168.1.100' });
-  initInlineEdit('ie-socket', 'srv-socket', { placeholder: 'http://socket-proxy:2375' });
-  initInlineEdit('ie-pve-url', 'srv-pve-url', { type: 'url', placeholder: 'https://192.168.1.10:8006' });
-  initInlineEdit('ie-pve-token', 'srv-pve-token', { placeholder: 'stackyard@pve!dashboard' });
-  initInlineEdit('ie-hosts', 'srv-hosts', { placeholder: () => t('general.allowedHostsNone') });
+  initInlineEdit('ie-ip', 'srv-ip', { placeholder: '192.168.1.100', plain: true });
+  initInlineEdit('ie-socket', 'srv-socket', { placeholder: 'http://socket-proxy:2375', plain: true });
+  initInlineEdit('ie-pve-url', 'srv-pve-url', { type: 'url', placeholder: 'https://192.168.1.10:8006', plain: true });
+  initInlineEdit('ie-pve-token', 'srv-pve-token', { placeholder: 'stackyard@pve!dashboard', plain: true });
+  initInlineEdit('ie-hosts', 'srv-hosts', { placeholder: () => t('general.allowedHostsNone'), plain: true });
 
   initInlineEdit('ie-pw', 'sec-pw', {
     type: 'password',
@@ -819,7 +819,7 @@ function initAllInlineEdits() {
   const colInp = document.createElement('input');
   colInp.id = 'bg-col-inp';
   document.body.appendChild(colInp);
-  initInlineEdit('ie-bgcol', 'bg-col-inp', { placeholder: 'AGVpqBZnzUE' });
+  initInlineEdit('ie-bgcol', 'bg-col-inp', { placeholder: 'AGVpqBZnzUE', plain: true });
 
   const urlInp = document.createElement('input');
   urlInp.id = 'bg-url-inp';
@@ -827,6 +827,7 @@ function initAllInlineEdits() {
   document.body.appendChild(urlInp);
   initInlineEdit('ie-bgurl', 'bg-url-inp', {
     placeholder: 'https://example.com/photo.jpg',
+    plain: true,
     onCommit(v) {
       fetchWallpaperLink(v.trim());
     },

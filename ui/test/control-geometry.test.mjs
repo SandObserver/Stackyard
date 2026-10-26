@@ -60,6 +60,20 @@ test('the switch is 64 by 28 with a capsule knob that travels 22', () => {
   assert.match(rule(admin, '.tog input:checked+.tr::after'), /translateX\(22px\)/);
 });
 
+/* Pressed, the knob stretches from 38 to 46 by transform, never by width. */
+test('the pressed knob stretches by transform only', () => {
+  const knob = rule(admin, '.tr::after');
+  assert.match(knob, /transition:transform \.2s var\(--ease-reveal\)/);
+  assert.doesNotMatch(knob, /transition:[^;]*width/);
+  assert.match(rule(admin, '.tog:active input:not(:disabled)+.tr::after'), /transform:scaleX\(1\.2105\)/);
+  assert.match(
+    rule(admin, '.tog:active input:checked:not(:disabled)+.tr::after'),
+    /translateX\(14px\) scaleX\(1\.2105\)/,
+  );
+  assert.ok(Math.abs(38 * 1.2105 - 46) < 0.01);
+  assert.doesNotMatch(admin, /\.tr::after\{width:46px\}/);
+});
+
 test('both sliders run a 6 track', () => {
   assert.match(rule(admin, '.adm-range'), /height:6px/);
   assert.match(rule(admin, '.hsb-range'), /height:6px/);
