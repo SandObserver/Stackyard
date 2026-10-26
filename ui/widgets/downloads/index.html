@@ -13,13 +13,13 @@
     font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
   :root {
     --sub: rgba(235,235,245,0.70); --plate: #1C1C1E;
-    --run: #0091FF; --stall: #FFD600; --error: #FF4245; --done: #30D158;
+    --run: #0091FF; --stall: #FFD600; --error: #FF4245; --done: #30D158; --pause: #8E8E93;
     --belt: #3A3A3C; --belt-back: #2C2C2E; --rail: #636366; --rail-hi: #8E8E93;
     --ghost-front: #2C2C2E; --ghost-top: #3A3A3C; --ghost-side: #48484A; --ghost-label: #3A3A3C;
   }
   html[data-theme="light"] {
     --sub: #6C6C70; --plate: #FFFFFF;
-    --run: #0088FF; --stall: #B25000; --error: #D70015; --done: #248A3D;
+    --run: #0088FF; --stall: #B25000; --error: #D70015; --done: #248A3D; --pause: #6C6C70;
     --belt: #48484A; --belt-back: #3A3A3C; --rail: #C7C7CC; --rail-hi: #E5E5EA;
     --ghost-front: #F2F2F7; --ghost-top: #FFFFFF; --ghost-side: #E5E5EA; --ghost-label: #E5E5EA;
   }
@@ -38,6 +38,7 @@
   .medium .sub { margin-top: 0; font-size: 13px; }
   .sub[hidden] { display: none; }
   .run { color: var(--run); } .stall { color: var(--stall); } .error { color: var(--error); } .done { color: var(--done); }
+  .pause { color: var(--pause); }
 
   .pager { position: absolute; z-index: 3; bottom: 1px; left: 50%; transform: translateX(-50%); display: inline-flex;
     align-items: center; height: 15px; border-radius: 999px; background: var(--plate); color: var(--sub);
@@ -67,7 +68,7 @@
     overflow-wrap: anywhere; font-size: 12px; line-height: 1.16; font-weight: 700; color: #1C1C1E; }
   .lab .dt { display: block; margin-top: 2px; font-size: 11px; font-weight: 600; color: #6C6C70;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .lab .dt .stall { color: #B25000; } .lab .dt .error { color: #D70015; }
+  .lab .dt .stall { color: #B25000; } .lab .dt .error { color: #D70015; } .lab .dt .pause { color: #6C6C70; }
   .lid { position: absolute; transition: clip-path 0.6s cubic-bezier(.3,0,.2,1); }
   .flap { position: absolute; overflow: visible; }
   .flap g { transition: transform 0.6s cubic-bezier(.3,0,.2,1); }
@@ -221,6 +222,7 @@ const REASON = {
   noPeers: () => wt('ui.reason.noPeers', 'no peers'),
   missingFiles: () => wt('ui.reason.missingFiles', 'files missing'),
   error: () => wt('ui.reason.error', 'error'),
+  paused: () => wt('ui.reason.paused', 'paused'),
 };
 const reasonText = r => (REASON[r] || REASON.error)();
 
@@ -422,7 +424,7 @@ function drawGhosts() {
 let headerMode = 'finish';
 
 function header(data, now) {
-  const KINDS = ['time', 'stall', 'error'];
+  const KINDS = ['time', 'stall', 'error', 'paused'];
   const m = KINDS.includes(data.summary?.kind) ? data.summary : { kind: 'done' };
   bigEl.className = 'big';
   if (m.kind === 'done') {
@@ -433,6 +435,13 @@ function header(data, now) {
     else if (medium && last) subEl.textContent = wtCount('ui.finishedLast', count, { one: '{count} finished today · at {time}', other: '{count} finished today · last at {time}' }, { time: clock(last) });
     else subEl.textContent = wtCount('ui.finishedToday', count, { one: '{count} today', other: '{count} today' });
     return wt('ui.sayHeading', '{title}, {detail}', { title: bigEl.textContent, detail: subEl.textContent });
+  }
+  if (m.kind === 'paused') {
+    const { count } = finishedToday(data.finished, now);
+    bigEl.classList.add('pause');
+    bigEl.textContent = wt('ui.paused', 'Paused');
+    subEl.textContent = count ? wtCount('ui.finishedToday', count, { one: '{count} today', other: '{count} today' }) : '';
+    return subEl.textContent ? wt('ui.sayHeading', '{title}, {detail}', { title: bigEl.textContent, detail: subEl.textContent }) : bigEl.textContent;
   }
   if (m.kind === 'stall' || m.kind === 'error') {
     bigEl.classList.add(m.kind);

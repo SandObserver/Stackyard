@@ -23,7 +23,7 @@ const list = v => (Array.isArray(v) ? v.filter(x => x && typeof x === 'object' &
 const hiLo = (hi, lo) => nonNeg(hi) * 2 ** 32 + nonNeg(lo);
 
 /** One download. `eta` is seconds, or null when the client has no estimate.
-    `state` is run, stall or error; `reason` names a stall or error. */
+    `state` is run, stall, pause or error; `reason` names a stall, pause or error. */
 function makeItem({ name, size, left, speed, eta, state = 'run', reason = '' }) {
   const total = nonNeg(size);
   const remaining = Math.min(nonNeg(left), total);
@@ -48,12 +48,14 @@ const control = n => n < 0x20 || (n >= 0x7f && n <= 0x9f);
 const clean = name =>
   [...String(name || '')].filter(c => !control(c.codePointAt(0)) && !DISGUISE.has(c.codePointAt(0))).join('');
 
-const RANK = { run: 0, stall: 1, error: 2 };
+const RANK = { run: 0, stall: 1, pause: 1, error: 2 };
 
 /** What the heading says, over every download, not only the ones shown.
     `time`: `seconds` until the last moving one finishes, or null without an
-    estimate from each. `stall` and `error`: nothing moves; the first problem. */
-function summarize(items) {
+    estimate from each. `stall` and `error`: nothing moves; the first problem.
+    `paused`: the client is paused as a whole. */
+function summarize(items, paused) {
+  if (paused) return { kind: 'paused' };
   const moving = items.filter(i => i.state === 'run');
   const stalled = items.filter(i => i.state === 'stall').length;
   const failed = items.filter(i => i.state === 'error').length;
@@ -68,16 +70,22 @@ function summarize(items) {
   return { kind: 'done' };
 }
 
-/** Closest to done first, then stalled, then failed; at most MAX_ITEMS. */
-function arrange(items) {
-  const sorted = items
+/* A paused client reports its downloads as stalled or with a rate falling to
+   zero. Neither is a problem the owner has to fix. */
+const asPaused = it => (it.state === 'error' ? it : { ...it, state: 'pause', reason: 'paused', eta: null, speed: 0 });
+
+/** Closest to done first, then stalled or paused, then failed; at most MAX_ITEMS.
+
+    @param {any[]} items @param {boolean} [paused] the client is paused as a whole */
+function arrange(items, paused = false) {
+  const sorted = (paused ? items.map(asPaused) : items)
     .filter(i => i.name)
     .sort((a, b) => {
       if (a.state !== b.state) return RANK[a.state] - RANK[b.state];
       if (a.eta == null || b.eta == null) return (a.eta == null) - (b.eta == null) || b.progress - a.progress;
       return a.eta - b.eta;
     });
-  return { items: sorted.slice(0, MAX_ITEMS), summary: summarize(sorted) };
+  return { items: sorted.slice(0, MAX_ITEMS), summary: summarize(sorted, paused) };
 }
 
 /** Completion times in epoch ms within the window, newest first. Which ones
