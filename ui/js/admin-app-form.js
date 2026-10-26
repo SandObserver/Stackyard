@@ -19,7 +19,7 @@ import {
   failureIsMissingApiPath,
   nextActiveIndex,
   sameIconName,
-} from '/js/admin-logic.js?v=b3befae4';
+} from '/js/admin-logic.js?v=28471483';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import {
   toast,
@@ -33,10 +33,10 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=3e9cb9c8';
-import { createListbox } from '/js/listbox.js?v=3e47b403';
+} from '/js/admin-shared.js?v=6538c84c';
+import { createListbox } from '/js/listbox.js?v=99ce62fa';
 import { MAX_LABELS } from '/js/badge-logic.js?v=85b1bc96';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=8c27f165';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=aade667a';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=1c258dc1';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=8b4aadd4';
 import { iconSvg } from '/js/icon-set.js?v=26655aca';
@@ -165,7 +165,7 @@ export function buildAppForm(body, item) {
       <div class="icon-src-anchor">
       <div class="row icon-src-row">
         <span class="icon-prev" id="ipv">${state.siurl ? html`<img src="${throughServer(resolveIcon(state.siurl))}" alt="" id="ipv-img">` : html`<span>${initial(item?.label)}</span>`}</span>
-        <input class="icon-srch" id="ip-in" type="text" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="iprs" aria-autocomplete="list" aria-describedby="ip-status" aria-label="${t('app.icon')}" placeholder="${t('app.iconPh')}" value="${state.siurl}">
+        <input class="icon-srch" id="ip-in" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="iprs" aria-autocomplete="list" aria-describedby="ip-status" aria-label="${t('app.icon')}" placeholder="${t('app.iconPh')}" value="${state.siurl}">
         <button type="button" class="row-btn" id="ip-upload-lbl">${t('app.upload')}</button>
         <input type="file" id="ip-upload" class="file-hidden" tabindex="-1" aria-hidden="true" accept=".svg,.png,.ico,image/svg+xml,image/png,image/x-icon">
       </div>
@@ -256,15 +256,16 @@ export function buildAppForm(body, item) {
   });
   initInlineEdit('ie-url', 'f-href', {
     placeholder: t('app.urlPh'),
+    plain: true,
     onCommit(value) {
       reveal(el('href-login'), urlHasLogin(value));
     },
   });
-  initInlineEdit('ie-hc-con', 'hc-con', { placeholder: t('app.containerPh') });
-  initInlineEdit('ie-hc-ping', 'hc-ping', { placeholder: t('app.pingUrlPh') });
+  initInlineEdit('ie-hc-con', 'hc-con', { placeholder: t('app.containerPh'), plain: true });
+  initInlineEdit('ie-hc-ping', 'hc-ping', { placeholder: t('app.pingUrlPh'), plain: true });
   initInlineEdit('ie-static-label', 'f-static-label', { placeholder: t('app.labelPh') });
-  initInlineEdit('ie-burl', 'f-burl', { placeholder: t('app.apiUrlPh'), onCommit: warnUrlLogin });
-  initInlineEdit('ie-buser', 'f-buser', { placeholder: t('common.notSet') });
+  initInlineEdit('ie-burl', 'f-burl', { placeholder: t('app.apiUrlPh'), onCommit: warnUrlLogin, plain: true });
+  initInlineEdit('ie-buser', 'f-buser', { placeholder: t('common.notSet'), plain: true });
   const passSet = !!login?.passwordSet;
   const passRow = el('ie-bpass');
   const passInp = inpById('f-bpass');
@@ -1061,8 +1062,8 @@ function kvRowEl(host, rows, row, ph) {
   setHtml(
     rowEl,
     html`
-    <input class="kv-k" type="text" placeholder="${t('app.headerKeyPh')}" value="${row.key}" aria-label="${t('app.headerKey')}">
-    <input class="kv-v" type="${row.secret ? 'password' : 'text'}" placeholder="${valPh}" value="${row.value}" autocomplete="off" aria-label="${t('app.headerValue')}">
+    <input class="kv-k" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="${t('app.headerKeyPh')}" value="${row.key}" aria-label="${t('app.headerKey')}">
+    <input class="kv-v" type="${row.secret ? 'password' : 'text'}" placeholder="${valPh}" value="${row.value}" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" aria-label="${t('app.headerValue')}">
     <label class="kv-cred" title="${t('app.secretTip')}"><input type="checkbox" ${row.secret ? 'checked' : ''} aria-label="${t('app.secret')}"><span class="kv-box"></span><span class="kv-cred-lbl">${t('app.secret')}</span></label>
     <button class="kv-del" type="button" aria-label="${t('widgetCfg.remove')}">✕</button>`,
   );

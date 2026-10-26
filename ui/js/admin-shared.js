@@ -1,5 +1,5 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
-import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=b3befae4';
+import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=28471483';
 import { el, isolate, q } from '/js/utils.js?v=cfee1271';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import { errorAdvice } from '/js/admin-error.js?v=1c258dc1';
@@ -255,18 +255,29 @@ export function swapContent(node, apply) {
 
 export const PE_SVG = iconSvg('edit', 17);
 
+/** @param {HTMLInputElement} inp */
+export function plainInput(inp) {
+  inp.setAttribute('autocapitalize', 'none');
+  inp.setAttribute('autocorrect', 'off');
+  inp.spellcheck = false;
+}
+
 /* `root` lets a caller wire a subtree that is not in the document yet. */
 /** A function placeholder is resolved on use, not at wiring time: this runs
     before the catalog is fetched, so a translated one has to be read later.
     @param {string} rowId @param {string} inputId
     @param {{ type?: string, placeholder?: string | (() => string),
-              onCommit?: (value: string) => void, root?: ParentNode }} [opts] */
-export function initInlineEdit(rowId, inputId, { type = 'text', placeholder = '', onCommit, root = document } = {}) {
+              onCommit?: (value: string) => void, root?: ParentNode, plain?: boolean }} [opts] */
+export function initInlineEdit(
+  rowId,
+  inputId,
+  { type = 'text', placeholder = '', onCommit, root = document, plain = false } = {},
+) {
   const byId = id => (root === document ? el(id) : root.querySelector('#' + CSS.escape(id)));
   const row = /** @type {HTMLElement} */ (byId(rowId));
   const inp = /** @type {HTMLInputElement} */ (byId(inputId));
   if (!row || !inp) return;
-  wireInlineEdit(row, inp, { type, placeholder, onCommit });
+  wireInlineEdit(row, inp, { type, placeholder, onCommit, plain });
 }
 
 /** Name a row's pencil after its label. Call again once the catalog loads.
@@ -279,11 +290,16 @@ export function nameEditPen(row) {
 
 /** The same row behaviour for elements a caller already holds. `row` needs an id.
     `fill: false` keeps the input's own value on open. `render` replaces how the
-    committed value is shown.
+    committed value is shown. `plain` is for an address, host, username or key:
+    no capitals, correction or spelling marks.
     @param {HTMLElement} row @param {HTMLInputElement} inp
     @param {{ type?: string, placeholder?: string | (() => string), onCommit?: (value: string) => void,
-              fill?: boolean, render?: (valEl: Element, value: string) => void }} [opts] */
-export function wireInlineEdit(row, inp, { type = 'text', placeholder = '', onCommit, fill = true, render } = {}) {
+              fill?: boolean, render?: (valEl: Element, value: string) => void, plain?: boolean }} [opts] */
+export function wireInlineEdit(
+  row,
+  inp,
+  { type = 'text', placeholder = '', onCommit, fill = true, render, plain = false } = {},
+) {
   const ph = () => (typeof placeholder === 'function' ? placeholder() : placeholder);
   const valEl = q('.rv', row);
   const pen = q('.pe', row);
@@ -294,6 +310,7 @@ export function wireInlineEdit(row, inp, { type = 'text', placeholder = '', onCo
   inp.className = 'row-inp';
   inp.style.display = '';
   inp.style.cssText = '';
+  if (plain) plainInput(inp);
   /* The row's own label carries the translation. A placeholder is a hint, not a
      name, and several readers drop it once the field holds a value. */
   const labelEl = q('.rl', row);

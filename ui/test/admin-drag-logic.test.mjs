@@ -7,6 +7,7 @@ import {
   applyDrop,
   folderRowZone,
   listGroup,
+  pastLiftSlop,
 } from '../js/admin-drag-logic.js';
 
 /* a, b, w top level; f is a folder holding c. */
@@ -318,4 +319,11 @@ test('a docked app still listed in a folder leaves it when dropped into another 
   );
   assert.deepEqual(folder(items, 'f1'), []);
   assert.deepEqual(folder(items, 'f2'), ['x', 'y']);
+});
+
+test('a touch lifts the row only after it travels 8px', () => {
+  assert.equal(pastLiftSlop(0, 0), false);
+  assert.equal(pastLiftSlop(5, 5), false);
+  assert.equal(pastLiftSlop(0, 8), true);
+  assert.equal(pastLiftSlop(-6, -6), true);
 });
