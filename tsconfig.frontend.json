@@ -338,6 +338,12 @@
       "/js/palette.js?v=*": [
         "./ui/js/palette.js"
       ],
+      "/js/photo-credit.js": [
+        "./ui/js/photo-credit.js"
+      ],
+      "/js/photo-credit.js?v=*": [
+        "./ui/js/photo-credit.js"
+      ],
       "/js/password-strength.js": [
         "./ui/js/password-strength.js"
       ],

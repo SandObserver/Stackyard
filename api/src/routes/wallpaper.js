@@ -108,16 +108,49 @@ function mayWrite(req, res) {
 /* Keep the cache. Without it every request, including one sent by a page on
    another site, spends a call of the key's hourly quota. */
 const PHOTO_TTL_MS = 24 * 60 * 60 * 1000;
-/** @type {{ key: string, at: number, url: string } | null} */
+/** @typedef {{ name: string, profile: string, site: string }} PhotoCredit */
+/** @type {{ key: string, at: number, url: string, credit: PhotoCredit|null } | null} */
 let _photo = null;
-/** @type {{ key: string, promise: Promise<{ url: string|null, error?: string }> } | null} */
+/** @type {{ key: string, promise: Promise<{ url: string|null, credit?: PhotoCredit|null, error?: string }> } | null} */
 let _pending = null;
+
+const UTM = 'utm_source=stackyard&utm_medium=referral';
+const USERNAME_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+/** The photographer and Unsplash links the API terms require beside the photo.
+
+    @param {any} photo a `/photos/random` reply @returns {PhotoCredit|null} */
+function photoCredit(photo) {
+  const username = photo?.user?.username;
+  if (typeof username !== 'string' || !USERNAME_RE.test(username)) return null;
+  const name = typeof photo.user.name === 'string' && photo.user.name.trim() ? photo.user.name.trim() : username;
+  return {
+    name: name.slice(0, 100),
+    profile: `https://unsplash.com/@${username}?${UTM}`,
+    site: `https://unsplash.com/?${UTM}`,
+  };
+}
+
+/** Unsplash counts a photo as used only through this request.
+
+    @param {any} photo @param {string} apiKey */
+function reportDownload(photo, apiKey) {
+  const loc = photo?.links?.download_location;
+  if (typeof loc !== 'string' || !loc.startsWith('https://api.unsplash.com/')) return;
+  const u = new URL(loc);
+  u.searchParams.set('client_id', apiKey);
+  fetchUnchecked(u.href)
+    .then(r => {
+      if (r.status < 200 || r.status >= 300) log.warn('Unsplash download report failed', { status: r.status });
+    })
+    .catch(e => log.warn('Unsplash download report failed', { error: e instanceof Error ? e.message : String(e) }));
+}
 
 /** @param {{ apiKey?: string, collection?: string }} bg */
 function randomPhoto(bg) {
   const key = `${bg.apiKey || ''}\n${bg.collection || ''}`;
   if (_photo && _photo.key === key && Date.now() - _photo.at < PHOTO_TTL_MS)
-    return Promise.resolve({ url: _photo.url });
+    return Promise.resolve({ url: _photo.url, credit: _photo.credit });
   if (_pending?.key === key) return _pending.promise;
   const promise = (async () => {
     const p = new URLSearchParams({ orientation: 'landscape', content_filter: 'high', client_id: bg.apiKey || '' });
@@ -129,8 +162,10 @@ function randomPhoto(bg) {
       return { url: null, error: 'No image returned' };
     }
     const url = `${raw}&w=2800&h=1800&q=85&fm=jpg&fit=crop&crop=entropy`;
-    _photo = { key, at: Date.now(), url };
-    return { url };
+    const credit = photoCredit(r.data);
+    _photo = { key, at: Date.now(), url, credit };
+    reportDownload(r.data, bg.apiKey || '');
+    return { url, credit };
   })().finally(() => {
     if (_pending?.promise === promise) _pending = null;
   });

@@ -409,6 +409,28 @@
     /* Mirrored by the no-dock reserve in desktopSlots(). */
     body.no-dock:not(.is-mob) #dots { bottom:24px }
 
+    /* ── Photo credit ── */
+    #photo-credit {
+      position:fixed; z-index:300;
+      inset-block-end:calc(14px + env(safe-area-inset-bottom)); inset-inline-start:calc(20px + env(safe-area-inset-left));
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+      font-weight:500;
+      font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2);
+      color:var(--label-color-2); text-shadow:var(--label-shadow);
+      transition:color .2s;
+    }
+    #photo-credit[data-place="top"] { inset-block:calc(12px + env(safe-area-inset-top)) auto }
+    #photo-credit[data-tone="dark"] { color:var(--label-color-2-dark); text-shadow:var(--label-shadow-dark) }
+    #photo-credit:hover, #photo-credit:focus-within { color:var(--label-color) }
+    #photo-credit[data-tone="dark"]:hover, #photo-credit[data-tone="dark"]:focus-within { color:var(--label-color-dark) }
+    #photo-credit a { color:inherit; text-decoration:none }
+    #photo-credit a:hover { text-decoration:underline }
+    #photo-credit a:focus-visible { outline:2px solid currentColor; outline-offset:2px; border-radius:2px }
+    body.is-mob #photo-credit {
+      inset-block:max(4px, calc(var(--sa-top) - 16px)) auto; inset-inline:0;
+      width:fit-content; max-width:70vw; margin-inline:auto;
+    }
+
     /* ── Search pill — mobile only ── */
     #mob-search-pill {
       position:fixed; left:50%; z-index:500;
@@ -981,6 +1003,8 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
   }
   .empty-state-mark, .empty-state-title, .empty-state-btn { color:#FFFFFF; }
   .empty-state-mark[data-tone="dark"], .empty-state-title[data-tone="dark"], .empty-state-btn[data-tone="dark"] { color:#000000; }
+  #photo-credit { color:#FFFFFF; }
+  #photo-credit[data-tone="dark"] { color:#000000; }
   .srn  { color:var(--label-primary); }
   .srh, .sr-section { color:rgba(235,235,245,.85); }
   .widget, .mob-widget-card { border-color:rgba(255,255,255,.35); }
