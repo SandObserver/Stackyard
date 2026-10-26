@@ -4,6 +4,10 @@
 export const MOBILE_QUERY = '(max-width:768px)';
 const PORTRAIT_QUERY = '(orientation:portrait)';
 const PHONE_UA = /iPhone|iPod|Android/i;
+const PHONE_ONLY_UA = /iPhone|iPod|Android.*Mobile/i;
+const SHORT_QUERY = '(orientation:landscape) and (max-height:500px)';
+const REGULAR_QUERY = '(min-width:600px)';
+const REGULAR_SCREEN = 600;
 
 /** @param {string} query */
 function matches(query) {
@@ -14,9 +18,23 @@ function matches(query) {
   }
 }
 
-/** @returns {boolean} */
-export function isMobileLayout() {
-  return matches(MOBILE_QUERY) || (matches(PORTRAIT_QUERY) && PHONE_UA.test(navigator.userAgent || ''));
+function regularScreen() {
+  try {
+    return Math.min(screen.width, screen.height) >= REGULAR_SCREEN;
+  } catch {
+    return false;
+  }
+}
+
+/** @param {boolean} [home] the home screen, which keeps the phone layout on a sideways phone
+    @returns {boolean} */
+export function isMobileLayout(home = false) {
+  const ua = navigator.userAgent || '';
+  const phonePortrait = matches(PORTRAIT_QUERY) && PHONE_UA.test(ua);
+  if (home) return matches(MOBILE_QUERY) || PHONE_ONLY_UA.test(ua) || phonePortrait;
+  if (matches(SHORT_QUERY)) return false;
+  if (matches(REGULAR_QUERY) && regularScreen()) return false;
+  return matches(MOBILE_QUERY) || phonePortrait;
 }
 
 /** Call `onChange` when, and only when, the answer flips.
@@ -28,19 +46,20 @@ export function isMobileLayout() {
 
     @param {(mobile: boolean) => void} onChange
     @param {boolean} [applied] the layout the caller currently shows
+    @param {boolean} [home] see isMobileLayout
     @returns {() => void} a function that detaches the listeners */
-export function onLayoutChange(onChange, applied) {
-  let last = applied === undefined ? isMobileLayout() : applied;
+export function onLayoutChange(onChange, applied, home = false) {
+  let last = applied === undefined ? isMobileLayout(home) : applied;
   const check = () => {
-    const now = isMobileLayout();
+    const now = isMobileLayout(home);
     if (now === last) return;
     last = now;
     onChange(now);
   };
-  /* Both queries, so a rotation is noticed as well as a resize. A media query
+  /* Every query, so a rotation is noticed as well as a resize. A media query
      fires once when it flips, where a resize handler fires for every pixel and
      for a phone keyboard opening. */
-  const lists = [MOBILE_QUERY, PORTRAIT_QUERY]
+  const lists = [MOBILE_QUERY, PORTRAIT_QUERY, SHORT_QUERY, REGULAR_QUERY]
     .map(q => {
       try {
         return window.matchMedia?.(q) || null;

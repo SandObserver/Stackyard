@@ -9,6 +9,7 @@ import {
   contentBottom,
   gridColumnWidth,
   gridCellCount,
+  dockFit,
   BASE_CELL_W,
   BASE_CELL_H,
 } from '../js/mobile-metrics.js';
@@ -114,7 +115,7 @@ test('a full dock sits the same distance from the bottom as from the sides', () 
   assert.match(ui, /const dockGap = Math\.round\(9 \* sc\)/);
   assert.match(ui, /const maxDockW = vw - Math\.round\(18 \* sc\)/, 'a side gap of dockGap on each edge');
   assert.match(ui, /bottom:\$\{dockGap\}px/, 'the dock');
-  assert.match(ui, /bottom:\$\{dockGap \+ dh \+ pillGap\}px/, 'the pill');
+  assert.match(ui, /bottom:\$\{dockGap \+ dockH \+ pillGap\}px/, 'the pill');
 });
 
 /* ── The rebuild trigger ──────────────────────────────────────────────────── */
@@ -328,7 +329,7 @@ test('the grid never has fewer columns than the widest widget', () => {
 
 test('the layout reads its cell count from the measured box', () => {
   const ui = read('js/ui.js');
-  assert.match(ui, /gridCellCount\(\{ gridW: gridBox\.width, gridH: gridBox\.height/);
+  assert.match(ui, /gridCellCount\(\{\s*gridW: gridBox\.width,\s*gridH: gridBox\.height/);
   assert.doesNotMatch(ui, /const COLS = 4,\n\s*ROWS = 6;/, 'a fixed grid is what stretched across a tablet');
   assert.match(ui, /'--mcols'/);
   assert.match(ui, /'--mrows'/);
@@ -339,7 +340,7 @@ test('the layout reads its cell count from the measured box', () => {
 /* A wide window must not stretch the dock into an empty bar. */
 test('the dock keeps phone width whatever it holds', () => {
   const ui = read('js/ui.js');
-  assert.match(ui, /const dockW = Math\.min\(maxDockW, Math\.round\(\(PHONE_W - 18\) \* sc\)\)/);
+  assert.match(ui, /const dockW = Math\.min\(maxDockW, Math\.round\(\(PHONE_W - 18\) \* sc \* fit\)\)/);
   assert.doesNotMatch(ui, /dockContentW/, 'the dock is sized to its icons again');
 });
 
@@ -425,4 +426,50 @@ test('the desktop grid is bounded by the gutters, not only by the reserve', () =
   assert.match(css, /padding-inline:var\(--gutter-l\) var\(--gutter-r\)/);
   assert.doesNotMatch(css, /padding-inline:max\(clamp\(16px,4vw,270px\)/, 'the gutter is spelled out twice');
   assert.match(css, /--page-gutter:clamp\(16px,4vw,270px\)/);
+});
+
+test('a sideways phone scales the chrome by its height', () => {
+  const sideways = mobileMetrics(734, true, 343);
+  assert.ok(sideways.sc < 0.65, `sc ${sideways.sc} keeps the dock at its upright size`);
+  assert.ok(sideways.dh / 343 < 0.2, 'the dock takes too much of the height');
+});
+
+test('upright phones keep the width-based scale', () => {
+  for (const [vw, vh] of [
+    [320, 460],
+    [375, 548],
+    [393, 659],
+    [430, 739],
+    [382, 580],
+  ]) {
+    assert.equal(mobileMetrics(vw, true, vh).sc, mobileMetrics(vw).sc, `${vw}x${vh}`);
+  }
+});
+
+test('a dock box shrinks with capped icons', () => {
+  assert.ok(Math.abs(dockFit({ iconSz: 31, sc: 0.61 }) - 31 / 39) < 1e-9);
+  assert.ok(Math.abs(dockFit({ iconSz: 54, sc: 382 / 393 }) - 54 / 62) < 1e-9, 'upright too');
+});
+
+test('a dock with full-size icons keeps its size', () => {
+  assert.equal(dockFit({ iconSz: 64, sc: 1 }), 1);
+  assert.equal(dockFit({ iconSz: 72, sc: 430 / 393 }), 1);
+});
+
+test('a window wider than the widest phone keeps the base size', () => {
+  assert.equal(mobileMetrics(431).sc, 1);
+  assert.equal(mobileMetrics(669, true, 867).sc, 1);
+  assert.equal(mobileMetrics(430).sc, 430 / 393, 'the widest phone still scales');
+});
+
+test('wider than a phone with no labels, two icon rows match a small widget', () => {
+  const { cols, rows } = gridCellCount({ gridW: 629, gridH: 685, sc: 1, vw: 669, labels: false });
+  const ratio = 685 / rows / (629 / cols);
+  assert.ok(Math.abs(ratio - 1) < 0.15, `cells are ${ratio.toFixed(2)} times as tall as wide`);
+});
+
+test('phones keep the iOS grid with or without labels', () => {
+  for (const labels of [true, false]) {
+    assert.deepEqual(gridCellCount({ gridW: 357, gridH: 696, sc: 1, vw: 393, labels }), { cols: 4, rows: 6 });
+  }
 });

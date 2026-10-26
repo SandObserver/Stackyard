@@ -9,18 +9,34 @@ import { isMobileLayout, onLayoutChange, MOBILE_QUERY } from '../js/layout.js';
 
 const PHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)';
 const DESKTOP = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)';
+const ANDROID_PHONE = 'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/131.0 Mobile Safari/537.36';
+const ANDROID_TABLET = 'Mozilla/5.0 (Linux; Android 15; Pixel Tablet) AppleWebKit/537.36 Chrome/131.0 Safari/537.36';
 
 /** A matchMedia whose answers can be changed, with listeners that fire. */
-function stubMedia({ narrow = false, portrait = false, ua = DESKTOP } = {}) {
-  const state = { narrow, portrait };
+function stubMedia({
+  narrow = false,
+  portrait = false,
+  short = false,
+  regular = false,
+  ua = DESKTOP,
+  screen = [393, 852],
+} = {}) {
+  const state = { narrow, portrait, short, regular };
   const lists = new Map();
   const listFor = query => {
-    const isWidth = query === MOBILE_QUERY;
+    const key =
+      query === MOBILE_QUERY
+        ? 'narrow'
+        : query.includes('max-height')
+          ? 'short'
+          : query.includes('min-width')
+            ? 'regular'
+            : 'portrait';
     if (!lists.has(query)) {
       const listeners = new Set();
       lists.set(query, {
         get matches() {
-          return isWidth ? state.narrow : state.portrait;
+          return state[key];
         },
         addEventListener: (_type, fn) => listeners.add(fn),
         removeEventListener: (_type, fn) => listeners.delete(fn),
@@ -32,6 +48,7 @@ function stubMedia({ narrow = false, portrait = false, ua = DESKTOP } = {}) {
   globalThis.window = { matchMedia: listFor };
   /* Node's own navigator is getter-only. */
   Object.defineProperty(globalThis, 'navigator', { value: { userAgent: ua }, configurable: true, writable: true });
+  globalThis.screen = { width: screen[0], height: screen[1] };
   return {
     set(next) {
       Object.assign(state, next);
@@ -58,9 +75,47 @@ test('a phone in portrait is mobile even when it reports a wide viewport', () =>
   assert.equal(isMobileLayout(), true);
 });
 
-test('the same phone sideways gets the layout it has room for', () => {
+test('the same phone sideways gets the Settings layout it has room for', () => {
   stubMedia({ narrow: false, portrait: false, ua: PHONE });
   assert.equal(isMobileLayout(), false);
+});
+
+test('Settings on a short sideways screen keeps its sidebar', () => {
+  stubMedia({ narrow: true, short: true, regular: false, ua: PHONE });
+  assert.equal(isMobileLayout(), false);
+  assert.equal(isMobileLayout(true), true, 'the home screen stays the phone layout');
+});
+
+test('Settings on a large upright screen keeps its sidebar', () => {
+  stubMedia({ narrow: true, portrait: true, regular: true, ua: PHONE, screen: [669, 867] });
+  assert.equal(isMobileLayout(), false);
+});
+
+test('a zoomed-out phone is still a phone in Settings', () => {
+  stubMedia({ narrow: false, portrait: true, regular: true, ua: PHONE, screen: [393, 852] });
+  assert.equal(isMobileLayout(), true);
+});
+
+test('a phone sideways keeps the mobile home screen', () => {
+  stubMedia({ narrow: false, portrait: false, ua: PHONE });
+  assert.equal(isMobileLayout(true), true);
+  stubMedia({ narrow: false, portrait: false, ua: ANDROID_PHONE });
+  assert.equal(isMobileLayout(true), true);
+});
+
+test('a tablet or desktop sideways keeps the desktop home screen', () => {
+  stubMedia({ narrow: false, portrait: false, ua: ANDROID_TABLET });
+  assert.equal(isMobileLayout(true), false);
+  stubMedia({ narrow: false, portrait: false, ua: DESKTOP });
+  assert.equal(isMobileLayout(true), false);
+});
+
+test('the home screen does not flip when a phone rotates', () => {
+  const media = stubMedia({ narrow: false, portrait: true, ua: PHONE });
+  const seen = [];
+  onLayoutChange(m => seen.push(m), true, true);
+  media.set({ portrait: false });
+  assert.deepEqual(seen, []);
 });
 
 /* A desktop window is portrait whenever it is taller than it is wide, which is

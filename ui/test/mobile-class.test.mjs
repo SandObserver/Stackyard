@@ -14,10 +14,18 @@ test('the preload script repeats the layout rule exactly', () => {
      stay compared with each other when the cutoff moves. */
   const width = layout.match(/MOBILE_QUERY = '(\(max-width:\d+px\))'/);
   assert.ok(width, 'layout.js no longer declares MOBILE_QUERY as a width query');
-  for (const literal of [`'${width[1]}'`, "'(orientation:portrait)'", '/iPhone|iPod|Android/i']) {
+  for (const literal of [
+    `'${width[1]}'`,
+    "'(orientation:portrait)'",
+    '/iPhone|iPod|Android/i',
+    "'(orientation:landscape) and (max-height:500px)'",
+    "'(min-width:600px)'",
+  ]) {
     assert.ok(layout.includes(literal), `layout.js no longer contains ${literal}`);
     assert.ok(preload.includes(literal), `mobile-class.js no longer contains ${literal}`);
   }
+  assert.match(layout, /REGULAR_SCREEN = 600;/);
+  assert.match(preload, /Math\.min\(screen\.width, screen\.height\) >= 600/);
 });
 
 test('the preload script is not a module', () => {

@@ -738,6 +738,10 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
   .sb { min-height:calc(100vh - 48px); }
 }
 
+@media (max-width:768px) {
+  html:not(.is-mobile) { --sbw:200px; }
+}
+
 /* ── Touch input ──
    Sizing follows the pointer, not the window: a tablet gets the desktop layout
    and is still driven by a finger. 44px is the minimum tap target. */

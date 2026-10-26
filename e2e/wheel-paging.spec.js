@@ -64,7 +64,8 @@ test('a sideways swipe over a widget turns the page too', async ({ page, request
 test('a sideways swipe over an open folder leaves the page alone in the phone layout', async ({ page, request }) => {
   const kids = Array.from({ length: 4 }, (_, i) => app(`f${i}`, `Folder app ${i}`));
   const folder = { id: 'box', type: 'folder', label: 'Box', children: kids.map(c => c.id), color: 'dark' };
-  await seedConfig(request, { items: [folder, ...kids, ...MANY] });
+  const more = Array.from({ length: 48 }, (_, i) => app(`b${i}`, `More app ${i}`));
+  await seedConfig(request, { items: [folder, ...kids, ...MANY, ...more] });
   await dismissSetupPrompt(request);
   await page.setViewportSize({ width: 700, height: 844 });
   await page.goto('/');

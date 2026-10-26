@@ -110,7 +110,7 @@ test('an undocked mobile layout reserves no dock height', async () => {
 
 test('the dock reservation follows what is actually docked', () => {
   const src = read('js/ui.js');
-  assert.match(src, /mobileMetrics\(vw, dock\.length > 0\)/);
+  assert.match(src, /mobileMetrics\(vw, dock\.length > 0, vh\)/);
   assert.ok(
     src.indexOf('const dock = items()') < src.indexOf('mobileMetrics(vw,'),
     'the dock is known before the metrics are taken',
