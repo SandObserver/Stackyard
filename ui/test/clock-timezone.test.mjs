@@ -25,6 +25,7 @@ function element() {
   const el = {
     style: {},
     attrs: {},
+    writes: {},
     children: [],
     className: '',
     innerHTML: '',
@@ -33,7 +34,9 @@ function element() {
     classList: { add() {}, remove() {}, toggle() {} },
     setAttribute(k, v) {
       el.attrs[k] = v;
+      el.writes[k] = (el.writes[k] || 0) + 1;
     },
+    getComputedTextLength: () => 0,
     appendChild(c) {
       el.children.push(c);
       return c;
@@ -46,14 +49,20 @@ function element() {
   return el;
 }
 
-async function boot(file, clockTimezone, { resizeDuringLoad = false, search = '?id=c1', config = {} } = {}) {
+async function boot(
+  file,
+  clockTimezone,
+  { resizeDuringLoad = false, search = '?id=c1', config = {}, reduceMotion = true, frames = 0 } = {},
+) {
   const els = new Map();
   const byId = id => els.get(id) || els.set(id, element()).get(id);
   const timers = [];
   const painted = [];
   const resizers = [];
+  const rafs = [];
   const globals = {
     location: { search },
+    window: {},
     document: {
       documentElement: { getAttribute: () => null },
       getElementById: byId,
@@ -62,14 +71,14 @@ async function boot(file, clockTimezone, { resizeDuringLoad = false, search = '?
       hidden: false,
     },
     addEventListener: (type, fn) => type === 'resize' && resizers.push(fn),
-    matchMedia: () => ({ matches: true }),
+    matchMedia: () => ({ matches: reduceMotion }),
     fetch: async () => {
       if (resizeDuringLoad) for (const fn of resizers) fn();
       return { ok: true, json: async () => ({ widgetConfig: { clockTimezone, ...config } }) };
     },
     setTimeout: fn => timers.push(fn),
     clearTimeout() {},
-    requestAnimationFrame: () => 0,
+    requestAnimationFrame: fn => rafs.push(fn),
     cancelAnimationFrame() {},
     __clockDate: () => import('../js/clock-date.js'),
     __toolbox: async () => ({
@@ -86,13 +95,25 @@ async function boot(file, clockTimezone, { resizeDuringLoad = false, search = '?
   try {
     await new Function(pageScript(file))();
     for (const fn of timers.splice(0)) fn();
+    for (let i = 0; i < frames; i++) {
+      for (const fn of rafs.splice(0)) fn();
+      if (rafs.length) break;
+      for (const fn of timers.splice(0)) fn();
+    }
   } finally {
     for (const k of Object.keys(globals)) {
       if (saved[k]) Object.defineProperty(globalThis, k, saved[k]);
       else delete globalThis[k];
     }
   }
-  return { painted, timers, byId, label: byId('widget').attrs['aria-label'], face: byId('face').children.length };
+  return {
+    painted,
+    timers,
+    rafs,
+    byId,
+    label: byId('widget').attrs['aria-label'],
+    face: byId('face').children.length,
+  };
 }
 
 for (const file of ['digital.html', 'analog.html']) {
@@ -132,4 +153,13 @@ test('digital.html: the figures move down when the date is off', async () => {
   assert.deepEqual([off('hh').attrs.y, off('mm').attrs.y], [88, 124]);
   assert.deepEqual([off('hh-over').attrs.y, off('mm-clip').attrs.y], [88, 124]);
   assert.equal(off('date-line').style.display, 'none');
+});
+
+test('analog.html: the sweep waits on a timer between frames and writes the label only when it changes', async () => {
+  const r = await boot('analog.html', 'Europe/Berlin', { reduceMotion: false, frames: 6 });
+  assert.deepEqual(r.painted, []);
+  assert.equal(r.rafs.length, 1, 'each timer asks for one frame');
+  assert.equal(r.timers.length, 0, 'each frame schedules one timer');
+  assert.match(r.label, /^\d\d:\d\d, /);
+  assert.ok(r.byId('widget').writes['aria-label'] <= 2, 'the label is written once a minute');
 });

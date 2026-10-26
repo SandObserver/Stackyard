@@ -11,10 +11,14 @@ globalThis.window = { matchMedia: () => ({ matches: false }) };
 let hostTheme = 'dark';
 globalThis.document = {
   documentElement: { getAttribute: () => hostTheme },
+  getElementById: () => ({}),
   createElement: () => ({
-    style: { cssText: '' },
+    style: { cssText: '', setProperty() {} },
     className: '',
     children: [],
+    get firstElementChild() {
+      return this.children[0];
+    },
     appendChild(child) {
       this.children.push(child);
       return child;

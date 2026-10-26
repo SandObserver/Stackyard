@@ -65,7 +65,7 @@ const DIAL = {
 };
 
 let _mode='dark', _timezone='', _showDate=true, _zoneBad=false;
-let _groups=null, _dateTexts=[], _dateShown='', _rafId=null, _running=false, _vb=0, _faceSz=0;
+let _groups=null, _dateTexts=[], _dateShown='', _rafId=null, _running=false, _vb=0, _faceSz=0, _drawn={}, _label='';
 
 function _now(){
   if(!_timezone) return new Date();
@@ -86,7 +86,7 @@ function zoneOk(z){
 async function showZoneError(){
   const w=document.getElementById('widget');
   w.className='widget mode-'+_mode;
-  const { errorState, loadStrings, wt } = await import('/js/widget-toolbox.js?v=c346a35b');
+  const { errorState, loadStrings, wt } = await import('/js/widget-toolbox.js?v=66813091');
   await loadStrings();
   const line=wt('ui.unknownZone','Unknown timezone');
   errorState({ root: w, place: 'center' }).empty(line);
@@ -124,6 +124,7 @@ function buildShell(){
 
   _dateTexts=[];
   _dateShown='';
+  _drawn={};
   /* Two text elements, not two tspans. Safari reorders right-to-left text
      across tspans and scrambles a Persian date. */
   const dateOf=clip=>{
@@ -202,6 +203,8 @@ function render(smoothSeconds){
      discs carry their position instead of a rotation. */
   const dist=_vb*0.085;
   for(const key in angle){
+    if(_drawn[key]===angle[key]) continue;
+    _drawn[key]=angle[key];
     const rad=angle[key]*Math.PI/180;
     const dx=cx+dist*Math.sin(rad), dy=cy-dist*Math.cos(rad);
     for(const node of _groups[key].discs){
@@ -212,7 +215,8 @@ function render(smoothSeconds){
     for(const node of _groups[key].ticks) node.setAttribute('transform', t);
   }
 
-  document.getElementById('widget').setAttribute('aria-label', _a11yLabel(now));
+  const label=_a11yLabel(now);
+  if(label!==_label){ _label=label; document.getElementById('widget').setAttribute('aria-label', label); }
   if(_showDate && _dateTexts.length){
     const d=_dateShort(now);
     if(d.full!==_dateShown) showDate(d);
@@ -240,12 +244,14 @@ function showDate(d){
   set('date', d.date, size*max/widest);
 }
 
+const SWEEP_MS=66;
+let _stepId=null;
 function _loop(){
+  _rafId=null;
   if(!_running) return;
   render(true);
-  _rafId=requestAnimationFrame(_loop);
+  _stepId=setTimeout(()=>{ _stepId=null; _rafId=requestAnimationFrame(_loop); }, SWEEP_MS);
 }
-let _stepId=null;
 function _step(){
   if(!_running) return;
   render(false);

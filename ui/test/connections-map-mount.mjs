@@ -25,25 +25,35 @@ export function placement(math = Math) {
   return { D: window.__DOTS, M: window.__MAP };
 }
 
-/* Records what the last frame painted: each fill with its colour and shape. */
-const ctx = {
-  fills: [],
-  fillStyle: '',
-  _shape: null,
-  clearRect() {
-    ctx.fills = [];
-  },
-  beginPath() {},
-  arc(x, y, r) {
-    ctx._shape = { kind: 'arc', x, y, r };
-  },
-  fill() {
-    ctx.fills.push({ ...ctx._shape, color: ctx.fillStyle });
-  },
-  fillRect(x, y, w, h) {
-    ctx.fills.push({ kind: 'rect', x, y, w, h, color: ctx.fillStyle });
-  },
-};
+/* Each canvas records what it last painted: each fill with its colour and
+   shape. Copying one canvas onto another copies its fills. */
+function canvasContext() {
+  const ctx = {
+    fills: [],
+    drawn: 0,
+    fillStyle: '',
+    _shape: null,
+    clearRect() {
+      ctx.fills = [];
+    },
+    beginPath() {},
+    arc(x, y, r) {
+      ctx._shape = { kind: 'arc', x, y, r };
+    },
+    fill() {
+      ctx.fills.push({ ...ctx._shape, color: ctx.fillStyle });
+      ctx.drawn++;
+    },
+    fillRect(x, y, w, h) {
+      ctx.fills.push({ kind: 'rect', x, y, w, h, color: ctx.fillStyle });
+      ctx.drawn++;
+    },
+    drawImage(src) {
+      ctx.fills.push(...src.getContext().fills);
+    },
+  };
+  return ctx;
+}
 
 function element(tag = 'div') {
   const el = {
@@ -100,7 +110,7 @@ function element(tag = 'div') {
       return out;
     },
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 360, height: 170 }),
-    getContext: () => ctx,
+    getContext: () => (el._ctx ||= canvasContext()),
   };
   return el;
 }
@@ -112,13 +122,18 @@ export async function mount({ theme = 'dark', onScreen = true } = {}) {
   let render = null;
   let screenChanged = null;
   const byId = { c: element('canvas'), key: element(), sr: element('p') };
+  const created = [];
 
   const saved = {};
   const globals = {
     window: {},
     document: {
       getElementById: id => byId[id] || element(),
-      createElement: element,
+      createElement: tag => {
+        const el = element(tag);
+        created.push(el);
+        return el;
+      },
       createTextNode: t => t,
       body: element('body'),
       documentElement: { lang: 'en' },
@@ -174,7 +189,8 @@ export async function mount({ theme = 'dark', onScreen = true } = {}) {
   return {
     frames,
     key: byId.key,
-    painted: () => ctx.fills,
+    painted: () => byId.c.getContext().fills,
+    dotsDrawn: () => created.filter(c => c !== byId.c).reduce((n, c) => n + (c._ctx?.drawn || 0), 0),
     sr: byId.sr,
     render: data => render(data),
     resize: () => resizeCallbacks.forEach(fn => fn()),

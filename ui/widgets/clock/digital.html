@@ -85,7 +85,7 @@ function zoneOk(z) {
 }
 async function showZoneError() {
   const w = document.getElementById('widget');
-  const { errorState, loadStrings, wt } = await import('/js/widget-toolbox.js?v=c346a35b');
+  const { errorState, loadStrings, wt } = await import('/js/widget-toolbox.js?v=66813091');
   await loadStrings();
   const line = wt('ui.unknownZone', 'Unknown timezone');
   errorState({ root: w, place: 'center' }).empty(line);

@@ -9,6 +9,7 @@
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
   html,body{width:100%;height:100%;overflow:hidden;background:transparent;
     font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif}
+  html{-webkit-tap-highlight-color:transparent}
 
   .widget{width:100%;height:100%;position:relative;border-radius:inherit;overflow:hidden;
     background:#2C2C2E}
@@ -52,13 +53,15 @@
     border-radius:5px 5px 38px 38px;overflow:hidden;
     box-shadow:inset 0 2px 5px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.28)}
 
-  .tape{position:absolute;left:71px;top:-8px;border-radius:50%;transform:translate(-50%,-50%);
-    background:radial-gradient(circle at 50% 46%,#1C1C1E,#1C1C1E 80%);transition:width .6s ease,height .6s ease}
+  .tape{position:absolute;left:71px;top:-8px;width:126px;height:126px;border-radius:50%;
+    transform:translate(-50%,-50%) scale(var(--wound,0));
+    background:radial-gradient(circle at 50% 46%,#1C1C1E,#1C1C1E 80%)}
+  .tape.wound{transition:transform .6s ease}
   .strand{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-  .spinwrap{position:absolute;left:71px;top:-8px;width:88px;height:88px;margin:-44px 0 0 -44px;color:#8E8E93}
-  .spinwrap .reel{width:100%;height:100%;display:block;transform-origin:center;
-    animation:spin 3.6s linear infinite;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
-  .spinwrap.paused .reel{animation-play-state:paused}
+  .spinwrap{position:absolute;left:71px;top:-8px;width:88px;height:88px;margin:-44px 0 0 -44px;color:#8E8E93;
+    animation:spin 3.6s linear infinite}
+  .spinwrap .reel{width:100%;height:100%;display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+  .spinwrap.paused,.spinwrap.off{animation-play-state:paused}
   @keyframes spin{to{transform:rotate(360deg)}}
 
   .glass{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
@@ -69,7 +72,7 @@
   .nav{width:19px;height:19px;border:0;border-radius:6px;background:transparent;color:inherit;cursor:pointer;
     display:flex;align-items:center;justify-content:center}
   .nav svg{width:10px;height:10px}
-  .nav:hover{background:rgba(128,128,128,.22)}
+  @media(hover:hover) and (pointer:fine){ .nav:hover{background:rgba(128,128,128,.22)} }
   .nav:focus-visible{outline:2px solid currentColor;outline-offset:-2px}
   /* A chevron is a drawing: no logical property points it the other way. */
   [dir="rtl"] .nav svg{transform:scaleX(-1)}
@@ -77,7 +80,7 @@
   .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);border:0}
 
   @media(prefers-reduced-motion:reduce){
-    .spinwrap .reel{animation:none!important}
+    .spinwrap{animation:none!important}
     .tape{transition:none!important}
   }
 </style>
@@ -129,7 +132,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, errorState, localiseDigits, placeholder } from '/js/widget-toolbox.js?v=c346a35b';
+import { poll, fetchData, linkTo, loadStrings, wt, errorState, localiseDigits, placeholder, whileOnScreen } from '/js/widget-toolbox.js?v=66813091';
 await loadStrings();
 document.getElementById('w').setAttribute('aria-label', wt('widget.label', 'Now Playing'));
 document.getElementById('prev').setAttribute('aria-label', wt('ui.previous', 'Previous item'));
@@ -189,7 +192,8 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
       playerEl.textContent=s.player||PROVIDER_NAME[provider]||'';
       spinEl.classList.toggle('paused', s.state==='paused');
     }
-    tapeEl.style.width=d+'px'; tapeEl.style.height=d+'px';
+    tapeEl.style.setProperty('--wound', String(d/TAPE_MAX));
+    if(!tapeEl.classList.contains('wound')){ getComputedStyle(tapeEl).transform; tapeEl.classList.add('wound'); }
     /* The offset seats the strand's full 6px thickness inside the spool. Its
        lower edge otherwise shows as a detached stub. */
     let ly=-8+d/2-6; if(ly>50)ly=50; if(ly<18)ly=18;
@@ -202,24 +206,32 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
     ctlEl.hidden=!many;
     countEl.textContent=many ? localiseDigits(`${idx+1}/${sessions.length}`) : '';
   }
-  const EASE_OUT='cubic-bezier(.4,0,1,1)', EASE_IN='cubic-bezier(.32,.72,0,1)';
-  let swapping=false;
+  const EASE_EXIT='cubic-bezier(.23,1,.32,1)', EASE_ENTER='cubic-bezier(.32,.72,0,1)';
+  let swap=0, running=[];
   function nav(dir){
-    if(sessions.length<2||swapping) return;
+    if(sessions.length<2) return;
     idx=(idx+dir+sessions.length)%sessions.length;
     if(reduced){ paint(true); return; }
-    swapping=true;
+    const mine=++swap, busy=running.length>0;
+    for(const a of running) a.cancel();
+    running=[];
     const shift=6*dir*(getComputedStyle(wEl).direction==='rtl'?-1:1);
     const els=[titleEl,subEl,playerEl,countEl];
-    const outs=els.map(el=>el.animate([{opacity:1,transform:'none'},{opacity:0,transform:`translateX(${-shift}px)`}],
-      {duration:160,easing:EASE_OUT,fill:'forwards'}));
-    Promise.all(outs.map(a=>a.finished)).then(()=>{
+    const enter=()=>{
       paint(true);
-      const ins=els.map(el=>el.animate([{opacity:0,transform:`translateX(${shift}px)`},{opacity:1,transform:'none'}],
-        {duration:200,easing:EASE_IN}));
+      running=els.map(el=>el.animate([{opacity:0,transform:`translateX(${shift}px)`},{opacity:1,transform:'none'}],
+        {duration:200,easing:EASE_ENTER}));
+      Promise.all(running.map(a=>a.finished)).then(()=>{ if(mine===swap) running=[]; }).catch(()=>{});
+    };
+    if(busy){ enter(); return; }
+    const outs=els.map(el=>el.animate([{opacity:1,transform:'none'},{opacity:0,transform:`translateX(${-shift}px)`}],
+      {duration:160,easing:EASE_EXIT,fill:'forwards'}));
+    running=outs;
+    Promise.all(outs.map(a=>a.finished)).then(()=>{
+      if(mine!==swap) return;
+      enter();
       for(const a of outs) a.cancel();
-      return Promise.all(ins.map(a=>a.finished));
-    }).catch(()=>{}).finally(()=>{ swapping=false; });
+    }).catch(()=>{});
   }
   prevB.addEventListener('click',e=>{e.stopPropagation();nav(-1);});
   nextB.addEventListener('click',e=>{e.stopPropagation();nav(1);});
@@ -254,6 +266,7 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
     titleEl.replaceChildren(placeholder(96,12));
     subEl.replaceChildren(placeholder(58,9));
     linked=linkTo(linkEl,href);
+    whileOnScreen(spinEl,v=>spinEl.classList.toggle('off',!v));
     const state=errorState({ root:wEl, content:[document.querySelector('.window')],
       caption:document.getElementById('np-cap') });
 

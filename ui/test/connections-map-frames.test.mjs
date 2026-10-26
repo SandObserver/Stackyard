@@ -59,3 +59,22 @@ test('the pulse resumes when the map comes back on screen', async () => {
     map.restore();
   }
 });
+
+test('the pulse repaints only the marker, not the map dots', async () => {
+  const map = await mount();
+  try {
+    map.render(PULSING);
+    map.runFrames();
+    const once = map.dotsDrawn();
+    assert.ok(once > 1000, 'the first frame draws the map');
+    for (let i = 0; i < 5; i++) map.runFrames();
+    assert.equal(map.dotsDrawn(), once);
+    const fills = map.painted();
+    assert.ok(fills.length > 1000, 'each frame still shows the map');
+    map.resize();
+    map.runFrames();
+    assert.ok(map.dotsDrawn() > once, 'a resize redraws the map');
+  } finally {
+    map.restore();
+  }
+});
