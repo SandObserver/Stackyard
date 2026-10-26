@@ -4,6 +4,10 @@
   /* Keep. iOS Safari enlarges frame text on a sideways phone and the widgets clip. */
   document.documentElement.style.webkitTextSizeAdjust = '100%';
   try {
+    const lang = new URLSearchParams(location.search).get('lang');
+    if (lang) document.documentElement.lang = Intl.getCanonicalLocales(lang)[0];
+  } catch {}
+  try {
     const frame = window.frameElement;
     const dark =
       (frame && frame.closest('[data-appearance="dark"]')) ||
