@@ -64,5 +64,5 @@ test('the date starts at 11px or more at design size', () => {
 });
 
 test('the dial date leaves out the year', () => {
-  assert.match(src, /_dateShort = clockDateParts\(_lang, 'short', false\);/);
+  assert.match(src, /_dateShort = clockDateParts\(_lang, 'short', false, _timezone\);/);
 });

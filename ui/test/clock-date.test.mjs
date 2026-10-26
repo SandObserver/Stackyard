@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { clockDateFormatter, clockDateParts, clockDateWithYear } from '../js/clock-date.js';
+import { clockDateFormatter, clockDateParts, clockDateWithYear, zoneTime } from '../js/clock-date.js';
 
 const at = s => new Date(`${s}T12:00:00`);
 
@@ -91,4 +91,27 @@ test('the date with its year turns over at 1 January and at Nowruz', () => {
 
 test('the date with its year falls back to English for an unknown language', () => {
   assert.equal(clockDateWithYear('not a tag')(at('2026-10-26')), 'October 26, 2026');
+});
+
+test("the zone time holds inside the browser zone's spring-forward gap", () => {
+  const saved = process.env.TZ;
+  process.env.TZ = 'Europe/Berlin';
+  try {
+    const t = zoneTime('Europe/London')(new Date('2026-03-29T01:30:00Z'));
+    assert.deepEqual(t, { hours: 2, minutes: 30, seconds: 0 });
+  } finally {
+    if (saved === undefined) delete process.env.TZ;
+    else process.env.TZ = saved;
+  }
+});
+
+test('midnight in a zone reads as hour 0', () => {
+  assert.equal(zoneTime('UTC')(new Date('2026-10-26T00:05:00Z')).hours, 0);
+});
+
+test("the dates follow the clock's zone, not the browser's", () => {
+  const d = new Date('2026-10-26T20:00:00Z');
+  assert.equal(clockDateWithYear('en', 'Asia/Tokyo')(d), 'October 27, 2026');
+  assert.equal(clockDateFormatter('en', 'short', 'Asia/Tokyo')(d), 'Tue, Oct 27');
+  assert.equal(clockDateParts('fa', 'long', true, 'Asia/Tokyo')(d).date, '۵ آبان ۲۵۸۵');
 });

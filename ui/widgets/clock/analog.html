@@ -37,10 +37,10 @@ const API = '/api';
 const NS  = 'http://www.w3.org/2000/svg';
 
 const _lang = new URLSearchParams(location.search).get('lang') || 'en';
-let _dateLong = null, _dateShort = null;
+let _dateLong = null, _dateShort = null, _zoneTime = null;
 function _a11yLabel(now){
-  const hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
-  return `${hh}:${mm}, ${_dateLong(now)}`;
+  const hh=String(now.hours).padStart(2,'0'), mm=String(now.minutes).padStart(2,'0');
+  return `${hh}:${mm}, ${_dateLong(now.date)}`;
 }
 
 const _reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -68,16 +68,11 @@ let _mode='dark', _timezone='', _showDate=true, _zoneBad=false;
 let _groups=null, _dateTexts=[], _dateShown='', _rafId=null, _running=false, _vb=0, _faceSz=0, _drawn={}, _label='';
 
 function _now(){
-  if(!_timezone) return new Date();
-  /* toLocaleString drops milliseconds and freezes the second hand at whole
-     seconds. Timezone offsets are never sub-second. */
-  const d = new Date();
-  const shifted = new Date(d.toLocaleString('en-US', { timeZone: _timezone }));
-  shifted.setMilliseconds(d.getMilliseconds());
-  return shifted;
+  const date = new Date();
+  return { date, ..._zoneTime(date), ms: date.getMilliseconds() };
 }
 
-/* An unknown zone makes every toLocaleString call throw, so the clock never
+/* An unknown zone makes every zone formatter throw, so the clock never
    draws. */
 function zoneOk(z){
   try{ new Intl.DateTimeFormat('en-US', { timeZone: z || undefined }); return true; }
@@ -192,7 +187,7 @@ function buildShell(){
 
 function render(smoothSeconds){
   const now=_now();
-  const h=now.getHours(), m=now.getMinutes(), s=now.getSeconds(), ms=now.getMilliseconds();
+  const h=now.hours, m=now.minutes, s=now.seconds, ms=now.ms;
   const cx=_vb/2, cy=_vb/2;
   const angle={
     hour:   ((h%12)+m/60)*30,
@@ -218,7 +213,7 @@ function render(smoothSeconds){
   const label=_a11yLabel(now);
   if(label!==_label){ _label=label; document.getElementById('widget').setAttribute('aria-label', label); }
   if(_showDate && _dateTexts.length){
-    const d=_dateShort(now);
+    const d=_dateShort(now.date);
     if(d.full!==_dateShown) showDate(d);
   }
 }
@@ -255,7 +250,7 @@ function _loop(){
 function _step(){
   if(!_running) return;
   render(false);
-  _stepId=setTimeout(_step, 1000 - (_now().getMilliseconds()));
+  _stepId=setTimeout(_step, 1000 - new Date().getMilliseconds());
 }
 function start(){
   if(_running) return;
@@ -305,9 +300,10 @@ async function boot(){
     }
   }catch{}
   if(!zoneOk(_timezone)){ _zoneBad=true; return showZoneError(); }
-  const { clockDateFormatter, clockDateParts } = await import('/js/clock-date.js?v=e9647f3b');
-  _dateLong = clockDateFormatter(_lang, 'long');
-  _dateShort = clockDateParts(_lang, 'short', false);
+  const { clockDateFormatter, clockDateParts, zoneTime } = await import('/js/clock-date.js?v=de40b876');
+  _zoneTime = zoneTime(_timezone);
+  _dateLong = clockDateFormatter(_lang, 'long', _timezone);
+  _dateShort = clockDateParts(_lang, 'short', false, _timezone);
   buildShell();
   render(!_reduceMotion);
   watchVisibility();
