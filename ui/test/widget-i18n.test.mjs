@@ -293,7 +293,7 @@ test('the GitHub labels are looked up, and every locale translates them', () => 
 test('both clock styles name days and months through Intl', () => {
   for (const style of ['analog', 'digital']) {
     const src = read(`widgets/clock/${style}.html`);
-    assert.match(src, /_dateShort\(now\)/, `${style} does not format its date`);
+    assert.match(src, /_dateShort\(now(?:\.date)?\)/, `${style} does not format its date`);
     assert.doesNotMatch(src, /'Jan'\s*,\s*'Feb'/, `${style} still carries English month names`);
     assert.doesNotMatch(src, /'Sun'\s*,\s*'Mon'/, `${style} still carries English day names`);
   }

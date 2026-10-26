@@ -102,7 +102,7 @@ const LEAD_H = 40, TIME_SIZE = 90, DATE_SIZE = 25, LEAD_SIZE = 24, LEAD_MIN = 22
 const CX = (BX + 18 + 306 - BX) / 2;
 
 let _timezone = '', _showDate = true, _tickId = null;
-let _lib = null, _dateYear = null, _dateParts = null, _wt = null;
+let _lib = null, _dateYear = null, _dateParts = null, _wt = null, _zoneTime = null;
 let _slots = null, _shown = '', _drawn = false, _leadH = LEAD_H;
 
 const w = () => document.getElementById('widget');
@@ -136,18 +136,13 @@ function measureSlots(sample) {
   return m;
 }
 
-function now() {
-  return _timezone
-    ? new Date(new Date().toLocaleString('en-US', { timeZone: _timezone }))
-    : new Date();
-}
-
 function hm(d) {
   const two = n => {
     try { return new Intl.NumberFormat(_lang, { minimumIntegerDigits: 2, useGrouping: false }).format(n); }
     catch { return String(n).padStart(2, '0'); }
   };
-  return `${two(d.getHours())}:${two(d.getMinutes())}`;
+  const t = _zoneTime(d);
+  return `${two(t.hours)}:${two(t.minutes)}`;
 }
 
 function balloons(ink, leadW, bottom) {
@@ -275,24 +270,24 @@ function pour() {
 }
 
 function scene(d) {
-  const part = _lib.partOfDay(d.getHours());
+  const part = _lib.partOfDay(_zoneTime(d).hours);
   const cls = `widget ${part}${_script === 'fa' ? ' fa' : _script === 'zh' ? ' zh' : ''}${_drawn ? '' : ' still'}`;
   if (w().className !== cls) w().className = cls;
   document.getElementById('room').setAttribute('transform', _rtl ? 'translate(306 0) scale(-1 1)' : '');
 }
 
 function tick() {
-  const d = now();
+  const d = new Date();
   scene(d);
   if (!_drawn) reveal(d);
   else step(d);
   _drawn = true;
   pour();
   if (_tickId) clearTimeout(_tickId);
-  _tickId = setTimeout(tick, (60 - d.getSeconds()) * 1000);
+  _tickId = setTimeout(tick, (60 - _zoneTime(d).seconds) * 1000);
 }
 
-/* An unknown zone makes every toLocaleString call throw, so the clock never
+/* An unknown zone makes every zone formatter throw, so the clock never
    draws. */
 function zoneOk(z) {
   try { new Intl.DateTimeFormat('en-US', { timeZone: z || undefined }); return true; }
@@ -322,10 +317,11 @@ async function boot() {
   const [toolbox, lib, dates] = await Promise.all([
     import('/js/widget-toolbox.js?v=66813091'),
     import('/js/clock-captain.js?v=c571e432'),
-    import('/js/clock-date.js?v=e9647f3b'),
+    import('/js/clock-date.js?v=de40b876'),
   ]);
   _lib = lib;
   _wt = toolbox.wt;
+  _zoneTime = dates.zoneTime();
   scene(new Date());
   await Promise.all([toolbox.loadStrings(), loadFonts()]);
   drawLoading(_wt('ui.captainLoading', 'Captain, it’s…'));
@@ -334,13 +330,14 @@ async function boot() {
   _timezone = wc.clockTimezone || '';
   _showDate = wc.clockShowDate !== false;
   if (!zoneOk(_timezone)) return showZoneError(toolbox);
-  _dateYear = dates.clockDateWithYear(_lang);
-  _dateParts = dates.clockDateParts(_lang, 'long');
+  _zoneTime = dates.zoneTime(_timezone);
+  _dateYear = dates.clockDateWithYear(_lang, _timezone);
+  _dateParts = dates.clockDateParts(_lang, 'long', true, _timezone);
   tick();
 }
 
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && _drawn && hm(now()) !== _shown) tick();
+  if (!document.hidden && _drawn && hm(new Date()) !== _shown) tick();
 });
 
 boot();
