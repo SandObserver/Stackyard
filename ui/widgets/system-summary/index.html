@@ -47,6 +47,7 @@
   .tb-col-mark { background-color: rgba(255,255,255,0.9); }
   /* Keep the picked colour. The edge is what keeps a colour near the card visible. */
   .faint .tb-col-fill, .faint .tb-bar-fill { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35); }
+  .faint .tb-bar-fill { width: var(--tb-pct); transform: none; transition-property: width !important; }
 
   .tb-bar, .tb-col { background-color: rgba(255,255,255,0.12); }
   .net { grid-column: 1 / -1; display: flex; gap: 12px; font-size: 11px; font-weight: 500;
