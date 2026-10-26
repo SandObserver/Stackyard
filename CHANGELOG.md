@@ -157,6 +157,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stop the home screen from enlarging icons on screens wider than a phone.
 
+- Clock faces no longer show the wrong hour when the clock's timezone falls in
+  the browser's daylight saving change.
+
+- The Digital clock updates as soon as a hidden tab is shown again.
+
 ### Security
 
 - Update Node.js to 24.22.1 and nginx to 1.30.6 to fix CVE-2026-111497,
