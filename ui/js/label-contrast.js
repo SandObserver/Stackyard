@@ -234,8 +234,8 @@ export function loadSamplingImage(url) {
 }
 
 /* The page indicator is chrome over the same wallpaper, and it is tinted rather
-   than inked, so it needs the same reading. */
-const LABEL_SELECTOR = '.ilabel, .dyn-mob-label, .dyn-fold-label, #dots';
+   than inked, so it needs the same reading. So does the empty dashboard's text. */
+const LABEL_SELECTOR = '.ilabel, .dyn-mob-label, .dyn-fold-label, #dots, .empty-state > *';
 
 /* A folder overlay lays its own scrim over the background. */
 const SCRIM = '.folder-overlay, .folder-overlay-mobile';

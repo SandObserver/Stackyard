@@ -3,9 +3,9 @@
 
 import { t } from '/js/i18n.js?v=ed7c5565';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=3e9cb9c8';
-import { createListbox } from '/js/listbox.js?v=3e47b403';
-import { renderColorControl } from '/js/admin-color-control.js?v=8c27f165';
+import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=c509d11e';
+import { createListbox } from '/js/listbox.js?v=2734f4e0';
+import { renderColorControl } from '/js/admin-color-control.js?v=b3bb1707';
 import {
   seedCarried,
   applyOptionSet,
@@ -13,9 +13,10 @@ import {
   requiredFieldMissing,
   groupBounds,
   visibleFieldFlags,
-} from '/js/admin-logic.js?v=b3befae4';
+  isPlainField,
+} from '/js/admin-logic.js?v=28471483';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=1c258dc1';
-import { qi } from '/js/utils.js?v=cfee1271';
+import { qi } from '/js/utils.js?v=017012d7';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { SAVED_ROW } from '/js/saved-row.js?v=44039df6';
 
@@ -48,6 +49,7 @@ function _ieRow(field, value, inputType) {
     type: inputType,
     placeholder: ph,
     fill: false,
+    plain: isPlainField(field),
     onCommit: () => inp.dispatchEvent(new Event('change', { bubbles: true })),
   });
   const get = () => {

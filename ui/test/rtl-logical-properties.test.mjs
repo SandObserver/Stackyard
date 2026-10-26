@@ -248,14 +248,16 @@ test('the dashboard needs no direction overrides at all', () => {
   );
 });
 
-/* Only the chevrons, the gradient angle and the toggle knob's travel, resting
-   and pressed, none of which a logical property can express. */
+/* Only the chevrons, the gradient angle and the toggle knob's travel and
+   stretch origin, resting and pressed, none of which a logical property can
+   express. */
 test('admin keeps only the overrides that cannot be logical', () => {
   const allowed = [
     /transform:\s*scaleX\(-1\)/,
     /--slider-dir:\s*270deg/,
     /transform:\s*translateX\(-22px\)/,
     /transform:\s*translateX\(-14px\)/,
+    /transform-origin:\s*right/,
   ];
   const overrides = [...code('css/admin.css').matchAll(/\[dir="rtl"\][^{]*\{[^}]*\}/g)].map(m => m[0]);
   assert.equal(overrides.length, allowed.length, `unexpected override list, found:\n${overrides.join('\n')}`);
@@ -453,6 +455,8 @@ test("the phone folder title starts on the panel's leading edge", () => {
 test('every swipe and drag pager mirrors its direction', () => {
   const ui = code('js/ui.js');
   const calls = [...ui.matchAll(/(goTo|gotoPage)\((st\(\)\.pg|curPage) \+ ([^)]*\)?[^)]*)\)/g)].map(m => m[0]);
-  assert.ok(calls.length >= 3, 'the pager calls moved');
   for (const c of calls) assert.match(c, /pageDir\(\)/, `${c} ignores the page direction`);
+  const pager = ui.slice(ui.indexOf('export function swipePager('), ui.indexOf('function folderMotion('));
+  assert.match(pager, /const rest = n => -pageDir\(\) \* n \* o\.width\(\);/, 'a page rests on the wrong side');
+  assert.match(pager, /dir: pageDir\(\)/, 'a release settles the wrong way');
 });

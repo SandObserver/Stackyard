@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { register } from 'node:module';
+
+register('./js-root-hooks.mjs', import.meta.url);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
@@ -26,6 +29,87 @@ test('closing search puts focus back where it was', () => {
   assert.match(handler[1], /back\.focus\(\)/);
   assert.match(handler[1], /inp\.blur\(\)/);
   assert.match(js, /returnFocus = document\.activeElement;\s*ov\.classList\.add\('on'\);\s*ov\.showModal\(\);/);
+});
+
+class FakeEl extends EventTarget {
+  constructor(id) {
+    super();
+    this.id = id;
+    this.value = '';
+    this.style = {};
+    this.attrs = {};
+    this.children = [];
+    const cls = new Set();
+    this.classList = { add: c => cls.add(c), remove: c => cls.delete(c), toggle() {} };
+  }
+  setAttribute(n, v) {
+    this.attrs[n] = String(v);
+  }
+  appendChild(c) {
+    this.children.push(c);
+  }
+  replaceChildren() {
+    this.children = [];
+  }
+  querySelector() {
+    return null;
+  }
+  focus() {
+    globalThis.document.activeElement = this;
+  }
+  blur() {}
+  get isConnected() {
+    return true;
+  }
+}
+
+/* Chromium puts focus back on close() and fires the close event later, in its
+   own task. */
+function spotlightHarness() {
+  const ov = new FakeEl('spot');
+  const inp = new FakeEl('sin');
+  let before = null;
+  ov.open = false;
+  ov.showModal = () => {
+    ov.open = true;
+    before = globalThis.document.activeElement;
+  };
+  ov.close = () => {
+    ov.open = false;
+    before?.focus();
+  };
+  ov.contains = n => n === ov || n === inp;
+  const byId = { spot: ov, sin: inp, sres: new FakeEl('sres'), 'spot-cancel': new FakeEl('spot-cancel') };
+  const pill = new FakeEl('pill');
+  globalThis.HTMLElement = FakeEl;
+  globalThis.window = globalThis;
+  globalThis.requestAnimationFrame = () => 0;
+  globalThis.document = {
+    activeElement: pill,
+    body: new FakeEl('body'),
+    getElementById: id => byId[id] ?? null,
+    createElement: tag => new FakeEl(tag),
+    addEventListener() {},
+  };
+  return { ov, inp, pill };
+}
+
+test('a close event that lands after Search reopened leaves focus in the field', async () => {
+  const { ov, inp, pill } = spotlightHarness();
+  const { initSpotlight } = await import('../js/spotlight.js');
+  const CB = {};
+  initSpotlight({ getItems: () => [], isMob: () => false, typeToOpen: () => true, CB, iconChain: () => [] });
+  CB.spotOpen('');
+  CB.spotClose();
+  CB.spotOpen('a');
+  assert.equal(document.activeElement, inp);
+  ov.dispatchEvent(new Event('close'));
+  assert.equal(document.activeElement, inp, 'the late close moved focus out of the reopened field');
+
+  CB.spotClose();
+  inp.focus();
+  ov.dispatchEvent(new Event('close'));
+  assert.equal(document.activeElement, pill, 'a plain close no longer puts focus back');
 });
 
 test('a folder result shows the folder icon grid', () => {

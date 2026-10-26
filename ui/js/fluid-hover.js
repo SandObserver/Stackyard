@@ -41,7 +41,7 @@ function stateFor(container) {
   return s;
 }
 
-function refresh(container) {
+function refresh(container, snap = false) {
   const s = stateFor(container);
   /* Whichever moved last. The pointer holding it meant a keyboard cursor in a
      hovered list had no highlight at all, because the row's own background is
@@ -49,6 +49,7 @@ function refresh(container) {
   const target = s.hover || s.kb;
   if (target && target.isConnected && selectable(target)) {
     const pill = ensurePill(container, 'fh-hl');
+    pill.classList.toggle('mp-snap', snap);
     live.add(container);
     placePill(container, pill, target, s.zoom ? s.zoom() : 1);
   } else {
@@ -88,7 +89,7 @@ export function fluidHoverKb(item) {
   s.hover = null;
   s.kb = item;
   bind(container);
-  refresh(container);
+  refresh(container, true);
 }
 
 /* For the test: proves a detached container is not retained. */

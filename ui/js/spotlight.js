@@ -1,5 +1,5 @@
-import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=8b4aadd4';
-import { mk, clr, el, initial, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=cfee1271';
+import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
+import { mk, clr, el, initial, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=017012d7';
 import { t } from '/js/i18n.js?v=ed7c5565';
 
 /* Attached to the window so a re-open can undo the previous one. */
@@ -28,7 +28,8 @@ export function initSpotlight({
   let si = 0,
     cur = [],
     returnFocus = null,
-    openGen = 0;
+    openGen = 0,
+    closeGen = 0;
 
   inp.setAttribute('role', 'combobox');
   inp.setAttribute('aria-autocomplete', 'list');
@@ -96,6 +97,7 @@ export function initSpotlight({
 
       const ic = mk('div');
       ic.className = 'sri';
+      ic.dir = 'ltr';
       ic.style.background = clr(app.color);
       if (isFolder && folderGlyph) {
         ic.style.background = 'transparent';
@@ -223,13 +225,11 @@ export function initSpotlight({
     close();
   });
 
-  /* The dialog stays open for the length of the fade, so the page behind it
-     is inert until the overlay has actually gone. The browser returns focus
-     when it closes. */
+  /* The dialog closes at once, so the page takes input during the fade. The
+     overlay stays drawn until the fade ends and lets input through. */
   ov.addEventListener('close', () => {
-    ov.classList.remove('on');
-    inp.value = '';
-    res.replaceChildren();
+    /* A close that lands after a reopen would move focus out of the new field. */
+    if (closeGen !== openGen) return;
     const back = returnFocus;
     returnFocus = null;
     /* Only while focus is still inside the closed dialog. A folder opened from
@@ -241,7 +241,7 @@ export function initSpotlight({
 
   function close() {
     if (!ov.open) return;
-    openGen++;
+    closeGen = ++openGen;
     ov.classList.remove('vis');
     inp.setAttribute('aria-expanded', 'false');
     inp.setAttribute('aria-activedescendant', '');
@@ -252,9 +252,14 @@ export function initSpotlight({
     ov.style.top = '';
     ov.style.bottom = '';
     ov.classList.remove('kb');
+    ov.close();
+    const gen = openGen;
     setTimeout(() => {
-      if (!ov.classList.contains('vis')) ov.close();
-    }, 220);
+      if (gen !== openGen) return;
+      ov.classList.remove('on');
+      inp.value = '';
+      res.replaceChildren();
+    }, 160);
   }
 
   ov.onclick = e => {
@@ -315,7 +320,7 @@ export function initSpotlight({
   document.addEventListener(
     'keydown',
     e => {
-      if (ov.classList.contains('on') || !typeToOpen()) return;
+      if (ov.open || !typeToOpen()) return;
       if (e.key === 'Escape' || e.key.length !== 1 || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === ' ' && e.target instanceof Element && e.target.closest(ACTIVATES_ON_SPACE)) return;
       e.stopImmediatePropagation();

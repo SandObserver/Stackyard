@@ -63,11 +63,27 @@ test('the placard strings exist in every catalog', () => {
   }
 });
 
-test('the placard draws the logo from the icon set in theme colours', () => {
+test('the placard draws the logo from the icon set in the label colour', () => {
   const src = read('js/utils.js');
   assert.match(src, /href', '#sy-solid-logo'/);
   assert.match(src, /'sy-icon empty-state-mark'/);
-  assert.match(read('css/dashboard.css'), /\.empty-state-mark\s*\{[^}]*color:\s*var\(--label-primary\)/);
+  assert.match(read('css/dashboard.css'), /\.empty-state-mark\s*\{[^}]*color:\s*var\(--label-color\)/);
+});
+
+/* The placard sits on the wallpaper. A theme ink is black in a light system
+   theme, which cannot be read on a dark photo. */
+test('the placard text takes the tone measured on the wallpaper, not the theme', () => {
+  const css = read('css/dashboard.css');
+  const selector = /const LABEL_SELECTOR =\s*'([^']+)'/.exec(read('js/label-contrast.js'))[1];
+  assert.ok(selector.split(/,\s*/).includes('.empty-state > *'), 'the placard is not toned');
+  for (const part of ['mark', 'title', 'sub', 'btn', 'hint']) {
+    const cls = `.empty-state-${part}`;
+    assert.match(css, new RegExp(`\\${cls}\\[data-tone="dark"\\]\\s*\\{[^}]*color:`), `${cls} has no dark tone`);
+    assert.doesNotMatch(css, new RegExp(`html\\[data-theme="light"\\][^{]*\\${cls}\\b`), `${cls} follows the theme`);
+    const base = new RegExp(`(?:^|\\n)\\${cls} \\{([^}]*)\\}`).exec(css);
+    assert.ok(base, `${cls} rule is gone`);
+    assert.doesNotMatch(base[1], /--label-(?:primary|secondary)/, `${cls} takes a theme ink`);
+  }
 });
 
 test('both layouts drop the settings tile while the dashboard is empty', () => {

@@ -126,3 +126,51 @@ export function wheelPager({ threshold = 40, quietMs = 220 } = {}) {
     return sum > 0 ? 1 : -1;
   };
 }
+
+export const FLICK_SPEED = 0.11;
+export const SWIPE_LOCK_PX = 10;
+const PAGE_EASE_SLOPE = 0.72 / 0.32;
+export const PAGE_TURN_MS = 280;
+
+/** @returns {{ add: (x: number, t: number) => void, speed: (now: number) => number }} */
+export function fingerSpeed(windowMs = 100) {
+  /** @type {[number, number][]} */
+  let pts = [];
+  return {
+    add(x, t) {
+      pts.push([x, t]);
+      pts = pts.filter(p => t - p[1] <= windowMs);
+    },
+    speed(now) {
+      if (pts.length < 2 || now - pts[pts.length - 1][1] > windowMs) return 0;
+      const [x0, t0] = pts[0];
+      const [x1, t1] = pts[pts.length - 1];
+      return t1 > t0 ? (x1 - x0) / (t1 - t0) : 0;
+    },
+  };
+}
+
+/** @param {number} over @param {number} dim @returns {number} */
+export function rubberBand(over, dim) {
+  return (over * 0.55 * dim) / (dim + 0.55 * over);
+}
+
+/** `offset` and `speed` are physical: negative is towards the left of the
+    screen. `dir` is pageDir(), so the next page is on the left in one direction
+    and on the right in the other.
+
+    @param {{ page: number, total: number, offset: number, speed: number, width: number, dir: number }} o
+    @returns {number} the page index */
+export function swipeSettle({ page, total, offset, speed, width, dir }) {
+  const at = page + (-offset * dir) / width;
+  const along = -speed * dir;
+  let target = Math.round(at);
+  if (Math.abs(speed) > FLICK_SPEED) target = along > 0 ? Math.ceil(at) : Math.floor(at);
+  return Math.max(0, Math.min(total - 1, target));
+}
+
+/** @param {number} distance @param {number} speed @returns {number} ms */
+export function settleMs(distance, speed) {
+  if (!(speed > 0) || !(distance > 0)) return PAGE_TURN_MS;
+  return Math.round(Math.max(120, Math.min(PAGE_TURN_MS, (PAGE_EASE_SLOPE * distance) / speed)));
+}

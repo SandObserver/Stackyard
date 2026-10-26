@@ -35,6 +35,7 @@
   font-family: inherit; font-size: var(--fs-headline); line-height: var(--lh-headline); letter-spacing: var(--tr-headline);
   font-weight: var(--fw-headline);
 }
+.cfg-recovery-btn:active:not(:disabled) { opacity: 0.8 }
 .cfg-recovery-btn:disabled { opacity: 0.6; cursor: default }
 .cfg-recovery-btn:focus-visible, .cfg-recovery-help a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
 .cfg-recovery-status:empty { display: none }

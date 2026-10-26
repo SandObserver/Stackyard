@@ -123,7 +123,7 @@ const keydown = dashboard.slice(
 );
 const mouseup = dashboard.slice(
   dashboard.indexOf("document.addEventListener('mouseup'"),
-  dashboard.indexOf('let _dTx'),
+  dashboard.indexOf("'touchstart'", dashboard.indexOf("document.addEventListener('mouseup'")),
 );
 
 test('arrow keys page on the phone layout too', () => {
@@ -155,10 +155,62 @@ test('an open folder overlay stops the keyboard pager', () => {
   assert.match(keydown, /folder-overlay/);
 });
 
-test('the touch pager still belongs to one layout only', () => {
-  const at = dashboard.indexOf("'touchend'");
-  const touchend = dashboard.slice(at, dashboard.indexOf('{ passive: true }', at));
-  assert.match(touchend, /if \(MOB\) return/, 'both swipe handlers would advance two pages for one gesture');
+/* Two touch pagers would advance two pages for one gesture. */
+test('one touch pager serves both layouts', () => {
+  assert.equal(dashboard.match(/swipePager\(document,/g)?.length, 1);
+  const ui = read('js/ui.js');
+  const build = ui.slice(ui.indexOf('export function buildMobile('), ui.indexOf('export function resetMobileChrome('));
+  assert.doesNotMatch(build, /swipePager\(document|goTo\(st\(\)\.pg \+ \(dx/, 'the phone build pages on its own');
+});
+
+/* The swipe follows the finger and settles from where the finger left it. */
+const ui = read('js/ui.js');
+const pager = ui.slice(ui.indexOf('export function swipePager('), ui.indexOf('function folderMotion('));
+
+test('the strip follows the finger while it is down', () => {
+  assert.match(pager, /move\(pid, px, py, ts\) \{[\s\S]*strip\.style\.transform = [^;]*translateX\(\$\{x\}px\)/);
+  assert.match(pager, /strip\.style\.transition = 'none'/);
+});
+
+test('the release settles from the finger, at the finger speed', () => {
+  assert.match(pager, /swipeSettle\(\{/);
+  assert.match(pager, /settleMs\(/);
+  assert.match(pager, /strip\.style\.transition = `transform \$\{ms\}ms var\(--page-ease\)`;\s*o\.turn\(n\)/);
+});
+
+test('only the first finger drags, and a vertical drag is left alone', () => {
+  assert.match(pager, /if \(id !== null \|\| /);
+  assert.match(pager, /p\.identifier === id/);
+  assert.match(pager, /axis = Math\.abs\(dx\) > Math\.abs\(dy\) \? 'x' : 'y'/);
+});
+
+test('a finger whose touchend never arrived does not lock the pager', () => {
+  assert.match(
+    pager,
+    /'touchstart',[\s\S]{0,200}if \(id !== null && e\.touches\.length === e\.changedTouches\.length\) feed\.up\(id, e\.timeStamp, false\);/,
+  );
+});
+
+test('the page strip has no touch listener that blocks scrolling', () => {
+  assert.doesNotMatch(pager, /passive: false/);
+  assert.doesNotMatch(pager, /preventDefault/);
+});
+
+test('an open folder or search keeps the home pager still', () => {
+  const call = dashboard.slice(dashboard.indexOf('swipePager(document,'));
+  assert.match(
+    call.slice(0, 400),
+    /enabled: \(\) =>[\s\S]*spot[\s\S]*folder-overlay\[open\], \.folder-overlay-mobile\[open\]/,
+  );
+});
+
+/* An ease-in-out barely moves for the first 100ms, and a keyboard page turn
+   reads as stuck. */
+test('a page turns in 280ms on an ease-out curve', () => {
+  const css = read('css/dashboard.css');
+  assert.match(css, /--page-ease:\s+cubic-bezier\(\.32,\.72,0,1\);/);
+  assert.match(css, /#pages \{[^}]*transition:transform \.28s var\(--page-ease\);/);
+  assert.match(css, /\.dyn-strip\s+\{[^}]*transition:transform \.28s var\(--page-ease\);/);
 });
 
 /* A strip is laid out in the page's direction, so the next page is on the left
@@ -213,4 +265,22 @@ test('the hidden pager is not painted', () => {
     /<nav id="dots"[^>]*\shidden>/,
     'the bar must start hidden, or the error screen shows it empty',
   );
+});
+
+/* A widget frame swallows touches, so it hands them to the same pager. Its
+   points are in the frame's own pixels, and the frame moves with the strip. */
+test('a swipe on a phone widget drives the home pager', () => {
+  const utils = read('js/utils.js');
+  const gesture = utils.slice(
+    utils.indexOf('An iframe swallows touches'),
+    utils.indexOf("ifr.addEventListener('load', attach)"),
+  );
+  assert.match(gesture, /const r = ifr\.getBoundingClientRect\(\);/, 'the point must be mapped at every event');
+  assert.match(gesture, /r\.left \+ touch\.clientX \* k/);
+  assert.match(gesture, /owned = ownsSidewaysTouch\(e\.target\)/, 'a widget scrubber would page');
+  assert.match(gesture, /feed\(\)\?\.down\(/);
+  assert.match(gesture, /feed\(\)\?\.move\(/);
+  assert.match(gesture, /feed\(\)\?\.up\(/);
+  assert.match(gesture, /if \(!fling \|\| moved \|\| !overlayHref\) return;/, 'a tap must still open the link');
+  assert.doesNotMatch(gesture, /onSwipe/);
 });

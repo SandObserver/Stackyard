@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
-const { scrollsSideways } = await import('../js/utils.js');
+const { scrollsSideways, ownsSidewaysTouch } = await import('../js/utils.js');
 
-const view = { getComputedStyle: n => ({ overflowX: n.ox }) };
+const view = { getComputedStyle: n => ({ overflowX: n.ox, touchAction: n.ta ?? 'auto' }) };
 const node = (props, parent = null) => ({
   nodeType: 1,
   ownerDocument: { defaultView: view },
@@ -37,4 +37,20 @@ test('a strip already at its end hands the wheel to the pager', () => {
 
 test('overflow that is clipped, not scrollable, does not count', () => {
   assert.equal(scrollsSideways(node({ ox: 'hidden', scrollWidth: 400, clientWidth: 100 }), 30), false);
+});
+
+/* A widget swipe drags the home pages, unless the widget takes the sideways
+   touch for itself. */
+test('a plain widget leaves a sideways touch to the home pager', () => {
+  assert.equal(ownsSidewaysTouch(node({}, node({ ta: 'manipulation' }))), false);
+  assert.equal(ownsSidewaysTouch(node({ ta: 'pan-x pan-y' })), false);
+});
+
+test('a scrubber that takes sideways touch keeps it', () => {
+  assert.equal(ownsSidewaysTouch(node({}, node({ ta: 'pan-y' }))), true);
+  assert.equal(ownsSidewaysTouch(node({ ta: 'none' })), true);
+});
+
+test('a strip that scrolls sideways keeps the touch', () => {
+  assert.equal(ownsSidewaysTouch(node({}, node({ ox: 'auto', scrollWidth: 400, clientWidth: 100 }))), true);
 });

@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { DOCK_MAX } from '../js/limits.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -8,6 +9,8 @@ import {
   settleDock,
   isDockBlocked,
   nextActiveIndex,
+  isPlainTextKey,
+  isPlainField,
   sameIconName,
   groupBounds,
   visibleFieldKeys,
@@ -767,4 +770,48 @@ test('urlHasLogin spots a username or password before the host', () => {
   for (const u of ['http://adguard.lan/control/stats', 'http://host/api?u=a@b', '', 'http://', undefined]) {
     assert.equal(urlHasLogin(u), false, String(u));
   }
+});
+
+test('widget fields naming an address, a user or an id take no capitals', () => {
+  for (const key of [
+    'url',
+    'dnsUrl',
+    'githubHref',
+    'username',
+    'backrestUser',
+    'siteId',
+    'pbsTokenId',
+    'dnsNextdnsProfile',
+  ]) {
+    assert.equal(isPlainTextKey(key), true, key);
+  }
+  for (const key of ['name', 'label', 'customName', 'cityQuery', 'clockTimezone', 'storage', '', undefined]) {
+    assert.equal(isPlainTextKey(key), false, String(key));
+  }
+});
+
+test('a widget field marked plain takes no capitals whatever its key', () => {
+  assert.equal(isPlainField({ key: 'primary', plain: true }), true);
+  assert.equal(isPlainField({ key: 'primary' }), false);
+  assert.equal(isPlainField({ key: 'primary', plain: 'yes' }), false);
+  assert.equal(isPlainField({ key: 'url' }), true);
+  assert.equal(isPlainField({ key: 'url', plain: false }), true);
+  assert.equal(isPlainField(undefined), false);
+});
+
+/* The widget compares these names exactly. A capitalised one shows 0%. */
+test('every System Summary disk name field is marked plain', () => {
+  const manifest = JSON.parse(
+    fs.readFileSync(new URL('../widgets/system-summary/widget.json', import.meta.url), 'utf8'),
+  );
+  const found = [];
+  const walk = node => {
+    if (Array.isArray(node)) return node.forEach(walk);
+    if (!node || typeof node !== 'object') return;
+    if (node.key === 'primary' || node.key === 'secondary') found.push(node);
+    Object.values(node).forEach(walk);
+  };
+  walk(manifest);
+  assert.ok(found.length >= 12, `found only ${found.length} disk name fields`);
+  for (const f of found) assert.equal(isPlainField(f), true, `${f.label} still capitalises`);
 });

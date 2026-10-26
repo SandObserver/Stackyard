@@ -250,11 +250,11 @@ html.type-small:not(.is-mobile) {
    suit any page belong here. A selector naming dashboard elements, or an
    override of a token dashboard.css defines, stays in that file. */
 
-/* Not zero. A duration of exactly 0 skips the transitionend event some code
-   waits on. .01ms is instant and still fires. */
+/* Fades and colour changes keep their timing. Movement jumps. transitionend
+   never fires for a dropped property, so code waiting on it needs a timeout. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    transition-duration: .01ms !important;
+    transition-property: opacity, visibility, color, background-color, border-color, outline-color, fill, stroke, box-shadow !important;
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;

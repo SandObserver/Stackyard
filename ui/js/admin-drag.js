@@ -9,24 +9,33 @@
    directly. This module is the DOM half: what the pointer is doing, which edge
    it is near, and which classes say so. */
 
-import { applyDrop, canDropInGroup, canJoinFolder, folderRowZone } from '/js/admin-drag-logic.js?v=1d1d553e';
+import {
+  applyDrop,
+  canDropInGroup,
+  canJoinFolder,
+  folderRowZone,
+  pastLiftSlop,
+} from '/js/admin-drag-logic.js?v=4aae5094';
 import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { snapshotItems } from '/js/admin-save-logic.js?v=b83791fb';
-import { qa } from '/js/utils.js?v=cfee1271';
+import { qa } from '/js/utils.js?v=017012d7';
 
 /** @type {(before: unknown) => void} */
 let _save = () => {};
 /** @type {() => void} */
 let _dockFull = () => {};
+/** @type {() => void} */
+let _redraw = () => {};
 
 /** The list writes the config and shows notices, not this module. Call once
     at start-up.
     @param {(before: unknown) => void} save @param {() => void} dockFull
-    @returns {void} */
-export function initDrag(save, dockFull) {
+    @param {() => void} [redraw] @returns {void} */
+export function initDrag(save, dockFull, redraw = () => {}) {
   _save = save;
   _dockFull = dockFull;
+  _redraw = redraw;
   /* Capture runs before the row handlers, which set it again over a refusing
      row. So it describes the element under the pointer now. */
   document.addEventListener('dragover', () => (_refused = false), true);
@@ -36,7 +45,30 @@ export function initDrag(save, dockFull) {
 /* Applies the arrangement and saves it, or leaves the list untouched. */
 function commit(opts) {
   const before = snapshotItems(state.items);
-  if (applyDrop(state.items, { ...opts, dockMax: DOCK_MAX })) _save(before);
+  if (!applyDrop(state.items, { ...opts, dockMax: DOCK_MAX })) return false;
+  _save(before);
+  return true;
+}
+
+/* A redraw replaces every row. A touch drag whose handle is replaced loses its
+   pointer capture and never ends, so a redraw asked for mid-drag waits. */
+let _dragging = false;
+let _redrawHeld = false;
+
+/** Whether a drag is in progress. If so, the caller skips its redraw and it
+    runs once the drag ends.
+    @returns {boolean} */
+export function redrawHeld() {
+  if (_dragging) _redrawHeld = true;
+  return _dragging;
+}
+
+/** @returns {boolean} whether a redraw was held */
+function releaseRedraw() {
+  const held = _redrawHeld;
+  _dragging = false;
+  _redrawHeld = false;
+  return held;
 }
 
 /* dataTransfer is not readable during dragover. */
@@ -116,24 +148,35 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
     if (row.draggable === false) return; /* hidden while filtering */
     e.preventDefault();
     const srcId = row.dataset.itemId;
-    const startRect = row.getBoundingClientRect();
-    const ghost = row.cloneNode(true);
-    ghost.className = 'row drow drag-ghost';
-    ghost.style.width = startRect.width + 'px';
-    ghost.style.left = startRect.left + 'px';
-    ghost.style.top = startRect.top + 'px';
-    document.body.appendChild(ghost);
-    row.classList.add('dragging');
-    handle.setPointerCapture(e.pointerId);
-    const offY = e.clientY - startRect.top;
-    let hovered = null,
+    const pointerId = e.pointerId;
+    handle.setPointerCapture(pointerId);
+    _dragging = true;
+    const x0 = e.clientX,
+      y0 = e.clientY;
+    /** @type {HTMLElement|null} */
+    let ghost = null;
+    let startRect = null,
+      offY = 0,
+      hovered = null,
       dropAbove = false,
       dropInto = false,
       scrollTimer = null;
     const scroller = scrollParent(row);
 
+    const lift = () => {
+      startRect = row.getBoundingClientRect();
+      offY = y0 - startRect.top;
+      ghost = /** @type {HTMLElement} */ (row.cloneNode(true));
+      ghost.className = 'row drow drag-ghost';
+      ghost.style.width = startRect.width + 'px';
+      ghost.style.left = startRect.left + 'px';
+      ghost.style.top = startRect.top + 'px';
+      document.body.appendChild(ghost);
+      row.classList.add('dragging');
+    };
+
     const place = (x, y) => {
-      ghost.style.top = y - offY + 'px';
+      ghost.style.transform = `translateY(${y - offY - startRect.top}px)`;
       const under = /** @type {HTMLElement} */ (document.elementFromPoint(x, y));
       const tr = /** @type {HTMLElement} */ (under && under.closest('.drow, .al-dock-empty'));
       if (!tr || tr === row || tr === ghost) {
@@ -185,6 +228,10 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
       if (!up && !dn) return;
       let last = performance.now();
       const step = now => {
+        if (!handle.isConnected) {
+          cancel();
+          return;
+        }
         scrollByPx(scroller, (up ? -1 : 1) * (now - last) * SCROLL_PX_PER_MS);
         last = now;
         scrollTimer = requestAnimationFrame(step);
@@ -192,6 +239,10 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
       scrollTimer = requestAnimationFrame(step);
     };
     const move = ev => {
+      if (!ghost) {
+        if (!pastLiftSlop(ev.clientX - x0, ev.clientY - y0)) return;
+        lift();
+      }
       place(ev.clientX, ev.clientY);
       autoscroll(ev.clientY);
     };
@@ -199,27 +250,21 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
       handle.removeEventListener('pointermove', move);
       handle.removeEventListener('pointerup', up);
       handle.removeEventListener('pointercancel', cancel);
+      document.removeEventListener('lostpointercapture', lost);
       if (scrollTimer) cancelAnimationFrame(scrollTimer);
-      ghost.remove();
+      scrollTimer = null;
       row.classList.remove('dragging');
       _refused = false;
       _marked = null;
       clearDragClasses();
+      return releaseRedraw();
     };
-    const up = () => {
-      const tr = hovered;
-      const refused = _refused;
-      end();
-      if (!tr) {
-        if (refused) _dockFull();
-        return;
-      }
+    const drop = tr => {
       if (tr.classList.contains('al-dock-empty')) {
-        commit({ srcId, srcFolderId: indent ? folderId : null, targetId: null, targetGroup: 'dock' });
-        return;
+        return commit({ srcId, srcFolderId: indent ? folderId : null, targetId: null, targetGroup: 'dock' });
       }
       const into = !!tr.dataset.isFolder && canJoinFolder(itemType(srcId)) && dropInto;
-      commit({
+      return commit({
         srcId,
         srcFolderId: indent ? folderId : null,
         targetId: tr.dataset.itemId,
@@ -231,11 +276,58 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
         targetGroup: tr.dataset.group,
       });
     };
-    const cancel = () => end();
+    const up = () => {
+      const tr = hovered;
+      const refused = _refused;
+      const held = end();
+      const moved = !!tr && drop(tr);
+      if (moved || held) _redraw();
+      if (!ghost) return;
+      settle(ghost, startRect, rowOf(srcId));
+      if (!tr && refused) _dockFull();
+    };
+    const cancel = () => {
+      if (end()) _redraw();
+      if (ghost) settle(ghost, startRect, rowOf(srcId));
+    };
+    /* Fires on the document, not the handle, when the handle leaves the page.
+       No pointerup follows. */
+    const lost = ev => {
+      if (ev.pointerId === pointerId) cancel();
+    };
     handle.addEventListener('pointermove', move);
     handle.addEventListener('pointerup', up);
     handle.addEventListener('pointercancel', cancel);
+    document.addEventListener('lostpointercapture', lost);
   });
+}
+
+/** @param {string} id @returns {HTMLElement|null} */
+function rowOf(id) {
+  return /** @type {HTMLElement|undefined} */ (qa('.drow:not(.drag-ghost)').find(r => r.dataset.itemId === id)) || null;
+}
+
+/** @param {HTMLElement} ghost @param {DOMRect} from @param {HTMLElement|null} to */
+function settle(ghost, from, to) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    ghost.remove();
+    return;
+  }
+  const rect = to?.getBoundingClientRect();
+  const shown = !!rect && rect.height > 0;
+  if (shown) to.classList.add('dragging');
+  let timer = 0;
+  const done = () => {
+    clearTimeout(timer);
+    ghost.remove();
+    if (shown) to.classList.remove('dragging');
+  };
+  ghost.addEventListener('transitionend', done, { once: true });
+  /* transitionend never fires if the transition is dropped. */
+  timer = setTimeout(done, 400);
+  ghost.style.transition = 'transform var(--t-reveal) var(--ease-reveal), opacity var(--t-reveal) var(--ease-reveal)';
+  if (shown) ghost.style.transform = `translate(${rect.left - from.left}px, ${rect.top - from.top}px)`;
+  else ghost.style.opacity = '0';
 }
 
 /** Every drag affordance for one row: the pointer handlers and the touch
@@ -255,6 +347,7 @@ export function wireRowDrag(row, handle, { item, indent, folderId, childIdx }) {
     _dragId = item.id;
     _refused = false;
     _dropped = false;
+    _dragging = true;
     frame = requestAnimationFrame(() => row.classList.add('dragging'));
   });
   row.addEventListener('dragend', () => {
@@ -266,6 +359,7 @@ export function wireRowDrag(row, handle, { item, indent, folderId, childIdx }) {
     _dragType = null;
     _marked = null;
     clearDragClasses();
+    if (releaseRedraw()) _redraw();
   });
   row.addEventListener('dragover', e => {
     if (!accepts(_dragId, row.dataset.group)) {
