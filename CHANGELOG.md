@@ -49,6 +49,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Let widget text fields opt out of capitalisation and autocorrect with
   `"plain": true`.
 
+- Add a Captain style to the Clock widget, a comic panel with the weekday, time,
+  date and a glass of beer.
+
 ### Changed
 
 - Long weather condition labels shrink to fit before they are cut off.
