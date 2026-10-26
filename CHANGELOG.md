@@ -162,6 +162,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Digital clock updates as soon as a hidden tab is shown again.
 
+- Widgets declare the dashboard language, so screen readers read their text in
+  that language.
+
+- The Connections map names countries in the dashboard language.
+
 ### Security
 
 - Update Node.js to 24.22.1 and nginx to 1.30.6 to fix CVE-2026-111497,
