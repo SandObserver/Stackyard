@@ -14,7 +14,7 @@ import { confirmText, promptModal } from '/js/modal.js?v=6b0320bd';
 import { el, inp, setUserText } from '/js/utils.js?v=017012d7';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { serialWrites } from '/js/admin-save-logic.js?v=b83791fb';
-import { renderColorControl } from '/js/admin-color-control.js?v=b3bb1707';
+import { renderColorControl } from '/js/admin-color-control.js?v=b47faa12';
 import { BACKDROP } from '/js/background.js?v=4d651887';
 import {
   ALLOWED_HOSTS_MAX,

@@ -40,6 +40,9 @@
       "suspicious": {
         "noShadow": "error",
         "useIterableCallbackReturn": "off"
+      },
+      "performance": {
+        "useDomNodeTextContent": "off"
       }
     }
   },
