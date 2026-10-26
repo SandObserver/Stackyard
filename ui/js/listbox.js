@@ -221,7 +221,7 @@ export function createListbox(
     );
     const o = items();
     const first = o.findIndex(li => li.getAttribute('aria-selected') === 'true');
-    setActive(first >= 0 ? first : 0);
+    setActive(Math.max(first, 0));
     if (animate) list.classList.add('dd-in');
   };
 
