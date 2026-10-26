@@ -138,6 +138,12 @@
       "/js/badge-logic.js?v=*": [
         "./ui/js/badge-logic.js"
       ],
+      "/js/clock-captain.js": [
+        "./ui/js/clock-captain.js"
+      ],
+      "/js/clock-captain.js?v=*": [
+        "./ui/js/clock-captain.js"
+      ],
       "/js/clock-date.js": [
         "./ui/js/clock-date.js"
       ],

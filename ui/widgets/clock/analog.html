@@ -305,7 +305,7 @@ async function boot(){
     }
   }catch{}
   if(!zoneOk(_timezone)){ _zoneBad=true; return showZoneError(); }
-  const { clockDateFormatter, clockDateParts } = await import('/js/clock-date.js?v=161731f5');
+  const { clockDateFormatter, clockDateParts } = await import('/js/clock-date.js?v=e9647f3b');
   _dateLong = clockDateFormatter(_lang, 'long');
   _dateShort = clockDateParts(_lang, 'short', false);
   buildShell();

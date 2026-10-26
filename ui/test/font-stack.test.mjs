@@ -30,13 +30,35 @@ function files(dir, out = []) {
 
 /* The widget guide and the widget template are scanned too. They are what a new
    widget is copied from, so an old stack there reintroduces itself. */
-const all = [...files(ui), ...files(path.join(root, 'docs'))].map(p => [
-  path.relative(root, p),
-  fs.readFileSync(p, 'utf8'),
-]);
+/* The Captain clock face draws its words in comic lettering bundled with the
+   widget. Only that page may name those faces, alone or before the stack. */
+const LETTERING_PAGE = 'ui/widgets/clock/captain.html';
+const LETTERING = ['"Patrick Hand"', 'Vazirmatn', '"ZCOOL KuaiLe"'];
+const LETTERING_DECL = new RegExp(
+  `font-family:\\s*(?:${LETTERING.join('|')})(?:, ${CANON.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})?\\s*(?=[;}])`,
+  'g',
+);
+
+const all = [...files(ui), ...files(path.join(root, 'docs'))].map(p => {
+  const name = path.relative(root, p);
+  const src = fs.readFileSync(p, 'utf8');
+  return [name, name === LETTERING_PAGE ? src.replace(LETTERING_DECL, '') : src];
+});
 
 test('the scan sees the project', () => {
   assert.ok(all.length > 20, `only ${all.length} files found, the scan is probably wrong`);
+});
+
+test('every lettering face the Captain page names is bundled with it', () => {
+  const src = fs.readFileSync(path.join(root, LETTERING_PAGE), 'utf8');
+  const faces = [...src.matchAll(/@font-face\s*\{([^}]*)\}/g)].map(m => m[1]);
+  assert.ok(faces.length >= LETTERING.length, 'the page declares its faces');
+  for (const face of faces) {
+    const family = face.match(/font-family:\s*([^;]+);/)[1].trim();
+    assert.ok(LETTERING.includes(family), `${family} is not a listed lettering face`);
+    const file = face.match(/src:\s*url\(([^)]+)\)/)[1];
+    assert.ok(fs.existsSync(path.join(root, path.dirname(LETTERING_PAGE), file)), `${file} is missing`);
+  }
 });
 
 /* inherit and monospace are not the UI face. monospace is for the code spans in

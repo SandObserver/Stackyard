@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Captain Clock</title>
+<script src="/js/widget-theme.js?v=ad9fc2f7"></script>
+<style>
+  @font-face { font-family: "Patrick Hand"; src: url(fonts/patrick-hand.woff2) format("woff2"); font-display: block; }
+  @font-face { font-family: Vazirmatn; font-weight: 400; src: url(fonts/vazirmatn-400.woff2) format("woff2"); font-display: block; }
+  @font-face { font-family: Vazirmatn; font-weight: 600; src: url(fonts/vazirmatn-600.woff2) format("woff2"); font-display: block; }
+  @font-face { font-family: "ZCOOL KuaiLe"; src: url(fonts/zcool-kuaile.woff2) format("woff2"); font-display: block; }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+
+  .widget { position: relative; width: 100%; height: 100%;
+    --ink: #111; --bubble: #FFFFFF; --soft: #5A5650; --stroke: 4.4; --placeholder: rgba(60,60,67,0.12);
+    --wt-cap-color: var(--cap); }
+  .morning { --wall: #DDB656; --wood: #CC8A2E; --beer: #F2C64C; --hi: #F9DC8A; --foam: #FFFFFF; --foam-lo: #E4DAE6; --cap: #2E2614; }
+  .day     { --wall: #D8AF4F; --wood: #C8852B; --beer: #F0C24A; --hi: #F8DA86; --foam: #FFFFFF; --foam-lo: #E3D9E6; --cap: #2E2614; }
+  .dusk    { --wall: #D59A5C; --wood: #B06F2C; --beer: #EBB24A; --hi: #F5CF86; --foam: #FFF6EC; --foam-lo: #E6D3CF; --cap: #2E2614; }
+  .night   { --wall: #33405F; --wood: #6A4526; --beer: #C9A04A; --hi: #DDBD72; --foam: #E4E0E8; --foam-lo: #B8B3C4; --cap: rgba(255,255,255,0.72); }
+  .late    { --wall: #1E2539; --wood: #3E2A1A; --beer: #8C7238; --hi: #A58A4C; --foam: #A9A6B2; --foam-lo: #8A8796; --cap: rgba(255,255,255,0.72); }
+
+  #art { display: block; width: 100%; height: 100%; }
+  .wall, .wood, .beer, .hi, .foam, .foam-lo { transition: fill 0.6s ease; }
+  .wall { fill: var(--wall); }
+  .grain { mix-blend-mode: multiply; }
+  .wood { fill: var(--wood); }
+  .rule, .rim { fill: none; stroke: var(--ink); stroke-linejoin: round; }
+  .glass { fill: #FFFFFF; fill-opacity: 0.32; }
+  .beer { fill: var(--beer); }
+  .hi { fill: var(--hi); }
+  .foam { fill: var(--foam); }
+  .foam-lo { fill: var(--foam-lo); }
+  #beer { transform: translateY(12px); transition: transform 0.45s cubic-bezier(0.23, 1, 0.32, 1); }
+  .outline { fill: var(--bubble); stroke: var(--ink); stroke-width: var(--stroke); stroke-linejoin: round; }
+  .bubble { fill: var(--bubble); }
+  .placeholder { fill: var(--placeholder); }
+
+  .words { font-family: "Patrick Hand", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; fill: var(--ink); }
+  .time { font-family: "Patrick Hand", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; fill: var(--ink); }
+  #date { fill: var(--soft); }
+  .fa .words, .fa .time { font-family: Vazirmatn, -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+  .fa .words { direction: rtl; }
+  .fa .time { font-weight: 600; }
+  .zh .words { font-family: "ZCOOL KuaiLe", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+
+  @media (prefers-contrast: more) { .widget { --soft: #111; --stroke: 6.4; } }
+  @media (forced-colors: active) {
+    .widget { --wall: Canvas; --wood: Canvas; --beer: Canvas; --hi: Canvas; --foam: Canvas; --foam-lo: Canvas;
+      --ink: CanvasText; --bubble: Canvas; --soft: CanvasText; --cap: CanvasText; --placeholder: GrayText; }
+    .grain, .glass { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { #beer { transition: none; } }
+</style>
+</head>
+<body>
+<div class="widget day" id="widget" role="img" aria-label="Clock">
+  <svg id="art" viewBox="0 0 306 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+    <defs>
+      <pattern id="grain" width="32" height="32" patternUnits="userSpaceOnUse"><image href="grain.png" width="32" height="32"/></pattern>
+      <clipPath id="glass-clip"><path d="M236 236 H266 L264 282 H238 Z"/></clipPath>
+    </defs>
+    <g id="room">
+      <rect class="wall" width="306" height="300"/>
+      <rect class="grain" width="306" height="300" fill="url(#grain)"/>
+      <rect class="wood" x="-2" y="282" width="310" height="20"/>
+      <path class="rule" d="M-2 282.5 H308" stroke-width="2.2"/>
+      <path class="rule" d="M-2 296 H308" stroke-width="2"/>
+      <g clip-path="url(#glass-clip)">
+        <path class="glass" d="M236 236 H266 L264 282 H238 Z"/>
+        <g id="beer">
+          <rect class="beer" x="236" y="279" width="30" height="60"/>
+          <rect class="hi" x="253" y="283" width="4" height="60"/>
+          <rect class="foam" x="236" y="272" width="30" height="8"/>
+          <rect class="foam-lo" x="255" y="272" width="11" height="8"/>
+          <path class="rule" d="M236 280 H266" stroke-width="1.6"/>
+        </g>
+      </g>
+      <path class="rim" d="M236 236 H266 L264 282 H238 Z" stroke-width="2.4"/>
+    </g>
+    <g id="ink"></g>
+  </svg>
+</div>
+<script>
+const id  = new URLSearchParams(location.search).get('id') || '';
+const API = '/api';
+const NS  = 'http://www.w3.org/2000/svg';
+
+const _lang = new URLSearchParams(location.search).get('lang') || 'en';
+const _script = _lang.split('-')[0];
+const _rtl = _script === 'fa';
+const _reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
+
+const BX = 22, BY = 22, BW = 262, BR = 18;
+const LEAD_H = 40, TIME_SIZE = 90, DATE_SIZE = 25, LEAD_SIZE = 24, LEAD_MIN = 22;
+const CX = (BX + 18 + 306 - BX) / 2;
+
+let _timezone = '', _showDate = true, _tickId = null;
+let _lib = null, _dateYear = null, _dateParts = null, _wt = null;
+let _slots = null, _shown = '', _drawn = false;
+
+const w = () => document.getElementById('widget');
+const mx = x => (_rtl ? 306 - x : x);
+
+function el(tag, attrs, parent) {
+  const n = document.createElementNS(NS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+
+function textWidth(cls, size, s) {
+  const t = el('text', { class: cls, 'font-size': size }, document.getElementById('ink'));
+  t.textContent = s;
+  const width = t.getComputedTextLength();
+  t.remove();
+  return width;
+}
+
+function measureSlots(sample) {
+  const digits = /[۰-۹]/.test(sample) ? '۰۱۲۳۴۵۶۷۸۹' : '0123456789';
+  const at = size => ({
+    size,
+    adv: Math.max(...[...digits].map(c => textWidth('time', size, c))) * 0.9,
+    colon: textWidth('time', size, ':') * 1.05,
+  });
+  let m = at(TIME_SIZE);
+  const max = BW - 18 - 36, total = m.adv * 4 + m.colon;
+  if (total > max) m = at(_lib.fitSize(total, TIME_SIZE, max));
+  return m;
+}
+
+function now() {
+  return _timezone
+    ? new Date(new Date().toLocaleString('en-US', { timeZone: _timezone }))
+    : new Date();
+}
+
+function hm(d) {
+  const two = n => {
+    try { return new Intl.NumberFormat(_lang, { minimumIntegerDigits: 2, useGrouping: false }).format(n); }
+    catch { return String(n).padStart(2, '0'); }
+  };
+  return `${two(d.getHours())}:${two(d.getMinutes())}`;
+}
+
+function balloons(ink, leadW, bottom) {
+  const g = el('g', { transform: _rtl ? 'translate(306 0) scale(-1 1)' : '' }, ink);
+  const ty = BY + LEAD_H / 2 + 6;
+  const shapes = [
+    ['polygon', { points: `${BX + 14},${ty - 8} ${BX + 18},${ty + 8} -8,${ty + 30}` }],
+    ['rect', { x: BX, y: BY, width: leadW, height: LEAD_H, rx: BR }],
+    ['rect', { x: BX + 18, y: BY + LEAD_H - 8, width: BW - 18, height: bottom - (BY + LEAD_H - 8), rx: BR }],
+  ];
+  for (const [tag, a] of shapes) el(tag, { ...a, class: 'outline' }, g);
+  for (const [tag, a] of shapes) el(tag, { ...a, class: 'bubble' }, g);
+}
+
+function layoutRows() {
+  const y2 = BY + LEAD_H - 8;
+  const timeBase = y2 + 14 + TIME_SIZE * 0.72;
+  const dateBase = _showDate ? timeBase + 18 + DATE_SIZE * 0.74 : timeBase;
+  return { timeBase, dateBase, bottom: dateBase + 14 };
+}
+
+function drawLead(ink, line) {
+  const size = _lib.fitSize(textWidth('words', LEAD_SIZE, line), LEAD_SIZE, BW - 30, LEAD_MIN);
+  const leadW = textWidth('words', size, line) + 30;
+  const rows = layoutRows();
+  balloons(ink, leadW, rows.bottom);
+  const t = el('text', { class: 'words', id: 'lead', x: mx(BX + leadW / 2), y: BY + 12 + 22 * 0.74,
+    'font-size': size, 'text-anchor': 'middle' }, ink);
+  t.textContent = line;
+  return rows;
+}
+
+function drawLoading(line) {
+  const ink = document.getElementById('ink');
+  ink.replaceChildren();
+  const rows = drawLead(ink, line);
+  const bar = (cy, width, height) => el('rect', { class: 'placeholder', x: mx(CX) - width / 2, y: cy - height / 2,
+    width, height, rx: Math.min(8, height / 2) }, ink);
+  bar(rows.timeBase - TIME_SIZE * 0.36, 176, 52);
+  if (_showDate) bar(rows.dateBase - DATE_SIZE * 0.36, 104, 12);
+}
+
+function drawFace(d) {
+  const ink = document.getElementById('ink');
+  ink.replaceChildren();
+  const line = _wt('ui.captainLine', 'Captain, it’s {weekday}!', { weekday: _dateParts(d).weekday });
+  const rows = drawLead(ink, line);
+  const time = el('g', { id: 'time' }, ink);
+  const figures = hm(d);
+  _slots = measureSlots(figures);
+  let x = mx(CX) - (_slots.adv * 4 + _slots.colon) / 2;
+  for (const c of figures) {
+    const width = c === ':' ? _slots.colon : _slots.adv;
+    const t = el('text', { class: 'time', x: x + width / 2, 'font-size': _slots.size, 'text-anchor': 'middle',
+      y: c === ':' ? rows.timeBase - _slots.size * 0.07 : rows.timeBase }, time);
+    t.textContent = c;
+    x += width;
+  }
+  if (_showDate) {
+    const date = _dateYear(d);
+    const size = _lib.fitSize(textWidth('words', DATE_SIZE, date), DATE_SIZE, BW - 30);
+    const t = el('text', { class: 'words', id: 'date', x: mx(CX), y: rows.dateBase, 'font-size': size,
+      'text-anchor': 'middle' }, ink);
+    t.textContent = date;
+  }
+  _shown = figures;
+  w().setAttribute('aria-label', [line, figures, _showDate ? _dateYear(d) : ''].filter(Boolean).join(' '));
+}
+
+function fadeIn(node, rise, delay = 0) {
+  if (!node) return;
+  const from = _reduceMotion || !rise ? { opacity: 0 } : { opacity: 0, transform: `translateY(${rise}px)` };
+  node.animate([from, { opacity: 1, transform: 'none' }], { duration: 240, delay, easing: EASE, fill: 'backwards' });
+}
+
+function reveal(d) {
+  const ink = document.getElementById('ink');
+  const old = ink.cloneNode(true);
+  for (const n of [old, ...old.querySelectorAll('[id]')]) n.removeAttribute('id');
+  drawFace(d);
+  ink.after(old);
+  const blur = _reduceMotion ? 'none' : 'blur(2px)';
+  old.animate([{ opacity: 1, filter: 'none' }, { opacity: 0, filter: blur }],
+    { duration: 200, easing: 'ease', fill: 'forwards' }).onfinish = () => old.remove();
+  fadeIn(document.getElementById('lead'), 0);
+  fadeIn(document.getElementById('time'), 8);
+  fadeIn(document.getElementById('date'), 8, 40);
+}
+
+function step(d) {
+  const before = _shown;
+  const old = [...document.querySelectorAll('#time text')].map(t => t.cloneNode(true));
+  drawFace(d);
+  if (document.hidden || hm(d).length !== before.length) return;
+  const now = [...document.querySelectorAll('#time text')];
+  for (const i of _lib.changedFigures(before, _shown)) {
+    const o = old[i], n = now[i];
+    if (!o || !n) continue;
+    n.before(o);
+    const out = _reduceMotion
+      ? [{ opacity: 1 }, { opacity: 0 }]
+      : [{ opacity: 1, transform: 'none', filter: 'none' }, { opacity: 0, transform: 'translateY(-12px)', filter: 'blur(2px)' }];
+    const into = _reduceMotion
+      ? [{ opacity: 0 }, { opacity: 1 }]
+      : [{ opacity: 0, transform: 'translateY(12px)', filter: 'blur(2px)' }, { opacity: 1, transform: 'none', filter: 'none' }];
+    o.animate(out, { duration: 240, easing: EASE, fill: 'forwards' }).onfinish = () => o.remove();
+    n.animate(into, { duration: 240, easing: EASE });
+  }
+}
+
+function pour() {
+  const surface = 31 * _lib.beerLevel();
+  document.getElementById('beer').style.transform = `translateY(${-surface}px)`;
+}
+
+function scene(d) {
+  const part = _lib.partOfDay(d.getHours());
+  const cls = `widget ${part}${_script === 'fa' ? ' fa' : _script === 'zh' ? ' zh' : ''}`;
+  if (w().className !== cls) w().className = cls;
+  document.getElementById('room').setAttribute('transform', _rtl ? 'translate(306 0) scale(-1 1)' : '');
+}
+
+function tick() {
+  const d = now();
+  scene(d);
+  if (!_drawn) reveal(d);
+  else step(d);
+  _drawn = true;
+  pour();
+  if (_tickId) clearTimeout(_tickId);
+  _tickId = setTimeout(tick, (60 - d.getSeconds()) * 1000);
+}
+
+/* An unknown zone makes every toLocaleString call throw, so the clock never
+   draws. */
+function zoneOk(z) {
+  try { new Intl.DateTimeFormat('en-US', { timeZone: z || undefined }); return true; }
+  catch { return false; }
+}
+async function showZoneError(toolbox) {
+  document.getElementById('ink').replaceChildren();
+  const line = toolbox.wt('ui.unknownZone', 'Unknown timezone');
+  toolbox.errorState({ root: w(), place: 'center' }).empty(line);
+  w().setAttribute('aria-label', line);
+}
+
+const FONT_SAMPLES = {
+  fa: [['400 24px Vazirmatn', 'کاپیتان ۰۱۲۳۴۵۶۷۸۹'], ['600 24px Vazirmatn', '۰۱۲۳۴۵۶۷۸۹']],
+  zh: [['24px "Patrick Hand"', '0123456789:'], ['24px "ZCOOL KuaiLe"', '船长星期年月日']],
+};
+function loadFonts() {
+  if (!document.fonts) return Promise.resolve();
+  const list = FONT_SAMPLES[_script] || [['24px "Patrick Hand"', 'Captain 0123456789:']];
+  return Promise.all(list.map(([font, text]) => document.fonts.load(font, text).catch(() => {})));
+}
+
+async function boot() {
+  const config = fetch(`${API}/widget-config/${encodeURIComponent(id)}`)
+    .then(r => (r.ok ? r.json() : null))
+    .catch(() => null);
+  const [toolbox, lib, dates] = await Promise.all([
+    import('/js/widget-toolbox.js?v=66813091'),
+    import('/js/clock-captain.js?v=1de46f24'),
+    import('/js/clock-date.js?v=e9647f3b'),
+  ]);
+  _lib = lib;
+  _wt = toolbox.wt;
+  scene(new Date());
+  await Promise.all([toolbox.loadStrings(), loadFonts()]);
+  drawLoading(_wt('ui.captainLoading', 'Captain, it’s…'));
+  const d = await config;
+  const wc = (d && d.widgetConfig) || {};
+  _timezone = wc.clockTimezone || '';
+  _showDate = wc.clockShowDate !== false;
+  if (!zoneOk(_timezone)) return showZoneError(toolbox);
+  _dateYear = dates.clockDateWithYear(_lang);
+  _dateParts = dates.clockDateParts(_lang, 'long');
+  tick();
+}
+
+boot();
+</script>
+</body>
+</html>

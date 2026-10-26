@@ -3,12 +3,16 @@
   "widget.description": "Show the time and date in any time zone.",
   "view.digital.label": "Digital",
   "view.analog.label": "Analog",
+  "view.captain.label": "Captain",
   "clockStyle.label": "Style",
   "clockStyle.opt.digital": "Digital",
   "clockStyle.opt.analog": "Analog",
+  "clockStyle.opt.captain": "Captain",
   "clockTimezone.label": "Timezone",
   "clockTimezone.placeholder": "America/Toronto",
   "clockTimezone.hint": "IANA timezone name. Leave blank for the browser's local time.",
   "clockShowDate.label": "Show date",
-  "ui.unknownZone": "Unknown timezone"
+  "ui.unknownZone": "Unknown timezone",
+  "ui.captainLine": "Captain, it’s {weekday}!",
+  "ui.captainLoading": "Captain, it’s…"
 }
