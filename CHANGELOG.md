@@ -90,6 +90,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Keep fades under Reduce Motion and drop only movement.
 
+- Reduce CPU use of the analog clock, Connections, Now Playing, Weather and
+  Backup animations.
+
 ### Fixed
 
 - Colour swatches no longer spread across the row on small tablets.
@@ -134,6 +137,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   opening search.
 
 - Stop the dashboard from bouncing on iOS.
+
+- Count both taps when switching Now Playing sessions quickly.
+
+- Put the ellipsis at the end of right-to-left Dashboard Switch names.
+
+- Stop widgets from flashing grey on tap on iOS.
 
 ### Security
 
