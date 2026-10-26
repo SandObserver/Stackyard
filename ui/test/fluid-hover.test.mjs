@@ -147,6 +147,28 @@ test('the pill appears on hover, is inert, and is reused', () => {
   assert.equal(pill.style.transform, 'translate3d(0px,50px,0)');
 });
 
+/* A key press is a discrete step. A glide after it reads as lag. */
+test('the keyboard moves the pill at once and the pointer glides it', () => {
+  install();
+  const list = fake('div', { rect: { left: 0, top: 0, width: 200, height: 120 } });
+  list._sel = ['#sres'];
+  const a = fake('a', { rect: { left: 0, top: 0, width: 200, height: 40 } });
+  const b = fake('a', { rect: { left: 0, top: 40, width: 200, height: 40 } });
+  for (const r of [a, b]) {
+    r._sel = ['.sr'];
+    r.parent = list;
+  }
+  let over;
+  mod.initFluidHover({ addEventListener: (t, fn) => t === 'pointerover' && (over = fn) });
+  mod.fluidHoverKb(b);
+  const pill = list.children[0];
+  assert.ok(pill.classList.contains('mp-snap'), 'a key press must not glide');
+  over({ pointerType: 'mouse', target: a });
+  assert.ok(!pill.classList.contains('mp-snap'), 'the pointer glides');
+  mod.fluidHoverKb(b);
+  assert.ok(pill.classList.contains('mp-snap'));
+});
+
 test('right-to-left measures from the other edge and travels the other way', () => {
   install({ dir: 'rtl' });
   const list = fake('ul', { rect: { left: 100, right: 300, top: 50, width: 200, height: 120 } });
@@ -221,6 +243,18 @@ for (const [name, text] of Object.entries(css)) {
     const at = text.indexOf('prefers-reduced-motion');
     assert.ok(at > -1, 'the stylesheet must answer reduced motion');
     assert.match(text.slice(at), /\.mp[^}]*\{[^}]*transition\s*:\s*none/);
+  });
+
+  /* Size is layout. The pill moves by transform and takes its new size at once. */
+  test(`${name}.css: the pill glides by transform only, and a snap drops the glide`, () => {
+    const on = /\.mp\.on\s*\{([^}]*)\}/.exec(text);
+    assert.ok(on, 'the pill has no on rule');
+    assert.match(on[1], /transform\s+[\d.]+s/);
+    assert.doesNotMatch(on[1], /\b(width|height)\s+[\d.]+s/);
+    const snap = /\.mp\.mp-snap\s*\{([^}]*)\}/.exec(text);
+    assert.ok(text.indexOf(snap?.[0]) > text.indexOf(on[0]), 'the snap rule must come after the on rule');
+    assert.ok(snap, 'the snap rule is gone');
+    assert.doesNotMatch(snap[1], /transform/);
   });
 
   test(`${name}.css: the row fill gives way only while the pill is on screen`, () => {

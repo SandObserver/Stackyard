@@ -4,10 +4,10 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=aa7daaca';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=99cc620c';
+} from '/js/admin-app-form.js?v=ef7d4181';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=242c76de';
 import { recoveryShown } from '/js/config-recovery.js?v=85138697';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=6479edae';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=41905d29';
 import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=b3befae4';
 import {
   afterImport,
@@ -31,7 +31,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=9f96f864';
+} from '/js/admin-settings.js?v=a13a056b';
 import {
   apiGet,
   apiPost,
@@ -45,13 +45,13 @@ import {
   setReauthHandler,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=3e9cb9c8';
+} from '/js/admin-shared.js?v=fa77980c';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=b45c44b7';
-import { initFluidHover } from '/js/fluid-hover.js?v=8b4aadd4';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=6a8852dd';
+import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=75a71ab4';
-import { createListbox } from '/js/listbox.js?v=3e47b403';
+import { createListbox } from '/js/listbox.js?v=44be56be';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
 import { loadLocalIcons } from '/js/icons.js?v=5ac01d72';
@@ -92,8 +92,8 @@ import {
   storeGet,
   storeSet,
   tgt,
-} from '/js/utils.js?v=cfee1271';
-import { applyBackground, resolveBackground } from '/js/background.js?v=72db97ac';
+} from '/js/utils.js?v=7ceb7ce2';
+import { applyBackground, resolveBackground } from '/js/background.js?v=2680a8b7';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
 
 ensureSprite();

@@ -1,4 +1,4 @@
-import { clr, el, focusFirst, initial, inp as inpById, isolate, q as qSel, qa, qi, tgt } from '/js/utils.js?v=cfee1271';
+import { clr, el, focusFirst, initial, inp as inpById, isolate, q as qSel, qa, qi, tgt } from '/js/utils.js?v=7ceb7ce2';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import {
   loadLocalIcons,
@@ -33,12 +33,12 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=3e9cb9c8';
-import { createListbox } from '/js/listbox.js?v=3e47b403';
+} from '/js/admin-shared.js?v=fa77980c';
+import { createListbox } from '/js/listbox.js?v=44be56be';
 import { MAX_LABELS } from '/js/badge-logic.js?v=85b1bc96';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=8c27f165';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=b5d80ee6';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=1c258dc1';
-import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=8b4aadd4';
+import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { iconSvg } from '/js/icon-set.js?v=26655aca';
 
 export function buildFolderForm(body, item) {

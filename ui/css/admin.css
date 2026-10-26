@@ -859,10 +859,9 @@ html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadlin
 .mp.on{
   opacity:1;
   transition:opacity .12s ease,
-             transform .19s cubic-bezier(.22,1,.36,1),
-             width .19s cubic-bezier(.22,1,.36,1),
-             height .19s cubic-bezier(.22,1,.36,1);
+             transform .19s cubic-bezier(.22,1,.36,1);
 }
+.mp.mp-snap{transition:opacity .12s ease}
 /* The pill precedes the rows, so a position is all they need to paint above it.
    No z-index: one on a row makes it a stacking context, and the dropdown inside
    that row is then trapped behind every row that follows it. */

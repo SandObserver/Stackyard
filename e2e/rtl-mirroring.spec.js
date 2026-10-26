@@ -63,3 +63,43 @@ test('a row title and its subtitle share a leading edge', async ({ page, request
   const gap = Math.abs(name - meta);
   expect(gap, `the title and its subtitle start ${Math.round(gap)}px apart`).toBeLessThan(8);
 });
+
+/* A tile name takes the direction of its own script, whatever the page's. The
+   localisation clipping check skips anything with an ellipsis, so a name cut
+   from the wrong end passes there. WebKit reports a clipped first glyph inside
+   the box, so the computed direction is the check that holds in both engines. */
+for (const language of ['en', 'fa']) {
+  test(`a long tile name keeps its start on a ${language} dashboard`, async ({ page, request }) => {
+    const names = [
+      ['fa', 'مدیریت سرورهای خانگی و پشتیبان‌گیری خودکار شبانه', 'rtl'],
+      ['en', 'Benachrichtigungseinstellungen Verwaltung', 'ltr'],
+    ];
+    await seedConfig(request, {
+      items: names.map(([id, label]) => app(id, label)),
+      settings: { language, showLabels: { desktop: true } },
+    });
+    await dismissSetupPrompt(request);
+    await page.goto('/');
+    for (const [id, label, dir] of names) {
+      const tile = page.locator(`#pages .icon[data-tile-name="${label}"] .ilabel`);
+      await tile.waitFor({ state: 'visible' });
+      const seen = await tile.evaluate(el => {
+        const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        const text = /** @type {Text} */ (walk.nextNode());
+        const range = document.createRange();
+        range.setStart(text, 0);
+        range.setEnd(text, 1);
+        const glyph = range.getBoundingClientRect();
+        const box = el.getBoundingClientRect();
+        return {
+          dir: getComputedStyle(el).direction,
+          cut: el.scrollWidth > el.clientWidth,
+          inside: glyph.left >= box.left - 1 && glyph.right <= box.right + 1,
+        };
+      });
+      expect(seen.cut, `${id}: the name is not long enough to be cut`).toBe(true);
+      expect(seen.dir, `${id}: the label follows the page, not its text`).toBe(dir);
+      expect(seen.inside, `${id}: the first letter is cut off`).toBe(true);
+    }
+  });
+}

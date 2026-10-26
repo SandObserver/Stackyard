@@ -15,13 +15,15 @@ import {
   el,
   q,
   qa,
+  setCentredText,
   setUserText,
-} from '/js/utils.js?v=cfee1271';
+} from '/js/utils.js?v=7ceb7ce2';
 import { t, currentLang } from '/js/i18n.js?v=ed7c5565';
-import { toneForColor } from '/js/label-contrast.js?v=0b1ebb19';
+import { toneForColor } from '/js/label-contrast.js?v=4e97555e';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=349f4300';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
 import { mkGlassRim, observeGlass } from '/js/glass-rim.js?v=3faec233';
+import { fingerSpeed, rubberBand, settleMs, swipeSettle } from '/js/dashboard-logic.js?v=babbf326';
 
 const PHONE_W = 393;
 
@@ -36,7 +38,6 @@ const breg = (...a) => _state.breg(...a);
 const bunreg = (...a) => _state.bunreg(...a);
 const bupd = (...a) => _state.bupd(...a);
 const BEL = () => _state.BEL;
-const goTo = (...a) => _state.goTo(...a);
 const CB = () => _state.CB;
 const st = () => _state;
 const widgetReg = () => _state?.widgetReg || Object.create(null);
@@ -139,7 +140,7 @@ export function mkFolder(item) {
   a.dataset.tileName = folderName(item);
   if (!showLabel) a.title = item.label || t('type.folder');
   a.onclick = () => {
-    openFolderDesktop(item);
+    openFolderDesktop(item, a);
   };
   const box = mk('div');
   box.className = 'dyn-folder-box';
@@ -166,16 +167,175 @@ export function mkFolder(item) {
   if (showLabel) {
     const l = mk('div');
     l.className = 'ilabel';
-    l.dir = 'auto';
     l.style.width = iw + 12 + 'px';
-    setUserText(l, item.label || t('type.folder'));
+    setCentredText(l, item.label || t('type.folder'));
     a.appendChild(l);
   }
   return a;
 }
 
+/** @typedef {{ down: (id: number|string, x: number, y: number, t: number) => void,
+    move: (id: number|string, x: number, y: number, t: number) => void,
+    up: (id: number|string, t: number, fling: boolean) => void }} SwipeFeed */
+
+/** The returned handle takes touches from elsewhere, such as a widget frame,
+    in this page's coordinates.
+
+    @param {EventTarget|null} target where the touches land
+    @param {HTMLElement} strip
+    @param {{ width: () => number, page: () => number, total: () => number,
+      turn: (n: number) => void, enabled?: () => boolean }} o
+    @returns {SwipeFeed} */
+export function swipePager(target, strip, o) {
+  /** @type {number|string|null} */
+  let id = null;
+  let x0 = 0,
+    y0 = 0,
+    axis = '',
+    from = 0,
+    x = 0,
+    speed = fingerSpeed();
+  /** @type {ReturnType<typeof setTimeout>|undefined} */
+  let done;
+  const rest = n => -pageDir() * n * o.width();
+  /** @type {SwipeFeed} */
+  const feed = {
+    down(pid, px, py, ts) {
+      if (id !== null || (o.enabled && !o.enabled())) return;
+      id = pid;
+      x0 = px;
+      y0 = py;
+      axis = '';
+      speed = fingerSpeed();
+      speed.add(x0, ts);
+    },
+    move(pid, px, py, ts) {
+      if (pid !== id || axis === 'y') return;
+      if (!axis) {
+        const dx = px - x0,
+          dy = py - y0;
+        if (Math.hypot(dx, dy) < 10) return;
+        axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+        if (axis === 'y') return;
+        clearTimeout(done);
+        const m = getComputedStyle(strip).transform;
+        from = m === 'none' ? 0 : new DOMMatrixReadOnly(m).m41;
+        strip.style.transition = 'none';
+        strip.style.willChange = 'transform';
+        strip.classList.add('dragging');
+      }
+      speed.add(px, ts);
+      const ends = [rest(0), rest(Math.max(0, o.total() - 1))];
+      const lo = Math.min(...ends),
+        hi = Math.max(...ends),
+        raw = from + px - x0;
+      x = raw > hi ? hi + rubberBand(raw - hi, o.width()) : raw < lo ? lo - rubberBand(lo - raw, o.width()) : raw;
+      strip.style.transform = strip.style.webkitTransform = `translateX(${x}px)`;
+    },
+    up(pid, ts, fling) {
+      if (id === null || pid !== id) return;
+      id = null;
+      if (axis !== 'x') return;
+      strip.classList.remove('dragging');
+      const page = o.page();
+      const v = fling ? speed.speed(ts) : 0;
+      const n = swipeSettle({
+        page,
+        total: o.total(),
+        offset: x - rest(page),
+        speed: v,
+        width: o.width(),
+        dir: pageDir(),
+      });
+      const ms = settleMs(Math.abs(rest(n) - x), Math.sign(rest(n) - x) * v);
+      strip.style.transition = `transform ${ms}ms var(--page-ease)`;
+      o.turn(n);
+      done = setTimeout(() => {
+        strip.style.transition = '';
+      }, ms);
+    },
+  };
+  if (!target) return feed;
+  /** @param {TouchEvent} e */
+  const find = e => Array.prototype.find.call(e.changedTouches, p => p.identifier === id);
+  target.addEventListener(
+    'touchstart',
+    /** @param {TouchEvent} e */ e => {
+      /* A handler that stops touchend leaves the old finger tracked forever. */
+      if (id !== null && e.touches.length === e.changedTouches.length) feed.up(id, e.timeStamp, false);
+      const touch = e.changedTouches[0];
+      feed.down(touch.identifier, touch.clientX, touch.clientY, e.timeStamp);
+    },
+    { passive: true },
+  );
+  target.addEventListener(
+    'touchmove',
+    /** @param {TouchEvent} e */ e => {
+      const touch = find(e);
+      if (touch) feed.move(touch.identifier, touch.clientX, touch.clientY, e.timeStamp);
+    },
+    { passive: true },
+  );
+  /** @param {boolean} fling */
+  const lift = fling => /** @param {TouchEvent} e */ e => {
+    const touch = find(e);
+    if (touch) feed.up(touch.identifier, e.timeStamp, fling);
+  };
+  target.addEventListener('touchend', lift(true), { passive: true });
+  target.addEventListener('touchcancel', lift(false), { passive: true });
+  return feed;
+}
+
+/** @param {HTMLDialogElement} ov @param {HTMLElement[]} parts
+    @param {Element} [tile] @returns {() => void} */
+function folderMotion(ov, parts, tile) {
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ease = 'cubic-bezier(.32,.72,0,1)';
+  /** @param {HTMLElement} p */
+  const intoTile = p => {
+    const from = !still && tile?.isConnected ? tile.getBoundingClientRect() : null;
+    if (!from?.width) return 'none';
+    const r = p.getBoundingClientRect();
+    const s = from.width / r.width;
+    const dx = from.left + from.width / 2 - r.left - (r.width * s) / 2;
+    const dy = from.top + from.height / 2 - r.top - (r.height * s) / 2;
+    return `translate(${dx}px, ${dy}px) scale(${s})`;
+  };
+  for (const p of parts) p.style.transformOrigin = '0 0';
+  const steps = [
+    { el: ov, prop: 'opacity', shut: '0', open: '1' },
+    ...parts.map(part => ({ el: part, prop: 'transform', shut: intoTile(part), open: 'none' })),
+  ];
+  /** @param {string} prop @param {boolean} opening */
+  const timing = (prop, opening) =>
+    still
+      ? { duration: 150, easing: 'ease-out' }
+      : prop === 'opacity'
+        ? { duration: opening ? 120 : 250, easing: opening ? 'ease-out' : 'cubic-bezier(.6,0,1,1)' }
+        : { duration: opening ? 300 : 250, easing: ease };
+  let running = steps.map(s => s.el.animate({ [s.prop]: [s.shut, s.open] }, timing(s.prop, true)));
+  return () => {
+    if (ov.contains(document.activeElement)) /** @type {HTMLElement} */ (document.activeElement).blur();
+    const now = steps.map(s => getComputedStyle(s.el)[s.prop]);
+    steps.forEach((s, i) => s.el.style.setProperty(s.prop, now[i]));
+    running.forEach(a => a.cancel());
+    ov.style.opacity = '1';
+    running = steps
+      .slice(1)
+      .flatMap((s, i) => [
+        s.el.animate({ transform: [now[i + 1], s.shut] }, { ...timing('transform', false), fill: 'forwards' }),
+        s.el.animate({ opacity: [now[0], 0] }, { ...timing('opacity', false), fill: 'forwards' }),
+      ]);
+    running[0].finished.then(
+      () => ov.remove(),
+      () => {},
+    );
+  };
+}
+
 let folderOverlay = null;
-export function openFolderDesktop(folder) {
+/** @param {any} folder @param {Element} [tile] */
+export function openFolderDesktop(folder, tile) {
   if (folderOverlay) {
     folderOverlay.remove();
     folderOverlay = null;
@@ -213,9 +373,8 @@ export function openFolderDesktop(folder) {
     if (showLabel) {
       const l = mk('div');
       l.className = 'ilabel';
-      l.dir = 'auto';
       l.style.width = iw + 12 + 'px';
-      setUserText(l, child.label || child.id);
+      setCentredText(l, child.label || child.id);
       a.appendChild(l);
     }
     grid.appendChild(a);
@@ -230,10 +389,11 @@ export function openFolderDesktop(folder) {
   /* Escape and the tile's own toggle arrive here alike, and a badge registered
      to an element that has gone keeps the dashboard repainting it. */
   let stopGlass = () => {};
+  let shrink = () => ov.remove();
   ov.addEventListener('close', () => {
     stopGlass();
     registeredBadges.forEach(badge => BEL().forEach((_, id) => bunreg(id, badge)));
-    ov.remove();
+    shrink();
     folderOverlay = null;
   });
   /* The overlay is the scrim, so a click reported against it is a click
@@ -249,6 +409,7 @@ export function openFolderDesktop(folder) {
      tiles under the scrim were reachable by Tab and by a screen reader. */
   ov.showModal();
   ov.focus();
+  shrink = folderMotion(ov, [outer], tile);
   stopGlass = observeGlass(box, 28, 0.2);
 }
 
@@ -268,7 +429,7 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
     setTimeout(() => {
       _opening = false;
     }, 500);
-    openFolderMobile(item, isz, ir, im, sc);
+    openFolderMobile(item, isz, ir, im, sc, a);
   }
   let _tStarted = false,
     _tMoved = false,
@@ -324,9 +485,8 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
   if (showLabel) {
     const l = mk('div');
     l.className = 'dyn-fold-label';
-    l.dir = 'auto';
     css(l, { '--lfs': Math.max(11, Math.round(12 * sc)) + 'px', '--lw': cw - 4 + 'px' });
-    setUserText(l, item.label || t('type.folder'));
+    setCentredText(l, item.label || t('type.folder'));
     a.appendChild(l);
   }
   return a;
@@ -335,7 +495,9 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
 let folderOverlayMob = null;
 /* The widest phone viewport. Matches the cap in mobile-metrics.js. */
 export const FOLDER_MAX_VW = 430;
-export function openFolderMobile(folder, isz, _ir, _im, sc) {
+/** @param {any} folder @param {number} isz @param {number} _ir @param {number} _im
+    @param {number} sc @param {Element} [tile] */
+export function openFolderMobile(folder, isz, _ir, _im, sc, tile) {
   if (folderOverlayMob) {
     folderOverlayMob.remove();
     folderOverlayMob = null;
@@ -357,9 +519,10 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   }
   /* A badge registered to an element that has gone keeps the dashboard
      repainting it. */
+  let shrink = () => ov.remove();
   ov.addEventListener('close', () => {
     qa('.badge', ov).forEach(badge => BEL().forEach((_, id) => bunreg(id, badge)));
-    ov.remove();
+    shrink();
     folderOverlayMob = null;
   });
 
@@ -463,9 +626,8 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
         if (showLabel) {
           const l = mk('div');
           l.className = 'dyn-fold-inner-label';
-          l.dir = 'auto';
           css(l, { '--lfs': Math.max(11, Math.round(11 * ptScale)) + 'px', '--fiw': folderIconW + 'px' });
-          setUserText(l, child.label || child.id);
+          setCentredText(l, child.label || child.id);
           a.appendChild(l);
         }
         p.appendChild(a);
@@ -501,41 +663,10 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   if (dotsEl) box.appendChild(dotsEl);
   children.forEach(c => bupd(c.id));
 
-  let tx0 = 0,
-    ty0 = 0,
-    swiping = false;
-  box.addEventListener(
-    'touchstart',
-    e => {
-      tx0 = e.touches[0].clientX;
-      ty0 = e.touches[0].clientY;
-      swiping = false;
-      e.stopPropagation();
-    },
-    { passive: false },
-  );
-  box.addEventListener(
-    'touchmove',
-    e => {
-      const dx = Math.abs(e.touches[0].clientX - tx0),
-        dy = Math.abs(e.touches[0].clientY - ty0);
-      if (dx > dy && dx > 8) swiping = true;
-      e.stopPropagation();
-      e.preventDefault();
-    },
-    { passive: false },
-  );
-  box.addEventListener(
-    'touchend',
-    e => {
-      e.stopPropagation();
-      if (!swiping) return;
-      swiping = false;
-      const dx = e.changedTouches[0].clientX - tx0;
-      if (Math.abs(dx) > Math.round(30 * ptScale)) gotoPage(curPage + (dx < 0 ? 1 : -1) * pageDir());
-    },
-    { passive: false },
-  );
+  if (pages.length > 1)
+    swipePager(box, strip, { width: () => pageW, page: () => curPage, total: () => pages.length, turn: gotoPage });
+  for (const type of ['touchstart', 'touchmove', 'touchend'])
+    box.addEventListener(type, e => e.stopPropagation(), { passive: true });
   ov.appendChild(titleEl);
   ov.appendChild(box);
   ov.onclick = e => {
@@ -558,6 +689,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc) {
   folderOverlayMob = ov;
   ov.showModal();
   ov.focus();
+  shrink = folderMotion(ov, [titleEl, box], tile);
 }
 
 /* Cells per widget size on the 4x6 home grid. */
@@ -718,9 +850,8 @@ export function buildMobile() {
     if (showLabel) {
       const l = mk('div');
       l.className = 'dyn-mob-label';
-      l.dir = 'auto';
       css(l, { '--lfs': Math.max(11, Math.round(12 * sc)) + 'px', '--lw': '100%' });
-      setUserText(l, item.label || item.id);
+      setCentredText(l, item.label || item.id);
       a.appendChild(l);
     }
     return a;
@@ -750,7 +881,7 @@ export function buildMobile() {
       iframeOpts: item.iframe,
       overlayHref,
       mobile: true,
-      onSwipe: dir => goTo(st().pg + dir * pageDir()),
+      swipe: () => CB().homeSwipe,
     });
     return card;
   }
@@ -848,9 +979,30 @@ export function buildMobile() {
   };
 
   let _pillIdleTimer = null;
+  let _pillClipTimer = 0;
+  let pillShownW = pillSearchW;
   function pillPaging(on) {
     pillNew.classList.toggle('paging', on);
-    pillNew.style.width = (on ? pillDotsW : pillSearchW) + 'px';
+    const to = on ? pillDotsW : pillSearchW;
+    const from = pillShownW;
+    pillShownW = to;
+    clearTimeout(_pillClipTimer);
+    if (from === to) return;
+    const wide = Math.max(from, to);
+    const inset = w => `inset(0 ${(wide - w) / 2}px round 999px)`;
+    pillNew.style.transition = 'none';
+    pillNew.style.width = wide + 'px';
+    pillNew.style.clipPath = inset(from);
+    pillNew.getBoundingClientRect();
+    pillNew.style.transition = '';
+    pillNew.style.clipPath = inset(to);
+    _pillClipTimer = setTimeout(() => {
+      pillNew.style.transition = 'none';
+      pillNew.style.width = to + 'px';
+      pillNew.style.clipPath = '';
+      pillNew.getBoundingClientRect();
+      pillNew.style.transition = '';
+    }, 260);
   }
   function pillBump(newPg) {
     pillPaging(true);
@@ -863,19 +1015,10 @@ export function buildMobile() {
   const { _mobTsCleanup, _mobTeCleanup } = st();
   if (_mobTsCleanup) document.removeEventListener('touchstart', _mobTsCleanup);
   if (_mobTeCleanup) document.removeEventListener('touchend', _mobTeCleanup);
-  let tx = 0,
-    txOpenedWithFolder = false;
-  st()._mobTsCleanup = e => {
-    tx = e.touches[0].clientX;
-    txOpenedWithFolder = !!folderOverlayMob;
-  };
-  st()._mobTeCleanup = e => {
+  st()._mobTsCleanup = null;
+  st()._mobTeCleanup = () => {
     clearMobWidgets(); /* tap on the home background dismisses any active sled */
-    if (txOpenedWithFolder || folderOverlayMob) return;
-    const dx = e.changedTouches[0].clientX - tx;
-    if (Math.abs(dx) > 40) goTo(st().pg + (dx < 0 ? 1 : -1) * pageDir());
   };
-  document.addEventListener('touchstart', st()._mobTsCleanup, { passive: true });
   document.addEventListener('touchend', st()._mobTeCleanup, { passive: true });
 }
 

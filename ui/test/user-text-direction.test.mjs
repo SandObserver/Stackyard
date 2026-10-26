@@ -83,13 +83,37 @@ test('no translated sentence takes a user-supplied name without isolating it', (
   );
 });
 
-test('setUserText is what the dashboard, folders, search and admin all use', () => {
+test('setUserText or setCentredText is what the dashboard, folders, search and admin all use', () => {
   /* Named individually so removing the call from one of them fails here rather
      than only showing up as a truncated name in a right-to-left language. */
   for (const file of ['ui.js', 'dashboard.js', 'spotlight.js', 'admin.js', 'admin-settings.js']) {
     const src = fs.readFileSync(path.join(JS_DIR, file), 'utf8');
-    assert.match(src, /setUserText/, `${file} should render user-supplied names through setUserText`);
+    assert.match(src, /set(?:User|Centred)Text\(/, `${file} should render user-supplied names through setUserText`);
   }
+});
+
+/* dir="auto" skips text inside a <bdi>. A block holding one finds no strong
+   character, resolves to ltr, and a Persian label then loses its start: Blink
+   keeps the tail, WebKit cuts both ends with no ellipsis. */
+test('a centred label carries its direction on the block, with the text bare', async () => {
+  const { setCentredText } = await import('../js/utils.js');
+  const node = /** @type {any} */ ({ dir: '', textContent: 'old', appendChild: () => assert.fail('no child') });
+  const returned = setCentredText(node, 'مدیریت سرورهای خانگی');
+  assert.equal(node.dir, 'auto');
+  assert.equal(node.textContent, 'مدیریت سرورهای خانگی');
+  assert.equal(returned, node);
+});
+
+test('no block marked dir="auto" puts its text in a bdi', () => {
+  const offenders = [];
+  for (const file of fs.readdirSync(JS_DIR).filter(f => f.endsWith('.js'))) {
+    const src = fs.readFileSync(path.join(JS_DIR, file), 'utf8');
+    for (const m of src.matchAll(/\b(\w+)\.dir = 'auto';/g)) {
+      const after = src.slice(m.index, m.index + 400);
+      if (new RegExp(`setUserText\\(${m[1]},`).test(after)) offenders.push(`${file}: ${m[1]}`);
+    }
+  }
+  assert.deepEqual(offenders, [], 'use setCentredText(node, name) for a centred label');
 });
 
 /* The isolation belongs on the text, not on the block that holds it. `dir` sets
@@ -125,6 +149,15 @@ test('setUserText isolates the name in a bdi and leaves the block alone', async 
     'the block still carries a direction, which sets its alignment too',
   );
   assert.equal(returned, node, 'returns the node so it can be appended inline');
+});
+
+/* A right-to-left page mirrors a lone bracket, so "<Admin" showed ">". */
+test('an initial on a letter plate is laid out left to right', () => {
+  const utils = fs.readFileSync(path.join(JS_DIR, 'utils.js'), 'utf8');
+  const plate = utils.slice(utils.indexOf('export const letterTile'));
+  assert.match(plate.slice(0, plate.indexOf('\n};')), /e\.dir = 'ltr';/);
+  const spot = fs.readFileSync(path.join(JS_DIR, 'spotlight.js'), 'utf8');
+  assert.match(spot, /ic\.className = 'sri';\s*ic\.dir = 'ltr';/);
 });
 
 /* Indexing takes one UTF-16 unit, half of an emoji. */

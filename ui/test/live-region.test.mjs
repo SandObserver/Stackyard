@@ -60,10 +60,15 @@ test('the announcement is made where the page changes', () => {
 /* Every route to another page, arrow keys, swipes, and the dots, goes through
    goTo, so one announcement covers all of them. */
 test('every way of changing page goes through goTo', () => {
-  for (const route of [/ArrowRight'\) goTo/, /ArrowLeft'\)\s+goTo/, /touchend[\s\S]{0,200}goTo\(pg/]) {
+  for (const route of [
+    /ArrowRight'\) goTo/,
+    /ArrowLeft'\)\s+goTo/,
+    /swipePager\(document,[\s\S]{0,300}turn: n => goTo\(n\)/,
+  ]) {
     assert.match(dashboard, route, 'a page change that bypasses goTo would be silent');
   }
-  assert.match(read('js/ui.js'), /onSwipe: dir => goTo\(/);
+  assert.match(read('js/ui.js'), /swipe: \(\) => CB\(\)\.homeSwipe/);
+  assert.match(dashboard, /CB\.homeSwipe = swipePager\(document,/);
 });
 
 /* Repeating the same page would otherwise announce it again on every click. */

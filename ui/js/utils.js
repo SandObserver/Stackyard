@@ -1,5 +1,5 @@
 import { iconChain } from '/js/icons.js?v=5ac01d72';
-import { toneForColor } from '/js/label-contrast.js?v=0b1ebb19';
+import { toneForColor } from '/js/label-contrast.js?v=4e97555e';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
 import { mkGlassRim } from '/js/glass-rim.js?v=3faec233';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
@@ -65,6 +65,8 @@ export const isolate = text => `\u2068${text}\u2069`;
 export const letterTile = (l, sz, plate) => {
   const e = mk('span');
   e.className = 'fb';
+  /* A right-to-left page mirrors a lone bracket: "<" draws as ">". */
+  e.dir = 'ltr';
   const tone = toneForColor(plate) ?? (pageTheme() === 'light' ? 'dark' : 'light');
   if (tone === 'dark') e.classList.add('fb-on-light');
   e.style.fontSize = Math.round(sz * 0.32) + 'px';
@@ -81,16 +83,23 @@ export { esc } from '/js/html.js?v=c71f8903';
    alignment as well as bidi, so a Latin name on the block dragged its whole row
    to the other edge: a title and its subtitle ended up on opposite sides.
 
-   A centred label sets `dir` on the block as well, because alignment cannot move
-   centred text. Without it the block's direction decides which end is cut, and
-   WebKit ignores unicode-bidi:plaintext for that.
-
    @param {HTMLElement} node @param {string} text @returns {HTMLElement} */
 export const setUserText = (node, text) => {
   node.textContent = '';
   const bdi = mk('bdi');
   bdi.textContent = text;
   node.appendChild(bdi);
+  return node;
+};
+
+/* A centred label that ellipsises. The block's direction decides which end is
+   cut, so it takes dir="auto" and no <bdi>: dir="auto" skips text inside a bdi
+   and would resolve to ltr.
+
+   @param {HTMLElement} node @param {string} text @returns {HTMLElement} */
+export const setCentredText = (node, text) => {
+  node.dir = 'auto';
+  node.textContent = text;
   return node;
 };
 
@@ -306,13 +315,30 @@ export function scrollsSideways(target, dx) {
   return false;
 }
 
+/** @param {any} target @returns {boolean} */
+export function ownsSidewaysTouch(target) {
+  for (let n = target; n && n.nodeType === 1; n = n.parentElement) {
+    const view = n.ownerDocument && n.ownerDocument.defaultView;
+    if (!view) continue;
+    const st = view.getComputedStyle(n);
+    const ta = st.touchAction || 'auto';
+    if (ta !== 'auto' && ta !== 'manipulation' && !ta.includes('pan-x')) return true;
+    if (n.scrollWidth > n.clientWidth && /(auto|scroll)/.test(st.overflowX)) return true;
+  }
+  return false;
+}
+
 /** @param {HTMLElement} card
     @param {{
       src?: string, title?: string, design?: [number, number],
       iframeOpts?: Record<string, unknown>, overlayHref?: string,
-      mobile?: boolean, onSwipe?: (dir: number) => void,
+      mobile?: boolean, swipe?: () => {
+        down: (id: string, x: number, y: number, t: number) => void,
+        move: (id: string, x: number, y: number, t: number) => void,
+        up: (id: string, t: number, fling: boolean) => void,
+      } | null,
     }} [opts] */
-export function mountScaledWidget(card, { src, title, design, iframeOpts, overlayHref, mobile, onSwipe } = {}) {
+export function mountScaledWidget(card, { src, title, design, iframeOpts, overlayHref, mobile, swipe } = {}) {
   const [dw, dh] = design;
   const o = iframeOpts || {};
   /* Without a positioned ancestor the iframe escapes up the tree and paints at
@@ -483,15 +509,31 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
       doc.__wgesture = true;
       let sx = 0,
         sy = 0,
-        moved = false;
+        moved = false,
+        owned = false;
+      const win = /** @type {Window} */ (doc.defaultView);
+      /* A frame touch is in the frame's own pixels, and the frame moves with
+         the page strip. Map every point through the frame's current box. */
+      const at = touch => {
+        const r = ifr.getBoundingClientRect();
+        const k = ifr.offsetWidth ? r.width / ifr.offsetWidth : 1;
+        return [r.left + touch.clientX * k, r.top + touch.clientY * k];
+      };
+      const time = e => e.timeStamp + win.performance.timeOrigin - performance.timeOrigin;
+      const feed = () => (owned || typeof swipe !== 'function' ? null : swipe());
       doc.addEventListener(
         'touchstart',
         e => {
-          const touch = e.touches[0];
+          const touch = e.changedTouches[0];
           if (!touch) return;
-          sx = touch.clientX;
-          sy = touch.clientY;
-          moved = false;
+          if (e.touches.length === 1) {
+            sx = touch.clientX;
+            sy = touch.clientY;
+            moved = false;
+            owned = ownsSidewaysTouch(e.target);
+          }
+          const [x, y] = at(touch);
+          feed()?.down('f' + touch.identifier, x, y, time(e));
         },
         { passive: true },
       );
@@ -499,37 +541,30 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
         'touchmove',
         e => {
           const touch = e.touches[0];
-          if (!touch) return;
-          if (Math.abs(touch.clientX - sx) > 8 || Math.abs(touch.clientY - sy) > 8) moved = true;
-        },
-        { passive: true },
-      );
-      doc.addEventListener(
-        'touchend',
-        e => {
-          const touch = e.changedTouches[0];
-          if (!touch) return;
-          const dx = touch.clientX - sx,
-            dy = touch.clientY - sy;
-          if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) * 1.4) {
-            /* horizontal swipe → page */
-            if (typeof onSwipe === 'function') onSwipe(dx < 0 ? 1 : -1);
-            return;
-          }
-          if (!moved && overlayHref) {
-            /* tap on non-interactive area → open link */
-            const target = e.target;
-            const interactive =
-              target &&
-              target.closest &&
-              target.closest(
-                'a,button,[role="button"],[onclick],.clickable,.bay,.val-row,.chart-wrap,input,select,textarea',
-              );
-            if (!interactive) window.open(overlayHref, '_blank', 'noopener,noreferrer');
+          if (touch && (Math.abs(touch.clientX - sx) > 8 || Math.abs(touch.clientY - sy) > 8)) moved = true;
+          for (const tp of e.changedTouches) {
+            const [x, y] = at(tp);
+            feed()?.move('f' + tp.identifier, x, y, time(e));
           }
         },
         { passive: true },
       );
+      /** @param {boolean} fling */
+      const lift = fling => e => {
+        for (const tp of e.changedTouches) feed()?.up('f' + tp.identifier, time(e), fling);
+        if (!fling || moved || !overlayHref) return;
+        /* tap on non-interactive area → open link */
+        const target = e.target;
+        const interactive =
+          target &&
+          target.closest &&
+          target.closest(
+            'a,button,[role="button"],[onclick],.clickable,.bay,.val-row,.chart-wrap,input,select,textarea',
+          );
+        if (!interactive) window.open(overlayHref, '_blank', 'noopener,noreferrer');
+      };
+      doc.addEventListener('touchend', lift(true), { passive: true });
+      doc.addEventListener('touchcancel', lift(false), { passive: true });
     };
     ifr.addEventListener('load', attach);
     cleanups.push(() => ifr.removeEventListener('load', attach));

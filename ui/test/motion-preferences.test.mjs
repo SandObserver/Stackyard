@@ -48,13 +48,56 @@ test('reduced transparency is handled in the shared stylesheet', () => {
   assert.match(tokens, /@media \(prefers-reduced-transparency: reduce\)/);
 });
 
-/* A duration of exactly 0 skips the transitionend event some code waits on, so
-   the value has to be small rather than zero. */
-test('reduced motion neutralises rather than removes transitions', () => {
+/* Reduced motion asks for less movement, not for no change. A fade is not
+   movement, so it keeps its timing; a slide, scale or resize jumps. */
+test('reduced motion keeps fades and drops movement', () => {
   const block = tokens.slice(tokens.indexOf('@media (prefers-reduced-motion'));
-  assert.match(block, /transition-duration: \.01ms !important/);
-  assert.match(block, /animation-duration: \.01ms !important/);
-  assert.doesNotMatch(block.slice(0, block.indexOf('}')), /duration: 0s/);
+  const rule = block.slice(0, block.indexOf('}'));
+  const props = /transition-property: ([^;!]+) !important/.exec(rule);
+  assert.ok(props, 'the transition allowlist is gone');
+  const list = props[1].split(',').map(p => p.trim());
+  for (const keep of ['opacity', 'color', 'background-color'])
+    assert.ok(list.includes(keep), `${keep} no longer fades`);
+  for (const drop of [
+    'all',
+    'transform',
+    'translate',
+    'scale',
+    'rotate',
+    'width',
+    'height',
+    'inset',
+    'top',
+    'left',
+    'clip-path',
+    'filter',
+  ]) {
+    assert.ok(!list.includes(drop), `${drop} still animates under reduced motion`);
+  }
+  assert.doesNotMatch(rule, /transition-duration/, 'a duration override cuts the fades as well');
+  /* Not zero. A duration of exactly 0 skips the animationend event. */
+  assert.match(rule, /animation-duration: \.01ms !important/);
+  assert.doesNotMatch(rule, /duration: 0s/);
+});
+
+/* With the property dropped, transitionend never fires for it. Every listener
+   needs a fallback or must not depend on the event. */
+test('code that waits on transitionend has a way out under reduced motion', () => {
+  const dir = path.join(root, 'js');
+  const waiters = fs
+    .readdirSync(dir)
+    .filter(f => f.endsWith('.js'))
+    .filter(f => /'transitionend'/.test(read(`js/${f}`)));
+  assert.deepEqual(
+    waiters.sort(),
+    ['admin-shared.js', 'dashboard.js'],
+    'a new transitionend listener needs a fallback',
+  );
+  assert.match(read('js/admin-shared.js'), /timer = setTimeout\(end, \d+\)/);
+  assert.match(
+    dashboard.slice(dashboard.indexOf('@media (prefers-reduced-motion')),
+    /#pages \{ transition: none !important; \}/,
+  );
 });
 
 test('every page ends up honouring all three preferences', () => {
