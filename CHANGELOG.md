@@ -81,6 +81,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Open menus and dialogs with a short animation.
 
+- Make phone pages follow the finger, turn on a quick flick and stretch at the
+  ends.
+
+- Turn pages faster from the keyboard, wheel and page dots.
+
+- Grow folders out of their tile and shrink them back on close.
+
+- Keep fades under Reduce Motion and drop only movement.
+
 ### Fixed
 
 - Colour swatches no longer spread across the row on small tablets.
@@ -110,6 +119,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stop a dragged row from sticking on screen when the list redraws during the
   drag.
+
+- Show the start of long right-to-left app names, with the ellipsis at the end.
+
+- Make empty-dashboard text readable on dark wallpapers in light mode.
+
+- Keep typing and clicks working right after closing search.
+
+- Show press feedback on phone app, Dock and folder tiles.
+
+- Wrap long names in phone search.
+
+- Turn the page on a swipe that starts on the phone search pill instead of
+  opening search.
+
+- Stop the dashboard from bouncing on iOS.
 
 ### Security
 
