@@ -56,6 +56,7 @@ async function run({ child, signals = ['SIGTERM'], marker = false }) {
       SY_FATAL: marker ? fatal : '',
     },
     stdio: ['ignore', 'ignore', 'pipe'],
+    detached: true,
   });
   let stderr = '';
   proc.stderr.on('data', d => {
@@ -63,13 +64,21 @@ async function run({ child, signals = ['SIGTERM'], marker = false }) {
   });
   const exited = new Promise(resolve => proc.on('exit', status => resolve(status)));
 
-  await waitFor(() => fs.existsSync(started));
-  for (const [i, sig] of signals.entries()) {
-    if (i) await new Promise(r => setTimeout(r, 100));
-    proc.kill(sig);
+  /* Kill the whole group, pass or fail. A stand-in left running keeps this file
+     from ever finishing. */
+  try {
+    await waitFor(() => fs.existsSync(started), 30000);
+    for (const [i, sig] of signals.entries()) {
+      if (i) await new Promise(r => setTimeout(r, 100));
+      proc.kill(sig);
+    }
+    const code = await exited;
+    return { code, stopped: fs.existsSync(done), stderr };
+  } finally {
+    try {
+      process.kill(-proc.pid, 'SIGKILL');
+    } catch {}
   }
-  const code = await exited;
-  return { code, stopped: fs.existsSync(done), stderr };
 }
 
 /* Shuts down over 300 ms after SIGTERM, then exits 0 as supervisord does. */
