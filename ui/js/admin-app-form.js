@@ -34,9 +34,9 @@ import {
   setTogDisabled,
   swapContent,
 } from '/js/admin-shared.js?v=c509d11e';
-import { createListbox } from '/js/listbox.js?v=2734f4e0';
+import { createListbox } from '/js/listbox.js?v=42aec241';
 import { MAX_LABELS } from '/js/badge-logic.js?v=85b1bc96';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=b3bb1707';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=b47faa12';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=1c258dc1';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { iconSvg } from '/js/icon-set.js?v=26655aca';

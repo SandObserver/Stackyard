@@ -3,12 +3,16 @@
   "widget.description": "Affichez l’heure et la date dans n’importe quel fuseau horaire.",
   "view.digital.label": "Numérique",
   "view.analog.label": "Analogique",
+  "view.captain.label": "Capitaine",
   "clockStyle.label": "Style",
   "clockStyle.opt.digital": "Numérique",
   "clockStyle.opt.analog": "Analogique",
+  "clockStyle.opt.captain": "Capitaine",
   "clockTimezone.label": "Fuseau horaire",
   "clockTimezone.placeholder": "Europe/Paris",
   "clockTimezone.hint": "Nom de fuseau horaire IANA. Laissez vide pour l’heure locale du navigateur.",
   "clockShowDate.label": "Afficher la date",
-  "ui.unknownZone": "Fuseau horaire inconnu"
+  "ui.unknownZone": "Fuseau horaire inconnu",
+  "ui.captainLine": "Capitaine, on est {weekday} !",
+  "ui.captainLoading": "Capitaine, on est…"
 }

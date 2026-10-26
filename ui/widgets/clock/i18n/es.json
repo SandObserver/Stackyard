@@ -3,12 +3,16 @@
   "widget.description": "Muestra la hora y la fecha en cualquier zona horaria.",
   "view.digital.label": "Digital",
   "view.analog.label": "Analógico",
+  "view.captain.label": "Capitán",
   "clockStyle.label": "Estilo",
   "clockStyle.opt.digital": "Digital",
   "clockStyle.opt.analog": "Analógico",
+  "clockStyle.opt.captain": "Capitán",
   "clockTimezone.label": "Zona horaria",
   "clockTimezone.placeholder": "Europe/Madrid",
   "clockTimezone.hint": "Nombre de zona horaria IANA. Déjalo en blanco para la hora local del navegador.",
   "clockShowDate.label": "Mostrar la fecha",
-  "ui.unknownZone": "Zona horaria desconocida"
+  "ui.unknownZone": "Zona horaria desconocida",
+  "ui.captainLine": "¡Capitán, es {weekday}!",
+  "ui.captainLoading": "¡Capitán, es…"
 }

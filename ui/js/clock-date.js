@@ -12,15 +12,20 @@ function format(lang, opts) {
   }
 }
 
+/** @param {string} lang @returns {string} */
+function canonical(lang) {
+  try {
+    return Intl.getCanonicalLocales(lang)[0] || 'en';
+  } catch {
+    return 'en';
+  }
+}
+
 /** The whole date, and its weekday and day-month parts for a two-line layout.
     @param {string} lang @param {'long'|'short'} width @param {boolean} [withYear]
     @returns {(date: Date) => { full: string, weekday: string, date: string }} */
 export function clockDateParts(lang, width, withYear = true) {
-  try {
-    lang = Intl.getCanonicalLocales(lang)[0] || 'en';
-  } catch {
-    lang = 'en';
-  }
+  lang = canonical(lang);
   /** @type {Intl.DateTimeFormatOptions} */
   const opts = { weekday: width, month: width, day: 'numeric' };
   if (String(lang).split('-')[0] !== 'fa') {
@@ -48,4 +53,16 @@ export function clockDateParts(lang, width, withYear = true) {
 export function clockDateFormatter(lang, width) {
   const parts = clockDateParts(lang, width);
   return date => parts(date).full;
+}
+
+/** Day, month and year, without the weekday.
+    @param {string} lang @returns {(date: Date) => string} */
+export function clockDateWithYear(lang) {
+  lang = canonical(lang);
+  if (lang.split('-')[0] === 'fa') {
+    const parts = clockDateParts(lang, 'long');
+    return date => parts(date).date;
+  }
+  const f = format(lang, { day: 'numeric', month: 'long', year: 'numeric' });
+  return date => f.format(date);
 }

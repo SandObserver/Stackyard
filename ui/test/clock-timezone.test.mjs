@@ -8,6 +8,7 @@ import fs from 'node:fs';
 
 const TOOLBOX_IMPORT = /import\('\/js\/widget-toolbox\.js\?v=[0-9a-z]+'\)/;
 const CLOCK_DATE_IMPORT = /import\('\/js\/clock-date\.js\?v=[0-9a-z]+'\)/;
+const CAPTAIN_IMPORT = /import\('\/js\/clock-captain\.js\?v=[0-9a-z]+'\)/;
 
 function pageScript(file) {
   const src = fs.readFileSync(new URL(`../widgets/clock/${file}`, import.meta.url), 'utf8');
@@ -18,6 +19,7 @@ function pageScript(file) {
   return body
     .replace(TOOLBOX_IMPORT, '__toolbox()')
     .replace(CLOCK_DATE_IMPORT, '__clockDate()')
+    .replace(CAPTAIN_IMPORT, '__captain()')
     .replace(/\nboot\(\);\s*$/, '\nreturn boot();');
 }
 
@@ -37,6 +39,17 @@ function element() {
       el.writes[k] = (el.writes[k] || 0) + 1;
     },
     getComputedTextLength: () => 0,
+    replaceChildren() {
+      el.children.length = 0;
+    },
+    remove() {},
+    removeAttribute(k) {
+      delete el.attrs[k];
+    },
+    after() {},
+    before() {},
+    cloneNode: () => element(),
+    animate: () => ({}),
     appendChild(c) {
       el.children.push(c);
       return c;
@@ -67,6 +80,7 @@ async function boot(
       documentElement: { getAttribute: () => null },
       getElementById: byId,
       createElementNS: element,
+      querySelectorAll: () => [],
       addEventListener() {},
       hidden: false,
     },
@@ -81,9 +95,10 @@ async function boot(
     requestAnimationFrame: fn => rafs.push(fn),
     cancelAnimationFrame() {},
     __clockDate: () => import('../js/clock-date.js'),
+    __captain: () => import('../js/clock-captain.js'),
     __toolbox: async () => ({
       loadStrings: async () => {},
-      wt: (_k, fallback) => fallback,
+      wt: (_k, fallback, vars = {}) => fallback.replace(/\{(\w+)\}/g, (_m, k) => vars[k]),
       errorState: () => ({ empty: text => painted.push(text) }),
     }),
   };
@@ -116,7 +131,7 @@ async function boot(
   };
 }
 
-for (const file of ['digital.html', 'analog.html']) {
+for (const file of ['digital.html', 'analog.html', 'captain.html']) {
   test(`${file}: an unknown timezone shows an error instead of a clock`, async () => {
     const r = await boot(file, 'Berlin');
     assert.deepEqual(r.painted, ['Unknown timezone']);
@@ -162,4 +177,16 @@ test('analog.html: the sweep waits on a timer between frames and writes the labe
   assert.equal(r.timers.length, 0, 'each frame schedules one timer');
   assert.match(r.label, /^\d\d:\d\d, /);
   assert.ok(r.byId('widget').writes['aria-label'] <= 2, 'the label is written once a minute');
+});
+
+test('captain.html: a known timezone ticks and reads the whole panel', async () => {
+  const r = await boot('captain.html', 'Europe/Berlin');
+  assert.deepEqual(r.painted, []);
+  assert.equal(r.timers.length, 1);
+  assert.match(r.label, /^Captain, it’s [A-Z][a-z]+day! \d\d:\d\d [A-Z][a-z]+ \d{1,2}, \d{4}$/);
+});
+
+test('captain.html: with the date off the panel reads without it', async () => {
+  const r = await boot('captain.html', 'Europe/Berlin', { config: { clockShowDate: false } });
+  assert.match(r.label, /^Captain, it’s [A-Z][a-z]+day! \d\d:\d\d$/);
 });

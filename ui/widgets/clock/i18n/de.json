@@ -3,12 +3,16 @@
   "widget.description": "Zeigt Uhrzeit und Datum in jeder Zeitzone.",
   "view.digital.label": "Digital",
   "view.analog.label": "Analog",
+  "view.captain.label": "Kapitän",
   "clockStyle.label": "Stil",
   "clockStyle.opt.digital": "Digital",
   "clockStyle.opt.analog": "Analog",
+  "clockStyle.opt.captain": "Kapitän",
   "clockTimezone.label": "Zeitzone",
   "clockTimezone.placeholder": "Europe/Berlin",
   "clockTimezone.hint": "IANA-Zeitzonenname. Leer lassen für die lokale Zeit des Browsers.",
   "clockShowDate.label": "Datum anzeigen",
-  "ui.unknownZone": "Unbekannte Zeitzone"
+  "ui.unknownZone": "Unbekannte Zeitzone",
+  "ui.captainLine": "Kapitän, es ist {weekday}!",
+  "ui.captainLoading": "Kapitän, es ist…"
 }
