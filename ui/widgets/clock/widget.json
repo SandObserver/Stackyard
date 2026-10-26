@@ -16,6 +16,10 @@
     "analog": {
       "label": "view.analog.label",
       "src": "analog.html"
+    },
+    "captain": {
+      "label": "view.captain.label",
+      "src": "captain.html"
     }
   },
   "fields": [
@@ -32,6 +36,10 @@
         {
           "value": "analog",
           "label": "clockStyle.opt.analog"
+        },
+        {
+          "value": "captain",
+          "label": "clockStyle.opt.captain"
         }
       ]
     },

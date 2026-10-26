@@ -3,12 +3,16 @@
   "widget.description": "ساعت و تاریخ را در هر منطقه زمانی نمایش دهید.",
   "view.digital.label": "دیجیتال",
   "view.analog.label": "عقربه‌ای",
+  "view.captain.label": "کاپیتان",
   "clockStyle.label": "سبک",
   "clockStyle.opt.digital": "دیجیتال",
   "clockStyle.opt.analog": "عقربه‌ای",
+  "clockStyle.opt.captain": "کاپیتان",
   "clockTimezone.label": "منطقه زمانی",
   "clockTimezone.placeholder": "Asia/Tehran",
   "clockTimezone.hint": "نام منطقه زمانی IANA. برای زمان محلی مرورگر خالی بگذارید.",
   "clockShowDate.label": "نمایش تاریخ",
-  "ui.unknownZone": "منطقه زمانی ناشناخته"
+  "ui.unknownZone": "منطقه زمانی ناشناخته",
+  "ui.captainLine": "کاپیتان، امروز {weekday}‌ست!",
+  "ui.captainLoading": "کاپیتان، امروز…"
 }
