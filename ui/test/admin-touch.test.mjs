@@ -72,6 +72,64 @@ test('rows, pencils, pickers and tabs press differently from how they hover', ()
   assert.match(css, /html\.is-mobile \.mtab:not\(\.active\):active\{background:var\(--fill-tertiary\)\}/);
 });
 
+/* Each rule as { sels, body }, at any depth. */
+function cssRules(src) {
+  return [...src.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => ({
+    sels: m[1]
+      .split(',')
+      .map(x => x.trim())
+      .filter(Boolean),
+    body: m[2],
+  }));
+}
+
+/* `.chip:active` and `.row-btn:active:not(:disabled)` press .chip and .row-btn.
+   `.chip-x:active` and `.chip .x:active` do not. */
+function pressRuleFor(all, sel) {
+  return all.some(r =>
+    r.sels.some(it => {
+      if (!it.startsWith(sel)) return false;
+      const rest = it.slice(sel.length);
+      const at = rest.indexOf(':active');
+      return at >= 0 && /^[.:[]/.test(rest) && !/[\s>+~]/.test(rest.slice(0, at));
+    }),
+  );
+}
+
+/* The tap highlight is off, so a control without a press state shows nothing
+   under a finger. */
+test('every control a finger can press has a press state', () => {
+  const all = cssRules(css);
+  const exempt = new Set([
+    /* The thumb moves under the finger. */
+    '.adm-range',
+    '.hsb-range',
+    /* The tap opens the field in place. */
+    '.ie-row .rv',
+    /* Only ever on a .btn. */
+    '.cursor-ptr',
+  ]);
+  const pressable = new Set(['.sb-brand', '.upd-link']);
+  for (const r of all) {
+    if (!/cursor:\s*pointer/.test(r.body)) continue;
+    for (const sel of r.sels) if (!sel.includes('::') && !exempt.has(sel)) pressable.add(sel);
+  }
+  assert.ok(pressable.size >= 30, `found only ${pressable.size} controls, the scan is probably broken`);
+  const missing = [...pressable].filter(sel => !pressRuleFor(all, sel));
+  assert.deepEqual(missing, [], 'no press state under a finger');
+  const recovery = cssRules(read('css/config-recovery.css').replace(/\/\*[\s\S]*?\*\//g, ''));
+  assert.ok(pressRuleFor(recovery, '.cfg-recovery-btn'), '.cfg-recovery-btn has no press state');
+});
+
+test('the press scan tells a control of its own from a descendant', () => {
+  const all = cssRules('.a:active{x:1}.b .c:active{x:1}.d:active:not(:disabled){x:1}.e-f:active{x:1}.g:active h{x:1}');
+  assert.equal(pressRuleFor(all, '.a'), true);
+  assert.equal(pressRuleFor(all, '.b'), false);
+  assert.equal(pressRuleFor(all, '.d'), true);
+  assert.equal(pressRuleFor(all, '.e'), false);
+  assert.equal(pressRuleFor(all, '.g'), true);
+});
+
 test('the tap highlight is cleared once, on the document', () => {
   assert.match(css, /(^|\n)html\{[^}]*-webkit-tap-highlight-color:transparent/);
   assert.equal(css.match(/-webkit-tap-highlight-color/g).length, 1, 'it inherits; a second copy is redundant');
@@ -118,7 +176,7 @@ test('address, host, username and header fields take no capitals or correction',
     assert.ok(tag, `${cls} is not built`);
     assert.match(tag[0], /autocapitalize="none" autocorrect="off" spellcheck="false"/, cls);
   }
-  assert.match(read('js/widget-config-form.js'), /plain: isPlainTextKey\(field\.key\)/);
+  assert.match(read('js/widget-config-form.js'), /plain: isPlainField\(field\)/);
 });
 
 test('a touch drag moves its copy by transform and settles it on release', () => {
@@ -130,7 +188,10 @@ test('a touch drag moves its copy by transform and settles it on release', () =>
   assert.match(drag, /transition = 'transform var\(--t-reveal\) var\(--ease-reveal\)/);
   assert.match(drag, /prefers-reduced-motion: reduce\)'\)\.matches\) \{\s*ghost\.remove\(\);/);
   assert.match(drag, /timer = setTimeout\(done, 400\)/, 'without it a dropped transition strands the copy');
-  assert.match(drag, /if \(moved\) _redraw\(\);\s*settle\(ghost, startRect, rowOf\(srcId\)\);/);
+  assert.match(
+    drag,
+    /if \(moved \|\| held\) _redraw\(\);\s*if \(!ghost\) return;\s*settle\(ghost, startRect, rowOf\(srcId\)\);/,
+  );
 });
 
 test('a folder chevron turns from its old angle after the list is rebuilt', () => {

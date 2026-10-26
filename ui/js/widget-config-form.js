@@ -3,9 +3,9 @@
 
 import { t } from '/js/i18n.js?v=ed7c5565';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=de497dcb';
-import { createListbox } from '/js/listbox.js?v=1ea519c4';
-import { renderColorControl } from '/js/admin-color-control.js?v=04741823';
+import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=6538c84c';
+import { createListbox } from '/js/listbox.js?v=99ce62fa';
+import { renderColorControl } from '/js/admin-color-control.js?v=aade667a';
 import {
   seedCarried,
   applyOptionSet,
@@ -13,8 +13,8 @@ import {
   requiredFieldMissing,
   groupBounds,
   visibleFieldFlags,
-  isPlainTextKey,
-} from '/js/admin-logic.js?v=69993191';
+  isPlainField,
+} from '/js/admin-logic.js?v=28471483';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=1c258dc1';
 import { qi } from '/js/utils.js?v=cfee1271';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
@@ -49,7 +49,7 @@ function _ieRow(field, value, inputType) {
     type: inputType,
     placeholder: ph,
     fill: false,
-    plain: isPlainTextKey(field.key),
+    plain: isPlainField(field),
     onCommit: () => inp.dispatchEvent(new Event('change', { bubbles: true })),
   });
   const get = () => {

@@ -50,6 +50,27 @@ function commit(opts) {
   return true;
 }
 
+/* A redraw replaces every row. A touch drag whose handle is replaced loses its
+   pointer capture and never ends, so a redraw asked for mid-drag waits. */
+let _dragging = false;
+let _redrawHeld = false;
+
+/** Whether a drag is in progress. If so, the caller skips its redraw and it
+    runs once the drag ends.
+    @returns {boolean} */
+export function redrawHeld() {
+  if (_dragging) _redrawHeld = true;
+  return _dragging;
+}
+
+/** @returns {boolean} whether a redraw was held */
+function releaseRedraw() {
+  const held = _redrawHeld;
+  _dragging = false;
+  _redrawHeld = false;
+  return held;
+}
+
 /* dataTransfer is not readable during dragover. */
 let _dragType = null;
 let _dragId = null;
@@ -127,7 +148,9 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
     if (row.draggable === false) return; /* hidden while filtering */
     e.preventDefault();
     const srcId = row.dataset.itemId;
-    handle.setPointerCapture(e.pointerId);
+    const pointerId = e.pointerId;
+    handle.setPointerCapture(pointerId);
+    _dragging = true;
     const x0 = e.clientX,
       y0 = e.clientY;
     /** @type {HTMLElement|null} */
@@ -205,6 +228,10 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
       if (!up && !dn) return;
       let last = performance.now();
       const step = now => {
+        if (!handle.isConnected) {
+          cancel();
+          return;
+        }
         scrollByPx(scroller, (up ? -1 : 1) * (now - last) * SCROLL_PX_PER_MS);
         last = now;
         scrollTimer = requestAnimationFrame(step);
@@ -223,58 +250,61 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
       handle.removeEventListener('pointermove', move);
       handle.removeEventListener('pointerup', up);
       handle.removeEventListener('pointercancel', cancel);
+      document.removeEventListener('lostpointercapture', lost);
       if (scrollTimer) cancelAnimationFrame(scrollTimer);
+      scrollTimer = null;
       row.classList.remove('dragging');
       _refused = false;
       _marked = null;
       clearDragClasses();
+      return releaseRedraw();
+    };
+    const drop = tr => {
+      if (tr.classList.contains('al-dock-empty')) {
+        return commit({ srcId, srcFolderId: indent ? folderId : null, targetId: null, targetGroup: 'dock' });
+      }
+      const into = !!tr.dataset.isFolder && canJoinFolder(itemType(srcId)) && dropInto;
+      return commit({
+        srcId,
+        srcFolderId: indent ? folderId : null,
+        targetId: tr.dataset.itemId,
+        targetFolderId: tr.dataset.folderId || null,
+        targetIsFolder: into,
+        indent: !!tr.dataset.indent,
+        childIdx: tr.dataset.childIdx != null ? Number(tr.dataset.childIdx) : null,
+        dropAbove: into ? false : dropAbove,
+        targetGroup: tr.dataset.group,
+      });
     };
     const up = () => {
-      if (!ghost) {
-        end();
-        return;
-      }
       const tr = hovered;
       const refused = _refused;
-      end();
-      if (!tr) {
-        settle(ghost, startRect, row);
-        if (refused) _dockFull();
-        return;
-      }
-      let moved;
-      if (tr.classList.contains('al-dock-empty')) {
-        moved = commit({ srcId, srcFolderId: indent ? folderId : null, targetId: null, targetGroup: 'dock' });
-      } else {
-        const into = !!tr.dataset.isFolder && canJoinFolder(itemType(srcId)) && dropInto;
-        moved = commit({
-          srcId,
-          srcFolderId: indent ? folderId : null,
-          targetId: tr.dataset.itemId,
-          targetFolderId: tr.dataset.folderId || null,
-          targetIsFolder: into,
-          indent: !!tr.dataset.indent,
-          childIdx: tr.dataset.childIdx != null ? Number(tr.dataset.childIdx) : null,
-          dropAbove: into ? false : dropAbove,
-          targetGroup: tr.dataset.group,
-        });
-      }
-      if (moved) _redraw();
+      const held = end();
+      const moved = !!tr && drop(tr);
+      if (moved || held) _redraw();
+      if (!ghost) return;
       settle(ghost, startRect, rowOf(srcId));
+      if (!tr && refused) _dockFull();
     };
     const cancel = () => {
-      end();
-      if (ghost) settle(ghost, startRect, row);
+      if (end()) _redraw();
+      if (ghost) settle(ghost, startRect, rowOf(srcId));
+    };
+    /* Fires on the document, not the handle, when the handle leaves the page.
+       No pointerup follows. */
+    const lost = ev => {
+      if (ev.pointerId === pointerId) cancel();
     };
     handle.addEventListener('pointermove', move);
     handle.addEventListener('pointerup', up);
     handle.addEventListener('pointercancel', cancel);
+    document.addEventListener('lostpointercapture', lost);
   });
 }
 
 /** @param {string} id @returns {HTMLElement|null} */
 function rowOf(id) {
-  return /** @type {HTMLElement|undefined} */ (qa('.drow').find(r => r.dataset.itemId === id)) || null;
+  return /** @type {HTMLElement|undefined} */ (qa('.drow:not(.drag-ghost)').find(r => r.dataset.itemId === id)) || null;
 }
 
 /** @param {HTMLElement} ghost @param {DOMRect} from @param {HTMLElement|null} to */
@@ -317,6 +347,7 @@ export function wireRowDrag(row, handle, { item, indent, folderId, childIdx }) {
     _dragId = item.id;
     _refused = false;
     _dropped = false;
+    _dragging = true;
     frame = requestAnimationFrame(() => row.classList.add('dragging'));
   });
   row.addEventListener('dragend', () => {
@@ -328,6 +359,7 @@ export function wireRowDrag(row, handle, { item, indent, folderId, childIdx }) {
     _dragType = null;
     _marked = null;
     clearDragClasses();
+    if (releaseRedraw()) _redraw();
   });
   row.addEventListener('dragover', e => {
     if (!accepts(_dragId, row.dataset.group)) {

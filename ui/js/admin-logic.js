@@ -120,6 +120,13 @@ export function isPlainTextKey(key) {
   return /(?:url|href|user(?:name)?|id|profile)$/i.test(String(key || ''));
 }
 
+/** A manifest field marked `"plain": true`, or one whose key names an address
+    or an identifier.
+    @param {{ key?: string, plain?: unknown }} [field] @returns {boolean} */
+export function isPlainField(field) {
+  return field?.plain === true || isPlainTextKey(field?.key);
+}
+
 export function nextActiveIndex(key, active, len) {
   if (len <= 0) return null;
   const clamp = i => Math.max(0, Math.min(i, len - 1));
