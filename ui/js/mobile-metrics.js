@@ -7,10 +7,13 @@
 const BASE_VW = 393;
 
 /* The grid answers a wider window with more cells, not with bigger ones, so the
-   chrome around it must stop growing too. Above this the dock, the pill and the
-   margins would be drawn half as large again as anything they sit beside. The
-   widest phone reports 430px, which is under the cap, so no phone is affected. */
-const MAX_SC = 1.2;
+   chrome around it must stop growing too. Phones scale up to the widest one;
+   anything wider keeps the base size. */
+const WIDEST_PHONE = 430;
+
+const BASE_VH = 560;
+
+const DOCK_ICON = 64;
 
 /* Cell size at the design viewport, gap included. The grid keeps a cell near
    this and changes how many of them there are. */
@@ -28,17 +31,18 @@ const MIN_COLS = 4;
    stays put and the count follows the box. Scaling a fixed count instead is what
    stretched four columns across a tablet and squeezed six into a phone.
 
-   @param {{ gridW: number, gridH: number, sc: number }} o
+   @param {{ gridW: number, gridH: number, sc: number, vw?: number, labels?: boolean }} o
    @returns {{ cols: number, rows: number }} */
-export function gridCellCount({ gridW, gridH, sc }) {
+export function gridCellCount({ gridW, gridH, sc, vw = 0, labels = true }) {
   const cols = Math.max(MIN_COLS, Math.round(gridW / (BASE_CELL_W * sc)));
-  const rows = Math.max(MIN_ROWS, Math.round(gridH / (BASE_CELL_H * sc)));
+  const cellH = vw > WIDEST_PHONE && !labels ? gridW / cols : BASE_CELL_H * sc;
+  const rows = Math.max(MIN_ROWS, Math.round(gridH / cellH));
   return { cols, rows };
 }
 
-/** @param {number} vw @param {boolean} docked */
-export function mobileMetrics(vw, docked = true) {
-  const sc = Math.min(vw / BASE_VW, MAX_SC);
+/** @param {number} vw @param {boolean} docked @param {number} [vh] */
+export function mobileMetrics(vw, docked = true, vh = Infinity) {
+  const sc = Math.min(vw > WIDEST_PHONE ? 1 : vw / BASE_VW, vh / BASE_VH);
   const sm = Math.round(18 * sc);
   const dh = docked ? Math.round(108 * sc) : 0;
   const pillH = Math.round(30 * sc);
@@ -46,6 +50,11 @@ export function mobileMetrics(vw, docked = true) {
   /* Reserving less lets the pill sit on top of the last row. */
   const dz = pillGap + pillH + Math.round(8 * sc);
   return { sc, sm, dh, pillH, pillGap, dz };
+}
+
+/** @param {{ iconSz: number, sc: number }} o */
+export function dockFit({ iconSz, sc }) {
+  return Math.min(1, iconSz / Math.round(DOCK_ICON * sc));
 }
 
 /* One column width for the whole home grid.

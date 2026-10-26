@@ -50,7 +50,7 @@ test('the corner never reaches past half the short side', () => {
 
 test('the mobile dock draws the smooth shape at phone width', () => {
   const ui = read('js/ui.js');
-  assert.match(ui, /const dockW = Math\.min\(maxDockW, Math\.round\(\(PHONE_W - 18\) \* sc\)\)/);
+  assert.match(ui, /const dockW = Math\.min\(maxDockW, Math\.round\(\(PHONE_W - 18\) \* sc \* fit\)\)/);
   assert.match(ui, /observeGlass\(dk, Math\.round\(38 \* sc\), 0\.6\)/);
   assert.doesNotMatch(ui, /border-radius:\$\{Math\.round\(44 \* sc\)\}px/, 'the dock is back to a circular corner');
 });

@@ -67,7 +67,7 @@ import {
   parseErrorsAsSkipped,
   SKIP,
 } from '/js/import-foreign.js?v=961efd4d';
-import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
+import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { clampName } from '/js/limits.js?v=ea61a441';
 import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6b0320bd';
 import {

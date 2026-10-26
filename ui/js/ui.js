@@ -20,7 +20,7 @@ import {
 } from '/js/utils.js?v=017012d7';
 import { t, currentLang } from '/js/i18n.js?v=ed7c5565';
 import { toneForColor } from '/js/label-contrast.js?v=4e97555e';
-import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=349f4300';
+import { mobileMetrics, gridColumnWidth, gridCellCount, dockFit } from '/js/mobile-metrics.js?v=938a32a2';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
 import { mkGlassRim, observeGlass } from '/js/glass-rim.js?v=3faec233';
 import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=5fa66027';
@@ -755,7 +755,7 @@ export function buildMobile() {
   const dock = items()
     .filter(i => i.type === 'app' && i.dock && !i.hidden)
     .slice(0, 4);
-  const { sc, sm, dh, pillH, pillGap, dz } = mobileMetrics(vw, dock.length > 0);
+  const { sc, sm, dh, pillH, pillGap, dz } = mobileMetrics(vw, dock.length > 0, vh);
   document.body.classList.toggle('no-dock', !dock.length);
   const gap = Math.round(sm * 0.5);
   css(document.body, {
@@ -793,7 +793,13 @@ export function buildMobile() {
   const firstPage = mkPage();
   strip.appendChild(firstPage.page);
   const gridBox = firstPage.grid.getBoundingClientRect();
-  const { cols: COLS, rows: ROWS } = gridCellCount({ gridW: gridBox.width, gridH: gridBox.height, sc });
+  const { cols: COLS, rows: ROWS } = gridCellCount({
+    gridW: gridBox.width,
+    gridH: gridBox.height,
+    sc,
+    vw,
+    labels: S().showLabels?.ios === true,
+  });
   css(document.body, { '--mcols': String(COLS), '--mrows': String(ROWS) });
   const rh = gridBox.height / ROWS;
   const rh2 = (gridBox.height - gap * (ROWS - 1)) / ROWS; /* exact row height incl. gaps */
@@ -964,17 +970,19 @@ export function buildMobile() {
   const dk = el('dock');
   dk.className = 'mdock';
   const maxDockW = vw - Math.round(18 * sc);
-  const dockPad = Math.round(14 * sc);
   const dockIconSz = Math.round(Math.min(isz, ((maxDockW - Math.round(28 * sc)) / 4) * 0.85));
   const dockIr = Math.round(dockIconSz * ICON_R),
     dockIm = Math.round(dockIconSz * 0.64);
   const dockGap = Math.round(9 * sc);
-  const dockW = Math.min(maxDockW, Math.round((PHONE_W - 18) * sc));
+  const fit = dockFit({ iconSz: dockIconSz, sc });
+  const dockPad = Math.round(14 * sc * fit);
+  const dockH = Math.round(dh * fit);
+  const dockW = Math.min(maxDockW, Math.round((PHONE_W - 18) * sc * fit));
   const spare = dockW - dockPad * 2 - dock.length * dockIconSz;
   const maxIconGap = Math.round(22 * sc);
   const dockIconGap = dock.length > 1 ? Math.max(0, Math.min(maxIconGap, Math.floor(spare / (dock.length - 1)))) : 0;
   dk.hidden = !dock.length;
-  dk.style.cssText = `position:fixed;left:50%;bottom:${dockGap}px;transform:translateX(-50%);width:${dockW}px;height:${dh}px;padding:0 ${dockPad}px;gap:${dockIconGap}px;z-index:400;`;
+  dk.style.cssText = `position:fixed;left:50%;bottom:${dockGap}px;transform:translateX(-50%);width:${dockW}px;height:${dockH}px;padding:0 ${dockPad}px;gap:${dockIconGap}px;z-index:400;`;
   dk.replaceChildren();
   observeGlass(dk, Math.round(38 * sc), 0.6);
   dock.forEach(item => {
@@ -997,7 +1005,7 @@ export function buildMobile() {
     _pdotPad = Math.round(14 * sc);
   const pillDotsW = pages.length * (_pdotSz + _pdotGap) - _pdotGap + _pdotPad * 2;
   const pill = el('mob-search-pill');
-  pill.style.cssText = `position:fixed;left:50%;bottom:${dockGap + dh + pillGap}px;transform:translateX(-50%);width:${pillSearchW}px;height:${pillH}px;display:${bare ? 'none' : 'flex'};z-index:500;`;
+  pill.style.cssText = `position:fixed;left:50%;bottom:${dockGap + dockH + pillGap}px;transform:translateX(-50%);width:${pillSearchW}px;height:${pillH}px;display:${bare ? 'none' : 'flex'};z-index:500;`;
 
   const pillNew = /** @type {HTMLElement} */ (pill.cloneNode(true));
   const pillNewDots = q('.msp-dots', pillNew);

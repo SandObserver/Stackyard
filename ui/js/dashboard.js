@@ -47,7 +47,7 @@ import {
   resetMobileChrome,
   mkFolderGlyph,
   swipePager,
-} from '/js/ui.js?v=92aeff53';
+} from '/js/ui.js?v=9af2a487';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=85b1bc96';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=23793736';
@@ -62,7 +62,7 @@ import {
 } from '/js/dashboard-logic.js?v=5fa66027';
 import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=4d651887';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
-import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
+import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=4e97555e';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=26655aca';
@@ -78,7 +78,7 @@ if (!('GestureEvent' in window)) {
 }
 
 /* Recomputed, never stored: the window can cross the breakpoint after load. */
-let MOB = isMobileLayout();
+let MOB = isMobileLayout(true);
 
 const wCols = { d: WIDGET_COLS.desktop, m: WIDGET_COLS.mobile };
 const wRows = { d: WIDGET_ROWS.desktop, m: WIDGET_ROWS.mobile };
@@ -1000,10 +1000,14 @@ async function boot() {
     if (e.key === THEME_KEY) onTheme();
   });
 
-  onLayoutChange(mobile => {
-    MOB = mobile;
-    buildLayout();
-  }, MOB);
+  onLayoutChange(
+    mobile => {
+      MOB = mobile;
+      buildLayout();
+    },
+    MOB,
+    true,
+  );
 
   /* The platform reports its safe-area insets after the first paint, and again after a
      rotation. The probe is sized by them, so its box changing is the signal

@@ -242,7 +242,7 @@ test('a resize rebuilds only when the desktop slot count changes', () => {
 test('the rebuild is driven by the shared layout rule', () => {
   const src = read('js/dashboard.js');
   assert.match(src, /import \{[^}]*onLayoutChange[^}]*\} from '\/js\/layout\.js/);
-  assert.match(src, /onLayoutChange\(mobile => \{/, 'the layout change is what triggers a rebuild');
+  assert.match(src, /onLayoutChange\(\s*mobile => \{/, 'the layout change is what triggers a rebuild');
 });
 
 test('a reload replaces the frame location instead of adding a Back entry', async () => {
