@@ -181,3 +181,23 @@ export function buildModel(config = {}, opts = {}) {
   }
   return { size, capacity, openIn, count: slots.length, slots };
 }
+
+const RTL_LETTER = /[\p{Script=Arabic}\p{Script=Hebrew}\p{Script=Syriac}\p{Script=Thaana}\p{Script=Nko}]/u;
+
+/** @param {string} text @returns {'rtl' | 'ltr'} */
+export function textDirection(text) {
+  const first = String(text).match(/\p{L}/u);
+  return first && RTL_LETTER.test(first[0]) ? 'rtl' : 'ltr';
+}
+
+/** @param {string} name @param {(text: string) => boolean} fits @returns {string} */
+export function fitName(name, fits) {
+  if (fits(name)) return name;
+  const parts = [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(name)].map(p => p.segment);
+  let text = name;
+  for (let n = parts.length - 1; n >= 1; n--) {
+    text = `${parts.slice(0, n).join('').trimEnd()}…`;
+    if (fits(text)) break;
+  }
+  return text;
+}

@@ -9,6 +9,7 @@
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; background: transparent;
     font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+  html { -webkit-tap-highlight-color: transparent; }
 
   .widget {
     width: 100%; height: 100%;
@@ -113,6 +114,7 @@
     margin-inline-end: 3px; vertical-align: middle; opacity: 0.85;
     animation: spin 1.4s linear infinite;
   }
+  .sync-icon svg { display: block; width: 100%; height: 100%; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce){
     *{transition:none !important;animation:none !important}
@@ -122,7 +124,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom } from '/js/widget-toolbox.js?v=c346a35b';
+import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom } from '/js/widget-toolbox.js?v=66813091';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const id   = new URLSearchParams(location.search).get('id')   || '';
@@ -652,7 +654,7 @@ function applyCard(idx, job) {
   const next = (!running && job.nextRun) ? relTime(job.nextRun) : '';
   if(bmeta) {
     if(running){
-      bmeta.innerHTML=`<svg class="sync-icon" aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5a5.5 5.5 0 0 1 4 1.73"/><path d="M13.5 2.5v2.5H11"/></svg>${wt('ui.runningNow','Running…')}<br>&nbsp;`;
+      bmeta.innerHTML=`<span class="sync-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5a5.5 5.5 0 0 1 4 1.73"/><path d="M13.5 2.5v2.5H11"/></svg></span>${wt('ui.runningNow','Running…')}<br>&nbsp;`;
     } else {
       setHtml(bmeta, next
         ? html`${wt('ui.lastAt','Last {when}',{when:last})}<br>${wt('ui.nextAt','Next {when}',{when:next})}`

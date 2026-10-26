@@ -68,20 +68,26 @@ test('the cloud rests both puffs on a flat base', () => {
   assert.match(d, /z$/);
 });
 
-const ORIGIN_RULE = /\.ico (\.wx-[\w-]+(?:,\.ico \.wx-[\w-]+)*)\{transform-box:fill-box;transform-origin:center\}/;
-
-test('no part with its own transform gets a centred transform origin', () => {
-  const classes = ORIGIN_RULE.exec(page)?.[1]
-    .split(',.ico .')
-    .map(c => c.replace(/^\./, ''));
-  assert.ok(classes?.length, 'the transform-origin rule is gone');
+test('falling parts move as HTML boxes outside the artwork svg', () => {
   for (const cond of CONDITIONS)
-    for (const day of [true, false])
-      for (const [tag] of buildIcon(cond, day).matchAll(/<[a-z]+\b[^>]*>/g)) {
-        const cls = /class="([^"]+)"/.exec(tag)?.[1].split(' ') ?? [];
-        if (cls.some(c => classes.includes(c)))
-          assert.doesNotMatch(tag, /\stransform=/, `${cond}: ${tag} would move off its place`);
+    for (const day of [true, false]) {
+      const markup = `<svg viewBox="0 0 100 100">${buildIcon(cond, day)}</svg>`;
+      let depth = 0;
+      for (const [tag, close, name] of markup.matchAll(/<(\/?)([a-z]+)\b[^>]*>/g)) {
+        if (name === 'svg' && !tag.endsWith('/>')) depth += close ? -1 : 1;
+        if (/class="wx-(?:pos|drop|flake|pellet|bolt)\b/.test(tag)) {
+          assert.equal(name, 'div', `${cond}: ${tag} is not an HTML box`);
+          assert.equal(depth, 0, `${cond}: ${tag} sits inside an svg`);
+        }
+        assert.ok(depth >= 0 && depth <= 1, `${cond}: svg tags do not pair up`);
       }
+      assert.equal(depth, 0, `${cond}: an svg is left open`);
+    }
+});
+
+test('a snowflake turns around its own centre', () => {
+  for (const [tag] of buildIcon('snow', true).matchAll(/<div class="wx-flake"[^>]*>/g))
+    assert.match(tag, /transform-origin:0 58\.968%/);
 });
 
 test('css motion stops for reduced motion and while the card is off screen', () => {
@@ -98,7 +104,7 @@ test('nothing blurred is moved by a frame-rate css animation', () => {
     assert.doesNotMatch(page, new RegExp(`\\.${cls}[^{]*\\{[^}]*animation`), `.${cls} has a css animation`);
   for (const cond of CONDITIONS)
     for (const day of [true, false])
-      for (const [part] of buildIcon(cond, day).matchAll(/<g class="wx-(?:drop|flake)[^>]*>[\s\S]*?<\/g>/g))
+      for (const [part] of buildIcon(cond, day).matchAll(/<div class="wx-(?:drop|flake)[^>]*>[\s\S]*?<\/div>/g))
         assert.doesNotMatch(part, /filter=/, `${cond}: falling parts carry a filter`);
 });
 
@@ -149,7 +155,7 @@ test('every falling part starts inside its lane', () => {
       const svg = buildIcon(cond, day);
       const parts = [
         ...svg.matchAll(
-          /<g class="wx-pos[^"]*" data-lo="([\d.]+)" data-hi="([\d.]+)" transform="translate\(([\d.]+) 0\)"(?: opacity="[\d.]+")?><g class="wx-(?:drop|flake|bolt)/g,
+          /<div class="wx-pos[^"]*" data-lo="([\d.]+)" data-hi="([\d.]+)" style="transform:translateX\(([\d.]+)%\)(?:;opacity:[\d.]+)?"><div class="wx-(?:drop|flake|bolt)/g,
         ),
       ];
       assert.ok(parts.length, `${cond} has no falling parts`);
@@ -172,8 +178,10 @@ test('a falling part restarts at a new spot inside its lane', () => {
   const lane = (flip = false) => ({
     classList: { contains: c => c === 'wx-pos' || (flip && c === 'wx-flip') },
     dataset: { lo: '30', hi: '64' },
-    setAttribute: (_, v) => {
-      transform = v;
+    style: {
+      set transform(v) {
+        transform = v;
+      },
     },
     querySelector: () => ({
       animate: () => {
@@ -183,7 +191,7 @@ test('a falling part restarts at a new spot inside its lane', () => {
   });
   for (let i = 0; i < 40; i++) {
     restart({ target: { parentNode: lane(i % 2 === 1) } });
-    const x = +/^translate\(([\d.]+) 0\)/.exec(transform)[1];
+    const x = +/^translateX\(([\d.]+)%\)/.exec(transform)[1];
     assert.ok(x >= 30 && x <= 64, `${x} left the lane`);
     seen.add(x);
     if (i % 2 === 0) assert.doesNotMatch(transform, /scale/);
@@ -208,10 +216,10 @@ test('a faint far layer keeps its opacity off the animated element', () => {
   for (const cond of ['shower', 'rain', 'snow'])
     for (const day of [true, false]) {
       const svg = buildIcon(cond, day);
-      assert.match(svg, /<g class="wx-pos"[^>]*opacity="0\.5+"/, `${cond} has no faint far layer`);
+      assert.match(svg, /<div class="wx-pos"[^>]*opacity:0\.5+"/, `${cond} has no faint far layer`);
       assert.doesNotMatch(
         svg,
-        /<g class="wx-(?:drop|flake)"[^>]*opacity=/,
+        /<div class="wx-(?:drop|flake)"[^>]*opacity/,
         `${cond}: the animation overrides the faint layer`,
       );
     }
@@ -222,7 +230,9 @@ test('falling parts start in separate lanes, so a still picture shows each one',
   for (const cond of ['shower', 'rain', 'snow', 'fdrizzle', 'frain', 'sleet', 'rainsnow', 'hail'])
     for (const day of [true, false]) {
       const near = [
-        ...buildIcon(cond, day).matchAll(/<g class="wx-pos[^"]*" [^>]*translate\(([\d.]+) 0\)"><g class="([\w-]+)/g),
+        ...buildIcon(cond, day).matchAll(
+          /<div class="wx-pos[^"]*" [^>]*translateX\(([\d.]+)%\)"><div class="([\w-]+)/g,
+        ),
       ].map(m => +m[1] + still[m[2]]);
       const gaps = near
         .sort((a, b) => a - b)
@@ -234,6 +244,6 @@ test('falling parts start in separate lanes, so a still picture shows each one',
 
 test('reduced motion shows rain and snow below the cloud, not behind it', () => {
   const still = /@media\(prefers-reduced-motion:reduce\)\{([^@]*?)\}\s*\n/.exec(page)?.[1];
-  assert.match(still, /\.ico \.wx-drop\{transform:translate\(-?[\d.]+px,[\d.]+px\)\}/);
-  assert.match(still, /\.ico \.wx-flake\{transform:translate\(-?[\d.]+px,[\d.]+px\)\}/);
+  assert.match(still, /\.ico \.wx-drop\{transform:translate\(-?[\d.]+%,[\d.]+%\)\}/);
+  assert.match(still, /\.ico \.wx-flake\{transform:translate\(-?[\d.]+%,[\d.]+%\)\}/);
 });

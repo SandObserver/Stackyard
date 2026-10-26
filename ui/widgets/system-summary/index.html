@@ -7,6 +7,7 @@
 <script src="/js/widget-theme.js?v=645f280f"></script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-tap-highlight-color: transparent; }
   html, body { width: 100%; height: 100%; overflow: hidden; background: #1C1C1E;
     font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
   /* Keep #cap outside #widget. Inside it the caption loses the reader's direction. */
@@ -46,6 +47,7 @@
   .tb-col-mark { background-color: rgba(255,255,255,0.9); }
   /* Keep the picked colour. The edge is what keeps a colour near the card visible. */
   .faint .tb-col-fill, .faint .tb-bar-fill { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35); }
+  .faint .tb-bar-fill { width: var(--tb-pct); transform: none; transition-property: width !important; }
 
   .tb-bar, .tb-col { background-color: rgba(255,255,255,0.12); }
   .net { grid-column: 1 / -1; display: flex; gap: 12px; font-size: 11px; font-weight: 500;
@@ -81,7 +83,7 @@
 <div id="cap"></div>
 <div id="ss-link" aria-labelledby="sr-sum"></div>
 <script type="module">
-import { contrastInk, cardContrast, colorOrFallback, columns, barFill, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState, cssZoom, linkTo, openUrl, formatList } from '/js/widget-toolbox.js?v=c346a35b';
+import { contrastInk, cardContrast, colorOrFallback, columns, barFill, setBar, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState, cssZoom, linkTo, openUrl, formatList } from '/js/widget-toolbox.js?v=66813091';
 await loadStrings();
 const REFRESH_SECONDS = ['5', '10', '30', '60'];
 const SPEED_MS = 60000;
@@ -501,8 +503,8 @@ function applyStats(raw) {
       if (r.sizeEl) r.sizeEl.textContent = r.sizes;
       if (!r.showing || r.box) r.val.textContent = r.latest;
       else showSizes(r, true);
-      if (r.bar) r.bar.firstElementChild.style.width = (p ?? 0) + '%';
-      if (r.bar2) r.bar2.firstElementChild.style.width = (s ?? 0) + '%';
+      if (r.bar) setBar(r.bar, p);
+      if (r.bar2) setBar(r.bar2, s);
       /* #widget is aria-hidden. The summary must carry the sizes and the second disk. */
       if (p !== null) spoken.push(`${r.label} ${r.latest}${firstSize ? ` (${sizeSpoken(firstSize)})` : ''}`);
       if (s !== null)

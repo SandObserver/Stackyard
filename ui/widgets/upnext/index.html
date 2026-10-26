@@ -7,6 +7,7 @@
 <script src="/js/widget-theme.js?v=645f280f"></script>
 <style>
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-tap-highlight-color:transparent}
   html,body{width:100%;height:100%;overflow:hidden;background:transparent;
     font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif;color:#FFFFFF}
   .card{position:relative;width:100%;height:100%;padding:16px;border-radius:inherit;outline:none}
@@ -19,7 +20,7 @@
   .row.clickable{cursor:pointer}
   .row.clickable:active{background:rgba(255,255,255,.08)}
   .mp{position:absolute;top:0;inset-inline-start:0;pointer-events:none;opacity:0;transition:opacity .14s ease}
-  .mp.on{opacity:1;transition:opacity .14s ease,transform .19s cubic-bezier(.22,1,.36,1),width .19s cubic-bezier(.22,1,.36,1),height .19s cubic-bezier(.22,1,.36,1)}
+  .mp.on{opacity:1;transition:opacity .14s ease,transform .19s cubic-bezier(.22,1,.36,1)}
   .fh-hl{background:rgba(255,255,255,.08)}
   @media (prefers-reduced-motion: reduce){.mp,.mp.on{transition:none}}
   .row.clickable:focus-visible{outline:2px solid #00D2E0;outline-offset:-1px}
@@ -72,7 +73,7 @@
   <div class="wt-cap note" id="note" hidden></div>
 </div>
 <script type="module">
-  import { poll, linkTo, loadStrings, wt, errorState, errorLine, placeholder, localiseDigits, cssZoom } from '/js/widget-toolbox.js?v=c346a35b';
+  import { poll, linkTo, loadStrings, wt, errorState, errorLine, placeholder, localiseDigits, cssZoom } from '/js/widget-toolbox.js?v=66813091';
   import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
   import { visibleItems, dayOffset, kindClass } from './upnext-logic.js';
 

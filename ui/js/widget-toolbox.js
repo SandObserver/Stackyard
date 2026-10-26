@@ -325,10 +325,20 @@ function fit(el, min) {
   }
 }
 
+const BAR_STYLE_ID = 'wt-bar-css';
+const BAR_CSS =
+  '.tb-bar-fill{transform:translateX(calc(var(--tb-pct) - 100%))}' +
+  '.tb-bar-fill:dir(rtl){transform:translateX(calc(100% - var(--tb-pct)))}';
+
 /* opts: { color='#0a84ff', track='rgba(255,255,255,0.10)', height=6, radius=3 }
    track: null paints no track, so the page styles .tb-bar per theme. */
 export function barFill(percent, opts = {}) {
-  const pct = Math.max(0, Math.min(100, Number(percent) || 0));
+  if (!document.getElementById(BAR_STYLE_ID)) {
+    const s = document.createElement('style');
+    s.id = BAR_STYLE_ID;
+    s.textContent = BAR_CSS;
+    document.head.appendChild(s);
+  }
   const h = opts.height != null ? opts.height : 6;
   const radius = opts.radius != null ? opts.radius : 3;
   const track = document.createElement('div');
@@ -338,11 +348,18 @@ export function barFill(percent, opts = {}) {
   const fill = document.createElement('div');
   fill.className = 'tb-bar-fill';
   fill.style.cssText =
-    `position:absolute;left:0;top:0;bottom:0;width:${pct}%;border-radius:${radius}px` +
-    (reducedMotion() ? '' : ';transition:width .4s ease');
+    `position:absolute;inset:0;border-radius:${radius}px` +
+    (reducedMotion() ? '' : ';transition:transform .4s cubic-bezier(.23,1,.32,1)');
   fill.style.backgroundColor = colorOrFallback(opts.color, '#0a84ff');
   track.appendChild(fill);
+  setBar(track, percent);
   return track;
+}
+
+/** @param {HTMLElement} track @param {unknown} percent */
+export function setBar(track, percent) {
+  const pct = Math.max(0, Math.min(100, Number(percent) || 0));
+  /** @type {HTMLElement} */ (track.firstElementChild).style.setProperty('--tb-pct', `${pct}%`);
 }
 
 /** Rounded columns, newest on the right, for a short history at a glance.

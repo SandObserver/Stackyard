@@ -15,16 +15,23 @@ globalThis.location = { search: '?id=test' };
 
 /* Enough of a DOM for an element that carries a style string and a child. */
 function stubDom() {
-  globalThis.document = {
-    createElement: () => ({
-      style: { cssText: '' },
-      children: [],
-      appendChild(child) {
-        this.children.push(child);
-        return child;
+  const element = () => ({
+    style: {
+      cssText: '',
+      setProperty(k, v) {
+        this[k] = v;
       },
-    }),
-  };
+    },
+    children: [],
+    get firstElementChild() {
+      return this.children[0];
+    },
+    appendChild(child) {
+      this.children.push(child);
+      return child;
+    },
+  });
+  globalThis.document = { createElement: element, getElementById: () => null, head: element() };
 }
 
 /** @param {boolean|null} reduce null means the browser answers no matchMedia */
@@ -33,20 +40,24 @@ function setMotionPreference(reduce) {
 }
 
 stubDom();
-const { barFill } = await import('../js/widget-toolbox.js');
+const { barFill, setBar } = await import('../js/widget-toolbox.js');
 
 const fillOf = track => track.children[0];
 
 test('the bar animates when no reduced-motion preference is set', () => {
   setMotionPreference(false);
-  assert.match(fillOf(barFill(40)).style.cssText, /transition:width \.4s ease/);
+  assert.match(fillOf(barFill(40)).style.cssText, /transition:transform \.4s cubic-bezier\(\.23,1,\.32,1\)/);
 });
 
 test('the bar does not animate when reduced motion is asked for', () => {
   setMotionPreference(true);
   const css = fillOf(barFill(40)).style.cssText;
   assert.doesNotMatch(css, /transition/);
-  assert.match(css, /width:40%/, 'the bar still reaches its value, it just does not travel there');
+  assert.equal(
+    fillOf(barFill(40)).style['--tb-pct'],
+    '40%',
+    'the bar still reaches its value, it just does not travel there',
+  );
 });
 
 /* The preference is read per call, so a widget that redraws after the setting
@@ -61,7 +72,7 @@ test('the preference is read on each call, not once at load', () => {
 /* A browser without matchMedia must still draw a bar. */
 test('a missing matchMedia is treated as no preference', () => {
   setMotionPreference(null);
-  assert.match(fillOf(barFill(55)).style.cssText, /transition:width \.4s ease/);
+  assert.match(fillOf(barFill(55)).style.cssText, /transition:transform /);
 });
 
 test('a throwing matchMedia does not break the bar', () => {
@@ -70,6 +81,15 @@ test('a throwing matchMedia does not break the bar', () => {
       throw new Error('unsupported');
     },
   };
-  const css = fillOf(barFill(55)).style.cssText;
-  assert.match(css, /width:55%/);
+  assert.equal(fillOf(barFill(55)).style['--tb-pct'], '55%');
+});
+
+test('the bar moves by transform, never by its width', () => {
+  setMotionPreference(false);
+  const bar = barFill(30);
+  assert.doesNotMatch(fillOf(bar).style.cssText, /width/);
+  setBar(bar, 140);
+  assert.equal(fillOf(bar).style['--tb-pct'], '100%');
+  setBar(bar, null);
+  assert.equal(fillOf(bar).style['--tb-pct'], '0%');
 });

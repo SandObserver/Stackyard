@@ -7,6 +7,7 @@
 <script src="/js/widget-theme.js?v=645f280f"></script>
 <style>
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-tap-highlight-color:transparent}
   html,body{width:100%;height:100%;overflow:hidden;background:transparent;
     font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif}
   .widget{width:100%;height:100%;position:relative;border-radius:inherit}
@@ -14,15 +15,17 @@
   .widget.clickable:focus-visible{outline:2px solid #0091FF;outline-offset:-3px}
   .widget[tabindex]:focus-visible{outline:2px solid #0091FF;outline-offset:-3px}
   .ico{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:62%;max-width:110px;aspect-ratio:1/1;display:block;overflow:visible}
+  .ico svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .wx-pos,.wx-pos>div{position:absolute;inset:0}
+  .wx-pos{transform-origin:0 0}
   .meta{position:absolute;left:18px;right:18px;bottom:14px;display:flex;flex-direction:column;gap:2px}
   .cond{font-size:15px;font-weight:600;color:#2C2C2E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .temp{font-size:42px;font-weight:700;line-height:1;letter-spacing:-0.01em;color:#f0852a}
   .msg{margin-top:3px}
-  /* Only on elements without a transform attribute. A transform-origin on one moves it. */
-  .ico .wx-drop,.ico .wx-flake,.ico .wx-pellet{transform-box:fill-box;transform-origin:center}
-  @keyframes wxdrop{0%{transform:translate(0,0);opacity:0}22%{opacity:1}80%{opacity:1}100%{transform:translate(-7.5px,15.2px);opacity:0}}
-  @keyframes wxflake{0%{transform:translate(0,-2px) rotate(0);opacity:0}18%{opacity:1}50%{transform:translate(2px,6px) rotate(45deg)}85%{opacity:1}100%{transform:translate(-1px,15px) rotate(90deg);opacity:0}}
-  @keyframes wxpellet{0%{transform:translate(0,-2px);opacity:0}18%{opacity:1}85%{opacity:1}100%{transform:translate(-3px,17px);opacity:0}}
+  /* Falling parts are HTML boxes the size of the icon, so 1% is one unit of the artwork. */
+  @keyframes wxdrop{0%{transform:translate(0,0);opacity:0}22%{opacity:1}80%{opacity:1}100%{transform:translate(-7.5%,15.2%);opacity:0}}
+  @keyframes wxflake{0%{transform:translate(0,-2%) rotate(0);opacity:0}18%{opacity:1}50%{transform:translate(2%,6%) rotate(45deg)}85%{opacity:1}100%{transform:translate(-1%,15%) rotate(90deg);opacity:0}}
+  @keyframes wxpellet{0%{transform:translate(0,-2%);opacity:0}18%{opacity:1}85%{opacity:1}100%{transform:translate(-3%,17%);opacity:0}}
   @keyframes wxslide{to{transform:translateX(var(--d))}}
   @keyframes wxspin{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-100}}
   @keyframes wxflash{0%,100%{opacity:0}1.5%{opacity:.5}4%{opacity:.08}6.5%{opacity:.35}12%{opacity:0}}
@@ -36,7 +39,7 @@
   .wx-bolt{animation:wxbolt 6.5s linear infinite}
   .wx-draw{stroke-dasharray:1}
   .ico.off *{animation-play-state:paused}
-  @media(prefers-reduced-motion:reduce){.ico *{animation:none}.ico .wx-drop{transform:translate(-3.75px,7.6px)}.ico .wx-flake{transform:translate(1px,6px)}.ico .wx-pellet{transform:translate(-1.5px,8px)}.ico .wx-flow{transform:translateX(calc(var(--d) * .4))}}
+  @media(prefers-reduced-motion:reduce){.ico *{animation:none}.ico .wx-drop{transform:translate(-3.75%,7.6%)}.ico .wx-flake{transform:translate(1%,6%)}.ico .wx-pellet{transform:translate(-1.5%,8%)}.ico .wx-flow{transform:translateX(calc(var(--d) * .4))}}
   .ico .ph{fill:rgba(235,235,245,0.16)}
   html[data-theme="light"] .ico .ph{fill:rgba(60,60,67,0.12)}
   .aq{position:absolute;inset-block-start:4px;inset-inline-end:4px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:#2C2C2E}
@@ -60,7 +63,7 @@
 </head>
 <body>
 <div class="widget" id="widget" role="group" aria-label="Weather">
-  <svg class="ico" id="ico" viewBox="0 0 100 100" aria-hidden="true"></svg>
+  <div class="ico" id="ico" aria-hidden="true"></div>
   <div class="meta">
     <div class="cond" id="cond"></div>
     <div class="temp" id="temp"></div>
@@ -73,7 +76,7 @@
   <div class="sr-only" id="sr"></div>
 </div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, setHtml } from '/js/widget-toolbox.js?v=c346a35b';
+import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, setHtml } from '/js/widget-toolbox.js?v=66813091';
 import { ensureSprite } from '/js/icon-set.js?v=26655aca';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('widget.label', 'Weather'));
@@ -129,12 +132,14 @@ function cloud(day,x,y,W,back,glow=''){
 const over=(day,orbAt,x,y,W)=>orb(day,...orbAt)+cloud(day,x,y,W,false,`<g filter="url(#wx-blur)">${orb(day,...orbAt)}</g>`);
 const PC=[8,-3,84],BASE=f(PC[1]+.702*PC[2]),SKY=[78,27,31],LANE=[30,64];
 const rnd=(lo,hi)=>f(lo+Math.random()*(hi-lo));
+const LAYER='<svg viewBox="0 0 100 100">',FLAKE_Y=f(BASE+3);
 function falling(n,shape,cls,[lo,hi],{op=1,lane=LANE,shift=.5,slots=n,at=i=>i}={}){
   const step=(lane[1]-lane[0])/slots;
-  return Array.from({length:n},(_,i)=>{
+  return '</svg>'+Array.from({length:n},(_,i)=>{
     const d=rnd(lo,hi);
-    return `<g class="wx-pos" data-lo="${lane[0]}" data-hi="${lane[1]}" transform="translate(${f(lane[0]+(at(i)+shift)*step)} 0)"${op<1?` opacity="${op}"`:''}><g class="${cls}" style="animation-duration:${d}s;animation-delay:-${rnd(0,d)}s">${shape}</g></g>`;
-  }).join('');
+    const origin=cls==='wx-flake'?`;transform-origin:0 ${FLAKE_Y}%`:'';
+    return `<div class="wx-pos" data-lo="${lane[0]}" data-hi="${lane[1]}" style="transform:translateX(${f(lane[0]+(at(i)+shift)*step)}%)${op<1?`;opacity:${op}`:''}"><div class="${cls}" style="animation-duration:${d}s;animation-delay:-${rnd(0,d)}s${origin}">${LAYER}${shape}</svg></div></div>`;
+  }).join('')+LAYER;
 }
 const drop=(k,w)=>`<path d="M0 ${f(BASE-2)}l${f(-4.2*k)} ${f(8.5*k)}" stroke="#00D2E0" stroke-width="${w}" stroke-linecap="round"/>`;
 const rain=()=>falling(2,drop(.7,2.2),'wx-drop',[1.6,2],{op:.5})+falling(4,drop(1,3.6),'wx-drop',[.95,1.25]);
@@ -147,14 +152,14 @@ const pellets=(day,n,r,dur,o)=>falling(n,`<circle cx="0" cy="${f(BASE+2)}" r="${
 function flake(cx,cy,r,w,c){
   return [0,60,120].map(a=>`<path d="M${cx} ${f(cy-r)}v${f(2*r)}" transform="rotate(${a} ${cx} ${cy})" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`).join('');
 }
-const flakes=(n,r,w,c,o)=>falling(n,flake(0,f(BASE+3),r,w,c),'wx-flake',[3.6,4.8],o);
+const flakes=(n,r,w,c,o)=>falling(n,flake(0,FLAKE_Y,r,w,c),'wx-flake',[3.6,4.8],o);
 function snow(day){
-  const c=day?'#00D2E0':'#FFFFFF',y=f(BASE+3);
+  const c=day?'#00D2E0':'#FFFFFF',y=FLAKE_Y;
   return falling(2,flake(0,y,2.8,1.8,c),'wx-flake',[5.5,7.5],{op:.55})+flakes(3,4.6,2.6,c,{shift:.75});
 }
 function storm(day){
   const z=`M4 ${f(BASE-6)}L-6 ${f(BASE+10)}L4 ${f(BASE+11)}L-8 ${f(BASE+30)}`;
-  const bolt=`<g class="wx-pos wx-flip" data-lo="40" data-hi="58" transform="translate(50 0)"><g class="wx-bolt"><path class="wx-draw" pathLength="1" d="${z}" fill="none" stroke="#FFD600" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/></g></g>`;
+  const bolt=`</svg><div class="wx-pos wx-flip" data-lo="40" data-hi="58" style="transform:translateX(50%)"><div class="wx-bolt">${LAYER}<path class="wx-draw" pathLength="1" d="${z}" fill="none" stroke="#FFD600" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>${LAYER}`;
   return bolt+cloud(day,...PC)+`<path class="wx-flash wx-front" d="${cloudPath(...PC)}" fill="#FFFFFF" opacity="0"/>`;
 }
 const BANDS=[[10,14,80,.5],[0,28,96,.75],[14,42,84,.9],[2,56,90,.65],[18,68,66,.4]];
@@ -323,7 +328,7 @@ function render(d){
   widgetEl.style.background = bg;
   setCardAppearance(!lightCard);
 
-  icoEl.innerHTML=buildIcon(m.cond,day);
+  icoEl.innerHTML=(LAYER+buildIcon(m.cond,day)+'</svg>').replaceAll(LAYER+'</svg>','');
   if(ambientTimer)ambient();
   condEl.textContent=m.label;
   fitText(condEl,11);
@@ -381,17 +386,20 @@ icoEl.addEventListener('animationiteration',e=>{
   if(!p.classList.contains('wx-pos'))return;
   const x=(+p.dataset.lo+Math.random()*(p.dataset.hi-p.dataset.lo)).toFixed(1);
   const flip=p.classList.contains('wx-flip');
-  p.setAttribute('transform',`translate(${x} 0)${flip&&Math.random()<.5?' scale(-1 1)':''}`);
+  p.style.transform=`translateX(${x}%)${flip&&Math.random()<.5?' scaleX(-1)':''}`;
   if(flip)p.querySelector('.wx-draw').animate([{strokeDashoffset:1},{strokeDashoffset:0}],{duration:200,easing:'ease-out'});
 });
 
 const state=errorState({root:widgetEl,content:[icoEl,condEl,tempEl,aqEl],caption:msgEl});
 
 {
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 100 100');
   const sun=document.createElementNS('http://www.w3.org/2000/svg','circle');
   sun.setAttribute('cx','50'); sun.setAttribute('cy','46'); sun.setAttribute('r','26');
   sun.setAttribute('class','ph');
-  icoEl.replaceChildren(sun);
+  svg.append(sun);
+  icoEl.replaceChildren(svg);
   condEl.replaceChildren(placeholder(78,11));
   tempEl.replaceChildren(placeholder(64,30,6));
 }

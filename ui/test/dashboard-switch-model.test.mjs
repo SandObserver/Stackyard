@@ -10,6 +10,8 @@ import {
   deriveComposition,
   deriveColor,
   buildModel,
+  fitName,
+  textDirection,
 } from '../js/dashboard-switch-model.js';
 
 /* ── normalizeUrl ── */
@@ -217,4 +219,40 @@ test('hashString is a stable uint32', () => {
   const h = hashString('http://dash.lan');
   assert.equal(h, hashString('http://dash.lan'));
   assert.ok(Number.isInteger(h) && h >= 0 && h <= 0xffffffff);
+});
+
+/* ── fitName, textDirection ── */
+
+const fitsIn = max => text => [...new Intl.Segmenter().segment(text)].length <= max;
+
+test('fitName keeps a name that fits', () => {
+  assert.equal(
+    fitName('Home', () => true),
+    'Home',
+  );
+});
+
+test('fitName drops the space before the ellipsis', () => {
+  assert.equal(fitName('Homelab main', fitsIn(8)), 'Homelab\u2026');
+});
+
+test('fitName never splits a grapheme', () => {
+  const family = '\u{1F468}\u200D\u{1F469}\u200D\u{1F467}';
+  const out = fitName(`ab${family}cd`, fitsIn(4));
+  assert.equal(out, `ab${family}\u2026`);
+  assert.equal(fitName('\u{1F3E0}\u{1F3E1}\u{1F3E2}', fitsIn(2)), '\u{1F3E0}\u2026');
+});
+
+test('fitName stops at one grapheme', () => {
+  assert.equal(
+    fitName('Dashboard', () => false),
+    'D\u2026',
+  );
+});
+
+test('textDirection follows the first letter of the name', () => {
+  assert.equal(textDirection('داشبورد خانه'), 'rtl');
+  assert.equal(textDirection('1 داشبورد'), 'rtl');
+  assert.equal(textDirection('Home داشبورد'), 'ltr');
+  assert.equal(textDirection('123'), 'ltr');
 });
