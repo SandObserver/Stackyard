@@ -290,6 +290,7 @@
         {
           "key": "primary",
           "type": "text",
+          "plain": true,
           "label": "slots.primary.label",
           "default": "/",
           "placeholder": "slots.primary.placeholder",
@@ -302,6 +303,7 @@
         {
           "key": "secondary",
           "type": "text",
+          "plain": true,
           "label": "slots.secondary.label",
           "placeholder": "slots.secondary.placeholder",
           "optional": true,
@@ -377,6 +379,7 @@
         {
           "key": "primary",
           "type": "text",
+          "plain": true,
           "label": "slots.primary.label",
           "default": "/",
           "placeholder": "slots.primary.placeholder",
@@ -389,6 +392,7 @@
         {
           "key": "secondary",
           "type": "text",
+          "plain": true,
           "label": "slots.secondary.label",
           "placeholder": "slots.secondary.placeholder",
           "optional": true,
@@ -461,6 +465,7 @@
         {
           "key": "primary",
           "type": "text",
+          "plain": true,
           "label": "slots.fsPrimary.label",
           "default": "/",
           "placeholder": "slots.fsPrimary.placeholder",
@@ -473,6 +478,7 @@
         {
           "key": "secondary",
           "type": "text",
+          "plain": true,
           "label": "slots.fsSecondary.label",
           "placeholder": "slots.fsSecondary.placeholder",
           "optional": true,
@@ -542,6 +548,7 @@
         {
           "key": "primary",
           "type": "text",
+          "plain": true,
           "label": "slots.sharePrimary.label",
           "default": "/",
           "placeholder": "slots.sharePrimary.placeholder",
@@ -555,6 +562,7 @@
         {
           "key": "secondary",
           "type": "text",
+          "plain": true,
           "label": "slots.shareSecondary.label",
           "placeholder": "slots.shareSecondary.placeholder",
           "optional": true,
@@ -624,6 +632,7 @@
         {
           "key": "primary",
           "type": "text",
+          "plain": true,
           "label": "slots.storagePrimary.label",
           "placeholder": "slots.storagePrimary.placeholder",
           "showIf": {
@@ -636,6 +645,7 @@
         {
           "key": "secondary",
           "type": "text",
+          "plain": true,
           "label": "slots.storageSecondary.label",
           "placeholder": "slots.storageSecondary.placeholder",
           "optional": true,
@@ -693,6 +703,7 @@
         {
           "key": "primary",
           "type": "text",
+          "plain": true,
           "label": "slots.poolPrimary.label",
           "placeholder": "slots.poolPrimary.placeholder",
           "showIf": {
@@ -705,6 +716,7 @@
         {
           "key": "secondary",
           "type": "text",
+          "plain": true,
           "label": "slots.poolSecondary.label",
           "placeholder": "slots.poolSecondary.placeholder",
           "optional": true,

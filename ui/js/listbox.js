@@ -6,11 +6,11 @@
    Do not use popover. The top layer makes iOS collapse its browser toolbar,
    which exposes a strip of page canvas and misplaces the menu. */
 
-import { nextActiveIndex, singleChoice } from '/js/admin-logic.js?v=b3befae4';
+import { nextActiveIndex, singleChoice } from '/js/admin-logic.js?v=28471483';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatList } from '/js/format-number.js?v=abcd4ae4';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { qa } from '/js/utils.js?v=7ceb7ce2';
+import { qa } from '/js/utils.js?v=017012d7';
 import { iconSvg } from '/js/icon-set.js?v=26655aca';
 
 const CHEV = iconSvg('chevrons', 22, 'solid', 'dd-chev');
@@ -157,14 +157,19 @@ export function createListbox(
 
   function place() {
     const r = btn.getBoundingClientRect();
-    const pr = list.getBoundingClientRect();
+    const pr = { width: list.offsetWidth, height: list.offsetHeight };
     /* Not the layout viewport. iOS grows the visible area past it. */
     const vh = visualViewport?.height ?? window.innerHeight;
     const vw = visualViewport?.width ?? window.innerWidth;
     const gap = 4;
     let top = r.bottom + gap;
-    if (top + pr.height > vh - 8) top = Math.max(8, r.top - gap - pr.height);
+    let above = false;
+    if (top + pr.height > vh - 8) {
+      top = Math.max(8, r.top - gap - pr.height);
+      above = true;
+    }
     const rtl = (document.documentElement.getAttribute('dir') || 'ltr') === 'rtl';
+    list.style.transformOrigin = `${above ? 'bottom' : 'top'} ${rtl ? 'left' : 'right'}`;
     let left = rtl ? r.left : r.right - pr.width;
     left = Math.min(Math.max(8, left), vw - pr.width - 8);
     list.style.top = `${Math.round(top)}px`;
@@ -183,7 +188,8 @@ export function createListbox(
     fluidHoverKb(o[active]);
   };
 
-  const open = () => {
+  /** @param {{ animate?: boolean }} [o] */
+  const open = ({ animate = false } = {}) => {
     if (open_) return;
     list.hidden = false;
     open_ = true;
@@ -216,12 +222,14 @@ export function createListbox(
     const o = items();
     const first = o.findIndex(li => li.getAttribute('aria-selected') === 'true');
     setActive(first >= 0 ? first : 0);
+    if (animate) list.classList.add('dd-in');
   };
 
   const close = ({ focusBtn = false } = {}) => {
     outside?.abort();
     outside = null;
     list.hidden = true;
+    list.classList.remove('dd-in');
     open_ = false;
     btn.setAttribute('aria-expanded', 'false');
     items().forEach(li => li.classList.remove('kb-active'));
@@ -268,7 +276,7 @@ export function createListbox(
   btn.addEventListener('click', e => {
     e.stopPropagation();
     if (open_) close();
-    else open();
+    else open({ animate: e.detail > 0 });
   });
   btn.addEventListener('keydown', e => {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {

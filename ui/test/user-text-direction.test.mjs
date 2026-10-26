@@ -160,6 +160,42 @@ test('an initial on a letter plate is laid out left to right', () => {
   assert.match(spot, /ic\.className = 'sri';\s*ic\.dir = 'ltr';/);
 });
 
+test('an initial in a folder thumbnail is laid out left to right', async () => {
+  const doc = globalThis.document;
+  const win = globalThis.window;
+  const node = tag => ({
+    tag,
+    dir: '',
+    className: '',
+    textContent: '',
+    children: [],
+    style: { setProperty() {} },
+    getContext: () => null,
+    appendChild(c) {
+      this.children.push(c);
+    },
+  });
+  globalThis.document = { createElement: node, addEventListener() {} };
+  globalThis.window = { addEventListener() {}, location: {} };
+  try {
+    const { initUI, mkFolderGlyph } = await import('../js/ui.js');
+    initUI({ items: [{ id: 'a', type: 'app', label: '<Admin', color: '#1C1C1E' }] });
+    const fb = mkFolderGlyph({ children: ['a'] }, 60).children[0].children[0].children[0];
+    assert.match(fb.className, /folder-mini-fb/);
+    assert.equal(fb.textContent, '<');
+    assert.equal(fb.dir, 'ltr', 'a right-to-left page draws "<" as ">"');
+  } finally {
+    globalThis.document = doc;
+    globalThis.window = win;
+  }
+  const ui = fs.readFileSync(path.join(JS_DIR, 'ui.js'), 'utf8');
+  assert.equal(
+    ui.match(/'folder-mini-fb/g)?.length,
+    2,
+    'the fallback span is built in a second place this test does not cover',
+  );
+});
+
 /* Indexing takes one UTF-16 unit, half of an emoji. */
 test('no initial is taken by indexing a name', () => {
   const files = fs.readdirSync(JS_DIR).filter(f => f.endsWith('.js'));

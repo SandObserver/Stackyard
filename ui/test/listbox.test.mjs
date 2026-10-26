@@ -227,3 +227,15 @@ test('every single-choice value goes through singleChoice', () => {
   assert.equal((src.match(/new Set\(singleChoice\(/g) || []).length, 3);
   assert.doesNotMatch(src, /=== '' \? \[\] :/);
 });
+
+/* A menu opened from the keyboard shows at once. A pointer open grows from the
+   trigger's corner, which flips with the side the menu is anchored to. */
+test('only a pointer open animates, from the trigger side', () => {
+  assert.match(src, /open\(\{ animate: e\.detail > 0 \}\)/);
+  assert.match(src, /if \(animate\) list\.classList\.add\('dd-in'\)/);
+  assert.match(src, /list\.classList\.remove\('dd-in'\)/, 'a close is instant');
+  assert.match(src, /transformOrigin = `\$\{above \? 'bottom' : 'top'\} \$\{rtl \? 'left' : 'right'\}`/);
+  assert.match(src, /width: list\.offsetWidth, height: list\.offsetHeight/, 'the scaled rect would misplace the list');
+  assert.match(css, /\.row-dd-list\.dd-in\{animation:pop-in /);
+  assert.match(css, /@keyframes pop-in\{from\{opacity:0;transform:scale\(\.97\)\}\}/);
+});

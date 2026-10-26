@@ -46,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Import apps and folders from gethomepage labels on Docker containers.
 
+- Let widget text fields opt out of capitalisation and autocorrect with
+  `"plain": true`.
+
 ### Changed
 
 - Long weather condition labels shrink to fit before they are cut off.
@@ -72,6 +75,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Warn in the app form when a link holds a username and password.
 
+- Show press feedback on Settings rows, buttons and the tab bar.
+
+- Glide dragged rows into place.
+
+- Open menus and dialogs with a short animation.
+
 ### Fixed
 
 - Colour swatches no longer spread across the row on small tablets.
@@ -88,6 +97,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Read the Docker API through socket proxies that allow only versioned paths.
 
 - Wrap long names in the import preview instead of scrolling sideways.
+
+- Stop Settings rows and buttons from staying highlighted after a tap.
+
+- Stop iOS from zooming into header fields.
+
+- Stop iOS from capitalising addresses, usernames and System Summary disk names.
+
+- Keep Save on screen when an app has a long name.
+
+- Show addresses from their start in right-to-left languages.
+
+- Stop a dragged row from sticking on screen when the list redraws during the
+  drag.
 
 ### Security
 

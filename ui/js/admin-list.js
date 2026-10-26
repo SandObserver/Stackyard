@@ -13,16 +13,16 @@
 
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
 import { snapshotItems } from '/js/admin-save-logic.js?v=b83791fb';
-import { isShownChild, reorderItems, shownChildren, topLevelRows } from '/js/admin-logic.js?v=b3befae4';
-import { listGroup } from '/js/admin-drag-logic.js?v=1d1d553e';
-import { initDrag, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=016ba436';
+import { isShownChild, reorderItems, shownChildren, topLevelRows } from '/js/admin-logic.js?v=28471483';
+import { listGroup } from '/js/admin-drag-logic.js?v=4aae5094';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=e2c9c061';
 import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { paintIcon, toast } from '/js/admin-shared.js?v=fa77980c';
-import { clr, el, focusFirst, initial, qa, setUserText } from '/js/utils.js?v=7ceb7ce2';
+import { paintIcon, toast } from '/js/admin-shared.js?v=c509d11e';
+import { clr, el, focusFirst, initial, qa, setUserText } from '/js/utils.js?v=017012d7';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { sizeLabel } from '/js/admin-widget-form.js?v=6a8852dd';
+import { sizeLabel } from '/js/admin-widget-form.js?v=e9db6e2a';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=479a53ee';
 import { iconSvg } from '/js/icon-set.js?v=26655aca';
 
@@ -39,7 +39,7 @@ let _page = {
     @param {typeof _page} page @returns {void} */
 export function initList(page) {
   _page = page;
-  initDrag(page.save, () => toast(t('app.dockFull', { max: formatNumber(DOCK_MAX) })));
+  initDrag(page.save, () => toast(t('app.dockFull', { max: formatNumber(DOCK_MAX) })), render);
 }
 
 /* Constant markup only. No user data reaches these. */
@@ -59,6 +59,15 @@ function svgNode(markup) {
 function moveRow(item, dir, opts = {}) {
   const before = snapshotItems(state.items);
   if (reorderItems(state.items, item, dir, opts)) _page.save(before);
+}
+
+/** @param {HTMLElement|null} chevron @param {string} from */
+function turnFrom(chevron, from) {
+  if (!chevron) return;
+  const to = chevron.style.transform;
+  chevron.style.transform = from;
+  void chevron.offsetWidth;
+  chevron.style.transform = to;
 }
 
 export function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } = {}) {
@@ -133,6 +142,7 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
         collapsedFolders.add(item.id);
       }
       render();
+      turnFrom(document.getElementById('chev-' + item.id), chevron.style.transform);
     };
   } else {
     setUserText(nm, item.label || item.id);
@@ -146,7 +156,10 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
   } else if (item.type === 'folder')
     mt.textContent = t('folder.appsCount', { count: shownChildren(state.items, item).length });
   else if (item.system === 'settings') mt.textContent = t('home.opensSettings');
-  else mt.textContent = item.href || '';
+  else if (item.href) {
+    mt.textContent = item.href;
+    mt.classList.add('rmt-url');
+  }
   inf.append(nm, mt);
   const pb = document.createElement('div');
   pb.className = 'rpills';
@@ -198,6 +211,7 @@ export function focusRow(itemId, act = 'edit') {
 }
 
 export function render() {
+  if (redrawHeld()) return;
   const l = el('al');
   const was = /** @type {HTMLElement|null} */ (document.activeElement);
   const inList = !!was && !!l?.contains(was);

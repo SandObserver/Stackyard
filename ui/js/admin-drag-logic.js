@@ -20,6 +20,13 @@ export function folderRowZone(y, rect) {
   return 'into';
 }
 
+const LIFT_SLOP = 8;
+
+/** @param {number} dx @param {number} dy @returns {boolean} */
+export function pastLiftSlop(dx, dy) {
+  return Math.hypot(dx, dy) >= LIFT_SLOP;
+}
+
 /** The list group a top-level row is drawn in.
     @param {any} item @returns {'dock' | 'home'} */
 export function listGroup(item) {

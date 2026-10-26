@@ -255,7 +255,7 @@
     .folder-icon-link.settled .iwrap,
     .di.settled .dwrap,
     .dyn-mob-icon.settled > .plate, .dyn-dock-icon.settled > .plate, .dyn-fold-anchor.settled > .plate { transform:none; filter:none; transition:none }
-    .dragging :is(.plate, .dyn-box, .dyn-folder-box) { transform:none; filter:none }
+    :is(#pages, .dyn-strip).dragging :is(.plate, .dyn-box, .dyn-folder-box) { transform:none; filter:none }
 
     /* ── Icon label ── */
     .ilabel {

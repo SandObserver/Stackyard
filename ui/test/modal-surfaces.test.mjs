@@ -79,3 +79,14 @@ test('the admin dialog box has no padding of its own', () => {
   assert.match(rule[1], /padding:0[;}]?/);
   assert.match(read('js/modal.js'), /e\.target === box/, 'the close test changed; revisit this rule');
 });
+
+test('an admin dialog fades and scales in from its centre, and fades only under reduced motion', () => {
+  const css = read('css/admin.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.match(css, /\.dlg-box\[open\]\{animation:pop-in var\(--t-reveal\) var\(--ease-reveal\)\}/);
+  assert.match(css, /@keyframes pop-in\{from\{opacity:0;transform:scale\(\.97\)\}\}/);
+  assert.doesNotMatch(/\.dlg-box\{([^}]*)\}/.exec(css)[1], /transform-origin/, 'it must scale about its centre');
+  assert.match(
+    css,
+    /@media \(prefers-reduced-motion: reduce\)\{\.row-dd-list\.dd-in,\.dlg-box\[open\]\{animation-name:swap-in\}\}/,
+  );
+});

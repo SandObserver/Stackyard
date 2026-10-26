@@ -336,6 +336,7 @@ export function ownsSidewaysTouch(target) {
         down: (id: string, x: number, y: number, t: number) => void,
         move: (id: string, x: number, y: number, t: number) => void,
         up: (id: string, t: number, fling: boolean) => void,
+        cancel: () => void,
       } | null,
     }} [opts] */
 export function mountScaledWidget(card, { src, title, design, iframeOpts, overlayHref, mobile, swipe } = {}) {
@@ -531,6 +532,10 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
             sy = touch.clientY;
             moved = false;
             owned = ownsSidewaysTouch(e.target);
+          }
+          if (e.touches.length > 1) {
+            feed()?.cancel();
+            return;
           }
           const [x, y] = at(touch);
           feed()?.down('f' + touch.identifier, x, y, time(e));

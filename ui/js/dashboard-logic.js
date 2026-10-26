@@ -128,6 +128,7 @@ export function wheelPager({ threshold = 40, quietMs = 220 } = {}) {
 }
 
 export const FLICK_SPEED = 0.11;
+export const SWIPE_LOCK_PX = 10;
 const PAGE_EASE_SLOPE = 0.72 / 0.32;
 export const PAGE_TURN_MS = 280;
 

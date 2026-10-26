@@ -17,13 +17,13 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=7ceb7ce2';
+} from '/js/utils.js?v=017012d7';
 import { t, currentLang } from '/js/i18n.js?v=ed7c5565';
 import { toneForColor } from '/js/label-contrast.js?v=4e97555e';
 import { mobileMetrics, gridColumnWidth, gridCellCount } from '/js/mobile-metrics.js?v=349f4300';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
 import { mkGlassRim, observeGlass } from '/js/glass-rim.js?v=3faec233';
-import { fingerSpeed, rubberBand, settleMs, swipeSettle } from '/js/dashboard-logic.js?v=babbf326';
+import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=5fa66027';
 
 const PHONE_W = 393;
 
@@ -91,20 +91,15 @@ function mkMiniIcon(child, pointerEvents) {
       };
       img.src = srcs[0];
       bg.appendChild(img);
-    } else {
-      const s = mk('span');
-      s.className = toneForColor(plate) === 'dark' ? 'folder-mini-fb fb-on-light' : 'folder-mini-fb';
-      if (pointerEvents === 'none') s.style.pointerEvents = 'none';
-      s.textContent = initial(child.label);
-      bg.appendChild(s);
+      return bg;
     }
-  } else {
-    const s = mk('span');
-    s.className = toneForColor(plate) === 'dark' ? 'folder-mini-fb fb-on-light' : 'folder-mini-fb';
-    if (pointerEvents === 'none') s.style.pointerEvents = 'none';
-    s.textContent = initial(child.label);
-    bg.appendChild(s);
   }
+  const s = mk('span');
+  s.className = toneForColor(plate) === 'dark' ? 'folder-mini-fb fb-on-light' : 'folder-mini-fb';
+  s.dir = 'ltr';
+  if (pointerEvents === 'none') s.style.pointerEvents = 'none';
+  s.textContent = initial(child.label);
+  bg.appendChild(s);
   return bg;
 }
 
@@ -174,9 +169,52 @@ export function mkFolder(item) {
   return a;
 }
 
+/** Runs `fn` on a tap or a click. A touch that moved the pager's lock
+    distance is a swipe and runs nothing.
+    @param {HTMLElement} node @param {() => void} fn */
+export function onTap(node, fn) {
+  let x0 = 0,
+    y0 = 0,
+    moved = false;
+  node.addEventListener(
+    'touchstart',
+    /** @param {TouchEvent} e */ e => {
+      const touch = e.changedTouches[0];
+      x0 = touch.clientX;
+      y0 = touch.clientY;
+      moved = e.touches.length > 1;
+    },
+    { passive: true },
+  );
+  node.addEventListener(
+    'touchmove',
+    /** @param {TouchEvent} e */ e => {
+      const touch = e.changedTouches[0];
+      if (touch && Math.hypot(touch.clientX - x0, touch.clientY - y0) >= SWIPE_LOCK_PX) moved = true;
+    },
+    { passive: true },
+  );
+  node.addEventListener(
+    'touchend',
+    /** @param {TouchEvent} e */ e => {
+      /* Do not stop a swipe. The home pager never sees the lift and the strip stays between pages. */
+      if (moved) return;
+      e.preventDefault();
+      e.stopPropagation();
+      fn();
+    },
+    { passive: false },
+  );
+  node.addEventListener('click', () => {
+    if (moved) moved = false;
+    else fn();
+  });
+}
+
 /** @typedef {{ down: (id: number|string, x: number, y: number, t: number) => void,
     move: (id: number|string, x: number, y: number, t: number) => void,
-    up: (id: number|string, t: number, fling: boolean) => void }} SwipeFeed */
+    up: (id: number|string, t: number, fling: boolean) => void,
+    cancel: () => void }} SwipeFeed */
 
 /** The returned handle takes touches from elsewhere, such as a widget frame,
     in this page's coordinates.
@@ -214,7 +252,7 @@ export function swipePager(target, strip, o) {
       if (!axis) {
         const dx = px - x0,
           dy = py - y0;
-        if (Math.hypot(dx, dy) < 10) return;
+        if (Math.hypot(dx, dy) < SWIPE_LOCK_PX) return;
         axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
         if (axis === 'y') return;
         clearTimeout(done);
@@ -234,27 +272,35 @@ export function swipePager(target, strip, o) {
     },
     up(pid, ts, fling) {
       if (id === null || pid !== id) return;
-      id = null;
-      if (axis !== 'x') return;
-      strip.classList.remove('dragging');
-      const page = o.page();
-      const v = fling ? speed.speed(ts) : 0;
-      const n = swipeSettle({
-        page,
-        total: o.total(),
-        offset: x - rest(page),
-        speed: v,
-        width: o.width(),
-        dir: pageDir(),
-      });
-      const ms = settleMs(Math.abs(rest(n) - x), Math.sign(rest(n) - x) * v);
-      strip.style.transition = `transform ${ms}ms var(--page-ease)`;
-      o.turn(n);
-      done = setTimeout(() => {
-        strip.style.transition = '';
-      }, ms);
+      release(fling ? speed.speed(ts) : 0, false);
+    },
+    cancel() {
+      if (id !== null) release(0, true);
     },
   };
+  /** @param {number} v @param {boolean} stay */
+  function release(v, stay) {
+    id = null;
+    if (axis !== 'x') return;
+    strip.classList.remove('dragging');
+    const page = o.page();
+    const n = stay
+      ? page
+      : swipeSettle({
+          page,
+          total: o.total(),
+          offset: x - rest(page),
+          speed: v,
+          width: o.width(),
+          dir: pageDir(),
+        });
+    const ms = settleMs(Math.abs(rest(n) - x), Math.sign(rest(n) - x) * v);
+    strip.style.transition = `transform ${ms}ms var(--page-ease)`;
+    o.turn(n);
+    done = setTimeout(() => {
+      strip.style.transition = '';
+    }, ms);
+  }
   if (!target) return feed;
   /** @param {TouchEvent} e */
   const find = e => Array.prototype.find.call(e.changedTouches, p => p.identifier === id);
@@ -263,6 +309,10 @@ export function swipePager(target, strip, o) {
     /** @param {TouchEvent} e */ e => {
       /* A handler that stops touchend leaves the old finger tracked forever. */
       if (id !== null && e.touches.length === e.changedTouches.length) feed.up(id, e.timeStamp, false);
+      if (e.touches.length > 1) {
+        feed.cancel();
+        return;
+      }
       const touch = e.changedTouches[0];
       feed.down(touch.identifier, touch.clientX, touch.clientY, e.timeStamp);
     },
@@ -959,18 +1009,9 @@ export function buildMobile() {
     return d;
   });
   pill.parentNode.replaceChild(pillNew, pill);
-  pillNew.addEventListener(
-    'touchend',
-    e => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (CB().spotOpen) CB().spotOpen('');
-    },
-    { passive: false },
-  );
-  pillNew.onclick = () => {
+  onTap(pillNew, () => {
     if (CB().spotOpen) CB().spotOpen('');
-  };
+  });
   pillNew.onkeydown = e => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();

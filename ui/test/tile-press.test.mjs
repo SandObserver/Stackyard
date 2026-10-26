@@ -43,10 +43,60 @@ test('a phone tile that opens a new tab resets its press', () => {
   }
 });
 
+/* [ids, classes, types]. Pseudo-classes count as classes; :is() counts as its
+   most specific argument. */
+function specificity(sel) {
+  const total = [0, 0, 0];
+  let rest = sel.replace(/:(?:is|not|has)\(([^()]*)\)/g, (_, list) => {
+    const best = list
+      .split(',')
+      .map(specificity)
+      .sort((a, b) => b[0] - a[0] || b[1] - a[1] || b[2] - a[2])[0];
+    for (let i = 0; i < 3; i++) total[i] += best[i];
+    return ' ';
+  });
+  rest = rest.replace(/:where\([^()]*\)/g, ' ');
+  total[0] += (rest.match(/#[\w-]+/g) || []).length;
+  total[1] += (rest.match(/\.[\w-]+|\[[^\]]*\]|:(?!:)[\w-]+/g) || []).length;
+  total[2] += (rest.match(/(?:^|[\s>+~])[a-z][\w-]*/gi) || []).length;
+  return total;
+}
+const beats = (a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
+
+test('the specificity helper counts what the cascade counts', () => {
+  assert.deepEqual(specificity('.icon:active .iwrap'), [0, 3, 0]);
+  assert.deepEqual(specificity('.dyn-mob-icon:hover > .plate'), [0, 3, 0]);
+  assert.deepEqual(specificity(':is(#pages, .dyn-strip).dragging :is(.plate, .dyn-box)'), [1, 2, 0]);
+  assert.deepEqual(specificity('body.is-mob a'), [0, 1, 2]);
+});
+
+const TILE_SURFACE = /\.(plate|iwrap|dwrap|dyn-box|dyn-folder-box)\s*$/;
+
+/* Each selector that scales or dims a tile on press or hover. */
+function pressAndHover() {
+  const found = [];
+  for (const m of css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    if (!/(?:^|[;\s])(?:transform|filter)\s*:\s*(?!none)/.test(m[2])) continue;
+    for (const sel of m[1].split(',').map(x => x.trim())) {
+      if (/:(?:active|hover)/.test(sel) && TILE_SURFACE.test(sel)) found.push(sel);
+    }
+  }
+  return found;
+}
+
+/* A drag that starts on a tile keeps :active, so the drag rule must outrank
+   every press and hover. */
 test('a drag that starts on a tile is not a press', () => {
-  assert.match(css, /\.dragging :is\(\.plate, \.dyn-box, \.dyn-folder-box\) \{ transform:none; filter:none \}/);
-  const press = css.indexOf('.icon:active .iwrap,');
-  assert.ok(css.indexOf('.dragging :is(') > press, 'the drag rule must come after the press it cancels');
+  const drag = css.match(/([^{}]*\.dragging[^{}]*)\{\s*transform:none; filter:none\s*\}/)?.[1].trim();
+  assert.ok(drag, 'the drag rule is gone');
+  const rivals = pressAndHover();
+  assert.ok(rivals.length >= 15, `expected every press and hover, found ${rivals.length}`);
+  for (const sel of rivals) {
+    assert.ok(
+      beats(specificity(drag), specificity(sel)) > 0,
+      `${sel} (${specificity(sel)}) outranks ${drag} (${specificity(drag)})`,
+    );
+  }
 });
 
 test('a long press on a phone tile shows no link preview', () => {
