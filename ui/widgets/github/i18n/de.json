@@ -18,7 +18,7 @@
   "githubToken.label": "Persönliches Zugriffstoken",
   "githubToken.hint": "Klassischer PAT mit den Berechtigungen repo und read:user (oder ein feingranularer PAT mit gleichwertigem Lesezugriff). Wird nur von diesem Widget verwendet.",
   "githubToken.hint.gitea": "Zugriffstoken mit den Berechtigungen read:user und read:issue. Wird nur von diesem Widget verwendet.",
-  "githubToken.hint.gitlab": "Persönliches Zugriffstoken mit der Berechtigung read_api. Wird nur von diesem Widget verwendet.",
+  "githubToken.hint.gitlab": "Ein fein abgestuftes persönliches Zugriffstoken mit Merge Request: Read oder ein älteres Token mit der Berechtigung read_api. Wird nur von diesem Widget verwendet.",
   "githubHref.label": "Link-URL",
   "githubHref.hint": "Wohin ein Klick auf das Widget führt. Leer lassen, um dein Profil zu öffnen.",
   "githubPrFilters.label": "Pull-Request-Filter",
