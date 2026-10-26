@@ -111,3 +111,53 @@ test('the desktop overlay takes focus itself too', () => {
   assert.match(desktop, /ov\.tabIndex = -1/);
   assert.match(desktop, /ov\.showModal\(\);\s*ov\.focus\(\)/);
 });
+
+/* A non-passive touchmove listener holds every scroll on the main thread. */
+test('the folder box stops panning by touch-action, not by a blocking listener', () => {
+  assert.match(css, /\.dyn-box-mob\s+\{[^}]*touch-action:none/);
+  assert.doesNotMatch(
+    overlay,
+    /passive: false \}\);\s*box\.addEventListener|box\.addEventListener\(\s*'touchmove',[\s\S]{0,200}preventDefault/,
+  );
+  assert.match(overlay, /swipePager\(box, strip, \{/, 'the folder pages swipe');
+});
+
+const motion = ui.slice(ui.indexOf('function folderMotion('), ui.indexOf('let folderOverlay = null;'));
+
+test('a folder grows from the size and place of the tile that opened it', () => {
+  assert.match(motion, /const s = from\.width \/ r\.width;/);
+  assert.match(motion, /return `translate\(\$\{dx\}px, \$\{dy\}px\) scale\(\$\{s\}\)`;/);
+  assert.match(motion, /p\.style\.transformOrigin = '0 0'/);
+  assert.match(motion, /duration: opening \? 300 : 250/);
+  assert.match(ui, /openFolderDesktop\(item, a\)/);
+  assert.match(ui, /openFolderMobile\(item, isz, ir, im, sc, a\)/);
+});
+
+test('reduced motion keeps only the fade', () => {
+  assert.match(motion, /prefers-reduced-motion: reduce/);
+  assert.match(motion, /!still && tile\?\.isConnected/);
+  assert.match(motion, /if \(!from\?\.width\) return 'none';/);
+});
+
+/* The dialog closes at once, so focus goes back to the tile and the dashboard
+   stops being inert. Only the picture shrinks away. */
+test('a closing folder takes no input and shrinks from where it is', () => {
+  assert.match(motion, /getComputedStyle\(s\.el\)\[s\.prop\]/, 'an interrupted open would jump');
+  assert.match(
+    css,
+    /:is\(\.folder-overlay, \.folder-overlay-mobile\):not\(\[open\]\) \* \{ pointer-events:none !important \}/,
+  );
+  assert.match(css, /\.folder-overlay-mobile:not\(\[open\]\) \{ display:block \}/);
+  assert.match(
+    css,
+    /:is\(\.folder-overlay, \.folder-overlay-mobile\):not\(\[open\]\) \{\s*background:none !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important;/,
+    'a fading blur darkens the top edge of the screen',
+  );
+  assert.match(motion, /running = steps\s*\.slice\(1\)/, 'only the panel animates the close');
+  const dash = read('js/dashboard.js');
+  assert.doesNotMatch(
+    dash,
+    /querySelector\('\.folder-overlay'\)|'\.folder-overlay, \.folder-overlay-mobile'/,
+    'a closing folder would block the pager',
+  );
+});

@@ -23,14 +23,14 @@ import {
   qa,
   qi,
   scrollsSideways,
-  setUserText,
+  setCentredText,
   storeGet,
   storeSet,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=cfee1271';
-import { initFluidHover } from '/js/fluid-hover.js?v=8b4aadd4';
-import { initSpotlight } from '/js/spotlight.js?v=06e7ef30';
+} from '/js/utils.js?v=017012d7';
+import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
+import { initSpotlight } from '/js/spotlight.js?v=73fdaf2e';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=ed7c5565';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=85138697';
@@ -46,7 +46,8 @@ import {
   buildMobile,
   resetMobileChrome,
   mkFolderGlyph,
-} from '/js/ui.js?v=43203089';
+  swipePager,
+} from '/js/ui.js?v=92aeff53';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=85b1bc96';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=23793736';
@@ -58,12 +59,12 @@ import {
   landingAfterSetup,
   restorePage,
   wheelPager,
-} from '/js/dashboard-logic.js?v=6a29cedc';
-import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=72db97ac';
+} from '/js/dashboard-logic.js?v=5fa66027';
+import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=4d651887';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=e9f4b607';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
-import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=0b1ebb19';
+import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=4e97555e';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=26655aca';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { THEME_KEY, applyTheme, prefersDark, readMode, resolveTheme } from '/js/theme.js?v=eeafa4b5';
@@ -126,7 +127,7 @@ function desktopRows(hasDock) {
   return Math.max(1, Math.min(4, Math.floor((ih - top - bottom + gm.rowGap) / (gm.tile + gm.rowGap))));
 }
 
-const CB = { spotOpen: null, spotClose: null, mobPillBump: null };
+const CB = { spotOpen: null, spotClose: null, mobPillBump: null, homeSwipe: null };
 
 /* A touch produces a compatibility mouse event after it. */
 const COMPAT_POINTER_MS = 500;
@@ -323,9 +324,8 @@ function mkIcon(item) {
   if (showLabel) {
     const l = mk('div');
     l.className = 'ilabel';
-    l.dir = 'auto';
     l.style.width = iw + 12 + 'px';
-    setUserText(l, item.label || item.id);
+    setCentredText(l, item.label || item.id);
     a.appendChild(l);
   }
   return a;
@@ -915,9 +915,9 @@ async function boot() {
      what a narrow window gets, and there its own swipe is the only pager, so a
      mouse and a keyboard cannot leave page one. */
   document.addEventListener('keydown', e => {
-    if (el('spot').classList.contains('on')) return;
+    if (el('spot').hasAttribute('open')) return;
     /* The overlay covers the page it would scroll behind. */
-    if (document.querySelector('.folder-overlay')) return;
+    if (document.querySelector('.folder-overlay[open]')) return;
     if (e.key === 'ArrowRight') goTo(pg + pageDir());
     if (e.key === 'ArrowLeft') goTo(pg - pageDir());
   });
@@ -928,8 +928,8 @@ async function boot() {
     'wheel',
     e => {
       if (e.ctrlKey) return;
-      if (el('spot').classList.contains('on')) return;
-      if (document.querySelector('.folder-overlay, .folder-overlay-mobile')) return;
+      if (el('spot').hasAttribute('open')) return;
+      if (document.querySelector('.folder-overlay[open], .folder-overlay-mobile[open]')) return;
       const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerWidth : 1;
       const dx = e.deltaX * unit,
         dy = e.deltaY * unit;
@@ -959,27 +959,30 @@ async function boot() {
     const dx = e.clientX - _dMx;
     if (Math.abs(dx) > 60) goTo(pg + (dx < 0 ? 1 : -1) * pageDir());
   });
-  let _dTx = 0;
   document.addEventListener(
     'touchstart',
-    e => {
-      _dTx = e.touches[0].clientX;
+    () => {
       _lastTouch = Date.now();
     },
     { passive: true },
   );
-  /* The mobile layout has its own swipe, in ui.js. Both would advance two
-     pages for one gesture. */
   document.addEventListener(
     'touchend',
-    e => {
+    () => {
       _lastTouch = Date.now();
-      if (MOB) return;
-      const dx = e.changedTouches[0].clientX - _dTx;
-      if (Math.abs(dx) > 50) goTo(pg + (dx < 0 ? 1 : -1) * pageDir());
     },
     { passive: true },
   );
+  const strip = el('pages');
+  CB.homeSwipe = swipePager(document, strip, {
+    width: () => innerWidth,
+    page: () => pg,
+    total: () => strip.children.length,
+    turn: n => goTo(n),
+    enabled: () =>
+      !el('spot').hasAttribute('open') &&
+      !document.querySelector('.folder-overlay[open], .folder-overlay-mobile[open]'),
+  });
 
   applyBg();
 
@@ -1104,7 +1107,9 @@ async function boot() {
   /* Keep. Without it Safari leaves the tile scaled after a new tab opens. */
   document.addEventListener('click', e => {
     if (!(e.target instanceof Element)) return;
-    const a = e.target.closest('a[target="_blank"]:is(.icon, .di, .folder-icon-link)');
+    const a = e.target.closest(
+      'a[target="_blank"]:is(.icon, .di, .folder-icon-link, .dyn-mob-icon, .dyn-dock-icon, .dyn-fold-anchor)',
+    );
     if (!a) return;
     a.classList.add('settled');
     a.addEventListener('pointerleave', () => a.classList.remove('settled'), { once: true });

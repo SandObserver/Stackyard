@@ -7,10 +7,10 @@
    which exposes a strip of page canvas and misplaces the menu. */
 
 import { nextActiveIndex, singleChoice } from '/js/admin-logic.js?v=28471483';
-import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=8b4aadd4';
+import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatList } from '/js/format-number.js?v=abcd4ae4';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { qa } from '/js/utils.js?v=cfee1271';
+import { qa } from '/js/utils.js?v=017012d7';
 import { iconSvg } from '/js/icon-set.js?v=26655aca';
 
 const CHEV = iconSvg('chevrons', 22, 'solid', 'dd-chev');

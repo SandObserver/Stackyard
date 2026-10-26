@@ -455,6 +455,8 @@ test("the phone folder title starts on the panel's leading edge", () => {
 test('every swipe and drag pager mirrors its direction', () => {
   const ui = code('js/ui.js');
   const calls = [...ui.matchAll(/(goTo|gotoPage)\((st\(\)\.pg|curPage) \+ ([^)]*\)?[^)]*)\)/g)].map(m => m[0]);
-  assert.ok(calls.length >= 3, 'the pager calls moved');
   for (const c of calls) assert.match(c, /pageDir\(\)/, `${c} ignores the page direction`);
+  const pager = ui.slice(ui.indexOf('export function swipePager('), ui.indexOf('function folderMotion('));
+  assert.match(pager, /const rest = n => -pageDir\(\) \* n \* o\.width\(\);/, 'a page rests on the wrong side');
+  assert.match(pager, /dir: pageDir\(\)/, 'a release settles the wrong way');
 });

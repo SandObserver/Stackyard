@@ -15,7 +15,7 @@
       --label-color-dark:  rgba(0,0,0,.92);
       --label-shadow-dark: 0 0 2px rgba(255,255,255,.55);
       --bounce-spring:    cubic-bezier(.34,1.56,.64,1);
-      --page-ease:        cubic-bezier(.77,0,.175,1);
+      --page-ease:        cubic-bezier(.32,.72,0,1);
       /* The page behind the wallpaper, and the boot veil over the unstyled
          first paint. */
       /* Darker than the system greys: it sits behind the wallpaper. */
@@ -34,17 +34,18 @@
     /* ── Root ── */
     html {
       width:100vw; height:100vh; height:100dvh; overflow:hidden;
+      overscroll-behavior:none; -webkit-text-size-adjust:100%; text-size-adjust:100%;
       background: var(--bg-color, var(--bg-base));
       font-family:var(--font-ui);
       -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
     }
     /* background, position and z-index come from tokens.css. */
-    body { width:100vw; height:100vh; height:100dvh; overflow:hidden; }
+    body { width:100vw; height:100vh; height:100dvh; overflow:hidden; overscroll-behavior:none; }
     /* ── Boot loading veil — fades out once boot() finishes ── */
     body::after {
       content:''; position:fixed; inset:0; z-index:9999;
       background:var(--bg-base); pointer-events:none;
-      transition:opacity .4s ease;
+      transition:opacity .2s ease-out;
     }
     body.ready::after { opacity:0; }
 
@@ -72,7 +73,7 @@
     #pages {
       position:fixed; inset:0; z-index:10;
       display:flex;
-      transition:transform .44s var(--page-ease);
+      transition:transform .28s var(--page-ease);
     }
     .page {
       flex:0 0 100vw; width:100vw; height:100vh; height:100dvh;
@@ -233,21 +234,28 @@
        clears neither tone. */
     .fb.fb-on-light { color:var(--on-tint-dark) }
 
-    .iwrap, .dwrap { transition:transform .32s var(--bounce-spring), filter .2s ease-out }
+    .iwrap, .dwrap, .dyn-folder-box,
+    .dyn-mob-icon > .plate, .dyn-dock-icon > .plate, .dyn-mob-btn > .dyn-box, .dyn-fold-anchor > .plate { transition:transform .32s var(--bounce-spring), filter .2s ease-out }
     @media (hover:hover) {
       .icon:hover .iwrap,
+      .icon:hover .dyn-folder-box,
       .folder-icon-link:hover .iwrap,
-      .di:hover .dwrap { transform:scale(1.03) }
+      .di:hover .dwrap,
+      .dyn-mob-icon:hover > .plate, .dyn-dock-icon:hover > .plate, .dyn-mob-btn:hover > .dyn-box, .dyn-fold-anchor:hover > .plate { transform:scale(1.03) }
     }
     .icon:active .iwrap,
+    .icon:active .dyn-folder-box,
     .folder-icon-link:active .iwrap,
-    .di:active .dwrap {
+    .di:active .dwrap,
+    .dyn-mob-icon:active > .plate, .dyn-dock-icon:active > .plate, .dyn-mob-btn:active > .dyn-box, .dyn-fold-anchor:active > .plate {
       transform:scale(.92); filter:brightness(.88);
       transition:transform .1s ease-out, filter .1s ease-out;
     }
     .icon.settled .iwrap,
     .folder-icon-link.settled .iwrap,
-    .di.settled .dwrap { transform:none; filter:none; transition:none }
+    .di.settled .dwrap,
+    .dyn-mob-icon.settled > .plate, .dyn-dock-icon.settled > .plate, .dyn-fold-anchor.settled > .plate { transform:none; filter:none; transition:none }
+    :is(#pages, .dyn-strip).dragging :is(.plate, .dyn-box, .dyn-folder-box) { transform:none; filter:none }
 
     /* ── Icon label ── */
     .ilabel {
@@ -417,7 +425,7 @@
       -webkit-user-select:none; user-select:none;
       -webkit-touch-callout:none;
       overflow:hidden;
-      transition:width .25s cubic-bezier(.4,0,.2,1);
+      transition:clip-path .25s cubic-bezier(.4,0,.2,1);
     }
     /* Search content — shown when idle */
     #mob-search-pill .msp-search {
@@ -513,7 +521,7 @@
       max-width:none; max-height:none; width:auto; height:auto;
       margin:0; padding:0; border:0; color:inherit;
       display:none; opacity:0;
-      transition:opacity .2s ease;
+      transition:opacity .15s ease-out;
     }
     #spot::backdrop { background:none }
     #spot.on  { display:flex;
@@ -617,6 +625,9 @@
        to. At .38 it did not over a light one. */
     #sin::placeholder { color:rgba(255,255,255,.55); }
     #spot #sin::placeholder { color:rgba(235,235,245,.55); }
+    /* Closed and still fading out. It must not catch input. */
+    #spot:not([open]) { pointer-events:none }
+    body:has(#spot[open]) #mob-search-pill { visibility:hidden }
     #spot-cancel {
       display:flex; flex-shrink:0; background:transparent; border:0;
       outline:0; cursor:pointer; -webkit-tap-highlight-color:transparent;
@@ -669,7 +680,7 @@
     #sres .sri img { width:34px !important; height:34px !important; }
     #sres .sri img.folder-mini-img,
     body.is-mob #sres .sri img.folder-mini-img { width:72% !important; height:72% !important; }
-    .srn { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight:400; color:rgba(255,255,255,.92) }
+    .srn { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight:400; color:rgba(255,255,255,.92); overflow-wrap:anywhere }
     .srh {
       font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color:rgba(255,255,255,.65); margin-top:1px;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
@@ -723,6 +734,12 @@
       margin:0; padding:0; border:0; color:inherit;
     }
     .folder-overlay::backdrop, .folder-overlay-mobile::backdrop { background:none }
+    .folder-overlay-mobile:not([open]) { display:block }
+    :is(.folder-overlay, .folder-overlay-mobile):not([open]),
+    :is(.folder-overlay, .folder-overlay-mobile):not([open]) * { pointer-events:none !important }
+    :is(.folder-overlay, .folder-overlay-mobile):not([open]) {
+      background:none !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important;
+    }
     .folder-overlay-mobile {
       position:fixed; inset:0; z-index:800;
       -webkit-backdrop-filter:blur(22px) brightness(.72);
@@ -802,13 +819,13 @@
     .dyn-folder-box { position:relative; width:var(--iw); height:var(--iw); flex-shrink:0; }
     .dyn-grid       { display:grid; grid-template-columns:repeat(6,var(--iw)); gap:24px; justify-content:center; }
     .dyn-mob-btn    { flex:1; height:var(--rh); background:none; border:none; padding:0; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; -webkit-tap-highlight-color:transparent; -webkit-appearance:none; }
-    .dyn-mob-icon   { display:flex; flex-direction:column; align-items:center; justify-content:center; width:var(--cw); height:var(--rh); cursor:pointer; text-decoration:none; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
+    .dyn-mob-icon   { display:flex; flex-direction:column; align-items:center; justify-content:center; width:var(--cw); height:var(--rh); cursor:pointer; text-decoration:none; flex-shrink:0; -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; }
     .dyn-mob-label  { font-weight:500; color:#FFFFFF; text-align:center; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.65); font-size:var(--lfs); width:var(--lw); }
     .dyn-fold-label { font-weight:500; color:#FFFFFF; text-align:center; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.70); font-size:var(--lfs); width:var(--lw); }
     .dyn-fold-wrap  { position:absolute; inset:0; pointer-events:none; border-radius:var(--br); display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:var(--gap); padding:var(--pad); overflow:hidden; }
     .dyn-fold-cell  { display:flex; align-items:center; justify-content:center; z-index:1; pointer-events:none; min-width:0; min-height:0; }
     .dyn-clip       { overflow:hidden; flex-shrink:0; width:var(--gw); height:var(--gh); }
-    .dyn-strip      { display:flex; height:var(--gh); will-change:transform; transition:transform .3s cubic-bezier(.4,0,.2,1); }
+    .dyn-strip      { display:flex; height:var(--gh); will-change:transform; transition:transform .28s var(--page-ease); }
     .dyn-page-grid  { flex-shrink:0; display:grid; gap:var(--gap); justify-content:center; align-content:start; width:var(--gw); height:var(--gh); padding:var(--ovh,0); overflow:hidden; grid-template-columns:repeat(3,var(--fiw)); grid-template-rows:repeat(3,var(--fiw)); }
     .dyn-dot        { border-radius:50%; cursor:pointer; flex-shrink:0; width:var(--dsz); height:var(--dsz); }
     .dyn-dots-row   { display:flex; justify-content:center; align-items:center; flex-shrink:0; width:100%; }
@@ -819,8 +836,8 @@
     .dyn-fold-anchor { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; -webkit-tap-highlight-color:transparent; }
     .dyn-fold-inner-label { font-weight:400; color:rgba(255,255,255,.90); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.6); font-size:var(--lfs); width:var(--fiw); }
     .dyn-title-mob  { position:absolute; pointer-events:none; font-size:var(--tfs); }
-    .dyn-box-mob    { position:absolute; display:flex; flex-direction:column; align-items:center; inset-inline-start:var(--left); width:var(--bw); height:var(--bh); top:var(--top); border-radius:var(--br); padding:var(--pt) var(--ph) var(--pb); }
-    .dyn-dock-icon  { display:flex; align-items:center; justify-content:center; flex:0 1 auto; min-width:0; height:100%; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; overflow:visible; position:relative; }
+    .dyn-box-mob    { position:absolute; touch-action:none; display:flex; flex-direction:column; align-items:center; inset-inline-start:var(--left); width:var(--bw); height:var(--bh); top:var(--top); border-radius:var(--br); padding:var(--pt) var(--ph) var(--pb); }
+    .dyn-dock-icon  { display:flex; align-items:center; justify-content:center; flex:0 1 auto; min-width:0; height:100%; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; overflow:visible; position:relative; }
 
 /* Strip backdrop-filter blur for anyone who asks for reduced motion or
    transparency. */
@@ -839,10 +856,18 @@
   #pages { transition: none !important; }
   .icon:hover .iwrap, .folder-icon-link:hover .iwrap, .di:hover .dwrap,
   .icon:active .iwrap, .folder-icon-link:active .iwrap, .di:active .dwrap,
+  .icon .dyn-folder-box, .dyn-mob-icon > .plate, .dyn-dock-icon > .plate, .dyn-mob-btn > .dyn-box, .dyn-fold-anchor > .plate,
   .dot.on { transform: none !important; }
 }
 
 /* ── Empty dashboard welcome ── */
+/* Toned from the wallpaper by label-contrast.js, never by the theme. */
+:root {
+  --label-color-2:      rgba(235,235,245,.70);
+  --label-color-2-dark: rgba(60,60,67,.85);
+  --label-link:         #00D2E0;
+  --label-link-dark:    #00587E;
+}
 .empty-state {
   position: fixed; inset: 0; z-index: 300;
   display: flex; flex-direction: column;
@@ -855,15 +880,15 @@
 .empty-state::before, .empty-state::after { content: ''; flex: 1 0 0 }
 .empty-state-mark {
   width: clamp(71px, 11vh, 112px); height: clamp(71px, 11vh, 112px);
-  color: var(--label-primary);
+  color: var(--label-color);
   margin-block-end: var(--sp-32);
 }
 .empty-state-title {
-  margin: 0; font-weight: 600; color: var(--label-primary);
+  margin: 0; font-weight: 600; color: var(--label-color); text-shadow: var(--label-shadow);
   font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2);
 }
 .empty-state-sub {
-  margin: 0; max-width: 38ch; color: var(--label-secondary); font-weight: 500;
+  margin: 0; max-width: 38ch; color: var(--label-color-2); text-shadow: var(--label-shadow); font-weight: 500;
   font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2);
 }
 .empty-state-btn {
@@ -871,11 +896,18 @@
   border-radius: 999px; min-height: 52px;
   background: var(--glass-surface-bg); border: .5px solid rgba(255,255,255,.22);
   -webkit-backdrop-filter: var(--glass-surface-blur); backdrop-filter: var(--glass-surface-blur);
-  color: var(--label-primary); text-decoration: none; font-weight: 500;
+  color: var(--label-color); text-decoration: none; font-weight: 500;
   font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);
 }
+.empty-state-mark[data-tone="dark"] { color: var(--label-color-dark) }
+.empty-state-title[data-tone="dark"] { color: var(--label-color-dark); text-shadow: var(--label-shadow-dark) }
+.empty-state-sub[data-tone="dark"] { color: var(--label-color-2-dark); text-shadow: var(--label-shadow-dark) }
+.empty-state-hint[data-tone="dark"] { color: var(--label-link-dark) }
+.empty-state-btn[data-tone="dark"] {
+  background: rgba(0,0,0,.06); border-color: rgba(0,0,0,.12); color: var(--label-color-dark);
+}
 .empty-state-hint {
-  margin-block-start: var(--sp-20); color: var(--accent); text-decoration: none;
+  margin-block-start: var(--sp-20); color: var(--label-link); text-decoration: none;
   font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);
 }
 .empty-state-hint:hover { text-decoration: underline }
@@ -947,6 +979,8 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
   .ilabel[data-tone="dark"], .dyn-mob-label[data-tone="dark"], .dyn-fold-label[data-tone="dark"] {
     color:#000000; text-shadow:0 0 2px rgba(255,255,255,.95);
   }
+  .empty-state-mark, .empty-state-title, .empty-state-btn { color:#FFFFFF; }
+  .empty-state-mark[data-tone="dark"], .empty-state-title[data-tone="dark"], .empty-state-btn[data-tone="dark"] { color:#000000; }
   .srn  { color:var(--label-primary); }
   .srh, .sr-section { color:rgba(235,235,245,.85); }
   .widget, .mob-widget-card { border-color:rgba(255,255,255,.35); }
@@ -1066,10 +1100,9 @@ html[data-theme="light"] .setup-bars .pwbar { background: rgba(0,0,0,.1); }
 .mp.on {
   opacity:1;
   transition:opacity .14s ease,
-             transform .19s cubic-bezier(.22,1,.36,1),
-             width .19s cubic-bezier(.22,1,.36,1),
-             height .19s cubic-bezier(.22,1,.36,1);
+             transform .19s cubic-bezier(.22,1,.36,1);
 }
+.mp.mp-snap { transition:opacity .14s ease }
 .fh-hl { background:rgba(255,255,255,.07) }
 @media (prefers-reduced-motion: reduce) {
   .mp, .mp.on { transition:none }
@@ -1146,12 +1179,9 @@ html[data-theme="light"] .folder-box-desktop { box-shadow:0 32px 80px rgba(0,0,0
 html[data-theme="light"] .folder-dot { background:rgba(0,0,0,.25) }
 html[data-theme="light"] .folder-dot.on { background:rgba(0,0,0,.8) }
 html[data-theme="light"] .dyn-fold-inner-label { color:rgba(0,0,0,.88); text-shadow:0 0 2px rgba(255,255,255,.55) }
-html[data-theme="light"] .empty-state-btn,
 html[data-theme="light"] .api-error-btn { background:rgba(0,0,0,.06); border-color:rgba(0,0,0,.12) }
 html[data-theme="light"] .api-error-screen { color:rgba(0,0,0,.7) }
 html[data-theme="light"] .api-error-sub { color:rgba(0,0,0,.6) }
-html[data-theme="light"] .empty-state-sub { color:rgba(60,60,67,.85) }
-html[data-theme="light"] .empty-state-hint { color:var(--accent-strong) }
 html[data-theme="light"] .folder-overlay .ilabel { color:var(--label-color-dark); text-shadow:var(--label-shadow-dark) }
 html[data-theme="light"] #dock:not(.mdock) { border-radius:38px; box-shadow:var(--glass-lift) }
 html[data-theme="light"] .folder-icon-grid,

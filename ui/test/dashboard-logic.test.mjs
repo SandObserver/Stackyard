@@ -12,6 +12,12 @@ import {
   landingAfterSetup,
   restorePage,
   wheelPager,
+  fingerSpeed,
+  rubberBand,
+  swipeSettle,
+  settleMs,
+  FLICK_SPEED,
+  PAGE_TURN_MS,
 } from '../js/dashboard-logic.js';
 
 const SPANS = { app: [1, 1], small: [1, 0], medium: [2, 0], large: [2, 2], xlarge: [2, 3] };
@@ -220,4 +226,76 @@ test('vertical scrolling and a small sideways nudge turn nothing', () => {
   assert.equal(step(10, 0, 16), 0);
   assert.equal(step(10, 0, 32), 0);
   assert.equal(step(5, 0, 600), 0, 'the nudge was forgotten after the pause');
+});
+
+/* A finger drag on the page strip. Offsets and speeds are physical: negative is
+   towards the left of the screen. */
+const W = 390;
+const settle = (offset, speed, { page = 1, total = 3, dir = 1 } = {}) =>
+  swipeSettle({ page, total, offset, speed, width: W, dir });
+
+test('a slow release goes to the nearest page', () => {
+  assert.equal(settle(-0.4 * W, 0), 1);
+  assert.equal(settle(-0.6 * W, 0), 2);
+  assert.equal(settle(0.6 * W, 0), 0);
+});
+
+test('a short flick turns the page by speed alone', () => {
+  assert.equal(settle(-35, -(FLICK_SPEED + 0.05)), 2);
+  assert.equal(settle(35, FLICK_SPEED + 0.05), 0);
+  assert.equal(settle(-35, -(FLICK_SPEED - 0.05)), 1, 'too slow to count as a flick');
+});
+
+test('a flick back against the drag returns to the page it left', () => {
+  assert.equal(settle(-0.7 * W, 0.5), 1);
+});
+
+test('a flick turns one page at most', () => {
+  assert.equal(settle(-0.2 * W, -5), 2);
+});
+
+test('the first and last pages hold', () => {
+  assert.equal(settle(80, 2, { page: 0 }), 0);
+  assert.equal(settle(-80, -2, { page: 2 }), 2);
+});
+
+/* In a right-to-left page the next page is on the left, so a drag to the right
+   moves forward. */
+test('a right-to-left page mirrors the drag', () => {
+  assert.equal(settle(-35, -1, { dir: -1 }), 0);
+  assert.equal(settle(35, 1, { dir: -1 }), 2);
+  assert.equal(settle(0.6 * W, 0, { dir: -1 }), 2);
+});
+
+test('the edge gives less the further it is pulled, and never a whole page', () => {
+  const a = rubberBand(50, W),
+    b = rubberBand(100, W),
+    c = rubberBand(10_000, W);
+  assert.ok(a < 50 && b < 100);
+  assert.ok(b - a < a, 'the second 50px moves less than the first');
+  assert.ok(c < W);
+});
+
+test('the finger speed comes from the last moments of the drag', () => {
+  const s = fingerSpeed();
+  s.add(0, 0);
+  s.add(-100, 50);
+  s.add(-200, 100);
+  assert.equal(s.speed(100), -2);
+});
+
+test('a finger that stopped before lifting has no speed', () => {
+  const s = fingerSpeed();
+  s.add(0, 0);
+  s.add(-100, 50);
+  assert.equal(s.speed(400), 0);
+});
+
+test('the settle starts at the finger speed and never outlasts a page turn', () => {
+  assert.equal(settleMs(300, 0), PAGE_TURN_MS);
+  assert.equal(settleMs(300, -1), PAGE_TURN_MS, 'moving away from the page');
+  assert.equal(settleMs(300, 0.5), PAGE_TURN_MS);
+  const fast = settleMs(200, 3);
+  assert.ok(fast < PAGE_TURN_MS && fast >= 120, `${fast}`);
+  assert.equal(fast, Math.round((0.72 / 0.32) * (200 / 3)));
 });

@@ -221,21 +221,24 @@ test('the first-run prompt and API error are translated', () => {
    beginning.
 
    unicode-bidi:plaintext does nothing in WebKit, so the label carries dir
-   instead. That is safe only because these labels are centred: dir sets
-   alignment too, which moves a name off its own icon. */
+   instead, through setCentredText. That is safe only because these labels are
+   centred: dir sets alignment too, which moves a name off its own icon. */
 test('every tile label carries its own direction', () => {
   const ui = read('js/ui.js');
   const dashboard = read('js/dashboard.js');
+  let sites = 0;
   for (const [src, name] of [
     [ui, 'ui.js'],
     [dashboard, 'dashboard.js'],
   ]) {
     for (const m of src.matchAll(
-      /className = '(ilabel|dyn-mob-label|dyn-fold-label|dyn-fold-inner-label)';\n(\s*)(.*)/g,
+      /className = '(ilabel|dyn-mob-label|dyn-fold-label|dyn-fold-inner-label)';\n([\s\S]*?)a\.appendChild\(l\);/g,
     )) {
-      assert.match(m[3], /^l\.dir = 'auto';$/, `${name}: .${m[1]} is cut by the page direction`);
+      sites++;
+      assert.match(m[2], /setCentredText\(l, /, `${name}: .${m[1]} is cut by the page direction`);
     }
   }
+  assert.equal(sites, 6, 'a tile label site moved; check it still sets its direction');
 });
 
 test('the labels the direction is set on are centred', () => {

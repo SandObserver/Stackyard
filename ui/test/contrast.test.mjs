@@ -480,9 +480,11 @@ const DASHBOARD_TEXT = [
   ['first-run mismatch error', '.setup-err', SETUP, 'wallpaper'],
   ['API error title', '.api-error-screen', [], '--bg-base'],
   ['API error explanation', '.api-error-sub', [], '--bg-base'],
-  ['empty dashboard title', '.empty-state-title', [], '--bg-base'],
-  ['empty dashboard explanation', '.empty-state-sub', [], '--bg-base'],
-  ['empty dashboard import link', '.empty-state-hint', [], '--bg-base'],
+  /* Toned like a tile label. With no wallpaper the tone follows the theme, so
+     each theme's base is read with the tone it picks. */
+  ['empty dashboard title', ['.empty-state-title', '.empty-state-title[data-tone="dark"]'], [], '--bg-base'],
+  ['empty dashboard explanation', ['.empty-state-sub', '.empty-state-sub[data-tone="dark"]'], [], '--bg-base'],
+  ['empty dashboard import link', ['.empty-state-hint', '.empty-state-hint[data-tone="dark"]'], [], '--bg-base'],
   ['Spotlight result name', '.srn', SPOTLIGHT, 'wallpaper'],
   ['Spotlight result address', '.srh', SPOTLIGHT, 'wallpaper'],
   ['Spotlight selected result address', '.srh', [...SPOTLIGHT, '.sr.sel'], 'wallpaper'],
