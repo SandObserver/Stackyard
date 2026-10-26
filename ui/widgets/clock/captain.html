@@ -26,6 +26,7 @@
 
   #art { display: block; width: 100%; height: 100%; }
   .wall, .wood, .beer, .hi, .foam, .foam-lo { transition: fill 0.6s ease; }
+  .still :is(.wall, .wood, .beer, .hi, .foam, .foam-lo) { transition: none; }
   .wall { fill: var(--wall); }
   .grain { mix-blend-mode: multiply; }
   .wood { fill: var(--wood); }
@@ -102,7 +103,7 @@ const CX = (BX + 18 + 306 - BX) / 2;
 
 let _timezone = '', _showDate = true, _tickId = null;
 let _lib = null, _dateYear = null, _dateParts = null, _wt = null;
-let _slots = null, _shown = '', _drawn = false;
+let _slots = null, _shown = '', _drawn = false, _leadH = LEAD_H;
 
 const w = () => document.getElementById('widget');
 const mx = x => (_rtl ? 306 - x : x);
@@ -151,32 +152,43 @@ function hm(d) {
 
 function balloons(ink, leadW, bottom) {
   const g = el('g', { transform: _rtl ? 'translate(306 0) scale(-1 1)' : '' }, ink);
-  const ty = BY + LEAD_H / 2 + 6;
+  const ty = BY + _leadH / 2 + 6;
   const shapes = [
     ['polygon', { points: `${BX + 14},${ty - 8} ${BX + 18},${ty + 8} -8,${ty + 30}` }],
-    ['rect', { x: BX, y: BY, width: leadW, height: LEAD_H, rx: BR }],
-    ['rect', { x: BX + 18, y: BY + LEAD_H - 8, width: BW - 18, height: bottom - (BY + LEAD_H - 8), rx: BR }],
+    ['rect', { x: BX, y: BY, width: leadW, height: _leadH, rx: BR }],
+    ['rect', { x: BX + 18, y: BY + _leadH - 8, width: BW - 18, height: bottom - (BY + _leadH - 8), rx: BR }],
   ];
   for (const [tag, a] of shapes) el(tag, { ...a, class: 'outline' }, g);
   for (const [tag, a] of shapes) el(tag, { ...a, class: 'bubble' }, g);
 }
 
 function layoutRows() {
-  const y2 = BY + LEAD_H - 8;
+  const y2 = BY + _leadH - 8;
   const timeBase = y2 + 14 + TIME_SIZE * 0.72;
   const dateBase = _showDate ? timeBase + 18 + DATE_SIZE * 0.74 : timeBase;
   return { timeBase, dateBase, bottom: dateBase + 14 };
 }
 
 function drawLead(ink, line) {
-  const size = _lib.fitSize(textWidth('words', LEAD_SIZE, line), LEAD_SIZE, BW - 30, LEAD_MIN);
-  const leadW = textWidth('words', size, line) + 30;
-  const rows = layoutRows();
-  balloons(ink, leadW, rows.bottom);
-  const t = el('text', { class: 'words', id: 'lead', x: mx(BX + leadW / 2), y: BY + 12 + 22 * 0.74,
-    'font-size': size, 'text-anchor': 'middle' }, ink);
-  t.textContent = line;
-  return rows;
+  const fit = rows => _lib.fitSize(Math.max(...rows.map(r => textWidth('words', LEAD_SIZE, r))), LEAD_SIZE, BW - 30, LEAD_MIN);
+  let rows = [line];
+  let size = fit(rows);
+  if (textWidth('words', size, line) > BW - 29) {
+    rows = _lib.splitLine(line);
+    size = fit(rows);
+  }
+  const step = size * 1.15;
+  _leadH = LEAD_H + (rows.length - 1) * step;
+  const leadW = Math.max(...rows.map(r => textWidth('words', size, r))) + 30;
+  const layout = layoutRows();
+  balloons(ink, leadW, layout.bottom);
+  const lead = el('g', { id: 'lead' }, ink);
+  rows.forEach((r, i) => {
+    const t = el('text', { class: 'words', x: mx(BX + leadW / 2), y: BY + 12 + 22 * 0.74 + i * step,
+      'font-size': size, 'text-anchor': 'middle' }, lead);
+    t.textContent = r;
+  });
+  return layout;
 }
 
 function drawLoading(line) {
@@ -264,7 +276,7 @@ function pour() {
 
 function scene(d) {
   const part = _lib.partOfDay(d.getHours());
-  const cls = `widget ${part}${_script === 'fa' ? ' fa' : _script === 'zh' ? ' zh' : ''}`;
+  const cls = `widget ${part}${_script === 'fa' ? ' fa' : _script === 'zh' ? ' zh' : ''}${_drawn ? '' : ' still'}`;
   if (w().className !== cls) w().className = cls;
   document.getElementById('room').setAttribute('transform', _rtl ? 'translate(306 0) scale(-1 1)' : '');
 }
@@ -309,7 +321,7 @@ async function boot() {
     .catch(() => null);
   const [toolbox, lib, dates] = await Promise.all([
     import('/js/widget-toolbox.js?v=66813091'),
-    import('/js/clock-captain.js?v=1de46f24'),
+    import('/js/clock-captain.js?v=c571e432'),
     import('/js/clock-date.js?v=e9647f3b'),
   ]);
   _lib = lib;
@@ -326,6 +338,10 @@ async function boot() {
   _dateParts = dates.clockDateParts(_lang, 'long');
   tick();
 }
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && _drawn && hm(now()) !== _shown) tick();
+});
 
 boot();
 </script>

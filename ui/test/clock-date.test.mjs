@@ -78,6 +78,7 @@ test('the date with its year reads in each language', () => {
   assert.equal(clockDateWithYear('en')(d), 'October 26, 2026');
   assert.equal(clockDateWithYear('de')(d), '26. Oktober 2026');
   assert.equal(clockDateWithYear('fr')(d), '26 octobre 2026');
+  assert.equal(clockDateWithYear('es')(d), '26 de octubre de 2026');
   assert.equal(clockDateWithYear('zh-Hans')(d), '2026年10月26日');
   assert.equal(clockDateWithYear('fa')(d), '۴ آبان ۲۵۸۵');
 });

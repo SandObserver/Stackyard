@@ -13,6 +13,6 @@
   "clockTimezone.hint": "Nom de fuseau horaire IANA. Laissez vide pour l’heure locale du navigateur.",
   "clockShowDate.label": "Afficher la date",
   "ui.unknownZone": "Fuseau horaire inconnu",
-  "ui.captainLine": "Capitaine, on est {weekday} !",
+  "ui.captainLine": "Capitaine, on est {weekday} !",
   "ui.captainLoading": "Capitaine, on est…"
 }

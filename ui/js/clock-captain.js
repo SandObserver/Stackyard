@@ -26,3 +26,10 @@ export function changedFigures(before, after) {
   for (let i = 0; i < after.length; i++) if (before[i] !== after[i]) out.push(i);
   return out;
 }
+
+/** @param {string} line @returns {string[]} */
+export function splitLine(line) {
+  const comma = line.search(/[،,，]/);
+  const space = comma < 0 ? -1 : line.indexOf(' ', comma);
+  return space < 0 ? [line] : [line.slice(0, space), line.slice(space + 1)];
+}
