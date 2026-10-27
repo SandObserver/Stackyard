@@ -163,6 +163,8 @@ test('no run script holds an expression', () => {
     });
   }
   assert.deepEqual(found, [], `Pass the value through env and read it as a variable:\n  ${found.join('\n  ')}`);
+});
+
 test('a new push to a pull request cancels its older check runs', () => {
   for (const name of ['test.yml', 'e2e.yml', 'codeql.yml']) {
     const [, src] = workflows.find(([f]) => f === `workflows/${name}`);
