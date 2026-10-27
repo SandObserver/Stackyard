@@ -167,6 +167,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Connections map names countries in the dashboard language.
 
+- Credit the photographer and Unsplash on an Unsplash wallpaper, as Unsplash's
+  API terms require.
+
 ### Security
 
 - Update Node.js to 24.22.1 and nginx to 1.30.6 to fix CVE-2026-111497,
