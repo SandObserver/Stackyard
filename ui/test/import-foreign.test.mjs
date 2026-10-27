@@ -736,6 +736,31 @@ test('a protocol-relative link loses its username and password too', () => {
   assert.equal(out.notes.filter(n => n.code === NOTE.LOGIN_REMOVED).length, 1);
 });
 
+test('a login behind one, three, back or no slashes is removed too', () => {
+  for (const href of [
+    'http:/admin:hunter2@nas.lan/',
+    'http:///admin:hunter2@nas.lan/',
+    'http:\\\\admin:hunter2@nas.lan/',
+    'http:admin:hunter2@nas.lan/',
+  ]) {
+    const out = convertDockerLabels([container('nas', { name: 'NAS', group: 'G', href, siteMonitor: href })]);
+    const app = apps(out)[0];
+    assert.equal(new URL(app.href).username, '', href);
+    const ping = app.monitoring.healthcheck.pingUrl;
+    if (ping) assert.equal(new URL(ping).username, '', href);
+    assert.ok(!JSON.stringify(out).includes('hunter2'), href);
+    assert.ok(
+      out.notes.some(n => n.code === NOTE.LOGIN_REMOVED),
+      href,
+    );
+  }
+});
+
+test('a mail link keeps its address', () => {
+  const out = convertDockerLabels([container('m', { name: 'Mail', group: 'G', href: 'mailto:admin@nas.lan' })]);
+  assert.equal(apps(out)[0].href, 'mailto:admin@nas.lan');
+});
+
 test('no preview line shows a username and password', () => {
   const out = convertDockerLabels([
     container('a', { name: 'A', group: 'G', href: 'https://admin:hunter2@{{HOMEPAGE_VAR_HOST}}/' }),

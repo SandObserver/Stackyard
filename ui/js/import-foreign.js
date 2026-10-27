@@ -69,14 +69,25 @@ function isAbsoluteLink(href) {
 /** @param {string} href @returns {string} `href` with http:// added when it is a bare host:port */
 const withScheme = href => (/^[a-z0-9.-]+:\d{1,5}(?:[/?#]|$)/i.test(href) ? `http://${href}` : href);
 
-/* Stop at a backslash. Browsers end the host there, so removing past it changes
-   where the link goes. */
-const LOGIN = '((?:[a-z][a-z0-9+.-]*:)?//)[^\\s/?#\\\\]*@';
-const LOGIN_AT_START = new RegExp(`^${LOGIN}`, 'i');
+/* A login can follow any run of slashes or backslashes after a web scheme.
+   Stop at a backslash inside it. Browsers end the host there. */
+const LOGIN = '((?:https?|wss?|ftp):[/\\\\]*|(?:[a-z][a-z0-9+.-]*:)?//)[^\\s/?#\\\\]*@';
 const LOGIN_ANYWHERE = new RegExp(LOGIN, 'gi');
 
 /** @param {string} href @returns {string} */
-const withoutLogin = href => href.replace(LOGIN_AT_START, '$1');
+function withoutLogin(href) {
+  if (!href) return href;
+  let url;
+  try {
+    url = new URL(href);
+  } catch {
+    return href.replace(new RegExp(`^${LOGIN}`, 'i'), '$1');
+  }
+  if (!url.username && !url.password) return href;
+  url.username = '';
+  url.password = '';
+  return url.href;
+}
 
 /** @param {string} s @returns {string} */
 const withoutLoginInText = s => s.replace(LOGIN_ANYWHERE, '$1');
