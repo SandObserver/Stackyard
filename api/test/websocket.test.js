@@ -161,6 +161,19 @@ test('a message over the size limit ends the session', async t => {
   );
 });
 
+test('empty continuation frames count toward the size limit', async t => {
+  const url = await wsServer(t, {
+    onMessage: (_, socket) => {
+      socket.write(serverFrame(OP.TEXT, '', false));
+      socket.write(Buffer.concat(Array.from({ length: 2000 }, () => serverFrame(OP.CONTINUATION, '', false))));
+    },
+  });
+  await assert.rejects(
+    () => jsonRpcUnchecked(url, { timeout: 3000, maxBytes: 1024 * 1024 }, s => s.call('x')),
+    e => e.responseTooLarge === true,
+  );
+});
+
 test('a masked frame from the server ends the session', async t => {
   const url = await wsServer(t, { onMessage: (_, socket) => socket.write(encodeFrame(OP.TEXT, Buffer.from('{}'))) });
   await assert.rejects(
