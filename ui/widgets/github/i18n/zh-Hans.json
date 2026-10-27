@@ -18,7 +18,7 @@
   "githubToken.label": "个人访问令牌",
   "githubToken.hint": "具有 repo 和 read:user 权限的经典 PAT（或具有同等读取权限的细粒度 PAT）。仅此小组件使用。",
   "githubToken.hint.gitea": "具有 read:user 和 read:issue 权限的访问令牌。仅此小组件使用。",
-  "githubToken.hint.gitlab": "具有 read_api 权限的个人访问令牌。仅此小组件使用。",
+  "githubToken.hint.gitlab": "具有 Merge Request: Read 权限的细粒度个人访问令牌，或具有 read_api 权限的旧版令牌。仅此小组件使用。",
   "githubHref.label": "链接地址",
   "githubHref.hint": "点击此小组件后打开的地址。留空则打开你的个人主页。",
   "githubPrFilters.label": "拉取请求筛选",

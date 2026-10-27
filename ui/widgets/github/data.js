@@ -139,6 +139,7 @@ async function giteaPullRequests(ctx, base, token, config, name) {
   if (!filterArr.length) filterArr.push('created');
   const q = new URLSearchParams({ type: 'pulls', state: 'open', limit: '20' });
   for (const f of filterArr) q.set(GITEA_FILTER[f], 'true');
+  if (config.githubService === 'forgejo') q.set('sort', 'recentupdate');
   const r = await ctx.fetchJSON(`${base}/api/v1/repos/issues/search?${q}`, {
     headers: { Authorization: `token ${token}`, Accept: 'application/json' },
     withHeaders: true,
