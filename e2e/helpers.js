@@ -200,6 +200,20 @@ async function animationsDone(page) {
   });
 }
 
+/** Resolve once every widget frame on the page has finished loading its widget.
+    @param {import('@playwright/test').Page} page */
+async function widgetFramesLoaded(page) {
+  await page.waitForFunction(() => {
+    const frames = [...document.querySelectorAll('iframe')];
+    return (
+      frames.length > 0 &&
+      frames.every(
+        f => f.contentWindow?.location.pathname.includes('/widgets/') && f.contentDocument?.readyState === 'complete',
+      )
+    );
+  });
+}
+
 /** The colour at one point, once it has stopped changing. A panel that fades in
     is still moving when it first becomes visible.
     @param {import('@playwright/test').Locator} locator
@@ -232,5 +246,6 @@ module.exports = {
   pixelAt,
   settledPixelAt,
   animationsDone,
+  widgetFramesLoaded,
   contrast,
 };
