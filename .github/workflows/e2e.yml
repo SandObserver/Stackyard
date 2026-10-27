@@ -95,6 +95,28 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:8730
 
+      - name: Stop and restart the container
+        run: |
+          before=$(sha256sum "$RUNNER_TEMP/data/apps.json")
+          docker stop -t 30 stackyard-e2e
+          code=$(docker inspect -f '{{.State.ExitCode}}' stackyard-e2e)
+          echo "stopped with exit code ${code}"
+          if [ "$code" = 137 ]; then
+            echo "::error::the container ignored SIGTERM and was killed"
+            exit 1
+          fi
+          docker start stackyard-e2e
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8730/health >/dev/null 2>&1; then echo "up again after ${i}s"; break; fi
+            if [ "$i" = 60 ]; then echo "::error::the container never became healthy after a restart"; exit 1; fi
+            sleep 1
+          done
+          after=$(sha256sum "$RUNNER_TEMP/data/apps.json")
+          if [ "$before" != "$after" ]; then
+            echo "::error::the restart changed the saved config"
+            exit 1
+          fi
+
       - name: Container logs on failure
         if: failure()
         run: docker logs stackyard-e2e
