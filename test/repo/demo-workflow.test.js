@@ -1,5 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
@@ -30,4 +31,14 @@ test('the first-run placeholder never takes the demo address', () => {
   assert.ok(prep, 'the placeholder step is gone');
   assert.match(prep.run, /delete c\.routes/);
   assert.doesNotMatch(prep.run, /cp upload\/wrangler\.jsonc placeholder/);
+});
+
+test('the web-files check lets font licences through, and nothing else in text', () => {
+  const check = wf.jobs.upload.steps.find(s => s.name === 'Check the site holds web files only');
+  assert.ok(check, 'the web-files check is gone');
+  assert.match(check.run, /! -name 'OFL-\*\.txt'/);
+  const texts = execFileSync('git', ['ls-files', 'ui'], { cwd: root, encoding: 'utf8' })
+    .split('\n')
+    .filter(f => f.endsWith('.txt'));
+  for (const f of texts) assert.match(path.basename(f), /^OFL-.+\.txt$/, `${f} would stop the demo upload`);
 });
