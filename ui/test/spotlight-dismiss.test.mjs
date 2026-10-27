@@ -152,8 +152,8 @@ test('the field keeps the search-bar height and the body type scale', () => {
 });
 
 test('the overlay respects the safe area on both edges', () => {
-  assert.match(css, /body\.is-mob #spot #sres \{[^}]*env\(safe-area-inset-top\)/);
-  assert.match(css, /body\.is-mob #spot #sbox \{[^}]*env\(safe-area-inset-bottom\)/);
+  assert.match(css, /body\.is-mob #spot #sres \{[^}]*var\(--safe-top\)/);
+  assert.match(css, /body\.is-mob #spot #sbox \{[^}]*var\(--safe-bottom\)/);
 });
 
 test('no floating close button remains', () => {
