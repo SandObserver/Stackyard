@@ -57,9 +57,10 @@ jobs:
       - name: Install browsers
         run: |
           debs="$HOME/.cache/apt-archives"
-          if ls "$debs"/*.deb >/dev/null 2>&1 && sudo apt-get install -y --no-download --no-install-recommends "$debs"/*.deb; then
+          if ls "$debs"/*.deb >/dev/null 2>&1 && sudo dpkg -i "$debs"/*.deb; then
             npx playwright install chromium webkit
           else
+            sudo apt-get -f install -y
             echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/99keep-debs >/dev/null
             npx playwright install --with-deps chromium webkit
             rm -rf "$debs" && mkdir -p "$debs"
