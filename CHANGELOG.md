@@ -170,6 +170,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Credit the photographer and Unsplash on an Unsplash wallpaper, as Unsplash's
   API terms require.
 
+- Keep the dashboard and Settings clear of the notch and status bar when
+  Safari's page zoom is not 100%.
+
 ### Security
 
 - Update Node.js to 24.22.1 and nginx to 1.30.6 to fix CVE-2026-111497,

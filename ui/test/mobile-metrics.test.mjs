@@ -79,8 +79,8 @@ test('the layout never reads an inset out of the document', () => {
 
 test('the stylesheet holds the insets, with the scaled minimum as the floor', () => {
   const css = read('css/dashboard.css');
-  assert.match(css, /--sa-top:\s*max\(env\(safe-area-inset-top\), calc\(18px \* var\(--sc,1\)\)\)/);
-  assert.match(css, /--sa-bottom:\s*max\(env\(safe-area-inset-bottom\), calc\(8px \* var\(--sc,1\)\)\)/);
+  assert.match(css, /--sa-top:\s*max\(var\(--safe-top\), calc\(18px \* var\(--sc,1\)\)\)/);
+  assert.match(css, /--sa-bottom:\s*max\(var\(--safe-bottom\), calc\(8px \* var\(--sc,1\)\)\)/);
 });
 
 test('the page reserves the insets and the grid fills what is left', () => {
@@ -123,7 +123,7 @@ test('a full dock sits the same distance from the bottom as from the sides', () 
 test('a probe sized by the insets drives the rebuild', () => {
   const css = read('css/dashboard.css');
   const probe = css.match(/\.sa-probe\s*{[^}]*}/)[0];
-  assert.match(probe, /height:calc\(env\(safe-area-inset-top\) \+ env\(safe-area-inset-bottom\)\)/);
+  assert.match(probe, /height:calc\(var\(--safe-top\) \+ var\(--safe-bottom\)\)/);
   const dash = read('js/dashboard.js');
   assert.match(dash, /new ResizeObserver\([\s\S]{0,600}?\)\.observe\(probe\)/);
   assert.match(dash, /if \(MOB && spaceMoved\(\)\) buildLayout\(\)/);
@@ -136,7 +136,7 @@ test('the first observation does not rebuild what is being built', () => {
 
 test('admin reserves the top inset too', () => {
   const css = read('css/admin.css');
-  assert.match(css, /html\.is-mobile \.adm-outer\{padding:env\(safe-area-inset-top\) 0 0/);
+  assert.match(css, /html\.is-mobile \.adm-outer\{padding:var\(--safe-top\) 0 0/);
 });
 
 /* A sticky header with the large title covers a keyboard-focused row, and at
@@ -149,14 +149,8 @@ test('the phone section header scrolls with the page', () => {
 
 test('admin keeps clear of the side insets in landscape', () => {
   const css = read('css/admin.css');
-  assert.match(
-    css,
-    /\.adm-outer \{ padding:24px max\(16px,env\(safe-area-inset-left\),env\(safe-area-inset-right\)\); \}/,
-  );
-  assert.match(
-    css,
-    /#toast\{[^}]*inset-inline-end:max\(24px,env\(safe-area-inset-left\),env\(safe-area-inset-right\)\)/,
-  );
+  assert.match(css, /\.adm-outer \{ padding:24px max\(16px,var\(--safe-left\),var\(--safe-right\)\); \}/);
+  assert.match(css, /#toast\{[^}]*inset-inline-end:max\(24px,var\(--safe-left\),var\(--safe-right\)\)/);
 });
 
 /* ── Widget cards fit, and stay on one modular grid ───────────────────────── */
@@ -393,7 +387,7 @@ test('the side reserve widens the design gutter and never replaces it', () => {
 test('the safe-area probe is sized by both axes', () => {
   const probe = read('css/dashboard.css').match(/\.sa-probe\s*{[^}]*}/)[0];
   assert.match(probe, /width:calc\([^;]*--sa-left[^;]*--sa-right/);
-  assert.match(probe, /height:calc\([^)]*safe-area-inset-top[^;]*safe-area-inset-bottom/);
+  assert.match(probe, /height:calc\([^)]*--safe-top[^;]*--safe-bottom/);
   assert.match(read('js/dashboard.js'), /const \{ width: w, height: h \} = entries\[0\]\.contentRect;/);
 });
 

@@ -191,6 +191,21 @@ test('the e2e workflow can be called, and still runs on its own', () => {
   );
 });
 
+test('the e2e workflow stops and restarts the built image after the specs', () => {
+  const e2e = yaml.load(fs.readFileSync(path.join(root, '.github/workflows/e2e.yml'), 'utf8'));
+  const e2eSteps = Object.values(e2e.jobs)[0].steps;
+  const at = e2eSteps.findIndex(s => s.name === 'Stop and restart the container');
+  assert.ok(
+    at > e2eSteps.findIndex(s => s.name === 'Run the specs'),
+    'the restart must run on the config the specs saved',
+  );
+  const run = e2eSteps[at].run;
+  assert.match(run, /docker stop -t \d+ stackyard-e2e/);
+  assert.match(run, /"\$code" = 137/, 'a container killed after the stop timeout must fail the job');
+  assert.match(run, /docker start stackyard-e2e/);
+  assert.match(run, /"\$before" != "\$after"/, 'the restart must leave the saved config as it was');
+});
+
 /* Every other gate reads a locally built copy. These pin the checks that read
    the published image, and that nothing announces a release before they pass. */
 

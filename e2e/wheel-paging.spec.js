@@ -4,7 +4,7 @@
    a wheel inside it never reaches the dashboard unless it is handed on. */
 
 const { test, expect } = require('@playwright/test');
-const { seedConfig, dismissSetupPrompt, app } = require('./helpers');
+const { seedConfig, dismissSetupPrompt, app, widgetFramesLoaded } = require('./helpers');
 
 const MANY = Array.from({ length: 48 }, (_, i) => app(`a${i}`, `App ${i}`));
 const clock = {
@@ -23,11 +23,7 @@ async function open(page, request) {
   await page.route('**/api/health', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
   await page.goto('/');
   await page.locator('#dots .dot').nth(1).waitFor({ state: 'visible' });
-  await page.locator('.widget iframe').first().waitFor({ state: 'attached' });
-  await page.waitForFunction(() => {
-    const f = /** @type {HTMLIFrameElement|null} */ (document.querySelector('.widget iframe'));
-    return !!f && f.contentDocument?.readyState === 'complete';
-  });
+  await widgetFramesLoaded(page);
 }
 
 const current = page => page.locator('#dots .dot').evaluateAll(ds => ds.findIndex(d => d.classList.contains('on')));

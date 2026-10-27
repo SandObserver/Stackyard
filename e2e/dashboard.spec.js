@@ -4,7 +4,7 @@
    its Content-Security-Policy in force. */
 
 const { test, expect } = require('@playwright/test');
-const { seedConfig, dismissSetupPrompt, app } = require('./helpers');
+const { seedConfig, dismissSetupPrompt, app, widgetFramesLoaded } = require('./helpers');
 
 /* The dashboard shows the first-run prompt until it is dismissed, and builds no
    tiles behind it. */
@@ -138,8 +138,7 @@ test('one rotation into the phone layout loads each widget once', async ({ page,
   await stubPolls(page);
   await page.setViewportSize({ width: 844, height: 390 });
   await page.goto('/');
-  await page.locator('iframe').first().waitFor({ state: 'attached' });
-  await page.waitForTimeout(500);
+  await widgetFramesLoaded(page);
   let loads = 0;
   page.on('framenavigated', f => {
     if (f !== page.mainFrame() && f.url().includes('/widgets/')) loads++;
@@ -157,8 +156,7 @@ test('a safe-area change rebuilds the phone layout once', async ({ page, request
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await page.locator('body.is-mob').waitFor({ state: 'attached' });
-  await page.locator('iframe').first().waitFor({ state: 'attached' });
-  await page.waitForTimeout(500);
+  await widgetFramesLoaded(page);
   let loads = 0;
   page.on('framenavigated', f => {
     if (f !== page.mainFrame() && f.url().includes('/widgets/')) loads++;

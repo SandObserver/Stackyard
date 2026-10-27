@@ -7,7 +7,7 @@
    tile. A badge is also not a live region. */
 
 const { test, expect } = require('@playwright/test');
-const { seedConfig, dismissSetupPrompt, app } = require('./helpers');
+const { seedConfig, dismissSetupPrompt, app, animationsDone } = require('./helpers');
 
 /* A host that cannot resolve, so the check fails the same way on every run. */
 const DEAD = 'http://does-not-resolve.invalid/';
@@ -77,13 +77,13 @@ test.describe('tile names', () => {
     await seedConfig(request, { items: [app('plain', 'Plain')], settings: { showLabels: { desktop: false } } });
     await page.goto('/');
     await page.locator('.icon').first().waitFor({ state: 'visible' });
-    await page.waitForTimeout(500);
+    await animationsDone(page);
     const without = await readLive();
 
     await seedConfig(request, { items: ITEMS, settings: { showLabels: { desktop: false } } });
     await page.goto('/');
     await page.locator('.badge.on').nth(2).waitFor({ state: 'visible' });
-    await page.waitForTimeout(500);
+    await animationsDone(page);
     const with3 = await readLive();
 
     expect(

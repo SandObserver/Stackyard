@@ -561,7 +561,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .pw-hint{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);margin-top:4px;min-height:16px;padding-inline:16px}
 
 /* ── Toast ── */
-#toast{position:fixed;bottom:24px;inset-inline-end:max(24px,env(safe-area-inset-left),env(safe-area-inset-right));background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-group);padding:14px 18px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);color:var(--tx);box-shadow:var(--shadow-pop);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;max-width:320px}
+#toast{position:fixed;bottom:24px;inset-inline-end:max(24px,var(--safe-left),var(--safe-right));background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-group);padding:14px 18px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);color:var(--tx);box-shadow:var(--shadow-pop);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;max-width:320px}
 /* Only the shown toast takes pointer events. A hidden one would swallow a
    click. */
 #toast.show{opacity:1;transform:translateY(0);pointer-events:auto;cursor:pointer;-webkit-user-select:text;user-select:text}
@@ -733,7 +733,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
    308px is a third of the window and the app list is what pays for it. */
 @media (min-width:769px) and (max-width:1024px) {
   :root { --sbw:220px; }
-  .adm-outer { padding:24px max(16px,env(safe-area-inset-left),env(safe-area-inset-right)); }
+  .adm-outer { padding:24px max(16px,var(--safe-left),var(--safe-right)); }
   .adm { min-height:calc(100vh - 48px); }
   .sb { min-height:calc(100vh - 48px); }
 }
@@ -782,11 +782,11 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .mtabbar{display:none}
 .m-back{display:none}
 /* The status bar overlaps the page in a home-screen install. */
-html.is-mobile .adm-outer{padding:env(safe-area-inset-top) 0 0;display:block;min-height:100dvh}
+html.is-mobile .adm-outer{padding:var(--safe-top) 0 0;display:block;min-height:100dvh}
 html.is-mobile .adm{max-width:none;width:100%;min-height:100dvh;border:none;border-radius:0}
 html.is-mobile .sb{display:none}
 html.is-mobile .cp{width:100%}
-html.is-mobile .sec{padding-block:16px calc(132px + env(safe-area-inset-bottom));padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
+html.is-mobile .sec{padding-block:16px calc(132px + var(--safe-bottom));padding-inline:max(16px,var(--safe-left)) max(16px,var(--safe-right))}
 html.is-mobile .sec-title{font-size:var(--fs-large-title);line-height:var(--lh-large-title);letter-spacing:var(--tr-large-title)}
 html.is-mobile .cc-row{flex-wrap:wrap;row-gap:10px}
 html.is-mobile .cc-row .rl{flex:0 0 100%}
