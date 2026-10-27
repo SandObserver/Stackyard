@@ -1,6 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
+const { noSuchHost } = require('../test-support/no-such-host');
 const { errorBody, safeMessage, SAFE_MESSAGES, KIND, KINDS } = require('../src/api-error');
 
 /* Things a real failure names that a browser has no business seeing. */
@@ -116,7 +117,8 @@ test('a failed ping does not name the host it could not reach', async () => {
   assert.equal(r.code, 'network.refused', 'the reason is kept as an API code, which names no address');
 });
 
-test('a ping to a host that does not exist says so without naming it', async () => {
+test('a ping to a host that does not exist says so without naming it', async t => {
+  noSuchHost(t);
   const { pingUnchecked } = require('../src/proxy');
   const r = await pingUnchecked('http://stackyard-nx-host.invalid/', 3000);
   assert.equal(r.ok, false);

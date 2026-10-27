@@ -28,11 +28,37 @@ const {
   SKIP,
   NOTE,
   ImportTooLargeError,
+  MAX_IMPORT_ENTRIES,
 } = await import('/js/import-foreign.js');
 
 const apps = out => out.items.filter(i => i.type === 'app');
 const folders = out => out.items.filter(i => i.type === 'folder');
 const byName = (rows, name) => rows.filter(r => r.name === name);
+
+/** The document behind a proxy that counts list entries read and key listings. */
+function counted(doc) {
+  const n = { reads: 0, keyLists: 0 };
+  const proxies = new WeakMap();
+  const wrap = v => {
+    if (!v || typeof v !== 'object') return v;
+    if (!proxies.has(v))
+      proxies.set(
+        v,
+        new Proxy(v, {
+          get(t, k, r) {
+            if (Array.isArray(t) && typeof k === 'string' && /^\d+$/.test(k)) n.reads++;
+            return wrap(Reflect.get(t, k, r));
+          },
+          ownKeys(t) {
+            n.keyLists++;
+            return Reflect.ownKeys(t);
+          },
+        }),
+      );
+    return proxies.get(v);
+  };
+  return [wrap(doc), n];
+}
 
 const SERVICES = `- Media:
     - Plex:
@@ -523,21 +549,20 @@ test('telling the format apart stops at the entry budget on an aliased Homepage 
   const wraps = Array.from({ length: 2000 }, () => '{k: *c}').join(', ');
   let y = `- g1: &c [${rows}]\n- g2: &b [${wraps}]\n`;
   for (let i = 3; i < 53; i++) y += `- g${i}: *b\n`;
-  const doc = parseYaml(y);
-  const started = performance.now();
+  const [doc, n] = counted(parseYaml(y));
   assert.throws(() => detectSource(doc), tooLarge);
-  assert.ok(performance.now() - started < 1000);
+  /* Without the budget the 50 aliases expand to 200 million rows. */
+  assert.ok(n.reads <= MAX_IMPORT_ENTRIES + 10, `${n.reads} entries read`);
 });
 
 test('one wide map aliased under the budget is read once, not once per alias', () => {
   let y = '- g1:\n    - &m\n';
   for (let i = 0; i < 20000; i++) y += `      k${i}: 1\n`;
   y += `- g2: [${Array(2000).fill('*m').join(', ')}]\n`;
-  const doc = parseYaml(y);
-  const started = performance.now();
+  const [doc, n] = counted(parseYaml(y));
   assert.equal(detectSource(doc), 'homepage-services');
   assert.equal(convertHomepageServices(doc).items.length, 0);
-  assert.ok(performance.now() - started < 1000);
+  assert.ok(n.keyLists < 10, `the map's 20,000 keys were listed ${n.keyLists} times`);
 });
 
 test('aliases that stay under the budget still import everywhere they are used', () => {

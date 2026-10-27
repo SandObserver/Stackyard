@@ -53,12 +53,21 @@ test('only one refresh per key runs at a time', async () => {
   assert.equal(runs, 1);
 });
 
-test('a caller after the hold has passed does not wait again', async () => {
+test('a caller after the hold has passed does not wait again', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
   const stall = () => new Promise(() => {});
-  await latest('k', stall, OPTS);
-  const t = Date.now();
-  assert.equal(await latest('k', stall, OPTS), null);
-  assert.ok(Date.now() - t < 20, 'answered without a second hold');
+  const first = latest('k', stall, OPTS);
+  t.mock.timers.tick(OPTS.holdMs);
+  assert.equal(await first, null);
+  let answered = false;
+  const second = latest('k', stall, OPTS).then(v => {
+    answered = true;
+    return v;
+  });
+  t.mock.timers.tick(0);
+  await new Promise(r => setImmediate(r));
+  assert.ok(answered, 'answered without a second hold');
+  assert.equal(await second, null);
 });
 
 test('a result older than keepMs is not used', async t => {

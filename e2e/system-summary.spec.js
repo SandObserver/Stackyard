@@ -44,6 +44,12 @@ async function open(page, id) {
   const frame = page.frameLocator(`iframe[src*="${id}"]`);
   await expect(frame.locator('.head > .lbl, .row > .lbl').first()).toHaveText('CPU');
   await expect(frame.locator('.val').first()).toHaveText('50%');
+  await page.waitForFunction(src => {
+    const f = /** @type {HTMLIFrameElement|null} */ (document.querySelector(`iframe[src*="${src}"]`));
+    const zoom = f?.getAttribute('data-zoom');
+    const applied = Number.parseFloat(f?.contentDocument?.documentElement.style.zoom || '');
+    return !!zoom && Math.abs(applied - Number(zoom)) < 0.001;
+  }, id);
   return frame;
 }
 
