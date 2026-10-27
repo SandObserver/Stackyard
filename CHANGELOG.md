@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Stop attaching a not-affected statement for CVE-2026-107891 to Docker Hub
+  images.
+
 ## [1.20.0] - 2026-10-27
 
 ### Added
