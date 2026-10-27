@@ -179,7 +179,7 @@ jobs:
           bad=$(find upload/site \( -type l -o -name '.*' -o -name node_modules -o -name 'package*.json' \
             -o -name 'wrangler.*' -o -name '_worker.js' -o \( -type f \
             ! -regex '.*\.\(html\|js\|css\|json\|png\|jpg\|jpeg\|webp\|svg\|ico\|woff2\)$' \
-            ! -name _headers ! -name _redirects \) \) -print)
+            ! -name _headers ! -name _redirects ! -name 'OFL-*.txt' \) \) -print)
           if [ -n "$bad" ]; then
             echo "::error::the site holds files that are not web files:"
             printf '%s\n' "$bad"
