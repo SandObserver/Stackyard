@@ -98,11 +98,12 @@ test.describe('on a touch screen', () => {
     });
   }
 
-  test('the icon colour swatches stay packed at 744px', async ({ page, request }) => {
+  test('the icon colour swatches stay packed on a wide phone', async ({ page, request }) => {
     await seedConfig(request, { items: [app('one', 'One')] });
     await dismissSetupPrompt(request);
-    await page.setViewportSize({ width: 744, height: 900 });
+    await page.setViewportSize({ width: 430, height: 932 });
     await page.goto('/admin/#dashboard');
+    await expect(page.locator('html')).toHaveClass(/\bis-mobile\b/);
     await page.locator('#al [data-act="edit"]').first().click();
     await page.locator('#icon-col-style-btn').click();
     await page.locator('#icon-col-style-list [data-val="color"]').click();
