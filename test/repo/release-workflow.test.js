@@ -278,7 +278,9 @@ test('the identity pattern matches the identity the release signs with', () => {
   }
 });
 
-const vexJob = workflow.jobs.vex;
+const vexCall = workflow.jobs.vex;
+const vexWorkflow = yaml.load(fs.readFileSync(path.join(root, '.github/workflows/vex.yml'), 'utf8'));
+const vexJob = vexWorkflow.jobs.attach;
 const vexStep = name => {
   const step = vexJob.steps.find(s => s.name === name);
   assert.ok(step, `the ${name} step is gone`);
@@ -286,16 +288,35 @@ const vexStep = name => {
 };
 
 test('the VEX statements are attached in their own job, which cannot hold up the release', () => {
-  assert.deepEqual(vexJob.needs, 'build-and-push');
+  assert.deepEqual(vexCall.needs, 'build-and-push');
   assert.equal(job.outputs.dockerhub, '${{ steps.registries.outputs.dockerhub }}');
-  assert.equal(vexJob.if, "needs.build-and-push.outputs.dockerhub == 'true'");
-  assert.equal(vexJob['continue-on-error'], true, 'a Scout failure must not fail a published release');
+  assert.equal(vexCall.if, "needs.build-and-push.outputs.dockerhub == 'true'");
+  assert.equal(vexCall.uses, './.github/workflows/vex.yml');
+  assert.equal(vexCall.with.digest, '${{ needs.build-and-push.outputs.digest }}');
+  assert.equal(vexCall.with.version, '${{ needs.build-and-push.outputs.version }}');
+  assert.deepEqual(Object.keys(vexCall.secrets), ['DOCKERHUB_TOKEN']);
+  assert.equal(
+    vexJob['continue-on-error'],
+    "${{ github.event_name != 'workflow_dispatch' }}",
+    'a Scout failure must not fail a published release, and must fail a run by hand',
+  );
   assert.ok(vexJob['timeout-minutes'] <= 10, 'a hung Scout call must end on its own');
+  assert.deepEqual(vexCall.permissions, { contents: 'read' });
   assert.deepEqual(vexJob.permissions, { contents: 'read' });
   for (const [name, other] of Object.entries(workflow.jobs)) {
     assert.ok(![other.needs].flat().includes('vex'), `${name} must not wait for the VEX job`);
   }
   assert.equal(steps.filter(s => /scout/i.test(`${s.name} ${s.uses || ''}`)).length, 0);
+});
+
+test('a published version can be given its VEX statements by hand', () => {
+  assert.deepEqual(Object.keys(vexWorkflow.on.workflow_dispatch.inputs), ['version']);
+  const resolve = vexStep('Resolve the image');
+  assert.ok(vexJob.steps.indexOf(resolve) < vexJob.steps.indexOf(vexStep('Prepare the VEX statements')));
+  assert.equal(resolve.env.DIGEST, '${{ inputs.digest }}');
+  assert.match(resolve.run, /\*\[!0-9A-Za-z\.-\]\*/, 'the version lands in an image reference');
+  assert.match(resolve.run, /imagetools inspect "\$\{IMAGE\}:\$\{VERSION\}"/);
+  assert.match(resolve.run, /TAG=v\$VERSION/);
 });
 
 test('a statement is attached only to an image that ships the patched musl', () => {
@@ -315,6 +336,7 @@ test('the Scout program is pinned by digest and attaches by referrer', () => {
   assert.ok(prepare < vexJob.steps.indexOf(attach), 'nothing to attach yet');
   assert.match(attach.env.SCOUT_IMAGE, /^docker\.io\/docker\/scout-cli:[\d.]+@sha256:[0-9a-f]{64}$/);
   assert.match(attach.run, /--referrer\b/, 'attaching into the index changes the signed digest');
+  assert.match(attach.run, /--org "\$NAMESPACE"/, 'Scout refuses to attach without the organisation');
   assert.match(attach.run, /--predicate-type https:\/\/openvex\.dev\/ns\/v0\.2\.0/);
   assert.match(attach.run, /--file "\/vex\/stackyard-\$arch\.vex\.json"/);
   assert.match(vexStep('Prepare the VEX statements').run, /"\$RUNNER_TEMP\/stackyard-\$arch\.vex\.json"/);
