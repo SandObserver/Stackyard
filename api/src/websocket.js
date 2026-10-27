@@ -5,6 +5,9 @@ const crypto = require('crypto');
 const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 const MESSAGE_LIMIT = 4 * 1024 * 1024;
 const WRITE_BACKLOG_LIMIT = 64 * 1024;
+/* Each kept fragment costs heap whatever its length. Count at least this much
+   per fragment, or empty fragments grow the heap past the limit. */
+const FRAGMENT_FLOOR = 1024;
 
 const OP = { CONTINUATION: 0, TEXT: 1, BINARY: 2, CLOSE: 8, PING: 9, PONG: 10 };
 
@@ -103,6 +106,7 @@ function wrapSocket(socket, head, opts = {}) {
   /** @type {Buffer[]} */
   let parts = [];
   let partsSize = 0;
+  let partsCost = 0;
   let inMessage = false;
 
   const finish = (/** @type {Error|null} */ err) => {
@@ -137,12 +141,14 @@ function wrapSocket(socket, head, opts = {}) {
       inMessage = true;
     } else throw protocolError('The server sent an unknown frame type.');
     partsSize += payload.length;
-    if (partsSize > limit) throw tooLarge();
+    partsCost += Math.max(payload.length, FRAGMENT_FLOOR);
+    if (partsCost > limit) throw tooLarge();
     parts.push(payload);
     if (!fin) return;
     const text = Buffer.concat(parts, partsSize).toString('utf8');
     parts = [];
     partsSize = 0;
+    partsCost = 0;
     inMessage = false;
     if (onMessage) onMessage(text);
     else backlog.push(text);
