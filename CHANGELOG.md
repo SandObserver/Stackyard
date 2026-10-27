@@ -11,9 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Weather widget draws mist, rime fog, freezing drizzle, freezing rain, sleet,
-  rain and snow, snow grains, hail, haze, smoke, dust, sand, volcanic ash,
-  squalls and tornadoes.
+- Draw 15 more weather conditions in the Weather widget, from mist to tornadoes.
 
 - Group the Dashboard list into Dock and Home screen, with drag and drop into
   and out of the dock.
@@ -66,8 +64,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TrueNAS disk health reads TrueNAS 25.04 and later over the WebSocket API, so
   it keeps working on TrueNAS 27.
 
-- TrueNAS disk health refuses an http address, because TrueNAS revokes an API
-  key sent over http.
+- TrueNAS disk health refuses an http address.
+  Change the address to https.
 
 - Show the Backup widget's Source setting as a drop-down.
 
@@ -180,9 +178,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- Update Node.js to 24.22.1 and nginx to 1.30.6 to fix CVE-2026-111497,
-  CVE-2026-15176, CVE-2026-93479 and CVE-2026-97205, and stop trusting the
-  compromised eMudhra certificate roots.
+- Update Node.js to 24.22.1 and nginx to 1.30.6 to fix four CVEs.
+
+- Stop trusting the compromised eMudhra certificate roots.
 
 - Mark CVE-2026-107891 as not affecting the Docker Hub image, which ships the
   patched musl 1.2.6-r3.
