@@ -206,6 +206,23 @@ test('the e2e workflow stops and restarts the built image after the specs', () =
   assert.match(run, /"\$before" != "\$after"/, 'the restart must leave the saved config as it was');
 });
 
+test('the browser package cache matches only the same Playwright version', () => {
+  const e2e = yaml.load(fs.readFileSync(path.join(root, '.github/workflows/e2e.yml'), 'utf8'));
+  const cache = Object.values(e2e.jobs)[0].steps.find(s => s.name === 'Cache system packages for the browsers');
+  assert.match(cache.with.key, /steps\.image\.outputs\.playwright/);
+  assert.ok(!cache.with['restore-keys'], 'a partial hit installs an older package set and skips --with-deps');
+});
+
+test('the scheduled scan reads Node.js from the image binary', () => {
+  const scan = yaml.load(fs.readFileSync(path.join(root, '.github/workflows/scan-published.yml'), 'utf8'));
+  const step = scan.jobs.scan.steps.find(s => s.name === "Check the image's Node.js for missed security releases");
+  assert.doesNotMatch(step.run, /NODE_VERSION/, 'the runtime stage is FROM scratch and has no NODE_VERSION');
+  assert.match(step.run, /--platform "\$PLATFORM" --entrypoint node/);
+  assert.match(step.run, /-p process\.versions\.node/);
+  const qemu = scan.jobs.scan.steps.find(s => String(s.uses).startsWith('docker/setup-qemu-action@'));
+  assert.ok(qemu, 'the arm64 binary needs QEMU on an amd64 runner');
+});
+
 /* Every other gate reads a locally built copy. These pin the checks that read
    the published image, and that nothing announces a release before they pass. */
 
