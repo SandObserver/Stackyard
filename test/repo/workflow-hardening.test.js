@@ -164,3 +164,14 @@ test('no run script holds an expression', () => {
   }
   assert.deepEqual(found, [], `Pass the value through env and read it as a variable:\n  ${found.join('\n  ')}`);
 });
+
+test('a new push to a pull request cancels its older check runs', () => {
+  for (const name of ['test.yml', 'e2e.yml', 'codeql.yml']) {
+    const [, src] = workflows.find(([f]) => f === `workflows/${name}`);
+    assert.match(
+      src,
+      /^concurrency:\n {2}group: [\w-]+-\$\{\{ github\.event\.pull_request\.number \|\| github\.run_id \}\}\n {2}cancel-in-progress: true$/m,
+      `${name} should group runs by pull request and cancel the superseded one`,
+    );
+  }
+});
