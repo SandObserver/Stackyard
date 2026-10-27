@@ -33,4 +33,7 @@ jobs:
       # Python's standard library, so nothing is installed. The runner image
       # carries no xmllint.
       - name: Validate the template and the profile
-        run: python3 scripts/ca-validate.py "${{ github.repository }}" "${{ github.event.repository.default_branch }}"
+        env:
+          REPO: ${{ github.repository }}
+          BASE: ${{ github.event.repository.default_branch }}
+        run: python3 scripts/ca-validate.py "$REPO" "$BASE"

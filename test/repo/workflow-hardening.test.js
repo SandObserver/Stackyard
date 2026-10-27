@@ -142,6 +142,27 @@ test('the lockfile is committed and CI installs from it', () => {
   assert.deepEqual(loose, [], `Use npm ci so CI installs the lockfile:\n  ${loose.join('\n  ')}`);
 });
 
+/* An expression in a run script is pasted into the shell before it runs. A
+   value an outsider controls, such as a branch name, then runs as a command. */
+test('no run script holds an expression', () => {
+  const found = [];
+  for (const [f, src] of all) {
+    const lines = src.split('\n');
+    let block = -1;
+    lines.forEach((line, i) => {
+      const indent = line.match(/^\s*/)[0].length;
+      const run = line.match(/^(\s*)(- )?run:\s*(.*)$/);
+      if (run) {
+        block = /^[|>]/.test(run[3]) ? run[1].length + (run[2] ? 2 : 0) : -1;
+        if (run[3].includes('${{')) found.push(`${f}:${i + 1}`);
+        return;
+      }
+      if (block === -1) return;
+      if (line.trim() && indent <= block) block = -1;
+      else if (line.includes('${{')) found.push(`${f}:${i + 1}`);
+    });
+  }
+  assert.deepEqual(found, [], `Pass the value through env and read it as a variable:\n  ${found.join('\n  ')}`);
 test('a new push to a pull request cancels its older check runs', () => {
   for (const name of ['test.yml', 'e2e.yml', 'codeql.yml']) {
     const [, src] = workflows.find(([f]) => f === `workflows/${name}`);
