@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.20.0] - 2026-10-27
+
 ### Added
 
 - Weather widget draws mist, rime fog, freezing drizzle, freezing rain, sleet,
@@ -2211,7 +2213,8 @@ Everything before 1.0.0 was iterative development, condensed here:
 - **i18n**: full localization added
 - **Tooling**: linting, type-checking, test coverage, core docs added
 
-[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.19.0...HEAD
+[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.20.0...HEAD
+[1.20.0]: https://github.com/SandObserver/stackyard/compare/v1.19.0...v1.20.0
 [1.19.0]: https://github.com/SandObserver/stackyard/compare/v1.18.0...v1.19.0
 [1.18.0]: https://github.com/SandObserver/stackyard/compare/v1.17.0...v1.18.0
 [1.17.0]: https://github.com/SandObserver/stackyard/compare/v1.16.0...v1.17.0
