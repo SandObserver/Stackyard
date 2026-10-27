@@ -47,16 +47,19 @@ jobs:
           # below fetches whatever that set is missing.
           restore-keys: playwright-${{ runner.os }}-
 
-      - name: Read the runner image
+      - name: Read the runner image and the Playwright version
         id: image
-        run: echo "version=$ImageOS-$ImageVersion" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "version=$ImageOS-$ImageVersion" >> "$GITHUB_OUTPUT"
+          echo "playwright=$(node -p "require('./package-lock.json').packages['node_modules/playwright-core'].version")" >> "$GITHUB_OUTPUT"
 
+      # No restore-keys. A partial hit installs an older package set and skips
+      # --with-deps, so browsers that need a new package fail to launch.
       - name: Cache system packages for the browsers
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/apt-archives
-          key: apt-${{ steps.image.outputs.version }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: apt-${{ steps.image.outputs.version }}-
+          key: apt-${{ steps.image.outputs.version }}-playwright-${{ steps.image.outputs.playwright }}
 
       - name: Install browsers
         run: |
