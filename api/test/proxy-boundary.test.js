@@ -10,6 +10,7 @@ process.env.CONFIG_PATH = tmpPath('apps.json');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
+const { noSuchHost } = require('../test-support/no-such-host');
 const { fetchChecked, fetchUnchecked, pingChecked, pingUnchecked, SsrfBlockedError } = require('../src/proxy');
 
 function server(
@@ -53,7 +54,8 @@ test('SsrfBlockedError carries the status a route should return', async () => {
   );
 });
 
-test('fetchChecked rejects an unresolvable host rather than connecting', async () => {
+test('fetchChecked rejects an unresolvable host rather than connecting', async t => {
+  noSuchHost(t);
   await assert.rejects(
     () => fetchChecked('http://nx.invalid/', { timeout: 3000 }),
     e => e instanceof SsrfBlockedError,

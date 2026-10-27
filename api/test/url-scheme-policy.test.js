@@ -85,6 +85,12 @@ test('pingUnchecked refuses a non-http scheme', async () => {
   assert.match(r.error, /http/);
 });
 
+test('pingUnchecked refuses a non-http scheme before any lookup', async t => {
+  const lookups = t.mock.method(resolver, 'resolveAll', async () => []);
+  await pingUnchecked('file:///etc/passwd', 500);
+  assert.equal(lookups.mock.callCount(), 0);
+});
+
 test('a rejected URL opens no connection', async () => {
   const attempts = [];
   const realHttp = http.request;

@@ -5,6 +5,7 @@
 const path = require('node:path');
 
 const { tmpDir } = require('../test-support/tmp');
+const { noSuchHost } = require('../test-support/no-such-host');
 process.env.CONFIG_PATH = path.join(tmpDir('docker-test'), 'apps.json');
 
 const { test, before, after } = require('node:test');
@@ -105,7 +106,8 @@ test('an address with nothing listening is refused', async () => {
   assert.equal(r.body.code, 'network');
 });
 
-test('a name that resolves nowhere is refused', async () => {
+test('a name that resolves nowhere is refused', async t => {
+  noSuchHost(t);
   const r = await probe('http://no-such-host.invalid:2375');
   assert.equal(r.body.ok, false);
   assert.equal(r.body.fatal, true);
@@ -119,7 +121,8 @@ test('a scheme that cannot be requested is refused before any connection', async
 });
 
 /* The hint carries the address shape, and the UI turns it into advice. */
-test('a service name that fails is told to share a network', async () => {
+test('a service name that fails is told to share a network', async t => {
+  noSuchHost(t);
   const r = await probe('http://socket-proxy-nonexistent:2375');
   assert.equal(r.body.ok, false);
   assert.equal(r.body.hint, 'shared-network');

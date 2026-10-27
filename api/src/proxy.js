@@ -725,12 +725,15 @@ const PING_LINK_LOCAL = Object.freeze({
 async function pingUnchecked(url, ms, skipTls) {
   if (IS_DEMO) return pingUrl(url, ms, skipTls);
   const target = rewriteUrl(url);
-  let host;
+  let parsed;
   try {
-    host = bareHost(new URL(target).hostname);
+    parsed = new URL(target);
   } catch {
     return pingUrl(target, ms, skipTls);
   }
+  const policy = urlPolicyError(parsed);
+  if (policy) return pingInvalid(policy);
+  const host = bareHost(parsed.hostname);
   if (net.isIP(host)) return isLinkLocal(host) ? { ...PING_LINK_LOCAL } : pingUrl(target, ms, skipTls);
   const budget = ms || PING_MS;
   const started = Date.now();

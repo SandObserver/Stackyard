@@ -77,9 +77,10 @@ test('collectNumbers bounds the boolean filter scan on a wide, long array', () =
   const sample = {};
   for (let i = 0; i < 1000; i++) sample[`f${i}`] = true;
   const rows = [sample, ...Array.from({ length: 50_000 }, () => ({}))];
-  const started = performance.now();
-  const out = collectNumbers({ rows });
-  assert.ok(performance.now() - started < 1000);
+  const state = { n: 0, scanned: 0 };
+  const out = collectNumbers({ rows }, '', [], 0, state);
+  /* An unbounded scan reads every row for each of the 1,000 fields: 50 million. */
+  assert.ok(state.scanned <= 1_000_000, `${state.scanned} rows read`);
   assert.equal(out.find(e => e.path === 'rows.filter(f0==true).count')?.value, 1);
 });
 
