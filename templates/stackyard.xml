@@ -24,138 +24,188 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.19.0 - 2026-10-20
+### 1.20.0 - 2026-10-27
 
 ### Added
 
-- Nine short Backup haikus that fit small cards.
+- Draw 15 more weather conditions in the Weather widget, from mist to tornadoes.
 
-- Let a widget manifest list the query parameters its data function reads.
+- Group the Dashboard list into Dock and Home screen, with drag and drop into
+  and out of the dock.
 
-- Settings offers to add the address you are signed in on to Allowed Addresses.
+- Let the Settings tile go in the dock from its new editor.
+
+- Sign in to a live badge's API with a username and password.
+
+- Add a Proxmox health check that shows whether a VM or container is running.
+
+- Add Proxmox VE as a System Summary source.
+
+- Add Unraid as a Disk Health source.
+
+- TrueNAS as a System Summary source.
+
+- Allow Self-Signed Certificate for TrueNAS disk health.
+
+- Add Proxmox Backup Server and Backrest as Backup widget sources.
+
+- Show when a settings list from a service was cut short.
+
+- Weather shows an icon when UV or air quality calls for care, with the reading
+  on hover or tap.
+
+- Read pull requests and contributions from Gitea and Forgejo, and merge
+  requests from GitLab, in the Git widget.
+
+- Downloads widget for qBittorrent, Transmission, Deluge, SABnzbd and NZBGet.
+
+- Up Next widget for Sonarr, Radarr and Lidarr.
+
+- Import apps and folders from gethomepage labels on Docker containers.
+
+- Let widget text fields opt out of capitalisation and autocorrect with
+  `"plain": true`.
+
+- Add a Captain style to the Clock widget, a comic panel with the weekday, time,
+  date and a glass of beer.
 
 ### Changed
 
-- The Unsplash wallpaper changes once a day instead of on every load.
+- Long weather condition labels shrink to fit before they are cut off.
 
-- Log a failing widget once, with a reminder every 10 minutes and a line on
-  recovery, instead of on every request.
+- Read numbers sent as text in live badges.
 
-- Redraw the Weather widget artwork as frosted glass with gentle motion that
-  pauses off screen.
+- Replace the Docker health checks switch with one Health Checks switch that
+  covers every check type.
 
-- Choose the icon colour style (Dark, White, Auto, Clear or Color) from a
-  drop-down; colours and sliders show only under Color.
+- TrueNAS disk health reads TrueNAS 25.04 and later over the WebSocket API, so
+  it keeps working on TrueNAS 27.
 
-- Badge and wallpaper colour swatches sit together at the end of their row, all
-  one size.
+- TrueNAS disk health refuses an http address.
+  Change the address to https.
+
+- Show the Backup widget's Source setting as a drop-down.
+
+- Shrink the image by about 24 MB and run one nginx worker instead of one per
+  CPU core.
+
+- Rename the GitHub widget to Git.
+
+- Limit app, folder and widget names to 64 characters.
+
+- Warn in the app form when a link holds a username and password.
+
+- Show press feedback on Settings rows, buttons and the tab bar.
+
+- Glide dragged rows into place.
+
+- Open menus and dialogs with a short animation.
+
+- Make phone pages follow the finger, turn on a quick flick and stretch at the
+  ends.
+
+- Turn pages faster from the keyboard, wheel and page dots.
+
+- Grow folders out of their tile and shrink them back on close.
+
+- Keep fades under Reduce Motion and drop only movement.
+
+- Reduce CPU use of the analog clock, Connections, Now Playing, Weather and
+  Backup animations.
 
 ### Fixed
 
-- Name a widget without a manifest for re-entry when a port map change clears
-  its settings.
+- Colour swatches no longer spread across the row on small tablets.
 
-- Backup cards show a whole haiku or none, never part of one.
+- Chinese Weather widget labels drizzle as 毛毛雨 instead of light rain.
 
-- Show an error instead of zero DNS queries, "Nothing playing" or "Not secured"
-  when a service sends an unreadable reply.
+- Large numbers in GitHub widgets fit again after the dashboard is resized.
 
-- Stop a large non-JSON reply from a service from stalling the dashboard.
+- Widgets no longer show a strip of card at their sides when the card is wider
+  than the widget's design.
 
-- Show an error when a widget cannot draw the data it received, instead of
-  leaving old data on screen.
+- Widget loading placeholders show in high contrast mode.
 
-- Keep healthy Backup cards when another backup server stops answering.
+- Read the Docker API through socket proxies that allow only versioned paths.
 
-- Answer every widget request before the dashboard's proxy gives up, even when a
-  service stalls on several calls.
+- Wrap long names in the import preview instead of scrolling sideways.
 
-- Keep the dashboard and healthy widgets responsive while several services
-  stall.
+- Stop Settings rows and buttons from staying highlighted after a tap.
 
-- Keep every widget, badge and health check working while the DNS server is
-  down, instead of stalling behind lookups that never finish.
+- Stop iOS from zooming into header fields.
 
-- Keep app health dots updating while the Docker socket proxy stops answering.
+- Stop iOS from capitalising addresses, usernames and System Summary disk names.
 
-- Treat a damaged settings block in the config file as damage instead of loading
-  it as an open install.
+- Keep Save on screen when an app has a long name.
 
-- Skip invalid entries in the config file's app list instead of failing health
-  checks, badges and widgets.
+- Show addresses from their start in right-to-left languages.
 
-- Keep a config file edited by hand while the container runs instead of
-  overwriting it on the next save.
+- Stop a dragged row from sticking on screen when the list redraws during the
+  drag.
 
-- Report no changes when importing an export that matches the current
-  configuration.
+- Show the start of long right-to-left app names, with the ellipsis at the end.
 
-- Stop an icon upload from overwriting an existing icon when many share its
-  name.
+- Make empty-dashboard text readable on dark wallpapers in light mode.
 
-- The Referrer policy picker shows and selects Default.
+- Keep typing and clicks working right after closing search.
 
-- Now Playing no longer cuts off the second line of a long title.
+- Show press feedback on phone app, Dock and folder tiles.
 
-- Stop extra query values on widget data requests from filling server memory and
-  multiplying upstream calls.
+- Wrap long names in phone search.
 
-- Stop app tiles with a refresh interval from filling the browser Back history.
+- Turn the page on a swipe that starts on the phone search pill instead of
+  opening search.
 
-- Stop the Connections VPN view from stacking animation loops while its page is
-  off screen.
+- Stop the dashboard from bouncing on iOS.
 
-- Pause the Analog clock, Connections map and VPN animations on dashboard pages
-  not shown.
+- Count both taps when switching Now Playing sessions quickly.
 
-- Adding or removing a row in a widget's settings keeps the stored passwords and
-  keys of the other rows.
+- Put the ellipsis at the end of right-to-left Dashboard Switch names.
 
-- Colour pickers in Settings fit on narrow phones without cutting off labels or
-  swatches.
+- Stop widgets from flashing grey on tap on iOS.
 
-- Colour sliders in Settings share one length.
+- Show the phone home screen with a correctly sized Dock on phones held
+  sideways.
 
-- Safari no longer logs a viewport warning when the dashboard loads.
+- Stop iOS Safari from enlarging widget text in landscape.
+
+- Keep the Settings sidebar on short landscape screens and on large screens such
+  as an unfolded phone.
+
+- Stop the home screen from enlarging icons on screens wider than a phone.
+
+- Clock faces no longer show the wrong hour when the clock's timezone falls in
+  the browser's daylight saving change.
+
+- The Digital clock updates as soon as a hidden tab is shown again.
+
+- Widgets declare the dashboard language, so screen readers read their text in
+  that language.
+
+- The Connections map names countries in the dashboard language.
+
+- Credit the photographer and Unsplash on an Unsplash wallpaper, as Unsplash's
+  API terms require.
+
+- Keep the dashboard and Settings clear of the notch and status bar when
+  Safari's page zoom is not 100%.
+
+- The empty dashboard's heading and explanation stay readable on mid-grey
+  wallpapers.
 
 ### Security
 
-- Keep a stored widget secret out of the browser when a save sends the widget
-  under a legacy type.
+- Update Node.js to 24.22.1 and nginx to 1.30.6 to fix four CVEs.
 
-- Withhold stored secrets when a widget's type changes, the port map is removed,
-  or certificate checking for widgets is turned on or off.
+- Stop trusting the compromised eMudhra certificate roots.
 
-- Stop trusting the first host name that opens Stackyard while no password is
-  set. Add a domain name in Allowed Addresses from an IP address or a local
-  name.
+- Mark CVE-2026-107891 as not affecting the Docker Hub image, which ships the
+  patched musl 1.2.6-r3.
 
-- Refuse service names that resolve to loopback or link-local addresses, such as
-  `ip6-localhost`, in admin URL tests.
+- Refuse health check pings to link-local addresses, including the cloud
+  metadata service.
 
-- Block 6to4, local-use NAT64 and site-local IPv6 addresses in admin URL tests.
-
-- Refuse a config save whose settings block is not an object, which could remove
-  the password.
-
-- Refuse a config save or import nested too deeply, which could leave the config
-  unreadable.
-
-- Saving the wallpaper no longer replaces the stored Unsplash key with the
-  field's label.
-
-- Icons always load through the server, so the CDN does not learn which services
-  a dashboard shows.
-
-- A page on another site can no longer lock the owner out of sign-in by pointing
-  its host name at the server.
-
-- The wallpaper endpoint no longer returns Unsplash's error text.
-
-- A session cookie set by another host on the same parent domain no longer signs
-  the owner out.
-
-- The Connections widget no longer names an address the guard blocked.
+- Remove usernames and passwords from links during import.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
