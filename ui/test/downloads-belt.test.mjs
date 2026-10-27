@@ -2,11 +2,13 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   ENDS,
+  finishParts,
   finishedToday,
   hoursMinutes,
   leftover,
   LEFTOVER_CHANCE,
   lidOpen,
+  readerHourCycle,
   startOfDay,
   variations,
 } from '../widgets/downloads/belt-logic.js';
@@ -62,4 +64,20 @@ test('leftovers appear about one load in ten and stay inside the belt', () => {
   assert.ok(Math.abs(seen / 5000 - LEFTOVER_CHANCE) < 0.02, `${seen} in 5000`);
   assert.deepEqual([...kinds].sort(), ['cutter', 'roll']);
   assert.deepEqual(leftover(42), leftover(42));
+});
+
+test('a finish time names the day in the interface language and keeps the reader clock', () => {
+  const now = new Date(2026, 9, 27, 9, 0).getTime();
+  const fri = new Date(2026, 9, 30, 13, 5).getTime();
+  const us = readerHourCycle('en-US');
+  assert.deepEqual(finishParts(fri, now, 'de', us), { time: 'Fr. 1:05', half: 'pm' });
+  assert.deepEqual(finishParts(fri, now, 'en', readerHourCycle('de-DE')), { time: 'Fri 13:05', half: '' });
+  assert.match(finishParts(fri, now, 'fa', us).time, /^جمعه /);
+});
+
+test('a finish time today shows only the clock, and a week out only the date', () => {
+  const now = new Date(2026, 9, 27, 9, 0).getTime();
+  const us = readerHourCycle('en-US');
+  assert.deepEqual(finishParts(new Date(2026, 9, 27, 9, 30).getTime(), now, 'en', us), { time: '9:30', half: 'am' });
+  assert.deepEqual(finishParts(new Date(2026, 10, 9, 9, 30).getTime(), now, 'de', us), { time: '9. Nov.', half: '' });
 });

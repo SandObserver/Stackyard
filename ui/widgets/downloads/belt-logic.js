@@ -40,6 +40,39 @@ export function startOfDay(now) {
   return d.getTime();
 }
 
+/** The 12- or 24-hour clock the reader's own locale uses.
+    @param {string} [locale] @returns {string|undefined} */
+export function readerHourCycle(locale) {
+  try {
+    return new Intl.DateTimeFormat(locale || 'en', { hour: 'numeric' }).resolvedOptions().hourCycle;
+  } catch {
+    return undefined;
+  }
+}
+
+/** A finish time in the interface language, without its day period. `half` is
+    'am' or 'pm' when the clock has one, so the caller names it from its catalog.
+    @param {number} ms @param {number} now @param {string} lang @param {string|undefined} hourCycle
+    @returns {{ time: string, half: ''|'am'|'pm' }} */
+export function finishParts(ms, now, lang, hourCycle) {
+  const days = (startOfDay(ms) - startOfDay(now)) / 86400000;
+  /** @type {Intl.DateTimeFormatOptions} */
+  const opts =
+    days < 1
+      ? { hour: 'numeric', minute: '2-digit', hourCycle }
+      : days < 7
+        ? { weekday: 'short', hour: 'numeric', minute: '2-digit', hourCycle }
+        : { month: 'short', day: 'numeric' };
+  const parts = new Intl.DateTimeFormat(lang, opts).formatToParts(ms);
+  const time = parts
+    .filter(p => p.type !== 'dayPeriod')
+    .map(p => p.value)
+    .join('')
+    .trim();
+  if (!parts.some(p => p.type === 'dayPeriod')) return { time, half: '' };
+  return { time, half: new Date(ms).getHours() < 12 ? 'am' : 'pm' };
+}
+
 /** How many finished today, and the newest.
     @param {number[]} finished epoch ms @param {number} now
     @returns {{ count: number, last: number|null }} */
