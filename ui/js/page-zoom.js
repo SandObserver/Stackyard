@@ -6,14 +6,16 @@
     if (!vv) return;
     const root = document.documentElement;
     let width = -1;
-    /* Read the scale only when the layout width changes. A pinch changes the
-       scale but not the width, and must not move the insets. */
+    /* The scale is the page zoom only while the visual viewport spans the
+       layout width. A pinch narrows it, so a width change during a pinch is
+       read when the pinch ends. */
     const read = () => {
-      if (root.clientWidth === width) return;
+      if (root.clientWidth === width || vv.width < root.clientWidth - 2) return;
       width = root.clientWidth;
       root.style.setProperty('--inset-scale', String(1 / vv.scale));
     };
     read();
     window.addEventListener('resize', read);
+    vv.addEventListener('resize', read);
   } catch {}
 })();

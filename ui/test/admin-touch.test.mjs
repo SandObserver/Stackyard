@@ -137,6 +137,22 @@ test('the tap highlight is cleared once, on the document', () => {
 
 test('the header fields are body size on a phone, so focusing one does not zoom', () => {
   assert.match(css, /html\.is-mobile \.kv-k,html\.is-mobile \.kv-v\{font-size:var\(--fs-body\)/);
+  assert.match(
+    css,
+    /@media \(orientation:landscape\) and \(max-height:500px\) and \(pointer:coarse\)\{\.kv-k,\.kv-v\{font-size:var\(--fs-body\)/,
+    'a sideways phone keeps the desktop layout, so the phone rule alone misses it',
+  );
+});
+
+test('a sideways phone keeps the default type step, so no field is under 16px', () => {
+  const tokens = read('css/tokens.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const at = tokens.indexOf('html.type-small:not(.is-mobile)');
+  const media = tokens.lastIndexOf('@media', at);
+  assert.ok(media >= 0 && tokens.indexOf('}', media) > at, 'the small step must sit inside a media query');
+  assert.equal(
+    tokens.slice(media, tokens.indexOf('{', media)).trim(),
+    '@media not all and (orientation:landscape) and (max-height:500px) and (pointer:coarse)',
+  );
 });
 
 test('a long title wraps and the header buttons keep their size', () => {

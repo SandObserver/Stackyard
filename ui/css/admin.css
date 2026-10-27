@@ -799,6 +799,7 @@ html.is-mobile .m-back{display:inline-flex;align-items:center;justify-content:ce
 html.is-mobile .m-back:active{opacity:.7}
 /* Under 16px, iOS zooms the page on focus and does not zoom back. */
 html.is-mobile .kv-k,html.is-mobile .kv-v{font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body)}
+@media (orientation:landscape) and (max-height:500px) and (pointer:coarse){.kv-k,.kv-v{font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body)}}
 html.is-mobile body.authed .mtabbar{
   display:flex;position:fixed;left:21px;right:21px;bottom:21px;
   z-index:8000;justify-content:space-around;align-items:center;gap:2px;
