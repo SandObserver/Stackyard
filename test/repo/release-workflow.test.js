@@ -337,6 +337,8 @@ test('the Scout program is pinned by digest and attaches by referrer', () => {
   assert.match(attach.env.SCOUT_IMAGE, /^docker\.io\/docker\/scout-cli:[\d.]+@sha256:[0-9a-f]{64}$/);
   assert.match(attach.run, /--referrer\b/, 'attaching into the index changes the signed digest');
   assert.match(attach.run, /--org "\$NAMESPACE"/, 'Scout refuses to attach without the organisation');
+  assert.match(attach.run, /"\$\{IMAGE\}@\$\(cat "\$RUNNER_TEMP\/digest-\$arch"\)"/);
+  assert.doesNotMatch(attach.run, /registry:\/\//, 'attestation add reads the scheme as a host name');
   assert.match(attach.run, /--predicate-type https:\/\/openvex\.dev\/ns\/v0\.2\.0/);
   assert.match(attach.run, /--file "\/vex\/stackyard-\$arch\.vex\.json"/);
   assert.match(vexStep('Prepare the VEX statements').run, /"\$RUNNER_TEMP\/stackyard-\$arch\.vex\.json"/);

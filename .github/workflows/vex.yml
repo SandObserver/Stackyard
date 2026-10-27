@@ -111,7 +111,7 @@ jobs:
               --file "/vex/stackyard-$arch.vex.json" \
               --predicate-type https://openvex.dev/ns/v0.2.0 \
               --referrer \
-              "registry://${IMAGE#docker.io/}@$(cat "$RUNNER_TEMP/digest-$arch")"
+              "${IMAGE}@$(cat "$RUNNER_TEMP/digest-$arch")"
           done
         env:
           # Pin by digest. This program holds the Docker Hub token.
