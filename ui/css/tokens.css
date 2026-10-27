@@ -292,6 +292,15 @@ html.type-small:not(.is-mobile) {
   }
 }
 
+/* ── Safe area ───────────────────────────────────────────────────────────── */
+/* Use these, never env(safe-area-inset-*). ui/js/page-zoom.js sets the scale. */
+:root {
+  --safe-top: calc(env(safe-area-inset-top) * var(--inset-scale, 1));
+  --safe-right: calc(env(safe-area-inset-right) * var(--inset-scale, 1));
+  --safe-bottom: calc(env(safe-area-inset-bottom) * var(--inset-scale, 1));
+  --safe-left: calc(env(safe-area-inset-left) * var(--inset-scale, 1));
+}
+
 /* ── Rules both pages need ───────────────────────────────────────────────── */
 
 *, *::before, *::after { box-sizing:border-box; margin:0; padding:0 }

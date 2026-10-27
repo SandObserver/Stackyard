@@ -412,14 +412,14 @@
     /* ── Photo credit ── */
     #photo-credit {
       position:fixed; z-index:300;
-      inset-block-end:calc(14px + env(safe-area-inset-bottom)); inset-inline-start:calc(20px + env(safe-area-inset-left));
+      inset-block-end:calc(14px + var(--safe-bottom)); inset-inline-start:calc(20px + var(--safe-left));
       overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
       font-weight:500;
       font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2);
       color:var(--label-color-2); text-shadow:var(--label-shadow);
       transition:color .2s;
     }
-    #photo-credit[data-place="top"] { inset-block:calc(12px + env(safe-area-inset-top)) auto }
+    #photo-credit[data-place="top"] { inset-block:calc(12px + var(--safe-top)) auto }
     #photo-credit[data-tone="dark"] { color:var(--label-color-2-dark); text-shadow:var(--label-shadow-dark) }
     #photo-credit:hover, #photo-credit:focus-within { color:var(--label-color) }
     #photo-credit[data-tone="dark"]:hover, #photo-credit[data-tone="dark"]:focus-within { color:var(--label-color-dark) }
@@ -562,14 +562,14 @@
     body.is-mob #spot #sres {
       flex:1 1 0;
       overflow-y:auto;
-      padding:calc(env(safe-area-inset-top) + 24px) 0 4px;
+      padding:calc(var(--safe-top) + 24px) 0 4px;
       min-height:0;
     }
     body.is-mob #spot.kb #sres { padding-top:12px; }
     /* Search bar pinned to bottom on mobile */
     body.is-mob #spot #sbox {
       flex-shrink:0;
-      padding-block:10px calc(env(safe-area-inset-bottom) + 12px);
+      padding-block:10px calc(var(--safe-bottom) + 12px);
       padding-inline:max(16px, var(--sa-left,0px)) max(16px, var(--sa-right,0px));
       box-sizing:border-box;
     }
@@ -581,7 +581,7 @@
       align-items:center;
       justify-content:flex-start;
       flex-direction:column;
-      padding-top:max(env(safe-area-inset-top),80px);
+      padding-top:max(var(--safe-top),80px);
       box-sizing:border-box;
     }
     /* Search bar as a floating card at the top */
@@ -712,8 +712,8 @@
     /* The side reserves, used by both layouts. A device that reserves no side
        edge reports 0px, which leaves every gutter at its design value. */
     :root {
-      --sa-left:  env(safe-area-inset-left);
-      --sa-right: env(safe-area-inset-right);
+      --sa-left:  var(--safe-left);
+      --sa-right: var(--safe-right);
     }
 
     /* ── Mobile safe area ──
@@ -721,15 +721,15 @@
        These stay in CSS so the browser keeps them current. Nothing reads them
        into JavaScript. */
     body.is-mob {
-      --sa-top:    max(env(safe-area-inset-top), calc(18px * var(--sc,1)));
-      --sa-bottom: max(env(safe-area-inset-bottom), calc(8px * var(--sc,1)));
+      --sa-top:    max(var(--safe-top), calc(18px * var(--sc,1)));
+      --sa-bottom: max(var(--safe-bottom), calc(8px * var(--sc,1)));
     }
     /* Sized by the insets, and observed. A change to either fires the layout
        rebuild. */
     .sa-probe {
       position:fixed; top:0; left:0; visibility:hidden; pointer-events:none;
       width:calc(1px + var(--sa-left,0px) + var(--sa-right,0px));
-      height:calc(env(safe-area-inset-top) + env(safe-area-inset-bottom));
+      height:calc(var(--safe-top) + var(--safe-bottom));
     }
     .mob-page {
       flex:0 0 100vw; width:100vw; height:var(--pgh,100dvh); overflow:hidden;

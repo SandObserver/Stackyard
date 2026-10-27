@@ -314,6 +314,12 @@
       "/js/mobile-class.js?v=*": [
         "./ui/js/mobile-class.js"
       ],
+      "/js/page-zoom.js": [
+        "./ui/js/page-zoom.js"
+      ],
+      "/js/page-zoom.js?v=*": [
+        "./ui/js/page-zoom.js"
+      ],
       "/js/mobile-metrics.js": [
         "./ui/js/mobile-metrics.js"
       ],
