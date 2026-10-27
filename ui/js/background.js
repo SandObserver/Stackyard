@@ -1,17 +1,18 @@
 // @ts-check
-import { cssColor, sanitizeCssUrl } from '/js/utils.js?v=017012d7';
-import { loadWallpaper, saveWallpaper } from '/js/wallpaper-cache.js?v=c5f8a3e6';
+import { cssColor, sanitizeCssUrl } from '/js/utils.js?v=ab3cac1d';
+import { loadWallpaper, saveWallpaper, validCredit } from '/js/wallpaper-cache.js?v=321c8003';
 
 export const BACKDROP = '#0d1117';
 
 const DEFAULT_BRIGHTNESS = 0.62;
 
+/** @typedef {{ name: string, profile: string, site: string }} PhotoCredit */
 /** @typedef {{ image: string, color: string, brightness: string, size: string,
-                url: string|null, fit: 'fit'|'fill' }} Background */
+                url: string|null, fit: 'fit'|'fill', credit: PhotoCredit|null }} Background */
 
-/** @param {any} bg @param {string|null} [wallpaperUrl]
+/** @param {any} bg @param {string|null} [wallpaperUrl] @param {PhotoCredit|null} [credit]
     @returns {Background|null} */
-export function backgroundFor(bg, wallpaperUrl = null) {
+export function backgroundFor(bg, wallpaperUrl = null, credit = null) {
   const s = bg || {};
   if (s.type === 'color' && s.color) {
     return {
@@ -21,6 +22,7 @@ export function backgroundFor(bg, wallpaperUrl = null) {
       size: 'cover',
       url: null,
       fit: 'fill',
+      credit: null,
     };
   }
   const url = s.type === 'url' ? s.url : s.type === 'unsplash' ? wallpaperUrl : null;
@@ -34,6 +36,7 @@ export function backgroundFor(bg, wallpaperUrl = null) {
     size: fit === 'fit' ? 'contain' : 'cover',
     url: sanitizeCssUrl(url),
     fit,
+    credit: s.type === 'unsplash' ? credit : null,
   };
 }
 
@@ -45,14 +48,16 @@ export function applyBackground(root, b) {
   root.style.setProperty('--bg-size', b.size);
 }
 
-async function unsplashUrl(bg) {
+/** @param {any} bg @returns {Promise<{ url: string, credit: PhotoCredit|null }|null>} */
+async function unsplashPhoto(bg) {
   const cached = loadWallpaper(bg);
   if (cached) return cached;
   const r = await fetch('/api/wallpaper', { cache: 'no-store' });
   const d = await r.json();
-  const url = d.url || null;
-  if (url) saveWallpaper(url, bg);
-  return url;
+  if (typeof d.url !== 'string' || !d.url) return null;
+  const photo = { url: d.url, credit: validCredit(d.credit) };
+  saveWallpaper(photo, bg);
+  return photo;
 }
 
 const decoded = url =>
@@ -67,9 +72,9 @@ const decoded = url =>
 export async function resolveBackground(bg) {
   const s = bg || {};
   if (s.type === 'unsplash') {
-    const url = await unsplashUrl(s);
-    if (!url) return null;
-    return (await decoded(url)) ? backgroundFor(s, url) : null;
+    const photo = await unsplashPhoto(s);
+    if (!photo) return null;
+    return (await decoded(photo.url)) ? backgroundFor(s, photo.url, photo.credit) : null;
   }
   return backgroundFor(s);
 }

@@ -28,9 +28,9 @@ import {
   storeSet,
   teardownWidgets,
   titleWhenTruncated,
-} from '/js/utils.js?v=017012d7';
+} from '/js/utils.js?v=ab3cac1d';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
-import { initSpotlight } from '/js/spotlight.js?v=73fdaf2e';
+import { initSpotlight } from '/js/spotlight.js?v=93d9e423';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=ed7c5565';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=85138697';
@@ -47,7 +47,7 @@ import {
   resetMobileChrome,
   mkFolderGlyph,
   swipePager,
-} from '/js/ui.js?v=9af2a487';
+} from '/js/ui.js?v=dbd45ff7';
 import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=85b1bc96';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=23793736';
@@ -60,11 +60,12 @@ import {
   restorePage,
   wheelPager,
 } from '/js/dashboard-logic.js?v=5fa66027';
-import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=4d651887';
+import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=288bfc2a';
+import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
-import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=4e97555e';
+import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=46ab91e5';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=26655aca';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { THEME_KEY, applyTheme, prefersDark, readMode, resolveTheme } from '/js/theme.js?v=eeafa4b5';
@@ -539,8 +540,30 @@ function syncMobPages() {
    the labels as they are. */
 let bgTone = { grid: null, tone: null };
 
+const CREDIT_EDGE = 20;
+
+function placeCredit() {
+  const credit = el('photo-credit');
+  if (!credit || credit.hidden) return;
+  if (document.body.classList.contains('is-mob')) {
+    credit.removeAttribute('data-place');
+    credit.style.removeProperty('max-width');
+    return;
+  }
+  const dock = document.body.classList.contains('no-dock') ? null : el('dock').getBoundingClientRect();
+  const { place, maxWidth } = creditPlacement(
+    window.innerWidth,
+    dock,
+    document.documentElement.dir === 'rtl',
+    CREDIT_EDGE,
+  );
+  credit.dataset.place = place;
+  credit.style.maxWidth = `${maxWidth}px`;
+}
+
 function retone() {
   requestAnimationFrame(() => {
+    placeCredit();
     applyLabelTones(bgTone);
     /* Same frame: both need the layout the build produced, and both re-run on a
        rebuild and a resize for the same reason. */
@@ -582,6 +605,7 @@ async function applyBg() {
   bgTone = { grid: null, tone: themeTone() };
   retone();
   const bg = await resolveBackground(S.background || {});
+  showPhotoCredit(el('photo-credit'), bg?.credit ?? null);
   if (!bg) return;
   applyBackground(root, bg);
   if (bg.url) {

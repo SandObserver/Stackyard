@@ -12,12 +12,29 @@ function wallpaperKey(bg) {
   return `${bg?.type || ''}|${bg?.collection || ''}`;
 }
 
-/** The still-valid wallpaper URL held for these background settings, if any.
+/** @typedef {{ name: string, profile: string, site: string }} PhotoCredit */
+/** @typedef {{ url: string, credit: PhotoCredit|null }} CachedWallpaper */
+
+const UNSPLASH = 'https://unsplash.com/';
+
+/** A credit the page may render as links, or null.
+
+    @param {any} c @returns {PhotoCredit|null} */
+export function validCredit(c) {
+  if (!c || typeof c !== 'object') return null;
+  const { name, profile, site } = c;
+  if (typeof name !== 'string' || !name.trim()) return null;
+  if (typeof profile !== 'string' || !profile.startsWith(UNSPLASH)) return null;
+  if (typeof site !== 'string' || !site.startsWith(UNSPLASH)) return null;
+  return { name, profile, site };
+}
+
+/** The still-valid wallpaper held for these background settings, if any.
 
     @param {string|null|undefined} stored the raw stored entry
     @param {any} bg the background settings the page was built from
     @param {number} now
-    @returns {string|null} */
+    @returns {CachedWallpaper|null} */
 export function readWallpaperCache(stored, bg, now) {
   if (typeof stored !== 'string' || !stored) return null;
   let entry;
@@ -31,15 +48,17 @@ export function readWallpaperCache(stored, bg, now) {
   if (typeof entry.at !== 'number' || !Number.isFinite(entry.at)) return null;
   /* A clock moved backwards would otherwise hold one photo forever. */
   if (now < entry.at || now - entry.at >= WALLPAPER_TTL_MS) return null;
-  return entry.url;
+  /* Keep. An entry stored before credits would show the photo uncredited. */
+  if (!('credit' in entry)) return null;
+  return { url: entry.url, credit: validCredit(entry.credit) };
 }
 
-/** @param {string} url @param {any} bg @param {number} now @returns {string} */
-export function writeWallpaperCache(url, bg, now) {
-  return JSON.stringify({ url, key: wallpaperKey(bg), at: now });
+/** @param {CachedWallpaper} wallpaper @param {any} bg @param {number} now @returns {string} */
+export function writeWallpaperCache(wallpaper, bg, now) {
+  return JSON.stringify({ url: wallpaper.url, credit: wallpaper.credit, key: wallpaperKey(bg), at: now });
 }
 
-/** @param {any} bg @param {number} [now] @returns {string|null} */
+/** @param {any} bg @param {number} [now] @returns {CachedWallpaper|null} */
 export function loadWallpaper(bg, now = Date.now()) {
   let stored = null;
   try {
@@ -50,9 +69,9 @@ export function loadWallpaper(bg, now = Date.now()) {
   return readWallpaperCache(stored, bg, now);
 }
 
-/** @param {string} url @param {any} bg @param {number} [now] @returns {void} */
-export function saveWallpaper(url, bg, now = Date.now()) {
+/** @param {CachedWallpaper} wallpaper @param {any} bg @param {number} [now] @returns {void} */
+export function saveWallpaper(wallpaper, bg, now = Date.now()) {
   try {
-    localStorage.setItem(WALLPAPER_STORE, writeWallpaperCache(url, bg, now));
+    localStorage.setItem(WALLPAPER_STORE, writeWallpaperCache(wallpaper, bg, now));
   } catch {}
 }
