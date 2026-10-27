@@ -207,6 +207,42 @@ function pbsTaskNs(conn, upid, ctx, mayRead) {
   return p;
 }
 
+/* PBS 4.2 can move a group to another namespace of its datastore. The type and
+   id stay. Kept per card so the search runs once after a move. */
+const _pbsMoved = new Map();
+const PBS_MOVED_MAX = 200;
+
+const pbsSameGroup = ref => g => g['backup-type'] === ref.type && g['backup-id'] === ref.id;
+
+/** The one other namespace of the datastore that holds this group, or null
+    when none does, several do, or a list cannot be read. */
+async function pbsFindMoved(conn, ref, ctx) {
+  let spaces;
+  try {
+    spaces = (await pbsGet(conn, `${pbsStorePath(ref.store)}/namespace`, ctx, PBS_KEEP.ns)).map(n => n.ns || '');
+  } catch {
+    return null;
+  }
+  if (!spaces.length) spaces = [''];
+  if (spaces.length > PBS_MAX_NAMESPACES) return null;
+  const lists = await Promise.all(
+    spaces
+      .filter(ns => ns !== ref.ns)
+      .map(async ns => {
+        const groups = await pbsGet(
+          conn,
+          `${pbsStorePath(ref.store)}/groups${pbsNsQuery(ns)}`,
+          ctx,
+          PBS_KEEP.group,
+        ).catch(() => null);
+        return groups && { ns, group: groups.find(pbsSameGroup(ref)) };
+      }),
+  );
+  if (lists.includes(null)) return null;
+  const hits = lists.filter(l => l.group);
+  return hits.length === 1 ? hits[0] : null;
+}
+
 async function pbsGroupTasks(conn, storeTasks, ref, ctx) {
   if (!storeTasks) return null;
   const workerId = `${ref.store}:${ref.type}/${ref.id}`;
@@ -400,12 +436,19 @@ async function slots(config, ctx) {
     Object.values(pbsInstances).map(async ({ row, slots: gs }) => {
       try {
         const conn = pbsConn(row, ctx);
-        const wanted = gs.map(g => ({ ...g, ref: pbsParseGroupId(g.jobId) }));
+        const wanted = gs.map(g => {
+          const saved = pbsParseGroupId(g.jobId);
+          const movedKey = `${conn.base}|${g.jobId}`;
+          const moved = saved && _pbsMoved.get(movedKey);
+          return { ...g, saved, movedKey, ref: saved && moved != null ? { ...saved, ns: moved } : saved };
+        });
         const spaces = new Map();
         for (const { ref } of wanted) if (ref) spaces.set(`${ref.store}:${ref.ns}`, ref);
         const groupLists = new Map();
         for (const [key, { store, ns }] of spaces) {
-          groupLists.set(key, pbsGet(conn, `${pbsStorePath(store)}/groups${pbsNsQuery(ns)}`, ctx, PBS_KEEP.group));
+          const listed = pbsGet(conn, `${pbsStorePath(store)}/groups${pbsNsQuery(ns)}`, ctx, PBS_KEEP.group);
+          listed.catch(() => {});
+          groupLists.set(key, listed);
         }
         const since = Math.floor(Date.now() / 1000) - PBS_TASK_WINDOW_S;
         const tasksByStore = new Map();
@@ -417,17 +460,33 @@ async function slots(config, ctx) {
           );
         }
         await Promise.all(
-          wanted.map(async ({ i, ref, customName }) => {
+          wanted.map(async ({ i, saved, movedKey, ref: at, customName }) => {
             try {
-              if (!ref) {
+              if (!saved) {
                 result[i] = { error: ctx.KIND.INVALID };
                 return;
               }
-              const groups = await groupLists.get(`${ref.store}:${ref.ns}`);
-              const group = groups.find(g => g['backup-type'] === ref.type && g['backup-id'] === ref.id);
+              let ref = at;
+              let listError = null;
+              let group = null;
+              try {
+                group = (await groupLists.get(`${ref.store}:${ref.ns}`)).find(pbsSameGroup(ref)) || null;
+              } catch (e) {
+                listError = e;
+              }
               if (!group) {
-                result[i] = { error: ctx.KIND.INVALID };
-                return;
+                const moved = await pbsFindMoved(conn, ref, ctx);
+                if (!moved) {
+                  _pbsMoved.delete(movedKey);
+                  if (listError) throw listError;
+                  result[i] = { error: ctx.KIND.INVALID };
+                  return;
+                }
+                ref = { ...saved, ns: moved.ns };
+                group = moved.group;
+                _pbsMoved.delete(movedKey);
+                if (moved.ns !== saved.ns) _pbsMoved.set(movedKey, moved.ns);
+                while (_pbsMoved.size > PBS_MOVED_MAX) _pbsMoved.delete(_pbsMoved.keys().next().value);
               }
               const q = new URLSearchParams({ 'backup-type': ref.type, 'backup-id': ref.id });
               if (ref.ns) q.set('ns', ref.ns);

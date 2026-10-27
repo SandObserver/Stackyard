@@ -18,7 +18,7 @@
   "githubToken.label": "Jeton d’accès personnel",
   "githubToken.hint": "PAT classique avec les portées repo et read:user (ou un PAT granulaire avec l’accès en lecture équivalent). Utilisé uniquement par ce widget.",
   "githubToken.hint.gitea": "Jeton d’accès avec les portées read:user et read:issue. Utilisé uniquement par ce widget.",
-  "githubToken.hint.gitlab": "Jeton d’accès personnel avec la portée read_api. Utilisé uniquement par ce widget.",
+  "githubToken.hint.gitlab": "Un jeton d’accès personnel granulaire avec Merge Request: Read, ou un ancien jeton avec la portée read_api. Utilisé uniquement par ce widget.",
   "githubHref.label": "URL du lien",
   "githubHref.hint": "Où mène un clic sur le widget. Laissez vide pour ouvrir votre profil.",
   "githubPrFilters.label": "Filtres de pull requests",

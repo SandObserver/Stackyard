@@ -43,7 +43,7 @@ Widgets and the services they read:
 - **Books**: Audiobookshelf, Komga, Kavita
 - **System summary**: CPU, memory, disk, throughput, uptime, and network speed from SpeedTest Tracker or MySpeed. Reports on this machine, or on a host running Glances, Beszel, the Unraid API, Proxmox VE or TrueNAS
 - **Disk health**: TrueNAS, Unraid, Scrutiny
-- **Backup**: Duplicati, Kopia, Proxmox Backup Server, Backrest
+- **Backup**: Duplicati, Kopia, Proxmox Backup Server, Backrest 1.14 or newer
 - **Downloads**: qBittorrent, Transmission, Deluge, SABnzbd, NZBGet
 - **Up Next**: the next episodes, films and albums from Sonarr, Radarr and Lidarr
 - **Connections**: Gluetun, Psiphon Conduit, Netbird, Plausible, Umami

@@ -93,6 +93,7 @@ for (const service of ['gitea', 'forgejo']) {
     assert.equal(r.totalCount, 31);
     assert.deepEqual(r.items, [{ number: 4, title: 'Fix', repo: 'me/app', url: 'https://git.lan/me/app/pulls/4' }]);
     assert.equal(r.allUrl, 'https://git.lan/pulls');
+    assert.equal(url.searchParams.get('sort'), service === 'forgejo' ? 'recentupdate' : null);
   });
 }
 

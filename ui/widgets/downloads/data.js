@@ -50,10 +50,38 @@ function connection(ctx) {
   };
 }
 
+/* qBittorrent 5.3 reports a paused session only in its sync feed. The first
+   read sends every torrent; later reads with the returned rid send changes
+   only, and `session_state` only when it changes. Kept per server. */
+const _qbitSync = new Map();
+/* A list too large to read once is retried after this long. */
+const QBIT_RETRY_MS = 24 * 3600 * 1000;
+
+async function qbitPaused(get, base) {
+  const known = _qbitSync.get(base) || { rid: 0, paused: false };
+  if (known.tooLargeAt && Date.now() - known.tooLargeAt < QBIT_RETRY_MS) return false;
+  let d;
+  try {
+    d = await get(`/sync/maindata?rid=${known.rid}`, false);
+  } catch (e) {
+    if (e && e.responseTooLarge) remember(_qbitSync, base, { rid: 0, paused: false, tooLargeAt: Date.now() });
+    return known.paused;
+  }
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return false;
+  const next = {
+    rid: Number.isSafeInteger(d.rid) && d.rid >= 0 ? d.rid : 0,
+    paused: d.full_update === true ? false : known.paused,
+  };
+  const state = d.server_state && d.server_state.session_state;
+  if (typeof state === 'boolean') next.paused = state;
+  remember(_qbitSync, base, next);
+  return next.paused;
+}
+
 async function qbittorrent(ctx) {
   const { base, skipTls } = connection(ctx);
   const key = headerKey(ctx.config.apiKey, 'Enter the qBittorrent API key', ctx);
-  const get = async path => {
+  const get = async (path, list = true) => {
     const r = await ctx.fetchJSON(`${base}/api/v2${path}`, {
       headers: { Authorization: `Bearer ${key}` },
       skipTls,
@@ -62,16 +90,17 @@ async function qbittorrent(ctx) {
     if (r.status === 401 || r.status === 403)
       ctx.fail('qBittorrent refused the API key. It needs qBittorrent 5.2 or newer.', { kind: ctx.KIND.AUTH });
     if (r.status !== 200) ctx.fail(`qBittorrent returned HTTP ${r.status}`, { kind: ctx.KIND.UPSTREAM });
-    if (!Array.isArray(r.data))
+    if (list && !Array.isArray(r.data))
       ctx.fail('qBittorrent sent a reply in an unexpected shape', { kind: ctx.KIND.UPSTREAM });
     return r.data;
   };
-  const [active, failed, done] = await Promise.all([
+  const [active, failed, done, paused] = await Promise.all([
     get('/torrents/info?filter=downloading'),
     get('/torrents/info?filter=errored'),
     get('/torrents/info?filter=completed&sort=completion_on&reverse=true&limit=100').catch(() => []),
+    qbitPaused(get, base),
   ]);
-  return { found: items.qbitItems([...active, ...failed]), finished: items.qbitFinished(done) };
+  return { found: items.qbitItems([...active, ...failed]), finished: items.qbitFinished(done), paused };
 }
 
 async function sabnzbd(ctx) {
@@ -91,7 +120,11 @@ async function sabnzbd(ctx) {
     return r.data[mode];
   };
   const [queue, history] = await Promise.all([get('queue'), get('history', '&limit=100').catch(() => null)]);
-  return { found: items.sabItems(queue), finished: history ? items.sabFinished(history) : [] };
+  return {
+    found: items.sabItems(queue),
+    finished: history ? items.sabFinished(history) : [],
+    paused: queue.paused === true,
+  };
 }
 
 async function nzbget(ctx) {
@@ -111,7 +144,11 @@ async function nzbget(ctx) {
     call('listgroups'),
     call('history').catch(() => []),
   ]);
-  return { found: items.nzbgetItems(groups, status), finished: items.nzbgetFinished(history) };
+  return {
+    found: items.nzbgetItems(groups, status),
+    finished: items.nzbgetFinished(history),
+    paused: !!status && status.DownloadPaused === true,
+  };
 }
 
 /* Transmission answers 409 with a session id that every request must carry.
@@ -262,7 +299,8 @@ async function deluge(ctx) {
   }
   const ui = await authed('web.update_ui', [D_FIELDS, {}]);
   const torrents = ui && typeof ui === 'object' ? ui.torrents : null;
-  return { found: items.delugeItems(torrents), finished: items.delugeFinished(torrents) };
+  const paused = await authed('core.is_session_paused', []).catch(() => false);
+  return { found: items.delugeItems(torrents), finished: items.delugeFinished(torrents), paused: paused === true };
 }
 
 module.exports = async function (ctx) {
@@ -271,7 +309,7 @@ module.exports = async function (ctx) {
     { field: 'service', default: 'qbittorrent' },
   );
   return {
-    ...items.arrange(out.found),
+    ...items.arrange(out.found, out.paused === true),
     finished: items.finishedTimes(out.finished),
     link: ctx.serviceLink(ctx.config.href, ctx.config.url),
   };

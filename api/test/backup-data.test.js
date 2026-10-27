@@ -399,8 +399,10 @@ function pbsTask(ns, groupPath, startS, extra = {}) {
 
 const logPath = t => `/nodes/localhost/tasks/${encodeURIComponent(t.task.upid)}/log`;
 
-function pbsServer({ groups = {}, snaps = {}, runs = [], tasksStatus = 200 }) {
+function pbsServer({ groups = {}, snaps = {}, runs = [], tasksStatus = 200, namespaces = null }) {
   return (p, q) => {
+    if (p === '/admin/datastore/main/namespace' && namespaces)
+      return { status: 200, data: { data: namespaces.map(ns => ({ ns })) } };
     if (p === '/admin/datastore/main/groups') {
       const list = groups[q.get('ns') || ''];
       return list ? { status: 200, data: { data: list } } : { status: 400, data: null };
@@ -548,6 +550,62 @@ test('one failing PBS request marks only its own card', async () => {
   assert.equal(out[0].status, 'healthy');
   assert.deepEqual(out[1], { error: KIND.UPSTREAM });
   assert.deepEqual(out[2], { error: KIND.UPSTREAM });
+});
+
+test('a PBS group moved to another namespace is followed, and found there on the next poll', async () => {
+  const failed = pbsTask('archive', 'vm/300', NOW_S - 60, { status: 'connection error' });
+  const server = pbsServer({
+    namespaces: ['', 'archive', 'site-b'],
+    groups: { '': [], archive: [group('vm', '300', NOW_S - 3600)], 'site-b': [] },
+    runs: [failed],
+  });
+  const config = { slots: [{ ...PBS_ROW, jobId: 'main::vm/300' }] };
+  const first = pbsCtx(config, 'slots', server);
+  const out = await dataFn(first.ctx);
+  assert.equal(out[0].status, 'error', 'reads the tasks of the namespace it moved to');
+  assert.equal(out[0].id, 'main:archive:vm/300');
+  const second = pbsCtx(config, 'slots', server);
+  await dataFn(second.ctx);
+  const asked = second.calls.map(c => new URL(c.url)).filter(u => u.pathname.endsWith('/groups'));
+  assert.deepEqual(
+    asked.map(u => u.searchParams.get('ns')),
+    ['archive'],
+  );
+  assert.ok(!second.calls.some(c => c.url.includes('/namespace')));
+});
+
+test('a PBS group moved back to where the card was saved is found again', async () => {
+  const config = { slots: [{ ...PBS_ROW, jobId: 'main::vm/304' }] };
+  const away = pbsServer({ namespaces: ['', 'x'], groups: { '': [], x: [group('vm', '304', NOW_S - 60)] } });
+  await dataFn(pbsCtx(config, 'slots', away).ctx);
+  const back = pbsServer({ namespaces: ['', 'x'], groups: { '': [group('vm', '304', NOW_S - 60)], x: [] } });
+  const out = await dataFn(pbsCtx(config, 'slots', back).ctx);
+  assert.equal(out[0].id, 'main::vm/304');
+});
+
+test('a PBS namespace moved away is followed to the namespace that now holds the group', async () => {
+  const server = pbsServer({
+    namespaces: ['', 'site-c'],
+    groups: { '': [], 'site-c': [group('ct', '301', NOW_S - 60)] },
+  });
+  const out = await dataFn(pbsCtx({ slots: [{ ...PBS_ROW, jobId: 'main:site-b:ct/301' }] }, 'slots', server).ctx);
+  assert.equal(out[0].status, 'healthy');
+});
+
+/* Two groups with the same type and id are two machines. Picking one shows the wrong backups. */
+test('a PBS group that now appears in two namespaces is not guessed', async () => {
+  const server = pbsServer({
+    namespaces: ['', 'a', 'b'],
+    groups: { '': [], a: [group('vm', '302', NOW_S - 60)], b: [group('vm', '302', NOW_S - 60)] },
+  });
+  const out = await dataFn(pbsCtx({ slots: [{ ...PBS_ROW, jobId: 'main::vm/302' }] }, 'slots', server).ctx);
+  assert.deepEqual(out, [{ error: KIND.INVALID }]);
+});
+
+test('a PBS group that is gone everywhere stays not found', async () => {
+  const server = pbsServer({ namespaces: ['', 'a'], groups: { '': [], a: [] } });
+  const out = await dataFn(pbsCtx({ slots: [{ ...PBS_ROW, jobId: 'main::vm/303' }] }, 'slots', server).ctx);
+  assert.deepEqual(out, [{ error: KIND.INVALID }]);
 });
 
 test('a PBS reply in the wrong shape marks its card as an upstream error', async () => {

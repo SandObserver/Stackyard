@@ -402,6 +402,7 @@ function delugeRoute({
   connected = true,
   expireAfterLogin = false,
   hosts = [['hostid', '127.0.0.1', 58846, 'localclient']],
+  sessionPaused = false,
 } = {}) {
   let logins = 0;
   let served = 0;
@@ -427,6 +428,8 @@ function delugeRoute({
         headers: {},
       };
     if (method === 'web.connect') return { status: 200, data: { result: [], error: null }, headers: {} };
+    if (method === 'core.is_session_paused')
+      return { status: 200, data: { result: sessionPaused, error: null }, headers: {} };
     if (method === 'web.update_ui')
       return {
         status: 200,
@@ -458,7 +461,14 @@ test('Deluge: logs in, connects the web UI to its daemon when needed, and reads 
   const { ctx, calls } = ctxFor({ service: 'deluge', url: 'http://d:8112', password: 'deluge' }, d.route);
   const out = await freshData()(ctx);
   const methods = calls.map(c => JSON.parse(c.opts.body).method);
-  assert.deepEqual(methods, ['auth.login', 'web.connected', 'web.get_hosts', 'web.connect', 'web.update_ui']);
+  assert.deepEqual(methods, [
+    'auth.login',
+    'web.connected',
+    'web.get_hosts',
+    'web.connect',
+    'web.update_ui',
+    'core.is_session_paused',
+  ]);
   assert.equal(calls[1].opts.headers.Cookie, '_session_id=s1');
   assert.equal(out.items[0].progress, 0.5);
 });
@@ -495,4 +505,115 @@ test('every client needs an address', async () => {
     const { ctx } = ctxFor({ service, apiKey: 'k', password: 'p' }, () => assert.fail('no request without an address'));
     await assert.rejects(freshData()(ctx), e => e.kind === 'invalid', service);
   }
+});
+
+/* ── A client paused as a whole ───────────────────────────────────────────── */
+
+test('a paused client shows its downloads as paused, not stalled; failures stay failed', () => {
+  const out = items.arrange(
+    [
+      { name: 'a', size: 10, progress: 0.5, speed: 0, eta: null, state: 'stall', reason: 'noPeers' },
+      { name: 'b', size: 10, progress: 0.2, speed: 4, eta: 9, state: 'run' },
+      { name: 'c', size: 10, progress: 0.1, speed: 0, eta: null, state: 'error', reason: 'error' },
+    ],
+    true,
+  );
+  assert.deepEqual(out.summary, { kind: 'paused' });
+  assert.deepEqual(
+    out.items.map(i => [i.name, i.state, i.reason, i.eta, i.speed]),
+    [
+      ['a', 'pause', 'paused', null, 0],
+      ['b', 'pause', 'paused', null, 0],
+      ['c', 'error', 'error', null, 0],
+    ],
+  );
+});
+
+function qbitRoute(maindata) {
+  const asked = [];
+  const route = url => {
+    if (url.includes('/sync/maindata')) {
+      const rid = Number(new URL(url).searchParams.get('rid'));
+      asked.push(rid);
+      return maindata(rid);
+    }
+    if (url.includes('filter=downloading'))
+      return { status: 200, data: [{ name: 'deb.iso', state: 'stalledDL', size: 10, amount_left: 5, eta: 8640000 }] };
+    return { status: 200, data: [] };
+  };
+  return { route, asked };
+}
+
+test('qBittorrent: a paused session reads as paused, and later polls ask for changes only', async () => {
+  const q = qbitRoute(rid =>
+    rid === 0
+      ? { status: 200, data: { rid: 7, full_update: true, server_state: { session_state: true } } }
+      : { status: 200, data: { rid: rid + 1, server_state: { dl_info_speed: 0 } } },
+  );
+  const data = freshData();
+  const { ctx } = ctxFor({ service: 'qbittorrent', url: 'http://q:8080', apiKey: 'k' }, q.route);
+  const first = await data(ctx);
+  assert.equal(first.summary.kind, 'paused');
+  assert.equal(first.items[0].state, 'pause');
+  const second = await data(ctx);
+  assert.equal(second.summary.kind, 'paused', 'a change list without the field keeps the last state');
+  assert.deepEqual(q.asked, [0, 7]);
+});
+
+test('qBittorrent: resuming the session clears the pause', async () => {
+  const q = qbitRoute(rid =>
+    rid === 0
+      ? { status: 200, data: { rid: 1, full_update: true, server_state: { session_state: true } } }
+      : { status: 200, data: { rid: 2, server_state: { session_state: false } } },
+  );
+  const data = freshData();
+  const { ctx } = ctxFor({ service: 'qbittorrent', url: 'http://q:8080', apiKey: 'k' }, q.route);
+  await data(ctx);
+  assert.equal((await data(ctx)).summary.kind, 'stall');
+});
+
+test('qBittorrent: a version without the session state is never paused', async () => {
+  const q = qbitRoute(() => ({ status: 200, data: { rid: 1, full_update: true, server_state: {} } }));
+  const { ctx } = ctxFor({ service: 'qbittorrent', url: 'http://q:8080', apiKey: 'k' }, q.route);
+  assert.equal((await freshData()(ctx)).summary.kind, 'stall');
+});
+
+/* Every poll would download the whole list again and fail again. */
+test('qBittorrent: a torrent list too large to read is not asked for again on the next poll', async () => {
+  const q = qbitRoute(() => {
+    throw Object.assign(new Error('Response too large'), { responseTooLarge: true });
+  });
+  const data = freshData();
+  const { ctx } = ctxFor({ service: 'qbittorrent', url: 'http://q:8080', apiKey: 'k' }, q.route);
+  assert.equal((await data(ctx)).summary.kind, 'stall');
+  await data(ctx);
+  assert.deepEqual(q.asked, [0]);
+});
+
+test('SABnzbd and NZBGet: a paused queue reads as paused', async () => {
+  const sab = ctxFor({ service: 'sabnzbd', url: 'http://s:8080', apiKey: 'k' }, url =>
+    url.includes('mode=history')
+      ? { status: 200, data: { history: { slots: [] } } }
+      : { status: 200, data: { queue: { paused: true, kbpersec: '0', slots: [] } } },
+  );
+  assert.equal((await freshData()(sab.ctx)).summary.kind, 'paused');
+  const nzb = ctxFor({ service: 'nzbget', url: 'http://n:6789', username: 'u', password: 'p' }, url =>
+    url.endsWith('/status')
+      ? { status: 200, data: { result: { DownloadRate: 0, DownloadPaused: true } } }
+      : { status: 200, data: { result: [] } },
+  );
+  assert.equal((await freshData()(nzb.ctx)).summary.kind, 'paused');
+});
+
+test('Deluge: a paused session reads as paused; a daemon without the call does not', async () => {
+  const paused = delugeRoute({ sessionPaused: true });
+  const a = ctxFor({ service: 'deluge', url: 'http://d:8112', password: 'deluge' }, paused.route);
+  assert.equal((await freshData()(a.ctx)).summary.kind, 'paused');
+  const old = delugeRoute();
+  const route = (url, opts) =>
+    JSON.parse(opts.body).method === 'core.is_session_paused'
+      ? { status: 200, data: { result: null, error: { message: 'Unknown method', code: 2 } }, headers: {} }
+      : old.route(url, opts);
+  const b = ctxFor({ service: 'deluge', url: 'http://d:8112', password: 'deluge' }, route);
+  assert.equal((await freshData()(b.ctx)).summary.kind, 'time');
 });
