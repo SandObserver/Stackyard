@@ -889,6 +889,9 @@
   --label-color-2-dark: rgba(60,60,67,.85);
   --label-link:         #00D2E0;
   --label-link-dark:    #00587E;
+  /* Opaque. A translucent tone falls under 4.5:1 on a mid-grey wallpaper. */
+  --label-text:         #FFFFFF;
+  --label-text-dark:    #000000;
 }
 .empty-state {
   position: fixed; inset: 0; z-index: 300;
@@ -906,11 +909,11 @@
   margin-block-end: var(--sp-32);
 }
 .empty-state-title {
-  margin: 0; font-weight: 600; color: var(--label-color); text-shadow: var(--label-shadow);
+  margin: 0; font-weight: 600; color: var(--label-text); text-shadow: var(--label-shadow);
   font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2);
 }
 .empty-state-sub {
-  margin: 0; max-width: 38ch; color: var(--label-color-2); text-shadow: var(--label-shadow); font-weight: 500;
+  margin: 0; max-width: 38ch; color: var(--label-text); text-shadow: var(--label-shadow); font-weight: 500;
   font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2);
 }
 .empty-state-btn {
@@ -922,8 +925,8 @@
   font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);
 }
 .empty-state-mark[data-tone="dark"] { color: var(--label-color-dark) }
-.empty-state-title[data-tone="dark"] { color: var(--label-color-dark); text-shadow: var(--label-shadow-dark) }
-.empty-state-sub[data-tone="dark"] { color: var(--label-color-2-dark); text-shadow: var(--label-shadow-dark) }
+.empty-state-title[data-tone="dark"] { color: var(--label-text-dark); text-shadow: var(--label-shadow-dark) }
+.empty-state-sub[data-tone="dark"] { color: var(--label-text-dark); text-shadow: var(--label-shadow-dark) }
 .empty-state-hint[data-tone="dark"] { color: var(--label-link-dark) }
 .empty-state-btn[data-tone="dark"] {
   background: rgba(0,0,0,.06); border-color: rgba(0,0,0,.12); color: var(--label-color-dark);
