@@ -113,8 +113,6 @@ async function sabnzbd(ctx) {
     });
     if (r.status === 401 || r.status === 403) ctx.fail('SABnzbd refused the API key', { kind: ctx.KIND.AUTH });
     if (r.status !== 200) ctx.fail(`SABnzbd returned HTTP ${r.status}`, { kind: ctx.KIND.UPSTREAM });
-    if (typeof r.data === 'string' && /api key/i.test(r.data))
-      ctx.fail('SABnzbd refused the API key', { kind: ctx.KIND.AUTH });
     if (!r.data || typeof r.data !== 'object' || !r.data[mode])
       ctx.fail('SABnzbd sent a reply in an unexpected shape', { kind: ctx.KIND.UPSTREAM });
     return r.data[mode];
