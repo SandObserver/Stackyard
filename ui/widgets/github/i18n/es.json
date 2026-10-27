@@ -18,7 +18,7 @@
   "githubToken.label": "Token de acceso personal",
   "githubToken.hint": "PAT clásico con permisos repo y read:user (o un PAT granular con el acceso de lectura equivalente). Solo lo usa este widget.",
   "githubToken.hint.gitea": "Token de acceso con permisos read:user y read:issue. Solo lo usa este widget.",
-  "githubToken.hint.gitlab": "Token de acceso personal con el permiso read_api. Solo lo usa este widget.",
+  "githubToken.hint.gitlab": "Un token de acceso personal detallado con Merge Request: Read, o un token antiguo con el permiso read_api. Solo lo usa este widget.",
   "githubHref.label": "URL del enlace",
   "githubHref.hint": "Adónde lleva al hacer clic en el widget. Déjalo en blanco para abrir tu perfil.",
   "githubPrFilters.label": "Filtros de pull requests",

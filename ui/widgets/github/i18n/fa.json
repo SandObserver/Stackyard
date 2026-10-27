@@ -18,7 +18,7 @@
   "githubToken.label": "توکن دسترسی شخصی",
   "githubToken.hint": "توکن کلاسیک با دسترسی repo و read:user (یا توکن fine-grained با همان دسترسی خواندن). فقط همین ویجت از آن استفاده می‌کند.",
   "githubToken.hint.gitea": "توکن دسترسی با دسترسی read:user و read:issue. فقط همین ویجت از آن استفاده می‌کند.",
-  "githubToken.hint.gitlab": "توکن دسترسی شخصی با دسترسی read_api. فقط همین ویجت از آن استفاده می‌کند.",
+  "githubToken.hint.gitlab": "توکن دسترسی شخصی جزئی با مجوز Merge Request: Read، یا توکن قدیمی با دسترسی read_api. فقط همین ویجت از آن استفاده می‌کند.",
   "githubHref.label": "آدرس پیوند",
   "githubHref.hint": "جایی که با کلیک روی ویجت باز می‌شود. برای بازشدن پروفایلتان خالی بگذارید.",
   "githubPrFilters.label": "فیلترهای درخواست ادغام",
