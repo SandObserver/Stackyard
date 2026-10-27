@@ -7,6 +7,7 @@ import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
 const { isDashboardEmpty } = await import('../js/utils.js');
+const { relativeLuminance, contrastRatio, toneForLuminances } = await import('../js/label-contrast.js');
 
 const uiDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(uiDir, p), 'utf8');
@@ -83,6 +84,27 @@ test('the placard text takes the tone measured on the wallpaper, not the theme',
     const base = new RegExp(`(?:^|\\n)\\${cls} \\{([^}]*)\\}`).exec(css);
     assert.ok(base, `${cls} rule is gone`);
     assert.doesNotMatch(base[1], /--label-(?:primary|secondary)/, `${cls} takes a theme ink`);
+  }
+});
+
+test('the placard title and explanation keep 4.5:1 on any single-colour wallpaper', () => {
+  const css = read('css/dashboard.css');
+  const token = name => new RegExp(`${name}:\\s*(#[0-9A-Fa-f]{6});`).exec(css)?.[1];
+  const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const ink = { light: token('--label-text'), dark: token('--label-text-dark') };
+  assert.ok(ink.light && ink.dark, 'the placard text tones must be opaque');
+  for (const part of ['title', 'sub']) {
+    assert.match(css, new RegExp(`\\.empty-state-${part} \\{[^}]*color: var\\(--label-text\\);`));
+    assert.match(
+      css,
+      new RegExp(`\\.empty-state-${part}\\[data-tone="dark"\\] \\{ color: var\\(--label-text-dark\\);`),
+    );
+  }
+  for (let g = 0; g <= 255; g++) {
+    const wall = relativeLuminance(g, g, g);
+    const tone = toneForLuminances([wall]);
+    const ratio = contrastRatio(relativeLuminance(...hex(ink[tone])), wall);
+    assert.ok(ratio >= 4.5, `grey ${g}: ${ratio.toFixed(2)}:1`);
   }
 });
 

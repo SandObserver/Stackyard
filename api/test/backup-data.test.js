@@ -364,6 +364,15 @@ test('pbs-groups lists every group in every store and namespace', async () => {
   assert.equal(calls[0].opts.skipTls, true);
 });
 
+test('pbs-groups sends the token over https for an address with no scheme', async () => {
+  const { ctx, calls } = pbsCtx({}, 'pbs-groups', () => ({ status: 200, data: { data: [] } }), {
+    ...PBS_ROW,
+    pbsUrl: 'pbs.lan:8007/',
+  });
+  await dataFn(ctx);
+  assert.equal(calls[0].url, 'https://pbs.lan:8007/api2/json/admin/datastore');
+});
+
 test('pbs-groups refuses a token that would break the header', async () => {
   const { ctx, calls } = pbsCtx({}, 'pbs-groups', () => null, { ...PBS_ROW, pbsSecret: 'abc\r\nX-Evil: 1' });
   await assert.rejects(() => dataFn(ctx), /token ID/);

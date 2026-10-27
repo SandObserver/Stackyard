@@ -105,7 +105,7 @@ import {
   poll, getConfig, loadStrings, wt, wtCount, formatNumber, formatList, localiseDigits, linkTo, errorState, readingTime,
 } from '/js/widget-toolbox.js?v=66813091';
 import { ensureSprite } from '/js/icon-set.js?v=26655aca';
-import { variations, finishedToday, hoursMinutes, leftover, lidOpen, startOfDay } from './belt-logic.js';
+import { variations, finishedToday, hoursMinutes, leftover, lidOpen, finishParts, readerHourCycle } from './belt-logic.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const TONES = [
@@ -190,25 +190,12 @@ function size(bytes) {
   return bytes >= 1e9 ? unit(bytes / 1e9, 'gigabyte', 1) : unit(bytes / 1e6, 'megabyte');
 }
 const percent = p => iso(formatNumber(p, { style: 'percent', maximumFractionDigits: 0 }));
+const LANG = new URLSearchParams(location.search).get('lang') || 'en';
+const HOUR_CYCLE = readerHourCycle(navigator.language);
 function clockParts(ms) {
   try {
-    const days = (startOfDay(ms) - startOfDay(Date.now())) / 86400000;
-    const opts =
-      days < 1
-        ? { hour: 'numeric', minute: '2-digit' }
-        : days < 7
-          ? { weekday: 'short', hour: 'numeric', minute: '2-digit' }
-          : { month: 'short', day: 'numeric' };
-    const parts = new Intl.DateTimeFormat(navigator.language || 'en', opts).formatToParts(ms);
-    const time = parts.filter(p => p.type !== 'dayPeriod').map(p => p.value).join('').trim();
-    const found = parts.find(p => p.type === 'dayPeriod')?.value || '';
-    /* The reader's locale picks a 12-hour clock; the interface language names its halves. */
-    const morning = new Date(ms).getHours() < 12;
-    const period = !found
-      ? ''
-      : morning
-        ? wt('ui.am', 'AM')
-        : wt('ui.pm', 'PM');
+    const { time, half } = finishParts(ms, Date.now(), LANG, HOUR_CYCLE);
+    const period = half === 'am' ? wt('ui.am', 'AM') : half === 'pm' ? wt('ui.pm', 'PM') : '';
     return { time: localiseDigits(time), period };
   } catch {
     return { time: localiseDigits(new Date(ms).toTimeString().slice(0, 5)), period: '' };

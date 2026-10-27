@@ -118,6 +118,9 @@ const PBS_LOG_LINES = 5;
 const PBS_LOG_READS = 4;
 const PBS_TASK_NS_MAX = 2000;
 
+/* The PBS API listens on HTTPS only. A bare host must not send the token over http. */
+const pbsBase = url => dupNormalizeBase(/^[a-z][a-z0-9+.-]*:\/\//i.test(url) ? url : `https://${url}`);
+
 function pbsConn(row, ctx) {
   const url = (row.pbsUrl || '').trim();
   if (!url) ctx.fail('Proxmox Backup Server URL required', { kind: ctx.KIND.INVALID });
@@ -127,7 +130,7 @@ function pbsConn(row, ctx) {
   if (!PBS_TOKEN_ID.test(tokenId) || !PBS_SECRET.test(secret)) {
     ctx.fail('Enter a token ID like user@pbs!name and its secret', { kind: ctx.KIND.INVALID });
   }
-  return { base: dupNormalizeBase(url), tokenId, secret, skipTls: row.pbsSkipTls === true };
+  return { base: pbsBase(url), tokenId, secret, skipTls: row.pbsSkipTls === true };
 }
 
 async function pbsGet(conn, path, ctx, keep) {
