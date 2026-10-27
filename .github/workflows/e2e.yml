@@ -43,8 +43,29 @@ jobs:
           # below fetches whatever that set is missing.
           restore-keys: playwright-${{ runner.os }}-
 
+      - name: Read the runner image
+        id: image
+        run: echo "version=$ImageOS-$ImageVersion" >> "$GITHUB_OUTPUT"
+
+      - name: Cache system packages for the browsers
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/apt-archives
+          key: apt-${{ steps.image.outputs.version }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: apt-${{ steps.image.outputs.version }}-
+
       - name: Install browsers
-        run: npx playwright install --with-deps chromium webkit
+        run: |
+          debs="$HOME/.cache/apt-archives"
+          if ls "$debs"/*.deb >/dev/null 2>&1 && sudo dpkg -i "$debs"/*.deb; then
+            npx playwright install chromium webkit
+          else
+            sudo apt-get -f install -y
+            echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/99keep-debs >/dev/null
+            npx playwright install --with-deps chromium webkit
+            rm -rf "$debs" && mkdir -p "$debs"
+            cp /var/cache/apt/archives/*.deb "$debs"/
+          fi
 
       # The image that ships, so nginx and its headers are part of what is
       # tested. A bug this project has already had, an inline handler refused by
