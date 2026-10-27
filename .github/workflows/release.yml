@@ -42,7 +42,6 @@ jobs:
     outputs:
       digest: ${{ steps.build.outputs.digest }}
       version: ${{ steps.meta.outputs.version }}
-      dockerhub: ${{ steps.registries.outputs.dockerhub }}
     permissions:
       contents: read
       packages: write
@@ -248,18 +247,6 @@ jobs:
           repository: ${{ vars.DOCKERHUB_NAMESPACE || vars.DOCKERHUB_USERNAME }}/stackyard
           readme-filepath: dockerhub-description.md
           short-description: A self-hosted homelab dashboard you actually want to look at.
-
-  vex:
-    needs: build-and-push
-    if: needs.build-and-push.outputs.dockerhub == 'true'
-    permissions:
-      contents: read
-    uses: ./.github/workflows/vex.yml
-    with:
-      digest: ${{ needs.build-and-push.outputs.digest }}
-      version: ${{ needs.build-and-push.outputs.version }}
-    secrets:
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   # The only gate that reads the published image. It cannot unpublish a bad one,
   # but it stops the release page and the downstream updates describing it.
