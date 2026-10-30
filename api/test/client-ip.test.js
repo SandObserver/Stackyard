@@ -1,3 +1,4 @@
+const { entrypointArgs } = require('../test-support/entrypoint');
 const { tmpDir } = require('../test-support/tmp');
 
 const { test } = require('node:test');
@@ -63,18 +64,16 @@ test('an unknown peer with no header is reported as unknown', () => {
    logic, which would pass while the shipped script was broken. */
 function render(env) {
   const dir = tmpDir('realip');
-  const out = path.join(dir, 'realip.conf');
+  const out = path.join(dir, 'run', 'realip.conf');
   const stubDir = path.join(dir, 'bin');
   fs.mkdirSync(stubDir);
   /* The script runs `nginx -t` before exec'ing; there is no nginx here. */
   fs.writeFileSync(path.join(stubDir, 'nginx'), '#!/bin/sh\nexit 0\n');
   fs.chmodSync(path.join(stubDir, 'nginx'), 0o755);
 
-  execFileSync('sh', [path.join(__dirname, '../../docker-entrypoint.sh'), 'true'], {
+  execFileSync('sh', entrypointArgs(dir, {}, ['true']), {
     env: {
       PATH: `${stubDir}:${process.env.PATH}`,
-      REALIP_CONF: out,
-      LISTEN_CONF: path.join(dir, 'listen-ipv6.inc'),
       ...env,
     },
   });
@@ -120,11 +119,9 @@ test('the entrypoint refuses to start when nginx rejects the config', () => {
 
   assert.throws(
     () =>
-      execFileSync('sh', [path.join(__dirname, '../../docker-entrypoint.sh'), 'true'], {
+      execFileSync('sh', entrypointArgs(dir, {}, ['true']), {
         env: {
           PATH: `${stubDir}:${process.env.PATH}`,
-          REALIP_CONF: path.join(dir, 'realip.conf'),
-          LISTEN_CONF: path.join(dir, 'listen-ipv6.inc'),
         },
         stdio: 'pipe',
       }),
@@ -137,7 +134,7 @@ test('the entrypoint refuses to start when nginx rejects the config', () => {
 const dashboard = fs.readFileSync(path.join(__dirname, '../../nginx/dashboard.conf'), 'utf8');
 
 test('the generated config is included at server level', () => {
-  assert.match(dashboard, /include \/etc\/nginx\/http\.d\/realip\.conf;/);
+  assert.match(dashboard, /include \/run\/stackyard\/realip\.conf;/);
 });
 
 test('both forwarding headers are set on the API proxy', () => {
@@ -154,11 +151,10 @@ test('X-Forwarded-Proto is left alone', () => {
   assert.doesNotMatch(dashboard, /proxy_set_header X-Forwarded-Proto/);
 });
 
-test('the Dockerfile ships the entrypoint and the placeholder config', () => {
+test('the Dockerfile ships the entrypoint', () => {
   const dockerfile = fs.readFileSync(path.join(__dirname, '../../Dockerfile'), 'utf8');
   assert.match(dockerfile, /COPY docker-entrypoint\.sh \/docker-entrypoint\.sh/);
   assert.match(dockerfile, /ENTRYPOINT \["\/docker-entrypoint\.sh"\]/);
-  assert.match(dockerfile, /COPY nginx\/realip\.conf/);
   /* Proves the shipped nginx has the realip module the entrypoint depends on:
      a missing module fails the image build rather than a user's start. */
   assert.match(dockerfile, /nginx -t/);

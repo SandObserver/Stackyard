@@ -1,8 +1,10 @@
 /* A mounted volume replaces the image's /data and /icons with the host's
-   directory and the host's ownership. The API runs as node, so a root-owned
-   mount fails every config write with EACCES while the dashboard still serves.
+   directory and the host's ownership. Started as root, the API runs as node, so
+   a root-owned mount fails every config write with EACCES while the dashboard
+   still serves. Started as any other UID, nothing in the container can change
+   ownership.
 
-   su and chown are stood in for here. What is being tested is when the
+   id, su and chown are stood in for here. What is being tested is when the
    entrypoint takes ownership, which cannot be exercised without root. */
 
 const { test } = require('node:test');
@@ -11,12 +13,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
+const { entrypointArgs } = require('../../api/test-support/entrypoint');
 const { tmpDir } = require('../../api/test-support/tmp');
 
-const ENTRYPOINT = path.join(__dirname, '../../docker-entrypoint.sh');
-
 /* @returns {{ status: number, chowned: string[], stderr: string }} */
-function run({ writable = true, chownFails = false, dirs = ['data', 'icons'] } = {}) {
+function run({ uid = 0, writable = true, chownFails = false, dirs = ['data', 'icons'] } = {}) {
   const dir = tmpDir('entrypoint-ownership');
   const binDir = path.join(dir, 'bin');
   fs.mkdirSync(binDir);
@@ -29,32 +30,38 @@ function run({ writable = true, chownFails = false, dirs = ['data', 'icons'] } =
     return p;
   };
   stub('nginx', 'exit 0');
+  stub('id', `echo ${uid}`);
   stub('su', writable ? 'exit 0' : 'exit 1');
-  stub('chown', `echo "$*" >> ${log}\nexit ${chownFails ? 1 : 0}`);
+  stub('chown', `echo "$*" >> ${log}\n[ "$1" = -R ] || exit 0\nexit ${chownFails ? 1 : 0}`);
   const handoff = stub('handoff', 'true');
 
   const made = dirs.map(name => {
     const p = path.join(dir, name);
     fs.mkdirSync(p);
+    if (uid !== 0 && !writable) fs.chmodSync(p, 0o555);
     return p;
   });
 
-  const r = spawnSync('sh', [ENTRYPOINT, handoff], {
-    env: {
-      PATH: `${binDir}:${process.env.PATH}`,
-      REALIP_CONF: path.join(dir, 'realip.conf'),
-      LISTEN_CONF: path.join(dir, 'listen-ipv6.inc'),
-      INET6_PROC: path.join(dir, 'absent'),
-      SUPERVISOR_FATAL_MARKER: path.join(dir, 'fatal'),
-      DATA_DIR: path.join(dir, 'data'),
-      ICONS_DIR: path.join(dir, 'icons'),
+  const r = spawnSync(
+    'sh',
+    entrypointArgs(dir, { data: path.join(dir, 'data'), icons: path.join(dir, 'icons') }, [handoff]),
+    {
+      env: {
+        PATH: `${binDir}:${process.env.PATH}`,
+      },
+      encoding: 'utf8',
     },
-    encoding: 'utf8',
-  });
+  );
   const status = r.status;
   const stderr = r.stderr;
 
-  const chowned = fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').filter(Boolean) : [];
+  const chowned = fs.existsSync(log)
+    ? fs
+        .readFileSync(log, 'utf8')
+        .trim()
+        .split('\n')
+        .filter(line => line.startsWith('-R '))
+    : [];
   return { status, chowned, stderr, dirs: made };
 }
 
@@ -84,4 +91,18 @@ test('a chown that fails warns and starts the container anyway', () => {
   const r = run({ writable: false, chownFails: true });
   assert.equal(r.status, 0);
   assert.match(r.stderr, /cannot take ownership/);
+});
+
+test('started as another UID, a volume it cannot write is reported, not taken over', () => {
+  const r = run({ uid: 2000, writable: false });
+  assert.equal(r.status, 0);
+  assert.deepEqual(r.chowned, []);
+  assert.equal((r.stderr.match(/UID 2000 cannot write/g) || []).length, 2);
+});
+
+test('started as another UID, a volume it can write is used quietly', () => {
+  const r = run({ uid: 2000, writable: true });
+  assert.equal(r.status, 0);
+  assert.deepEqual(r.chowned, []);
+  assert.equal(r.stderr, '');
 });

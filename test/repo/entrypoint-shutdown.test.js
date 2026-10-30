@@ -13,7 +13,7 @@ const { spawn } = require('node:child_process');
 
 const { tmpDir } = require('../../api/test-support/tmp');
 
-const ENTRYPOINT = path.join(__dirname, '../../docker-entrypoint.sh');
+const { entrypointArgs } = require('../../api/test-support/entrypoint');
 
 const stub = (dir, name, body) => {
   const p = path.join(dir, name);
@@ -55,19 +55,13 @@ async function run({ child, signals = ['SIGTERM'], marker = false }) {
   const handoff = stub(binDir, 'handoff', child);
   const started = path.join(dir, 'started');
   const done = path.join(dir, 'done');
-  const fatal = path.join(dir, 'fatal');
 
-  const proc = spawn('sh', [ENTRYPOINT, handoff], {
+  const proc = spawn('sh', entrypointArgs(dir, {}, [handoff]), {
     env: {
       PATH: `${binDir}:${process.env.PATH}`,
-      REALIP_CONF: path.join(dir, 'realip.conf'),
-      LISTEN_CONF: path.join(dir, 'listen-ipv6.inc'),
-      DATA_DIR: path.join(dir, 'no-data'),
-      ICONS_DIR: path.join(dir, 'no-icons'),
-      SUPERVISOR_FATAL_MARKER: fatal,
       SY_STARTED: started,
       SY_DONE: done,
-      SY_FATAL: marker ? fatal : '',
+      SY_FATAL: marker ? '1' : '',
     },
     stdio: ['ignore', 'ignore', 'pipe'],
     detached: true,
@@ -100,9 +94,10 @@ async function run({ child, signals = ['SIGTERM'], marker = false }) {
   }
 }
 
-/* Shuts down over 300 ms after SIGTERM, then exits 0 as supervisord does. */
+/* Shuts down over 300 ms after SIGTERM, then exits 0 as supervisord does. The
+   marker goes where the entrypoint told supervisord to put it. */
 const SLOW_STOP = [
-  'trap \'sleep 0.3; [ -n "$SY_FATAL" ] && echo api > "$SY_FATAL"; touch "$SY_DONE"; exit 0\' TERM',
+  'trap \'sleep 0.3; [ -n "$SY_FATAL" ] && echo api > "$SUPERVISOR_FATAL_MARKER"; touch "$SY_DONE"; exit 0\' TERM',
   'touch "$SY_STARTED"',
   'while :; do sleep 0.05; done',
 ].join('\n');

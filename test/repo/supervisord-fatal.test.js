@@ -8,7 +8,8 @@ const read = f => fs.readFileSync(path.join(root, f), 'utf8');
 
 const supervisord = read('supervisord.conf');
 const dockerfile = read('Dockerfile');
-const entrypoint = read('docker-entrypoint.sh');
+const entrypoint = read('docker-entrypoint-lib.sh');
+const runtimeDir = /^stackyard_main (\S+) /m.exec(read('docker-entrypoint.sh'))[1];
 const listener = read('scripts/exit-on-fatal.py');
 
 /* ── the listener is registered and will be reached ───────────────────────── */
@@ -48,10 +49,19 @@ test('the listener has priority over the programs it watches', () => {
    failure out. Without it a dead API would read as a normal shutdown. */
 test('the listener writes a marker and the entrypoint reads the same one', () => {
   const inListener = /SUPERVISOR_FATAL_MARKER',\s*'([^']+)'/.exec(listener);
-  const inEntrypoint = /SUPERVISOR_FATAL_MARKER:-([^}]+)\}/.exec(entrypoint);
+  const inEntrypoint = /^\s*MARKER="([^"]+)"$/m.exec(entrypoint);
   assert.ok(inListener, 'the listener does not define a marker path');
-  assert.ok(inEntrypoint, 'the entrypoint does not read one');
-  assert.equal(inListener[1], inEntrypoint[1].trim(), 'the two must agree or the failure never reaches the exit code');
+  assert.ok(inEntrypoint, 'the entrypoint does not set one');
+  assert.equal(
+    inListener[1],
+    inEntrypoint[1].replace('$RUNTIME_DIR', runtimeDir),
+    'the two must agree or the failure never reaches the exit code',
+  );
+  assert.match(
+    entrypoint,
+    /SUPERVISOR_FATAL_MARKER="\$MARKER" "\$@" &/,
+    'supervisord must be told where the marker is',
+  );
 });
 
 test('the entrypoint exits non-zero when the marker is present', () => {

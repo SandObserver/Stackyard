@@ -5,6 +5,8 @@ services:
     container_name: stackyard
     image: ghcr.io/sandobserver/stackyard:latest
     restart: unless-stopped
+    # To run as your own account instead of root, add `user: "1000:1000"` here.
+    # That account must own ./data and ./icons, and cap_add is then not needed.
     cap_drop:
       - ALL
     cap_add:
@@ -80,17 +82,20 @@ services:
       # - CONFIG_PATH=/data/apps.json
       # - ICONS_PATH=/icons
       # - WIDGETS_PATH=/usr/share/nginx/html/widgets
-      # PORT does not change anything inside the container: nginx serves on 80 and
-      # supervisord pins the API to 3000. Set it only for a hosting platform that
-      # reads PORT to decide where to route, and give it 80. To reach the
-      # dashboard on a different port, change the mapping under `ports:` above.
+      # PORT does not change anything inside the container: nginx serves on
+      # LISTEN_PORT and supervisord pins the API to 3000. Set it only for a
+      # hosting platform that reads PORT to decide where to route, and give it
+      # the LISTEN_PORT value. To reach the dashboard on a different port, change
+      # the mapping under `ports:` above.
       # - PORT=80
+      # The port nginx listens on inside the container (default 80). Change it
+      # only when the container runs as a user other than root on a system that
+      # blocks ports below 1024, such as host networking, and map the same port.
+      # - LISTEN_PORT=8080
     healthcheck:
       test:
-        - CMD
-        - wget
-        - "-qO-"
-        - http://localhost/health
+        - CMD-SHELL
+        - wget -qO- "http://localhost:$${LISTEN_PORT:-80}/health" > /dev/null
       interval: 30s
       timeout: 10s
       retries: 3
