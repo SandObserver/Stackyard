@@ -7,6 +7,13 @@ fail() {
   exit 1
 }
 
+# Write a file to find out. test -w reads the mode bits only, and reports a
+# read-only filesystem as writable.
+can_write() {
+  probe="$(mktemp "$1/.writable.XXXXXX" 2>/dev/null)" || return 1
+  rm -f "$probe"
+}
+
 # Usage: stackyard_main RUNTIME_DIR DATA_DIR ICONS_DIR INET6_PROC PORT_FLOOR_PROC -- COMMAND...
 stackyard_main() {
   RUNTIME_DIR="$1"
@@ -22,6 +29,7 @@ stackyard_main() {
   NGINX_USER_CONF="$RUNTIME_DIR/nginx-user.conf"
   SUPERVISOR_USER_CONF="$RUNTIME_DIR/supervisord-user.conf"
   MARKER="$RUNTIME_DIR/fatal"
+  NGINX_TEMP_DIR="$RUNTIME_DIR/nginx"
   LISTEN_PORT="${LISTEN_PORT:-80}"
   uid="$(id -u)"
 
@@ -53,16 +61,15 @@ stackyard_main() {
     chown root:root "$RUNTIME_DIR"
     chmod 0755 "$RUNTIME_DIR"
     find "$RUNTIME_DIR" -mindepth 1 -delete
+    # Create the temp folders as nginx. A chown needs CAP_CHOWN, which a root
+    # start may not have, and nginx -t stops the container without it.
+    mkdir -m 0777 "$NGINX_TEMP_DIR"
+    su -s /bin/sh nginx -c "cd \"$NGINX_TEMP_DIR\" && mkdir -m 0700 client_body proxy fastcgi uwsgi scgi"
+    chmod 0755 "$NGINX_TEMP_DIR"
   else
-    # Write a file to find out. test -w reads the mode bits only, and reports a
-    # read-only filesystem as writable.
-    probe=""
-    if mkdir -p "$RUNTIME_DIR" 2>/dev/null; then
-      probe="$(mktemp "$RUNTIME_DIR/.writable.XXXXXX" 2>/dev/null)" || probe=""
-    fi
-    [ -n "$probe" ] ||
+    { mkdir -p "$RUNTIME_DIR" 2>/dev/null && can_write "$RUNTIME_DIR"; } ||
       fail "UID $uid cannot write $RUNTIME_DIR. If the container's root filesystem is read-only, mount a tmpfs on $RUNTIME_DIR."
-    rm -f "$probe"
+    mkdir -p "$NGINX_TEMP_DIR"
   fi
 
   {
@@ -134,7 +141,7 @@ stackyard_main() {
   for dir in "$DATA_DIR" "$ICONS_DIR"; do
     [ -d "$dir" ] || continue
     if [ "$uid" != 0 ]; then
-      [ -w "$dir" ] ||
+      can_write "$dir" ||
         echo "stackyard: UID $uid cannot write $dir; config and icon writes will fail. Make it writable by $uid:$(id -g) on the host." >&2
       continue
     fi

@@ -124,6 +124,24 @@ jobs:
             exit 1
           fi
 
+      - name: Start with reduced privileges
+        run: |
+          check() {
+            name=$1 port=$2; shift 2
+            docker run -d --name "$name" -p "$port" \
+              --tmpfs /data:mode=1777 --tmpfs /icons:mode=1777 "$@" stackyard:e2e
+            for i in $(seq 1 60); do
+              if curl -fsS "http://127.0.0.1:${port%%:*}/health" >/dev/null 2>&1; then echo "$name up after ${i}s"; break; fi
+              if [ "$i" = 60 ]; then echo "::error::$name never became healthy"; docker logs "$name"; exit 1; fi
+              sleep 1
+            done
+            docker rm -f "$name" >/dev/null
+          }
+          check stackyard-any-user 8731:8080 --user 4242:4242 --read-only --tmpfs /run/stackyard \
+            --cap-drop ALL --security-opt no-new-privileges -e LISTEN_PORT=8080
+          check stackyard-no-chown 8732:80 --cap-drop ALL \
+            --cap-add SETUID --cap-add SETGID --cap-add DAC_OVERRIDE --cap-add KILL --cap-add NET_BIND_SERVICE
+
       - name: Container logs on failure
         if: failure()
         run: docker logs stackyard-e2e

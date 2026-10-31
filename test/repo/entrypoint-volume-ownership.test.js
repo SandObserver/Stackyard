@@ -17,7 +17,7 @@ const { entrypointArgs } = require('../../api/test-support/entrypoint');
 const { tmpDir } = require('../../api/test-support/tmp');
 
 /* @returns {{ status: number, chowned: string[], stderr: string }} */
-function run({ uid = 0, writable = true, chownFails = false, dirs = ['data', 'icons'] } = {}) {
+function run({ uid = 0, writable = true, readOnly = false, chownFails = false, dirs = ['data', 'icons'] } = {}) {
   const dir = tmpDir('entrypoint-ownership');
   const binDir = path.join(dir, 'bin');
   fs.mkdirSync(binDir);
@@ -31,9 +31,12 @@ function run({ uid = 0, writable = true, chownFails = false, dirs = ['data', 'ic
   };
   stub('nginx', 'exit 0');
   stub('id', `echo ${uid}`);
-  stub('su', writable ? 'exit 0' : 'exit 1');
+  stub('su', `case "$*" in *mkdir*) exit 0 ;; esac\nexit ${writable ? 0 : 1}`);
   stub('chown', `echo "$*" >> ${log}\n[ "$1" = -R ] || exit 0\nexit ${chownFails ? 1 : 0}`);
   const handoff = stub('handoff', 'true');
+  if (readOnly) {
+    stub('mktemp', 'case "$1" in */data/* | */icons/*) exit 1 ;; esac\nPATH="${PATH#*:}" exec mktemp "$@"');
+  }
 
   const made = dirs.map(name => {
     const p = path.join(dir, name);
@@ -105,4 +108,11 @@ test('started as another UID, a volume it can write is used quietly', () => {
   assert.equal(r.status, 0);
   assert.deepEqual(r.chowned, []);
   assert.equal(r.stderr, '');
+});
+
+/* A read-only mount keeps mode bits that grant write. */
+test('started as another UID, a read-only volume is reported', () => {
+  const r = run({ uid: 2000, writable: true, readOnly: true });
+  assert.equal(r.status, 0);
+  assert.equal((r.stderr.match(/UID 2000 cannot write/g) || []).length, 2);
 });

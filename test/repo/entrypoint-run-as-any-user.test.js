@@ -39,6 +39,7 @@ function run({ uid = 0, env = {}, floor = null, inet6 = null, setup = () => {} }
   stub('nginx', 'exit 0');
   stub('id', `echo ${uid}`);
   stub('chown', 'exit 0');
+  stub('su', 'while [ "$1" != -c ]; do shift; done\nsh -c "$2"');
   const started = path.join(dir, 'started');
   const handoff = stub('handoff', 'printf %s "$TMPDIR" > "$SY_STARTED"');
 
@@ -190,6 +191,20 @@ test('started as root, anything left in the runtime folder is removed first', ()
   assert.equal(fs.statSync(r.runtime).mode & 0o777, 0o755);
 });
 
+/* nginx chowns a temp folder it finds owned by another account. A root start
+   without CAP_CHOWN then fails. */
+test('started as root, every nginx temp folder exists before nginx starts', () => {
+  const r = run({ uid: 0 });
+  assert.equal(r.status, 0, r.stderr);
+  const temp = path.join(r.runtime, 'nginx');
+  assert.equal(fs.statSync(temp).mode & 0o777, 0o755);
+  const paths = [...read('nginx/dashboard.conf').matchAll(/^\w+_temp_path\s+\/run\/stackyard\/nginx\/(\w+);$/gm)];
+  assert.equal(paths.length, 5);
+  for (const [, name] of paths) {
+    assert.equal(fs.statSync(path.join(temp, name)).mode & 0o777, 0o700, name);
+  }
+});
+
 test('started as another UID, an unwritable runtime folder stops the container with a reason', () => {
   const r = run({ uid: 2000, setup: ({ runtime }) => fs.chmodSync(runtime, 0o555) });
   assert.equal(r.status, 1);
@@ -316,7 +331,7 @@ test('supervisord reads the file the entrypoint writes, and sets no user itself'
 test('nothing nginx or supervisord writes is outside the runtime folder', () => {
   const dashboard = read('nginx/dashboard.conf');
   for (const kind of ['client_body', 'proxy', 'fastcgi', 'uwsgi', 'scgi']) {
-    assert.match(dashboard, new RegExp(`^${kind}_temp_path\\s+/run/stackyard/`, 'm'), kind);
+    assert.match(dashboard, new RegExp(`^${kind}_temp_path\\s+/run/stackyard/nginx/${kind};$`, 'm'), kind);
   }
   const supervisord = read('supervisord.conf');
   for (const key of ['logfile', 'pidfile']) {

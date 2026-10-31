@@ -121,6 +121,7 @@ COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh && \
     # Proves the shipped config parses and that nginx carries the realip module
     # the entrypoint needs. The files are written at container start.
+    mkdir /run/stackyard/nginx && \
     printf 'user nginx;\n' > /run/stackyard/nginx-user.conf && \
     printf 'listen 80;\nlisten [::]:80;\n' > /run/stackyard/listen.conf && \
     printf 'set_real_ip_from 127.0.0.1;\nreal_ip_header X-Forwarded-For;\nreal_ip_recursive on;\n' > /run/stackyard/realip.conf && \
