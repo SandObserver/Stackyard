@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Run the container as any non-root user, with every capability dropped.
+
+- Add `LISTEN_PORT` to set the port nginx listens on inside the container.
+
+- Support a read-only root filesystem with a tmpfs on `/run/stackyard`.
+
+### Changed
+
+- Reject a `TRUSTED_PROXY` entry that is not an IP address or network.
+
 ### Removed
 
 - Stop attaching a not-affected statement for CVE-2026-107891 to Docker Hub
