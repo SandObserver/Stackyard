@@ -202,7 +202,7 @@ function _backupCorrupt(raw) {
   const target = `${CONFIG_PATH}.corrupt-${stamp}`;
   _lastBackup = null;
   try {
-    fs.writeFileSync(target, raw, { encoding: 'utf8', flag: 'wx' });
+    fs.writeFileSync(target, raw, { encoding: 'utf8', flag: 'wx', mode: 0o600 });
     _lastBackup = path.basename(target);
   } catch (e) {
     log.warn('could not write the corrupt-config backup', { path: CONFIG_PATH, error: e.message });
@@ -210,6 +210,8 @@ function _backupCorrupt(raw) {
   _lastCorruptRaw = raw;
   return _lastBackup;
 }
+
+let _modeChecked = false;
 
 function _readDisk() {
   let raw;
@@ -219,6 +221,15 @@ function _readDisk() {
     if (e.code === 'ENOENT') _clearDamage();
     else _markDamaged('unreadable', e.message);
     return null;
+  }
+  /* Files written by earlier versions are world-readable. */
+  if (!_modeChecked) {
+    _modeChecked = true;
+    try {
+      fs.chmodSync(CONFIG_PATH, 0o600);
+    } catch {
+      /* not the owner: leave the mode to the host */
+    }
   }
 
   let parsed;
@@ -305,7 +316,7 @@ function saveConfig(data, { keepRev = false } = {}) {
      leaves the rename applied and the contents lost. */
   let fd;
   try {
-    fd = fs.openSync(tmp, 'w');
+    fd = fs.openSync(tmp, 'w', 0o600);
     fs.writeFileSync(fd, JSON.stringify(data, null, 2), 'utf8');
     fs.fsyncSync(fd);
   } finally {

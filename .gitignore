@@ -18,5 +18,3 @@ coverage/
 playwright-report/
 test-results/
 
-# Data for docker-compose.dev.yml. Holds stored secrets.
-/.dev/

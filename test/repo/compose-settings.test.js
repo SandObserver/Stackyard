@@ -65,12 +65,17 @@ test('the Compose file substitutes each operator setting it activates', () => {
 test('the Compose hardening is in place', () => {
   assert.match(compose, /cap_drop:\s*\n\s*- ALL/);
   assert.match(compose, /no-new-privileges:true/);
-  assert.ok(!/^\s*user:/m.test(compose), 'the Compose file now sets a user');
+  assert.doesNotMatch(compose, /^\s*cap_add:/m, 'the image runs as node and needs no capability');
+  assert.ok(!/^\s*user:/m.test(compose), 'the Compose file sets a user; the image default is node');
+  assert.match(read('Dockerfile'), /^USER node$/m);
   assert.match(read('docker-entrypoint-lib.sh'), /user=node/, 'started as root, the API should run as node');
 });
 
-/* supervisord runs as root and the API as node. Without KILL, root cannot signal
-   another user's process, so a stop never reaches the API. */
-test('supervisord can stop the API under the Compose capabilities', () => {
-  assert.match(compose, /cap_add:\s*\n(?:\s*- \w+\n)*\s*- KILL\n/);
+/* A named volume is created with the image's ownership. A bind mount Docker
+   creates belongs to root, and the node account cannot write it. */
+test('the Compose example stores data in named volumes', () => {
+  const mounts = [...compose.matchAll(/^\s+- ([^\s:#]+):\/(data|icons)$/gm)];
+  assert.equal(mounts.length, 2);
+  for (const [line, source] of mounts) assert.doesNotMatch(source, /^[./]/, line.trim());
+  assert.match(compose, /^volumes:\n {2}data:\n {2}icons:\n/m);
 });

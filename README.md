@@ -64,15 +64,19 @@ services:
     ports:
       - "8700:80"
     volumes:
-      - ./data:/data
-      - ./icons:/icons
+      - data:/data
+      - icons:/icons
+
+volumes:
+  data:
+  icons:
 ```
 
 ```sh
 docker compose up -d
 ```
 
-Then open `http://localhost:8700` and set everything up at `/admin`. Config and uploaded icons persist in `./data` and `./icons`.
+Then open `http://localhost:8700` and set everything up at `/admin`. Config and uploaded icons persist in the two volumes.
 
 On Unraid, install it from [Community Apps](https://ca.unraid.net/apps/stackyard-0ara4ku0sjjwqy).
 

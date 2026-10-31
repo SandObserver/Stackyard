@@ -128,5 +128,7 @@ RUN chmod +x /docker-entrypoint.sh && \
     nginx -t && \
     rm -rf /run/stackyard/*
 
+USER node
+
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/stackyard.conf"]

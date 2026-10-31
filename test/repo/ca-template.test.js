@@ -131,6 +131,11 @@ test('the donation link is the canonical form', () => {
   }
 });
 
+/* Unraid creates a missing appdata folder as root. The container runs as root
+   there and takes ownership at start. Root needs these capabilities; without
+   KILL a stop never reaches the API. */
+const ROOT_CAPS = ['NET_BIND_SERVICE', 'CHOWN', 'SETUID', 'SETGID', 'DAC_OVERRIDE', 'KILL'];
+
 /* An Unraid install gets no other hardening: the Compose file does not apply. */
 test('the template applies the Compose hardening', () => {
   const compose = fs.readFileSync(path.join(ROOT, 'docker-compose.yml'), 'utf8');
@@ -146,9 +151,10 @@ test('the template applies the Compose hardening', () => {
   };
 
   const expected = [
+    '--user=0:0',
     ...(value('init') === 'true' ? ['--init'] : []),
     ...list('cap_drop').map(c => `--cap-drop=${c}`),
-    ...list('cap_add').map(c => `--cap-add=${c}`),
+    ...ROOT_CAPS.map(c => `--cap-add=${c}`),
     ...list('security_opt').map(o => `--security-opt=${o}`),
     `--pids-limit=${value('pids_limit')}`,
     `--memory=${value('mem_limit')}`,

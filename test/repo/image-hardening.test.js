@@ -131,6 +131,15 @@ test('the upgrade cannot be served from a cache across releases', () => {
   assert.ok(argAt !== -1, 'APP_VERSION is read in the step but never declared above it');
 });
 
+/* Every RUN writes paths only root can write. */
+test('the image runs as node unless started as root', () => {
+  const user = dockerfile.indexOf('\nUSER node\n');
+  assert.notEqual(user, -1, 'the image runs as root by default');
+  assert.equal(dockerfile.indexOf('\nUSER '), user, 'more than one USER line');
+  assert.ok(dockerfile.lastIndexOf('\nRUN ') < user, 'a RUN after USER node runs as node');
+  assert.ok(user < dockerfile.indexOf('\nENTRYPOINT '));
+});
+
 /* The API runs as node. Code it owns, it can rewrite, and the change survives a
    restart. */
 test('the API cannot rewrite its own code', () => {

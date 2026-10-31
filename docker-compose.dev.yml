@@ -9,13 +9,6 @@ services:
     image: stackyard:dev
     cap_drop:
       - ALL
-    cap_add:
-      - NET_BIND_SERVICE
-      - CHOWN
-      - SETUID
-      - SETGID
-      - DAC_OVERRIDE
-      - KILL
     security_opt:
       - no-new-privileges:true
     privileged: false
@@ -28,8 +21,8 @@ services:
     ports:
       - "127.0.0.1:8701:80"
     volumes:
-      - ./.dev/data:/data
-      - ./.dev/icons:/icons
+      - data:/data
+      - icons:/icons
     environment:
       - NODE_OPTIONS=--max-old-space-size=192
     entrypoint:
@@ -82,3 +75,7 @@ services:
           action: rebuild
         - path: ./api/package.json
           action: rebuild
+
+volumes:
+  data:
+  icons:

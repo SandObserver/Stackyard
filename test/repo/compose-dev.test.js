@@ -41,11 +41,11 @@ test('the dev instance turns no guard off and gets no Docker socket', () => {
   assert.equal(dev.env_file, undefined);
 });
 
-/* The data folder holds stored secrets and corrupt-config backups. */
-test('dev data stays out of git and the build context', () => {
-  for (const v of dev.volumes) assert.match(v, /^\.\/\.dev\//, `${v} is outside .dev/`);
-  assert.match(read('.gitignore'), /^\/\.dev\/$/m);
-  assert.match(read('.dockerignore'), /^\.dev$/m);
+/* The data holds stored secrets and corrupt-config backups. A named volume is
+   outside the working tree and belongs to the node account from creation. */
+test('dev data lives in named volumes', () => {
+  assert.equal(dev.volumes.length, 2);
+  for (const v of dev.volumes) assert.doesNotMatch(v, /^[./]/, `${v} is a bind mount`);
 });
 
 /* Otherwise an edit to a shared module never reaches the API. */
