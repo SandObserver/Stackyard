@@ -104,7 +104,7 @@ jobs:
 
       - name: Stop and restart the container
         run: |
-          before=$(sha256sum "$RUNNER_TEMP/data/apps.json")
+          before=$(docker exec stackyard-e2e sha256sum /data/apps.json)
           docker stop -t 30 stackyard-e2e
           code=$(docker inspect -f '{{.State.ExitCode}}' stackyard-e2e)
           echo "stopped with exit code ${code}"
@@ -118,7 +118,7 @@ jobs:
             if [ "$i" = 60 ]; then echo "::error::the container never became healthy after a restart"; exit 1; fi
             sleep 1
           done
-          after=$(sha256sum "$RUNNER_TEMP/data/apps.json")
+          after=$(docker exec stackyard-e2e sha256sum /data/apps.json)
           if [ "$before" != "$after" ]; then
             echo "::error::the restart changed the saved config"
             exit 1
@@ -139,7 +139,7 @@ jobs:
           }
           check stackyard-any-user 8731:8080 --user 4242:4242 --read-only --tmpfs /run/stackyard \
             --cap-drop ALL --security-opt no-new-privileges -e LISTEN_PORT=8080
-          check stackyard-no-chown 8732:80 --cap-drop ALL \
+          check stackyard-no-chown 8732:80 --user 0:0 --cap-drop ALL \
             --cap-add SETUID --cap-add SETGID --cap-add DAC_OVERRIDE --cap-add KILL --cap-add NET_BIND_SERVICE
 
       - name: Container logs on failure

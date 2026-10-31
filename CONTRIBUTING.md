@@ -21,7 +21,8 @@ docker compose -f docker-compose.dev.yml watch
 It serves `http://127.0.0.1:8701`. A saved file reaches the container within a
 few seconds. A change under `api/src` or `ui/widgets`, or to a module the API
 shares with the frontend, restarts the container. A change to the Dockerfile,
-nginx or supervisord config rebuilds the image. Data is kept in `.dev/`.
+nginx or supervisord config rebuilds the image. Data is kept in the
+`stackyard-dev_data` and `stackyard-dev_icons` volumes.
 
 Unit tests use Node's
 built-in runner and need nothing installed; coverage and the browser tests use

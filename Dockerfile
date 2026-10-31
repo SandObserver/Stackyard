@@ -27,7 +27,7 @@ RUN rm -rf /usr/local/lib/node_modules/npm \
     node -e "process.exit(0)" && \
     find / -xdev \( -path /proc -o -path /sys -o -path /dev \) -prune -o -type d -exec touch -r /usr/local/bin/node {} +
 
-FROM scratch
+FROM scratch AS runtime
 COPY --from=base / /
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
@@ -128,5 +128,17 @@ RUN chmod +x /docker-entrypoint.sh && \
     nginx -t && \
     rm -rf /run/stackyard/*
 
+USER node
+
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/stackyard.conf"]
+
+FROM runtime AS dev
+USER root
+RUN sed -i 's/public, max-age=31536000, immutable/no-cache/' /etc/nginx/http.d/dashboard.conf && \
+    ! grep -q 'max-age=31536000' /etc/nginx/http.d/dashboard.conf && \
+    chown -R node:node /usr/share/nginx/html /app/api/src /app/ui/js
+USER node
+
+# Keep this stage last. A build without a target ships the last stage.
+FROM runtime

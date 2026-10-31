@@ -202,13 +202,33 @@ function _backupCorrupt(raw) {
   const target = `${CONFIG_PATH}.corrupt-${stamp}`;
   _lastBackup = null;
   try {
-    fs.writeFileSync(target, raw, { encoding: 'utf8', flag: 'wx' });
+    fs.writeFileSync(target, raw, { encoding: 'utf8', flag: 'wx', mode: 0o600 });
     _lastBackup = path.basename(target);
   } catch (e) {
     log.warn('could not write the corrupt-config backup', { path: CONFIG_PATH, error: e.message });
   }
   _lastCorruptRaw = raw;
   return _lastBackup;
+}
+
+let _modeChecked = false;
+
+function _tightenEarlierFiles() {
+  const dir = path.dirname(CONFIG_PATH);
+  const backup = `${path.basename(CONFIG_PATH)}.corrupt`;
+  let names = [];
+  try {
+    names = fs.readdirSync(dir).filter(n => n === backup || n.startsWith(`${backup}-`));
+  } catch {
+    /* unreadable folder: the config read reports it */
+  }
+  for (const file of [CONFIG_PATH, `${CONFIG_PATH}.tmp`, ...names.map(n => path.join(dir, n))]) {
+    try {
+      if (fs.lstatSync(file).isFile()) fs.chmodSync(file, 0o600);
+    } catch {
+      /* not the owner: leave the mode to the host */
+    }
+  }
 }
 
 function _readDisk() {
@@ -219,6 +239,10 @@ function _readDisk() {
     if (e.code === 'ENOENT') _clearDamage();
     else _markDamaged('unreadable', e.message);
     return null;
+  }
+  if (!_modeChecked) {
+    _modeChecked = true;
+    _tightenEarlierFiles();
   }
 
   let parsed;
@@ -305,7 +329,14 @@ function saveConfig(data, { keepRev = false } = {}) {
      leaves the rename applied and the contents lost. */
   let fd;
   try {
-    fd = fs.openSync(tmp, 'w');
+    /* Keep the unlink. A temp file left by a crash keeps its mode through the
+       rename and exposes the secrets. */
+    try {
+      fs.unlinkSync(tmp);
+    } catch (e) {
+      if (e.code !== 'ENOENT') throw e;
+    }
+    fd = fs.openSync(tmp, 'wx', 0o600);
     fs.writeFileSync(fd, JSON.stringify(data, null, 2), 'utf8');
     fs.fsyncSync(fd);
   } finally {
