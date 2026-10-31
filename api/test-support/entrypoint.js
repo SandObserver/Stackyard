@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const LIB = path.join(__dirname, '../../docker-entrypoint-lib.sh');
+const HARNESS = path.join(__dirname, 'entrypoint-harness.sh');
 
 /** Arguments for `sh` that run the entrypoint as docker-entrypoint.sh does,
     with the paths a test chooses.
@@ -20,18 +21,7 @@ function entrypointArgs(dir, paths, command) {
     floor: path.join(dir, 'docker-floor'),
     ...paths,
   };
-  return [
-    '-c',
-    'set -eu; . "$0"; stackyard_main "$@"',
-    LIB,
-    p.runtime,
-    p.data,
-    p.icons,
-    p.inet6,
-    p.floor,
-    '--',
-    ...command,
-  ];
+  return [HARNESS, LIB, p.runtime, p.data, p.icons, p.inet6, p.floor, '--', ...command];
 }
 
 module.exports = { entrypointArgs, LIB };

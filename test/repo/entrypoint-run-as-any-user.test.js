@@ -283,10 +283,7 @@ test('docker-entrypoint.sh passes the real paths', () => {
 test('the image ships the library where docker-entrypoint.sh sources it', () => {
   const sourced = /^\. (\S+)$/m.exec(read('docker-entrypoint.sh'));
   assert.ok(sourced, 'docker-entrypoint.sh sources no library');
-  assert.match(
-    read('Dockerfile'),
-    new RegExp(`^COPY docker-entrypoint-lib\\.sh ${sourced[1].replace(/\./g, '\\.')}$`, 'm'),
-  );
+  assert.ok(read('Dockerfile').split('\n').includes(`COPY docker-entrypoint-lib.sh ${sourced[1]}`));
 });
 
 test('the runtime folder is the one the image creates for every UID', () => {
