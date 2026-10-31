@@ -1,5 +1,5 @@
 {
-  "$schema": "https://unpkg.com/wrangler@4.151.3/config-schema.json",
+  "$schema": "https://unpkg.com/wrangler@4.156.0/config-schema.json",
   "name": "stackyard-demo",
   "compatibility_date": "2026-10-01",
   "workers_dev": true,
