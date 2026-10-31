@@ -90,8 +90,9 @@ services:
       # - PORT=80
       # The port nginx listens on inside the container (default 80). Change it
       # only when the container runs as a user other than root on a system that
-      # blocks ports below 1024, such as host networking, and map the same port.
-      # - LISTEN_PORT=8080
+      # blocks ports below 1024, such as host networking, and map the same port
+      # under `ports:` above.
+      - LISTEN_PORT=${LISTEN_PORT:-}
     healthcheck:
       test:
         - CMD-SHELL

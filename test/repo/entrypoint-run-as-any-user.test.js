@@ -28,6 +28,7 @@ function run({ uid = 0, env = {}, floor = null, inet6 = null, setup = () => {} }
   const runtime = path.join(dir, 'run');
   fs.mkdirSync(binDir);
   fs.mkdirSync(runtime);
+  fs.chmodSync(runtime, 0o1777);
   setup({ dir, runtime });
 
   const stub = (name, body) => {
@@ -188,7 +189,7 @@ test('started as root, anything left in the runtime folder is removed first', ()
   assert.equal(fs.readFileSync(target, 'utf8'), 'untouched\n');
   assert.ok(!fs.lstatSync(path.join(r.runtime, 'realip.conf')).isSymbolicLink());
   assert.ok(!fs.existsSync(path.join(r.runtime, 'leftover')));
-  assert.equal(fs.statSync(r.runtime).mode & 0o777, 0o755);
+  assert.equal(fs.statSync(r.runtime).mode & 0o7777, 0o755);
 });
 
 /* nginx chowns a temp folder it finds owned by another account. A root start

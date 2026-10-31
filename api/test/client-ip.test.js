@@ -76,6 +76,7 @@ function render(env) {
       PATH: `${stubDir}:${process.env.PATH}`,
       ...env,
     },
+    stdio: 'pipe',
   });
   return fs.readFileSync(out, 'utf8');
 }
@@ -104,6 +105,21 @@ test('several addresses are accepted, space or comma separated', () => {
 
 test('an IPv6 proxy address is passed through', () => {
   assert.match(render({ TRUSTED_PROXY: 'fd00::/8' }), /set_real_ip_from fd00::\/8;/);
+});
+
+test('an entry that is not an address or network stops the container', () => {
+  for (const value of [
+    '10.0.0.1;\rlocation\r/leak/\r{\ralias\r/data/;\r}\r#',
+    '10.0.0.1;',
+    '$(id)',
+    '172.18.0.0/16 proxy.example',
+  ]) {
+    assert.throws(
+      () => render({ TRUSTED_PROXY: value }),
+      err => err.status === 1 && /TRUSTED_PROXY entry is not an IP address or network/.test(String(err.stderr)),
+      JSON.stringify(value),
+    );
+  }
 });
 
 test('the generated file says it is generated', () => {
