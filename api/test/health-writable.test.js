@@ -58,6 +58,16 @@ for (const [name, dir] of [
   });
 }
 
+test('health fails while the config folder cannot be searched', async t => {
+  if (process.getuid?.() === 0) return t.skip('root ignores directory permissions');
+  fs.chmodSync(DATA, 0o600);
+  try {
+    assert.deepEqual(await health(), { status: 503, body: { ok: false } });
+  } finally {
+    fs.chmodSync(DATA, 0o700);
+  }
+});
+
 test('a data folder that does not exist does not fail health', async () => {
   fs.rmSync(ICONS, { recursive: true });
   try {

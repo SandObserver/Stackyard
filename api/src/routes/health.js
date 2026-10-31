@@ -254,7 +254,7 @@ let unwritable = [];
 function unwritableDataDirs() {
   return [path.dirname(CONFIG_PATH), ICONS_PATH].filter(dir => {
     try {
-      fs.accessSync(dir, fs.constants.W_OK);
+      fs.accessSync(dir, fs.constants.W_OK | fs.constants.X_OK);
       return false;
     } catch (e) {
       return e.code !== 'ENOENT';

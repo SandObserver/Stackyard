@@ -37,11 +37,22 @@ test('corrupt-file backups from an earlier version are made owner-only on first 
   const { dir, loadConfig } = fresh('old-backups', {
     'apps.json': current(SCHEMA_VERSION),
     'apps.json.corrupt-2026-01-01T00-00-00-000Z': '{not json',
+    'apps.json.corrupt': '{not json',
     'other.json': '{}',
   });
   loadConfig();
   assert.equal(mode(path.join(dir, 'apps.json.corrupt-2026-01-01T00-00-00-000Z')), 0o600);
+  assert.equal(mode(path.join(dir, 'apps.json.corrupt')), 0o600);
   assert.equal(mode(path.join(dir, 'other.json')), 0o644);
+});
+
+test('a temp file left by a crash is made owner-only on first read', () => {
+  const { dir, loadConfig } = fresh('old-tmp', {
+    'apps.json': current(SCHEMA_VERSION),
+    'apps.json.tmp': '{"items":[',
+  });
+  loadConfig();
+  assert.equal(mode(path.join(dir, 'apps.json.tmp')), 0o600);
 });
 
 test('a save writes the temp file and the config owner-only', () => {

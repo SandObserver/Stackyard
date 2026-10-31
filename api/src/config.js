@@ -215,14 +215,14 @@ let _modeChecked = false;
 
 function _tightenEarlierFiles() {
   const dir = path.dirname(CONFIG_PATH);
-  const backup = `${path.basename(CONFIG_PATH)}.corrupt-`;
+  const backup = `${path.basename(CONFIG_PATH)}.corrupt`;
   let names = [];
   try {
-    names = fs.readdirSync(dir).filter(n => n.startsWith(backup));
+    names = fs.readdirSync(dir).filter(n => n === backup || n.startsWith(`${backup}-`));
   } catch {
     /* unreadable folder: the config read reports it */
   }
-  for (const file of [CONFIG_PATH, ...names.map(n => path.join(dir, n))]) {
+  for (const file of [CONFIG_PATH, `${CONFIG_PATH}.tmp`, ...names.map(n => path.join(dir, n))]) {
     try {
       if (fs.lstatSync(file).isFile()) fs.chmodSync(file, 0o600);
     } catch {
