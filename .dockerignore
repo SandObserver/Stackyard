@@ -20,3 +20,4 @@ scripts/**
 *.md
 docs
 .dockerignore
+.dev

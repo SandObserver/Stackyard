@@ -104,7 +104,7 @@ jobs:
 
       - name: Stop and restart the container
         run: |
-          before=$(sha256sum "$RUNNER_TEMP/data/apps.json")
+          before=$(docker exec stackyard-e2e sha256sum /data/apps.json)
           docker stop -t 30 stackyard-e2e
           code=$(docker inspect -f '{{.State.ExitCode}}' stackyard-e2e)
           echo "stopped with exit code ${code}"
@@ -118,7 +118,7 @@ jobs:
             if [ "$i" = 60 ]; then echo "::error::the container never became healthy after a restart"; exit 1; fi
             sleep 1
           done
-          after=$(sha256sum "$RUNNER_TEMP/data/apps.json")
+          after=$(docker exec stackyard-e2e sha256sum /data/apps.json)
           if [ "$before" != "$after" ]; then
             echo "::error::the restart changed the saved config"
             exit 1

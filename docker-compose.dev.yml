@@ -5,7 +5,9 @@ name: stackyard-dev
 
 services:
   stackyard:
-    build: .
+    build:
+      context: .
+      target: dev
     image: stackyard:dev
     cap_drop:
       - ALL
@@ -25,12 +27,6 @@ services:
       - icons:/icons
     environment:
       - NODE_OPTIONS=--max-old-space-size=192
-    entrypoint:
-      - /bin/sh
-      - -c
-      - sed -i 's/public, max-age=31536000, immutable/no-cache/' /etc/nginx/http.d/dashboard.conf && exec /docker-entrypoint.sh "$$@"
-      - --
-    command: ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/stackyard.conf"]
     develop:
       watch:
         - path: ./ui

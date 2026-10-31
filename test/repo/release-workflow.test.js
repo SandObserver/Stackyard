@@ -204,6 +204,13 @@ test('the e2e workflow stops and restarts the built image after the specs', () =
   assert.match(run, /"\$code" = 137/, 'a container killed after the stop timeout must fail the job');
   assert.match(run, /docker start stackyard-e2e/);
   assert.match(run, /"\$before" != "\$after"/, 'the restart must leave the saved config as it was');
+  for (const side of ['before', 'after']) {
+    assert.match(
+      run,
+      new RegExp(`${side}=\\$\\(docker exec stackyard-e2e sha256sum /data/apps\\.json\\)`),
+      'the config is owner-only and the runner is another account: read it in the container',
+    );
+  }
 });
 
 test('the browser package cache matches only the same Playwright version', () => {

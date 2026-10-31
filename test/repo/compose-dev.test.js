@@ -48,6 +48,12 @@ test('dev data lives in named volumes', () => {
   for (const v of dev.volumes) assert.doesNotMatch(v, /^[./]/, `${v} is a bind mount`);
 });
 
+/* Earlier dev setups kept stored secrets in .dev/. */
+test('old dev data stays out of git and the build context', () => {
+  assert.match(read('.gitignore'), /^\/\.dev\/$/m);
+  assert.match(read('.dockerignore'), /^\.dev$/m);
+});
+
 /* Otherwise an edit to a shared module never reaches the API. */
 test('every module the API shares with the UI is watched', () => {
   const rules = dev.develop.watch;
@@ -62,16 +68,43 @@ test('every module the API shares with the UI is watched', () => {
 });
 
 /* The rewrite fails silently. A changed cache line would serve stale files. */
+const stages = read('Dockerfile').split(/^FROM /m);
+const devStage = stages.find(st => /^runtime AS dev$/m.test(st.split('\n')[0])) || '';
+
+test('the dev Compose file builds the dev stage', () => {
+  assert.equal(dev.build.target, 'dev');
+  assert.ok(devStage, 'no dev stage in the Dockerfile');
+});
+
+/* A build without a target ships the last stage. */
+test('the published image is the last stage', () => {
+  assert.equal(stages.at(-1).trim(), 'runtime', 'the last stage changes the published image');
+  assert.match(read('Dockerfile'), /^FROM scratch AS runtime$/m);
+});
+
 test('the dev cache rewrite matches every long-lived cache line in nginx', () => {
-  const script = dev.entrypoint.find(a => a.startsWith('sed '));
-  const [, from, to] = /s\/([^/]+)\/([^/]*)\//.exec(script) || [];
-  assert.ok(from, 'no sed substitution in the dev entrypoint');
+  const [, from, to] = /sed -i 's\/([^/]+)\/([^/]*)\/' \/etc\/nginx\/http\.d\/dashboard\.conf/.exec(devStage) || [];
+  assert.ok(from, 'no sed substitution in the dev stage');
   assert.equal(to, 'no-cache');
   const lines = read('nginx/dashboard.conf')
     .split('\n')
     .filter(l => /max-age=\d{5,}/.test(l));
   assert.ok(lines.length > 0);
   for (const l of lines) assert.ok(l.includes(from), `not rewritten in dev: ${l.trim()}`);
+});
+
+/* The container runs as node, and watch deletes a synced file as that account. */
+test('every folder the dev watch syncs into belongs to node in the dev stage', () => {
+  const [, owned] = /chown -R node:node ([^\n\\]+)/.exec(devStage) || [];
+  assert.ok(owned, 'the dev stage hands nothing to node');
+  const dirs = owned.trim().split(/\s+/);
+  for (const w of dev.develop.watch.filter(rule => rule.action.startsWith('sync'))) {
+    assert.ok(
+      dirs.some(d => w.target === d || w.target.startsWith(`${d}/`)),
+      `${w.target} is not handed to node`,
+    );
+  }
+  assert.match(devStage, /^USER node$/m);
 });
 
 /* Compose skips any watched path that .dockerignore excludes, with no warning. */

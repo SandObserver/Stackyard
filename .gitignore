@@ -18,3 +18,5 @@ coverage/
 playwright-report/
 test-results/
 
+# Data from earlier dev Compose setups. Holds stored secrets.
+/.dev/

@@ -2,7 +2,9 @@ const { on, json, getIp, readBody, checkOrigin } = require('../router');
 const { rateLimit } = require('../auth');
 const { KIND } = require('../api-error');
 const LIMITS = require('../poll-limits');
-const { loadConfig } = require('../config');
+const fs = require('node:fs');
+const path = require('node:path');
+const { loadConfig, CONFIG_PATH, ICONS_PATH } = require('../config');
 const {
   pingUnchecked,
   urlPolicyError,
@@ -246,7 +248,27 @@ on('GET', '/api/proxmox/guests', async (req, res) => {
   }
 });
 
-on('GET', '/health', (_, res) => json(res, 200, { ok: true }));
+/* Keep the write check. Without it Docker reports healthy while every save
+   fails. */
+let unwritable = [];
+function unwritableDataDirs() {
+  return [path.dirname(CONFIG_PATH), ICONS_PATH].filter(dir => {
+    try {
+      fs.accessSync(dir, fs.constants.W_OK);
+      return false;
+    } catch (e) {
+      return e.code !== 'ENOENT';
+    }
+  });
+}
+
+on('GET', '/health', (_, res) => {
+  const now = unwritableDataDirs();
+  for (const dir of now)
+    if (!unwritable.includes(dir)) log.warn('cannot write the data folder; saves will fail', { path: dir });
+  unwritable = now;
+  json(res, now.length ? 503 : 200, { ok: !now.length });
+});
 
 on('GET', '/api/health', async (req, res) => {
   const limited = rateLimit(getIp(req), 'health', LIMITS.HEALTH.max, LIMITS.HEALTH.windowMs);
