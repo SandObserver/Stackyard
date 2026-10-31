@@ -33,6 +33,7 @@
   "ui.diskHealth": "Disk health",
   "ui.noSmart": "No SMART data",
   "ui.healthy": "Healthy",
+  "ui.freeOf": "{free} / {size} free",
   "ui.failed": "Failed",
   "ui.bay": "Bay {n}",
   "ui.bayEmpty": "Bay {n}: empty",

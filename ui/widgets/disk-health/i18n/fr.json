@@ -33,6 +33,7 @@
   "ui.diskHealth": "Santé des disques",
   "ui.noSmart": "Aucune donnée SMART",
   "ui.healthy": "Bon état",
+  "ui.freeOf": "{free} / {size} libres",
   "ui.failed": "En échec",
   "ui.bay": "Baie {n}",
   "ui.bayEmpty": "Baie {n} : vide",

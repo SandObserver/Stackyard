@@ -164,6 +164,7 @@
   <div id="tip" role="status" aria-live="polite">
     <div class="t1"><i id="tip-led"></i><span class="nm" id="tip-name"></span></div>
     <div class="meta" id="tip-meta"></div>
+    <div class="meta" id="tip-free" hidden></div>
   </div>
 </div>
 
@@ -200,6 +201,12 @@ function statusText(s, hasSmart) {
 }
 /* TB and GB are symbols, not words: only the figure is localised. */
 function fmtCap(c){ if(!c||c<=0) return ''; if(c>=1e12){const t=c/1e12; return formatNumber(t>=10?Math.round(t):Number(t.toFixed(1)))+' TB';} return formatNumber(Math.round(c/1e9))+' GB'; }
+function freeText(d) {
+  if (d.free == null) return '';
+  return wt('ui.freeOf', '{free} / {size} free')
+    .replace('{free}', fmtCap(d.free) || formatNumber(0) + ' GB')
+    .replace('{size}', fmtCap(d.capacity) || fmtCap(d.fsTotal));
+}
 function shortName(d) {
   const n = (d.device_name || '').replace(/^\/dev\//, '');
   return n ? n.toUpperCase() : (d.device?.label || d.label || '');
@@ -222,6 +229,7 @@ const tipEl   = document.getElementById('tip');
 const tipLed  = document.getElementById('tip-led');
 const tipName = document.getElementById('tip-name');
 const tipMeta = document.getElementById('tip-meta');
+const tipFree = document.getElementById('tip-free');
 
 function showTip(i) {
   const d = bayData[i];
@@ -230,6 +238,7 @@ function showTip(i) {
     tipLed.className = 'unread';
     tipName.textContent = fullName(d) || wt('ui.bay', 'Bay {n}').replace('{n}', formatNumber(i + 1));
     tipMeta.textContent = wt('ui.notReporting', 'Not reporting');
+    tipFree.hidden = true;
     rootEl.classList.add('tip-active');
     positionTip(i);
     return;
@@ -239,10 +248,12 @@ function showTip(i) {
   tipName.textContent = fullName(d);
   const parts = [];
   const cap = fmtCap(d.capacity);
-  if (cap) parts.push(cap);
+  if (cap && d.free == null) parts.push(cap);
   parts.push(statusText(d.device_status ?? 0, d.hasSmart ?? false));
   if (d.temp != null) parts.push(formatNumber(Number(d.temp)) + '°C');
   tipMeta.textContent = parts.filter(Boolean).join(' · ');
+  tipFree.textContent = freeText(d);
+  tipFree.hidden = d.free == null;
   rootEl.classList.add('tip-active');
   positionTip(i);
 }
@@ -309,7 +320,7 @@ function update() {
       const cap = fmtCap(d.capacity);
       const st  = statusText(d.device_status ?? 0, d.hasSmart ?? false);
       bay.setAttribute('role','button'); bay.setAttribute('tabindex','0');
-      bay.setAttribute('aria-label', `${wt('ui.bay','Bay {n}').replace('{n}', formatNumber(i + 1))}: ${shortName(d)}${cap ? ', '+cap : ''}${st ? ', '+st : ''}`);
+      bay.setAttribute('aria-label', `${wt('ui.bay','Bay {n}').replace('{n}', formatNumber(i + 1))}: ${shortName(d)}${d.free != null ? ', '+freeText(d) : cap ? ', '+cap : ''}${st ? ', '+st : ''}`);
     } else {
       bay.classList.add('empty'); bay.classList.remove('assigned', 'unread');
       led.className = 'led';

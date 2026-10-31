@@ -33,6 +33,7 @@
   "ui.diskHealth": "سلامت دیسک",
   "ui.noSmart": "داده SMART نیست",
   "ui.healthy": "سالم",
+  "ui.freeOf": "{free} از {size} آزاد",
   "ui.failed": "خراب",
   "ui.bay": "محفظه {n}",
   "ui.bayEmpty": "محفظه {n}: خالی",

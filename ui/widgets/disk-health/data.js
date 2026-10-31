@@ -149,10 +149,27 @@ async function diskHealthScrutiny(ctx) {
       device_name: entry.device.device_name,
       temp: entry.smart?.temp ?? null,
       capacity: entry.device.capacity || null,
+      ...scrutinySpace(entry.filesystems),
     };
   });
 
   return { bays: result, href: ctx.serviceLink(config.scrutinyHref, url), provider: 'scrutiny' };
+}
+
+/* Free space only when every filesystem sits on this drive alone. A filesystem
+   on several drives would count again on each of them. */
+function scrutinySpace(list) {
+  if (!Array.isArray(list) || list.length === 0) return {};
+  let free = 0;
+  let total = 0;
+  for (const f of list) {
+    const avail = Number(f?.available_bytes);
+    const size = Number(f?.total_bytes);
+    if (f?.backing_devices?.length !== 1 || !(avail >= 0) || !(size > 0)) return {};
+    free += avail;
+    total += size;
+  }
+  return { free, fsTotal: total };
 }
 
 /* Scrutiny's device_status is a bit set: 1 is a failed SMART check, 2 a failed
