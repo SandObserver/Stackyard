@@ -19,10 +19,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Reject a `TRUSTED_PROXY` entry that is not an IP address or network.
 
+- The example Compose file stores config and icons in the `data` and `icons`
+  volumes. Existing installs keep their `./data` and `./icons` lines.
+
+- The health check fails while the API cannot write `/data` or `/icons`.
+
 ### Removed
 
 - Stop attaching a not-affected statement for CVE-2026-107891 to Docker Hub
   images.
+
+### Security
+
+- Run the container as the unprivileged `node` account by default. Root is
+  opt-in with `user: "0:0"`. With host networking or a Linux kernel older than
+  4.11, set `LISTEN_PORT` to 1024 or higher, or run as root.
+
+- Write the config file and its backups readable by their owner only.
 
 ## [1.20.0] - 2026-10-27
 
