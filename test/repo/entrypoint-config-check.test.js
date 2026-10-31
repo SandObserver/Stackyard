@@ -21,14 +21,14 @@ const { execFileSync } = require('node:child_process');
 
 const { tmpDir } = require('../../api/test-support/tmp');
 
-const ENTRYPOINT = path.join(__dirname, '../../docker-entrypoint.sh');
+const { entrypointArgs, LIB } = require('../../api/test-support/entrypoint');
 
 /* Runs the real entrypoint with a stand-in nginx and a handoff command that
    leaves a trace, so "did it get that far" is decidable.
    @returns {{ status: number, started: boolean, checked: string|null }} */
 function run({ nginxExit = 0, env = {} } = {}) {
   const dir = tmpDir('entrypoint');
-  const realip = path.join(dir, 'realip.conf');
+  const realip = path.join(dir, 'run', 'realip.conf');
   const started = path.join(dir, 'started');
   /* What the stand-in saw when it was asked to check, which is how the test
      knows the check ran against the rendered file rather than before it. */
@@ -51,12 +51,9 @@ function run({ nginxExit = 0, env = {} } = {}) {
 
   let status = 0;
   try {
-    execFileSync('sh', [ENTRYPOINT, handoff], {
+    execFileSync('sh', entrypointArgs(dir, {}, [handoff]), {
       env: {
         PATH: `${binDir}:${process.env.PATH}`,
-        REALIP_CONF: realip,
-        LISTEN_CONF: path.join(dir, 'listen-ipv6.inc'),
-        SUPERVISOR_FATAL_MARKER: path.join(dir, 'fatal'),
         SY_REALIP: realip,
         SY_SEEN: seen,
         SY_STARTED: started,
@@ -85,8 +82,8 @@ test('a config nginx accepts starts normally', () => {
    check itself is unchanged: set -eu still stops here, and nginx still prints
    what it rejected. */
 test('the config check is quiet when it passes', () => {
-  const entrypoint = fs.readFileSync(require('node:path').join(__dirname, '../../docker-entrypoint.sh'), 'utf8');
-  assert.match(entrypoint, /^nginx -t -q$/m);
+  const entrypoint = fs.readFileSync(LIB, 'utf8');
+  assert.match(entrypoint, /^\s*nginx -t -q -e stderr$/m);
 });
 
 test('a config nginx rejects stops the container from starting', () => {

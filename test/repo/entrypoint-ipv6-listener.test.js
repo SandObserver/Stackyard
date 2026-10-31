@@ -1,7 +1,7 @@
 /* The IPv6 listener is rendered at container start, not baked into the image.
 
    Some platforms reach the container only over IPv6, so nginx must bind [::]:80
-   as well as the IPv4 listener in dashboard.conf. Binding it unconditionally is
+   as well as the IPv4 listener. Binding it unconditionally is
    not an option: nginx exits when it cannot bind, and a container without IPv6
    would serve nothing at all.
 
@@ -16,13 +16,13 @@ const { execFileSync } = require('node:child_process');
 
 const { tmpDir } = require('../../api/test-support/tmp');
 
-const ENTRYPOINT = path.join(__dirname, '../../docker-entrypoint.sh');
+const { entrypointArgs, LIB } = require('../../api/test-support/entrypoint');
 const DASHBOARD_CONF = path.join(__dirname, '../../nginx/dashboard.conf');
 
 /* @returns {{ status: number, listen: string }} */
 function run({ inet6 = null } = {}) {
   const dir = tmpDir('entrypoint-ipv6');
-  const listen = path.join(dir, 'listen-ipv6.inc');
+  const listen = path.join(dir, 'run', 'listen.conf');
   const binDir = path.join(dir, 'bin');
   fs.mkdirSync(binDir);
 
@@ -45,13 +45,9 @@ function run({ inet6 = null } = {}) {
 
   let status = 0;
   try {
-    execFileSync('sh', [ENTRYPOINT, handoff], {
+    execFileSync('sh', entrypointArgs(dir, { inet6: inet6Path }, [handoff]), {
       env: {
         PATH: `${binDir}:${process.env.PATH}`,
-        REALIP_CONF: path.join(dir, 'realip.conf'),
-        LISTEN_CONF: listen,
-        INET6_PROC: inet6Path,
-        SUPERVISOR_FATAL_MARKER: path.join(dir, 'fatal'),
       },
       stdio: 'pipe',
     });
@@ -68,34 +64,41 @@ test('a container with IPv6 gets the IPv6 listener', () => {
   assert.match(r.listen, /^listen \[::\]:80;$/m);
 });
 
-test('a container without IPv6 gets no listener', () => {
+test('a container without IPv6 gets no IPv6 listener', () => {
   const r = run();
   assert.equal(r.status, 0);
-  assert.doesNotMatch(r.listen, /listen/);
+  assert.doesNotMatch(r.listen, /\[::\]/);
 });
 
 test('an empty if_inet6 counts as no IPv6', () => {
   const r = run({ inet6: '' });
   assert.equal(r.status, 0);
-  assert.doesNotMatch(r.listen, /listen/);
+  assert.doesNotMatch(r.listen, /\[::\]/);
 });
 
 /* The IPv4 listener stays. nginx defaults to ipv6only=on, so [::]:80 does not
    accept IPv4 connections and dropping `listen 80;` would break every other
    deployment. */
-test('dashboard.conf keeps the IPv4 listener and includes the generated file', () => {
+test('the IPv4 listener is rendered with or without IPv6', () => {
+  for (const inet6 of [null, '00000000000000000000000000000001 01 80 10 80 lo\n']) {
+    assert.match(run({ inet6 }).listen, /^listen 80;$/m);
+  }
+});
+
+test('dashboard.conf includes the generated listeners and hard-codes none', () => {
   const conf = fs.readFileSync(DASHBOARD_CONF, 'utf8');
-  assert.match(conf, /^\s*listen 80;$/m);
-  assert.match(conf, /^\s*include \/etc\/nginx\/listen-ipv6\.inc;$/m);
+  assert.match(conf, /^\s*include \/run\/stackyard\/listen\.conf;$/m);
+  assert.doesNotMatch(conf, /^\s*listen /m);
 });
 
 /* Alpine's nginx.conf includes /etc/nginx/http.d/*.conf at the http level,
    where `listen` is rejected and nginx will not start. */
 test('the generated file is outside the http.d glob', () => {
-  const entrypoint = fs.readFileSync(ENTRYPOINT, 'utf8');
-  const fallback = entrypoint.match(/LISTEN_CONF="\$\{LISTEN_CONF:-([^}]+)\}"/);
-  assert.ok(fallback, 'LISTEN_CONF has no default path');
-  assert.doesNotMatch(fallback[1], /http\.d\/.*\.conf$/);
+  const entrypoint = fs.readFileSync(path.join(__dirname, '../../docker-entrypoint.sh'), 'utf8');
+  const runtime = /^stackyard_main (\S+) /m.exec(entrypoint);
+  assert.ok(runtime, 'docker-entrypoint.sh does not call stackyard_main');
+  assert.match(fs.readFileSync(LIB, 'utf8'), /LISTEN_CONF="\$RUNTIME_DIR\/listen\.conf"/);
+  assert.doesNotMatch(runtime[1], /^\/etc\/nginx\/http\.d/);
 });
 
 /* Every file under /proc reports a size of 0, so `test -s` is always false on
@@ -103,7 +106,7 @@ test('the generated file is outside the http.d glob', () => {
    temporary files above are regular files, where -s works, so only the source
    shape can catch this. */
 test('IPv6 is detected by reading if_inet6, not by its reported size', () => {
-  const entrypoint = fs.readFileSync(ENTRYPOINT, 'utf8');
+  const entrypoint = fs.readFileSync(LIB, 'utf8');
   assert.doesNotMatch(entrypoint, /-s\s+"\$INET6_PROC"/);
   assert.match(entrypoint, /cat "\$INET6_PROC"/);
 });

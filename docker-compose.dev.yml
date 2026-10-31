@@ -74,6 +74,8 @@ services:
           action: rebuild
         - path: ./docker-entrypoint.sh
           action: rebuild
+        - path: ./docker-entrypoint-lib.sh
+          action: rebuild
         - path: ./supervisord.conf
           action: rebuild
         - path: ./nginx

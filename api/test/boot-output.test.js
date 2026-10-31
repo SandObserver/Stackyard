@@ -58,6 +58,7 @@ async function boot(env = {}) {
       LOG_LEVEL: 'info',
       TRUST_PROXY: '',
       TRUSTED_PROXY: '',
+      LISTEN_PORT: '',
       ...env,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -92,6 +93,11 @@ test('the banner names the port the container listens on, not the API port', asy
   const out = await boot();
   assert.ok(!out.includes('http://localhost'), 'the guessed URL reached nobody and must be gone');
   assert.match(out, /Dashboard {2}:80 in the container/);
+});
+
+test('the banner follows LISTEN_PORT', async () => {
+  const out = await boot({ LISTEN_PORT: '30543' });
+  assert.match(out, /Dashboard {2}:30543 in the container/);
 });
 
 test('the banner prints the version without a v prefix and without box drawing', async () => {

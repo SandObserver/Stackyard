@@ -39,7 +39,7 @@ test('nothing in the image invokes a package manager', () => {
   /* An invocation is the name used as a command. A preceding slash marks a path
      being deleted, and `command -v` is the removal's own check. */
   const INVOKED = /(?:^|[\s;&|(])(npm|npx|yarn|corepack)\b/;
-  for (const file of ['Dockerfile', 'docker-entrypoint.sh', 'supervisord.conf']) {
+  for (const file of ['Dockerfile', 'docker-entrypoint.sh', 'docker-entrypoint-lib.sh', 'supervisord.conf']) {
     const src = fs.readFileSync(path.join(root, file), 'utf8');
     const invocations = src
       .split('\n')

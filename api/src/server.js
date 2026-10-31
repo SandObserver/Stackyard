@@ -39,7 +39,7 @@ http.createServer(dispatch).listen(PORT, HOST, () => {
   const lines = [
     '',
     `  Stackyard ${version} · Node ${process.version}`,
-    row('Dashboard', ':80 in the container'),
+    row('Dashboard', `:${process.env.LISTEN_PORT || 80} in the container`),
     row('Config', CONFIG_PATH),
     row('Icons', ICONS_PATH),
     row('Widgets', `${widgets.length} loaded`),

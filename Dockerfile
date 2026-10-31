@@ -52,7 +52,20 @@ RUN echo "packages upgraded for ${APP_VERSION}" && \
     rm -f /etc/nginx/conf.d/default.conf /etc/nginx/http.d/default.conf && \
     sed -i 's/^worker_processes auto;$/worker_processes 1;/' /etc/nginx/nginx.conf && \
     grep -qx 'worker_processes 1;' /etc/nginx/nginx.conf && \
-    mkdir -p /var/log/nginx /var/log/supervisor /var/lib/nginx /run/nginx && \
+    # A container started as any UID must start nginx. Each line below names a
+    # path only root can write, or a user switch only root can make.
+    sed -i -e 's|^user nginx;$|include /run/stackyard/nginx-user.conf;|' \
+           -e 's|^error_log /var/log/nginx/error.log warn;$|error_log stderr warn;\npid /run/stackyard/nginx.pid;|' \
+           -e 's|^\taccess_log /var/log/nginx/access.log main;$|\taccess_log off;|' /etc/nginx/nginx.conf && \
+    grep -qx 'include /run/stackyard/nginx-user.conf;' /etc/nginx/nginx.conf && \
+    grep -qx 'error_log stderr warn;' /etc/nginx/nginx.conf && \
+    grep -qx 'pid /run/stackyard/nginx.pid;' /etc/nginx/nginx.conf && \
+    grep -qx '	access_log off;' /etc/nginx/nginx.conf && \
+    ! grep -qE '^\s*(user|error_log|access_log) .*/var/' /etc/nginx/nginx.conf && \
+    mkdir -p /var/log/nginx /var/lib/nginx && \
+    # Any UID must be able to write here. The entrypoint makes it root-only
+    # when the container starts as root.
+    mkdir -p /run/stackyard && chmod 1777 /run/stackyard && \
     # Users mount volumes here. Owned by node so the API can write config and
     # icons without running as root.
     mkdir -p /data /icons && \
@@ -73,9 +86,6 @@ COPY nginx/dashboard.conf /etc/nginx/http.d/dashboard.conf
 COPY nginx/security-headers.conf /etc/nginx/http.d/security-headers.conf
 COPY nginx/csp-default.conf /etc/nginx/http.d/csp-default.conf
 COPY nginx/csp-api.conf /etc/nginx/http.d/csp-api.conf
-# Replaced at container start by docker-entrypoint.sh. Present so the config is
-# valid at build time.
-COPY nginx/realip.conf /etc/nginx/http.d/realip.conf
 
 COPY --from=assets /src/ui/ /usr/share/nginx/html/
 
@@ -104,19 +114,19 @@ EXPOSE 80
 
 # Runs through nginx to Node, so it covers both processes.
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=20s \
-  CMD wget -qO- http://127.0.0.1:80/health > /dev/null || exit 1
+  CMD wget -qO- "http://127.0.0.1:${LISTEN_PORT:-80}/health" > /dev/null || exit 1
 
-# supervisord runs as root to bind port 80. It drops the API process to the node
-# user. See supervisord.conf.
+COPY docker-entrypoint-lib.sh /usr/local/lib/stackyard/entrypoint.sh
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh && \
     # Proves the shipped config parses and that nginx carries the realip module
-    # the entrypoint needs.
-    printf 'listen [::]:80;\n' > /etc/nginx/listen-ipv6.inc && \
-    printf 'set_real_ip_from 127.0.0.1;\nreal_ip_header X-Forwarded-For;\nreal_ip_recursive on;\n' > /etc/nginx/http.d/realip.conf && \
+    # the entrypoint needs. The files are written at container start.
+    mkdir /run/stackyard/nginx && \
+    printf 'user nginx;\n' > /run/stackyard/nginx-user.conf && \
+    printf 'listen 80;\nlisten [::]:80;\n' > /run/stackyard/listen.conf && \
+    printf 'set_real_ip_from 127.0.0.1;\nreal_ip_header X-Forwarded-For;\nreal_ip_recursive on;\n' > /run/stackyard/realip.conf && \
     nginx -t && \
-    printf '# Placeholder, replaced at container start by docker-entrypoint.sh.\n' > /etc/nginx/http.d/realip.conf && \
-    printf '# Placeholder, replaced at container start by docker-entrypoint.sh.\n' > /etc/nginx/listen-ipv6.inc
+    rm -rf /run/stackyard/*
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/stackyard.conf"]

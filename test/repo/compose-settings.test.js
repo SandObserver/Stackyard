@@ -10,8 +10,6 @@ const compose = read('docker-compose.yml');
 
 /* Variables the code reads that an operator is not meant to set. */
 const INTERNAL = {
-  REALIP_CONF:
-    'entrypoint only: where the generated proxy config is written, overridable so the rendering can be tested',
   SUPERVISOR_FATAL_MARKER: 'internal handoff between the supervisord listener and the entrypoint',
 };
 
@@ -68,7 +66,7 @@ test('the Compose hardening is in place', () => {
   assert.match(compose, /cap_drop:\s*\n\s*- ALL/);
   assert.match(compose, /no-new-privileges:true/);
   assert.ok(!/^\s*user:/m.test(compose), 'the Compose file now sets a user');
-  assert.match(read('supervisord.conf'), /^user=node$/m, 'the API should run as node');
+  assert.match(read('docker-entrypoint-lib.sh'), /user=node/, 'started as root, the API should run as node');
 });
 
 /* supervisord runs as root and the API as node. Without KILL, root cannot signal
