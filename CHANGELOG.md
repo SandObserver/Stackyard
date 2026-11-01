@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The health check fails while the API cannot write `/data` or `/icons`.
 
+- Run on Node.js 26.
+
 ### Removed
 
 - Stop attaching a not-affected statement for CVE-2026-107891 to Docker Hub
