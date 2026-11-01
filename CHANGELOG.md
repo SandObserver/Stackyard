@@ -58,9 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- Run the container as the unprivileged `node` account by default. Root is
-  opt-in with `user: "0:0"`. With host networking or a Linux kernel older than
-  4.11, set `LISTEN_PORT` to 1024 or higher, or run as root.
+- Run the container as the unprivileged `node` account by default.
+  With host networking or a Linux kernel older than 4.11, set `LISTEN_PORT` to
+  1024 or higher.
 
 - Write the config file and its backups readable by their owner only.
 
