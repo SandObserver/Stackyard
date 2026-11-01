@@ -90,3 +90,15 @@ test('each bay carries its own status light', () => {
   assert.match(src, /<i class="led" id="led-\$\{i\}"><\/i>/);
   assert.doesNotMatch(src, /id="dots"/);
 });
+
+const fmtFn = src.match(/function fmtCap\(c\)\{.*\}/);
+const freeFn = src.match(/function freeText\(d\) \{[\s\S]*?\n\}/);
+assert.ok(fmtFn && freeFn, 'fmtCap and freeText are defined in the widget');
+const freeText = new Function('wt', 'formatNumber', `${fmtFn[0]}; ${freeFn[0]}; return freeText;`)(
+  (_k, fallback) => fallback,
+  n => String(n),
+);
+
+test('free space is measured against the filesystem size, not the drive size', () => {
+  assert.equal(freeText({ capacity: 4e12, free: 20e9, fsTotal: 100e9 }), '20 GB / 100 GB free');
+});

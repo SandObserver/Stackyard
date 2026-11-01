@@ -12,6 +12,7 @@ export const API = '';
 
 let tt;
 let _toastWired = false;
+let _warnHolds = false;
 /** @type {HTMLElement|null} */
 let _toastReturn = null;
 
@@ -29,15 +30,17 @@ function hideToast() {
 }
 
 /** @param {string} m @param {'ok'|'warn'|'err'} [tone] 'warn' is for an action
-    that worked with a caveat. Neither 'warn' nor 'err' goes away on its own,
-    and an 'ok' never replaces a 'warn'.
+    that worked with a caveat. Neither 'warn' nor 'err' goes away on its own.
+    An 'ok' replaces a 'warn' only after the user next presses a key or a
+    pointer outside the toast, so the same action's success cannot hide it.
     @returns {void} */
 export const toast = (m, tone = 'ok') => {
   const e = el('toast');
   const msg = el('toast-msg');
   if (!e || !msg) return;
   const showing = e.classList.contains('show');
-  if (tone === 'ok' && showing && e.classList.contains('warn')) return;
+  if (tone === 'ok' && _warnHolds && showing && e.classList.contains('warn')) return;
+  _warnHolds = tone === 'warn';
   msg.textContent = m;
   e.className = `show ${tone}`;
   clearTimeout(tt);
@@ -59,6 +62,11 @@ export const toast = (m, tone = 'ok') => {
     e.addEventListener('mouseleave', release);
     e.addEventListener('focusout', release);
     e.addEventListener('click', hideToast);
+    const acted = ev => {
+      if (!e.contains(/** @type {Node|null} */ (ev.target))) _warnHolds = false;
+    };
+    document.addEventListener('pointerdown', acted, true);
+    document.addEventListener('keydown', acted, true);
   }
   const ms = toastHoldMs(tone, m, 'show');
   if (ms != null) tt = setTimeout(hideToast, ms);

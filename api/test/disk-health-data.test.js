@@ -420,6 +420,22 @@ test('a drive with one filesystem of its own reports its free space', async () =
   assert.equal(bay.fsTotal, 3.9e12);
 });
 
+for (const [name, value] of [
+  ['null', null],
+  ['empty', ''],
+  ['true', true],
+]) {
+  test(`a drive whose free space is ${name} reports none`, async () => {
+    const bay = await bayWith([fsOn(['/dev/sda'], 4e12, value)]);
+    assert.equal(bay.free, undefined);
+  });
+}
+
+test('free space given as a number string is read', async () => {
+  const bay = await bayWith([fsOn(['/dev/sda'], '4000000000000', '2600000000000')]);
+  assert.equal(bay.free, 2.6e12);
+});
+
 test('free space adds up every filesystem on the drive', async () => {
   const bay = await bayWith([fsOn(['/dev/sdd'], 480e9, 358e9), fsOn(['/dev/sdd'], 450e9, 149e9)]);
   assert.equal(bay.free, 507e9);
