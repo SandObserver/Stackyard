@@ -100,7 +100,7 @@ async function run(origin) {
         .first()
         .click()
         .catch(() => {});
-      outcomes.add(`${view.name}: save: ${await toastText(page)}`);
+      outcomes.add(`${view.name}: save: ${await noticeText(page)}`);
       await page
         .locator('button:has-text("Back"):visible')
         .first()
@@ -170,16 +170,17 @@ async function run(origin) {
 }
 
 /** @param {import('@playwright/test').Page} page */
-async function toastText(page) {
-  const sel = '#toast-msg';
-  await page
-    .waitForFunction(s => document.querySelector(s)?.textContent?.trim(), sel, { timeout: 3000 })
-    .catch(() => {});
-  const text = await page.evaluate(s => document.querySelector(s)?.textContent?.trim() || '', sel);
-  await page.evaluate(s => {
-    const el = document.querySelector(s);
-    if (el) el.textContent = '';
-  }, sel);
+async function noticeText(page) {
+  const read = () =>
+    document.getElementById('toast-msg')?.textContent?.trim() ||
+    [...document.querySelectorAll('.field-err')].map(n => n.textContent?.trim()).find(Boolean) ||
+    '';
+  await page.waitForFunction(read, null, { timeout: 3000 }).catch(() => {});
+  const text = await page.evaluate(read);
+  await page.evaluate(() => {
+    const msg = document.getElementById('toast-msg');
+    if (msg) msg.textContent = '';
+  });
   return text;
 }
 
