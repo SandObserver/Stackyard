@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support a read-only root filesystem with a tmpfs on `/run/stackyard`.
 
+- Show free space per drive in the Disk Health tooltip with Scrutiny 1.78.0 or
+  later.
+
 ### Changed
 
 - Reject a `TRUSTED_PROXY` entry that is not an IP address or network.
