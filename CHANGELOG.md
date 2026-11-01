@@ -29,10 +29,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Run on Node.js 26.
 
+- Notices for actions that succeeded with a caveat use an amber warning colour
+  instead of red.
+
+- Sign out all devices, and an import that deletes items, focus Cancel first.
+  Deleting an item no longer uses a red button.
+
 ### Removed
 
 - Stop attaching a not-affected statement for CVE-2026-107891 to Docker Hub
   images.
+
+### Fixed
+
+- Admin form errors now appear under the field they refer to, which is marked
+  invalid and focused.
+
+- A wrong current password keeps the password dialog open with the error under
+  the field.
+
+- When the session runs out during a save in a dialog, sign-in opens on top and
+  the save finishes afterwards.
+
+- On phones, notices no longer cover the tab bar, and every notice has a Close
+  button.
 
 ### Security
 
