@@ -171,14 +171,15 @@ async function run(origin) {
 
 /** @param {import('@playwright/test').Page} page */
 async function toastText(page) {
+  const sel = '#toast-msg';
   await page
-    .waitForFunction(() => document.getElementById('toast')?.textContent?.trim(), null, { timeout: 3000 })
+    .waitForFunction(s => document.querySelector(s)?.textContent?.trim(), sel, { timeout: 3000 })
     .catch(() => {});
-  const text = await page.evaluate(() => document.getElementById('toast')?.textContent?.trim() || '');
-  await page.evaluate(() => {
-    const toast = document.getElementById('toast');
-    if (toast) toast.textContent = '';
-  });
+  const text = await page.evaluate(s => document.querySelector(s)?.textContent?.trim() || '', sel);
+  await page.evaluate(s => {
+    const el = document.querySelector(s);
+    if (el) el.textContent = '';
+  }, sel);
   return text;
 }
 
