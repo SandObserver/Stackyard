@@ -3,9 +3,9 @@
 
 import { t } from '/js/i18n.js?v=ed7c5565';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=b0415050';
+import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=97de125a';
 import { createListbox } from '/js/listbox.js?v=f671e6f1';
-import { renderColorControl } from '/js/admin-color-control.js?v=c089c810';
+import { renderColorControl } from '/js/admin-color-control.js?v=da1cd793';
 import {
   seedCarried,
   applyOptionSet,
@@ -288,7 +288,7 @@ function _select(field, value, ctx, config = {}) {
     onChange: v => {
       chosen = v == null ? '' : String(v);
       syncCarried();
-      wrap.dispatchEvent(new Event('change'));
+      row.dispatchEvent(new Event('change', { bubbles: true }));
     },
   });
   row.appendChild(lb.el);
@@ -329,10 +329,12 @@ function _select(field, value, ctx, config = {}) {
       btn.disabled = true;
       try {
         const got = await _fetchOptions(field, ctx);
+        const before = chosen;
         opts = got.options;
         chosen = lb.getValue() || chosen;
         paint();
         syncCarried();
+        if (chosen !== before) row.dispatchEvent(new Event('change', { bubbles: true }));
         status.textContent = _loadedText(got);
         status.className = 'row-status ' + (got.truncated ? 'warn' : 'ok');
       } catch (e) {
@@ -394,7 +396,7 @@ function _pills(field, value) {
         value: sel,
         onChange: v => {
           sel = String(v);
-          wrap.dispatchEvent(new Event('change'));
+          row.dispatchEvent(new Event('change', { bubbles: true }));
         },
       });
       const hadFocus = group.contains(document.activeElement);
@@ -435,7 +437,7 @@ function _multiselect(field, value) {
     summary,
     onChange: v => {
       cur = new Set(v);
-      wrap.dispatchEvent(new Event('change'));
+      row.dispatchEvent(new Event('change', { bubbles: true }));
     },
   });
   row.appendChild(lb.el);

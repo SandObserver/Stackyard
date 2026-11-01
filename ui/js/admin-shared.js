@@ -12,6 +12,21 @@ export const API = '';
 
 let tt;
 let _toastWired = false;
+/** @type {HTMLElement|null} */
+let _toastReturn = null;
+
+function hideToast() {
+  const e = el('toast');
+  if (!e) return;
+  clearTimeout(tt);
+  const active = /** @type {HTMLElement|null} */ (document.activeElement);
+  if (active && e.contains(active)) {
+    if (_toastReturn?.isConnected) _toastReturn.focus();
+    else active.blur();
+  }
+  _toastReturn = null;
+  e.className = '';
+}
 
 /** @param {string} m @param {'ok'|'warn'|'err'} [tone] 'warn' is for an action
     that worked with a caveat. Neither 'warn' nor 'err' goes away on its own,
@@ -29,24 +44,24 @@ export const toast = (m, tone = 'ok') => {
   if (!_toastWired) {
     _toastWired = true;
     const toneOf = () => (e.classList.contains('err') ? 'err' : e.classList.contains('warn') ? 'warn' : 'ok');
-    const hide = () => {
-      clearTimeout(tt);
-      e.className = '';
-    };
     const hold = () => clearTimeout(tt);
     const release = () => {
       clearTimeout(tt);
       const ms = toastHoldMs(toneOf(), msg.textContent || '', 'release');
-      if (ms != null) tt = setTimeout(hide, ms);
+      if (ms != null) tt = setTimeout(hideToast, ms);
     };
     e.addEventListener('mouseenter', hold);
-    e.addEventListener('focusin', hold);
+    e.addEventListener('focusin', ev => {
+      const from = /** @type {HTMLElement|null} */ (ev.relatedTarget);
+      if (from && !e.contains(from)) _toastReturn = from;
+      hold();
+    });
     e.addEventListener('mouseleave', release);
     e.addEventListener('focusout', release);
-    e.addEventListener('click', hide);
+    e.addEventListener('click', hideToast);
   }
   const ms = toastHoldMs(tone, m, 'show');
-  if (ms != null) tt = setTimeout(() => (e.className = ''), ms);
+  if (ms != null) tt = setTimeout(hideToast, ms);
 };
 
 let _fieldErrSeq = 0;
@@ -78,8 +93,9 @@ export function showFieldError(row, message, { focus = true } = {}) {
   box.classList.add('row-invalid');
   const controls = qa('input:not([type="hidden"]), select, textarea, [role="combobox"], button', box);
   for (const c of controls) {
-    if (c.classList.contains('pe') || c.tagName === 'BUTTON') continue;
-    c.setAttribute('aria-invalid', 'true');
+    const pen = c.classList.contains('pe');
+    if (c.tagName === 'BUTTON' && !pen && !c.classList.contains('row-dd-btn')) continue;
+    if (!pen) c.setAttribute('aria-invalid', 'true');
     const ids = (c.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
     c.setAttribute('aria-describedby', [...ids, note.id].join(' '));
   }
@@ -92,7 +108,10 @@ export function showFieldError(row, message, { focus = true } = {}) {
   };
   box.addEventListener('input', clear, { signal: ac.signal });
   box.addEventListener('change', clear, { signal: ac.signal });
-  if (!focus) return;
+  if (!focus) {
+    announce(message);
+    return;
+  }
   const pen = /** @type {HTMLElement|null} */ (box.querySelector('.pe'));
   if (pen && box.classList.contains('ie-row') && !box.classList.contains('editing')) pen.click();
   else {
@@ -105,7 +124,7 @@ export function showFieldError(row, message, { focus = true } = {}) {
 }
 
 /** @param {Element} row */
-function clearFieldError(row) {
+export function clearFieldError(row) {
   if (!row.classList.contains('row-invalid')) return;
   _fieldErrWatch.get(row)?.abort();
   _fieldErrWatch.delete(row);
@@ -113,12 +132,23 @@ function clearFieldError(row) {
   const note = row.nextElementSibling;
   const noteId = note?.classList.contains('field-err') ? note.id : '';
   if (noteId) note?.remove();
-  for (const c of qa('[aria-invalid="true"]', row)) {
-    c.removeAttribute('aria-invalid');
+  for (const c of qa('[aria-invalid="true"]', row)) c.removeAttribute('aria-invalid');
+  if (!noteId) return;
+  for (const c of qa('[aria-describedby]', row)) {
     const ids = (c.getAttribute('aria-describedby') || '').split(/\s+/).filter(id => id && id !== noteId);
     if (ids.length) c.setAttribute('aria-describedby', ids.join(' '));
     else c.removeAttribute('aria-describedby');
   }
+}
+
+/** @param {string} text */
+function announce(text) {
+  const region = el('sr-announce');
+  if (!region) return;
+  region.textContent = '';
+  setTimeout(() => {
+    region.textContent = text;
+  }, 100);
 }
 
 /** @param {ParentNode} root */

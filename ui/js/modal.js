@@ -152,7 +152,21 @@ export function promptModal({
   return new Promise(resolve => {
     /** @type {string|null} */
     let answer = null;
-    const m = openModal({ title, onClose: () => resolve(answer) });
+    /** @type {Promise<{ value: string, refusal: string|null }> | null} */
+    let pending = null;
+    /* A browser closes a busy modal on repeated Escape. The running submit
+       decides the answer, or a write that went through reads as a cancel. */
+    const m = openModal({
+      title,
+      onClose: () => {
+        if (!pending) resolve(answer);
+        else
+          pending.then(
+            r => resolve(r.refusal ? null : r.value),
+            () => resolve(null),
+          );
+      },
+    });
 
     if (text) {
       const lead = document.createElement('p');
@@ -192,22 +206,27 @@ export function promptModal({
       input.removeAttribute('aria-describedby');
     });
 
-    let running = false;
     const accept = async () => {
       const v = password ? input.value : input.value.trim();
-      if (!v || running) return;
+      if (!v || pending) return;
       if (submit) {
-        running = true;
         m.setBusy(true);
+        const run = (async () => {
+          try {
+            return { value: v, refusal: await submit(v) };
+          } finally {
+            m.setBusy(false);
+          }
+        })();
+        pending = run;
         let refusal;
         try {
-          refusal = await submit(v);
+          ({ refusal } = await run);
         } finally {
-          m.setBusy(false);
-          running = false;
+          pending = null;
         }
         if (refusal) {
-          showError(refusal);
+          if (input.isConnected) showError(refusal);
           return;
         }
       }

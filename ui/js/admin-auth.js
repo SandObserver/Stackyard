@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=b0415050';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=97de125a';
 import { initI18n, t } from '/js/i18n.js?v=ed7c5565';
 import { loginErrorKey } from '/js/admin-error.js?v=1c258dc1';
 import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
@@ -23,7 +23,8 @@ export async function checkAuth(onLogin) {
 }
 
 /** Show the sign-in box over whatever is on screen, and resolve once the person
-    is back in. A fixed overlay, so a half-filled editor underneath survives.
+    is back in. A modal dialog, so it stacks above an open dialog and a
+    half-filled editor underneath survives.
 
     @returns {Promise<boolean>} */
 export function requireLogin() {
@@ -32,41 +33,39 @@ export function requireLogin() {
   });
 }
 
-/** @type {Element[]} */
-let madeInert = [];
 /** @type {HTMLElement|null} */
 let focusBefore = null;
 
-/** @param {HTMLElement|null} screen */
-function blockPageBehind(screen) {
-  if (madeInert.length) return;
-  focusBefore = /** @type {HTMLElement|null} */ (document.activeElement);
-  madeInert = [...document.body.children].filter(c => c !== screen && !c.hasAttribute('inert'));
-  madeInert.forEach(c => c.setAttribute('inert', ''));
-}
-
-function unblockPageBehind() {
-  madeInert.forEach(c => c.removeAttribute('inert'));
-  madeInert = [];
-  if (focusBefore?.isConnected && focusBefore !== document.body) focusBefore.focus();
-  focusBefore = null;
-}
-
 function showLoginScreen(onLogin) {
-  const s = el('login-screen');
+  const s = /** @type {HTMLDialogElement|null} */ (el('login-screen'));
   const btn = inpById('login-btn');
   const pw = inpById('login-pw');
   const err = el('login-err');
-  if (s) s.style.display = 'flex';
-  blockPageBehind(s);
+  let signedIn = false;
+  if (s) {
+    s.oncancel = e => e.preventDefault();
+    /* Keep. A browser closes a modal on repeated Escape even when cancel is
+       prevented, which leaves the page without a way to sign in. */
+    s.onclose = () => {
+      if (signedIn || !s.isConnected) return;
+      s.showModal();
+      pw?.focus();
+    };
+    if (!s.open) {
+      focusBefore = /** @type {HTMLElement|null} */ (document.activeElement);
+      s.showModal();
+    }
+  }
 
   async function doLogin() {
     if (btn) btn.disabled = true;
     if (err) err.style.display = 'none';
     try {
       await apiPost('/api/auth/login', { password: pw?.value || '' });
-      if (s) s.style.display = 'none';
-      unblockPageBehind();
+      signedIn = true;
+      s?.close();
+      if (focusBefore?.isConnected && focusBefore !== document.body) focusBefore.focus();
+      focusBefore = null;
       onLogin?.();
     } catch (e) {
       if (err) {

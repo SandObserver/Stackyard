@@ -18,6 +18,7 @@ function fakeToast() {
       for (const c of String(v).split(/\s+/).filter(Boolean)) classes.add(c);
     },
     classList: { contains: c => classes.has(c) },
+    contains: () => false,
     addEventListener(type, fn) {
       listeners[type] = fn;
     },
