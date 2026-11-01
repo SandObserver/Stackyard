@@ -33,6 +33,7 @@
   "ui.diskHealth": "Laufwerkszustand",
   "ui.noSmart": "Keine SMART-Daten",
   "ui.healthy": "In Ordnung",
+  "ui.freeOf": "{free} / {size} frei",
   "ui.failed": "Ausgefallen",
   "ui.bay": "Schacht {n}",
   "ui.bayEmpty": "Schacht {n}: leer",

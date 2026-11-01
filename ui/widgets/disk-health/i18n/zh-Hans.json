@@ -33,6 +33,7 @@
   "ui.diskHealth": "磁盘健康",
   "ui.noSmart": "无 SMART 数据",
   "ui.healthy": "健康",
+  "ui.freeOf": "可用 {free} / {size}",
   "ui.failed": "故障",
   "ui.bay": "硬盘位 {n}",
   "ui.bayEmpty": "硬盘位 {n}：空",

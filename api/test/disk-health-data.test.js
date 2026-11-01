@@ -400,3 +400,54 @@ test('a TrueNAS pool that is gone reads as not found', async () => {
   const { ctx } = truenasCtx('', { bays: ['gone'] });
   assert.equal((await dataFn(ctx)).bays[0].error, 'not found');
 });
+
+const fsOn = (devices, total, available) => ({
+  backing_devices: devices,
+  total_bytes: total,
+  available_bytes: available,
+});
+const bayWith = async filesystems => {
+  const summary = {
+    d1: { device: { device_id: 'd1', model_name: 'D', capacity: 4e12 }, ...(filesystems && { filesystems }) },
+  };
+  const config = { diskProvider: 'scrutiny', scrutinyUrl: 'http://s.local', bays: ['d1'] };
+  return (await dataFn(makeCtx('', config, summaryFetch(summary)))).bays[0];
+};
+
+test('a drive with one filesystem of its own reports its free space', async () => {
+  const bay = await bayWith([fsOn(['/dev/sda'], 3.9e12, 2.6e12)]);
+  assert.equal(bay.free, 2.6e12);
+  assert.equal(bay.fsTotal, 3.9e12);
+});
+
+test('free space adds up every filesystem on the drive', async () => {
+  const bay = await bayWith([fsOn(['/dev/sdd'], 480e9, 358e9), fsOn(['/dev/sdd'], 450e9, 149e9)]);
+  assert.equal(bay.free, 507e9);
+  assert.equal(bay.fsTotal, 930e9);
+});
+
+test('a drive that shares a filesystem with other drives reports no free space', async () => {
+  const bay = await bayWith([fsOn(['/dev/sda'], 1e12, 5e11), fsOn(['/dev/sda', '/dev/sdb'], 8e12, 2e12)]);
+  assert.equal(bay.free, undefined);
+});
+
+test('a drive with a btrfs filesystem reports no free space', async () => {
+  const bay = await bayWith([
+    fsOn(['/dev/sda'], 1e12, 5e11),
+    { ...fsOn(['/dev/sda'], 4e12, 3.2e12), filesystem_type: 'btrfs' },
+  ]);
+  assert.equal(bay.free, undefined);
+});
+
+for (const [name, filesystems] of [
+  ['Scrutiny before 1.78.0 sends no filesystems', undefined],
+  ['the filesystem collector is off', []],
+  ['a filesystem has no backing devices', [fsOn([], 1e12, 5e11)]],
+  ['a filesystem has no available bytes', [{ backing_devices: ['/dev/sda'], total_bytes: 1e12 }]],
+]) {
+  test(`no free space is reported when ${name}`, async () => {
+    const bay = await bayWith(filesystems);
+    assert.equal(bay.free, undefined);
+    assert.equal(bay.model_name, 'D');
+  });
+}
