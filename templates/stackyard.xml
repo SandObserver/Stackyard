@@ -24,188 +24,62 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.20.0 - 2026-10-27
+### 1.21.0 - 2026-11-01
 
 ### Added
 
-- Draw 15 more weather conditions in the Weather widget, from mist to tornadoes.
+- Run the container as any non-root user, with every capability dropped.
 
-- Group the Dashboard list into Dock and Home screen, with drag and drop into
-  and out of the dock.
+- Add `LISTEN_PORT` to set the port nginx listens on inside the container.
 
-- Let the Settings tile go in the dock from its new editor.
+- Support a read-only root filesystem with a tmpfs on `/run/stackyard`.
 
-- Sign in to a live badge's API with a username and password.
-
-- Add a Proxmox health check that shows whether a VM or container is running.
-
-- Add Proxmox VE as a System Summary source.
-
-- Add Unraid as a Disk Health source.
-
-- TrueNAS as a System Summary source.
-
-- Allow Self-Signed Certificate for TrueNAS disk health.
-
-- Add Proxmox Backup Server and Backrest as Backup widget sources.
-
-- Show when a settings list from a service was cut short.
-
-- Weather shows an icon when UV or air quality calls for care, with the reading
-  on hover or tap.
-
-- Read pull requests and contributions from Gitea and Forgejo, and merge
-  requests from GitLab, in the Git widget.
-
-- Downloads widget for qBittorrent, Transmission, Deluge, SABnzbd and NZBGet.
-
-- Up Next widget for Sonarr, Radarr and Lidarr.
-
-- Import apps and folders from gethomepage labels on Docker containers.
-
-- Let widget text fields opt out of capitalisation and autocorrect with
-  `"plain": true`.
-
-- Add a Captain style to the Clock widget, a comic panel with the weekday, time,
-  date and a glass of beer.
+- Show free space per drive in the Disk Health tooltip with Scrutiny 1.78.0 or
+  later.
 
 ### Changed
 
-- Long weather condition labels shrink to fit before they are cut off.
+- Reject a `TRUSTED_PROXY` entry that is not an IP address or network.
 
-- Read numbers sent as text in live badges.
+- The example Compose file stores config and icons in the `data` and `icons`
+  volumes. Existing installs keep their `./data` and `./icons` lines.
 
-- Replace the Docker health checks switch with one Health Checks switch that
-  covers every check type.
+- The health check fails while the API cannot write `/data` or `/icons`.
 
-- TrueNAS disk health reads TrueNAS 25.04 and later over the WebSocket API, so
-  it keeps working on TrueNAS 27.
+- Run on Node.js 26.
 
-- TrueNAS disk health refuses an http address.
-  Change the address to https.
+- Notices for actions that succeeded with a caveat use an amber warning colour
+  instead of red.
 
-- Show the Backup widget's Source setting as a drop-down.
+- Sign out all devices, and an import that deletes items, focus Cancel first.
+  Deleting an item no longer uses a red button.
 
-- Shrink the image by about 24 MB and run one nginx worker instead of one per
-  CPU core.
+### Removed
 
-- Rename the GitHub widget to Git.
-
-- Limit app, folder and widget names to 64 characters.
-
-- Warn in the app form when a link holds a username and password.
-
-- Show press feedback on Settings rows, buttons and the tab bar.
-
-- Glide dragged rows into place.
-
-- Open menus and dialogs with a short animation.
-
-- Make phone pages follow the finger, turn on a quick flick and stretch at the
-  ends.
-
-- Turn pages faster from the keyboard, wheel and page dots.
-
-- Grow folders out of their tile and shrink them back on close.
-
-- Keep fades under Reduce Motion and drop only movement.
-
-- Reduce CPU use of the analog clock, Connections, Now Playing, Weather and
-  Backup animations.
+- Stop attaching a not-affected statement for CVE-2026-107891 to Docker Hub
+  images.
 
 ### Fixed
 
-- Colour swatches no longer spread across the row on small tablets.
+- Admin form errors now appear under the field they refer to, which is marked
+  invalid and focused.
 
-- Chinese Weather widget labels drizzle as 毛毛雨 instead of light rain.
+- A wrong current password keeps the password dialog open with the error under
+  the field.
 
-- Large numbers in GitHub widgets fit again after the dashboard is resized.
+- When the session runs out during a save in a dialog, sign-in opens on top and
+  the save finishes afterwards.
 
-- Widgets no longer show a strip of card at their sides when the card is wider
-  than the widget's design.
-
-- Widget loading placeholders show in high contrast mode.
-
-- Read the Docker API through socket proxies that allow only versioned paths.
-
-- Wrap long names in the import preview instead of scrolling sideways.
-
-- Stop Settings rows and buttons from staying highlighted after a tap.
-
-- Stop iOS from zooming into header fields.
-
-- Stop iOS from capitalising addresses, usernames and System Summary disk names.
-
-- Keep Save on screen when an app has a long name.
-
-- Show addresses from their start in right-to-left languages.
-
-- Stop a dragged row from sticking on screen when the list redraws during the
-  drag.
-
-- Show the start of long right-to-left app names, with the ellipsis at the end.
-
-- Make empty-dashboard text readable on dark wallpapers in light mode.
-
-- Keep typing and clicks working right after closing search.
-
-- Show press feedback on phone app, Dock and folder tiles.
-
-- Wrap long names in phone search.
-
-- Turn the page on a swipe that starts on the phone search pill instead of
-  opening search.
-
-- Stop the dashboard from bouncing on iOS.
-
-- Count both taps when switching Now Playing sessions quickly.
-
-- Put the ellipsis at the end of right-to-left Dashboard Switch names.
-
-- Stop widgets from flashing grey on tap on iOS.
-
-- Show the phone home screen with a correctly sized Dock on phones held
-  sideways.
-
-- Stop iOS Safari from enlarging widget text in landscape.
-
-- Keep the Settings sidebar on short landscape screens and on large screens such
-  as an unfolded phone.
-
-- Stop the home screen from enlarging icons on screens wider than a phone.
-
-- Clock faces no longer show the wrong hour when the clock's timezone falls in
-  the browser's daylight saving change.
-
-- The Digital clock updates as soon as a hidden tab is shown again.
-
-- Widgets declare the dashboard language, so screen readers read their text in
-  that language.
-
-- The Connections map names countries in the dashboard language.
-
-- Credit the photographer and Unsplash on an Unsplash wallpaper, as Unsplash's
-  API terms require.
-
-- Keep the dashboard and Settings clear of the notch and status bar when
-  Safari's page zoom is not 100%.
-
-- The empty dashboard's heading and explanation stay readable on mid-grey
-  wallpapers.
+- On phones, notices no longer cover the tab bar, and every notice has a Close
+  button.
 
 ### Security
 
-- Update Node.js to 24.22.1 and nginx to 1.30.6 to fix four CVEs.
+- Run the container as the unprivileged `node` account by default.
+  With host networking or a Linux kernel older than 4.11, set `LISTEN_PORT` to
+  1024 or higher.
 
-- Stop trusting the compromised eMudhra certificate roots.
-
-- Mark CVE-2026-107891 as not affecting the Docker Hub image, which ships the
-  patched musl 1.2.6-r3.
-
-- Refuse health check pings to link-local addresses, including the cloud
-  metadata service.
-
-- Remove usernames and passwords from links during import.
+- Write the config file and its backups readable by their owner only.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
