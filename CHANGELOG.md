@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.21.0] - 2026-11-01
+
 ### Added
 
 - Run the container as any non-root user, with every capability dropped.
@@ -2266,7 +2268,8 @@ Everything before 1.0.0 was iterative development, condensed here:
 - **i18n**: full localization added
 - **Tooling**: linting, type-checking, test coverage, core docs added
 
-[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.20.0...HEAD
+[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.21.0...HEAD
+[1.21.0]: https://github.com/SandObserver/stackyard/compare/v1.20.0...v1.21.0
 [1.20.0]: https://github.com/SandObserver/stackyard/compare/v1.19.0...v1.20.0
 [1.19.0]: https://github.com/SandObserver/stackyard/compare/v1.18.0...v1.19.0
 [1.18.0]: https://github.com/SandObserver/stackyard/compare/v1.17.0...v1.18.0
