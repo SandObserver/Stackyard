@@ -17,8 +17,8 @@ updates:
         update-types: ["version-update:semver-major"]
 
   # Base image. The Dockerfile pins it by digest, which is what gives this entry
-  # something to raise: a bare `24-alpine` never changes version, so nothing on
-  # the 24 line is ever proposed. Major moves stay manual under the ignore below.
+  # something to raise: a bare `26-alpine` never changes version, so nothing on
+  # the 26 line is ever proposed. Major moves stay manual under the ignore below.
   - package-ecosystem: docker
     directory: /
     schedule:
