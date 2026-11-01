@@ -3,9 +3,9 @@
 
 import { t } from '/js/i18n.js?v=ed7c5565';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=f4752f33';
-import { createListbox } from '/js/listbox.js?v=b9f71853';
-import { renderColorControl } from '/js/admin-color-control.js?v=7d6a7623';
+import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=b0415050';
+import { createListbox } from '/js/listbox.js?v=f671e6f1';
+import { renderColorControl } from '/js/admin-color-control.js?v=c089c810';
 import {
   seedCarried,
   applyOptionSet,
@@ -14,7 +14,7 @@ import {
   groupBounds,
   visibleFieldFlags,
   isPlainField,
-} from '/js/admin-logic.js?v=28471483';
+} from '/js/admin-logic.js?v=07377bf7';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=1c258dc1';
 import { qi } from '/js/utils.js?v=ab3cac1d';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
@@ -477,16 +477,19 @@ function _visible(b) {
   return b.wrap ? b.wrap.classList.contains('open') : b.el.style.display !== 'none';
 }
 
+/** @returns {{ label: string, row: Element }[]} */
 function _missingIn(built) {
   const out = [];
+  const add = b =>
+    out.push({ label: b.field.label, row: b.el.classList.contains('row') ? b.el : b.el.querySelector('.row') || b.el });
   for (const b of built) {
     if (b.field.showIf && !_visible(b)) continue;
     if (b.field.type === 'secret' && !b.field.optional) {
       /* Blank means "keep the stored value". */
-      if (!b.get() && !b.hasStored()) out.push(b.field.label);
+      if (!b.get() && !b.hasStored()) add(b);
       continue;
     }
-    if (requiredFieldMissing(b.field, b.get())) out.push(b.field.label);
+    if (requiredFieldMissing(b.field, b.get())) add(b);
   }
   return out;
 }
@@ -690,7 +693,9 @@ function _group(field, rows, size, ctx) {
     return [field.key, data];
   };
   const missing = () =>
-    rowBuilt.flatMap((built, i) => _missingIn(built).map(l => `${l} (${field.label} ${formatNumber(i + 1)})`));
+    rowBuilt.flatMap((built, i) =>
+      _missingIn(built).map(m => ({ ...m, label: `${m.label} (${field.label} ${formatNumber(i + 1)})` })),
+    );
   return { el: wrap, get, control: null, liveValue: () => null, isGroup: true, missing };
 }
 

@@ -56,7 +56,7 @@ test('deleting from the editor moves focus to Add', async ({ page }) => {
   await rowByName(page, 'Charlie').getByRole('button', { name: /^Edit/ }).click();
   await editorOpened(page);
   await page.locator('#ev-delete').click();
-  await page.locator('dialog .bd-btn').click();
+  await page.locator('dialog').getByRole('button', { name: 'Delete' }).click();
   await expect(page.locator('#dash-edit-view')).toBeHidden();
   await expect(page.locator('#btn-add')).toBeFocused();
 });
