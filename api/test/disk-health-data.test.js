@@ -431,6 +431,14 @@ test('a drive that shares a filesystem with other drives reports no free space',
   assert.equal(bay.free, undefined);
 });
 
+test('a drive with a btrfs filesystem reports no free space', async () => {
+  const bay = await bayWith([
+    fsOn(['/dev/sda'], 1e12, 5e11),
+    { ...fsOn(['/dev/sda'], 4e12, 3.2e12), filesystem_type: 'btrfs' },
+  ]);
+  assert.equal(bay.free, undefined);
+});
+
 for (const [name, filesystems] of [
   ['Scrutiny before 1.78.0 sends no filesystems', undefined],
   ['the filesystem collector is off', []],
