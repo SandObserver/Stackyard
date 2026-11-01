@@ -332,14 +332,15 @@ export function toastMs(message) {
 const TOAST_RELEASE_MS = 1500;
 
 /** How long a notice stays up, or null when it waits to be dismissed. An error
-    carries the server's own words, so it never disappears on its own.
+    carries the server's own words and a warning a caveat, so neither
+    disappears on its own.
 
-    @param {string} kind `'err'` or `'ok'`
+    @param {string} kind `'err'`, `'warn'` or `'ok'`
     @param {string} message
     @param {'show'|'release'} phase shown, or the pointer just left it
     @returns {number|null} */
 export function toastHoldMs(kind, message, phase) {
-  if (kind === 'err') return null;
+  if (kind === 'err' || kind === 'warn') return null;
   return phase === 'release' ? TOAST_RELEASE_MS : toastMs(message);
 }
 

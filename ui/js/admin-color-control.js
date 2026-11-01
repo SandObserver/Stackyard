@@ -1,9 +1,9 @@
-import { PE_SVG, initInlineEdit, toast, reveal } from '/js/admin-shared.js?v=f4752f33';
+import { PE_SVG, initInlineEdit, showFieldError, clearFieldError, reveal } from '/js/admin-shared.js?v=97de125a';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { qa, q } from '/js/utils.js?v=ab3cac1d';
 import { iconSvg } from '/js/icon-set.js?v=26655aca';
-import { createListbox } from '/js/listbox.js?v=b9f71853';
+import { createListbox } from '/js/listbox.js?v=f671e6f1';
 import { HUE_NAMES, ROLE_NAMES, TILE_KEYWORDS, pageTheme, tileColor } from '/js/palette.js?v=3fb8ae43';
 
 const CC_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#0289ff', '#cb30df'];
@@ -196,6 +196,7 @@ export function renderColorControl(
   const hEl = qLocal(`#${idPrefix}-h`),
     sEl = qLocal(`#${idPrefix}-s`),
     vEl = qLocal(`#${idPrefix}-v`);
+  const codeRow = qLocal(`#${idPrefix}-code-row`);
   const codeRv = qLocal(`#${idPrefix}-code-row .rv`);
   const tune = rows.find(r => r.classList.contains('cc-tune'));
   const hidden = document.createElement('input');
@@ -289,6 +290,7 @@ export function renderColorControl(
   }
   const commit = (keep = null) => {
     pristine = keep;
+    clearFieldError(codeRow);
     paint();
     onChange?.(hidden.value);
   };
@@ -337,8 +339,9 @@ export function renderColorControl(
         mode = 'color';
         showTune = true;
         setSliders(parsed);
-      } else if (val) toast(t('toast.colorInvalid'), 'err');
+      }
       commit();
+      if (!hv && val) showFieldError(codeRow, t('toast.colorInvalid'), { focus: false });
     },
   });
   if (mode === 'color') {

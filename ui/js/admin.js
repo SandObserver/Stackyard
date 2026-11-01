@@ -4,11 +4,11 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=925a4b11';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=ec5cd673';
+} from '/js/admin-app-form.js?v=833d5a14';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=9f0b2529';
 import { recoveryShown } from '/js/config-recovery.js?v=85138697';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=511689a7';
-import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=28471483';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=d86433f2';
+import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=07377bf7';
 import {
   afterImport,
   buildAppItem,
@@ -31,7 +31,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=8eb7db69';
+} from '/js/admin-settings.js?v=b4950f2f';
 import {
   apiGet,
   apiPost,
@@ -43,15 +43,17 @@ import {
   responseError,
   ShownError,
   setReauthHandler,
+  showFieldError,
+  clearFieldErrors,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=f4752f33';
+} from '/js/admin-shared.js?v=97de125a';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=a5539971';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=5f70c229';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=75a71ab4';
-import { createListbox } from '/js/listbox.js?v=b9f71853';
+import { createListbox } from '/js/listbox.js?v=f671e6f1';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
 import { loadLocalIcons } from '/js/icons.js?v=5ac01d72';
@@ -69,7 +71,7 @@ import {
 } from '/js/import-foreign.js?v=20baac2a';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { clampName } from '/js/limits.js?v=ea61a441';
-import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6b0320bd';
+import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6df8b6c1';
 import {
   THEME_KEY,
   applyTheme,
@@ -268,7 +270,7 @@ async function writeBackup(file) {
     const notice = [withheldText(r), restoresSettings(file, live) ? t('toast.reloadToFinishRestore') : '']
       .filter(Boolean)
       .join(' ');
-    if (notice) toast(notice, 'err', { pin: true });
+    if (notice) toast(notice, 'warn');
     else toast(t('toast.imported'));
     return true;
   } catch (e) {
@@ -451,7 +453,6 @@ async function _evDelete(item, idx) {
       : t('confirm.remove', { name: isolate(item.label || item.id) }),
     confirmLabel: t('common.delete'),
     cancelLabel: t('common.cancel'),
-    destructive: true,
   });
   if (!ok) return;
   const before = snapshotItems(state.items);
@@ -621,6 +622,7 @@ let _editorSaving = false;
 async function doSave(orig) {
   if (_editorSaving) return;
   _editorSaving = true;
+  clearFieldErrors(el('ev-body'));
   try {
     /** @type {Record<string, any>} */
     let item;
@@ -629,7 +631,7 @@ async function doSave(orig) {
       if (state._autoForm && state._autoFormType === state._wtype && state._widgetReg[state._wtype]) {
         const missing = state._autoForm.validate();
         if (missing.length) {
-          toast(t('toast.fieldRequired', { field: missing[0] }), 'err');
+          showFieldError(missing[0].row, t('toast.fieldRequired', { field: missing[0].label }));
           return;
         }
         item = {
@@ -649,7 +651,7 @@ async function doSave(orig) {
       } else if (state._wtype === 'custom') {
         const url = inp('f-url')?.value?.trim();
         if (!url) {
-          toast(t('toast.urlRequired'), 'err');
+          showFieldError(el('cust-url-row'), t('toast.urlRequired'));
           return;
         }
         const ifo = {};
@@ -681,7 +683,7 @@ async function doSave(orig) {
     } else if (state.ctype === 'folder') {
       const label = clampName(inp('f-fname')?.value?.trim() || '');
       if (!label) {
-        toast(t('toast.nameRequired'), 'err');
+        showFieldError(el('ie-fname'), t('toast.nameRequired'));
         return;
       }
       /* An app belongs to one folder, or the dashboard renders it twice. */
@@ -733,7 +735,7 @@ async function doSave(orig) {
         state.items.map(i => i.id),
       );
       if (res.errorKey) {
-        toast(t(res.errorKey), 'err');
+        showFieldError(el(res.errorKey === 'toast.urlRequired' ? 'ie-url' : 'ie-name'), t(res.errorKey));
         return;
       }
       item = res.item;
@@ -1204,6 +1206,7 @@ el('imp').onchange = async e => {
       confirmLabel: t('common.import'),
       cancelLabel: t('common.cancel'),
       destructive: deleted > 0,
+      irreversible: deleted > 0,
     });
     if (!ok) {
       tgt(e).value = '';

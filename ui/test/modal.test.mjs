@@ -62,6 +62,10 @@ function makeDom() {
     setAttribute(k, v) {
       this.attrs.set(k, v);
     },
+    removeAttribute(k) {
+      this.attrs.delete(k);
+    },
+    select() {},
     append(...kids) {
       for (const k of kids) {
         k.parent = this;
@@ -286,5 +290,139 @@ test('two open dialogs label their headings apart', async () => {
     const a = openModal({ title: 'One' });
     const b = openModal({ title: 'Two' });
     assert.notEqual(a.box.getAttribute('aria-labelledby'), b.box.getAttribute('aria-labelledby'));
+  });
+});
+
+const settle = () => new Promise(r => setImmediate(r));
+
+function deferred() {
+  let resolve;
+  const promise = new Promise(r => {
+    resolve = r;
+  });
+  return { promise, resolve };
+}
+
+const promptParts = box => {
+  const [field, err] = box.children[1].children;
+  return { input: field.children[1], err };
+};
+
+test('a refused submit keeps the prompt open with the reason at the field', async () => {
+  await withDom(async ({ promptModal }, dom) => {
+    const replies = ['Wrong password', null];
+    const answer = promptModal({
+      title: 'T',
+      label: 'Password',
+      password: true,
+      confirmLabel: 'Save',
+      cancelLabel: 'No',
+      submit: async () => replies.shift(),
+    });
+    const box = dialog(dom);
+    const { input, err } = promptParts(box);
+
+    input.value = 'nope';
+    buttons(box)[1].onclick();
+    await settle();
+    assert.equal(box.open, true);
+    assert.equal(err.textContent, 'Wrong password');
+    assert.equal(err.hidden, false);
+    assert.equal(input.getAttribute('aria-invalid'), 'true');
+    assert.equal(input.getAttribute('aria-describedby'), err.id);
+    assert.equal(dom.getActive(), input);
+
+    input._fire('input');
+    assert.equal(err.hidden, true);
+    assert.equal(input.getAttribute('aria-invalid'), null);
+
+    input.value = 'right';
+    buttons(box)[1].onclick();
+    assert.equal(await answer, 'right');
+  });
+});
+
+test('the prompt is busy while its submit runs, and a second press starts nothing', async () => {
+  await withDom(async ({ promptModal }, dom) => {
+    const gate = deferred();
+    let calls = 0;
+    const answer = promptModal({
+      title: 'T',
+      label: 'Name',
+      confirmLabel: 'Save',
+      cancelLabel: 'No',
+      submit: () => {
+        calls++;
+        return gate.promise;
+      },
+    });
+    const box = dialog(dom);
+    const { input } = promptParts(box);
+    input.value = 'x';
+    buttons(box)[1].onclick();
+    input.onkeydown({ key: 'Enter', preventDefault() {} });
+    assert.equal(calls, 1);
+    assert.equal(box.getAttribute('aria-busy'), 'true');
+    assert.equal(buttons(box)[0].disabled, true);
+    assert.equal(input.disabled, true);
+
+    gate.resolve(null);
+    assert.equal(await answer, 'x');
+    assert.equal(box.getAttribute('aria-busy'), 'false');
+  });
+});
+
+test('a prompt the browser closes mid-submit answers once the submit finishes', async () => {
+  await withDom(async ({ promptModal }, dom) => {
+    const gate = deferred();
+    const answer = promptModal({
+      title: 'T',
+      label: 'Name',
+      confirmLabel: 'Save',
+      cancelLabel: 'No',
+      submit: () => gate.promise,
+    });
+    const box = dialog(dom);
+    promptParts(box).input.value = 'kept';
+    buttons(box)[1].onclick();
+    pressEscape(box);
+
+    let settled = false;
+    answer.then(() => {
+      settled = true;
+    });
+    await settle();
+    assert.equal(settled, false, 'no answer before the submit finishes');
+
+    gate.resolve(null);
+    assert.equal(await answer, 'kept');
+  });
+});
+
+test('a prompt the browser closes mid-submit answers null when the submit refuses', async () => {
+  await withDom(async ({ promptModal }, dom) => {
+    const gate = deferred();
+    const answer = promptModal({
+      title: 'T',
+      label: 'Name',
+      confirmLabel: 'Save',
+      cancelLabel: 'No',
+      submit: () => gate.promise,
+    });
+    const box = dialog(dom);
+    promptParts(box).input.value = 'x';
+    buttons(box)[1].onclick();
+    pressEscape(box);
+    gate.resolve('Refused');
+    assert.equal(await answer, null);
+  });
+});
+
+test('an irreversible confirmation gives Cancel the first focus', async () => {
+  await withDom(async ({ confirmModal }, dom) => {
+    confirmModal({ title: 'T', body: dom.el('p'), confirmLabel: 'Go', cancelLabel: 'No', irreversible: true });
+    assert.equal(dom.getActive(), buttons(dialog(dom))[0]);
+    confirmModal({ title: 'T', body: dom.el('p'), confirmLabel: 'Go', cancelLabel: 'No' });
+    assert.equal(dom.getActive(), buttons(dialog(dom))[1]);
   });
 });

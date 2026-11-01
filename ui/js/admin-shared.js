@@ -1,6 +1,6 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
-import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=28471483';
-import { el, isolate, q } from '/js/utils.js?v=ab3cac1d';
+import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=07377bf7';
+import { el, isolate, q, qa } from '/js/utils.js?v=ab3cac1d';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import { errorAdvice } from '/js/admin-error.js?v=1c258dc1';
 import { formatList, formatNumber } from '/js/format-number.js?v=abcd4ae4';
@@ -12,40 +12,149 @@ export const API = '';
 
 let tt;
 let _toastWired = false;
-let _pinned = false;
+/** @type {HTMLElement|null} */
+let _toastReturn = null;
 
-/** @param {string} m @param {'ok'|'err'} [tone]
-    @param {{ pin?: boolean }} [opts] pin: no 'ok' notice replaces it until it is dismissed
-    @returns {void} */
-export const toast = (m, tone = 'ok', { pin = false } = {}) => {
+function hideToast() {
   const e = el('toast');
   if (!e) return;
-  if (tone === 'ok' && _pinned && e.classList.contains('show')) return;
-  _pinned = pin;
-  e.textContent = m;
+  clearTimeout(tt);
+  const active = /** @type {HTMLElement|null} */ (document.activeElement);
+  if (active && e.contains(active)) {
+    if (_toastReturn?.isConnected) _toastReturn.focus();
+    else active.blur();
+  }
+  _toastReturn = null;
+  e.className = '';
+}
+
+/** @param {string} m @param {'ok'|'warn'|'err'} [tone] 'warn' is for an action
+    that worked with a caveat. Neither 'warn' nor 'err' goes away on its own,
+    and an 'ok' never replaces a 'warn'.
+    @returns {void} */
+export const toast = (m, tone = 'ok') => {
+  const e = el('toast');
+  const msg = el('toast-msg');
+  if (!e || !msg) return;
+  const showing = e.classList.contains('show');
+  if (tone === 'ok' && showing && e.classList.contains('warn')) return;
+  msg.textContent = m;
   e.className = `show ${tone}`;
   clearTimeout(tt);
   if (!_toastWired) {
     _toastWired = true;
+    const toneOf = () => (e.classList.contains('err') ? 'err' : e.classList.contains('warn') ? 'warn' : 'ok');
     const hold = () => clearTimeout(tt);
     const release = () => {
       clearTimeout(tt);
-      const ms = toastHoldMs(e.classList.contains('err') ? 'err' : 'ok', e.textContent || '', 'release');
-      if (ms != null) tt = setTimeout(() => (e.className = ''), ms);
+      const ms = toastHoldMs(toneOf(), msg.textContent || '', 'release');
+      if (ms != null) tt = setTimeout(hideToast, ms);
     };
     e.addEventListener('mouseenter', hold);
-    e.addEventListener('focusin', hold);
+    e.addEventListener('focusin', ev => {
+      const from = /** @type {HTMLElement|null} */ (ev.relatedTarget);
+      if (from && !e.contains(from)) _toastReturn = from;
+      hold();
+    });
     e.addEventListener('mouseleave', release);
     e.addEventListener('focusout', release);
-    e.addEventListener('click', () => {
-      clearTimeout(tt);
-      e.className = '';
-      _pinned = false;
-    });
+    e.addEventListener('click', hideToast);
   }
   const ms = toastHoldMs(tone, m, 'show');
-  if (ms != null) tt = setTimeout(() => (e.className = ''), ms);
+  if (ms != null) tt = setTimeout(hideToast, ms);
 };
+
+let _fieldErrSeq = 0;
+/** @type {WeakMap<Element, AbortController>} */
+const _fieldErrWatch = new WeakMap();
+const TEXT_TYPES = new Set(['text', 'url', 'password', 'number', 'search', 'email']);
+
+/** Says under a row what is wrong with its field and marks the field invalid.
+    The message goes once the field is edited. A row not on screen, such as one
+    on another page of a group, falls back to the toast.
+
+    @param {Element|null|undefined} row a `.row`
+    @param {string} message
+    @param {{ focus?: boolean }} [opts] focus: false when called from the
+      field's own blur, or focus is pulled back on every blur.
+    @returns {void} */
+export function showFieldError(row, message, { focus = true } = {}) {
+  if (!row?.isConnected) {
+    toast(message, 'err');
+    return;
+  }
+  clearFieldError(row);
+  const box = /** @type {HTMLElement} */ (row);
+  const note = document.createElement('p');
+  note.className = 'grp-tip in-card field-err';
+  note.id = `field-err-${++_fieldErrSeq}`;
+  note.textContent = message;
+  box.after(note);
+  box.classList.add('row-invalid');
+  const controls = qa('input:not([type="hidden"]), select, textarea, [role="combobox"], button', box);
+  for (const c of controls) {
+    const pen = c.classList.contains('pe');
+    if (c.tagName === 'BUTTON' && !pen && !c.classList.contains('row-dd-btn')) continue;
+    if (!pen) c.setAttribute('aria-invalid', 'true');
+    const ids = (c.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+    c.setAttribute('aria-describedby', [...ids, note.id].join(' '));
+  }
+  const ac = new AbortController();
+  _fieldErrWatch.set(box, ac);
+  const clear = ev => {
+    const tgt = ev.target;
+    if (ev.type === 'change' && tgt instanceof HTMLInputElement && TEXT_TYPES.has(tgt.type)) return;
+    clearFieldError(box);
+  };
+  box.addEventListener('input', clear, { signal: ac.signal });
+  box.addEventListener('change', clear, { signal: ac.signal });
+  if (!focus) {
+    announce(message);
+    return;
+  }
+  const pen = /** @type {HTMLElement|null} */ (box.querySelector('.pe'));
+  if (pen && box.classList.contains('ie-row') && !box.classList.contains('editing')) pen.click();
+  else {
+    const target = /** @type {HTMLElement|undefined} */ (
+      controls.find(c => !c.classList.contains('d-none') && /** @type {HTMLElement} */ (c).offsetParent)
+    );
+    target?.focus();
+  }
+  box.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+
+/** @param {Element} row */
+export function clearFieldError(row) {
+  if (!row.classList.contains('row-invalid')) return;
+  _fieldErrWatch.get(row)?.abort();
+  _fieldErrWatch.delete(row);
+  row.classList.remove('row-invalid');
+  const note = row.nextElementSibling;
+  const noteId = note?.classList.contains('field-err') ? note.id : '';
+  if (noteId) note?.remove();
+  for (const c of qa('[aria-invalid="true"]', row)) c.removeAttribute('aria-invalid');
+  if (!noteId) return;
+  for (const c of qa('[aria-describedby]', row)) {
+    const ids = (c.getAttribute('aria-describedby') || '').split(/\s+/).filter(id => id && id !== noteId);
+    if (ids.length) c.setAttribute('aria-describedby', ids.join(' '));
+    else c.removeAttribute('aria-describedby');
+  }
+}
+
+/** @param {string} text */
+function announce(text) {
+  const region = el('sr-announce');
+  if (!region) return;
+  region.textContent = '';
+  setTimeout(() => {
+    region.textContent = text;
+  }, 100);
+}
+
+/** @param {ParentNode} root */
+export function clearFieldErrors(root) {
+  for (const row of qa('.row-invalid', root)) clearFieldError(row);
+}
 
 /* Carry `kind`, `code` and `detail`, so callers branch on data, never on
    message text. Dropping a field here fails silently: the advice falls back to
@@ -142,7 +251,7 @@ export const apiPost = async (p, b, recover = true) => {
   /* Every config write goes through here, and a withheld credential has to be
      said out loud. */
   const withheld = withheldText(body);
-  if (withheld) toast(withheld, 'err', { pin: true });
+  if (withheld) toast(withheld, 'warn');
   return body;
 };
 

@@ -18,6 +18,7 @@ function fakeToast() {
       for (const c of String(v).split(/\s+/).filter(Boolean)) classes.add(c);
     },
     classList: { contains: c => classes.has(c) },
+    contains: () => false,
     addEventListener(type, fn) {
       listeners[type] = fn;
     },
@@ -25,8 +26,9 @@ function fakeToast() {
 }
 
 const box = fakeToast();
+const msg = fakeToast();
 globalThis.document = {
-  getElementById: id => (id === 'toast' ? box : null),
+  getElementById: id => (id === 'toast' ? box : id === 'toast-msg' ? msg : null),
   querySelectorAll: () => [],
   addEventListener() {},
 };
@@ -40,14 +42,14 @@ function replyWith(body) {
 test('a success notice right after a withheld credential leaves the warning on screen', async () => {
   replyWith({ ok: true, items: [], withheld: [{ id: 'w1', label: 'Shelf' }] });
   await apiPost('/api/config', { items: [] });
-  const warning = box.textContent;
+  const warning = msg.textContent;
   assert.equal(warning, 'toast.secretsWithheld');
 
   toast('Saved');
   toast('Imported');
 
-  assert.equal(box.textContent, warning);
-  assert.ok(box.classList.contains('err'));
+  assert.equal(msg.textContent, warning);
+  assert.ok(box.classList.contains('warn'));
 });
 
 test('dismissing the warning lets the next success notice show', async () => {
@@ -57,7 +59,7 @@ test('dismissing the warning lets the next success notice show', async () => {
 
   toast('Saved');
 
-  assert.equal(box.textContent, 'Saved');
+  assert.equal(msg.textContent, 'Saved');
 });
 
 test('an error still replaces the warning', async () => {
@@ -67,5 +69,5 @@ test('an error still replaces the warning', async () => {
   toast('Save failed', 'err');
   toast('Saved');
 
-  assert.equal(box.textContent, 'Saved');
+  assert.equal(msg.textContent, 'Saved');
 });

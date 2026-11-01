@@ -1,4 +1,14 @@
-import { toast, apiGet, apiPost, errorText, reveal, swapContent, wireInlineEdit } from '/js/admin-shared.js?v=f4752f33';
+import {
+  toast,
+  apiGet,
+  apiPost,
+  errorText,
+  reveal,
+  swapContent,
+  wireInlineEdit,
+  showFieldError,
+  clearFieldErrors,
+} from '/js/admin-shared.js?v=97de125a';
 import { socketProbeAdvice } from '/js/admin-error.js?v=1c258dc1';
 import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
 import { t } from '/js/i18n.js?v=ed7c5565';
@@ -9,12 +19,12 @@ import {
   needsCurrentPassword,
   createDirtyTracker,
   BLOCK,
-} from '/js/admin-logic.js?v=28471483';
-import { confirmText, promptModal } from '/js/modal.js?v=6b0320bd';
+} from '/js/admin-logic.js?v=07377bf7';
+import { confirmText, promptModal } from '/js/modal.js?v=6df8b6c1';
 import { el, inp, setUserText } from '/js/utils.js?v=ab3cac1d';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { serialWrites } from '/js/admin-save-logic.js?v=b83791fb';
-import { renderColorControl } from '/js/admin-color-control.js?v=7d6a7623';
+import { renderColorControl } from '/js/admin-color-control.js?v=da1cd793';
 import { BACKDROP } from '/js/background.js?v=288bfc2a';
 import {
   ALLOWED_HOSTS_MAX,
@@ -296,7 +306,7 @@ export function loadSettings(c) {
       text: t('confirm.revokeSessions'),
       confirmLabel: t('general.signOutEverywhereBtn'),
       cancelLabel: t('common.cancel'),
-      destructive: true,
+      irreversible: true,
     });
     if (!ok) return;
     secRevoke.disabled = true;
@@ -536,11 +546,13 @@ const PASSWORD_ERROR_KEYS = Object.freeze({
   'invalid.password-changed': 'toast.passwordChangedElsewhere',
   'blocked.rate-limit': 'toast.tooManyAttempts',
 });
+const RETRY_IN_DIALOG = new Set(['invalid.current-password', 'blocked.rate-limit']);
 
 async function saveServer() {
   const pw = inp('sec-pw')?.value || '';
   const enabled = inp('sec-en')?.checked || false;
   let socketWarning = '';
+  clearFieldErrors(el('sec-general') || document.body);
 
   /* Ask every rule that can refuse this save before the first request. */
   const blocker = settingsSaveBlocker({
@@ -550,25 +562,29 @@ async function saveServer() {
     strength: pwStrength(pw),
   });
   if (blocker) {
-    if (blocker.reason === BLOCK.NEEDS_PASSWORD) toast(t('toast.authNeedsPassword'), 'err');
-    else toast(t('toast.pwWeak', { label: t(blocker.labelKey) }), 'err');
+    showFieldError(
+      el('ie-pw'),
+      blocker.reason === BLOCK.NEEDS_PASSWORD
+        ? t('toast.authNeedsPassword')
+        : t('toast.pwWeak', { label: t(blocker.labelKey) }),
+    );
     return;
   }
 
   const hostsText = inp('srv-hosts')?.value || '';
   const badHost = firstBadHost(hostsText);
   if (badHost) {
-    toast(t('toast.allowedHostInvalid', { host: badHost }), 'err');
+    showFieldError(el('ie-hosts'), t('toast.allowedHostInvalid', { host: badHost }));
     return;
   }
   const allowedHosts = parseHostList(hostsText);
   if (!allowedHosts) {
-    toast(t('toast.allowedHostsTooMany', { max: formatNumber(ALLOWED_HOSTS_MAX) }), 'err');
+    showFieldError(el('ie-hosts'), t('toast.allowedHostsTooMany', { max: formatNumber(ALLOWED_HOSTS_MAX) }));
     return;
   }
   const here = hostnameOf(location.host);
   if (!enabled && here && !isLocalAddress(here) && !allowedHosts.includes(here)) {
-    toast(t('toast.allowedHostsKeepCurrent', { host: here }), 'err');
+    showFieldError(el('ie-hosts'), t('toast.allowedHostsKeepCurrent', { host: here }));
     return;
   }
 
@@ -591,7 +607,7 @@ async function saveServer() {
     const advice = socketProbeAdvice(probe);
     const socketReason = t(advice.key, advice.vars);
     if (!probe.ok && probe.fatal) {
-      toast(t('toast.socketUrlBad', { reason: socketReason }) + hint, 'err');
+      showFieldError(el('ie-socket'), t('toast.socketUrlBad', { reason: socketReason }) + hint);
       return;
     }
     /* Not answering yet is not the same as wrong. A proxy still starting would
@@ -599,10 +615,15 @@ async function saveServer() {
     if (!probe.ok) socketWarning = t('toast.socketUrlUnverified', { reason: socketReason }) + hint;
   }
 
+  const write = currentPassword => writeServer({ enabled, pw, currentPassword, allowedHosts, socketUrlTyped });
+
+  /** @type {{ langChanged: boolean } | undefined} */
+  let done;
+  /** @type {unknown} */
+  let failure = null;
+
   /* Switching protection off deletes the stored password. Ask before anything
      is written. */
-  /** @type {string|undefined} */
-  let currentPassword;
   const was = { enabled, wasEnabled: _authEnabled, passwordSet: _passwordSet };
   if (needsCurrentPassword({ ...was, newPassword: pw })) {
     const clearing = clearsStoredPassword(was);
@@ -614,67 +635,89 @@ async function saveServer() {
       destructive: clearing,
       confirmLabel: t(clearing ? 'common.delete' : 'common.save'),
       cancelLabel: t('common.cancel'),
+      submit: async currentPassword => {
+        try {
+          done = await write(currentPassword);
+        } catch (e) {
+          const code = /** @type {any} */ (e).code;
+          if (RETRY_IN_DIALOG.has(code)) return t(PASSWORD_ERROR_KEYS[code]);
+          failure = e;
+        }
+        return null;
+      },
     });
     if (answer === null) {
       if (clearing) await syncAuthFromServer();
       return;
     }
-    currentPassword = answer;
+  } else {
+    try {
+      done = await write(undefined);
+    } catch (e) {
+      failure = e;
+    }
   }
 
-  try {
-    /* Keep before the config read. These writes bump the config revision, and
-       a config save built on an earlier read is refused as stale. */
-    if (shouldWritePassword({ enabled, newPassword: pw })) {
-      await apiPost('/api/auth/set-password', { password: pw, currentPassword });
-      const pwEl = inp('sec-pw');
-      if (pwEl) {
-        pwEl.value = '';
-        pwEl.placeholder = `●●●●●●●●●● (${t('common.configured')})`;
-      }
-    }
-    await apiPost('/api/auth/toggle', { enabled, currentPassword, allowedHosts });
-
-    const c = await apiGet('/api/config');
-    c.settings = c.settings || {};
-    const prevLang = c.settings.language || 'en';
-    c.settings.server = {
-      ...c.settings.server,
-      hostIp: inp('srv-ip')?.value?.trim() || '',
-      healthChecks: inp('srv-hc-en')?.checked !== false,
-      socketProxyUrl: socketUrlTyped,
-      hideHealthyBadge: inp('srv-hide-healthy')?.checked !== false,
-      proxmox: readProxmoxForm(),
-      allowedHosts,
-    };
-    c.settings.logLevel = inp('log-level')?.value || 'info';
-    c.settings.language = inp('lang-sel')?.value || 'en';
-    const langChanged = c.settings.language !== prevLang;
-
-    await apiPost('/api/config', c);
-    if (!enabled) {
-      const pwEl = inp('sec-pw');
-      if (pwEl) {
-        pwEl.placeholder = '';
-        /* Whatever was typed was not stored. */
-        pwEl.value = '';
-      }
-    }
-    clearPveSecretInput();
-    _srvTrack?.reset();
-    const after = await apiGet('/api/config').catch(() => null);
-    if (after) showPveSecretState(!!after.settings?.server?.proxmox?.secretSet);
-    toast(socketWarning || t('toast.saved'), socketWarning ? 'err' : 'ok');
-    if (langChanged) {
-      location.reload();
-      return;
-    }
-    /* Read back from the server, never inferred from what was asked for. */
-    await syncAuthFromServer();
-  } catch (e) {
-    const key = PASSWORD_ERROR_KEYS[/** @type {any} */ (e).code];
+  if (failure || !done) {
+    const key = PASSWORD_ERROR_KEYS[/** @type {any} */ (failure)?.code];
     if (key) toast(t(key), 'err');
-    else toast(t('toast.saveFailed', { err: errorText(e) }), 'err');
+    else toast(t('toast.saveFailed', { err: errorText(failure) }), 'err');
     await syncAuthFromServer();
+    return;
   }
+  toast(socketWarning || t('toast.saved'), socketWarning ? 'warn' : 'ok');
+  if (done.langChanged) {
+    location.reload();
+    return;
+  }
+  /* Read back from the server, never inferred from what was asked for. */
+  await syncAuthFromServer();
+}
+
+/** @param {{ enabled: boolean, pw: string, currentPassword: string|undefined,
+              allowedHosts: string[], socketUrlTyped: string }} args
+    @returns {Promise<{ langChanged: boolean }>} */
+async function writeServer({ enabled, pw, currentPassword, allowedHosts, socketUrlTyped }) {
+  /* Keep before the config read. These writes bump the config revision, and
+     a config save built on an earlier read is refused as stale. */
+  if (shouldWritePassword({ enabled, newPassword: pw })) {
+    await apiPost('/api/auth/set-password', { password: pw, currentPassword });
+    const pwEl = inp('sec-pw');
+    if (pwEl) {
+      pwEl.value = '';
+      pwEl.placeholder = `●●●●●●●●●● (${t('common.configured')})`;
+    }
+  }
+  await apiPost('/api/auth/toggle', { enabled, currentPassword, allowedHosts });
+
+  const c = await apiGet('/api/config');
+  c.settings = c.settings || {};
+  const prevLang = c.settings.language || 'en';
+  c.settings.server = {
+    ...c.settings.server,
+    hostIp: inp('srv-ip')?.value?.trim() || '',
+    healthChecks: inp('srv-hc-en')?.checked !== false,
+    socketProxyUrl: socketUrlTyped,
+    hideHealthyBadge: inp('srv-hide-healthy')?.checked !== false,
+    proxmox: readProxmoxForm(),
+    allowedHosts,
+  };
+  c.settings.logLevel = inp('log-level')?.value || 'info';
+  c.settings.language = inp('lang-sel')?.value || 'en';
+  const langChanged = c.settings.language !== prevLang;
+
+  await apiPost('/api/config', c);
+  if (!enabled) {
+    const pwEl = inp('sec-pw');
+    if (pwEl) {
+      pwEl.placeholder = '';
+      /* Whatever was typed was not stored. */
+      pwEl.value = '';
+    }
+  }
+  clearPveSecretInput();
+  _srvTrack?.reset();
+  const after = await apiGet('/api/config').catch(() => null);
+  if (after) showPveSecretState(!!after.settings?.server?.proxmox?.secretSet);
+  return { langChanged };
 }

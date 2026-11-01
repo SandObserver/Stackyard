@@ -640,9 +640,11 @@ test('recoversSession tolerates a missing path', () => {
   assert.equal(recoversSession(null, 200), false);
 });
 
-test('an error waits to be dismissed, in both phases', () => {
+test('an error or a warning waits to be dismissed, in both phases', () => {
   assert.equal(toastHoldMs('err', 'Wallpaper failed: image too large (max 16 MB)', 'show'), null);
   assert.equal(toastHoldMs('err', 'x', 'release'), null);
+  assert.equal(toastHoldMs('warn', 'Imported with a caveat', 'show'), null);
+  assert.equal(toastHoldMs('warn', 'x', 'release'), null);
 });
 
 test('a confirmation still hides itself, and sooner once it has been read', () => {
