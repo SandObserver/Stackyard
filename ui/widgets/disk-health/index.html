@@ -205,7 +205,7 @@ function freeText(d) {
   if (d.free == null) return '';
   return wt('ui.freeOf', '{free} / {size} free')
     .replace('{free}', fmtCap(d.free) || formatNumber(0) + ' GB')
-    .replace('{size}', fmtCap(d.capacity) || fmtCap(d.fsTotal));
+    .replace('{size}', fmtCap(d.fsTotal));
 }
 function shortName(d) {
   const n = (d.device_name || '').replace(/^\/dev\//, '');

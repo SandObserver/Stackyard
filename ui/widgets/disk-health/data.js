@@ -156,6 +156,8 @@ async function diskHealthScrutiny(ctx) {
   return { bays: result, href: ctx.serviceLink(config.scrutinyHref, url), provider: 'scrutiny' };
 }
 
+const byteCount = v => (typeof v === 'number' || (typeof v === 'string' && v.trim() !== '') ? Number(v) : NaN);
+
 /* Free space only when every filesystem sits on this drive alone. A filesystem
    on several drives would count again on each of them. Scrutiny lists a btrfs
    filesystem on several drives under one drive only, so btrfs gets none. */
@@ -164,8 +166,8 @@ function scrutinySpace(list) {
   let free = 0;
   let total = 0;
   for (const f of list) {
-    const avail = Number(f?.available_bytes);
-    const size = Number(f?.total_bytes);
+    const avail = byteCount(f?.available_bytes);
+    const size = byteCount(f?.total_bytes);
     if (f?.backing_devices?.length !== 1 || f.filesystem_type === 'btrfs' || !(avail >= 0) || !(size > 0)) {
       return {};
     }

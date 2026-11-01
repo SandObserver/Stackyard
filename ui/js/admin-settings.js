@@ -8,7 +8,7 @@ import {
   wireInlineEdit,
   showFieldError,
   clearFieldErrors,
-} from '/js/admin-shared.js?v=97de125a';
+} from '/js/admin-shared.js?v=c0852eae';
 import { socketProbeAdvice } from '/js/admin-error.js?v=1c258dc1';
 import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
 import { t } from '/js/i18n.js?v=ed7c5565';
@@ -24,7 +24,7 @@ import { confirmText, promptModal } from '/js/modal.js?v=6df8b6c1';
 import { el, inp, setUserText } from '/js/utils.js?v=ab3cac1d';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { serialWrites } from '/js/admin-save-logic.js?v=b83791fb';
-import { renderColorControl } from '/js/admin-color-control.js?v=da1cd793';
+import { renderColorControl } from '/js/admin-color-control.js?v=05ddafec';
 import { BACKDROP } from '/js/background.js?v=288bfc2a';
 import {
   ALLOWED_HOSTS_MAX,

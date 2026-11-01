@@ -27,10 +27,13 @@ function fakeToast() {
 
 const box = fakeToast();
 const msg = fakeToast();
+const docListeners = {};
 globalThis.document = {
   getElementById: id => (id === 'toast' ? box : id === 'toast-msg' ? msg : null),
   querySelectorAll: () => [],
-  addEventListener() {},
+  addEventListener(type, fn) {
+    docListeners[type] = fn;
+  },
 };
 
 const { apiPost, toast } = await import('../js/admin-shared.js');
@@ -71,3 +74,16 @@ test('an error still replaces the warning', async () => {
 
   assert.equal(msg.textContent, 'Saved');
 });
+
+for (const type of ['pointerdown', 'keydown']) {
+  test(`after a ${type}, the next success notice replaces the warning`, async () => {
+    toast('Socket URL could not be verified', 'warn');
+    toast('Saved');
+    assert.equal(msg.textContent, 'Socket URL could not be verified');
+
+    docListeners[type]({ target: {} });
+    toast('Saved');
+
+    assert.equal(msg.textContent, 'Saved');
+  });
+}
