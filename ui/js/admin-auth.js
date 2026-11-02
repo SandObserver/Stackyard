@@ -1,9 +1,9 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=c0852eae';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=e9169387';
 import { initI18n, t } from '/js/i18n.js?v=ed7c5565';
 import { loginErrorKey } from '/js/admin-error.js?v=1c258dc1';
 import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
 import { el, inp as inpById, qa } from '/js/utils.js?v=ab3cac1d';
-import { blockingScreenFor } from '/js/config-recovery.js?v=85138697';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=56207b2c';
 
 export async function checkAuth(onLogin) {
   try {
@@ -68,6 +68,13 @@ function showLoginScreen(onLogin) {
       focusBefore = null;
       onLogin?.();
     } catch (e) {
+      const screen = blockingScreenFor(e);
+      if (screen) {
+        signedIn = true;
+        s?.close();
+        await showBlockingScreen(screen);
+        return;
+      }
       if (err) {
         err.textContent = t(loginErrorKey(e));
         err.style.display = 'block';

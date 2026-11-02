@@ -56,6 +56,11 @@ services:
       # Memory used per password hash. Default 16mib suits small hardware;
       # raise it if you can, for example 64mib. See https://stackyard.sandobserver.com/docs/security/.
       - PASSWORD_HASH_MEMORY=${PASSWORD_HASH_MEMORY:-}
+      # Sets the dashboard password on the first start only, 8 to 1024
+      # characters. In this file or in .env, write a $ as $$. The value stays
+      # visible in the container's environment; INITIAL_PASSWORD_FILE reads
+      # it from a file instead.
+      - INITIAL_PASSWORD=${INITIAL_PASSWORD:-}
       # Turns the SSRF guard off, so badges and widgets may reach private, LAN
       # and loopback addresses. Most homelab installs need it, because the
       # services they point at live on private IPs. See https://stackyard.sandobserver.com/docs/security/.

@@ -33,10 +33,10 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=c0852eae';
+} from '/js/admin-shared.js?v=e9169387';
 import { createListbox } from '/js/listbox.js?v=f671e6f1';
 import { MAX_LABELS } from '/js/badge-logic.js?v=85b1bc96';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=05ddafec';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=77ac872b';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=1c258dc1';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { iconSvg } from '/js/icon-set.js?v=26655aca';

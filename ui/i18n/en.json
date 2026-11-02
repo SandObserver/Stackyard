@@ -355,11 +355,24 @@
     "title": "Stackyard does not answer on this address",
     "why": "No password is set, so Stackyard answers only on IP addresses, local names and addresses you allow. <code>{host}</code> is not one of them.",
     "safe": "This stops web pages on other sites from pointing their own address at Stackyard and changing your settings.",
-    "stepsTitle": "To fix it",
+    "otherWays": "Other ways",
     "stepOpen": "Open Stackyard by its IP address, or by an address you already allowed.",
     "stepAllow": "In Settings, General, add <code>{host}</code> to Allowed Addresses and save.",
-    "stepPassword": "Or set a password in Settings. With a password, Stackyard answers on every address.",
-    "stillBlocked": "This address is still not allowed."
+    "stillBlocked": "This address is still not allowed.",
+    "setupTitle": "Set a password here",
+    "setupHelp": "Enter the setup code from the container log. Stackyard prints it when it first refuses an address, and makes a new one at each restart.",
+    "code": "Setup code",
+    "codeWrong": "The setup code is incorrect. Copy it again from the container log.",
+    "tooShort": "Use at least 8 characters.",
+    "codeMissing": "Enter the setup code from the container log.",
+    "tooLong": "Use at most 1024 characters."
+  },
+  "passwordDamaged": {
+    "title": "No password works",
+    "why": "The saved dashboard password is damaged, so Stackyard cannot check any password.",
+    "safe": "The dashboard stays locked. Only someone who can read the container log can set a new password.",
+    "setupHelp": "Enter the setup code from the container log. Stackyard prints it when you try to sign in, and makes a new one at each restart.",
+    "still": "The saved password is still damaged."
   },
   "toast": {
     "saved": "Saved",

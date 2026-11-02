@@ -355,11 +355,24 @@
     "title": "Stackyard antwortet nicht unter dieser Adresse",
     "why": "Es ist kein Passwort festgelegt. Deshalb antwortet Stackyard nur unter IP-Adressen, lokalen Namen und Adressen, die du erlaubst. <code>{host}</code> gehört nicht dazu.",
     "safe": "So können fremde Websites ihre Adresse nicht auf Stackyard zeigen lassen und deine Einstellungen ändern.",
-    "stepsTitle": "So behebst du es",
+    "otherWays": "Andere Wege",
     "stepOpen": "Öffne Stackyard über seine IP-Adresse oder über eine Adresse, die du bereits erlaubt hast.",
     "stepAllow": "Füge unter Einstellungen > Allgemein <code>{host}</code> zu „Erlaubte Adressen“ hinzu und speichere.",
-    "stepPassword": "Oder lege in den Einstellungen ein Passwort fest. Mit Passwort antwortet Stackyard unter jeder Adresse.",
-    "stillBlocked": "Diese Adresse ist weiterhin nicht erlaubt."
+    "stillBlocked": "Diese Adresse ist weiterhin nicht erlaubt.",
+    "setupTitle": "Hier ein Passwort festlegen",
+    "setupHelp": "Gib den Einrichtungscode aus dem Container-Log ein. Stackyard schreibt ihn ins Log, sobald es zum ersten Mal eine Adresse ablehnt, und erzeugt bei jedem Neustart einen neuen.",
+    "code": "Einrichtungscode",
+    "codeWrong": "Der Einrichtungscode ist falsch. Kopiere ihn erneut aus dem Container-Log.",
+    "tooShort": "Verwende mindestens 8 Zeichen.",
+    "codeMissing": "Gib den Einrichtungscode aus dem Container-Log ein.",
+    "tooLong": "Verwende höchstens 1024 Zeichen."
+  },
+  "passwordDamaged": {
+    "title": "Kein Passwort funktioniert",
+    "why": "Das gespeicherte Passwort des Dashboards ist beschädigt. Stackyard kann daher kein Passwort prüfen.",
+    "safe": "Das Dashboard bleibt gesperrt. Nur wer das Container-Log lesen kann, kann ein neues Passwort festlegen.",
+    "setupHelp": "Gib den Einrichtungscode aus dem Container-Log ein. Stackyard schreibt ihn ins Log, wenn du dich anmelden willst, und erzeugt bei jedem Neustart einen neuen.",
+    "still": "Das gespeicherte Passwort ist weiterhin beschädigt."
   },
   "toast": {
     "saved": "Gespeichert",

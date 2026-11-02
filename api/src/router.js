@@ -2,10 +2,12 @@ const { isAuthenticated, refreshSession } = require('./auth');
 const { configDamage } = require('./config');
 const { DAMAGE_CODES, HOST_BLOCKED_CODE } = require('../../ui/js/config-recovery-logic.js');
 const { refusedHost } = require('./host-check');
+const setupCode = require('./setup-code');
 const log = require('./log');
 const { tryDecode } = require('./percent-decode');
 
-const PUBLIC_PATHS = new Set(['/health', '/api/auth/login', '/api/auth/check']);
+const SETUP_PATH = '/api/auth/setup-password';
+const PUBLIC_PATHS = new Set(['/health', '/api/auth/login', '/api/auth/check', SETUP_PATH]);
 
 const routes = [];
 function on(m, p, h) {
@@ -51,9 +53,10 @@ function route(req, res) {
     }
   }
 
-  if (u.pathname !== '/health') {
+  if (u.pathname !== '/health' && u.pathname !== SETUP_PATH) {
     const host = refusedHost(req);
     if (host !== null) {
+      setupCode.announce();
       return json(res, 403, {
         error: 'Forbidden: this address is not allowed while no password is set',
         kind: 'blocked',

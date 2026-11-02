@@ -5,6 +5,7 @@
 const DOCS = 'https://stackyard.sandobserver.com/docs/troubleshooting/';
 export const HELP_URL = `${DOCS}#stackyard-cannot-read-its-settings-file`;
 export const HOST_HELP_URL = `${DOCS}#stackyard-does-not-answer-on-this-address`;
+export const PASSWORD_HELP_URL = `${DOCS}#no-password-works`;
 
 export const DAMAGE_CODES = Object.freeze({
   corrupt: 'internal.config-corrupt',
@@ -15,6 +16,7 @@ export const DAMAGE_CODES = Object.freeze({
 const FILE_NAME = /^[^\u0000-\u001f\u007f/\\]{1,255}$/;
 
 export const HOST_BLOCKED_CODE = 'blocked.host';
+export const PASSWORD_DAMAGED_CODE = 'auth.password-damaged';
 
 /** The address an API error body refuses, or null when it refuses none.
     @param {unknown} body @returns {{ host: string } | null} */
@@ -76,6 +78,16 @@ export function recoverySteps({ reason, file, backup }) {
   return steps;
 }
 
+/** The message for a refused setup attempt.
+    @param {unknown} body @returns {string} an i18n key */
+export function setupCodeErrorKey(body) {
+  const code = body && typeof body === 'object' ? /** @type {Record<string, any>} */ (body).code : undefined;
+  if (code === 'invalid.setup-code') return 'hostBlock.codeWrong';
+  if (code === 'invalid.password-short') return 'hostBlock.tooShort';
+  if (code === 'invalid.password-long') return 'hostBlock.tooLong';
+  return 'setup.failed';
+}
+
 /** The first browser language Stackyard ships, else English. The saved
     language is in the file that cannot be read.
     @param {readonly string[]} preferred @param {readonly string[]} supported
@@ -108,6 +120,22 @@ export function screenFor(body, fallbackHost = '') {
       still: 'configRecovery.stillDamaged',
       logHint: true,
       help: HELP_URL,
+      setup: false,
+      setupHelp: '',
+    };
+  }
+  if (body && typeof body === 'object' && /** @type {Record<string, any>} */ (body).code === PASSWORD_DAMAGED_CODE) {
+    return {
+      title: 'passwordDamaged.title',
+      why: { key: 'passwordDamaged.why' },
+      safe: 'passwordDamaged.safe',
+      stepsTitle: 'hostBlock.otherWays',
+      steps: [{ key: 'configRecovery.stepExport', vars: { file: 'apps.json' } }, { key: 'configRecovery.stepCheck' }],
+      still: 'passwordDamaged.still',
+      logHint: false,
+      help: PASSWORD_HELP_URL,
+      setup: true,
+      setupHelp: 'passwordDamaged.setupHelp',
     };
   }
   const block = readHostBlock(body);
@@ -117,16 +145,17 @@ export function screenFor(body, fallbackHost = '') {
       title: 'hostBlock.title',
       why: { key: 'hostBlock.why', vars: { host } },
       safe: 'hostBlock.safe',
-      stepsTitle: 'hostBlock.stepsTitle',
+      stepsTitle: 'hostBlock.otherWays',
       steps: [
         { key: 'hostBlock.stepOpen' },
         { key: 'hostBlock.stepAllow', vars: { host } },
-        { key: 'hostBlock.stepPassword' },
         { key: 'configRecovery.stepCheck' },
       ],
       still: 'hostBlock.stillBlocked',
       logHint: false,
       help: HOST_HELP_URL,
+      setup: true,
+      setupHelp: 'hostBlock.setupHelp',
     };
   }
   return null;

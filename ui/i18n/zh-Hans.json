@@ -348,11 +348,24 @@
     "title": "Stackyard 不在此地址上响应",
     "why": "尚未设置密码，因此 Stackyard 只在 IP 地址、本地名称和你允许的地址上响应。<code>{host}</code> 不在其中。",
     "safe": "这可以防止其他网站的网页把自己的地址指向 Stackyard 并更改你的设置。",
-    "stepsTitle": "修复方法",
+    "otherWays": "其他方法",
     "stepOpen": "通过 IP 地址或你已允许的地址打开 Stackyard。",
     "stepAllow": "在“设置”的“通用”中，将 <code>{host}</code> 添加到“允许的地址”并保存。",
-    "stepPassword": "或者在设置中设置密码。设置密码后，Stackyard 在任何地址上都会响应。",
-    "stillBlocked": "仍不允许此地址。"
+    "stillBlocked": "仍不允许此地址。",
+    "setupTitle": "在此设置密码",
+    "setupHelp": "输入容器日志中的设置码。Stackyard 首次拒绝某个地址时会将其写入日志，每次重启都会生成新的设置码。",
+    "code": "设置码",
+    "codeWrong": "设置码不正确。请从容器日志中重新复制。",
+    "tooShort": "请至少使用 8 个字符。",
+    "codeMissing": "请输入容器日志中的设置码。",
+    "tooLong": "最多使用 1024 个字符。"
+  },
+  "passwordDamaged": {
+    "title": "所有密码都无法使用",
+    "why": "已保存的仪表板密码已损坏，因此 Stackyard 无法验证任何密码。",
+    "safe": "仪表板保持锁定。只有能读取容器日志的人才能设置新密码。",
+    "setupHelp": "输入容器日志中的设置码。你尝试登录时 Stackyard 会将其写入日志，每次重启都会生成新的设置码。",
+    "still": "已保存的密码仍然损坏。"
   },
   "toast": {
     "saved": "已保存",
