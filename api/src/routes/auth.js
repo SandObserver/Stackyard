@@ -1,4 +1,4 @@
-const { on, json, readBody, checkOrigin, getIp } = require('../router');
+const { on, json, readBody, checkOrigin, getIp, AUTH_BODY_LIMIT } = require('../router');
 const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, loadConfigForUpdate, saveConfig } = require('../config');
 const log = require('../log');
@@ -57,7 +57,7 @@ on('POST', '/api/auth/login', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   const ip = getIp(req);
   try {
-    const { password = '' } = JSON.parse(await readBody(req));
+    const { password = '' } = JSON.parse(await readBody(req, AUTH_BODY_LIMIT));
     const cfg = loadConfig();
     if (!authActive(cfg)) return json(res, 200, { ok: true });
     const hash = cfg.settings.auth.passwordHash;
@@ -145,7 +145,7 @@ on('POST', '/api/auth/set-password', async (req, res) => {
     if (storedHash && !hasValidSession(req)) {
       return json(res, 401, { error: 'Authentication required to change the existing password.', kind: KIND.AUTH });
     }
-    const { password = '', currentPassword } = JSON.parse(await readBody(req));
+    const { password = '', currentPassword } = JSON.parse(await readBody(req, AUTH_BODY_LIMIT));
     if (typeof password !== 'string' || password.length < PASSWORD_MIN)
       return json(res, 400, { error: `Password must be at least ${PASSWORD_MIN} characters.`, kind: KIND.INVALID });
     if (password.length > PASSWORD_MAX)
@@ -215,7 +215,7 @@ on('POST', '/api/auth/toggle', async (req, res) => {
   if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED, code: 'blocked.read-only' });
   if (!checkOrigin(req, res)) return;
   try {
-    const { enabled, currentPassword, allowedHosts } = JSON.parse(await readBody(req));
+    const { enabled, currentPassword, allowedHosts } = JSON.parse(await readBody(req, AUTH_BODY_LIMIT));
     /* Only a real true or false. Turning protection off deletes the password,
        so an unclear body must change nothing rather than read as "off". */
     if (typeof enabled !== 'boolean') {
