@@ -1,7 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { DAMAGE_CODES, fillNames, pickLanguage, readConfigDamage, recoverySteps } from '../js/config-recovery-logic.js';
+import {
+  DAMAGE_CODES,
+  fillNames,
+  pickLanguage,
+  readConfigDamage,
+  recoverySteps,
+  screenFor,
+  setupCodeErrorKey,
+} from '../js/config-recovery-logic.js';
 
 const en = JSON.parse(fs.readFileSync(new URL('../i18n/en.json', import.meta.url), 'utf8'));
 
@@ -80,4 +88,32 @@ test('picks the browser language Stackyard ships, else English', () => {
   assert.equal(pickLanguage(['ja', 'fr-CA'], supported), 'fr');
   assert.equal(pickLanguage(['ja'], supported), 'en');
   assert.equal(pickLanguage([], supported), 'en');
+});
+
+test('the refused-address and damaged-password screens offer the setup form, each with its own help', () => {
+  const host = screenFor({ code: 'blocked.host', detail: { host: 'x.example' } });
+  const damaged = screenFor({ code: 'auth.password-damaged', kind: 'auth' });
+  assert.equal(host.setup, true);
+  assert.equal(damaged.setup, true);
+  assert.equal(screenFor({ code: DAMAGE_CODES.corrupt, detail: { file: 'apps.json' } }).setup, false);
+  assert.notEqual(host.setupHelp, damaged.setupHelp);
+  const has = key => key.split('.').reduce((o, k) => o?.[k], en) !== undefined;
+  for (const key of [
+    damaged.title,
+    damaged.why.key,
+    damaged.safe,
+    damaged.still,
+    damaged.setupHelp,
+    damaged.stepsTitle,
+  ])
+    assert.ok(has(key), key);
+  assert.equal(screenFor({ code: 'auth', kind: 'auth' }), null);
+});
+
+test('a refused setup names the right fix', () => {
+  assert.equal(setupCodeErrorKey({ code: 'invalid.setup-code' }), 'hostBlock.codeWrong');
+  assert.equal(setupCodeErrorKey({ code: 'invalid.password-short' }), 'hostBlock.tooShort');
+  assert.equal(setupCodeErrorKey({ code: 'invalid.password-long' }), 'hostBlock.tooLong');
+  assert.equal(setupCodeErrorKey({ code: 'invalid' }), 'setup.failed');
+  assert.equal(setupCodeErrorKey(null), 'setup.failed');
 });

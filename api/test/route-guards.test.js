@@ -17,7 +17,7 @@ const { saveConfig } = require('../src/config');
 const { hashPassword, makeToken } = require('../src/auth');
 
 const SECRET = 'b'.repeat(64);
-const PUBLIC = new Set(['/health', '/api/auth/login', '/api/auth/check']);
+const PUBLIC = new Set(['/health', '/api/auth/login', '/api/auth/check', '/api/auth/setup-password']);
 const routes = _routeTable();
 const writes = routes.filter(r => r.method !== 'GET');
 const concrete = p => p.replace(/:[^/]+/g, 'x');

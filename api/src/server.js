@@ -29,7 +29,11 @@ const { dispatch } = require('./router');
    client address nginx resolves rate limiting counts every caller as one. */
 const HOST = '127.0.0.1';
 
-http.createServer(dispatch).listen(PORT, HOST, () => {
+/* The password must be stored before the first request is answered. Until
+   then the dashboard is open to anyone. */
+applyInitialPassword().then(() => http.createServer(dispatch).listen(PORT, HOST, onListening));
+
+function onListening() {
   const { CONFIG_PATH, ICONS_PATH } = require('./config');
   const { getRegistry } = require('./widgets');
   const pkg = require('../package.json');
@@ -67,4 +71,14 @@ http.createServer(dispatch).listen(PORT, HOST, () => {
         'TRUST_PROXY without TRUSTED_PROXY trusts forwarded headers from any client and rate-limits all traffic as one; set TRUSTED_PROXY to the proxy address, for example TRUSTED_PROXY=172.18.0.0/16, in the environment section of docker-compose.yml. See https://stackyard.sandobserver.com/docs/reverse-proxy/.',
       );
   }
-});
+}
+
+async function applyInitialPassword() {
+  const { IS_DEMO } = require('./demo');
+  if (IS_DEMO) return;
+  try {
+    await require('./setup-code').applyInitialPassword();
+  } catch (e) {
+    log.warn('could not apply INITIAL_PASSWORD', { error: e.message });
+  }
+}

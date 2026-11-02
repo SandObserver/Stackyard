@@ -11,6 +11,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const fs = require('node:fs');
 const net = require('node:net');
+const http = require('node:http');
 const { spawn } = require('node:child_process');
 const { tmpDir } = require('../test-support/tmp');
 
@@ -153,4 +154,37 @@ test('TRUST_PROXY without TRUSTED_PROXY warns exactly once, naming the fix', asy
 test('a correctly configured boot warns about neither', async () => {
   const out = await boot();
   assert.deepEqual(trustWarnings(out), []);
+});
+
+test('INITIAL_PASSWORD is stored before the first request is answered', async () => {
+  const port = await freePort();
+  const child = spawn(process.execPath, [SERVER], {
+    env: {
+      ...process.env,
+      PORT: String(port),
+      CONFIG_PATH: path.join(tmpDir('boot-initial'), 'apps.json'),
+      WIDGETS_PATH: widgetsDir(),
+      INITIAL_PASSWORD: 'starting-password',
+      INITIAL_PASSWORD_FILE: '',
+    },
+    stdio: 'ignore',
+  });
+  const get = () =>
+    new Promise(resolve => {
+      const req = http.get({ host: '127.0.0.1', port, path: '/api/config' }, res => {
+        res.resume();
+        resolve(res.statusCode);
+      });
+      req.on('error', () => resolve(null));
+    });
+  try {
+    let first = null;
+    for (let i = 0; i < 3000 && first === null; i++) {
+      first = await get();
+      if (first === null) await new Promise(r => setTimeout(r, 5));
+    }
+    assert.equal(first, 401);
+  } finally {
+    child.kill('SIGKILL');
+  }
 });

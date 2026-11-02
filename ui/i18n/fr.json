@@ -362,11 +362,24 @@
     "title": "Stackyard ne répond pas à cette adresse",
     "why": "Aucun mot de passe n’est défini : Stackyard ne répond donc qu’aux adresses IP, aux noms locaux et aux adresses que vous autorisez. <code>{host}</code> n’en fait pas partie.",
     "safe": "Cela empêche des pages d’autres sites de faire pointer leur propre adresse vers Stackyard et de modifier vos réglages.",
-    "stepsTitle": "Pour corriger",
+    "otherWays": "Autres solutions",
     "stepOpen": "Ouvrez Stackyard par son adresse IP, ou par une adresse déjà autorisée.",
     "stepAllow": "Dans Réglages, Général, ajoutez <code>{host}</code> aux Adresses autorisées et enregistrez.",
-    "stepPassword": "Ou définissez un mot de passe dans les Réglages. Avec un mot de passe, Stackyard répond à toutes les adresses.",
-    "stillBlocked": "Cette adresse n’est toujours pas autorisée."
+    "stillBlocked": "Cette adresse n’est toujours pas autorisée.",
+    "setupTitle": "Définir un mot de passe ici",
+    "setupHelp": "Saisissez le code de configuration du journal du conteneur. Stackyard l’écrit la première fois qu’il refuse une adresse et en crée un nouveau à chaque redémarrage.",
+    "code": "Code de configuration",
+    "codeWrong": "Le code de configuration est incorrect. Copiez-le à nouveau depuis le journal du conteneur.",
+    "tooShort": "Utilisez au moins 8 caractères.",
+    "codeMissing": "Saisissez le code de configuration du journal du conteneur.",
+    "tooLong": "Utilisez au plus 1024 caractères."
+  },
+  "passwordDamaged": {
+    "title": "Aucun mot de passe ne fonctionne",
+    "why": "Le mot de passe enregistré du tableau de bord est endommagé. Stackyard ne peut donc vérifier aucun mot de passe.",
+    "safe": "Le tableau de bord reste verrouillé. Seule une personne qui peut lire le journal du conteneur peut définir un nouveau mot de passe.",
+    "setupHelp": "Saisissez le code de configuration du journal du conteneur. Stackyard l’écrit quand vous essayez de vous connecter et en crée un nouveau à chaque redémarrage.",
+    "still": "Le mot de passe enregistré est toujours endommagé."
   },
   "toast": {
     "saved": "Enregistré",

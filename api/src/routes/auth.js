@@ -1,10 +1,10 @@
-const { on, json, readBody, checkOrigin, getIp } = require('../router');
+const { on, json, readBody, checkOrigin, getIp, AUTH_BODY_LIMIT } = require('../router');
 const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, loadConfigForUpdate, saveConfig } = require('../config');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
 const { normalizeHostList } = require('../../../ui/js/host-names.js');
-const { knownHost } = require('../host-check');
+const { knownHost, refusedHost } = require('../host-check');
 const {
   getOrCreateSecret,
   rotateSessionSecret,
@@ -23,8 +23,11 @@ const {
   hasValidSession,
   stripDisabledCredentials,
   authActive,
+  passwordDamaged,
   needsRehash,
+  storePassword,
 } = require('../auth');
+const setupCode = require('../setup-code');
 
 const PASSWORD_MIN = 8;
 const CURRENT_PASSWORD_CODE = 'invalid.current-password';
@@ -57,9 +60,17 @@ on('POST', '/api/auth/login', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   const ip = getIp(req);
   try {
-    const { password = '' } = JSON.parse(await readBody(req));
+    const { password = '' } = JSON.parse(await readBody(req, AUTH_BODY_LIMIT));
     const cfg = loadConfig();
     if (!authActive(cfg)) return json(res, 200, { ok: true });
+    if (passwordDamaged(cfg)) {
+      setupCode.announce('damaged');
+      return json(res, 401, {
+        error: 'The saved password is damaged. Set a new one with the setup code from the container log.',
+        kind: KIND.AUTH,
+        code: 'auth.password-damaged',
+      });
+    }
     const hash = cfg.settings.auth.passwordHash;
     const key = attemptKey(req, cfg);
     const limitErr = registerLoginAttempt(key);
@@ -145,7 +156,7 @@ on('POST', '/api/auth/set-password', async (req, res) => {
     if (storedHash && !hasValidSession(req)) {
       return json(res, 401, { error: 'Authentication required to change the existing password.', kind: KIND.AUTH });
     }
-    const { password = '', currentPassword } = JSON.parse(await readBody(req));
+    const { password = '', currentPassword } = JSON.parse(await readBody(req, AUTH_BODY_LIMIT));
     if (typeof password !== 'string' || password.length < PASSWORD_MIN)
       return json(res, 400, { error: `Password must be at least ${PASSWORD_MIN} characters.`, kind: KIND.INVALID });
     if (password.length > PASSWORD_MAX)
@@ -162,19 +173,67 @@ on('POST', '/api/auth/set-password', async (req, res) => {
         code: 'invalid.password-changed',
       });
     }
-    cfg.settings = cfg.settings || {};
-    cfg.settings.auth = cfg.settings.auth || {};
-    cfg.settings.auth.passwordHash = passwordHash;
-    /* Rotating the secret is what signs other devices out. Assigned here rather
-       than calling rotateSessionSecret, which would load and write again. */
-    cfg.settings.auth.secret = newSessionSecret();
-    delete cfg.settings.auth.revoked;
-    cfg.settings.auth.enabled = true;
-    cfg.settings.auth.setupPrompted = true;
+    storePassword(cfg, passwordHash);
     saveConfig(cfg);
+    setupCode.retire();
     log.audit('password changed', {});
     const sessionId = newSessionId();
     setSessionCookie(res, makeToken(sessionId, cfg.settings.auth.secret), isSecureRequest(req));
+    json(res, 200, { ok: true });
+  } catch (e) {
+    fail(res, e, { status: 400 });
+  }
+});
+
+/* Anyone can post here. Logging every rejection lets them fill the disk. */
+const REJECT_LOG_MS = 60_000;
+let _rejected = 0;
+let _rejectLoggedAt = 0;
+function noteRejectedCode(ip) {
+  _rejected++;
+  const now = Date.now();
+  if (now - _rejectLoggedAt < REJECT_LOG_MS) return;
+  log.audit('setup code rejected', { ip, count: _rejected });
+  _rejected = 0;
+  _rejectLoggedAt = now;
+}
+
+on('POST', '/api/auth/setup-password', async (req, res) => {
+  if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED, code: 'blocked.read-only' });
+  if (!checkOrigin(req, res)) return;
+  const ip = getIp(req);
+  try {
+    const { code, password = '' } = JSON.parse(await readBody(req, AUTH_BODY_LIMIT));
+    const current = loadConfig();
+    const damaged = passwordDamaged(current);
+    if (authActive(current) && !damaged)
+      return json(res, 409, { error: 'A password is already set.', kind: KIND.INVALID, code: 'invalid.password-set' });
+    if (!damaged && refusedHost(req) === null) return json(res, 404, { error: 'Not found', kind: KIND.INVALID });
+    if (typeof password !== 'string' || password.length < PASSWORD_MIN)
+      return json(res, 400, {
+        error: `Password must be at least ${PASSWORD_MIN} characters.`,
+        kind: KIND.INVALID,
+        code: 'invalid.password-short',
+      });
+    if (password.length > PASSWORD_MAX)
+      return json(res, 400, {
+        error: `Password must be at most ${PASSWORD_MAX} characters.`,
+        kind: KIND.INVALID,
+        code: 'invalid.password-long',
+      });
+    if (!setupCode.matches(code, damaged ? 'damaged' : 'host')) {
+      noteRejectedCode(ip);
+      return json(res, 403, { error: 'The setup code is incorrect.', kind: KIND.INVALID, code: 'invalid.setup-code' });
+    }
+    const passwordHash = await hashPassword(password);
+    const cfg = loadConfigForUpdate();
+    if (authActive(cfg) && !passwordDamaged(cfg))
+      return json(res, 409, { error: 'A password is already set.', kind: KIND.INVALID, code: 'invalid.password-set' });
+    storePassword(cfg, passwordHash);
+    saveConfig(cfg);
+    setupCode.retire();
+    log.audit(damaged ? 'damaged password replaced with setup code' : 'password set with setup code', { ip });
+    setSessionCookie(res, makeToken(newSessionId(), cfg.settings.auth.secret), isSecureRequest(req));
     json(res, 200, { ok: true });
   } catch (e) {
     fail(res, e, { status: 400 });
@@ -215,7 +274,7 @@ on('POST', '/api/auth/toggle', async (req, res) => {
   if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED, code: 'blocked.read-only' });
   if (!checkOrigin(req, res)) return;
   try {
-    const { enabled, currentPassword, allowedHosts } = JSON.parse(await readBody(req));
+    const { enabled, currentPassword, allowedHosts } = JSON.parse(await readBody(req, AUTH_BODY_LIMIT));
     /* Only a real true or false. Turning protection off deletes the password,
        so an unclear body must change nothing rather than read as "off". */
     if (typeof enabled !== 'boolean') {
@@ -247,6 +306,7 @@ on('POST', '/api/auth/toggle', async (req, res) => {
     if (enabled && !cfg.settings.auth.secret) cfg.settings.auth.secret = newSessionSecret();
     if (hosts) cfg.settings.server = { ...cfg.settings.server, allowedHosts: hosts };
     saveConfig(cfg);
+    setupCode.retire();
     log.audit('auth toggled', { enabled: !!enabled });
     if (cleared) log.audit('password cleared', {});
     json(res, 200, { ok: true });

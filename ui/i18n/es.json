@@ -362,11 +362,24 @@
     "title": "Stackyard no responde en esta dirección",
     "why": "No hay contraseña, así que Stackyard solo responde en direcciones IP, nombres locales y direcciones que permitas. <code>{host}</code> no es una de ellas.",
     "safe": "Así las páginas de otros sitios no pueden apuntar su propia dirección a Stackyard y cambiar tus ajustes.",
-    "stepsTitle": "Para solucionarlo",
+    "otherWays": "Otras opciones",
     "stepOpen": "Abre Stackyard por su dirección IP o por una dirección que ya hayas permitido.",
     "stepAllow": "En Ajustes, General, añade <code>{host}</code> a Direcciones permitidas y guarda.",
-    "stepPassword": "O define una contraseña en Ajustes. Con contraseña, Stackyard responde en cualquier dirección.",
-    "stillBlocked": "Esta dirección sigue sin estar permitida."
+    "stillBlocked": "Esta dirección sigue sin estar permitida.",
+    "setupTitle": "Define una contraseña aquí",
+    "setupHelp": "Introduce el código de configuración del registro del contenedor. Stackyard lo escribe la primera vez que rechaza una dirección y crea uno nuevo en cada reinicio.",
+    "code": "Código de configuración",
+    "codeWrong": "El código de configuración no es correcto. Cópialo de nuevo del registro del contenedor.",
+    "tooShort": "Usa al menos 8 caracteres.",
+    "codeMissing": "Introduce el código de configuración del registro del contenedor.",
+    "tooLong": "Usa como máximo 1024 caracteres."
+  },
+  "passwordDamaged": {
+    "title": "Ninguna contraseña funciona",
+    "why": "La contraseña guardada del panel está dañada, así que Stackyard no puede comprobar ninguna contraseña.",
+    "safe": "El panel sigue bloqueado. Solo quien puede leer el registro del contenedor puede definir una contraseña nueva.",
+    "setupHelp": "Introduce el código de configuración del registro del contenedor. Stackyard lo escribe cuando intentas iniciar sesión y crea uno nuevo en cada reinicio.",
+    "still": "La contraseña guardada sigue dañada."
   },
   "toast": {
     "saved": "Guardado",

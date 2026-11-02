@@ -301,6 +301,21 @@ function authActive(cfg) {
   return !!(auth?.enabled && auth?.passwordHash);
 }
 
+function passwordDamaged(cfg) {
+  return authActive(cfg) && !parseHash(cfg.settings.auth.passwordHash);
+}
+
+/* Keep the new secret. Without it, other devices stay signed in. */
+function storePassword(cfg, passwordHash) {
+  cfg.settings = cfg.settings || {};
+  cfg.settings.auth = cfg.settings.auth || {};
+  cfg.settings.auth.passwordHash = passwordHash;
+  cfg.settings.auth.secret = newSessionSecret();
+  delete cfg.settings.auth.revoked;
+  cfg.settings.auth.enabled = true;
+  cfg.settings.auth.setupPrompted = true;
+}
+
 /* Protection off must leave no password and no secret behind. A stranded hash
    cannot be replaced: setting a password needs a session, and no session exists
    while protection is off. Returns whether anything was removed. */
@@ -391,6 +406,8 @@ module.exports = {
   hashPassword,
   verifyPassword,
   authActive,
+  passwordDamaged,
+  storePassword,
   needsRehash,
   HASH_PROFILES,
   DEFAULT_PROFILE,

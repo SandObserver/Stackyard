@@ -2,10 +2,12 @@ const { isAuthenticated, refreshSession } = require('./auth');
 const { configDamage } = require('./config');
 const { DAMAGE_CODES, HOST_BLOCKED_CODE } = require('../../ui/js/config-recovery-logic.js');
 const { refusedHost } = require('./host-check');
+const setupCode = require('./setup-code');
 const log = require('./log');
 const { tryDecode } = require('./percent-decode');
 
-const PUBLIC_PATHS = new Set(['/health', '/api/auth/login', '/api/auth/check']);
+const SETUP_PATH = '/api/auth/setup-password';
+const PUBLIC_PATHS = new Set(['/health', '/api/auth/login', '/api/auth/check', SETUP_PATH]);
 
 const routes = [];
 function on(m, p, h) {
@@ -51,9 +53,10 @@ function route(req, res) {
     }
   }
 
-  if (u.pathname !== '/health') {
+  if (u.pathname !== '/health' && u.pathname !== SETUP_PATH) {
     const host = refusedHost(req);
     if (host !== null) {
+      setupCode.announce();
       return json(res, 403, {
         error: 'Forbidden: this address is not allowed while no password is set',
         kind: 'blocked',
@@ -112,8 +115,11 @@ function json(res, status, data) {
 
 /* Buffered in memory before parsing, so this is a memory limit too. */
 const BODY_LIMIT = 2 * 1024 * 1024;
-function readBody(req) {
-  return readBodyCapped(req, BODY_LIMIT).then(b => b.toString('utf8'));
+/* Sign-in routes take bodies before any session check. Raising this lets
+   parallel requests exhaust the API's memory. The largest real body is ~20 KB. */
+const AUTH_BODY_LIMIT = 32 * 1024;
+function readBody(req, max = BODY_LIMIT) {
+  return readBodyCapped(req, max).then(b => b.toString('utf8'));
 }
 
 /** Rejects with `oversize: true` past `max` bytes. Do not destroy the request
@@ -172,6 +178,7 @@ function checkOrigin(req, res) {
 
 module.exports = {
   BODY_LIMIT,
+  AUTH_BODY_LIMIT,
   _routeTable: () => routes.map(r => ({ method: r.m, path: r.p })),
   on,
   dispatch,
