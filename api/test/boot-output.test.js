@@ -188,3 +188,51 @@ test('INITIAL_PASSWORD is stored before the first request is answered', async ()
     child.kill('SIGKILL');
   }
 });
+
+test('an INITIAL_PASSWORD_FILE that cannot be read stops the start before the API listens', async () => {
+  const port = await freePort();
+  const child = spawn(process.execPath, [SERVER], {
+    env: {
+      ...process.env,
+      PORT: String(port),
+      CONFIG_PATH: path.join(tmpDir('boot-initial-missing'), 'apps.json'),
+      WIDGETS_PATH: widgetsDir(),
+      INITIAL_PASSWORD: '',
+      INITIAL_PASSWORD_FILE: path.join(tmpDir('boot-initial-missing'), 'not-mounted'),
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let out = '';
+  child.stdout.on('data', c => (out += c));
+  child.stderr.on('data', c => (out += c));
+  let done = false;
+  const exited = new Promise(resolve =>
+    child.on('exit', code => {
+      done = true;
+      resolve({ code });
+    }),
+  );
+  const answered = (async () => {
+    for (let i = 0; i < 500 && !done; i++) {
+      const status = await new Promise(resolve => {
+        const req = http.get({ host: '127.0.0.1', port, path: '/api/config' }, res => {
+          res.resume();
+          resolve(res.statusCode);
+        });
+        req.on('error', () => resolve(null));
+      });
+      if (status !== null) return { answered: status };
+      await new Promise(r => setTimeout(r, 20));
+    }
+    return exited;
+  })();
+  try {
+    const result = await Promise.race([exited, answered]);
+    assert.deepEqual(result, { code: 1 });
+    assert.match(out, /did not start/);
+    assert.match(out, /INITIAL_PASSWORD_FILE could not be read/);
+  } finally {
+    done = true;
+    child.kill('SIGKILL');
+  }
+});

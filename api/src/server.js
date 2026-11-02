@@ -30,8 +30,15 @@ const { dispatch } = require('./router');
 const HOST = '127.0.0.1';
 
 /* The password must be stored before the first request is answered. Until
-   then the dashboard is open to anyone. */
-applyInitialPassword().then(() => http.createServer(dispatch).listen(PORT, HOST, onListening));
+   then the dashboard is open to anyone. A password that cannot be stored must
+   stop the start, not leave the dashboard open. */
+applyInitialPassword().then(
+  () => http.createServer(dispatch).listen(PORT, HOST, onListening),
+  e => {
+    log.error('Stackyard did not start: the password from INITIAL_PASSWORD could not be stored', { error: e.message });
+    process.exit(1);
+  },
+);
 
 function onListening() {
   const { CONFIG_PATH, ICONS_PATH } = require('./config');
@@ -76,9 +83,5 @@ function onListening() {
 async function applyInitialPassword() {
   const { IS_DEMO } = require('./demo');
   if (IS_DEMO) return;
-  try {
-    await require('./setup-code').applyInitialPassword();
-  } catch (e) {
-    log.warn('could not apply INITIAL_PASSWORD', { error: e.message });
-  }
+  await require('./setup-code').applyInitialPassword();
 }

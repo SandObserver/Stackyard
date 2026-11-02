@@ -61,6 +61,16 @@ test('a sign-in body over the auth limit is refused', async () => {
   assert.equal(await post('/api/auth/login', body), 400);
 });
 
+test('a set-password body over the auth limit is refused', async () => {
+  const body = JSON.stringify({ password: 'owner-password', pad: 'p'.repeat(AUTH_BODY_LIMIT) });
+  assert.equal(await post('/api/auth/set-password', body), 400);
+});
+
+test('a toggle body over the auth limit is refused', async () => {
+  const body = JSON.stringify({ enabled: false, pad: 'p'.repeat(AUTH_BODY_LIMIT) });
+  assert.equal(await post('/api/auth/toggle', body), 400);
+});
+
 test('the largest real auth body, 50 long allowed addresses, still fits', async () => {
   const label = n => `${'a'.repeat(58)}${String(n).padStart(3, '0')}`;
   const hosts = Array.from(

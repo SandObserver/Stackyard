@@ -1,7 +1,7 @@
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const log = require('./log');
-const { loadConfig, loadConfigForUpdate, saveConfig } = require('./config');
+const { loadConfig, loadConfigForUpdate, saveConfig, configDamage } = require('./config');
 const { authActive, hashPassword, storePassword } = require('./auth');
 
 const ALPHABET = '23456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -76,37 +76,70 @@ function retire() {
   _printed = false;
 }
 
-function readInitialPassword() {
-  const file = process.env.INITIAL_PASSWORD_FILE;
-  if (file) {
-    try {
-      return fs.readFileSync(file, 'utf8').replace(/\r?\n$/, '');
-    } catch (e) {
-      log.warn('INITIAL_PASSWORD_FILE could not be read', { error: e.message });
-      return '';
-    }
+/* Thrown when a first start cannot store the configured password. The caller
+   must not start the API: it would answer with no password. */
+class InitialPasswordError extends Error {}
+
+/* A byte-order mark or an extra line ending would be stored as part of the
+   password, and the owner could never sign in. */
+function cleanInitialPassword(value, name) {
+  const password = value.replace(/^\uFEFF/, '').replace(/[\r\n]+$/, '');
+  const unusable = [...password].some(ch => {
+    const c = ch.codePointAt(0) ?? 0;
+    return c < 0x20 || c === 0x7f || c === 0xfffd;
+  });
+  if (unusable)
+    throw new InitialPasswordError(
+      `${name} holds control characters or text that is not UTF-8. Save it as plain UTF-8 text.`,
+    );
+  if (password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) {
+    const hint = name === 'INITIAL_PASSWORD' ? ' In docker-compose.yml or .env, write each $ as $$.' : '';
+    throw new InitialPasswordError(`${name} must be ${PASSWORD_MIN} to ${PASSWORD_MAX} characters.${hint}`);
   }
-  return process.env.INITIAL_PASSWORD || '';
+  return password;
+}
+
+function readInitialPassword(name) {
+  if (name === 'INITIAL_PASSWORD') return cleanInitialPassword(process.env.INITIAL_PASSWORD || '', name);
+  try {
+    return cleanInitialPassword(fs.readFileSync(process.env.INITIAL_PASSWORD_FILE || '', 'utf8'), name);
+  } catch (e) {
+    if (e instanceof InitialPasswordError) throw e;
+    throw new InitialPasswordError(`INITIAL_PASSWORD_FILE could not be read: ${e.message}`);
+  }
 }
 
 /** Store INITIAL_PASSWORD or INITIAL_PASSWORD_FILE once, on a first start.
-    Never again after the owner set, skipped or removed a password. */
+    Never again after the owner set, skipped or removed a password.
+    Throws InitialPasswordError when a first start cannot store it. */
 async function applyInitialPassword() {
-  const password = readInitialPassword();
-  delete process.env.INITIAL_PASSWORD;
-  if (!password) return false;
-  const first = stored => {
-    const auth = stored.settings?.auth;
-    return !auth?.passwordHash && !auth?.setupPrompted && !auth?.initialPasswordApplied;
-  };
-  if (!first(loadConfig())) return false;
-  if (password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) {
+  const name = process.env.INITIAL_PASSWORD_FILE
+    ? 'INITIAL_PASSWORD_FILE'
+    : process.env.INITIAL_PASSWORD
+      ? 'INITIAL_PASSWORD'
+      : null;
+  if (!name) return false;
+  if (configDamage()) {
     log.warn(
-      `INITIAL_PASSWORD ignored: it must be ${PASSWORD_MIN} to ${PASSWORD_MAX} characters. In docker-compose.yml, write each $ as $$.`,
+      `${name} not applied: the settings file cannot be used. It applies on the first start after the file is fixed.`,
       {},
     );
     return false;
   }
+  const first = stored => {
+    const auth = stored.settings?.auth;
+    return !auth?.passwordHash && !auth?.setupPrompted && !auth?.initialPasswordApplied;
+  };
+  const current = loadConfig();
+  if (!first(current)) {
+    if (!current.settings?.auth?.initialPasswordApplied)
+      log.warn(
+        `${name} ignored: a password was set, skipped or removed before. Set a password in Settings instead.`,
+        {},
+      );
+    return false;
+  }
+  const password = readInitialPassword(name);
   const passwordHash = await hashPassword(password);
   const cfg = loadConfigForUpdate();
   if (!first(cfg) || authActive(cfg)) return false;
@@ -123,6 +156,7 @@ module.exports = {
   matches,
   retire,
   applyInitialPassword,
+  InitialPasswordError,
   CODE_LEN,
   _reset: () => retire(),
 };

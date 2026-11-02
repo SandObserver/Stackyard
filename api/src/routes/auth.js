@@ -56,11 +56,25 @@ on('GET', '/api/auth/check', (req, res) => {
   json(res, 200, body);
 });
 
+/* Anyone can post to these routes. A body that is too large or not a JSON
+   object gets a 400 with no log line, or strangers can fill the log. */
+async function readAuthBody(req, res) {
+  let body = null;
+  try {
+    body = JSON.parse(await readBody(req, AUTH_BODY_LIMIT));
+  } catch {}
+  if (body && typeof body === 'object' && !Array.isArray(body)) return body;
+  json(res, 400, { error: 'The request body must be a JSON object.', kind: KIND.INVALID });
+  return null;
+}
+
 on('POST', '/api/auth/login', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   const ip = getIp(req);
   try {
-    const { password = '' } = JSON.parse(await readBody(req, AUTH_BODY_LIMIT));
+    const body = await readAuthBody(req, res);
+    if (!body) return;
+    const { password = '' } = body;
     const cfg = loadConfig();
     if (!authActive(cfg)) return json(res, 200, { ok: true });
     if (passwordDamaged(cfg)) {
@@ -156,7 +170,9 @@ on('POST', '/api/auth/set-password', async (req, res) => {
     if (storedHash && !hasValidSession(req)) {
       return json(res, 401, { error: 'Authentication required to change the existing password.', kind: KIND.AUTH });
     }
-    const { password = '', currentPassword } = JSON.parse(await readBody(req, AUTH_BODY_LIMIT));
+    const body = await readAuthBody(req, res);
+    if (!body) return;
+    const { password = '', currentPassword } = body;
     if (typeof password !== 'string' || password.length < PASSWORD_MIN)
       return json(res, 400, { error: `Password must be at least ${PASSWORD_MIN} characters.`, kind: KIND.INVALID });
     if (password.length > PASSWORD_MAX)
@@ -203,7 +219,9 @@ on('POST', '/api/auth/setup-password', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   const ip = getIp(req);
   try {
-    const { code, password = '' } = JSON.parse(await readBody(req, AUTH_BODY_LIMIT));
+    const body = await readAuthBody(req, res);
+    if (!body) return;
+    const { code, password = '' } = body;
     const current = loadConfig();
     const damaged = passwordDamaged(current);
     if (authActive(current) && !damaged)
@@ -274,7 +292,9 @@ on('POST', '/api/auth/toggle', async (req, res) => {
   if (IS_DEMO) return json(res, 403, { error: DEMO_READONLY_MSG, kind: KIND.BLOCKED, code: 'blocked.read-only' });
   if (!checkOrigin(req, res)) return;
   try {
-    const { enabled, currentPassword, allowedHosts } = JSON.parse(await readBody(req, AUTH_BODY_LIMIT));
+    const body = await readAuthBody(req, res);
+    if (!body) return;
+    const { enabled, currentPassword, allowedHosts } = body;
     /* Only a real true or false. Turning protection off deletes the password,
        so an unclear body must change nothing rather than read as "off". */
     if (typeof enabled !== 'boolean') {
