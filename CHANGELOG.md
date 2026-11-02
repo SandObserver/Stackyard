@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Print a one-time setup code to the container log when an address is refused,
+  so a password can be set on that address.
+
+- Add `INITIAL_PASSWORD` and `INITIAL_PASSWORD_FILE` to set the dashboard
+  password on the first start.
+
+### Fixed
+
+- Let the owner set a new password with a setup code when the saved password is
+  damaged, instead of being locked out.
+
 ### Security
 
 - Refuse sign-in and password requests larger than 32 KB, so parallel large
