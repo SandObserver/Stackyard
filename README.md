@@ -80,6 +80,8 @@ Then open `http://localhost:8700` and set everything up at `/admin`. Config and 
 
 On Unraid, install it from [Community Apps](https://ca.unraid.net/apps/stackyard-0ara4ku0sjjwqy).
 
+On TrueNAS, install it from the [Apps catalog](https://apps.truenas.com/catalog/stackyard_community/).
+
 The same image is on Docker Hub as `sandobserver/stackyard`. Prefer `ghcr.io`: it is the registry the [release signature](https://stackyard.sandobserver.com/docs/security/#verifying-a-release-image) covers.
 
 The repo's [`docker-compose.yml`](docker-compose.yml) is the recommended version: it adds resource limits, dropped capabilities, and commented options for a reverse proxy, host access, and Docker health checks.
