@@ -1,9 +1,10 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=e6355fcb';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=150973a3';
 import { initI18n, t } from '/js/i18n.js?v=ed7c5565';
 import { loginErrorKey } from '/js/admin-error.js?v=f1471df6';
-import { passwordMeter, contextWords, meterColor } from '/js/password-policy.js?v=6e609aa2';
+import { passwordMeter, contextWords, meterColor } from '/js/password-policy.js?v=0c0fd0af';
 import { el, inp as inpById, qa } from '/js/utils.js?v=ab3cac1d';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=8168bbf0';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=e1cf730c';
+import { fillUsernames } from '/js/password-reveal.js?v=37f218b4';
 
 export async function checkAuth(onLogin) {
   try {
@@ -88,13 +89,15 @@ function showLoginScreen(onLogin) {
     }
   }
 
-  if (btn) btn.onclick = doLogin;
-  if (pw) {
-    pw.focus();
-    pw.onkeydown = e => {
-      if (e.key === 'Enter') doLogin();
+  const form = /** @type {HTMLFormElement|null} */ (el('login-form'));
+  if (form) {
+    fillUsernames(form);
+    form.onsubmit = e => {
+      e.preventDefault();
+      if (!btn?.disabled) doLogin();
     };
   }
+  pw?.focus();
 }
 
 export function wirePasswordStrength(inputId, barsId, hintId) {

@@ -5,8 +5,8 @@ import { t } from '/js/i18n.js?v=ed7c5565';
 import { errorAdvice } from '/js/admin-error.js?v=f1471df6';
 import { formatList, formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { iconChain } from '/js/icons.js?v=5ac01d72';
-import { iconSvg } from '/js/icon-set.js?v=26655aca';
-import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=8168bbf0';
+import { iconSvg } from '/js/icon-set.js?v=2f4cd1e2';
+import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=e1cf730c';
 
 export const API = '';
 
@@ -384,17 +384,18 @@ export function plainInput(inp) {
     before the catalog is fetched, so a translated one has to be read later.
     @param {string} rowId @param {string} inputId
     @param {{ type?: string, placeholder?: string | (() => string),
-              onCommit?: (value: string) => void, root?: ParentNode, plain?: boolean }} [opts] */
+              onCommit?: (value: string) => void, root?: ParentNode, plain?: boolean, fill?: boolean,
+              render?: (valEl: Element, value: string) => void }} [opts] */
 export function initInlineEdit(
   rowId,
   inputId,
-  { type = 'text', placeholder = '', onCommit, root = document, plain = false } = {},
+  { type = 'text', placeholder = '', onCommit, root = document, plain = false, fill, render } = {},
 ) {
   const byId = id => (root === document ? el(id) : root.querySelector('#' + CSS.escape(id)));
   const row = /** @type {HTMLElement} */ (byId(rowId));
   const inp = /** @type {HTMLInputElement} */ (byId(inputId));
   if (!row || !inp) return;
-  wireInlineEdit(row, inp, { type, placeholder, onCommit, plain });
+  wireInlineEdit(row, inp, { type, placeholder, onCommit, plain, fill, render });
 }
 
 /** Name a row's pencil after its label. Call again once the catalog loads.

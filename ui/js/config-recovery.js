@@ -3,7 +3,9 @@ import { esc, html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=ed7c5565';
 import { sanitizeI18nMarkup } from '/js/i18n-markup.js?v=8c90e1dd';
 import { fillNames, pickLanguage, screenFor, setupCodeErrorKey } from '/js/config-recovery-logic.js?v=26c6ed96';
-import { contextWords, passwordProblem, REFUSAL_KEYS } from '/js/password-policy.js?v=6e609aa2';
+import { contextWords, passwordMismatch, passwordProblem, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
+import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=2f4cd1e2';
 
 let _shown = false;
 export const recoveryShown = () => _shown;
@@ -17,6 +19,7 @@ export const blockingScreenFor = body => screenFor(body, location.host);
     @param {NonNullable<ReturnType<typeof screenFor>>} screenText */
 export async function showBlockingScreen(screenText) {
   _shown = true;
+  ensureSprite();
   await initI18n(
     pickLanguage(
       navigator.languages || [navigator.language],
@@ -44,6 +47,12 @@ export async function showBlockingScreen(screenText) {
   render(body, more, help, screenText);
   const form = /** @type {HTMLFormElement | null} */ (screen.querySelector('.cfg-recovery-form'));
   if (form) {
+    fillUsernames(form);
+    const field = name => /** @type {HTMLInputElement} */ (form.elements.namedItem(name));
+    wireReveal(/** @type {HTMLButtonElement} */ (form.querySelector('.cfg-recovery-reveal')), [
+      field('password'),
+      field('confirm'),
+    ]);
     form.addEventListener('submit', e => submitSetup(e, form));
     form.addEventListener('input', e => clearInvalid(/** @type {HTMLInputElement} */ (e.target)));
   }
@@ -101,13 +110,18 @@ function setupForm(helpKey) {
   return html`<section class="cfg-recovery-setup" aria-labelledby="cfg-setup-title">
     <h2 id="cfg-setup-title" class="cfg-recovery-steps-title">${t('hostBlock.setupTitle')}</h2>
     <p id="cfg-setup-help" class="cfg-recovery-safe">${t(helpKey)}</p>
-    <form class="cfg-recovery-form" novalidate>
+    <form class="cfg-recovery-form" method="post" novalidate>
+      <input type="text" name="username" autocomplete="username" hidden>
       <label class="cfg-recovery-label">${t('hostBlock.code')}
         <input class="cfg-recovery-input cfg-recovery-code" name="code" type="text" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" required aria-describedby="cfg-setup-help">
       </label>
-      <label class="cfg-recovery-label">${t('setup.newPassword')}
-        <input class="cfg-recovery-input" name="password" type="password" autocomplete="new-password" required>
-      </label>
+      <div class="cfg-recovery-label">
+        <label for="cfg-setup-password">${t('setup.newPassword')}</label>
+        <span class="cfg-recovery-field">
+          <input id="cfg-setup-password" class="cfg-recovery-input" name="password" type="password" autocomplete="new-password" required>
+          <button type="button" class="cfg-recovery-reveal" aria-pressed="false" aria-label="${t('common.showPassword')}" title="${t('common.showPassword')}">${raw(iconSvg('eye', 18))}</button>
+        </span>
+      </div>
       <label class="cfg-recovery-label">${t('setup.confirmPassword')}
         <input class="cfg-recovery-input" name="confirm" type="password" autocomplete="new-password" required>
       </label>
@@ -137,7 +151,7 @@ async function submitSetup(e, form) {
   if (!code.value.trim()) return refuse('hostBlock.codeMissing', code);
   const problem = passwordProblem(password.value, contextWords(location.hostname));
   if (problem) return refuse(REFUSAL_KEYS[problem], password);
-  if (password.value !== confirm.value) return refuse('setup.mismatch', confirm);
+  if (passwordMismatch(password.value, confirm.value)) return refuse('setup.mismatch', confirm);
   submit.disabled = true;
   error.textContent = '';
   try {

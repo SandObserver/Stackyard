@@ -7,10 +7,12 @@ import {
   swapContent,
   wireInlineEdit,
   showFieldError,
+  clearFieldError,
   clearFieldErrors,
-} from '/js/admin-shared.js?v=e6355fcb';
+} from '/js/admin-shared.js?v=150973a3';
 import { socketProbeAdvice } from '/js/admin-error.js?v=f1471df6';
-import { passwordMeter, contextWords, REFUSAL_KEYS } from '/js/password-policy.js?v=6e609aa2';
+import { passwordMeter, passwordMismatch, contextWords, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
+import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import {
   shouldWritePassword,
@@ -21,10 +23,10 @@ import {
   BLOCK,
 } from '/js/admin-logic.js?v=07377bf7';
 import { confirmText, promptModal } from '/js/modal.js?v=6df8b6c1';
-import { el, inp, setUserText } from '/js/utils.js?v=ab3cac1d';
+import { el, inp, qa, setUserText } from '/js/utils.js?v=ab3cac1d';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { serialWrites } from '/js/admin-save-logic.js?v=b83791fb';
-import { renderColorControl } from '/js/admin-color-control.js?v=6322ec89';
+import { renderColorControl } from '/js/admin-color-control.js?v=3921c3fa';
 import { BACKDROP } from '/js/background.js?v=288bfc2a';
 import {
   ALLOWED_HOSTS_MAX,
@@ -344,7 +346,11 @@ async function syncAuthFromServer() {
     reveal(el('pw-hint-wrap'), !!d.enabled, true);
   }
   const pwValEl = el('ie-pw-v');
-  if (pwValEl) pwValEl.textContent = d.passwordSet ? t('common.configured') : t('common.notSet');
+  if (pwValEl && !inp('sec-pw')?.value) {
+    pwValEl.dataset.saved = d.passwordSet ? t('common.configured') : '';
+    pwValEl.textContent = d.passwordSet ? t('common.configured') : t('common.notSet');
+    pwValEl.classList.toggle('is-ph', !d.passwordSet);
+  }
   syncSessionRows(true);
 }
 /** The stored wallpaper, named by its file rather than its full path.
@@ -572,6 +578,10 @@ async function saveServer() {
     );
     return;
   }
+  if (enabled && passwordMismatch(pw, inp('sec-pw2')?.value || '')) {
+    showFieldError(el('ie-pw2'), t('setup.mismatch'));
+    return;
+  }
 
   const hostsText = inp('srv-hosts')?.value || '';
   const badHost = firstBadHost(hostsText);
@@ -676,6 +686,19 @@ async function saveServer() {
   await syncAuthFromServer();
 }
 
+function clearNewPassword() {
+  const fields = [inp('sec-pw'), inp('sec-pw2')].filter(f => f !== null);
+  for (const f of fields) f.value = '';
+  setRevealed(/** @type {HTMLButtonElement[]} */ (qa('#ie-pw .pw-reveal, #ie-pw2 .pw-reveal')), fields, false);
+  reveal(el('ie-pw2-wrap'), false);
+  clearFieldError(el('ie-pw2'));
+  const v2 = el('ie-pw2-v');
+  if (v2) {
+    v2.textContent = t('common.notSet');
+    v2.classList.add('is-ph');
+  }
+}
+
 /** @param {{ enabled: boolean, pw: string, currentPassword: string|undefined,
               allowedHosts: string[], socketUrlTyped: string }} args
     @returns {Promise<{ langChanged: boolean }>} */
@@ -684,11 +707,9 @@ async function writeServer({ enabled, pw, currentPassword, allowedHosts, socketU
      a config save built on an earlier read is refused as stale. */
   if (shouldWritePassword({ enabled, newPassword: pw })) {
     await apiPost('/api/auth/set-password', { password: pw, currentPassword });
+    clearNewPassword();
     const pwEl = inp('sec-pw');
-    if (pwEl) {
-      pwEl.value = '';
-      pwEl.placeholder = `●●●●●●●●●● (${t('common.configured')})`;
-    }
+    if (pwEl) pwEl.placeholder = `●●●●●●●●●● (${t('common.configured')})`;
   }
   await apiPost('/api/auth/toggle', { enabled, currentPassword, allowedHosts });
 
@@ -711,11 +732,9 @@ async function writeServer({ enabled, pw, currentPassword, allowedHosts, socketU
   await apiPost('/api/config', c);
   if (!enabled) {
     const pwEl = inp('sec-pw');
-    if (pwEl) {
-      pwEl.placeholder = '';
-      /* Whatever was typed was not stored. */
-      pwEl.value = '';
-    }
+    if (pwEl) pwEl.placeholder = '';
+    /* Whatever was typed was not stored. */
+    clearNewPassword();
   }
   clearPveSecretInput();
   _srvTrack?.reset();

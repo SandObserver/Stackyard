@@ -16,8 +16,8 @@ export function passwordLength(pw) {
 
 /** @param {string} newPassword @param {string} confirmation */
 export function passwordMismatch(newPassword, confirmation) {
-  const pw = newPassword || '';
-  return pw.length > 0 && pw !== (confirmation || '');
+  const pw = (newPassword || '').normalize('NFC');
+  return pw.length > 0 && pw !== (confirmation || '').normalize('NFC');
 }
 
 /** Words that name this install: the service and the parts of its host name.

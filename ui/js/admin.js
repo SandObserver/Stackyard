@@ -4,10 +4,10 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=b39dcff7';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=ec3c3ad9';
-import { recoveryShown } from '/js/config-recovery.js?v=8168bbf0';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=da66a4b7';
+} from '/js/admin-app-form.js?v=e89df52f';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=874312cd';
+import { recoveryShown } from '/js/config-recovery.js?v=e1cf730c';
+import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=6e7bccf3';
 import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=07377bf7';
 import {
   afterImport,
@@ -31,7 +31,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=f900db3c';
+} from '/js/admin-settings.js?v=26ca2e97';
 import {
   apiGet,
   apiPost,
@@ -44,20 +44,23 @@ import {
   ShownError,
   setReauthHandler,
   showFieldError,
+  clearFieldError,
   clearFieldErrors,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=e6355fcb';
+} from '/js/admin-shared.js?v=150973a3';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=49831025';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=20498a19';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=75a71ab4';
-import { createListbox } from '/js/listbox.js?v=f671e6f1';
+import { createListbox } from '/js/listbox.js?v=a797f939';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
 import { loadLocalIcons } from '/js/icons.js?v=5ac01d72';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=26655aca';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=2f4cd1e2';
+import { passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
+import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import {
   clearSkipTls,
   convert,
@@ -783,6 +786,46 @@ function initNav() {
   initGlideSelect();
 }
 
+/* A typed password never shows in the row.
+   @param {Element} valEl @param {string} value */
+function renderSecret(valEl, value) {
+  const saved = /** @type {HTMLElement} */ (valEl).dataset.saved;
+  valEl.textContent = value ? t('widgetCfg.newValueSet') : saved || t('common.notSet');
+  valEl.classList.toggle('is-ph', !value && !saved);
+}
+
+function initPasswordRows() {
+  const pw = inp('sec-pw');
+  const pw2 = inp('sec-pw2');
+  if (!pw || !pw2) return;
+  const checkMatch = () => {
+    clearFieldError(el('ie-pw2'));
+    if (pw.value && pw2.value && passwordMismatch(pw.value, pw2.value))
+      showFieldError(el('ie-pw2'), t('setup.mismatch'), { focus: false });
+  };
+  initInlineEdit('ie-pw', 'sec-pw', {
+    type: 'password',
+    placeholder: () => t('general.passwordPh'),
+    fill: false,
+    render: renderSecret,
+    onCommit() {
+      el('sec-pw-bars')?.classList.add('d-none');
+      el('sec-pw-hint')?.classList.add('d-none');
+      checkMatch();
+    },
+  });
+  initInlineEdit('ie-pw2', 'sec-pw2', {
+    type: 'password',
+    placeholder: () => t('setup.confirmPassword'),
+    fill: false,
+    render: renderSecret,
+    onCommit: checkMatch,
+  });
+  pw.addEventListener('input', () => reveal(el('ie-pw2-wrap'), pw.value !== ''));
+  wireReveal(/** @type {HTMLButtonElement[]} */ (qa('#ie-pw .pw-reveal, #ie-pw2 .pw-reveal')), [pw, pw2]);
+  fillUsernames();
+}
+
 function initAllInlineEdits() {
   initInlineEdit('ie-ip', 'srv-ip', { placeholder: '192.168.1.100', plain: true });
   initInlineEdit('ie-socket', 'srv-socket', { placeholder: 'http://socket-proxy:2375', plain: true });
@@ -790,16 +833,7 @@ function initAllInlineEdits() {
   initInlineEdit('ie-pve-token', 'srv-pve-token', { placeholder: 'stackyard@pve!dashboard', plain: true });
   initInlineEdit('ie-hosts', 'srv-hosts', { placeholder: () => t('general.allowedHostsNone'), plain: true });
 
-  initInlineEdit('ie-pw', 'sec-pw', {
-    type: 'password',
-    placeholder: () => t('general.passwordPh'),
-    onCommit() {
-      const bars = el('sec-pw-bars');
-      const hint = el('sec-pw-hint');
-      if (bars) bars.classList.add('d-none');
-      if (hint) hint.classList.add('d-none');
-    },
-  });
+  initPasswordRows();
   const pwInp = el('sec-pw');
   if (pwInp) {
     pwInp.addEventListener(
@@ -896,6 +930,7 @@ function initSecToggle() {
   if (!en) return;
   function apply(on, now = false) {
     reveal(el('ie-pw-wrap'), on, now);
+    reveal(el('ie-pw2-wrap'), on && inp('sec-pw')?.value !== '', now);
     reveal(el('pw-hint-wrap'), on, now);
   }
   apply(en.checked, true);

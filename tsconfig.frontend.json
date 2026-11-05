@@ -356,6 +356,12 @@
       "/js/password-policy.js?v=*": [
         "./ui/js/password-policy.js"
       ],
+      "/js/password-reveal.js": [
+        "./ui/js/password-reveal.js"
+      ],
+      "/js/password-reveal.js?v=*": [
+        "./ui/js/password-reveal.js"
+      ],
       "/js/spotlight.js": [
         "./ui/js/spotlight.js"
       ],
