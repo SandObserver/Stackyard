@@ -13,6 +13,8 @@ const {
   newSessionId,
   hashPassword,
   verifyPassword,
+  matchPassword,
+  attemptAddress,
   makeToken,
   setSessionCookie,
   clearSessionCookie,
@@ -31,6 +33,8 @@ const {
 const setupCode = require('../setup-code');
 
 const CURRENT_PASSWORD_CODE = 'invalid.current-password';
+/* The last hash this process rewrote at login. It holds the same password. */
+let lastUpgrade = null;
 const LANGUAGE_TAG = /^[a-z]{2,3}(-[A-Za-z]{2,4})?$/;
 
 /* Answers before sign-in. Say only what the login screen has to decide. The
@@ -89,28 +93,41 @@ on('POST', '/api/auth/login', async (req, res) => {
       log.audit('login blocked', { ip, reason: 'rate_limit' });
       return json(res, 429, { error: limitErr, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
     }
-    const ok = await verifyPassword(typeof password === 'string' ? password : '', hash);
-    if (!ok) {
+    const match = await matchPassword(typeof password === 'string' ? password : '', hash);
+    if (!match) {
       log.audit('login failed', { ip });
       return json(res, 401, { error: 'Incorrect password.', kind: KIND.AUTH });
     }
     clearAttempts(key);
-    log.audit('login success', { ip });
+    let current = hash;
     /* A failure here must not fail the login. The password is correct either
        way and the old hash still verifies. */
-    if (needsRehash(hash)) {
+    if (match.unnormalized || needsRehash(hash)) {
       try {
         const upgraded = await hashPassword(password);
         const fresh = loadConfigForUpdate();
-        if (fresh.settings?.auth?.passwordHash === hash) {
+        const stored = fresh.settings?.auth?.passwordHash;
+        if (stored === hash) {
           fresh.settings.auth.passwordHash = upgraded;
           saveConfig(fresh);
+          current = upgraded;
+          lastUpgrade = { from: hash, to: upgraded };
           log.info('password hash upgraded to the current format', {});
+        } else if (lastUpgrade?.from === hash && stored === lastUpgrade.to) {
+          current = stored;
         }
       } catch (e) {
         log.warn('could not upgrade the stored password hash', { error: e.message });
       }
     }
+    /* No await from here to the cookie. A password changed while this one was
+       checked rotated the secret, and signing with it would let the old
+       password in. */
+    if (loadConfig().settings?.auth?.passwordHash !== current) {
+      log.audit('login failed', { ip, reason: 'password_changed' });
+      return json(res, 401, { error: 'Incorrect password.', kind: KIND.AUTH });
+    }
+    log.audit('login success', { ip });
     const secret = getOrCreateSecret();
     const sessionId = newSessionId();
     setSessionCookie(res, makeToken(sessionId, secret), isSecureRequest(req));
@@ -135,7 +152,7 @@ on('POST', '/api/auth/logout', (req, res) => {
 /* Keep unlisted names on a count of their own. A page on another site that
    points its name at this server could otherwise lock the owner out. */
 function attemptKey(req, cfg) {
-  const ip = getIp(req);
+  const ip = attemptAddress(getIp(req));
   return knownHost(req, cfg) ? ip : `${ip} unlisted`;
 }
 
