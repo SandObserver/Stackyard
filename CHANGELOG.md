@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `INITIAL_PASSWORD` and `INITIAL_PASSWORD_FILE` to set the dashboard
   password on the first start.
 
+- Add a Confirm Password field and a show-password button to the Settings
+  password.
+
 ### Changed
 
 - Require at least 15 characters for a new password and refuse common passwords.
@@ -33,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Accept a password with accents whether the device types them composed or
   decomposed.
 
+- Let password managers save and fill the dashboard password, filed under the
+  host name.
+
 ### Security
 
 - Refuse sign-in and password requests larger than 32 KB, so parallel large
@@ -41,6 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refuse a sign-in checked against a password that was changed meanwhile.
 
 - Count failed sign-ins from one IPv6 /64 against a single limit.
+
+- Hide a newly typed password in Settings instead of showing it in the row.
 
 ## [1.21.0] - 2026-11-01
 
