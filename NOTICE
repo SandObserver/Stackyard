@@ -7,3 +7,9 @@ Licensed under the Apache License, Version 2.0.
 License does not grant permission to use them (see Section 6). Forks and
 derivative works are welcome, but must use a different name and must not present
 themselves as the original project.
+
+api/src/common-passwords.txt contains public sector information licensed under
+the Open Government Licence v3.0
+(https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
+Source: UK National Cyber Security Centre, list of the 100,000 most common
+passwords from Have I Been Pwned.

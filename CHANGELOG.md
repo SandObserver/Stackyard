@@ -20,10 +20,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Let the owner set a new password with a setup code when the saved password is
   damaged, instead of being locked out.
 
+- Accept a password with accents whether the device types them composed or
+  decomposed.
+
 ### Security
 
 - Refuse sign-in and password requests larger than 32 KB, so parallel large
   requests to these routes can no longer exhaust the container's memory.
+
+- Refuse a sign-in checked against a password that was changed meanwhile.
+
+- Count failed sign-ins from one IPv6 /64 against a single limit.
 
 ## [1.21.0] - 2026-11-01
 

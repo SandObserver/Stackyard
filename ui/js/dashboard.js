@@ -33,9 +33,9 @@ import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { initSpotlight } from '/js/spotlight.js?v=93d9e423';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=ed7c5565';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=56207b2c';
-import { pwStrength, passwordMismatch } from '/js/password-strength.js?v=389e0ed0';
-import { setupErrorKey } from '/js/admin-error.js?v=1c258dc1';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=8168bbf0';
+import { passwordMeter, passwordMismatch, contextWords, meterColor } from '/js/password-policy.js?v=6e609aa2';
+import { setupErrorKey } from '/js/admin-error.js?v=f1471df6';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
 import {
@@ -677,7 +677,7 @@ function showSetupPrompt() {
     ov.setAttribute('aria-labelledby', 'setup-title');
     setHtml(
       ov,
-      html`<div class="setup-card"><p id="setup-title" class="setup-title">${t('setup.title')}</p><p class="setup-sub">${t('setup.sub')}</p><div class="setup-field"><input id="setup-pw" type="password" placeholder="${t('setup.newPassword')}" aria-label="${t('setup.newPassword')}" autocomplete="new-password" class="setup-pw"><button id="setup-reveal" type="button" class="setup-reveal" aria-pressed="false" aria-label="${t('common.showPassword')}" title="${t('common.showPassword')}">${raw(EYE)}</button></div><input id="setup-pw2" type="password" placeholder="${t('setup.confirmPassword')}" aria-label="${t('setup.confirmPassword')}" autocomplete="new-password" class="setup-pw"><div id="setup-bars" class="setup-bars"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div><div id="setup-hint" class="setup-hint"></div><div id="setup-err" class="setup-err" role="alert"></div><div class="setup-btns"><button id="setup-skip" type="button" class="setup-btn setup-btn-skip">${t('setup.skip')}</button><button id="setup-set" type="button" class="setup-btn setup-btn-set" disabled>${t('setup.set')}</button></div></div>`,
+      html`<div class="setup-card"><p id="setup-title" class="setup-title">${t('setup.title')}</p><p class="setup-sub">${t('setup.sub')}</p><div class="setup-field"><input id="setup-pw" type="password" placeholder="${t('setup.newPassword')}" aria-label="${t('setup.newPassword')}" aria-describedby="setup-hint" autocomplete="new-password" class="setup-pw"><button id="setup-reveal" type="button" class="setup-reveal" aria-pressed="false" aria-label="${t('common.showPassword')}" title="${t('common.showPassword')}">${raw(EYE)}</button></div><input id="setup-pw2" type="password" placeholder="${t('setup.confirmPassword')}" aria-label="${t('setup.confirmPassword')}" autocomplete="new-password" class="setup-pw"><div id="setup-bars" class="setup-bars" aria-hidden="true"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div><div id="setup-hint" class="setup-hint" role="status"></div><div id="setup-err" class="setup-err" role="alert"></div><div class="setup-btns"><button id="setup-skip" type="button" class="setup-btn setup-btn-skip">${t('setup.skip')}</button><button id="setup-set" type="button" class="setup-btn setup-btn-set" disabled>${t('setup.set')}</button></div></div>`,
     );
     const pw = qi('#setup-pw', ov);
     const pw2 = qi('#setup-pw2', ov);
@@ -690,12 +690,13 @@ function showSetupPrompt() {
 
     /* A typo here locks the dashboard with no way back in. */
     const matches = () => pw2.value !== '' && !passwordMismatch(pw.value, pw2.value);
+    const words = contextWords(location.hostname);
     const sync = () => {
-      const { score, labelKey, color, ok } = pwStrength(pw.value);
+      const { lit, tone, key, vars, ok } = passwordMeter(pw.value, words);
       bars.forEach((b, i) => {
-        b.style.background = pw.value && i < score ? color : '';
+        b.style.background = i < lit ? meterColor(tone) : '';
       });
-      hint.textContent = pw.value && labelKey ? t(labelKey) : '';
+      hint.textContent = t(key, vars);
       const mismatch = pw2.value !== '' && passwordMismatch(pw.value, pw2.value);
       err.textContent = mismatch ? t('setup.mismatch') : '';
       err.style.display = mismatch ? 'block' : 'none';
@@ -713,6 +714,7 @@ function showSetupPrompt() {
       rev.title = label;
     };
 
+    sync();
     document.body.appendChild(ov);
     ov.showModal();
     pw.focus();
@@ -739,7 +741,7 @@ function showSetupPrompt() {
     };
 
     async function doSet() {
-      if (!pwStrength(pw.value).ok || !matches()) return;
+      if (!passwordMeter(pw.value, words).ok || !matches()) return;
       setB.disabled = true;
       skip.disabled = true;
       err.style.display = 'none';

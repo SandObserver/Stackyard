@@ -321,7 +321,7 @@ test('a locked install lets the admin back in', async () => {
 
 test('a locked install accepts a password, and auth then takes effect', async () => {
   saveLockedState();
-  assert.equal((await req('POST', '/api/auth/set-password', { password: 'correct-horse' })).status, 200);
+  assert.equal((await req('POST', '/api/auth/set-password', { password: 'correct-horse-battery' })).status, 200);
   assert.equal((await req('GET', '/api/config')).status, 401, 'auth should apply again immediately');
 });
 

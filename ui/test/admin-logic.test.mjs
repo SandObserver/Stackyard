@@ -50,7 +50,7 @@ test('createDirtyTracker is clean until the value moves, and clean again after r
   assert.equal(tr.dirty(), false);
 });
 /* The real strength check, so these assert the rule the save actually applies. */
-import { pwStrength } from '../js/password-strength.js';
+import { passwordMeter } from '../js/password-policy.js';
 
 test('reorderItems swaps top-level rows and reports whether it moved', () => {
   const items = [
@@ -558,7 +558,10 @@ test('nothing is written when no password was typed', () => {
 
 /* Written the way saveServer calls it, passing the strength result alongside
    the password. */
-const blockerFor = v => settingsSaveBlocker({ ...v, strength: pwStrength(v.newPassword) });
+const blockerFor = v => {
+  const { ok, refusalKey } = passwordMeter(v.newPassword || '');
+  return settingsSaveBlocker({ ...v, strength: { ok, labelKey: refusalKey } });
+};
 
 test('nothing blocks a save that changes no security setting', () => {
   assert.equal(blockerFor({ enabled: false, passwordSet: false, newPassword: '' }), null);

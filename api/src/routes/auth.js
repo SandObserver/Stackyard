@@ -3,7 +3,8 @@ const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, loadConfigForUpdate, saveConfig } = require('../config');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
-const { normalizeHostList } = require('../../../ui/js/host-names.js');
+const { normalizeHostList, hostnameOf } = require('../../../ui/js/host-names.js');
+const { newPasswordError } = require('../new-password');
 const { knownHost, refusedHost } = require('../host-check');
 const {
   getOrCreateSecret,
@@ -12,6 +13,8 @@ const {
   newSessionId,
   hashPassword,
   verifyPassword,
+  matchPassword,
+  attemptAddress,
   makeToken,
   setSessionCookie,
   clearSessionCookie,
@@ -29,11 +32,9 @@ const {
 } = require('../auth');
 const setupCode = require('../setup-code');
 
-const PASSWORD_MIN = 8;
 const CURRENT_PASSWORD_CODE = 'invalid.current-password';
-/* Bounds what is accepted, never what is verified. An existing install may hold
-   a longer password. Capping login locks its owner out. */
-const PASSWORD_MAX = 1024;
+/* The last hash this process rewrote at login. It holds the same password. */
+let lastUpgrade = null;
 const LANGUAGE_TAG = /^[a-z]{2,3}(-[A-Za-z]{2,4})?$/;
 
 /* Answers before sign-in. Say only what the login screen has to decide. The
@@ -92,28 +93,41 @@ on('POST', '/api/auth/login', async (req, res) => {
       log.audit('login blocked', { ip, reason: 'rate_limit' });
       return json(res, 429, { error: limitErr, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
     }
-    const ok = await verifyPassword(typeof password === 'string' ? password : '', hash);
-    if (!ok) {
+    const match = await matchPassword(typeof password === 'string' ? password : '', hash);
+    if (!match) {
       log.audit('login failed', { ip });
       return json(res, 401, { error: 'Incorrect password.', kind: KIND.AUTH });
     }
     clearAttempts(key);
-    log.audit('login success', { ip });
+    let current = hash;
     /* A failure here must not fail the login. The password is correct either
        way and the old hash still verifies. */
-    if (needsRehash(hash)) {
+    if (match.unnormalized || needsRehash(hash)) {
       try {
         const upgraded = await hashPassword(password);
         const fresh = loadConfigForUpdate();
-        if (fresh.settings?.auth?.passwordHash === hash) {
+        const stored = fresh.settings?.auth?.passwordHash;
+        if (stored === hash) {
           fresh.settings.auth.passwordHash = upgraded;
           saveConfig(fresh);
+          current = upgraded;
+          lastUpgrade = { from: hash, to: upgraded };
           log.info('password hash upgraded to the current format', {});
+        } else if (lastUpgrade?.from === hash && stored === lastUpgrade.to) {
+          current = stored;
         }
       } catch (e) {
         log.warn('could not upgrade the stored password hash', { error: e.message });
       }
     }
+    /* No await from here to the cookie. A password changed while this one was
+       checked rotated the secret, and signing with it would let the old
+       password in. */
+    if (loadConfig().settings?.auth?.passwordHash !== current) {
+      log.audit('login failed', { ip, reason: 'password_changed' });
+      return json(res, 401, { error: 'Incorrect password.', kind: KIND.AUTH });
+    }
+    log.audit('login success', { ip });
     const secret = getOrCreateSecret();
     const sessionId = newSessionId();
     setSessionCookie(res, makeToken(sessionId, secret), isSecureRequest(req));
@@ -138,7 +152,7 @@ on('POST', '/api/auth/logout', (req, res) => {
 /* Keep unlisted names on a count of their own. A page on another site that
    points its name at this server could otherwise lock the owner out. */
 function attemptKey(req, cfg) {
-  const ip = getIp(req);
+  const ip = attemptAddress(getIp(req));
   return knownHost(req, cfg) ? ip : `${ip} unlisted`;
 }
 
@@ -173,10 +187,8 @@ on('POST', '/api/auth/set-password', async (req, res) => {
     const body = await readAuthBody(req, res);
     if (!body) return;
     const { password = '', currentPassword } = body;
-    if (typeof password !== 'string' || password.length < PASSWORD_MIN)
-      return json(res, 400, { error: `Password must be at least ${PASSWORD_MIN} characters.`, kind: KIND.INVALID });
-    if (password.length > PASSWORD_MAX)
-      return json(res, 400, { error: `Password must be at most ${PASSWORD_MAX} characters.`, kind: KIND.INVALID });
+    const refused = newPasswordError(password, hostnameOf(req.headers.host) ?? '');
+    if (refused) return json(res, 400, { ...refused, kind: KIND.INVALID });
     if (authActive(before) && (await refuseWrongCurrentPassword(req, res, storedHash, currentPassword))) return;
     const passwordHash = await hashPassword(password);
     /* Read again after the awaits. Saving the earlier copy drops any config
@@ -227,18 +239,8 @@ on('POST', '/api/auth/setup-password', async (req, res) => {
     if (authActive(current) && !damaged)
       return json(res, 409, { error: 'A password is already set.', kind: KIND.INVALID, code: 'invalid.password-set' });
     if (!damaged && refusedHost(req) === null) return json(res, 404, { error: 'Not found', kind: KIND.INVALID });
-    if (typeof password !== 'string' || password.length < PASSWORD_MIN)
-      return json(res, 400, {
-        error: `Password must be at least ${PASSWORD_MIN} characters.`,
-        kind: KIND.INVALID,
-        code: 'invalid.password-short',
-      });
-    if (password.length > PASSWORD_MAX)
-      return json(res, 400, {
-        error: `Password must be at most ${PASSWORD_MAX} characters.`,
-        kind: KIND.INVALID,
-        code: 'invalid.password-long',
-      });
+    const refused = newPasswordError(password, hostnameOf(req.headers.host) ?? '');
+    if (refused) return json(res, 400, { ...refused, kind: KIND.INVALID });
     if (!setupCode.matches(code, damaged ? 'damaged' : 'host')) {
       noteRejectedCode(ip);
       return json(res, 403, { error: 'The setup code is incorrect.', kind: KIND.INVALID, code: 'invalid.setup-code' });

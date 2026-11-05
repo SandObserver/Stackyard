@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const log = require('./log');
 const { loadConfig, loadConfigForUpdate, saveConfig, configDamage } = require('./config');
 const { authActive, hashPassword, storePassword } = require('./auth');
+const { newPasswordError } = require('./new-password');
 
 const ALPHABET = '23456789ABCDEFGHJKMNPQRSTVWXYZ';
 const GROUP_LEN = 4;
@@ -10,8 +11,6 @@ const GROUP_LEN = 4;
    replaces or blocks the code: behind a proxy without TRUSTED_PROXY every
    client shares one address, and anyone could then lock the owner out. */
 const CODE_LEN = 24;
-const PASSWORD_MIN = 8;
-const PASSWORD_MAX = 1024;
 
 let _code = null;
 let _printed = false;
@@ -92,9 +91,13 @@ function cleanInitialPassword(value, name) {
     throw new InitialPasswordError(
       `${name} holds control characters or text that is not UTF-8. Save it as plain UTF-8 text.`,
     );
-  if (password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) {
-    const hint = name === 'INITIAL_PASSWORD' ? ' In docker-compose.yml or .env, write each $ as $$.' : '';
-    throw new InitialPasswordError(`${name} must be ${PASSWORD_MIN} to ${PASSWORD_MAX} characters.${hint}`);
+  const refused = newPasswordError(password);
+  if (refused) {
+    const hint =
+      name === 'INITIAL_PASSWORD' && refused.code === 'invalid.password-short'
+        ? ' In docker-compose.yml or .env, write each $ as $$.'
+        : '';
+    throw new InitialPasswordError(`${name}: ${refused.error}${hint}`);
   }
   return password;
 }

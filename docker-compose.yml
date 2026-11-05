@@ -56,7 +56,7 @@ services:
       # Memory used per password hash. Default 16mib suits small hardware;
       # raise it if you can, for example 64mib. See https://stackyard.sandobserver.com/docs/security/.
       - PASSWORD_HASH_MEMORY=${PASSWORD_HASH_MEMORY:-}
-      # Sets the dashboard password on the first start only, 8 to 1024
+      # Sets the dashboard password on the first start only, 15 to 1024
       # characters. In this file or in .env, write a $ as $$. The value stays
       # visible in the container's environment; INITIAL_PASSWORD_FILE reads
       # it from a file instead.

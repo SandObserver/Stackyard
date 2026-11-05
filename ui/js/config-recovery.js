@@ -2,7 +2,8 @@
 import { esc, html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=ed7c5565';
 import { sanitizeI18nMarkup } from '/js/i18n-markup.js?v=8c90e1dd';
-import { fillNames, pickLanguage, screenFor, setupCodeErrorKey } from '/js/config-recovery-logic.js?v=2b8295f0';
+import { fillNames, pickLanguage, screenFor, setupCodeErrorKey } from '/js/config-recovery-logic.js?v=26c6ed96';
+import { contextWords, passwordProblem, REFUSAL_KEYS } from '/js/password-policy.js?v=6e609aa2';
 
 let _shown = false;
 export const recoveryShown = () => _shown;
@@ -105,10 +106,10 @@ function setupForm(helpKey) {
         <input class="cfg-recovery-input cfg-recovery-code" name="code" type="text" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" required aria-describedby="cfg-setup-help">
       </label>
       <label class="cfg-recovery-label">${t('setup.newPassword')}
-        <input class="cfg-recovery-input" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="1024" required>
+        <input class="cfg-recovery-input" name="password" type="password" autocomplete="new-password" required>
       </label>
       <label class="cfg-recovery-label">${t('setup.confirmPassword')}
-        <input class="cfg-recovery-input" name="confirm" type="password" autocomplete="new-password" maxlength="1024" required>
+        <input class="cfg-recovery-input" name="confirm" type="password" autocomplete="new-password" required>
       </label>
       <p id="cfg-setup-error" class="cfg-recovery-status cfg-recovery-error" role="alert"></p>
       <button class="cfg-recovery-btn" type="submit">${t('setpw.submit')}</button>
@@ -134,8 +135,8 @@ async function submitSetup(e, form) {
     at.focus();
   };
   if (!code.value.trim()) return refuse('hostBlock.codeMissing', code);
-  if (password.value.length < 8) return refuse('hostBlock.tooShort', password);
-  if (password.value.length > 1024) return refuse('hostBlock.tooLong', password);
+  const problem = passwordProblem(password.value, contextWords(location.hostname));
+  if (problem) return refuse(REFUSAL_KEYS[problem], password);
   if (password.value !== confirm.value) return refuse('setup.mismatch', confirm);
   submit.disabled = true;
   error.textContent = '';

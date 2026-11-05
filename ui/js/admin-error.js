@@ -156,5 +156,6 @@ export function loginErrorKey(e) {
 export function setupErrorKey(e) {
   const { kind, code } = readError(e);
   if (kind === KIND.AUTH || code === 'invalid.password-changed') return 'toast.passwordChangedElsewhere';
+  if (code === 'invalid.password-common') return 'pwStrength.common';
   return 'setup.failed';
 }

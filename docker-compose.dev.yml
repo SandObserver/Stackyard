@@ -53,6 +53,9 @@ services:
         - path: ./ui/js/host-names.js
           target: /app/ui/js/host-names.js
           action: sync+restart
+        - path: ./ui/js/password-policy.js
+          target: /app/ui/js/password-policy.js
+          action: sync+restart
         - path: ./ui/js/service-link.js
           target: /app/ui/js/service-link.js
           action: sync+restart

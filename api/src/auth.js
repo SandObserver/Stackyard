@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const net = require('net');
 const { loadConfig, loadConfigForUpdate, saveConfig } = require('./config');
 const { decodeOrRaw } = require('./percent-decode');
 const log = require('./log');
@@ -78,11 +79,14 @@ const _scrypt = (password, salt, params) =>
     );
   });
 
+/* Do not change the form. Every stored hash depends on it. */
+const _nfc = password => password.normalize('NFC');
+
 /** @param {string} password @returns {Promise<string>} */
 async function hashPassword(password) {
   const params = _activeProfile();
   const salt = crypto.randomBytes(SALT_BYTES);
-  const key = await _scrypt(password, salt, params);
+  const key = await _scrypt(_nfc(password), salt, params);
   return `$scrypt$ln=${params.ln},r=${params.r},p=${params.p}$${_b64(salt)}$${_b64(key)}`;
 }
 
@@ -130,15 +134,12 @@ function parseHash(stored) {
   return null;
 }
 
-/** Must never throw. A damaged hash fails the login rather than taking the
-    server down.
-    @param {string} password @param {unknown} hash @returns {Promise<boolean>} */
+/** @param {string} password @param {unknown} hash @returns {Promise<boolean>} */
 async function verifyPassword(password, hash) {
-  const parsed = parseHash(hash);
-  if (!parsed) {
-    if (hash) log.error('stored password hash is malformed, login cannot succeed', { reason: 'bad_hash_format' });
-    return false;
-  }
+  return (await matchPassword(password, hash)) !== null;
+}
+
+async function _derivedMatches(password, parsed) {
   let derived;
   try {
     derived = await _scrypt(password, parsed.salt, parsed.params);
@@ -152,6 +153,24 @@ async function verifyPassword(password, hash) {
   } catch {
     return false;
   }
+}
+
+/** Must never throw. A damaged hash fails the login rather than taking the
+    server down. `unnormalized` is true when the hash was made from the
+    password as typed, before hashes were normalized; it needs a rehash.
+    @param {string} password @param {unknown} hash
+    @returns {Promise<{ unnormalized: boolean }|null>} null when it does not match */
+async function matchPassword(password, hash) {
+  const parsed = parseHash(hash);
+  if (!parsed) {
+    if (hash) log.error('stored password hash is malformed, login cannot succeed', { reason: 'bad_hash_format' });
+    return null;
+  }
+  const nfc = _nfc(password);
+  if (await _derivedMatches(nfc, parsed)) return { unnormalized: false };
+  /* Keep. A hash stored before normalization only matches the typed form. */
+  if (nfc !== password && (await _derivedMatches(password, parsed))) return { unnormalized: true };
+  return null;
 }
 
 /** True when a verified hash should be rewritten. Only a successful login can
@@ -266,6 +285,33 @@ function hit(store, key, max, windowMs) {
 const _loginAttempts = new Map();
 const LOGIN_MAX = 5,
   LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+/* Keep the /64 grouping. Counting each IPv6 address apart gives one client
+   unlimited guesses. */
+function attemptAddress(ip) {
+  if (!net.isIPv6(ip)) return ip;
+  const g = _ipv6Groups(ip.split('%')[0]);
+  if (g.slice(0, 5).every(n => n === 0) && g[5] === 0xffff)
+    return `${g[6] >> 8}.${g[6] & 255}.${g[7] >> 8}.${g[7] & 255}`;
+  return `${g
+    .slice(0, 4)
+    .map(n => n.toString(16))
+    .join(':')}::/64`;
+}
+
+/** @param {string} ip a valid IPv6 address @returns {number[]} the eight groups */
+function _ipv6Groups(ip) {
+  const fromV4 = s => {
+    const [a, b, c, d] = s.split('.').map(Number);
+    return [(a << 8) | b, (c << 8) | d];
+  };
+  const parse = part => (part ? part.split(':').flatMap(x => (x.includes('.') ? fromV4(x) : [parseInt(x, 16)])) : []);
+  const [head, tail] = ip.split('::');
+  const h = parse(head);
+  if (tail === undefined) return h;
+  const t = parse(tail);
+  return [...h, ...new Array(8 - h.length - t.length).fill(0), ...t];
+}
 
 function registerLoginAttempt(ip) {
   const left = hit(_loginAttempts, ip, LOGIN_MAX, LOGIN_WINDOW_MS);
@@ -404,6 +450,8 @@ module.exports = {
   newSessionId,
   hashPassword,
   verifyPassword,
+  matchPassword,
+  attemptAddress,
   authActive,
   passwordDamaged,
   storePassword,
