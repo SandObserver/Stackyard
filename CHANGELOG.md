@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show a character count toward the minimum instead of a strength score while a
   password is typed.
 
+- Sign out all devices now signs out this browser as well.
+
 ### Fixed
 
 - Let the owner set a new password with a setup code when the saved password is
