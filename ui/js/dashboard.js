@@ -33,8 +33,9 @@ import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { initSpotlight } from '/js/spotlight.js?v=93d9e423';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, t, currentLang } from '/js/i18n.js?v=ed7c5565';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=8168bbf0';
-import { passwordMeter, passwordMismatch, contextWords, meterColor } from '/js/password-policy.js?v=6e609aa2';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=e1cf730c';
+import { passwordMeter, passwordMismatch, contextWords, meterColor } from '/js/password-policy.js?v=0c0fd0af';
+import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import { setupErrorKey } from '/js/admin-error.js?v=f1471df6';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
@@ -66,7 +67,7 @@ import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=46ab91e5';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=26655aca';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=2f4cd1e2';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { THEME_KEY, applyTheme, prefersDark, readMode, resolveTheme } from '/js/theme.js?v=eeafa4b5';
 
@@ -677,11 +678,11 @@ function showSetupPrompt() {
     ov.setAttribute('aria-labelledby', 'setup-title');
     setHtml(
       ov,
-      html`<div class="setup-card"><p id="setup-title" class="setup-title">${t('setup.title')}</p><p class="setup-sub">${t('setup.sub')}</p><div class="setup-field"><input id="setup-pw" type="password" placeholder="${t('setup.newPassword')}" aria-label="${t('setup.newPassword')}" aria-describedby="setup-hint" autocomplete="new-password" class="setup-pw"><button id="setup-reveal" type="button" class="setup-reveal" aria-pressed="false" aria-label="${t('common.showPassword')}" title="${t('common.showPassword')}">${raw(EYE)}</button></div><input id="setup-pw2" type="password" placeholder="${t('setup.confirmPassword')}" aria-label="${t('setup.confirmPassword')}" autocomplete="new-password" class="setup-pw"><div id="setup-bars" class="setup-bars" aria-hidden="true"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div><div id="setup-hint" class="setup-hint" role="status"></div><div id="setup-err" class="setup-err" role="alert"></div><div class="setup-btns"><button id="setup-skip" type="button" class="setup-btn setup-btn-skip">${t('setup.skip')}</button><button id="setup-set" type="button" class="setup-btn setup-btn-set" disabled>${t('setup.set')}</button></div></div>`,
+      html`<form class="setup-card" method="post" novalidate><input type="text" name="username" autocomplete="username" hidden><p id="setup-title" class="setup-title">${t('setup.title')}</p><p class="setup-sub">${t('setup.sub')}</p><div class="setup-field"><input id="setup-pw" type="password" placeholder="${t('setup.newPassword')}" aria-label="${t('setup.newPassword')}" aria-describedby="setup-hint" autocomplete="new-password" class="setup-pw"><button id="setup-reveal" type="button" class="setup-reveal" aria-pressed="false" aria-label="${t('common.showPassword')}" title="${t('common.showPassword')}">${raw(EYE)}</button></div><input id="setup-pw2" type="password" placeholder="${t('setup.confirmPassword')}" aria-label="${t('setup.confirmPassword')}" autocomplete="new-password" class="setup-pw"><div id="setup-bars" class="setup-bars" aria-hidden="true"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div><div id="setup-hint" class="setup-hint" role="status"></div><div id="setup-err" class="setup-err" role="alert"></div><div class="setup-btns"><button id="setup-skip" type="button" class="setup-btn setup-btn-skip">${t('setup.skip')}</button><button id="setup-set" type="submit" class="setup-btn setup-btn-set" disabled>${t('setup.set')}</button></div></form>`,
     );
     const pw = qi('#setup-pw', ov);
     const pw2 = qi('#setup-pw2', ov);
-    const rev = qi('#setup-reveal', ov);
+    const rev = /** @type {HTMLButtonElement} */ (q('#setup-reveal', ov));
     const bars = qa('.pwbar', ov);
     const hint = q('#setup-hint', ov);
     const err = q('#setup-err', ov);
@@ -705,14 +706,8 @@ function showSetupPrompt() {
     pw.addEventListener('input', sync);
     pw2.addEventListener('input', sync);
 
-    rev.onclick = () => {
-      const show = pw.type === 'password';
-      pw.type = pw2.type = show ? 'text' : 'password';
-      rev.setAttribute('aria-pressed', String(show));
-      const label = t(show ? 'common.hidePassword' : 'common.showPassword');
-      rev.setAttribute('aria-label', label);
-      rev.title = label;
-    };
+    wireReveal(rev, [pw, pw2]);
+    fillUsernames(ov);
 
     sync();
     document.body.appendChild(ov);
@@ -765,10 +760,10 @@ function showSetupPrompt() {
         skip.disabled = false;
       }
     }
-    setB.onclick = doSet;
-    pw.onkeydown = pw2.onkeydown = e => {
-      if (e.key === 'Enter' && !setB.disabled) doSet();
-    };
+    q('form', ov).addEventListener('submit', e => {
+      e.preventDefault();
+      if (!setB.disabled) doSet();
+    });
     pw.focus();
   });
 }

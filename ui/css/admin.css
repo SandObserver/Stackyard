@@ -249,6 +249,12 @@ html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable;-webkit-t
 .ie-row .row-inp{display:none;flex:2;background:transparent;border:none;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-family:inherit;text-align:end;padding:0;min-width:0;outline:none}
 .ie-row.editing .row-inp{display:block}
 .ie-row.editing{background:var(--ov-soft)}
+.ie-row .pw-reveal{display:none;flex:none;align-items:center;justify-content:center;width:44px;height:44px;margin-block:-12px;margin-inline:4px -12px;padding:0;border:none;border-radius:50%;background:none;color:var(--dm-strong);cursor:pointer}
+.ie-row.editing .pw-reveal{display:flex}
+.pw-reveal[aria-pressed="true"]{color:var(--ac)}
+.pw-reveal:focus-visible{outline:2px solid var(--ac);outline-offset:-4px}
+.ie-row .pw-reveal:active{color:var(--tx);background:var(--fill-tertiary)}
+@media (forced-colors: active){.pw-reveal[aria-pressed="true"]{color:Highlight}}
 .pe{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;border:none;background:transparent;color:var(--dm);cursor:pointer;flex-shrink:0;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);transition:color var(--t),background var(--t);position:relative}
 .pe::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px}
 @media (hover:hover) and (pointer:fine){.pe:hover{color:var(--tx);background:var(--ov-strong)}}
@@ -698,6 +704,7 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
 .login-screen[open]{display:flex}
 .login-screen::backdrop{background:transparent}
 .login-wrap{background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-window);padding:28px 22px 22px;width:100%;max-width:360px;box-shadow:var(--shadow-login);display:flex;flex-direction:column;gap:14px}
+.login-form{display:contents}
 .login-header{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:4px}
 .login-mark{height:34px;width:auto;color:var(--tx);margin-bottom:4px}
 .login-sub{font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);color:var(--dm-strong)}
