@@ -31,7 +31,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=6e66d034';
+} from '/js/admin-settings.js?v=f900db3c';
 import {
   apiGet,
   apiPost,

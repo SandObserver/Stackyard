@@ -270,12 +270,9 @@ on('POST', '/api/auth/revoke-sessions', (req, res) => {
       kind: KIND.INVALID,
     });
   }
-  const secret = rotateSessionSecret();
+  rotateSessionSecret();
   log.audit('sessions revoked', { ip: getIp(req) });
-  /* The caller's own token was signed with the old secret. Replace it in this
-     response, or the person who pressed the button is the one signed out. */
-  const sessionId = newSessionId();
-  setSessionCookie(res, makeToken(sessionId, secret), isSecureRequest(req));
+  clearSessionCookie(res, isSecureRequest(req));
   json(res, 200, { ok: true });
 });
 

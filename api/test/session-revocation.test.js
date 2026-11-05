@@ -75,7 +75,6 @@ function req(method, pathname, cookie) {
 
 const secret = () => loadConfig().settings?.auth?.secret;
 const cookieFor = s => 'ds=' + makeToken('session-abc', s);
-const tokenFrom = setCookie => (setCookie.find(c => c.startsWith('ds=')) || '').slice(3).split(';')[0];
 
 /* ── the helper ───────────────────────────────────────────────────────────── */
 
@@ -109,23 +108,15 @@ test('a session from before the call no longer works', async () => {
   assert.equal((await req('GET', '/api/config', old)).status, 401, 'the old session must be dead');
 });
 
-test('the caller is handed a working replacement session', async () => {
+test('the caller is signed out too', async () => {
   await enableAuth();
-  const r = await req('POST', '/api/auth/revoke-sessions', cookieFor(secret()));
-  const fresh = tokenFrom(r.setCookie);
-  assert.ok(fresh, 'the response must set a new session cookie');
-  assert.equal(
-    (await req('GET', '/api/config', 'ds=' + fresh)).status,
-    200,
-    'the person who pressed the button must stay signed in',
+  const own = cookieFor(secret());
+  const r = await req('POST', '/api/auth/revoke-sessions', own);
+  assert.ok(
+    r.setCookie.some(c => c.startsWith('ds=;') && /Max-Age=0/.test(c)),
+    'the response must clear the session cookie',
   );
-});
-
-test('the replacement session is a different one, not the old token reissued', async () => {
-  await enableAuth();
-  const old = cookieFor(secret());
-  const r = await req('POST', '/api/auth/revoke-sessions', old);
-  assert.notEqual('ds=' + tokenFrom(r.setCookie), old);
+  assert.equal((await req('GET', '/api/config', own)).status, 401);
 });
 
 test('every other device is signed out, not just one', async () => {

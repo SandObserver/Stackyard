@@ -390,7 +390,6 @@
     "passwordChangedElsewhere": "Das Passwort wurde anderswo geändert. Lade die Seite neu und versuche es erneut.",
     "dashboardChangedElsewhere": "Das Dashboard wurde anderswo geändert. Lade die Seite neu und versuche es erneut.",
     "tooManyAttempts": "Zu viele Versuche. Versuche es später erneut.",
-    "sessionsRevoked": "Alle Geräte wurden abgemeldet.",
     "authNeedsPassword": "Lege ein Passwort fest, bevor du die Authentifizierung aktivierst.",
     "importForeignDone": "Import abgeschlossen. Apps: {apps}. Ordner: {folders}.",
     "importForeignNothing": "Aus diesen Dateien gibt es nichts zu importieren.",

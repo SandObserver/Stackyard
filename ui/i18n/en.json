@@ -390,7 +390,6 @@
     "passwordChangedElsewhere": "The password was changed elsewhere. Reload the page and try again.",
     "dashboardChangedElsewhere": "The dashboard was changed elsewhere. Reload the page and try again.",
     "tooManyAttempts": "Too many attempts. Try again later.",
-    "sessionsRevoked": "All devices signed out.",
     "authNeedsPassword": "Set a password before turning authentication on.",
     "importForeignDone": "Import finished. Apps: {apps}. Folders: {folders}.",
     "importForeignNothing": "Nothing to import from those files.",
