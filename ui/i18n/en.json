@@ -57,7 +57,7 @@
     "passwordProtection": "Password Protection",
     "password": "Password",
     "currentPassword": "Current password",
-    "passwordTip": "Leave blank to keep existing password. Min 8 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.",
+    "passwordTip": "Leave blank to keep existing password. Min 15 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.",
     "backup": "Backup",
     "importExport": "Import / Export",
     "signOut": "Sign out",
@@ -67,7 +67,7 @@
     "logDebug": "Debug",
     "logInfo": "Info",
     "logError": "Errors",
-    "passwordPh": "New password (min 8 chars)",
+    "passwordPh": "New password (min 15 chars)",
     "showSettingsAria": "Show Settings on dashboard",
     "dockNeedsShown": "Turn on Show Settings on dashboard to put it in the dock.",
     "importJson": "Import configuration JSON",
@@ -363,7 +363,7 @@
     "setupHelp": "Enter the setup code from the container log. Stackyard prints it when it first refuses an address, and makes a new one at each restart.",
     "code": "Setup code",
     "codeWrong": "The setup code is incorrect. Copy it again from the container log.",
-    "tooShort": "Use at least 8 characters.",
+    "tooShort": "Use at least 15 characters.",
     "codeMissing": "Enter the setup code from the container log.",
     "tooLong": "Use at most 1024 characters."
   },
@@ -386,7 +386,6 @@
     "importFailed": "Import failed: {err}",
     "exportFailed": "Export failed: {err}",
     "importNoChange": "Nothing to import. The file matches your current config.",
-    "pwWeak": "Password too weak: {label}",
     "currentPasswordWrong": "The current password is incorrect.",
     "passwordChangedElsewhere": "The password was changed elsewhere. Reload the page and try again.",
     "dashboardChangedElsewhere": "The dashboard was changed elsewhere. Reload the page and try again.",
@@ -476,11 +475,12 @@
     "mismatch": "Passwords do not match."
   },
   "pwStrength": {
-    "tooShort": "Too short, min 8 characters",
-    "weak": "Weak",
-    "fair": "Fair",
-    "good": "Good",
-    "strong": "Strong"
+    "tip": "Use at least 15 characters. A few random words are easy to remember.",
+    "count_one": "Characters: {count} of 15",
+    "count_other": "Characters: {count} of 15",
+    "enough": "Long enough",
+    "guessable": "Too easy to guess. Avoid the name or address of this dashboard.",
+    "common": "This password is too common. Choose another one."
   },
   "widget": {
     "loading": "Loading",

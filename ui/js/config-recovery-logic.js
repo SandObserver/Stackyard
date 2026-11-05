@@ -85,6 +85,7 @@ export function setupCodeErrorKey(body) {
   if (code === 'invalid.setup-code') return 'hostBlock.codeWrong';
   if (code === 'invalid.password-short') return 'hostBlock.tooShort';
   if (code === 'invalid.password-long') return 'hostBlock.tooLong';
+  if (code === 'invalid.password-common') return 'pwStrength.common';
   return 'setup.failed';
 }
 

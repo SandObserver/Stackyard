@@ -1,9 +1,9 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=e9169387';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=e6355fcb';
 import { initI18n, t } from '/js/i18n.js?v=ed7c5565';
-import { loginErrorKey } from '/js/admin-error.js?v=1c258dc1';
-import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
+import { loginErrorKey } from '/js/admin-error.js?v=f1471df6';
+import { passwordMeter, contextWords, meterColor } from '/js/password-policy.js?v=6e609aa2';
 import { el, inp as inpById, qa } from '/js/utils.js?v=ab3cac1d';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=56207b2c';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=8168bbf0';
 
 export async function checkAuth(onLogin) {
   try {
@@ -102,13 +102,14 @@ export function wirePasswordStrength(inputId, barsId, hintId) {
   const bars = qa('.pwbar', el(barsId));
   const hint = el(hintId);
   if (!inp || !bars?.length) return;
-  inp.addEventListener('input', () => {
-    const { score, labelKey, color } = pwStrength(inp.value);
+  const words = contextWords(location.hostname);
+  const paint = () => {
+    const { lit, tone, key, vars } = passwordMeter(inp.value, words);
     bars.forEach((b, i) => {
-      b.style.background = inp.value && i < score ? color : '';
+      b.style.background = i < lit ? meterColor(tone) : '';
     });
-    if (hint) {
-      hint.textContent = inp.value && labelKey ? t(labelKey) : '';
-    }
-  });
+    if (hint) hint.textContent = t(key, vars);
+  };
+  inp.addEventListener('input', paint);
+  paint();
 }

@@ -57,7 +57,7 @@
     "passwordProtection": "密码保护",
     "password": "密码",
     "currentPassword": "当前密码",
-    "passwordTip": "留空以保留现有密码。至少 8 个字符。若需更强的保护，建议将仪表板置于<strong>专用身份验证代理</strong>之后。此内置密码只是一道简单的门槛，并非完整的身份验证层。",
+    "passwordTip": "留空以保留现有密码。至少 15 个字符。若需更强的保护，建议将仪表板置于<strong>专用身份验证代理</strong>之后。此内置密码只是一道简单的门槛，并非完整的身份验证层。",
     "backup": "备份",
     "importExport": "导入 / 导出",
     "signOut": "退出登录",
@@ -67,7 +67,7 @@
     "logDebug": "调试",
     "logInfo": "信息",
     "logError": "错误",
-    "passwordPh": "新密码（至少 8 个字符）",
+    "passwordPh": "新密码（至少 15 个字符）",
     "showSettingsAria": "在仪表板上显示设置",
     "dockNeedsShown": "开启“在仪表板上显示设置”后，才能将其放入程序坞。",
     "importJson": "导入配置 JSON",
@@ -356,7 +356,7 @@
     "setupHelp": "输入容器日志中的设置码。Stackyard 首次拒绝某个地址时会将其写入日志，每次重启都会生成新的设置码。",
     "code": "设置码",
     "codeWrong": "设置码不正确。请从容器日志中重新复制。",
-    "tooShort": "请至少使用 8 个字符。",
+    "tooShort": "请至少使用 15 个字符。",
     "codeMissing": "请输入容器日志中的设置码。",
     "tooLong": "最多使用 1024 个字符。"
   },
@@ -379,7 +379,6 @@
     "importFailed": "导入失败：{err}",
     "exportFailed": "导出失败：{err}",
     "importNoChange": "没有可导入的内容。该文件与当前配置一致。",
-    "pwWeak": "密码强度不足：{label}",
     "currentPasswordWrong": "当前密码不正确。",
     "passwordChangedElsewhere": "密码已在其他地方更改。请重新加载页面后重试。",
     "dashboardChangedElsewhere": "仪表板已在其他地方更改。请重新加载页面后重试。",
@@ -466,11 +465,11 @@
     "mismatch": "两次输入的密码不一致。"
   },
   "pwStrength": {
-    "tooShort": "太短，至少 8 个字符",
-    "weak": "弱",
-    "fair": "一般",
-    "good": "良好",
-    "strong": "强"
+    "tip": "请至少使用 15 个字符。几个随机单词组合起来既安全又好记。",
+    "count_other": "字符数：{count}/15",
+    "enough": "长度已足够",
+    "guessable": "太容易被猜到。请避免使用此仪表板的名称或地址。",
+    "common": "此密码太常见，请换一个。"
   },
   "widget": {
     "loading": "加载中",

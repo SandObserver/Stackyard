@@ -114,10 +114,10 @@
         <div class="row-wrap reveal" id="ie-pw-wrap"><div class="reveal-in"><div class="row ie-row" id="ie-pw"><span class="rl" data-i18n="general.password">Password</span><span class="rv is-ph" id="ie-pw-v">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div></div></div>
         <div class="row-wrap reveal" id="sec-revoke-wrap"><div class="reveal-in"><div class="row" id="sec-revoke-row"><span class="rl" data-i18n="general.signOutEverywhere">Sign out all devices</span><div class="row-btns"><button class="btn bg sm" id="sec-revoke" type="button" data-i18n="general.signOutEverywhereBtn">Sign out all</button></div></div></div></div>
       </div>
-      <div id="sec-pw-bars" class="pw-bars d-none"><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div></div>
-      <div id="sec-pw-hint" class="pw-hint d-none"></div>
+      <div id="sec-pw-bars" class="pw-bars d-none" aria-hidden="true"><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div></div>
+      <div id="sec-pw-hint" class="pw-hint d-none" role="status"></div>
       <div class="reveal" id="revoke-tip-wrap"><div class="reveal-in"><p class="grp-tip" id="revoke-tip" data-i18n="general.signOutEverywhereTip">Signs out every browser and device, including this one. Use it if you think a session may have been left open or compromised. Your password does not change.</p></div></div>
-      <div class="reveal" id="pw-hint-wrap"><div class="reveal-in"><p class="grp-tip" id="pw-hint-static" data-i18n-html="general.passwordTip">Leave blank to keep existing password. Min 8 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.</p></div></div>
+      <div class="reveal" id="pw-hint-wrap"><div class="reveal-in"><p class="grp-tip" id="pw-hint-static" data-i18n-html="general.passwordTip">Leave blank to keep existing password. Min 15 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.</p></div></div>
       <div class="grp">
         <div class="row ie-row" id="ie-hosts"><span class="rl" data-i18n="general.allowedHosts">Allowed Addresses</span><span class="rv is-ph" id="ie-hosts-v">Local addresses only</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
         <div class="row-wrap reveal" id="hosts-add-wrap"><div class="reveal-in"><div class="row"><span class="rl" id="hosts-add-name"></span><div class="row-btns"><button class="btn bg sm" id="hosts-add" type="button" aria-describedby="hosts-add-tip" data-i18n="common.add">+ Add</button></div></div></div></div>
@@ -273,7 +273,7 @@
 <input id="srv-pve-token" type="text" class="d-none" autocomplete="off">
 <input id="srv-pve-secret" type="password" class="d-none" autocomplete="new-password">
 <input id="srv-hosts" type="text"    class="d-none" autocomplete="off">
-<input id="sec-pw"    type="password" class="d-none" autocomplete="new-password">
+<input id="sec-pw"    type="password" class="d-none" autocomplete="new-password" aria-describedby="sec-pw-hint">
 <input id="bg-col"    type="text"    class="d-none" autocomplete="off">
 <input id="bg-url"    type="url"     class="d-none" autocomplete="off">
 <p id="sr-announce" class="visually-hidden" aria-live="polite"></p>
@@ -321,6 +321,6 @@
   </div></div>
 </div>
 
-<script type="module" src="/js/admin.js?v=a1be78e9"></script>
+<script type="module" src="/js/admin.js?v=aeba0856"></script>
 </body>
 </html>

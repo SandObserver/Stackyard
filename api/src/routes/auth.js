@@ -3,7 +3,8 @@ const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { loadConfig, loadConfigForUpdate, saveConfig } = require('../config');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
-const { normalizeHostList } = require('../../../ui/js/host-names.js');
+const { normalizeHostList, hostnameOf } = require('../../../ui/js/host-names.js');
+const { newPasswordError } = require('../new-password');
 const { knownHost, refusedHost } = require('../host-check');
 const {
   getOrCreateSecret,
@@ -31,11 +32,7 @@ const {
 } = require('../auth');
 const setupCode = require('../setup-code');
 
-const PASSWORD_MIN = 8;
 const CURRENT_PASSWORD_CODE = 'invalid.current-password';
-/* Bounds what is accepted, never what is verified. An existing install may hold
-   a longer password. Capping login locks its owner out. */
-const PASSWORD_MAX = 1024;
 /* The last hash this process rewrote at login. It holds the same password. */
 let lastUpgrade = null;
 const LANGUAGE_TAG = /^[a-z]{2,3}(-[A-Za-z]{2,4})?$/;
@@ -190,10 +187,8 @@ on('POST', '/api/auth/set-password', async (req, res) => {
     const body = await readAuthBody(req, res);
     if (!body) return;
     const { password = '', currentPassword } = body;
-    if (typeof password !== 'string' || password.length < PASSWORD_MIN)
-      return json(res, 400, { error: `Password must be at least ${PASSWORD_MIN} characters.`, kind: KIND.INVALID });
-    if (password.length > PASSWORD_MAX)
-      return json(res, 400, { error: `Password must be at most ${PASSWORD_MAX} characters.`, kind: KIND.INVALID });
+    const refused = newPasswordError(password, hostnameOf(req.headers.host) ?? '');
+    if (refused) return json(res, 400, { ...refused, kind: KIND.INVALID });
     if (authActive(before) && (await refuseWrongCurrentPassword(req, res, storedHash, currentPassword))) return;
     const passwordHash = await hashPassword(password);
     /* Read again after the awaits. Saving the earlier copy drops any config
@@ -244,18 +239,8 @@ on('POST', '/api/auth/setup-password', async (req, res) => {
     if (authActive(current) && !damaged)
       return json(res, 409, { error: 'A password is already set.', kind: KIND.INVALID, code: 'invalid.password-set' });
     if (!damaged && refusedHost(req) === null) return json(res, 404, { error: 'Not found', kind: KIND.INVALID });
-    if (typeof password !== 'string' || password.length < PASSWORD_MIN)
-      return json(res, 400, {
-        error: `Password must be at least ${PASSWORD_MIN} characters.`,
-        kind: KIND.INVALID,
-        code: 'invalid.password-short',
-      });
-    if (password.length > PASSWORD_MAX)
-      return json(res, 400, {
-        error: `Password must be at most ${PASSWORD_MAX} characters.`,
-        kind: KIND.INVALID,
-        code: 'invalid.password-long',
-      });
+    const refused = newPasswordError(password, hostnameOf(req.headers.host) ?? '');
+    if (refused) return json(res, 400, { ...refused, kind: KIND.INVALID });
     if (!setupCode.matches(code, damaged ? 'damaged' : 'host')) {
       noteRejectedCode(ip);
       return json(res, 403, { error: 'The setup code is incorrect.', kind: KIND.INVALID, code: 'invalid.setup-code' });
