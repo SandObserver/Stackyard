@@ -57,7 +57,7 @@
     "passwordProtection": "Protection par mot de passe",
     "password": "Mot de passe",
     "currentPassword": "Mot de passe actuel",
-    "passwordTip": "Laissez vide pour conserver le mot de passe actuel. 8 caractères minimum. Pour une protection renforcée, envisagez de placer le tableau de bord derrière un <strong>proxy d’authentification dédié</strong>. Ce mot de passe intégré est une barrière légère, pas une couche d’authentification complète.",
+    "passwordTip": "Laissez vide pour conserver le mot de passe actuel. 15 caractères minimum. Pour une protection renforcée, envisagez de placer le tableau de bord derrière un <strong>proxy d’authentification dédié</strong>. Ce mot de passe intégré est une barrière légère, pas une couche d’authentification complète.",
     "backup": "Sauvegarde",
     "importExport": "Importer / Exporter",
     "signOut": "Se déconnecter",
@@ -67,7 +67,7 @@
     "logDebug": "Débogage",
     "logInfo": "Info",
     "logError": "Erreurs",
-    "passwordPh": "Nouveau mot de passe (8 caractères minimum)",
+    "passwordPh": "Nouveau mot de passe (15 caractères minimum)",
     "showSettingsAria": "Afficher les Réglages sur le tableau de bord",
     "dockNeedsShown": "Activez « Afficher les Réglages sur le tableau de bord » pour les placer dans le Dock.",
     "importJson": "Importer le JSON de configuration",
@@ -370,7 +370,7 @@
     "setupHelp": "Saisissez le code de configuration du journal du conteneur. Stackyard l’écrit la première fois qu’il refuse une adresse et en crée un nouveau à chaque redémarrage.",
     "code": "Code de configuration",
     "codeWrong": "Le code de configuration est incorrect. Copiez-le à nouveau depuis le journal du conteneur.",
-    "tooShort": "Utilisez au moins 8 caractères.",
+    "tooShort": "Utilisez au moins 15 caractères.",
     "codeMissing": "Saisissez le code de configuration du journal du conteneur.",
     "tooLong": "Utilisez au plus 1024 caractères."
   },
@@ -393,7 +393,6 @@
     "importFailed": "Échec de l’import : {err}",
     "exportFailed": "Échec de l’export : {err}",
     "importNoChange": "Rien à importer. Le fichier correspond à votre configuration actuelle.",
-    "pwWeak": "Mot de passe trop faible : {label}",
     "currentPasswordWrong": "Le mot de passe actuel est incorrect.",
     "passwordChangedElsewhere": "Le mot de passe a été modifié ailleurs. Rechargez la page et réessayez.",
     "dashboardChangedElsewhere": "Le tableau de bord a été modifié ailleurs. Rechargez la page et réessayez.",
@@ -486,11 +485,13 @@
     "mismatch": "Les mots de passe ne correspondent pas."
   },
   "pwStrength": {
-    "tooShort": "Trop court, 8 caractères minimum",
-    "weak": "Faible",
-    "fair": "Moyen",
-    "good": "Bon",
-    "strong": "Fort"
+    "tip": "Utilisez au moins 15 caractères. Quelques mots choisis au hasard sont faciles à retenir.",
+    "count_one": "Caractères : {count} sur 15",
+    "count_many": "Caractères : {count} sur 15",
+    "count_other": "Caractères : {count} sur 15",
+    "enough": "Longueur suffisante",
+    "guessable": "Trop facile à deviner. Évitez le nom ou l’adresse de ce tableau de bord.",
+    "common": "Ce mot de passe est trop courant. Choisissez-en un autre."
   },
   "widget": {
     "loading": "Chargement",

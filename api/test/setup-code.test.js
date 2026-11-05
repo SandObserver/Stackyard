@@ -109,10 +109,10 @@ test('the printed code sets the password on a refused address and signs in', asy
 
 test('a used code cannot set a second password', async () => {
   const code = printedCode();
-  assert.equal((await setup(code, 'first-password')).status, 200);
+  assert.equal((await setup(code, 'first-password-here')).status, 200);
   const again = await setup(code, 'attacker-password');
   assert.equal(again.status, 409);
-  assert.equal(await verifyPassword('first-password', loadConfig().settings.auth.passwordHash), true);
+  assert.equal(await verifyPassword('first-password-here', loadConfig().settings.auth.passwordHash), true);
 });
 
 test('a wrong code is refused and stores nothing', async () => {
@@ -137,7 +137,7 @@ test('wrong codes never lock the owner out or replace the code', async () => {
   const rejected = audit.mock.calls.filter(c => c.arguments[0] === 'setup code rejected').length;
   audit.mock.restore();
   assert.equal(rejected, 1);
-  assert.equal((await setup(code, 'owner-password')).status, 200);
+  assert.equal((await setup(code, 'owner-password-here')).status, 200);
 });
 
 test('an address Stackyard answers gets no setup route', async () => {
@@ -150,7 +150,7 @@ test('an address Stackyard answers gets no setup route', async () => {
 
 test('a submit with no code yet prints one, so the log holds a code that works', async () => {
   const printed = mock.method(log, 'print', () => {});
-  const r = await setup('OLD-CODE-FROM-BEFORE-A-RESTART', 'owner-password');
+  const r = await setup('OLD-CODE-FROM-BEFORE-A-RESTART', 'owner-password-here');
   const fresh = printed.mock.calls
     .map(c => c.arguments[0])
     .join('\n')
@@ -158,7 +158,7 @@ test('a submit with no code yet prints one, so the log holds a code that works',
   printed.mock.restore();
   assert.equal(r.status, 403);
   assert.ok(fresh);
-  assert.equal((await setup(fresh, 'owner-password')).status, 200);
+  assert.equal((await setup(fresh, 'owner-password-here')).status, 200);
 });
 
 test('a code pasted with its label, odd dashes or spaces still works', async () => {
@@ -177,12 +177,12 @@ test('a password over the maximum is refused with its own reason', async () => {
 test('a code printed before a password was set and removed no longer works', async () => {
   const code = printedCode();
   const ip = { host: '192.168.1.10', origin: 'http://192.168.1.10' };
-  const set = await request('/api/auth/set-password', { password: 'first-password' }, ip);
+  const set = await request('/api/auth/set-password', { password: 'first-password-here' }, ip);
   assert.equal(set.status, 200);
   const cookie = set.cookie;
   expireCache();
   const off = await new Promise((resolve, reject) => {
-    const body = JSON.stringify({ enabled: false, currentPassword: 'first-password' });
+    const body = JSON.stringify({ enabled: false, currentPassword: 'first-password-here' });
     const req = http.request(
       {
         host: '127.0.0.1',
@@ -219,12 +219,15 @@ test('a request without an Origin header is refused', async () => {
 });
 
 test('the code cannot replace a password that is already set', async () => {
-  saveConfig({ items: [], settings: { auth: { enabled: true, passwordHash: await hashPassword('owner-password') } } });
+  saveConfig({
+    items: [],
+    settings: { auth: { enabled: true, passwordHash: await hashPassword('owner-password-here') } },
+  });
   expireCache();
   const code = printedCode();
   const r = await setup(code, 'attacker-password');
   assert.equal(r.status, 409);
-  assert.equal(await verifyPassword('owner-password', loadConfig().settings.auth.passwordHash), true);
+  assert.equal(await verifyPassword('owner-password-here', loadConfig().settings.auth.passwordHash), true);
 });
 
 test('INITIAL_PASSWORD sets the password while none is set', async () => {
@@ -236,11 +239,14 @@ test('INITIAL_PASSWORD sets the password while none is set', async () => {
 });
 
 test('INITIAL_PASSWORD leaves a password set in Settings alone', async () => {
-  saveConfig({ items: [], settings: { auth: { enabled: true, passwordHash: await hashPassword('owner-password') } } });
+  saveConfig({
+    items: [],
+    settings: { auth: { enabled: true, passwordHash: await hashPassword('owner-password-here') } },
+  });
   expireCache();
   process.env.INITIAL_PASSWORD = 'from-the-template';
   assert.equal(await setupCode.applyInitialPassword(), false);
-  assert.equal(await verifyPassword('owner-password', loadConfig().settings.auth.passwordHash), true);
+  assert.equal(await verifyPassword('owner-password-here', loadConfig().settings.auth.passwordHash), true);
 });
 
 test('INITIAL_PASSWORD does not come back after the owner removes the password', async () => {
@@ -295,7 +301,7 @@ test('a short INITIAL_PASSWORD is an error that names $$', async () => {
   process.env.INITIAL_PASSWORD = 'short';
   await assert.rejects(
     setupCode.applyInitialPassword(),
-    /must be 8 to 1024 characters\. In docker-compose\.yml or \.env, write each \$ as \$\$/,
+    /at least 15 characters\. In docker-compose\.yml or \.env, write each \$ as \$\$/,
   );
   assert.equal(authActive(loadConfig()), false);
 });
@@ -338,7 +344,7 @@ test('INITIAL_PASSWORD waits while the settings file is damaged', async () => {
 
 test('setting a password retires a printed code', async () => {
   const code = printedCode();
-  assert.equal((await request('/api/auth/set-password', { password: 'first-password' }, LAN_ADDR)).status, 200);
+  assert.equal((await request('/api/auth/set-password', { password: 'first-password-here' }, LAN_ADDR)).status, 200);
   saveConfig({ items: [], settings: {} });
   expireCache();
   const printed = mock.method(log, 'print', () => {});
@@ -385,15 +391,15 @@ test('a damaged password prints a code at sign-in, and the code replaces it on a
   assert.equal(login.body.code, 'auth.password-damaged');
   assert.match(text, /saved dashboard password is damaged/);
   const code = text.match(/Setup code {2}(\S+)/)[1];
-  assert.equal((await setup('WRONG-CODE', 'new-owner-pass', LAN)).status, 403);
-  const r = await setup(code, 'new-owner-pass', LAN);
+  assert.equal((await setup('WRONG-CODE', 'new-owner-password', LAN)).status, 403);
+  const r = await setup(code, 'new-owner-password', LAN);
   assert.equal(r.status, 200);
   assert.ok(r.cookie?.startsWith('ds='));
   expireCache();
   const cfg = loadConfig();
-  assert.equal(await verifyPassword('new-owner-pass', cfg.settings.auth.passwordHash), true);
+  assert.equal(await verifyPassword('new-owner-password', cfg.settings.auth.passwordHash), true);
   assert.notEqual(cfg.settings.auth.secret, 'x'.repeat(64));
-  assert.equal((await request('/api/auth/login', { password: 'new-owner-pass' }, LAN)).status, 200);
+  assert.equal((await request('/api/auth/login', { password: 'new-owner-password' }, LAN)).status, 200);
 });
 
 test('a damaged password is not counted as a failed sign-in', async () => {
@@ -405,11 +411,14 @@ test('a damaged password is not counted as a failed sign-in', async () => {
 });
 
 test('the code cannot replace a password that is intact', async () => {
-  saveConfig({ items: [], settings: { auth: { enabled: true, passwordHash: await hashPassword('owner-password') } } });
+  saveConfig({
+    items: [],
+    settings: { auth: { enabled: true, passwordHash: await hashPassword('owner-password-here') } },
+  });
   expireCache();
   const code = printedCode();
   assert.equal((await setup(code, 'attacker-password', LAN)).status, 409);
-  assert.equal(await verifyPassword('owner-password', loadConfig().settings.auth.passwordHash), true);
+  assert.equal(await verifyPassword('owner-password-here', loadConfig().settings.auth.passwordHash), true);
 });
 
 function rawPost(pathName, payload, { host = HOST, origin = `https://${host}` } = {}) {

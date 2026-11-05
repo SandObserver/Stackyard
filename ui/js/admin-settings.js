@@ -8,9 +8,9 @@ import {
   wireInlineEdit,
   showFieldError,
   clearFieldErrors,
-} from '/js/admin-shared.js?v=e9169387';
-import { socketProbeAdvice } from '/js/admin-error.js?v=1c258dc1';
-import { pwStrength } from '/js/password-strength.js?v=389e0ed0';
+} from '/js/admin-shared.js?v=e6355fcb';
+import { socketProbeAdvice } from '/js/admin-error.js?v=f1471df6';
+import { passwordMeter, contextWords, REFUSAL_KEYS } from '/js/password-policy.js?v=6e609aa2';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import {
   shouldWritePassword,
@@ -24,7 +24,7 @@ import { confirmText, promptModal } from '/js/modal.js?v=6df8b6c1';
 import { el, inp, setUserText } from '/js/utils.js?v=ab3cac1d';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { serialWrites } from '/js/admin-save-logic.js?v=b83791fb';
-import { renderColorControl } from '/js/admin-color-control.js?v=77ac872b';
+import { renderColorControl } from '/js/admin-color-control.js?v=6322ec89';
 import { BACKDROP } from '/js/background.js?v=288bfc2a';
 import {
   ALLOWED_HOSTS_MAX,
@@ -545,6 +545,9 @@ const PASSWORD_ERROR_KEYS = Object.freeze({
   'invalid.current-password': 'toast.currentPasswordWrong',
   'invalid.password-changed': 'toast.passwordChangedElsewhere',
   'blocked.rate-limit': 'toast.tooManyAttempts',
+  'invalid.password-short': REFUSAL_KEYS.short,
+  'invalid.password-long': REFUSAL_KEYS.long,
+  'invalid.password-common': REFUSAL_KEYS.common,
 });
 const RETRY_IN_DIALOG = new Set(['invalid.current-password', 'blocked.rate-limit']);
 
@@ -559,14 +562,14 @@ async function saveServer() {
     enabled,
     passwordSet: _passwordSet,
     newPassword: pw,
-    strength: pwStrength(pw),
+    strength: (({ ok, refusalKey }) => ({ ok, labelKey: refusalKey }))(
+      passwordMeter(pw, contextWords(location.hostname)),
+    ),
   });
   if (blocker) {
     showFieldError(
       el('ie-pw'),
-      blocker.reason === BLOCK.NEEDS_PASSWORD
-        ? t('toast.authNeedsPassword')
-        : t('toast.pwWeak', { label: t(blocker.labelKey) }),
+      blocker.reason === BLOCK.NEEDS_PASSWORD ? t('toast.authNeedsPassword') : t(blocker.labelKey),
     );
     return;
   }

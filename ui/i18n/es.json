@@ -57,7 +57,7 @@
     "passwordProtection": "Protección con contraseña",
     "password": "Contraseña",
     "currentPassword": "Contraseña actual",
-    "passwordTip": "Déjalo en blanco para mantener la contraseña actual. Mínimo 8 caracteres. Para una protección más sólida, considera colocar el panel detrás de un <strong>proxy de autenticación dedicado</strong>. Esta contraseña integrada es una barrera ligera, no una capa de autenticación completa.",
+    "passwordTip": "Déjalo en blanco para mantener la contraseña actual. Mínimo 15 caracteres. Para una protección más sólida, considera colocar el panel detrás de un <strong>proxy de autenticación dedicado</strong>. Esta contraseña integrada es una barrera ligera, no una capa de autenticación completa.",
     "backup": "Copia de seguridad",
     "importExport": "Importar / Exportar",
     "signOut": "Cerrar sesión",
@@ -67,7 +67,7 @@
     "logDebug": "Depuración",
     "logInfo": "Información",
     "logError": "Errores",
-    "passwordPh": "Nueva contraseña (mín. 8 caracteres)",
+    "passwordPh": "Nueva contraseña (mín. 15 caracteres)",
     "showSettingsAria": "Mostrar Ajustes en el panel",
     "dockNeedsShown": "Activa «Mostrar Ajustes en el panel» para añadir Ajustes al Dock.",
     "importJson": "Importar JSON de configuración",
@@ -370,7 +370,7 @@
     "setupHelp": "Introduce el código de configuración del registro del contenedor. Stackyard lo escribe la primera vez que rechaza una dirección y crea uno nuevo en cada reinicio.",
     "code": "Código de configuración",
     "codeWrong": "El código de configuración no es correcto. Cópialo de nuevo del registro del contenedor.",
-    "tooShort": "Usa al menos 8 caracteres.",
+    "tooShort": "Usa al menos 15 caracteres.",
     "codeMissing": "Introduce el código de configuración del registro del contenedor.",
     "tooLong": "Usa como máximo 1024 caracteres."
   },
@@ -393,7 +393,6 @@
     "importFailed": "Error al importar: {err}",
     "exportFailed": "Error al exportar: {err}",
     "importNoChange": "Nada que importar. El archivo coincide con tu configuración actual.",
-    "pwWeak": "Contraseña demasiado débil: {label}",
     "currentPasswordWrong": "La contraseña actual es incorrecta.",
     "passwordChangedElsewhere": "La contraseña se cambió en otro lugar. Recarga la página e inténtalo de nuevo.",
     "dashboardChangedElsewhere": "El panel se cambió en otro lugar. Recarga la página e inténtalo de nuevo.",
@@ -486,11 +485,13 @@
     "mismatch": "Las contraseñas no coinciden."
   },
   "pwStrength": {
-    "tooShort": "Demasiado corta, mínimo 8 caracteres",
-    "weak": "Débil",
-    "fair": "Aceptable",
-    "good": "Buena",
-    "strong": "Fuerte"
+    "tip": "Usa al menos 15 caracteres. Unas cuantas palabras al azar son fáciles de recordar.",
+    "count_one": "Caracteres: {count} de 15",
+    "count_many": "Caracteres: {count} de 15",
+    "count_other": "Caracteres: {count} de 15",
+    "enough": "Longitud suficiente",
+    "guessable": "Demasiado fácil de adivinar. Evita el nombre o la dirección de este panel.",
+    "common": "Esta contraseña es demasiado común. Elige otra."
   },
   "widget": {
     "loading": "Cargando",

@@ -57,7 +57,7 @@
     "passwordProtection": "Passwortschutz",
     "password": "Passwort",
     "currentPassword": "Aktuelles Passwort",
-    "passwordTip": "Leer lassen, um das bestehende Passwort beizubehalten. Mindestens 8 Zeichen. Für stärkeren Schutz solltest du dem Dashboard einen <strong>eigenen Authentifizierungs-Proxy</strong> vorschalten. Dieses integrierte Passwort ist nur eine einfache Sperre, keine vollständige Authentifizierungsebene.",
+    "passwordTip": "Leer lassen, um das bestehende Passwort beizubehalten. Mindestens 15 Zeichen. Für stärkeren Schutz solltest du dem Dashboard einen <strong>eigenen Authentifizierungs-Proxy</strong> vorschalten. Dieses integrierte Passwort ist nur eine einfache Sperre, keine vollständige Authentifizierungsebene.",
     "backup": "Backup",
     "importExport": "Import / Export",
     "signOut": "Abmelden",
@@ -67,7 +67,7 @@
     "logDebug": "Debug",
     "logInfo": "Info",
     "logError": "Fehler",
-    "passwordPh": "Neues Passwort (mind. 8 Zeichen)",
+    "passwordPh": "Neues Passwort (mind. 15 Zeichen)",
     "showSettingsAria": "Einstellungen im Dashboard anzeigen",
     "dockNeedsShown": "Aktiviere „Einstellungen im Dashboard anzeigen“, um sie ins Dock zu legen.",
     "importJson": "Konfigurations-JSON importieren",
@@ -363,7 +363,7 @@
     "setupHelp": "Gib den Einrichtungscode aus dem Container-Log ein. Stackyard schreibt ihn ins Log, sobald es zum ersten Mal eine Adresse ablehnt, und erzeugt bei jedem Neustart einen neuen.",
     "code": "Einrichtungscode",
     "codeWrong": "Der Einrichtungscode ist falsch. Kopiere ihn erneut aus dem Container-Log.",
-    "tooShort": "Verwende mindestens 8 Zeichen.",
+    "tooShort": "Verwende mindestens 15 Zeichen.",
     "codeMissing": "Gib den Einrichtungscode aus dem Container-Log ein.",
     "tooLong": "Verwende höchstens 1024 Zeichen."
   },
@@ -386,7 +386,6 @@
     "importFailed": "Import fehlgeschlagen: {err}",
     "exportFailed": "Export fehlgeschlagen: {err}",
     "importNoChange": "Nichts zu importieren. Die Datei stimmt mit deiner aktuellen Konfiguration überein.",
-    "pwWeak": "Passwort zu schwach: {label}",
     "currentPasswordWrong": "Das aktuelle Passwort ist falsch.",
     "passwordChangedElsewhere": "Das Passwort wurde anderswo geändert. Lade die Seite neu und versuche es erneut.",
     "dashboardChangedElsewhere": "Das Dashboard wurde anderswo geändert. Lade die Seite neu und versuche es erneut.",
@@ -476,11 +475,12 @@
     "mismatch": "Passwörter stimmen nicht überein."
   },
   "pwStrength": {
-    "tooShort": "Zu kurz, mindestens 8 Zeichen",
-    "weak": "Schwach",
-    "fair": "Mittel",
-    "good": "Gut",
-    "strong": "Stark"
+    "tip": "Verwende mindestens 15 Zeichen. Ein paar zufällige Wörter kann man sich leicht merken.",
+    "count_one": "Zeichen: {count} von 15",
+    "count_other": "Zeichen: {count} von 15",
+    "enough": "Lang genug",
+    "guessable": "Zu leicht zu erraten. Vermeide den Namen oder die Adresse dieses Dashboards.",
+    "common": "Dieses Passwort ist zu verbreitet. Wähle ein anderes."
   },
   "widget": {
     "loading": "Wird geladen",

@@ -350,11 +350,11 @@
       "/js/photo-credit.js?v=*": [
         "./ui/js/photo-credit.js"
       ],
-      "/js/password-strength.js": [
-        "./ui/js/password-strength.js"
+      "/js/password-policy.js": [
+        "./ui/js/password-policy.js"
       ],
-      "/js/password-strength.js?v=*": [
-        "./ui/js/password-strength.js"
+      "/js/password-policy.js?v=*": [
+        "./ui/js/password-policy.js"
       ],
       "/js/spotlight.js": [
         "./ui/js/spotlight.js"
