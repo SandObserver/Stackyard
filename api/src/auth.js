@@ -14,8 +14,7 @@ function _authBlock(cfg) {
   return cfg.settings.auth;
 }
 
-/* Invalidates every outstanding session, including the caller's own. The caller
-   must issue a fresh cookie in the same response. */
+/* Invalidates every outstanding session, including the caller's own. */
 function rotateSessionSecret() {
   const cfg = loadConfigForUpdate();
   const auth = _authBlock(cfg);

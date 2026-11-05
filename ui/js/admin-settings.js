@@ -312,10 +312,9 @@ export function loadSettings(c) {
     secRevoke.disabled = true;
     try {
       await apiPost('/api/auth/revoke-sessions', {});
-      toast(t('toast.sessionsRevoked'), 'ok');
+      location.reload();
     } catch (e) {
       toast(errorText(e), 'err');
-    } finally {
       secRevoke.disabled = false;
     }
   });

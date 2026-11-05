@@ -398,7 +398,6 @@
     "passwordChangedElsewhere": "Le mot de passe a été modifié ailleurs. Rechargez la page et réessayez.",
     "dashboardChangedElsewhere": "Le tableau de bord a été modifié ailleurs. Rechargez la page et réessayez.",
     "tooManyAttempts": "Trop de tentatives. Réessayez plus tard.",
-    "sessionsRevoked": "Tous les appareils ont été déconnectés.",
     "authNeedsPassword": "Définissez un mot de passe avant d’activer l’authentification.",
     "importForeignDone": "Importation terminée. Applications : {apps}. Dossiers : {folders}.",
     "importForeignNothing": "Rien à importer dans ces fichiers.",
