@@ -237,16 +237,16 @@ test('every locale can name every pull request filter', () => {
   }
 });
 
-/* Both are read out beside an item's name, so an untranslated one reaches a
+/* Each is read out beside an item's name, so an untranslated one reaches a
    screen reader in English while the row beside it is translated. */
-test('every locale names the reorder buttons', () => {
+test('every locale names the reorder handle', () => {
   for (const file of fs.readdirSync(path.join(root, 'i18n')).filter(f => f.endsWith('.json'))) {
     const cat = JSON.parse(read(`i18n/${file}`));
-    for (const key of ['moveUp', 'moveDown']) {
-      assert.ok(cat.common?.[key], `${file} is missing common.${key}`);
+    for (const key of ['moveNamed', 'moveHint', 'movedTo']) {
+      assert.ok(cat.list?.[key], `${file} is missing list.${key}`);
     }
   }
-  assert.match(settingsSource(), /t\(dir < 0 \? 'common\.moveUp' : 'common\.moveDown'\)/);
+  assert.match(settingsSource(), /t\('list\.moveNamed', \{ name \}\)/);
 });
 
 /* The tests above cover the toolbox's own status strings. Text a widget writes

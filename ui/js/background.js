@@ -1,5 +1,5 @@
 // @ts-check
-import { cssColor, sanitizeCssUrl } from '/js/utils.js?v=ab3cac1d';
+import { cssColor, sanitizeCssUrl } from '/js/utils.js?v=dab8881a';
 import { loadWallpaper, saveWallpaper, validCredit } from '/js/wallpaper-cache.js?v=321c8003';
 
 export const BACKDROP = '#0d1117';
@@ -60,7 +60,8 @@ async function unsplashPhoto(bg) {
   return photo;
 }
 
-const decoded = url =>
+/** @param {string} url @returns {Promise<boolean>} */
+export const decoded = url =>
   new Promise(resolve => {
     const img = new Image();
     img.onload = () => resolve(true);

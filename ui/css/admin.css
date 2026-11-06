@@ -319,7 +319,7 @@ html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable;-webkit-t
 .chip.on{background:var(--ac);color:var(--on-fill);font-weight:600}
 @media (hover:hover) and (pointer:fine){.chip:hover:not(.on){color:var(--tx)}}
 .chip:active{opacity:.8}
-.row.drow{display:grid;grid-template-columns:20px 48px 1fr auto auto;gap:12px;padding:10px 16px;min-height:68px;cursor:grab;align-items:center}
+.row.drow{display:grid;grid-template-columns:24px 48px 1fr auto auto;gap:12px;padding:10px 16px;min-height:68px;cursor:pointer;align-items:center}
 .row.drow[data-indent]{padding-inline-start:28px;background:rgba(255,255,255,.02);border-inline-start:2px solid var(--bd);margin-inline-start:8px;border-start-end-radius:var(--rs);border-end-end-radius:var(--rs)}
 @media (hover:hover) and (pointer:fine){.row.drow:hover{background:var(--ov-soft)}
 .grp:has(> .fh-hl.on) .row.drow:hover{background:transparent}}
@@ -332,9 +332,12 @@ html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable;-webkit-t
 .row.al-dock-empty{min-height:68px;justify-content:center;text-align:center;padding-block:10px;color:var(--dm);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 .row.al-dock-empty.drag-into{background:var(--row-drop);box-shadow:inset 0 0 0 2px var(--gn);color:var(--tx)}
 /* touch-action:none, or a drag starting on the handle scrolls the list instead. */
-.rord{display:flex;align-items:center;justify-content:center;color:var(--dm);font-size:var(--fs-callout);line-height:var(--lh-callout);letter-spacing:var(--tr-callout);touch-action:none}
+.rord{display:flex;align-items:center;justify-content:center;align-self:stretch;min-height:44px;padding:0;border:0;border-radius:8px;background:none;font-family:inherit;color:var(--dm);font-size:var(--fs-callout);line-height:var(--lh-callout);letter-spacing:var(--tr-callout);touch-action:none;cursor:grab}
+.rord:focus-visible,.ract-edit:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
+.row.drow:active,.ract-edit:active{opacity:.7}
 .rico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--on-tint);flex-shrink:0;overflow:hidden;box-shadow:inset 0 0 0 1px var(--icon-ring)}
 .rico img{width:30px;height:30px;object-fit:contain}
+.rico img.rico-settings{width:36px;height:36px}
 .rinf{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px}
 /* dir="auto" on the name makes it align by its own direction, away from the
    icon. match-parent resolves the alignment against the row's direction. */
@@ -357,6 +360,31 @@ button.rnm:active{opacity:.55}
 .p-sy{background:var(--chip-sy-bg);color:var(--chip-sy-fg)}
 .p-hd{background:var(--chip-hd-bg);color:var(--chip-hd-fg)}
 .ract{display:flex;gap:4px;align-items:center}
+.ract-edit{display:flex;align-items:center;justify-content:center;width:28px;height:44px;margin-inline-end:-8px;padding:0;border:0;border-radius:8px;background:none;color:var(--dm);cursor:pointer}
+.ract-chev{display:block}
+.ract-edit,.rpills{transition:opacity .2s var(--ease-reveal),width .2s var(--ease-reveal),visibility 0s}
+.rmove{display:flex;max-width:0;overflow:hidden;opacity:0;visibility:hidden;transition:max-width .2s var(--ease-reveal),opacity .2s var(--ease-reveal),visibility 0s .2s}
+.reordering .rmove{max-width:88px;opacity:1;visibility:visible;transition-delay:0s}
+.reordering .ract-edit{width:0;margin-inline-end:0;opacity:0;visibility:hidden;transition-delay:0s,0s,.2s}
+.reordering .rpills{opacity:0;visibility:hidden;transition-delay:0s,0s,.2s}
+.reordering .row.drow{cursor:default}
+.reordering .row.drow:active{opacity:1}
+.rmove-btn{flex:none;display:grid;place-items:center;width:44px;height:44px;padding:4px;border:0;border-radius:50%;background:var(--btn-fill) content-box;color:var(--tx);cursor:pointer}
+.rmove-btn:active:not(:disabled){opacity:.7}
+.rmove-btn:disabled{opacity:.3;cursor:default}
+.rmove-btn:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
+.btn.al-reorder{display:inline-grid;justify-items:center}
+.sec-hdr-actions .btn.al-reorder{background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;color:var(--ac);padding-inline:8px;transition:opacity .15s ease}
+.sec-hdr-actions .btn.al-reorder:active{opacity:.6}
+.sec-hdr-actions .btn.al-add{width:36px;padding:0;display:inline-grid;place-items:center;border-radius:50%}
+html.is-mobile .sec-hdr-actions .btn.al-add{width:44px;padding:0}
+.al-filter{transition:opacity .2s var(--ease-reveal)}
+.al-filter.is-disabled{opacity:.4}
+.al-filter.is-disabled .chip,.al-filter.is-disabled .al-search{cursor:default}
+.al-reorder > span{grid-area:1/1;transition:opacity .2s var(--ease-reveal),visibility 0s}
+.al-reorder > span + span,.al-reorder.on > span:first-child{opacity:0;visibility:hidden;transition-delay:0s,.2s}
+.al-reorder.on > span + span{opacity:1;visibility:visible;transition-delay:0s}
+html:not(.is-mobile) .p-type{display:none}
 .empty{padding:48px 24px;text-align:center;color:var(--dm)}
 .fp-add{width:100%;background:none;border:none;border-radius:var(--rs);color:var(--ac2);padding:8px 14px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;cursor:pointer;text-align:start;font-family:inherit}
 @media (hover:hover) and (pointer:fine){.fp-add:hover{background:var(--ov-soft)}}
@@ -417,9 +445,10 @@ button.rnm:active{opacity:.55}
    message gets about half the width it could have. */
 .row .rl:empty{flex:0 0 auto}
 .row-status{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);margin-inline-end:8px;color:var(--dm);flex:1;min-width:0}
+.row-status.end{text-align:end}
 .row-status.ok{color:var(--ok)}
 .row-status.err{color:var(--danger)}
-.grp-tip.field-err{color:var(--danger);position:relative}
+.grp-tip.field-err,.grp-tip.field-err-out{color:var(--danger);position:relative}
 .grp-tip.field-err:has(~ .row:not(.d-none), ~ .row-wrap:not(.d-none):not(.reveal:not(.open)))::after{content:'';position:absolute;inset-inline-start:16px;inset-inline-end:16px;bottom:0;height:1px;background:var(--row-sep);pointer-events:none}
 .row.row-invalid::after{content:none}
 .row-invalid .rl{color:var(--danger)}
@@ -557,6 +586,15 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .bg:disabled{opacity:1;color:var(--dm)}
 .bd-btn{background:var(--btn-danger-fill);color:var(--rd)}
 @media (hover:hover) and (pointer:fine){.bd-btn:hover:not(:disabled){background:var(--rd);color:var(--on-fill)}}
+.sv-btn{display:inline-grid;place-items:center}
+.sv-btn > span{grid-area:1/1;transition:opacity .2s var(--ease-reveal),transform .2s var(--ease-reveal)}
+.sv-done{display:inline-flex;align-items:center;gap:4px;opacity:0;transform:translateY(4px)}
+.sv-btn .sv-lbl{transition-delay:.08s}
+.sv-btn .sv-done{transition-duration:.12s}
+.sv-btn.saved .sv-lbl{opacity:0;transform:translateY(-4px);transition-delay:0s;transition-duration:.12s}
+.sv-btn.saved .sv-done{opacity:1;transform:none;transition-delay:.08s;transition-duration:.2s}
+.sv-btn.saved:disabled{color:var(--tx)}
+.sv-btn.saved:disabled .sy-icon{color:var(--gn)}
 .sm{padding:5px 12px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);min-height:28px}
 .sec-hdr-actions .btn{min-height:36px;padding:7px 16px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);box-shadow:var(--shadow-glass-btn)}
 .sec-hdr-actions .bg{background:var(--glass-bg);-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);box-shadow:inset 0 0 0 .5px var(--glass-rim),var(--shadow-glass-btn)}
@@ -576,13 +614,14 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
    click. */
 #toast.show{opacity:1;transform:translateY(0);pointer-events:auto;cursor:pointer;-webkit-user-select:text;user-select:text}
 #toast.show:active{opacity:.8}
-/* Tinted fill, not the raw accent. Near-white text on solid --gn/--rd measures
-   2.02 and 3.43, under the 4.5 WCAG AA needs; mixed 30% into the page colour it
-   reaches 8.13 and 10.33. The border keeps the accent at full strength for the
-   3:1 non-text minimum. */
-#toast.ok{background:color-mix(in srgb,var(--gn) 30%,var(--bg-outer));border-color:var(--gn)}
-#toast.err{background:color-mix(in srgb,var(--rd) 30%,var(--bg-outer));border-color:var(--rd)}
-#toast.warn{background:color-mix(in srgb,var(--sy-orange) 30%,var(--bg-outer));border-color:var(--warning)}
+.toast-ico{flex-shrink:0;display:grid;color:var(--gn)}
+#toast.err .toast-ico{color:var(--rd)}
+#toast.warn .toast-ico{color:var(--warning)}
+.toast-act{flex-shrink:0;align-self:center;font:inherit;font-weight:600;color:var(--tx);background:var(--fill-tertiary);border:0;border-radius:999px;min-height:28px;padding:4px 12px;margin-block:-4px;cursor:pointer}
+.toast-act[hidden]{display:none}
+.toast-act:active{opacity:.55}
+.toast-act:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+@media (pointer:coarse){.toast-act{min-height:44px;margin-block:-12px}}
 #toast-msg{margin:0;flex:1;min-width:0;overflow-wrap:anywhere}
 .toast-x{position:relative;flex-shrink:0;width:28px;height:28px;margin-block:-4px;border:none;border-radius:50%;background:var(--fill-tertiary);color:var(--tx);cursor:pointer;padding:0;visibility:hidden;transition:visibility 0s .2s}
 #toast.show .toast-x{visibility:visible;transition-delay:0s}
@@ -620,8 +659,9 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
 .reveal.open.reveal-done > .reveal-in{overflow:visible}
 
 /* ── Swap: one block replaced by another ──────────────────────────────────── */
-.swapping > *{animation:swap-in var(--t-reveal) var(--ease-reveal)}
+.swapping > :not(.add-new-card){animation:swap-rise var(--t-reveal) var(--ease-reveal)}
 @keyframes swap-in{from{opacity:0}to{opacity:1}}
+@keyframes swap-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
 /* ── Modal dialog (folder picker, import preview, prompts) ── */
 /* The dialog is its own box in the top layer, so it needs no wrapper and no
@@ -633,7 +673,14 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
 .dlg-box::backdrop{background:var(--scrim)}
 .dlg-box[open]{animation:pop-in var(--t-reveal) var(--ease-reveal)}
 .dlg-box[open]::backdrop{animation:swap-in var(--t-reveal) ease-out}
+/* Pointer events off while leaving, or a click lands on a closing list. */
+.row-dd-list.dd-out{animation:pop-out .12s ease-in forwards;pointer-events:none}
+.dlg-box.closing{animation:pop-out .12s ease-in forwards;pointer-events:none}
+.dlg-box.closing::backdrop{animation:fade-out .12s ease-in forwards}
+@keyframes pop-out{to{opacity:0;transform:scale(.97)}}
+@keyframes fade-out{to{opacity:0}}
 @media (prefers-reduced-motion: reduce){.row-dd-list.dd-in,.dlg-box[open]{animation-name:swap-in}}
+@media (prefers-reduced-motion: reduce){.row-dd-list.dd-out,.dlg-box.closing{animation-name:fade-out}}
 .dlg-box.wide{max-width:560px;max-height:80vh}
 .dlg-hdr{padding:22px 22px 12px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline)}
 /* flex:1 sets flex-basis:0, so the body contributes nothing to a dialog that
@@ -874,7 +921,8 @@ html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadlin
    What cannot be expressed logically stays: a chevron is a drawing, not a box,
    and a gradient angle has no logical form, so both are flipped explicitly. */
 [dir="rtl"] .m-back svg,
-[dir="rtl"] .ev-back svg { transform: scaleX(-1); }
+[dir="rtl"] .ev-back svg,
+[dir="rtl"] .ract-chev { transform: scaleX(-1); }
 [dir="rtl"] { --slider-dir:270deg; }
 
 /* ── Increased contrast ──────────────────────────────────────────────────────

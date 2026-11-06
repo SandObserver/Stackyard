@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DNS Server</title>
-<script src="/js/widget-theme.js?v=36e39da3"></script>
+<script src="/js/widget-theme.js?v=9bd864aa"></script>
 <style>
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
   html { -webkit-tap-highlight-color: transparent; }
@@ -62,7 +62,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=66813091';
+import { poll, fetchData, rollText, linkTo, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=373740c4';
 await loadStrings();
 /* These two are in the markup, so the widget still reads correctly in English
    if the catalog fetch fails. */
@@ -216,7 +216,7 @@ function showHeadline() {
     pctEl.style.color = readableInk(s.color, 3);
     subEl.textContent = s.label;
   } else if (_last) {
-    pctEl.textContent = formatNumber(_last.pct / 100, { style: 'percent' });
+    rollText(pctEl, formatNumber(_last.pct / 100, { style: 'percent' }));
     pctEl.style.color = '';
     subEl.textContent = wt('ui.queriesBlocked', 'Queries Blocked');
   }

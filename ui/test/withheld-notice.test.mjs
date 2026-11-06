@@ -19,6 +19,8 @@ function fakeToast() {
     },
     classList: { contains: c => classes.has(c) },
     contains: () => false,
+    querySelector: () => null,
+    setAttribute() {},
     addEventListener(type, fn) {
       listeners[type] = fn;
     },

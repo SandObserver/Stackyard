@@ -184,8 +184,10 @@ export const ICON_R = 0.26;
 export function mkWrap(item, sz, r, isz, cls, breg) {
   const w = mk('div');
   w.className = cls ? `plate ${cls}` : 'plate';
-  const wrapBg = clr(item.system === 'settings' ? 'auto' : item.color);
+  const colour = item.system === 'settings' ? 'auto' : (item.color ?? '');
+  const wrapBg = clr(colour);
   const clear = item.color === 'clear' && item.system !== 'settings';
+  w.dataset.color = colour;
   w.style.cssText = `--tc:${wrapBg};width:${sz}px;height:${sz}px;border-radius:${r}px;${clear ? '' : `background-color:${wrapBg};`}position:relative;flex-shrink:0;overflow:visible;display:flex;align-items:center;justify-content:center;`;
   if (clear) {
     w.classList.add('plate-clear', 'glass-surface');
@@ -200,8 +202,9 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
       draggable: false,
     });
     img.setAttribute('aria-hidden', 'true');
+    img.className = 'settings-glyph';
     img.style.cssText = `width:${si}px;height:${si}px;object-fit:contain;position:relative;z-index:3;`;
-    img.onerror = () => img.replaceWith(letterTile(item.label, sz, wrapBg));
+    img.onerror = () => img.replaceWith(letterTile(item.label, sz, clr(colour)));
     w.appendChild(img);
   } else if (rawIcon) {
     const chain = iconChain(rawIcon);
@@ -213,7 +216,7 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
       const tryNext = () => {
         step++;
         if (step < chain.length) img.src = chain[step];
-        else img.replaceWith(letterTile(item.label, sz, wrapBg));
+        else img.replaceWith(letterTile(item.label, sz, clr(colour)));
       };
       img.onerror = tryNext;
       /* A 403 fires load, not onerror. A blocked image has zero dimensions. */
@@ -246,6 +249,27 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
 const _mounts = new Set();
 
 /** Stop everything the mounted widgets started. */
+/** @param {ParentNode} [root] */
+export function rethemeTiles(root = document) {
+  const light = pageTheme() === 'light';
+  const ink = plate => (toneForColor(plate) ?? (light ? 'dark' : 'light')) === 'dark';
+  for (const node of root.querySelectorAll('.plate[data-color]')) {
+    const w = /** @type {HTMLElement} */ (node);
+    const bg = clr(w.dataset.color);
+    w.style.setProperty('--tc', bg);
+    if (!w.classList.contains('plate-clear')) w.style.backgroundColor = bg;
+    w.querySelector(':scope > .fb')?.classList.toggle('fb-on-light', ink(bg));
+    const glyph = /** @type {HTMLImageElement|null} */ (w.querySelector(':scope > img.settings-glyph'));
+    if (glyph) glyph.src = light ? SETTINGS_ICON_LIGHT : SETTINGS_ICON;
+  }
+  for (const node of root.querySelectorAll('.folder-mini-bg[data-color]')) {
+    const m = /** @type {HTMLElement} */ (node);
+    const bg = clr(m.dataset.color);
+    m.style.background = bg;
+    m.querySelector(':scope > .folder-mini-fb')?.classList.toggle('fb-on-light', ink(bg));
+  }
+}
+
 export function teardownWidgets() {
   for (const stop of _mounts) {
     try {

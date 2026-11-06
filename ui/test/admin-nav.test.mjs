@@ -68,7 +68,7 @@ test('list saves run through one queue and undo through one reverting save', () 
     /if \(next\.stale\) _replaced\+\+;/,
     'a change queued on a list an import replaced must be refused, not saved over',
   );
-  assert.match(src, /const asked = _replaced;\s*return saves\.run\(\(\) => writeItems\(asked\)\);/);
+  assert.match(src, /const asked = _replaced;\s*return saves\.run\(\(\) => writeItems\(asked, done\)\);/);
   assert.match(src, /if \(asked !== _replaced \|\| JSON\.stringify\(full\.items \|\| \[\]\) !== _serverItems\)/);
   assert.match(
     src,

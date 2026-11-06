@@ -7,7 +7,9 @@ const { seedConfig, app, openDashboardList, rowByName } = require('./helpers');
 const focused = page =>
   page.evaluate(() => {
     const a = document.activeElement;
-    return a ? (a.getAttribute('aria-label') || a.textContent || a.id || a.tagName).trim() : '';
+    return a
+      ? (a.getAttribute('aria-label') || a.textContent || a.id || a.tagName).replace(/[\u2066-\u2069]/g, '').trim()
+      : '';
   });
 
 const editorOpened = page =>
@@ -21,18 +23,30 @@ test.beforeEach(async ({ request }) => {
 
 test('a list move keeps focus on the moved row', async ({ page }) => {
   await openDashboardList(page);
-  await rowByName(page, 'Alpha').getByRole('button', { name: 'Move down: Alpha' }).focus();
+  await page.locator('#btn-reorder').click();
+  await rowByName(page, 'Alpha')
+    .getByRole('button', { name: /^Move .*Alpha.* down$/ })
+    .focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('#al .rnm').nth(1)).toHaveText('Alpha');
-  expect(await focused(page)).toBe('Move down: Alpha');
+  expect(await focused(page)).toBe('Move Alpha down');
+  await expect(page.locator('#sr-announce')).toHaveText(/position 2 of/);
 
   await page.keyboard.press('Enter');
   await expect(page.locator('#al .rnm').nth(2)).toHaveText('Alpha');
-  expect(await focused(page)).toBe('Move down: Alpha');
+  expect(await focused(page)).toBe('Move Alpha down');
 
   await page.keyboard.press('Enter');
   await expect(page.locator('#al .rnm').last()).toHaveText('Alpha');
-  expect(await focused(page)).toBe('Move up: Alpha');
+  expect(await focused(page)).toBe('Move Alpha up');
+});
+
+test('the handle moves its row with the arrow keys', async ({ page }) => {
+  await openDashboardList(page);
+  await rowByName(page, 'Alpha').getByRole('button', { name: 'Move Alpha', exact: true }).focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.locator('#al .rnm').nth(1)).toHaveText('Alpha');
+  expect(await focused(page)).toBe('Move Alpha');
 });
 
 test('closing the editor returns focus to the row that opened it', async ({ page }) => {

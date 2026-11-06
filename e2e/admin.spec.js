@@ -82,7 +82,9 @@ test('an icon too large for the web server says so', async ({ page }) => {
   await rowByName(page, 'Alpha').getByRole('button', { name: /edit/i }).click();
   await page.locator('#ip-upload').setInputFiles({ name: 'big.png', mimeType: 'image/png', buffer: Buffer.alloc(8) });
   await expect(page.locator('#toast')).toHaveClass(/\berr\b/);
-  await expect(page.locator('#toast')).toHaveText('Upload failed: That image is too large for the server to accept.');
+  await expect(page.locator('#toast')).toHaveText(
+    'Could not upload the file. That image is too large for the server to accept.',
+  );
 });
 
 test('an import file whose aliases expand past the entry budget is refused', async ({ page, request }) => {
@@ -95,7 +97,7 @@ test('an import file whose aliases expand past the entry budget is refused', asy
     .setInputFiles({ name: 'conf.yml', mimeType: 'application/yaml', buffer: Buffer.from(yaml) });
   await expect(page.locator('#toast')).toHaveClass(/\berr\b/);
   await expect(page.locator('#toast')).toHaveText(
-    'Import failed: \u2068conf.yml\u2069 has too many entries to import.',
+    'Could not import. \u2068conf.yml\u2069 has too many entries to import.',
   );
   const hrefs = (await readConfig(request)).items.map(i => i.href || '');
   expect(hrefs.filter(h => h.includes('.invalid') && !h.includes('example'))).toEqual([]);
@@ -323,9 +325,12 @@ test('a save refuses to overwrite a change made in another tab', async ({ page, 
   await rowByName(page, 'Alpha').getByRole('button', { name: /edit/i }).click();
   await setInlineRow(page, 'ie-name', 'f-lbl', 'Alpha renamed');
   await page.locator('#ev-save').click();
-  await expect(page.locator('#toast')).toHaveText(
+  await expect(page.locator('#toast-msg')).toHaveText(
     'The dashboard was changed elsewhere. Reload the page and try again.',
   );
+  await expect(page.locator('#toast .toast-act')).toHaveText('Reload');
+  await page.locator('#toast .toast-x').click();
+  await expect(page.locator('#toast .toast-act')).toBeHidden();
 
   const cfg = await readConfig(request);
   expectItem(cfg, i => i.id === 'charlie', 'the item added in the other tab');

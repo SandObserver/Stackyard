@@ -36,7 +36,7 @@ const BUDGET = {
   'widgets/dashboard-switch/index.html': 2,
   'widgets/dns/index.html': 1,
   'widgets/disk-health/index.html': 1,
-  'widgets/weather/index.html': 2,
+  'widgets/weather/index.html': 1,
 };
 
 /* setHtml's own write. It is the single sanctioned innerHTML in the codebase and

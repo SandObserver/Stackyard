@@ -46,7 +46,7 @@ test('the editor opens for an app that already has labels', async ({ page }) => 
   page.on('pageerror', e => errors.push(e.message));
   await seedConfig(page.request, { items: [labelled()] });
   await openDashboardList(page);
-  await rowByName(page, 'Requests').locator('button', { hasText: 'Edit' }).click();
+  await rowByName(page, 'Requests').getByRole('button', { name: /^Edit/ }).click();
   await expect(page.locator('#albl-path-0-btn')).toBeVisible();
   await expect(page.locator('#albl-path-1-btn')).toBeVisible();
   expect(errors, 'building the editor must not throw').toEqual([]);
@@ -55,7 +55,7 @@ test('the editor opens for an app that already has labels', async ({ page }) => 
 test('a labelled app survives an edit that does not touch its labels', async ({ page }) => {
   await seedConfig(page.request, { items: [labelled()] });
   await openDashboardList(page);
-  await rowByName(page, 'Requests').locator('button', { hasText: 'Edit' }).click();
+  await rowByName(page, 'Requests').getByRole('button', { name: /^Edit/ }).click();
   await setInlineRow(page, 'ie-name', 'f-lbl', 'Requests 2');
   await saveEditor(page);
 
@@ -69,7 +69,7 @@ test('a labelled app survives an edit that does not touch its labels', async ({ 
 test('reordering labels changes which one owns the badge', async ({ page }) => {
   await seedConfig(page.request, { items: [labelled()] });
   await openDashboardList(page);
-  await rowByName(page, 'Requests').locator('button', { hasText: 'Edit' }).click();
+  await rowByName(page, 'Requests').getByRole('button', { name: /^Edit/ }).click();
   await page.locator('.albl-hdr').nth(1).locator('.albl-move').first().click();
   await saveEditor(page);
 
@@ -81,7 +81,7 @@ test('reordering labels changes which one owns the badge', async ({ page }) => {
 test('removing a label drops it from the saved config', async ({ page }) => {
   await seedConfig(page.request, { items: [labelled()] });
   await openDashboardList(page);
-  await rowByName(page, 'Requests').locator('button', { hasText: 'Edit' }).click();
+  await rowByName(page, 'Requests').getByRole('button', { name: /^Edit/ }).click();
   await page.locator('.albl-hdr').nth(1).locator('.grp-hdr-rm').click();
   await saveEditor(page);
 
@@ -95,7 +95,7 @@ test('a single label keeps its own styling rather than losing it', async ({ page
   one.monitoring.activity.labels = [{ path: 'pending', name: 'pending', unit: 'pending', color: '#ffcc00' }];
   await seedConfig(page.request, { items: [one] });
   await openDashboardList(page);
-  await rowByName(page, 'Requests').locator('button', { hasText: 'Edit' }).click();
+  await rowByName(page, 'Requests').getByRole('button', { name: /^Edit/ }).click();
   await saveEditor(page);
 
   const cfg = await readConfig(page.request);
@@ -121,7 +121,7 @@ test('a summed badge keeps its unit, colour and minimum when the app is renamed'
   };
   await seedConfig(page.request, { items: [summed] });
   await openDashboardList(page);
-  await rowByName(page, 'Requests').locator('button', { hasText: 'Edit' }).click();
+  await rowByName(page, 'Requests').getByRole('button', { name: /^Edit/ }).click();
   await setInlineRow(page, 'ie-name', 'f-lbl', 'Requests 2');
   await saveEditor(page);
 
@@ -142,7 +142,7 @@ test('an app saved in the older badge format keeps its secret header when edited
   };
   await seedConfig(page.request, { items: [legacy] });
   await openDashboardList(page);
-  await rowByName(page, 'Sonarr').locator('button', { hasText: 'Edit' }).click();
+  await rowByName(page, 'Sonarr').getByRole('button', { name: /^Edit/ }).click();
   await setInlineRow(page, 'ie-name', 'f-lbl', 'Sonarr 2');
   await saveEditor(page);
 
@@ -177,7 +177,7 @@ for (const [what, activity] of Object.entries(BAD)) {
     page.on('pageerror', e => errors.push(e.message));
     await seedConfig(page.request, { items: [withActivity(activity)] });
     await openDashboardList(page);
-    await rowByName(page, 'Requests').locator('button', { hasText: 'Edit' }).click();
+    await rowByName(page, 'Requests').getByRole('button', { name: /^Edit/ }).click();
     await expect(page.locator('#f-lbl')).toHaveCount(1);
     await expect(page.locator('#ev-save')).toBeVisible();
     expect(errors, `building the editor threw for ${what}`).toEqual([]);
@@ -194,7 +194,7 @@ test('a hostile label name is shown as text, never run as markup', async ({ page
     items: [withActivity({ labels: [{ path: 'a', name: '<img src=x onerror=alert(1)>' }] })],
   });
   await openDashboardList(page);
-  await rowByName(page, 'Requests').locator('button', { hasText: 'Edit' }).click();
+  await rowByName(page, 'Requests').getByRole('button', { name: /^Edit/ }).click();
   await expect(page.locator('#albl-name-0')).toHaveValue('<img src=x onerror=alert(1)>');
   expect(await page.locator('#act-labels img').count(), 'the name must not become an element').toBe(0);
   expect(dialogs).toEqual([]);
@@ -203,7 +203,7 @@ test('a hostile label name is shown as text, never run as markup', async ({ page
 test('saving an app whose labels were malformed writes a clean list', async ({ page }) => {
   await seedConfig(page.request, { items: [withActivity({ labels: [null, { path: 'a', name: 'kept' }, 'x'] })] });
   await openDashboardList(page);
-  await rowByName(page, 'Requests').locator('button', { hasText: 'Edit' }).click();
+  await rowByName(page, 'Requests').getByRole('button', { name: /^Edit/ }).click();
   await saveEditor(page);
   const cfg = await readConfig(page.request);
   const saved = expectItem(cfg, i => i.label === 'Requests', 'the app');
@@ -219,7 +219,7 @@ test('opening and saving does not rewrite a colour nobody touched', async ({ pag
   });
   await openDashboardList(page);
   for (const name of ['Requests', 'Fixed']) {
-    await rowByName(page, name).locator('button', { hasText: 'Edit' }).click();
+    await rowByName(page, name).getByRole('button', { name: /^Edit/ }).click();
     await saveEditor(page);
   }
   const cfg = await readConfig(page.request);
@@ -236,13 +236,13 @@ test('an older summed badge stays summed when the app is opened and saved', asyn
   });
   await openDashboardList(page);
   await expect(page.locator('#act-combine')).toHaveCount(0);
-  await rowByName(page, 'Requests').locator('button', { hasText: 'Edit' }).click();
+  await rowByName(page, 'Requests').getByRole('button', { name: /^Edit/ }).click();
   await expect(page.locator('#act-combine')).toBeChecked();
   await saveEditor(page);
 
   /* One path was never a sum, so the toggle stays hidden and it becomes a
      single label. */
-  await rowByName(page, 'One').locator('button', { hasText: 'Edit' }).click();
+  await rowByName(page, 'One').getByRole('button', { name: /^Edit/ }).click();
   await expect(page.locator('#act-combine-row')).toBeHidden();
   await saveEditor(page);
 

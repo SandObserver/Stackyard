@@ -325,6 +325,103 @@ function fit(el, min) {
   }
 }
 
+const ROLL_STYLE_ID = 'wt-roll-css';
+const ROLL_CSS =
+  '.wt-run{direction:ltr;unicode-bidi:isolate}' +
+  '.wt-roll{display:inline-block;position:relative;white-space:pre;clip-path:inset(0 -1em)}' +
+  '.wt-roll-in{display:inline-block}' +
+  '.wt-roll-out{position:absolute;inset:0;pointer-events:none}';
+const ROLL_MS = 350;
+const ROLL_EASE = 'cubic-bezier(.33,1,.68,1)';
+const _rolled = new WeakMap();
+
+/** @param {HTMLElement} el @param {string} text */
+export function rollText(el, text) {
+  const next = String(text ?? '');
+  const shown = _rolled.get(el);
+  const prev = shown != null && shownText(el) === shown ? shown : null;
+  _rolled.set(el, next);
+  if (prev === next) return;
+  if (prev == null || typeof el.animate !== 'function') {
+    el.textContent = next;
+    return;
+  }
+  if (!document.getElementById(ROLL_STYLE_ID)) {
+    const st = document.createElement('style');
+    st.id = ROLL_STYLE_ID;
+    st.textContent = ROLL_CSS;
+    document.head.appendChild(st);
+  }
+  const still = reducedMotion();
+  const up = rollDirection(prev, next);
+  const pad = Math.max(prev.length, next.length);
+  const a = prev.padStart(pad);
+  const b = next.padStart(pad);
+  /* Keep the run. Without it, a right-to-left widget shows the digits reversed. */
+  const run = document.createElement('span');
+  run.className = 'wt-run';
+  el.replaceChildren(run);
+  for (let i = 0; i < pad; i++) {
+    if (b[i] === ' ' && i < pad - next.length) continue;
+    const ch = document.createElement('span');
+    ch.className = 'wt-roll';
+    ch.textContent = b[i];
+    run.appendChild(ch);
+    if (a[i] === b[i]) continue;
+    const enter = up ? '100%' : '-100%';
+    const leave = up ? '-100%' : '100%';
+    const glyph = document.createElement('span');
+    glyph.className = 'wt-roll-in';
+    glyph.textContent = b[i];
+    ch.textContent = '';
+    ch.appendChild(glyph);
+    glyph.animate(
+      still
+        ? [{ opacity: 0 }, { opacity: 1 }]
+        : [
+            { opacity: 0, transform: `translateY(${enter})`, filter: 'blur(2px)' },
+            { opacity: 1, transform: 'none', filter: 'none' },
+          ],
+      { duration: ROLL_MS, easing: ROLL_EASE },
+    );
+    if (a[i] === ' ' || i < pad - prev.length) continue;
+    const out = document.createElement('span');
+    out.className = 'wt-roll-out';
+    out.setAttribute('aria-hidden', 'true');
+    out.textContent = a[i];
+    ch.appendChild(out);
+    out
+      .animate(
+        still
+          ? [{ opacity: 1 }, { opacity: 0 }]
+          : [
+              { opacity: 1, transform: 'none', filter: 'none' },
+              { opacity: 0, transform: `translateY(${leave})`, filter: 'blur(2px)' },
+            ],
+        { duration: ROLL_MS, easing: ROLL_EASE, fill: 'forwards' },
+      )
+      .finished.then(
+        () => out.remove(),
+        () => out.remove(),
+      );
+  }
+}
+
+/** @param {HTMLElement} el */
+function shownText(el) {
+  const run = el.firstElementChild;
+  if (!run?.classList?.contains('wt-run') || el.childNodes.length !== 1) return el.textContent;
+  return Array.from(run.children, c => c.firstChild?.textContent ?? '').join('');
+}
+
+/** @param {string} prev @param {string} next */
+export function rollDirection(prev, next) {
+  const num = s => Number.parseFloat(String(s).replace(/[^\d.-]/g, ''));
+  const p = num(prev);
+  const n = num(next);
+  return !(Number.isFinite(p) && Number.isFinite(n) && n < p);
+}
+
 const BAR_STYLE_ID = 'wt-bar-css';
 const BAR_CSS =
   '.tb-bar-fill{transform:translateX(calc(var(--tb-pct) - 100%))}' +
@@ -678,6 +775,18 @@ if (typeof window !== 'undefined') /** @type {any} */ (window).__setPollRate = s
 
 const SLOW_POLL_MS = 300000;
 
+const _themed = new Set();
+if (typeof MutationObserver === 'function' && typeof document !== 'undefined' && document.documentElement)
+  new MutationObserver(() => {
+    for (const redraw of _themed) redraw();
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+function revealFirstData() {
+  const body = typeof document !== 'undefined' ? document.body : null;
+  if (!body || typeof body.animate !== 'function') return;
+  body.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease-out' });
+}
+
 function asInternal(e) {
   if (e && typeof e === 'object' && !Object.isFrozen(e)) {
     if (typeof e.kind !== 'string') e.kind = 'internal';
@@ -719,6 +828,7 @@ export function poll(opts = {}) {
       } else {
         if (ov) ov.ok();
         opts.render && opts.render(data);
+        if (!everOk) revealFirstData();
       }
       fails = 0;
       lastOk = readingTime(data);
@@ -768,6 +878,10 @@ export function poll(opts = {}) {
     else timer = setTimeout(loop, jitter(due));
   }
   _polls.add(onRate);
+  const onTheme = () => {
+    if (!stopped && lastData != null && opts.render && !isEmpty(lastData)) opts.render(lastData);
+  };
+  _themed.add(onTheme);
 
   function onVisibility() {
     if (stopped) return;
@@ -794,6 +908,7 @@ export function poll(opts = {}) {
       stopped = true;
       clearTimeout(timer);
       _polls.delete(onRate);
+      _themed.delete(onTheme);
       if (canObserve) document.removeEventListener('visibilitychange', onVisibility);
     },
   };

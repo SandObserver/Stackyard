@@ -17,7 +17,7 @@ import {
   badgeErrorAdvice,
   errorAdvice,
   socketProbeAdvice,
-  loginErrorKey,
+  loginErrorAdvice,
   optionsErrorAdvice,
   readError,
   setupErrorKey,
@@ -206,10 +206,22 @@ test('a refused sign-in maps to a translated sentence, never the server text', (
     kind: 'blocked',
     code: 'blocked.rate-limit',
   });
-  assert.equal(loginErrorKey(wrong), 'login.incorrect');
-  assert.equal(loginErrorKey(locked), 'toast.tooManyAttempts');
-  assert.equal(loginErrorKey(new TypeError('Failed to fetch')), 'adminError.genericInternal');
-  for (const e of [wrong, locked]) assert.equal(typeof lookup(loginErrorKey(e)), 'string');
+  const timed = Object.assign(new Error('Too many attempts.'), {
+    kind: 'blocked',
+    code: 'blocked.rate-limit',
+    detail: { minutes: 12 },
+  });
+  assert.deepEqual(loginErrorAdvice(wrong), { key: 'login.incorrect' });
+  assert.deepEqual(loginErrorAdvice(locked), { key: 'toast.tooManyAttempts' });
+  assert.deepEqual(loginErrorAdvice(timed), { key: 'toast.tooManyAttemptsWait', vars: { count: 12 } });
+  assert.deepEqual(loginErrorAdvice(new TypeError('Failed to fetch')), { key: 'adminError.offline' });
+  for (const e of [wrong, locked]) assert.equal(typeof lookup(loginErrorAdvice(e).key), 'string');
+});
+
+test('a rate-limit answer with a wait gives the wait, and a bad wait is ignored', () => {
+  const at = minutes => errorAdvice({ kind: 'blocked', code: 'blocked.rate-limit', detail: { minutes } });
+  assert.deepEqual(at(3), { key: 'toast.tooManyAttemptsWait', vars: { count: 3 } });
+  for (const bad of [0, -1, 2.5, '3', null]) assert.deepEqual(at(bad), { key: 'toast.tooManyAttempts' });
 });
 
 test('a refused first-run password maps to a translated sentence', () => {
@@ -230,7 +242,7 @@ test('an API refusal maps to its own sentence, not the per-kind one', () => {
   assert.equal(errorAdvice({ kind: 'invalid', code: 'invalid.too-large' }).key, 'toast.imageTooLarge');
   assert.equal(errorAdvice({ kind: 'invalid', code: 'invalid.file-type' }).key, 'adminError.fileType');
   assert.equal(errorAdvice({ kind: 'invalid' }).key, 'adminError.genericInvalid');
-  assert.equal(errorAdvice(new TypeError('Failed to fetch')).key, 'adminError.genericInternal');
+  assert.equal(errorAdvice(new TypeError('Failed to fetch')).key, 'adminError.offline');
 });
 
 test('a Docker label import failure maps to its own sentence', () => {

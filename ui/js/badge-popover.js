@@ -53,8 +53,11 @@ function place(badge) {
   const r = badge.getBoundingClientRect();
   const pr = p.getBoundingClientRect();
   const gap = 8;
-  let top = r.bottom + gap;
-  if (top + pr.height > window.innerHeight - 8) top = Math.max(8, r.top - gap - pr.height);
+  let top = r.top - gap - pr.height;
+  if (top < 8) {
+    const tile = (tileOf(badge) || badge).getBoundingClientRect();
+    top = Math.min(tile.bottom + gap, window.innerHeight - 8 - pr.height);
+  }
   /* Aligned with the badge's trailing edge, which is the other side of the
      screen in a right-to-left language. */
   const rtl = (document.documentElement.getAttribute('dir') || 'ltr') === 'rtl';
@@ -62,6 +65,25 @@ function place(badge) {
   left = Math.min(Math.max(8, left), window.innerWidth - pr.width - 8);
   p.style.top = Math.round(top) + 'px';
   p.style.left = Math.round(left) + 'px';
+}
+
+/** @param {HTMLElement} p @param {HTMLElement} badge @param {boolean} opening
+    @returns {Animation|null} */
+function grow(p, badge, opening) {
+  if (typeof p.animate !== 'function') return null;
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const b = badge.getBoundingClientRect();
+  const r = p.getBoundingClientRect();
+  const x = Math.round(b.left + b.width / 2 - r.left);
+  const y = Math.round(b.top + b.height / 2 - r.top);
+  p.style.transformOrigin = String(x) + 'px ' + String(y) + 'px';
+  const shut = still ? { opacity: 0 } : { opacity: 0, transform: 'scale(.9)' };
+  const full = still ? { opacity: 1 } : { opacity: 1, transform: 'none' };
+  return p.animate(opening ? [shut, full] : [full, shut], {
+    duration: opening ? 200 : 120,
+    easing: opening ? 'cubic-bezier(.32,.72,0,1)' : 'ease-in',
+    fill: opening ? 'none' : 'forwards',
+  });
 }
 
 /** @param {HTMLElement} badge */
@@ -87,10 +109,13 @@ function open(badge) {
     line.append(dot, name, val);
     p.appendChild(line);
   }
-  p.showPopover();
+  const was = openFor;
+  p.getAnimations?.().forEach(a => a.cancel());
+  if (!p.matches(':popover-open')) p.showPopover();
   openFor = badge;
   openedAt = Date.now();
   place(badge);
+  if (was !== badge) grow(p, badge, true);
   const tile = tileOf(badge);
   if (tile) {
     tile.setAttribute('aria-describedby', 'badge-pop');
@@ -103,7 +128,16 @@ export function closeBadgePopover() {
   openTimer = 0;
   clearTimeout(closeTimer);
   closeTimer = 0;
-  if (pop?.matches(':popover-open')) pop.hidePopover();
+  const from = openFor;
+  if (pop?.matches(':popover-open')) {
+    const p = pop;
+    const a = from ? grow(p, from, false) : null;
+    if (a)
+      a.onfinish = () => {
+        if (!openFor && p.matches(':popover-open')) p.hidePopover();
+      };
+    else p.hidePopover();
+  }
   openFor = null;
   if (describedEl) {
     describedEl.removeAttribute('aria-describedby');

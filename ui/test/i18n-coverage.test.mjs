@@ -70,8 +70,6 @@ const SAME_ON_PURPOSE = {
     'app.ping',
     'app.dockPill',
     'home.dock',
-    /* "Error" is the Spanish word too. */
-    'toast.error',
     /* A product name, alone or before an error it did not write. */
     'app.proxmox',
     'status.proxmoxFailed',
@@ -110,6 +108,8 @@ const SAME_ON_PURPOSE = {
     'appearance.saturation',
     /* A product name, alone or before an error it did not write. */
     'app.proxmox',
+    /* "Page" is the French word too. */
+    'home.pageControl',
   ]),
   'fa.json': new Set(['appearance.sourceUnsplash', 'app.proxmox', 'status.proxmoxFailed']),
   'zh-Hans.json': new Set(['app.ping', 'appearance.sourceUnsplash', 'app.proxmox']),
@@ -276,6 +276,9 @@ for (const [file, rules] of Object.entries(HOUSE_STYLE)) {
    Everything is matched whole-word and case-insensitively. */
 const LATIN_OK = [
   'Stackyard',
+  'nas',
+  'local',
+  'teal',
   'Docker',
   'Unsplash',
   'Proxmox',

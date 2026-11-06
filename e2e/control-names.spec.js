@@ -47,9 +47,7 @@ test('the custom widget fullscreen switch is named', async ({ page }) => {
 
 test('the health check type radios are grouped under their label', async ({ page }) => {
   await openDashboardList(page);
-  await rowByName(page, 'Alpha')
-    .getByRole('button', { name: /^Bearbeiten/ })
-    .click();
+  await rowByName(page, 'Alpha').getByRole('button', { name: 'Alpha bearbeiten' }).click();
   const group = page.getByRole('group').filter({ has: page.locator('#hc-type-con') });
   await expect(group).toHaveAccessibleName('Typ');
 });
@@ -90,9 +88,7 @@ test('Settings group titles are headings', async ({ page }) => {
 
 test('the icon colour Style is a named drop-down', async ({ page }) => {
   await openDashboardList(page);
-  await rowByName(page, 'Alpha')
-    .getByRole('button', { name: /^Bearbeiten/ })
-    .click();
+  await rowByName(page, 'Alpha').getByRole('button', { name: 'Alpha bearbeiten' }).click();
   const style = page.getByRole('button', { name: /^Stil/ });
   await expect(style).toHaveAccessibleName('Stil Dunkel');
   const pick = async v => {
@@ -119,9 +115,7 @@ test('the icon colour Style is a named drop-down', async ({ page }) => {
 
 test('the Test result is announced', async ({ page }) => {
   await openDashboardList(page);
-  await rowByName(page, 'Alpha')
-    .getByRole('button', { name: /^Bearbeiten/ })
-    .click();
+  await rowByName(page, 'Alpha').getByRole('button', { name: 'Alpha bearbeiten' }).click();
   await page.locator('label:has(#hc-type-ping)').click();
   await page.locator('#hc-ping-test').click();
   await expect(page.getByRole('status').filter({ hasText: /URL/ })).toHaveAttribute('id', 'hc-ping-status');
@@ -134,13 +128,11 @@ test('a Test that got no HTTP answer says why, in the page language', async ({ p
     }),
   );
   await openDashboardList(page);
-  await rowByName(page, 'Alpha')
-    .getByRole('button', { name: /^Bearbeiten/ })
-    .click();
+  await rowByName(page, 'Alpha').getByRole('button', { name: 'Alpha bearbeiten' }).click();
   await page.locator('label:has(#hc-type-ping)').click();
   await page.locator('#ie-hc-ping .pe').click();
   await page.keyboard.type('http://192.168.1.10:1/');
   await page.keyboard.press('Enter');
   await page.locator('#hc-ping-test').click();
-  await expect(page.locator('#hc-ping-status')).toHaveText('✗ Der Host hat die Verbindung abgelehnt. Prüfe den Port.');
+  await expect(page.locator('#hc-ping-status')).toHaveText('Der Host hat die Verbindung abgelehnt. Prüfe den Port.');
 });

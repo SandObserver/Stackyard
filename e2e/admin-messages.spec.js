@@ -36,15 +36,30 @@ test('a wrong current password keeps the dialog open with the error at the field
   const field = prompt.getByLabel('Current password');
 
   await field.fill('wrong');
-  await prompt.getByRole('button', { name: 'Delete' }).click();
+  await prompt.getByRole('button', { name: 'Turn Off' }).click();
   await expect(prompt.locator('.dlg-err')).toHaveText('The current password is incorrect.');
   await expect(field).toHaveAttribute('aria-invalid', 'true');
   await expect(field).toBeFocused();
 
   await field.fill('right');
-  await prompt.getByRole('button', { name: 'Delete' }).click();
+  await prompt.getByRole('button', { name: 'Turn Off' }).click();
   await expect(prompt).toBeHidden();
-  await expect(page.locator('#toast-msg')).toHaveText('Saved');
+  await expect(page.locator('#srv-save')).toHaveClass(/\bsaved\b/);
+});
+
+test('Enter during the close animation does not confirm a cancelled dialog', async ({ page }) => {
+  let sent = 0;
+  await page.route('**/api/auth/toggle', route => {
+    sent++;
+    return route.fulfill({ json: { ok: true } });
+  });
+  const prompt = await askToTurnOffProtection(page);
+  await prompt.getByLabel('Current password').fill('right');
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('dialog.dlg-box')).toHaveCount(0);
+  expect(sent).toBe(0);
+  await expect(page.locator('#srv-save')).not.toHaveClass(/\bsaved\b/);
 });
 
 test('a session that ran out mid-save asks to sign in above the dialog, then finishes the save', async ({ page }) => {
@@ -54,7 +69,7 @@ test('a session that ran out mid-save asks to sign in above the dialog, then fin
   const prompt = await askToTurnOffProtection(page);
 
   await prompt.getByLabel('Current password').fill('right');
-  await prompt.getByRole('button', { name: 'Delete' }).click();
+  await prompt.getByRole('button', { name: 'Turn Off' }).click();
   const signIn = page.locator('#login-pw');
   await expect(signIn).toBeFocused();
   await signIn.fill('anything');
@@ -62,7 +77,7 @@ test('a session that ran out mid-save asks to sign in above the dialog, then fin
 
   await expect(page.locator('#login-screen')).toBeHidden();
   await expect(prompt).toBeHidden();
-  await expect(page.locator('#toast-msg')).toHaveText('Saved');
+  await expect(page.locator('#srv-save')).toHaveClass(/\bsaved\b/);
   expect(replies).toHaveLength(0);
 });
 
@@ -79,11 +94,11 @@ test('a dialog the browser closes mid-save still reports the save', async ({ pag
   const prompt = await askToTurnOffProtection(page);
 
   await prompt.getByLabel('Current password').fill('right');
-  await prompt.getByRole('button', { name: 'Delete' }).click();
+  await prompt.getByRole('button', { name: 'Turn Off' }).click();
   await expect(prompt).toHaveAttribute('aria-busy', 'true');
   for (let i = 0; i < 5 && (await prompt.isVisible()); i++) await page.keyboard.press('Escape');
   release();
-  await expect(page.locator('#toast-msg')).toHaveText('Saved');
+  await expect(page.locator('#srv-save')).toHaveClass(/\bsaved\b/);
 });
 
 test('the sign-in screen cannot be dismissed with Escape', async ({ page }) => {
@@ -152,7 +167,7 @@ test('a required picker is marked invalid and clears once Fetch fills it', async
   const row = page.locator('.row-invalid');
   const picker = row.locator('.row-dd-btn');
   const note = page.locator('.row-invalid + .field-err');
-  await expect(note).toContainText('is required');
+  await expect(note).toContainText('Enter a value for');
   await expect(picker).toHaveAttribute('aria-invalid', 'true');
   await expect(picker).toHaveAttribute('aria-describedby', new RegExp(`\\b${await note.getAttribute('id')}\\b`));
 
@@ -169,8 +184,10 @@ test('a colour code that is not a colour is announced and clears when a swatch i
   await setInlineRow(page, 'icon-col-code-row', 'icon-col-hex', 'notacolour');
 
   const note = page.locator('#icon-col-code-row + .field-err');
-  await expect(note).toHaveText('That is not a color. Use #rrggbb or a CSS color name.');
-  await expect(page.locator('#sr-announce')).toHaveText('That is not a color. Use #rrggbb or a CSS color name.');
+  await expect(note).toHaveText('Enter a color as #rrggbb or as a CSS color name, such as teal.');
+  await expect(page.locator('#sr-announce')).toHaveText(
+    'Enter a color as #rrggbb or as a CSS color name, such as teal.',
+  );
   await expect(page.locator('#icon-col-code-row .pe')).toHaveAttribute(
     'aria-describedby',
     new RegExp(`\\b${await note.getAttribute('id')}\\b`),

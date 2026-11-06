@@ -21,6 +21,7 @@ const {
   revokeSession,
   isSecureRequest,
   registerLoginAttempt,
+  loginWaitMinutes,
   clearAttempts,
   isAuthenticated,
   hasValidSession,
@@ -91,7 +92,7 @@ on('POST', '/api/auth/login', async (req, res) => {
     const limitErr = registerLoginAttempt(key);
     if (limitErr) {
       log.audit('login blocked', { ip, reason: 'rate_limit' });
-      return json(res, 429, { error: limitErr, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
+      return json(res, 429, rateLimitBody(limitErr, key));
     }
     const match = await matchPassword(typeof password === 'string' ? password : '', hash);
     if (!match) {
@@ -156,6 +157,12 @@ function attemptKey(req, cfg) {
   return knownHost(req, cfg) ? ip : `${ip} unlisted`;
 }
 
+function rateLimitBody(error, key) {
+  const minutes = loginWaitMinutes(key);
+  const body = { error, kind: KIND.BLOCKED, code: 'blocked.rate-limit' };
+  return minutes ? { ...body, detail: { minutes } } : body;
+}
+
 /* Keep the lockout count. Without it a session can brute-force the password. */
 async function refuseWrongCurrentPassword(req, res, hash, currentPassword) {
   const ip = getIp(req);
@@ -163,7 +170,7 @@ async function refuseWrongCurrentPassword(req, res, hash, currentPassword) {
   const limitErr = registerLoginAttempt(key);
   if (limitErr) {
     log.audit('password check blocked', { ip, reason: 'rate_limit' });
-    json(res, 429, { error: limitErr, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
+    json(res, 429, rateLimitBody(limitErr, key));
     return true;
   }
   if (!(await verifyPassword(typeof currentPassword === 'string' ? currentPassword : '', hash))) {

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Weather</title>
-<script src="/js/widget-theme.js?v=36e39da3"></script>
+<script src="/js/widget-theme.js?v=9bd864aa"></script>
 <style>
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
   html{-webkit-tap-highlight-color:transparent}
@@ -76,8 +76,8 @@
   <div class="sr-only" id="sr"></div>
 </div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, setHtml } from '/js/widget-toolbox.js?v=66813091';
-import { ensureSprite } from '/js/icon-set.js?v=2f4cd1e2';
+import { poll, fetchData, rollText, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, setHtml } from '/js/widget-toolbox.js?v=373740c4';
+import { ensureSprite } from '/js/icon-set.js?v=b279fd98';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('widget.label', 'Weather'));
 const API='/api';
@@ -333,7 +333,7 @@ function render(d){
   condEl.textContent=m.label;
   fitText(condEl,11);
   const unitSym = d.units==='f' ? '°F' : '°C';
-  tempEl.innerHTML=formatNumber(Number(d.temp))+'&deg;';
+  rollText(tempEl, formatNumber(Number(d.temp))+'°');
   /* set colors directly on the elements so nothing can override them */
   tempEl.style.color=tempColor(d.temp,d.units,lightCard);
   condEl.style.color = lightCard ? '#2C2C2E' : '#FFFFFF';

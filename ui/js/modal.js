@@ -6,6 +6,61 @@
 let _seq = 0;
 const uniqueId = prefix => `${prefix}-${++_seq}`;
 
+/** @param {HTMLElement} node
+    @param {boolean} open
+    @param {() => void} [done] runs once the close has finished
+    @returns {void} */
+export function slideBlock(node, open, done) {
+  if (typeof node.animate !== 'function' || typeof getComputedStyle !== 'function') {
+    done?.();
+    return;
+  }
+  const still = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cs = getComputedStyle(node);
+  const full = {
+    height: `${node.getBoundingClientRect().height}px`,
+    paddingTop: cs.paddingTop,
+    paddingBottom: cs.paddingBottom,
+    marginTop: cs.marginTop,
+    marginBottom: cs.marginBottom,
+  };
+  const shut = { height: '0px', paddingTop: '0px', paddingBottom: '0px', marginTop: '0px', marginBottom: '0px' };
+  const frames = still
+    ? [{ opacity: open ? 0 : 1 }, { opacity: open ? 1 : 0 }]
+    : open
+      ? [
+          { ...shut, opacity: 0 },
+          { ...full, opacity: 0, offset: 0.6 },
+          { ...full, opacity: 1 },
+        ]
+      : [
+          { ...full, opacity: 1 },
+          { ...full, opacity: 0, offset: 0.4 },
+          { ...shut, opacity: 0 },
+        ];
+  node.style.overflow = 'hidden';
+  const a = node.animate(frames, { duration: open ? 240 : 180, easing: 'cubic-bezier(.32,.72,0,1)' });
+  const end = () => {
+    node.style.overflow = '';
+    done?.();
+  };
+  a.onfinish = end;
+  a.oncancel = end;
+}
+
+/** @param {Element|null} el @returns {HTMLElement|null} */
+export function redrawnTwin(el) {
+  if (!(el instanceof HTMLElement)) return null;
+  if (el.isConnected) return el;
+  if (el.id) return document.getElementById(el.id);
+  const act = el.dataset.act;
+  if (!act) return null;
+  const owner = el.dataset.folderId ? `[data-folder-id="${CSS.escape(el.dataset.folderId)}"]` : '';
+  const row = el.closest('[data-item-id]');
+  const scope = row ? `[data-item-id="${CSS.escape(/** @type {HTMLElement} */ (row).dataset.itemId || '')}"] ` : '';
+  return document.querySelector(`${scope}[data-act="${CSS.escape(act)}"]${owner}`);
+}
+
 /** Open a modal and return its parts. `close()` is safe to call more than once.
 
     @param {{ title: string, className?: string, onClose?: () => void }} opts
@@ -33,20 +88,41 @@ export function openModal({ title, className, onClose }) {
 
   let closed = false;
   let busy = false;
+  const opener = document.activeElement;
   const close = () => {
     if (closed || busy) return;
     closed = true;
-    box.close();
+    let timer = 0;
+    const done = () => {
+      clearTimeout(timer);
+      if (box.open) box.close();
+    };
+    box.addEventListener('animationend', done, { once: true });
+    /* animationend never fires if the animation is dropped. */
+    timer = setTimeout(done, 250);
+    box.classList.add('closing');
   };
 
   /* Escape and the close() above arrive here alike, so the caller is told once
      however the dialog went away. */
   box.addEventListener('cancel', e => {
-    if (busy) e.preventDefault();
+    e.preventDefault();
+    close();
   });
+  /* Keep. The fade-out leaves the dialog open, and a click or Enter in it would
+     confirm a dialog the user cancelled. */
+  const shut = e => {
+    if (!closed) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  };
+  box.addEventListener('click', shut, true);
+  box.addEventListener('keydown', shut, true);
   box.addEventListener('close', () => {
     closed = true;
     box.remove();
+    /* Keep. The list redraws during the close animation, and focus is lost. */
+    if (opener && !opener.isConnected) redrawnTwin(opener)?.focus();
     if (onClose) onClose();
   });
 
@@ -96,7 +172,7 @@ export function openModal({ title, className, onClose }) {
 
 /** A modal with Cancel and a confirming action, resolving to true or false.
 
-    @param {{ title: string, body: Node, confirmLabel: string, cancelLabel: string,
+    @param {{ title: string, body: Node | null, confirmLabel: string, cancelLabel: string,
               destructive?: boolean, irreversible?: boolean, className?: string }} opts
       destructive: the action does harm the person did not ask for.
       irreversible: Cancel takes the first focus, so Return does not confirm.
@@ -105,7 +181,7 @@ export function confirmModal({ title, body, confirmLabel, cancelLabel, destructi
   return new Promise(resolve => {
     let answer = false;
     const m = openModal({ title, className, onClose: () => resolve(answer) });
-    m.body.appendChild(body);
+    if (body) m.body.appendChild(body);
     const cancel = m.addAction(cancelLabel, 'bg sm', m.close);
     const go = m.addAction(confirmLabel, destructive ? 'bd-btn sm' : 'bp sm', () => {
       answer = true;
@@ -117,14 +193,17 @@ export function confirmModal({ title, body, confirmLabel, cancelLabel, destructi
 
 /** confirmModal for a plain sentence, which is what a replaced confirm() asks.
 
-    @param {{ title: string, text: string, confirmLabel: string, cancelLabel: string,
+    @param {{ title: string, text?: string, confirmLabel: string, cancelLabel: string,
               destructive?: boolean, irreversible?: boolean }} opts
     @returns {Promise<boolean>} */
 export function confirmText({ title, text, confirmLabel, cancelLabel, destructive, irreversible }) {
-  const lead = document.createElement('p');
-  lead.className = 'dlg-lead';
-  lead.textContent = text;
-  return confirmModal({ title, body: lead, confirmLabel, cancelLabel, destructive, irreversible });
+  let body = null;
+  if (text) {
+    body = document.createElement('p');
+    body.className = 'dlg-lead';
+    body.textContent = text;
+  }
+  return confirmModal({ title, body, confirmLabel, cancelLabel, destructive, irreversible });
 }
 
 /** A modal asking for one line of text, resolving to the value or null. Never
@@ -191,19 +270,26 @@ export function promptModal({
     err.hidden = true;
     m.body.appendChild(err);
 
+    let leaving = false;
     const showError = msg => {
       err.textContent = msg;
+      const was = err.hidden;
       err.hidden = false;
+      if (was) slideBlock(err, true);
       input.setAttribute('aria-invalid', 'true');
       input.setAttribute('aria-describedby', err.id);
       input.focus();
       input.select();
     };
     input.addEventListener('input', () => {
-      if (err.hidden) return;
-      err.hidden = true;
+      if (err.hidden || leaving) return;
+      leaving = true;
       input.removeAttribute('aria-invalid');
       input.removeAttribute('aria-describedby');
+      slideBlock(err, false, () => {
+        leaving = false;
+        if (input.getAttribute('aria-invalid') !== 'true') err.hidden = true;
+      });
     });
 
     const accept = async () => {

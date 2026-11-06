@@ -192,3 +192,20 @@ test('a widget list the build cannot restamp stops the build', () => {
     /not in the web root/,
   );
 });
+
+/* A selector that matches nothing fails silently: the tour records no editor
+   requests and the static demo cannot open an editor. */
+test('the tour finds the editor controls the admin page has', () => {
+  const fs = require('node:fs');
+  const root = path.join(__dirname, '..', '..');
+  const tour = fs.readFileSync(path.join(root, 'scripts/demo/tour.js'), 'utf8');
+  const page = fs.readFileSync(path.join(root, 'ui/admin/index.html'), 'utf8');
+  const list = fs.readFileSync(path.join(root, 'ui/js/admin-list.js'), 'utf8');
+  assert.match(tour, /#sec-dashboard button\[data-act="edit"\]/);
+  assert.match(list, /ed\.dataset\.act = 'edit';/);
+  for (const id of ['ev-save', 'ev-back', 'btn-add']) {
+    assert.match(tour, new RegExp(`'#${id}[:']`), `the tour should use #${id}`);
+    assert.match(page, new RegExp(`id="${id}"`), `the admin page has no #${id}`);
+  }
+  assert.doesNotMatch(tour, /:(?:text-is|has-text)\(/, 'visible text changes with the language and the design');
+});

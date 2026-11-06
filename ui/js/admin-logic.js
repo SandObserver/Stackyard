@@ -385,7 +385,7 @@ export function urlHasLogin(url) {
     reported as itself.
 
     @param {string} url
-    @param {{ sessionExpired?: boolean, code?: string, vars?: { status?: number } }} advice
+    @param {{ sessionExpired?: boolean, code?: string, vars?: Record<string, unknown> }} advice
     @returns {boolean} */
 export function failureIsMissingApiPath(url, advice) {
   if (!advice || advice.sessionExpired) return false;

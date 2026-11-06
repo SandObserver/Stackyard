@@ -45,9 +45,13 @@ test('English makes every string on the screen readable', async () => {
 test('the error branch loads a catalog before it renders', () => {
   const dashboard = read('js/dashboard.js');
   const branch = dashboard.slice(dashboard.indexOf('if (apiFailed) {'), dashboard.indexOf('api-error-btn'));
-  assert.match(branch, /await initI18n\('en'\)/, 'the screen would render its own keys');
+  assert.match(
+    branch,
+    /await initI18n\(isSupported\(lastLang\) \? lastLang : 'en'\)/,
+    'the screen would render its own keys',
+  );
   assert.ok(
-    branch.indexOf("initI18n('en')") < branch.indexOf('apiDownTitle'),
+    branch.indexOf('await initI18n(') < branch.indexOf('apiDownTitle'),
     'the catalog must load before the screen is built',
   );
 });
@@ -104,4 +108,16 @@ test('the timeout is long enough not to fire on a slow start', () => {
 test('a timeout reaches the API-down screen, not a blank page', () => {
   const src = boot();
   assert.match(src, /catch \(e\)[\s\S]{0,120}apiFailed = true/);
+});
+
+test('the screen speaks the language of the last good boot', () => {
+  const dashboard = read('js/dashboard.js');
+  assert.match(dashboard, /storeSet\(LANG_STORE, await initI18n\(S\.language \|\| 'en'\)\)/);
+});
+
+test('the screen is an alert with a heading', () => {
+  const dashboard = read('js/dashboard.js');
+  const branch = dashboard.slice(dashboard.indexOf('if (apiFailed) {'), dashboard.indexOf('api-error-btn'));
+  assert.match(branch, /setAttribute\('role', 'alert'\)/);
+  assert.match(branch, /<h2 class="api-error-title">/);
 });
