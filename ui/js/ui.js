@@ -17,7 +17,7 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=1a7e03c1';
+} from '/js/utils.js?v=dab8881a';
 import { t, currentLang } from '/js/i18n.js?v=ed7c5565';
 import { toneForColor } from '/js/label-contrast.js?v=46ab91e5';
 import { mobileMetrics, gridColumnWidth, gridCellCount, dockFit } from '/js/mobile-metrics.js?v=938a32a2';

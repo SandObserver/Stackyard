@@ -111,7 +111,7 @@ function open(badge) {
   }
   const was = openFor;
   p.getAnimations?.().forEach(a => a.cancel());
-  p.showPopover();
+  if (!p.matches(':popover-open')) p.showPopover();
   openFor = badge;
   openedAt = Date.now();
   place(badge);

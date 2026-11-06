@@ -1,13 +1,13 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
 import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=cf072e65';
-import { el, isolate, q, qa } from '/js/utils.js?v=1a7e03c1';
+import { el, isolate, q, qa } from '/js/utils.js?v=dab8881a';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import { errorAdvice } from '/js/admin-error.js?v=0882cee9';
 import { formatList, formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { iconChain } from '/js/icons.js?v=5ac01d72';
 import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { slideBlock } from '/js/modal.js?v=343a3508';
+import { slideBlock } from '/js/modal.js?v=bd88cb9e';
 import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=c03e1465';
 
 export const API = '';
@@ -29,6 +29,11 @@ function hideToast() {
   }
   _toastReturn = null;
   e.className = '';
+  const act = /** @type {HTMLButtonElement|null} */ (q('.toast-act', e));
+  if (act) {
+    act.hidden = true;
+    act.onclick = null;
+  }
 }
 
 const TOAST_ICON = Object.freeze({ ok: 'success', warn: 'warning', err: 'failure' });
@@ -113,17 +118,21 @@ function openGeneralAt(rowId) {
   }, 250);
 }
 
+const SOURCE_ROW = new Map([
+  ['invalid.socket-missing', 'ie-socket'],
+  ['invalid.proxmox-missing', 'ie-pve-url'],
+]);
+
 /** @param {unknown} e
     @returns {{ label: string, run: () => void } | null} */
 export function errorAction(e) {
   const err = /** @type {any} */ (e);
   const code = typeof err?.code === 'string' ? err.code : '';
-  if (code === 'invalid.socket-missing') {
+  const source = SOURCE_ROW.get(code);
+  if (source) {
     const off = !(/** @type {HTMLInputElement|null} */ (el('srv-hc-en'))?.checked);
-    return { label: t('toast.openGeneral'), run: () => openGeneralAt(off ? 'srv-hc-en' : 'ie-socket') };
+    return { label: t('toast.openGeneral'), run: () => openGeneralAt(off ? 'srv-hc-en' : source) };
   }
-  if (code === 'invalid.proxmox-missing')
-    return { label: t('toast.openGeneral'), run: () => openGeneralAt('ie-pve-url') };
   if (err?.status === 409 || code === 'invalid.password-changed')
     return { label: t('toast.reload'), run: () => location.reload() };
   return null;

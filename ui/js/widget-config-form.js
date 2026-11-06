@@ -3,9 +3,9 @@
 
 import { t } from '/js/i18n.js?v=ed7c5565';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=0db313c0';
-import { createListbox } from '/js/listbox.js?v=469ae719';
-import { renderColorControl } from '/js/admin-color-control.js?v=0e960c04';
+import { reveal, wireInlineEdit } from '/js/admin-shared.js?v=b790c530';
+import { createListbox } from '/js/listbox.js?v=b1e4e1ae';
+import { renderColorControl } from '/js/admin-color-control.js?v=4bda577d';
 import {
   seedCarried,
   applyOptionSet,
@@ -16,7 +16,7 @@ import {
   isPlainField,
 } from '/js/admin-logic.js?v=cf072e65';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=0882cee9';
-import { qi } from '/js/utils.js?v=1a7e03c1';
+import { qi } from '/js/utils.js?v=dab8881a';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { SAVED_ROW } from '/js/saved-row.js?v=44039df6';
 

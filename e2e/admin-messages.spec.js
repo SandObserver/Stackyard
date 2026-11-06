@@ -47,6 +47,21 @@ test('a wrong current password keeps the dialog open with the error at the field
   await expect(page.locator('#srv-save')).toHaveClass(/\bsaved\b/);
 });
 
+test('Enter during the close animation does not confirm a cancelled dialog', async ({ page }) => {
+  let sent = 0;
+  await page.route('**/api/auth/toggle', route => {
+    sent++;
+    return route.fulfill({ json: { ok: true } });
+  });
+  const prompt = await askToTurnOffProtection(page);
+  await prompt.getByLabel('Current password').fill('right');
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('dialog.dlg-box')).toHaveCount(0);
+  expect(sent).toBe(0);
+  await expect(page.locator('#srv-save')).not.toHaveClass(/\bsaved\b/);
+});
+
 test('a session that ran out mid-save asks to sign in above the dialog, then finishes the save', async ({ page }) => {
   const replies = [SIGNED_OUT, { json: { ok: true } }];
   await page.route('**/api/auth/toggle', route => route.fulfill(/** @type {any} */ (replies.shift())));

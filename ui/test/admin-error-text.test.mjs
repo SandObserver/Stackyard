@@ -7,7 +7,7 @@ globalThis.document = { getElementById: () => null, querySelectorAll: () => [], 
 globalThis.location = /** @type {any} */ ({ host: 'nas.local' });
 
 /* No catalogue is loaded, so t() returns the key it was asked for. */
-const { apiPost, errorText, responseError, ShownError } = await import('../js/admin-shared.js');
+const { apiPost, errorAction, errorText, responseError, ShownError } = await import('../js/admin-shared.js');
 
 const reply = (status, text) => ({
   ok: status < 400,
@@ -41,4 +41,39 @@ test('a web server 413 page is worded as too large', async () => {
 test('a message the page wrote itself is shown as written', () => {
   assert.equal(errorText(new ShownError('already translated')), 'already translated');
   assert.equal(errorText(new TypeError('Failed to fetch')), 'adminError.offline');
+});
+
+for (const [code, row] of [
+  ['invalid.socket-missing', 'ie-socket'],
+  ['invalid.proxmox-missing', 'ie-pve-url'],
+]) {
+  for (const on of [true, false]) {
+    test(`${code} opens ${on ? 'its row' : 'the Health Checks switch'} with Health Checks ${on ? 'on' : 'off'}`, async t => {
+      t.mock.timers.enable({ apis: ['setTimeout'] });
+      const focused = [];
+      const node = id => ({
+        checked: on,
+        querySelector: () => null,
+        scrollIntoView() {},
+        focus: () => focused.push(id),
+      });
+      const saved = globalThis.document;
+      globalThis.document = { ...saved, getElementById: node };
+      globalThis.location.hash = '';
+      try {
+        const action = errorAction({ code });
+        assert.ok(action, 'a missing source offers a way to fix it');
+        action.run();
+        t.mock.timers.tick(300);
+        assert.deepEqual(focused, [on ? row : 'srv-hc-en'], 'a hidden row cannot take focus');
+      } finally {
+        globalThis.document = saved;
+      }
+    });
+  }
+}
+
+test('an unknown code offers no action, even one named like an object key', () => {
+  for (const code of ['constructor', '__proto__', 'toString', 'invalid.other'])
+    assert.equal(errorAction({ code }), null);
 });

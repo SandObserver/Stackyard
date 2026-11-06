@@ -29,9 +29,9 @@ import {
   teardownWidgets,
   rethemeTiles,
   titleWhenTruncated,
-} from '/js/utils.js?v=1a7e03c1';
+} from '/js/utils.js?v=dab8881a';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
-import { initSpotlight } from '/js/spotlight.js?v=c337a384';
+import { initSpotlight } from '/js/spotlight.js?v=82b4584a';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, isSupported, t, currentLang } from '/js/i18n.js?v=ed7c5565';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=c03e1465';
@@ -49,7 +49,7 @@ import {
   resetMobileChrome,
   mkFolderGlyph,
   swipePager,
-} from '/js/ui.js?v=3c81baa2';
+} from '/js/ui.js?v=6de18bf0';
 import {
   badgeMinimum,
   badgeSignature,
@@ -58,7 +58,7 @@ import {
   readBadgeUpdate,
 } from '/js/badge-logic.js?v=6d99179d';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=b0a28c3a';
+import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=652dd5df';
 import { observeGlass } from '/js/glass-rim.js?v=3faec233';
 import {
   configChanged,
@@ -68,7 +68,7 @@ import {
   restorePage,
   wheelPager,
 } from '/js/dashboard-logic.js?v=5fa66027';
-import { applyBackground, BACKDROP, decoded, resolveBackground } from '/js/background.js?v=bf5bd05b';
+import { applyBackground, BACKDROP, decoded, resolveBackground } from '/js/background.js?v=278983c2';
 import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';

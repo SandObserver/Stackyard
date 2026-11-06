@@ -721,3 +721,12 @@ test('every chip fill Settings declares is measured as a tinted label', () => {
     'add the pill to TINTED',
   );
 });
+
+/* The filled button's hover fill would sit under the Reorder button's accent text. */
+test('the Reorder button keeps its plain text style in Reorder mode', () => {
+  const list = fs.readFileSync(path.join(dir, '..', 'js', 'admin-list.js'), 'utf8');
+  const body = list.match(/export function setReordering\([^)]*\) \{[\s\S]*?\n\}/)?.[0] ?? '';
+  assert.ok(body, 'setReordering not found');
+  assert.doesNotMatch(body, /btn-reorder[\s\S]*?toggle\('(?:bp|bg)'/);
+  assert.match(admin, /\.sec-hdr-actions \.btn\.al-reorder\{background:none;/);
+});

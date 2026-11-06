@@ -25,6 +25,14 @@ test('a theme change repaints in place and never rebuilds the widgets', () => {
   assert.match(body, /startViewTransition/);
 });
 
+/* The tile outlives a theme change now, so a colour read when it was built is stale. */
+test('a letter drawn after an icon fails reads the plate colour of the current theme', () => {
+  const utils = read('js/utils.js');
+  const failures = utils.match(/img\.replaceWith\(letterTile\([^)]*\)+/g) ?? [];
+  assert.equal(failures.length, 2, 'the icon failure paths moved');
+  for (const call of failures) assert.match(call, /letterTile\(item\.label, sz, clr\(colour\)\)/);
+});
+
 test('a widget frame can take a new theme without reloading', () => {
   const src = read('js/widget-theme.js');
   assert.match(src, /\(window\)\.__applyHostTheme = apply;/);
@@ -73,6 +81,12 @@ test('the theme crossfade lasts 300 ms and waits for a hidden page', () => {
 test('the phone page control is an input a screen reader can adjust', () => {
   const page = read('index.html');
   assert.match(page, /<input id="mob-pager" class="visually-hidden" type="range"[^>]*data-i18n-al="home\.pageControl"/);
+  assert.match(page, /<input id="mob-pager"[^>]*tabindex="-1"/, 'Tab would land on a control no one can see');
+  assert.match(
+    dashboard,
+    /if \(e\.key === 'ArrowRight'\) goTo\(pg \+ pageDir\(\)\);/,
+    'the keyboard pages without the control',
+  );
   assert.match(dashboard, /pager\.setAttribute\(\s*'aria-valuetext',\s*t\('home\.pageAnnounce'/);
   assert.match(
     dashboard,
@@ -114,6 +128,55 @@ test('the first value is written at once, with nothing to roll from', () => {
   const el = { textContent: 'old', firstElementChild: null, animate() {} };
   rollText(el, '12%');
   assert.equal(el.textContent, '12%');
+});
+
+test('a rolled figure keeps its digit order in a right-to-left widget', () => {
+  const node = tag => ({
+    tagName: tag,
+    className: '',
+    textContent: '',
+    children: [],
+    childNodes: [],
+    get firstElementChild() {
+      return this.children[0] ?? null;
+    },
+    get firstChild() {
+      return this.childNodes[0] ?? null;
+    },
+    classList: {
+      contains(c) {
+        return false;
+      },
+    },
+    appendChild(c) {
+      this.children.push(c);
+      this.childNodes.push(c);
+      return c;
+    },
+    replaceChildren(...c) {
+      this.children = [...c];
+      this.childNodes = [...c];
+    },
+    setAttribute() {},
+    animate: () => ({ finished: new Promise(() => {}) }),
+  });
+  const saved = globalThis.document;
+  globalThis.document = { createElement: node, getElementById: () => ({}), head: { appendChild() {} } };
+  try {
+    const el = node('div');
+    rollText(el, '۲۱°');
+    rollText(el, '۲۲°');
+    assert.equal(el.children.length, 1, 'one run holds every character');
+    const run = el.children[0];
+    assert.equal(run.className, 'wt-run');
+    assert.deepEqual(
+      run.children.map(c => c.className),
+      ['wt-roll', 'wt-roll', 'wt-roll'],
+    );
+  } finally {
+    globalThis.document = saved;
+  }
+  assert.match(read('js/widget-toolbox.js'), /\.wt-run\{direction:ltr;unicode-bidi:isolate\}/);
 });
 
 test('a changed digit rolls its full height inside a clipped slot', () => {

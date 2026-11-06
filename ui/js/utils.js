@@ -204,7 +204,7 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
     img.setAttribute('aria-hidden', 'true');
     img.className = 'settings-glyph';
     img.style.cssText = `width:${si}px;height:${si}px;object-fit:contain;position:relative;z-index:3;`;
-    img.onerror = () => img.replaceWith(letterTile(item.label, sz, wrapBg));
+    img.onerror = () => img.replaceWith(letterTile(item.label, sz, clr(colour)));
     w.appendChild(img);
   } else if (rawIcon) {
     const chain = iconChain(rawIcon);
@@ -216,7 +216,7 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
       const tryNext = () => {
         step++;
         if (step < chain.length) img.src = chain[step];
-        else img.replaceWith(letterTile(item.label, sz, wrapBg));
+        else img.replaceWith(letterTile(item.label, sz, clr(colour)));
       };
       img.onerror = tryNext;
       /* A 403 fires load, not onerror. A blocked image has zero dimensions. */

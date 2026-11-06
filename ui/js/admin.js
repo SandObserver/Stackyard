@@ -4,10 +4,10 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=199114f7';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=161abf42';
+} from '/js/admin-app-form.js?v=0b91f7aa';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=276d4aa8';
 import { recoveryShown } from '/js/config-recovery.js?v=c03e1465';
-import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=6523109b';
+import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=6e1b0245';
 import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=cf072e65';
 import {
   afterImport,
@@ -31,7 +31,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=2d0c5142';
+} from '/js/admin-settings.js?v=de2a9123';
 import {
   apiGet,
   apiPost,
@@ -52,13 +52,13 @@ import {
   errorAction,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=0db313c0';
+} from '/js/admin-shared.js?v=b790c530';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=df116f57';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=c35178b8';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=75a71ab4';
-import { createListbox } from '/js/listbox.js?v=469ae719';
+import { createListbox } from '/js/listbox.js?v=b1e4e1ae';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
 import { loadLocalIcons } from '/js/icons.js?v=5ac01d72';
@@ -78,7 +78,7 @@ import {
 } from '/js/import-foreign.js?v=050f6de4';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { clampName } from '/js/limits.js?v=ea61a441';
-import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=343a3508';
+import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=bd88cb9e';
 import {
   THEME_KEY,
   applyTheme,
@@ -101,8 +101,8 @@ import {
   storeGet,
   storeSet,
   tgt,
-} from '/js/utils.js?v=1a7e03c1';
-import { applyBackground, resolveBackground } from '/js/background.js?v=bf5bd05b';
+} from '/js/utils.js?v=dab8881a';
+import { applyBackground, resolveBackground } from '/js/background.js?v=278983c2';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
 
 ensureSprite();

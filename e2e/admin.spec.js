@@ -329,6 +329,8 @@ test('a save refuses to overwrite a change made in another tab', async ({ page, 
     'The dashboard was changed elsewhere. Reload the page and try again.',
   );
   await expect(page.locator('#toast .toast-act')).toHaveText('Reload');
+  await page.locator('#toast .toast-x').click();
+  await expect(page.locator('#toast .toast-act')).toBeHidden();
 
   const cfg = await readConfig(request);
   expectItem(cfg, i => i.id === 'charlie', 'the item added in the other tab');

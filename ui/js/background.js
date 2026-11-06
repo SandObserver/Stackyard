@@ -1,5 +1,5 @@
 // @ts-check
-import { cssColor, sanitizeCssUrl } from '/js/utils.js?v=1a7e03c1';
+import { cssColor, sanitizeCssUrl } from '/js/utils.js?v=dab8881a';
 import { loadWallpaper, saveWallpaper, validCredit } from '/js/wallpaper-cache.js?v=321c8003';
 
 export const BACKDROP = '#0d1117';

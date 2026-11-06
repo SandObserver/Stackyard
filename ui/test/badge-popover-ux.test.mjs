@@ -183,3 +183,7 @@ test('the badge sets no title attribute', () => {
   assert.doesNotMatch(paint, /\.title\s*=/, 'the browser tooltip would duplicate the popover');
   assert.match(paint, /removeAttribute\('title'\)/, 'a title left from an earlier paint would persist');
 });
+
+test('an open popover is moved to the next badge, not shown again', () => {
+  assert.match(popover, /if \(!p\.matches\(':popover-open'\)\) p\.showPopover\(\);/);
+});

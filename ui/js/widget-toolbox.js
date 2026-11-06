@@ -327,6 +327,7 @@ function fit(el, min) {
 
 const ROLL_STYLE_ID = 'wt-roll-css';
 const ROLL_CSS =
+  '.wt-run{direction:ltr;unicode-bidi:isolate}' +
   '.wt-roll{display:inline-block;position:relative;white-space:pre;clip-path:inset(0 -1em)}' +
   '.wt-roll-in{display:inline-block}' +
   '.wt-roll-out{position:absolute;inset:0;pointer-events:none}';
@@ -356,13 +357,16 @@ export function rollText(el, text) {
   const pad = Math.max(prev.length, next.length);
   const a = prev.padStart(pad);
   const b = next.padStart(pad);
-  el.textContent = '';
+  /* Keep the run. Without it, a right-to-left widget shows the digits reversed. */
+  const run = document.createElement('span');
+  run.className = 'wt-run';
+  el.replaceChildren(run);
   for (let i = 0; i < pad; i++) {
     if (b[i] === ' ' && i < pad - next.length) continue;
     const ch = document.createElement('span');
     ch.className = 'wt-roll';
     ch.textContent = b[i];
-    el.appendChild(ch);
+    run.appendChild(ch);
     if (a[i] === b[i]) continue;
     const enter = up ? '100%' : '-100%';
     const leave = up ? '-100%' : '100%';
@@ -405,8 +409,9 @@ export function rollText(el, text) {
 
 /** @param {HTMLElement} el */
 function shownText(el) {
-  if (!el.firstElementChild?.classList?.contains('wt-roll')) return el.textContent;
-  return Array.from(el.children, c => c.firstChild?.textContent ?? '').join('');
+  const run = el.firstElementChild;
+  if (!run?.classList?.contains('wt-run') || el.childNodes.length !== 1) return el.textContent;
+  return Array.from(run.children, c => c.firstChild?.textContent ?? '').join('');
 }
 
 /** @param {string} prev @param {string} next */

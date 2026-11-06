@@ -109,6 +109,15 @@ export function openModal({ title, className, onClose }) {
     e.preventDefault();
     close();
   });
+  /* Keep. The fade-out leaves the dialog open, and a click or Enter in it would
+     confirm a dialog the user cancelled. */
+  const shut = e => {
+    if (!closed) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  };
+  box.addEventListener('click', shut, true);
+  box.addEventListener('keydown', shut, true);
   box.addEventListener('close', () => {
     closed = true;
     box.remove();

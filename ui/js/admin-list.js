@@ -15,16 +15,16 @@ import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
 import { snapshotItems } from '/js/admin-save-logic.js?v=35fcc1c7';
 import { isShownChild, reorderItems, shownChildren, topLevelRows } from '/js/admin-logic.js?v=cf072e65';
 import { listGroup } from '/js/admin-drag-logic.js?v=4aae5094';
-import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=17cb1b26';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=15a0043a';
 import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=0db313c0';
-import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=1a7e03c1';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=b790c530';
+import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=dab8881a';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { sizeLabel } from '/js/admin-widget-form.js?v=df116f57';
+import { sizeLabel } from '/js/admin-widget-form.js?v=c35178b8';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=c1502c58';
 import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 
@@ -109,12 +109,7 @@ export function setReordering(on) {
     syncFilterUI();
     render();
   }
-  const b = el('btn-reorder');
-  if (b) {
-    b.classList.toggle('on', on);
-    b.classList.toggle('bp', on);
-    b.classList.toggle('bg', !on);
-  }
+  el('btn-reorder')?.classList.toggle('on', on);
   el('al')?.classList.toggle('reordering', on);
   el('al-filter')?.classList.toggle('is-disabled', on);
   for (const c of [el('al-search'), ...qa('#al-filter .chip'), el('btn-add')])

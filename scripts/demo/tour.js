@@ -87,7 +87,7 @@ async function run(origin) {
         .catch(() => {});
       await page.waitForTimeout(500);
     }
-    const edits = page.locator('#sec-dashboard button:text-is("Edit")');
+    const edits = page.locator('#sec-dashboard button[data-act="edit"]');
     const n = await edits.count();
     for (let i = 0; i < n; i++) {
       await edits
@@ -96,13 +96,13 @@ async function run(origin) {
         .catch(() => {});
       await page.waitForTimeout(700);
       await page
-        .locator('button:has-text("Save"):visible')
+        .locator('#ev-save:visible')
         .first()
         .click()
         .catch(() => {});
       outcomes.add(`${view.name}: save: ${await noticeText(page)}`);
       await page
-        .locator('button:has-text("Back"):visible')
+        .locator('#ev-back:visible')
         .first()
         .click()
         .catch(() => {});
