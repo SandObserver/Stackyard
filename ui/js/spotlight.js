@@ -1,6 +1,8 @@
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
-import { mk, clr, el, initial, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=ab3cac1d';
+import { mk, clr, el, initial, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=1a7e03c1';
 import { t } from '/js/i18n.js?v=ed7c5565';
+import { pageTheme } from '/js/palette.js?v=3fb8ae43';
+import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
 
 /* Attached to the window so a re-open can undo the previous one. */
 const _w = /** @type {any} */ (window);
@@ -98,8 +100,12 @@ export function initSpotlight({
       const ic = mk('div');
       ic.className = 'sri';
       ic.dir = 'ltr';
-      ic.style.background = clr(app.color);
-      if (isFolder && folderGlyph) {
+      ic.style.background = clr(app.system === 'settings' ? 'auto' : app.color);
+      if (app.system === 'settings') {
+        const img = mk('img', { alt: '', src: pageTheme() === 'light' ? SETTINGS_ICON_LIGHT : SETTINGS_ICON });
+        img.setAttribute('aria-hidden', 'true');
+        ic.appendChild(img);
+      } else if (isFolder && folderGlyph) {
         ic.style.background = 'transparent';
         ic.style.position = 'relative';
         ic.appendChild(folderGlyph(app, 44));

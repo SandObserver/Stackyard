@@ -177,8 +177,14 @@ test('the swap always releases the height it pinned', () => {
 });
 
 test('it reuses the disclosure timing rather than inventing its own', () => {
-  assert.match(css, /\.swapping > \*\{animation:swap-in var\(--t-reveal\) var\(--ease-reveal\)\}/);
-  assert.match(css, /@keyframes swap-in\{from\{opacity:0\}to\{opacity:1\}\}/);
+  assert.match(
+    css,
+    /\.swapping > :not\(\.add-new-card\)\{animation:swap-rise var\(--t-reveal\) var\(--ease-reveal\)\}/,
+  );
+  assert.match(
+    css,
+    /@keyframes swap-rise\{from\{opacity:0;transform:translateY\(8px\)\}to\{opacity:1;transform:none\}\}/,
+  );
 });
 
 test('every block swap runs through the helper', () => {

@@ -4,11 +4,11 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=e89df52f';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=874312cd';
-import { recoveryShown } from '/js/config-recovery.js?v=e1cf730c';
-import { focusRow, initList, render, syncFilterUI } from '/js/admin-list.js?v=6e7bccf3';
-import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=07377bf7';
+} from '/js/admin-app-form.js?v=199114f7';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=161abf42';
+import { recoveryShown } from '/js/config-recovery.js?v=c03e1465';
+import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=6523109b';
+import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=cf072e65';
 import {
   afterImport,
   buildAppItem,
@@ -21,7 +21,7 @@ import {
   serialWrites,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=b83791fb';
+} from '/js/admin-save-logic.js?v=35fcc1c7';
 import {
   loadSettings,
   savedWallpaperUrl,
@@ -31,10 +31,11 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=26ca2e97';
+} from '/js/admin-settings.js?v=2d0c5142';
 import {
   apiGet,
   apiPost,
+  fadeIn,
   initInlineEdit,
   nameEditPen,
   paintIcon,
@@ -43,22 +44,25 @@ import {
   responseError,
   ShownError,
   setReauthHandler,
+  swapContent,
   showFieldError,
   clearFieldError,
   clearFieldErrors,
+  confirmSaved,
+  errorAction,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=150973a3';
+} from '/js/admin-shared.js?v=0db313c0';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=20498a19';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=df116f57';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=75a71ab4';
-import { createListbox } from '/js/listbox.js?v=a797f939';
+import { createListbox } from '/js/listbox.js?v=469ae719';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
 import { loadLocalIcons } from '/js/icons.js?v=5ac01d72';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=2f4cd1e2';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=b279fd98';
 import { passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import {
@@ -71,10 +75,10 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=20baac2a';
+} from '/js/import-foreign.js?v=050f6de4';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { clampName } from '/js/limits.js?v=ea61a441';
-import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=6df8b6c1';
+import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=343a3508';
 import {
   THEME_KEY,
   applyTheme,
@@ -97,8 +101,8 @@ import {
   storeGet,
   storeSet,
   tgt,
-} from '/js/utils.js?v=ab3cac1d';
-import { applyBackground, resolveBackground } from '/js/background.js?v=288bfc2a';
+} from '/js/utils.js?v=1a7e03c1';
+import { applyBackground, resolveBackground } from '/js/background.js?v=bf5bd05b';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
 
 ensureSprite();
@@ -167,14 +171,16 @@ const saves = serialWrites();
    one: its change was made on the replaced list. */
 let _replaced = 0;
 
-/** Returns whether the write reached the server. */
-function save() {
+/** Returns whether the write reached the server.
+    @param {string|false} [done] the message for a change that is not a plain
+      save, or false for a save that announces nothing */
+function save(done) {
   const asked = _replaced;
-  return saves.run(() => writeItems(asked));
+  return saves.run(() => writeItems(asked, done));
 }
 
-/** @param {number} asked */
-async function writeItems(asked) {
+/** @param {number} asked @param {string|false} [done] */
+async function writeItems(asked, done) {
   let ok = false;
   try {
     const full = await apiGet('/api/config');
@@ -188,12 +194,14 @@ async function writeItems(asked) {
     _serverItems = JSON.stringify(r.items);
     _savedItems = sent;
     saveOrRestore.landed(JSON.parse(sent));
-    toast(t('toast.saved'));
+    if (typeof done === 'string') toast(done);
+    else confirmSaved(el('dash-save'), done === false);
     ok = true;
   } catch (e) {
     toast(
       e.status === 409 ? t('toast.dashboardChangedElsewhere') : t('toast.saveFailed', { err: errorText(e) }),
       'err',
+      errorAction(e),
     );
   }
   render();
@@ -280,6 +288,7 @@ async function writeBackup(file) {
     toast(
       e.status === 409 ? t('toast.dashboardChangedElsewhere') : t('toast.importFailed', { err: errorText(e) }),
       'err',
+      errorAction(e),
     );
     return false;
   } finally {
@@ -297,9 +306,10 @@ const saveOrRestore = revertingSaves({
 });
 
 /** Save, and put the list back if the write did not land. Never rejects. */
-async function saveOrRevert(before) {
+/** @param {any[]} before @param {string|false} [done] */
+async function saveOrRevert(before, done) {
   try {
-    return await saveOrRestore(before);
+    return await saveOrRestore(before, done);
   } catch {
     return false;
   }
@@ -309,6 +319,7 @@ async function saveOrRevert(before) {
 function showListView(focusId = null) {
   el('dash-list-view').classList.remove('d-none');
   el('dash-edit-view').classList.add('d-none');
+  fadeIn(el('dash-list-view'));
   if (!focusRow(focusId)) focusFirst(el('btn-add'));
 }
 function scrollSettingsTop() {
@@ -316,9 +327,11 @@ function scrollSettingsTop() {
 }
 
 function showEditView() {
+  setReordering(false);
   el('dash-list-view').classList.add('d-none');
   el('dash-edit-view').classList.remove('d-none');
   scrollSettingsTop();
+  fadeIn(el('dash-edit-view'));
 }
 
 /* Read at draw time. The catalog is not loaded when this module evaluates. */
@@ -344,7 +357,7 @@ function buildAddNewCard() {
     b.onclick = () => {
       if (state.ctype === kind) return;
       state.ctype = kind;
-      _renderEditBody(kind);
+      swapContent(el('ev-body'), () => _renderEditBody(kind));
     };
     grpTiles.appendChild(b);
   });
@@ -450,10 +463,8 @@ async function _evDelete(item, idx) {
   if (!item) return;
   const isFolder = item.type === 'folder';
   const ok = await confirmText({
-    title: t('common.delete'),
-    text: isFolder
-      ? t('confirm.deleteFolder', { name: isolate(item.label || item.id) })
-      : t('confirm.remove', { name: isolate(item.label || item.id) }),
+    title: t('confirm.deleteTitle', { name: isolate(item.label || item.id) }),
+    text: isFolder ? t('confirm.deleteFolder') : '',
     confirmLabel: t('common.delete'),
     cancelLabel: t('common.cancel'),
   });
@@ -463,7 +474,7 @@ async function _evDelete(item, idx) {
     if (f.type === 'folder') f.children = (f.children || []).filter(id => id !== item.id);
   });
   state.items.splice(idx, 1);
-  if (await saveOrRevert(before)) showListView();
+  if (await saveOrRevert(before, t('toast.deleted'))) showListView();
 }
 {
   const s = inp('al-search');
@@ -482,6 +493,7 @@ async function _evDelete(item, idx) {
 }
 
 el('btn-add').onclick = () => openModal(null);
+el('btn-reorder').onclick = () => setReordering(!isReordering());
 function closeModal(focusId = state.eid) {
   showListView(focusId);
   state.eid = null;
@@ -751,7 +763,7 @@ async function doSave(orig) {
     closeModal(item.id);
     toast(t(replaced ? 'toast.updated' : 'toast.added'));
   } catch (e) {
-    toast(t('toast.error', { err: errorText(e) }), 'err');
+    toast(t('toast.saveFailed', { err: errorText(e) }), 'err', errorAction(e));
   } finally {
     _editorSaving = false;
   }
@@ -762,14 +774,18 @@ function initNav() {
   const STORE = 'admin_sec';
   const sections = qa('.sec', document).map(s => s.id.replace(/^sec-/, ''));
 
+  let shown = '';
   /* Do not scroll on the restoring first call. Only a picked section. */
   function show(requested, picked) {
     const id = resolveAdminSection(requested, sections);
     if (id === null) return;
     if (requested && id !== requested) console.warn('admin: unknown section', requested, '- showing', id);
+    const changed = id !== shown;
+    shown = id;
     qa('.sec', document).forEach(s => {
       s.hidden = s.id !== 'sec-' + id;
     });
+    if (picked && changed) fadeIn(el('sec-' + id));
     links.forEach(l => {
       const on = l.dataset.sec === id;
       l.classList.toggle('active', on);
@@ -831,7 +847,11 @@ function initAllInlineEdits() {
   initInlineEdit('ie-socket', 'srv-socket', { placeholder: 'http://socket-proxy:2375', plain: true });
   initInlineEdit('ie-pve-url', 'srv-pve-url', { type: 'url', placeholder: 'https://192.168.1.10:8006', plain: true });
   initInlineEdit('ie-pve-token', 'srv-pve-token', { placeholder: 'stackyard@pve!dashboard', plain: true });
-  initInlineEdit('ie-hosts', 'srv-hosts', { placeholder: () => t('general.allowedHostsNone'), plain: true });
+  initInlineEdit('ie-hosts', 'srv-hosts', {
+    placeholder: () => t('general.allowedHostsNone'),
+    empty: () => t('general.allowedHostsNone'),
+    plain: true,
+  });
 
   initPasswordRows();
   const pwInp = el('sec-pw');

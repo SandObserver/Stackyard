@@ -12,23 +12,25 @@
    reads and writes them too. */
 
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { snapshotItems } from '/js/admin-save-logic.js?v=b83791fb';
-import { isShownChild, reorderItems, shownChildren, topLevelRows } from '/js/admin-logic.js?v=07377bf7';
+import { snapshotItems } from '/js/admin-save-logic.js?v=35fcc1c7';
+import { isShownChild, reorderItems, shownChildren, topLevelRows } from '/js/admin-logic.js?v=cf072e65';
 import { listGroup } from '/js/admin-drag-logic.js?v=4aae5094';
-import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=1c4004a0';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=17cb1b26';
 import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { paintIcon, toast } from '/js/admin-shared.js?v=150973a3';
-import { clr, el, focusFirst, initial, qa, setUserText } from '/js/utils.js?v=ab3cac1d';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=0db313c0';
+import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=1a7e03c1';
+import { pageTheme } from '/js/palette.js?v=3fb8ae43';
+import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { sizeLabel } from '/js/admin-widget-form.js?v=20498a19';
-import { widgetGlyph } from '/js/widget-glyphs.js?v=784bd6b4';
-import { iconSvg } from '/js/icon-set.js?v=2f4cd1e2';
+import { sizeLabel } from '/js/admin-widget-form.js?v=df116f57';
+import { widgetGlyph } from '/js/widget-glyphs.js?v=c1502c58';
+import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 
 /** @type {{ openModal: (idx: number|null) => void,
              openFolderPicker: (appId: string|null, targetFolderId?: string|null) => void,
-             save: (before: unknown) => Promise<boolean>|boolean }} */
+             save: (before: unknown, done?: string|false) => Promise<boolean>|boolean }} */
 let _page = {
   openModal: () => {},
   openFolderPicker: () => {},
@@ -44,6 +46,12 @@ export function initList(page) {
 
 /* Constant markup only. No user data reaches these. */
 const FOLDER_ICON = iconSvg('folder', 26);
+const CHEVRON =
+  '<svg class="ract-chev" viewBox="0 0 8 14" width="8" height="14" aria-hidden="true" focusable="false"><path d="M1 1l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ARROW_UP =
+  '<svg viewBox="0 0 14 14" width="14" height="14" aria-hidden="true" focusable="false"><path d="M7 12V2M2.5 6.5 7 2l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ARROW_DOWN =
+  '<svg viewBox="0 0 14 14" width="14" height="14" aria-hidden="true" focusable="false"><path d="M7 2v10M2.5 7.5 7 12l4.5-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const SIZE_ICONS = {
   small: iconSvg('small', 26),
   medium: iconSvg('medium', 26),
@@ -58,7 +66,80 @@ function svgNode(markup) {
 
 function moveRow(item, dir, opts = {}) {
   const before = snapshotItems(state.items);
-  if (reorderItems(state.items, item, dir, opts)) _page.save(before);
+  if (!reorderItems(state.items, item, dir, opts)) return;
+  _slideNext = true;
+  render();
+  announceSpot(item, opts.folderId);
+  _page.save(before, false);
+}
+
+/** @param {any} item @param {string|null|undefined} folderId */
+function announceSpot(item, folderId) {
+  const peers =
+    folderId != null
+      ? shownChildren(
+          state.items,
+          state.items.find(i => i.id === folderId),
+        )
+      : topLevelRows(state.items, listGroup(item) === 'dock');
+  announce(
+    t('list.movedTo', {
+      name: isolate(item.label || item.id),
+      pos: formatNumber(peers.indexOf(item) + 1),
+      total: formatNumber(peers.length),
+    }),
+  );
+}
+
+let _slideNext = false;
+let _reordering = false;
+
+/** @returns {boolean} */
+export function isReordering() {
+  return _reordering;
+}
+
+/** @param {boolean} on @returns {void} */
+export function setReordering(on) {
+  if (_reordering === on) return;
+  _reordering = on;
+  if (on && (filter.q || filter.type !== 'all')) {
+    filter.q = '';
+    filter.type = 'all';
+    syncFilterUI();
+    render();
+  }
+  const b = el('btn-reorder');
+  if (b) {
+    b.classList.toggle('on', on);
+    b.classList.toggle('bp', on);
+    b.classList.toggle('bg', !on);
+  }
+  el('al')?.classList.toggle('reordering', on);
+  el('al-filter')?.classList.toggle('is-disabled', on);
+  for (const c of [el('al-search'), ...qa('#al-filter .chip'), el('btn-add')])
+    if (c) /** @type {HTMLButtonElement} */ (c).disabled = on;
+}
+
+/** @param {HTMLElement} l @returns {Map<string, number>} */
+function rowTops(l) {
+  const tops = new Map();
+  for (const r of qa('.drow', l)) tops.set(r.dataset.itemId, r.getBoundingClientRect().top);
+  return tops;
+}
+
+/** @param {HTMLElement} l @param {Map<string, number>} tops */
+function slideRows(l, tops) {
+  for (const r of qa('.drow', l)) {
+    const was = tops.get(r.dataset.itemId);
+    if (was == null) continue;
+    const dy = was - r.getBoundingClientRect().top;
+    if (Math.abs(dy) < 1) continue;
+    r.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], {
+      duration: 200,
+      easing: 'cubic-bezier(.32,.72,0,1)',
+    });
+  }
 }
 
 /** @param {HTMLElement|null} chevron @param {string} from */
@@ -99,11 +180,21 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
     canUp = p > 0;
     canDown = p < top.length - 1;
   }
-  const handle = document.createElement('div');
+  const name = item.label || item.id || t('type.app');
+  const handle = document.createElement('button');
+  handle.type = 'button';
   handle.className = 'rord';
+  handle.dataset.act = 'move';
   handle.textContent = '⠿';
-  handle.setAttribute('aria-hidden', 'true');
+  handle.setAttribute('aria-label', t('list.moveNamed', { name }));
+  handle.setAttribute('aria-describedby', 'al-move-hint');
   if (_filtering) handle.style.visibility = 'hidden';
+  handle.addEventListener('keydown', e => {
+    const dir = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0;
+    if (!dir) return;
+    e.preventDefault();
+    if (dir < 0 ? canUp : canDown) moveRow(item, dir, { folderId, childIdx });
+  });
   const ico = document.createElement('div');
   ico.className = 'rico';
   ico.style.background = clr(item.color);
@@ -113,6 +204,13 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
     /* The type when the widget declares one, the size otherwise. */
     const glyph = widgetGlyph(state._widgetReg?.[item.widgetType]?.glyph);
     ico.appendChild(svgNode(glyph || SIZE_ICONS[item.widgetSize] || SIZE_ICONS.medium));
+  } else if (item.system === 'settings') {
+    ico.style.background = clr('auto');
+    const img = document.createElement('img');
+    img.src = pageTheme() === 'light' ? SETTINGS_ICON_LIGHT : SETTINGS_ICON;
+    img.alt = '';
+    img.className = 'rico-settings';
+    ico.appendChild(img);
   } else if (item.iconUrl) {
     paintIcon(ico, item.iconUrl, initial(item.label), 'width:28px;height:28px;object-fit:contain;');
   } else ico.textContent = initial(item.label || item.id);
@@ -165,8 +263,8 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
   pb.className = 'rpills';
   const pills = [];
   if (item.dock && _filtering) pills.push(html`<span class="pill p-dk">${t('app.dockPill')}</span>`);
-  if (item.type === 'widget') pills.push(html`<span class="pill p-wg">${t('type.widget')}</span>`);
-  if (item.type === 'folder') pills.push(html`<span class="pill p-fl">${t('type.folder')}</span>`);
+  if (item.type === 'widget') pills.push(html`<span class="pill p-wg p-type">${t('type.widget')}</span>`);
+  if (item.type === 'folder') pills.push(html`<span class="pill p-fl p-type">${t('type.folder')}</span>`);
   if (item.monitoring?.healthcheck?.enabled || item.container)
     pills.push(html`<span class="pill p-hl">${t('app.healthPill')}</span>`);
   if (item.monitoring?.activity?.enabled || item.badge?.enabled)
@@ -176,25 +274,36 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
   setHtml(pb, html`${pills}`);
   const ac = document.createElement('div');
   ac.className = 'ract';
-  const mkMove = (dir, can) => {
-    const b = document.createElement('button');
-    b.className = 'btn bg sm ic';
-    const lbl = t(dir < 0 ? 'common.moveUp' : 'common.moveDown');
-    b.title = lbl;
-    b.setAttribute('aria-label', lbl + ': ' + (item.label || item.id || t('type.app')));
-    b.textContent = dir < 0 ? '↑' : '↓';
-    b.dataset.act = dir < 0 ? 'up' : 'down';
-    b.disabled = !can;
-    b.onclick = () => moveRow(item, dir, { folderId, childIdx });
-    return b;
-  };
-  if (!_filtering) ac.append(mkMove(-1, canUp), mkMove(1, canDown));
   const ed = document.createElement('button');
-  ed.className = 'btn bg sm';
-  ed.textContent = t('common.edit');
+  ed.type = 'button';
+  ed.className = 'ract-edit';
   ed.dataset.act = 'edit';
+  ed.setAttribute('aria-label', t('common.editNamed', { name }));
+  setHtml(ed, raw(CHEVRON));
   ed.onclick = () => _page.openModal(idx);
+  if (!_filtering) {
+    const mv = document.createElement('span');
+    mv.className = 'rmove';
+    const mkMove = (dir, can) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'rmove-btn';
+      b.dataset.act = dir < 0 ? 'up' : 'down';
+      b.setAttribute('aria-label', t(dir < 0 ? 'list.moveUpNamed' : 'list.moveDownNamed', { name: isolate(name) }));
+      setHtml(b, raw(dir < 0 ? ARROW_UP : ARROW_DOWN));
+      b.disabled = !can;
+      b.onclick = () => moveRow(item, dir, { folderId, childIdx });
+      return b;
+    };
+    mv.append(mkMove(-1, canUp), mkMove(1, canDown));
+    ac.append(mv);
+  }
   ac.append(ed);
+  row.addEventListener('click', e => {
+    if (_reordering) return;
+    if (/** @type {HTMLElement} */ (e.target).closest('button, a, input')) return;
+    _page.openModal(idx);
+  });
   row.append(handle, ico, inf, pb, ac);
   wireRowDrag(row, handle, { item, indent, folderId, childIdx });
   return row;
@@ -213,12 +322,22 @@ export function focusRow(itemId, act = 'edit') {
 export function render() {
   if (redrawHeld()) return;
   const l = el('al');
+  const slide = _slideNext && !!l && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  _slideNext = false;
+  const tops = slide ? rowTops(l) : null;
   const was = /** @type {HTMLElement|null} */ (document.activeElement);
   const inList = !!was && !!l?.contains(was);
   const row = /** @type {HTMLElement|null} */ (inList ? was.closest('.drow') : null);
   const act = inList ? was.dataset.act : undefined;
   const id = row ? row.dataset.itemId : was?.dataset.folderId;
+  const icons = tops ? new Map(qa('.drow', l).map(r => [r.dataset.itemId, r.querySelector('.rico')])) : null;
   draw(l);
+  if (icons)
+    for (const r of qa('.drow', l)) {
+      const old = icons.get(r.dataset.itemId);
+      if (old) r.querySelector('.rico')?.replaceWith(old);
+    }
+  if (tops) slideRows(l, tops);
   if (act === 'add-to') focusFirst(qa('.fp-add', l).find(b => b.dataset.folderId === id));
   else if (act) focusRow(id, act);
 }

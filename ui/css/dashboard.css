@@ -48,6 +48,17 @@
       transition:opacity .2s ease-out;
     }
     body.ready::after { opacity:0; }
+    html.wall-in::before { animation:wall-in .4s ease-out }
+    @keyframes wall-in { from { opacity:0 } }
+    html.wall-swap::after {
+      content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background-image:var(--bg-prev-image,none); background-size:var(--bg-prev-size,cover);
+      background-position:center; background-repeat:no-repeat;
+      filter:brightness(var(--bg-prev-brightness,1)); transform:translateZ(0);
+      animation:wall-out .4s ease-out forwards;
+    }
+    @keyframes wall-out { to { opacity:0 } }
+    ::view-transition-old(root), ::view-transition-new(root) { animation-duration:.3s; animation-timing-function:ease }
 
     /* Something is happening. boot() waits on the API and then the catalogues,
        and an empty rectangle for the whole of it reads as hung rather than as
@@ -294,8 +305,10 @@
          painted from the same value. */
       --badge-peek:calc(7px * var(--sc,1));
       background:var(--badge-bg,transparent);
+      transition:background-color .2s ease;
     }
-    .badge.on  { display:flex }
+    .badge.on  { display:flex; animation:badge-in .3s cubic-bezier(.33,1,.68,1) }
+    @keyframes badge-in { from { opacity:0; transform:translateZ(0) scale(.5) } }
     .badge-txt { flex-shrink:0 }
     /* The pill is a corner marker. A unit makes it wider than the icon it marks,
        measured at 66px on a 72px icon. The popover names every value. */
@@ -315,6 +328,7 @@
     .badge.has-pop .badge-txt::after { content:''; position:absolute; inset:min(0px, calc((100% - 24px) / 2)) }
     .badge.has-more::before, .badge.has-more::after {
       content:''; position:absolute; inset:0; border-radius:50px;
+      transition:background-color .2s ease;
     }
     /* Separated from the front pill, or the peek reads as a colour fringe on one
        pill rather than as a second pill behind it. */
@@ -338,7 +352,7 @@
       inset:auto; margin:0;
       position:fixed; z-index:900; min-width:124px; max-width:min(300px,calc(100vw - 16px));
       padding:10px 8px; border-radius:22px;
-      background:rgba(30,30,32,.72);
+      background:rgba(30,30,32,.94);
       border:.5px solid rgba(255,255,255,.12);
       box-shadow:0 8px 48px rgba(0,0,0,.45);
       -webkit-backdrop-filter:blur(32px) saturate(180%) brightness(.72);
@@ -880,7 +894,9 @@
   .icon:active .iwrap, .folder-icon-link:active .iwrap, .di:active .dwrap,
   .icon .dyn-folder-box, .dyn-mob-icon > .plate, .dyn-dock-icon > .plate, .dyn-mob-btn > .dyn-box, .dyn-fold-anchor > .plate,
   .dot.on { transform: none !important; }
+  .badge.on { animation-name:badge-fade }
 }
+@keyframes badge-fade { from { opacity:0 } }
 
 /* ── Empty dashboard welcome ── */
 /* Toned from the wallpaper by label-contrast.js, never by the theme. */
@@ -950,8 +966,10 @@
   position: fixed; inset: 0; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   color: rgba(255,255,255,.7); font-family: inherit; gap: 16px; z-index: 10000;
+  padding-inline: max(24px, var(--safe-left), var(--safe-right)); text-align: center;
 }
-.api-error-title { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight: 500; margin: 0; }
+.api-error-sub { max-width: 32em }
+.api-error-title { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight: 600; margin: 0; }
 .api-error-sub   { font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color: rgba(255,255,255,.6); margin: 0; }
 .api-error-btn   {
   margin-top: 8px; padding: 13px 24px; border-radius: 999px; min-height: 48px;

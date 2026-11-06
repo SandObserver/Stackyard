@@ -25,7 +25,6 @@ const BY_CODE = Object.freeze({
   'network.tls-ignored': 'adminError.tlsIgnored',
   'network.tls-untrusted': 'adminError.tlsUntrusted',
   'blocked.read-only': 'adminError.readOnly',
-  'blocked.rate-limit': 'toast.tooManyAttempts',
   'invalid.too-large': 'toast.imageTooLarge',
   'invalid.file-type': 'adminError.fileType',
   'invalid.url': 'adminError.invalidUrl',
@@ -99,6 +98,7 @@ function detailVars(detail) {
 function adviceFor(read) {
   const { kind, code, detail } = read;
   const status = detail && typeof detail.status === 'number' ? detail.status : null;
+  if (code === 'blocked.rate-limit') return rateLimitAdvice(detail);
   if (code === 'upstream.status' && status !== null) return { key: statusKey(status), vars: { status } };
   if (BY_CODE[code]) {
     const vars = detailVars(detail);
@@ -107,9 +107,21 @@ function adviceFor(read) {
   return { key: BY_KIND[kind] || BY_KIND[KIND.INTERNAL] };
 }
 
+/** @param {Record<string, unknown> | null} detail */
+function rateLimitAdvice(detail) {
+  const minutes = detail && Number.isInteger(detail.minutes) && Number(detail.minutes) > 0 ? Number(detail.minutes) : 0;
+  return minutes ? { key: 'toast.tooManyAttemptsWait', vars: { count: minutes } } : { key: 'toast.tooManyAttempts' };
+}
+
+/** @param {unknown} e */
+function unanswered(e) {
+  return e instanceof TypeError && !(/** @type {any} */ (e).kind);
+}
+
 /** What to show for a failed request to the API's own routes.
     @param {unknown} e @returns {{ key: string, vars?: Record<string, unknown> }} */
 export function errorAdvice(e) {
+  if (unanswered(e)) return { key: 'adminError.offline' };
   return adviceFor(readError(e));
 }
 
@@ -142,12 +154,13 @@ export function optionsErrorAdvice(e) {
   return vars ? { tone, code, key, vars } : { tone, code, key };
 }
 
-/** @param {unknown} e @returns {string} */
-export function loginErrorKey(e) {
-  const { kind, code } = readError(e);
-  if (code === 'blocked.rate-limit') return 'toast.tooManyAttempts';
-  if (kind === KIND.AUTH) return 'login.incorrect';
-  return 'adminError.genericInternal';
+/** @param {unknown} e @returns {{ key: string, vars?: Record<string, unknown> }} */
+export function loginErrorAdvice(e) {
+  const { kind, code, detail } = readError(e);
+  if (code === 'blocked.rate-limit') return rateLimitAdvice(detail);
+  if (kind === KIND.AUTH) return { key: 'login.incorrect' };
+  if (unanswered(e)) return { key: 'adminError.offline' };
+  return { key: 'adminError.genericInternal' };
 }
 
 /* A first-run password is refused as auth or as changed when another tab or

@@ -9,6 +9,8 @@ const EN = {
   'status.pending_other': '{count} pending',
   'status.pendingValue': '{value} pending',
   'status.stale': '(may be out of date)',
+  'status.staleRow': 'May be out of date',
+  'status.healthyRow': 'Healthy',
   'status.moreValues_one': '{count} more badge',
   'status.moreValues_other': '{count} more badges',
   'status.containerNotFound': 'Container not found',
@@ -298,10 +300,9 @@ export function computeBadgeVisual({
   else if (fixed) aria = staticBdg.label;
   else if (cls.includes('green')) aria = tr('status.healthy');
 
-  if (
-    (active && (badgesStale || activityStale)) ||
-    ((health || cls.includes('green')) && (healthStale || activityStale))
-  ) {
+  const stale =
+    (active && (badgesStale || activityStale)) || ((health || cls.includes('green')) && (healthStale || activityStale));
+  if (stale) {
     cls += ' stale';
     aria = (aria ? aria + ' ' : '') + tr('status.stale');
   }
@@ -328,13 +329,17 @@ export function computeBadgeVisual({
   }
   const nextColor = more ? rows[1].color : '';
 
-  /* The popover exists to show what the badge cannot. Several values qualify,
-     and so does a failure, whose reason is otherwise only in the name. A single
-     healthy badge does not: it would repeat what is already drawn. */
-  const popover = more > 0 || Boolean(health);
+  /* Rows added below are for the popover only. They must not change `more`,
+     which draws the second pill. */
+  if (!rows.length && active)
+    rows.push({ name: pending(activity, custom.unit), value: '', unit: '', color: bg || NAMED.blue });
+  if (!rows.length && cls.includes('green'))
+    rows.push({ name: tr('status.healthyRow'), value: '', unit: '', color: NAMED.green });
+  if (rows.length && stale) rows.push({ name: tr('status.staleRow'), value: '', unit: '', color: NAMED.gray });
+
   /* A badge ignores the pointer so a click reaches the tile under it. One that
-     has something to open must not, or it can never be hovered. Separate from
-     has-more, which draws the second pill and is about having extra values. */
+     has something to open must not, or it can never be hovered. */
+  const popover = cls.includes(' on') && rows.length > 0;
   if (popover) cls += ' has-pop';
 
   return {
@@ -372,4 +377,10 @@ export function badgeSignature({
      string two ways and compare equal. */
   const digest = rows.map(r => `${r.name}\u0001${r.value}\u0001${r.unit}\u0001${r.color}`).join('\u0002');
   return [cls, txt, unit, bg, aria, color, title, nextColor, digest].join('\u0000');
+}
+
+/** @param {string} app @param {{ name?: string }} label @returns {string} */
+export function folderLabelName(app, label) {
+  const name = typeof label?.name === 'string' ? label.name.trim() : '';
+  return name ? `${app} · ${name}` : app;
 }

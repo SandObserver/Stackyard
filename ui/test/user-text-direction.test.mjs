@@ -170,6 +170,7 @@ test('an initial in a folder thumbnail is laid out left to right', async () => {
     textContent: '',
     children: [],
     style: { setProperty() {} },
+    dataset: {},
     getContext: () => null,
     appendChild(c) {
       this.children.push(c);
@@ -216,13 +217,7 @@ test('no initial is taken by indexing a name', () => {
    sentence and is drawn on the far side of the name. */
 test('a name inside a visible translated sentence is isolated', () => {
   const admin = fs.readFileSync(path.join(JS_DIR, 'admin.js'), 'utf8');
-  for (const key of [
-    'common.editNamed',
-    'confirm.deleteFolder',
-    'confirm.remove',
-    'folder.moveTo',
-    'toast.importIdTaken',
-  ]) {
+  for (const key of ['common.editNamed', 'confirm.deleteTitle', 'folder.moveTo', 'toast.importIdTaken']) {
     const call = new RegExp(`t\\('${key.replace('.', '\\.')}', \\{ name: ([^}]+) \\}\\)`).exec(admin);
     assert.ok(call, `${key} is no longer built here`);
     assert.match(call[1], /^isolate\(/, `${key} interpolates a bare name`);

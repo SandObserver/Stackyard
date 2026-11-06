@@ -285,6 +285,13 @@ export const ICONS = {
     ],
   },
   info: { shapes: [circle(12, 12, 10), line('M12 11v6', 'cut'), detail(11, 6, 2, 2, 1, 'cut')] },
+  success: { shapes: [circle(12, 12, 10), line('M7 12l3 3 7-7', 'cut')] },
+  failure: { shapes: [circle(12, 12, 10), line('M8 8l8 8M16 8l-8 8', 'cut')] },
+  check: { shapes: [line('M5 13l4 4 10-10')] },
+  plus: { shapes: [line('M12 5v14M5 12h14')] },
+  warning: {
+    shapes: [shape('M12 3l10 17H2z', 'ink', { rj: true }), line('M12 9v4', 'cut'), detail(11, 16, 2, 2, 1, 'cut')],
+  },
   heart: { shapes: [shape('M12 21l-8-8a5 5 0 0 1 8-6 5 5 0 0 1 8 6z')] },
   grip: {
     shapes: [

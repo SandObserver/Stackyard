@@ -694,3 +694,11 @@ test('cleanId keeps at most 32 characters and no trailing separator', () => {
   assert.equal(cleanId('N'.repeat(2000)).length, 32);
   assert.equal(cleanId(`${'a'.repeat(31)} b`), 'a'.repeat(31));
 });
+
+test('a reverting save passes its message to the write', async () => {
+  const got = [];
+  const save = revertingSaves({ write: async (...a) => got.push(a), restore: () => {} });
+  await save([], 'Deleted');
+  await save([]);
+  assert.deepEqual(got, [['Deleted'], []]);
+});

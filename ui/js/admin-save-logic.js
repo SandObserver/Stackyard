@@ -61,8 +61,8 @@ export function snapshotItems(items) {
     next save would delete it.
 
     @template T
-    @param {{ write: () => Promise<boolean|void>, restore: (snapshot: T) => void }} opts
-    @returns {((snapshot: T) => Promise<boolean>) & { landed: (sent: T) => void }} */
+    @param {{ write: (...args: any[]) => Promise<boolean|void>, restore: (snapshot: T) => void }} opts
+    @returns {((snapshot: T, ...args: any[]) => Promise<boolean>) & { landed: (sent: T) => void }} */
 export function revertingSaves({ write, restore }) {
   let waiting = 0;
   let landings = 0;
@@ -70,12 +70,12 @@ export function revertingSaves({ write, restore }) {
   let lastLanded;
   /** @type {{ seen: number, snapshot: T } | null} */
   let carried = null;
-  const save = async (/** @type {T} */ snapshot) => {
+  const save = async (/** @type {T} */ snapshot, /** @type {any[]} */ ...args) => {
     const seen = landings;
     waiting++;
     let ok = false;
     try {
-      ok = (await write()) !== false;
+      ok = (await write(...args)) !== false;
     } finally {
       waiting--;
       const before = carried || { seen, snapshot };

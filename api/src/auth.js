@@ -320,6 +320,13 @@ function registerLoginAttempt(ip) {
   return `Too many attempts. Try again in ${minutes} minute${minutes !== 1 ? 's' : ''}.`;
 }
 
+function loginWaitMinutes(ip) {
+  const rec = _loginAttempts.get(ip);
+  if (!rec || rec.count < LOGIN_MAX) return null;
+  const left = LOGIN_WINDOW_MS - (Date.now() - rec.first);
+  return left > 0 ? Math.ceil(left / 60000) : null;
+}
+
 function clearAttempts(ip) {
   _loginAttempts.delete(ip);
 }
@@ -469,6 +476,7 @@ module.exports = {
   clearSessionCookie,
   isSecureRequest,
   registerLoginAttempt,
+  loginWaitMinutes,
   clearAttempts,
   rateLimit,
   isAuthenticated,

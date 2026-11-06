@@ -13,6 +13,7 @@ import {
   LABEL_DEFAULT_COLOR,
   MAX_LABELS,
   cssUsableColor,
+  folderLabelName,
 } from '../js/badge-logic.js';
 
 test('unhealthy takes priority over everything else', () => {
@@ -76,7 +77,7 @@ test('a static label takes the pill when nothing is firing', () => {
 
 test('activity takes the pill when there is no fixed label', () => {
   const v = computeBadgeVisual({ activity: 3, hasHC: true, hideHealthy: false });
-  assert.equal(v.cls, 'badge on blue');
+  assert.equal(v.cls, 'badge on blue has-pop');
   assert.equal(v.txt, '3');
   assert.equal(v.aria, '3 pending');
 });
@@ -84,9 +85,12 @@ test('activity takes the pill when there is no fixed label', () => {
 test('one badge alone advertises no list', () => {
   const only = computeBadgeVisual({ staticBdg: { enabled: true, label: 'x' } });
   assert.equal(only.more, 0);
-  assert.deepEqual(only.rows, []);
+  assert.deepEqual(
+    only.rows.map(r => r.name),
+    ['x'],
+  );
   const healthy = computeBadgeVisual({ hasHC: true, hideHealthy: false });
-  assert.equal(healthy.cls, 'badge on green');
+  assert.equal(healthy.cls, 'badge on green has-pop');
   assert.equal(healthy.more, 0, 'the healthy dot reports nothing a list could add');
 });
 
@@ -122,7 +126,7 @@ test('activity appends a truncated unit', () => {
 
 test('static label takes priority over the healthy dot', () => {
   const v = computeBadgeVisual({ staticBdg: { enabled: true, label: 'Maintenance' }, hasHC: true, hideHealthy: false });
-  assert.equal(v.cls, 'badge on blue');
+  assert.equal(v.cls, 'badge on blue has-pop');
   assert.equal(v.txt, 'Maintenanc');
   assert.equal(v.aria, 'Maintenance');
 });
@@ -134,7 +138,7 @@ test('static label is truncated to 10 characters', () => {
 
 test('healthy dot shows only when hideHealthy is off and a health check exists', () => {
   const shown = computeBadgeVisual({ hasHC: true, hideHealthy: false });
-  assert.equal(shown.cls, 'badge on green');
+  assert.equal(shown.cls, 'badge on green has-pop');
   assert.equal(shown.aria, 'Status: healthy');
 
   const hiddenByPref = computeBadgeVisual({ hasHC: true, hideHealthy: true });
@@ -452,7 +456,7 @@ test('a single firing label advertises no list', () => {
   ];
   const v = computeBadgeVisual({ labels, values: [7, 0] });
   assert.equal(v.more, 0);
-  assert.equal(v.rows.length, 0);
+  assert.equal(v.rows.length, 1);
   assert.ok(!v.cls.includes('has-more'));
 });
 
@@ -469,7 +473,7 @@ test('a label below its own minimum does not fire', () => {
 test('no firing label falls back to the healthy dot', () => {
   const labels = [{ path: 'a', name: 'pending' }];
   const v = computeBadgeVisual({ labels, values: [0], hasHC: true, hideHealthy: false });
-  assert.equal(v.cls, 'badge on green');
+  assert.equal(v.cls, 'badge on green has-pop');
 });
 
 test('firingLabels skips entries without a path', () => {
@@ -613,7 +617,7 @@ test('a label with no name falls back to its unit, then to its path', () => {
 test('a hostile label name or unit is carried as text, never as markup', () => {
   const evil = '<img src=x onerror=alert(1)>';
   const v = computeBadgeVisual({ labels: [{ path: 'a', name: evil, unit: evil }], values: [1] });
-  assert.equal(v.rows.length, 0, 'one badge opens no list');
+  assert.equal(v.rows[0].name, evil, 'stored verbatim; the DOM write escapes it');
   const two = computeBadgeVisual({
     labels: [
       { path: 'a', name: evil, unit: evil },
@@ -716,8 +720,12 @@ test('an app with no labels renders exactly as it did before labels existed', ()
   assert.equal(v.num, '7');
   assert.equal(v.bg, '#cb30df');
   assert.equal(v.more, 0, 'no marker appears where there was none');
-  assert.deepEqual(v.rows, []);
-  assert.equal(computeBadgeVisual({ ...legacy, activity: 2 }).cls, 'badge on green', 'the minimum still applies');
+  assert.deepEqual(v.rows, [{ name: '7 jobs pending', value: '', unit: '', color: '#cb30df' }]);
+  assert.equal(
+    computeBadgeVisual({ ...legacy, activity: 2 }).cls,
+    'badge on green has-pop',
+    'the minimum still applies',
+  );
 });
 
 test('a legacy fixed label alone is unchanged', () => {
@@ -791,21 +799,44 @@ test('a failing badge offers the popover on its own', () => {
   assert.equal(v.rows[0].value, '', 'the row repeats the mark the badge already draws');
 });
 
-test('a healthy badge offers nothing to open', () => {
+test('a healthy badge opens one row that names its state', () => {
   const v = computeBadgeVisual({ health: false, hasHC: true, hideHealthy: false });
-  assert.equal(v.popover, false, 'a popover here repeats the tile');
-  assert.ok(!v.cls.includes('has-pop'), 'a badge with nothing to open must let the click through');
-  assert.deepEqual(v.rows, []);
+  assert.equal(v.popover, true);
+  assert.ok(v.cls.includes('has-pop'), 'without the class the badge cannot be hovered');
+  assert.deepEqual(
+    v.rows.map(r => r.name),
+    ['Healthy'],
+  );
 });
 
-test('a single activity value offers nothing to open', () => {
+test('no badge offers nothing to open', () => {
+  const v = computeBadgeVisual({ hasHC: false, hideHealthy: false });
+  assert.equal(v.popover, false);
+  assert.ok(!v.cls.includes('has-pop'), 'a hidden badge must let the click through');
+});
+
+test('an out-of-date badge says so in its popover, without a second pill', () => {
+  const v = computeBadgeVisual({ activity: 1, badgesStale: true });
+  assert.deepEqual(
+    v.rows.map(r => r.name),
+    ['1 pending', 'May be out of date'],
+  );
+  assert.equal(v.more, 0);
+  assert.ok(!v.cls.includes('has-more'));
+});
+
+test('a single activity value opens its popover', () => {
   const v = computeBadgeVisual({
     labels: [{ path: 'a', name: 'Queue', unit: '', min: 0 }],
     values: [7],
     hasHC: false,
     hideHealthy: false,
   });
-  assert.equal(v.popover, false, 'the one value is already the badge');
+  assert.equal(v.popover, true);
+  assert.deepEqual(
+    v.rows.map(r => r.name),
+    ['Queue'],
+  );
 });
 
 test('two or more values still offer it', () => {
@@ -833,4 +864,13 @@ test('a named colour resolves through the injected palette', () => {
     computeBadgeVisual({ staticBdg: { enabled: true, label: 'x', color: '#123456' }, palette }).bg,
     '#123456',
   );
+});
+
+test('a folder names a child label by app and label', () => {
+  assert.equal(folderLabelName('Sonarr', { name: 'Queue', path: 'totalRecords' }), 'Sonarr · Queue');
+});
+
+test('a folder never shows the field path of an unnamed label', () => {
+  assert.equal(folderLabelName('Sonarr', { path: 'totalRecords' }), 'Sonarr');
+  assert.equal(folderLabelName('Sonarr', { name: '  ', unit: 'GB', path: 'totalRecords' }), 'Sonarr');
 });

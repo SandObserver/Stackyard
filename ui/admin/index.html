@@ -12,7 +12,7 @@
   <script src="/js/admin-theme.js?v=66565254"></script>
   <script src="/js/page-zoom.js?v=01ccc9cf"></script>
   <link rel="stylesheet" href="/css/tokens.css?v=7ea2122b">
-  <link rel="stylesheet" href="/css/admin.css?v=a9397b0a">
+  <link rel="stylesheet" href="/css/admin.css?v=b7eb41b8">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=53b91d5f">
   <link rel="stylesheet" href="/css/config-recovery.css?v=9f8ca0ab">
 </head>
@@ -58,11 +58,11 @@
       <div class="sec-hdr">
         <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-back"/></svg></a><h1 class="sec-title" data-i18n="nav.general">General</h1>
         <div class="sec-hdr-actions">
-          <button class="btn bp sm" id="srv-save" type="button" data-i18n="common.save">Save</button>
+          <button class="btn bp sm sv-btn" id="srv-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><span class="sv-done" aria-hidden="true"><svg class="sy-icon" width="16" height="16" aria-hidden="true" focusable="false"><use href="#sy-solid-check"/></svg><span data-i18n="toast.saved">Saved</span></span></button>
         </div>
       </div>
       <div class="grp">
-        <div class="row ie-row" id="ie-ip"><span class="rl" data-i18n="general.hostIp">Host IP</span><span class="rv is-ph" id="ie-ip-v">192.168.1.100</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+        <div class="row ie-row" id="ie-ip"><span class="rl" data-i18n="general.hostIp">Host IP</span><span class="rv is-ph" id="ie-ip-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
       </div>
       <p class="grp-tip" data-i18n="general.hostIpTip">Lets badges fetch from your server's own address. Without it, those requests are blocked.</p>
 
@@ -95,15 +95,15 @@
       </div></div>
       <div class="reveal" id="hc-sources-wrap"><div class="reveal-in">
       <div class="grp">
-        <div class="row ie-row" id="ie-socket"><span class="rl" data-i18n="general.socketUrl">Docker Socket URL</span><span class="rv is-ph" id="ie-socket-v">http://socket-proxy:2375</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+        <div class="row ie-row" id="ie-socket"><span class="rl" data-i18n="general.socketUrl">Docker Socket URL</span><span class="rv is-ph" id="ie-socket-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
       </div>
       <p class="grp-tip" id="socket-hint" data-i18n-html="general.socketTip">Use the URL of a <strong>socket proxy</strong> container, never the Docker socket itself. A name such as <code>http://socket-proxy:2375</code> works only when this container and the proxy share a Docker network; an IP address works only when the proxy publishes its port beyond the host's own loopback.</p>
       <div class="grp">
-        <div class="row ie-row" id="ie-pve-url"><span class="rl" data-i18n="general.proxmoxUrl">Proxmox Address</span><span class="rv is-ph" id="ie-pve-url-v">https://192.168.1.10:8006</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
-        <div class="row ie-row" id="ie-pve-token"><span class="rl" data-i18n="general.proxmoxTokenId">Token ID</span><span class="rv is-ph" id="ie-pve-token-v">stackyard@pve!dashboard</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+        <div class="row ie-row" id="ie-pve-url"><span class="rl" data-i18n="general.proxmoxUrl">Proxmox Address</span><span class="rv is-ph" id="ie-pve-url-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+        <div class="row ie-row" id="ie-pve-token"><span class="rl" data-i18n="general.proxmoxTokenId">Token ID</span><span class="rv is-ph" id="ie-pve-token-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
         <div class="row ie-row" id="ie-pve-secret"><span class="rl" data-i18n="general.proxmoxSecret">Secret</span><span class="rv is-ph" id="ie-pve-secret-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
-        <div class="row"><span class="rl" id="rl-srv-pve-tls" data-i18n="app.allowSelfSigned">Allow Self-Signed Certificates</span><label class="tog"><input type="checkbox" id="srv-pve-tls" aria-labelledby="rl-srv-pve-tls"><div class="tr"></div></label></div>
-        <div class="row"><span class="rl"></span><span id="pve-status" class="row-status" role="status"></span><button type="button" class="row-btn" id="pve-test" data-i18n="app.test">Test</button></div>
+        <div class="row"><span class="rl" id="rl-srv-pve-tls" data-i18n="app.allowSelfSigned">Allow Self-Signed Certificate</span><label class="tog"><input type="checkbox" id="srv-pve-tls" aria-labelledby="rl-srv-pve-tls"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl" data-i18n="general.proxmoxConnection">Connection</span><span id="pve-status" class="row-status end" role="status" data-i18n="general.proxmoxNotTested">Not tested</span><button type="button" class="row-btn" id="pve-test" data-i18n="app.test">Test</button></div>
       </div>
       <p class="grp-tip" id="pve-hint" data-i18n="general.proxmoxTip">For Proxmox checks. Use an API token with the PVEAuditor role.</p>
       </div></div>
@@ -113,14 +113,14 @@
         <div class="row"><span class="rl" id="rl-sec-en" data-i18n="general.passwordProtection">Password Protection</span><label class="tog"><input type="checkbox" id="sec-en" aria-labelledby="rl-sec-en"><div class="tr"></div></label></div>
         <div class="row-wrap reveal" id="ie-pw-wrap"><div class="reveal-in"><div class="row ie-row" id="ie-pw"><span class="rl" data-i18n="general.password">Password</span><span class="rv is-ph" id="ie-pw-v">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button><button class="pw-reveal" type="button" aria-pressed="false" aria-label="Show password" title="Show password" data-i18n-al="common.showPassword" data-i18n-title="common.showPassword"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-eye"/></svg></button></div></div></div>
         <div class="row-wrap reveal" id="ie-pw2-wrap"><div class="reveal-in"><div class="row ie-row" id="ie-pw2"><span class="rl" data-i18n="general.confirmPassword">Confirm Password</span><span class="rv is-ph" id="ie-pw2-v">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button><button class="pw-reveal" type="button" aria-pressed="false" aria-label="Show password" title="Show password" data-i18n-al="common.showPassword" data-i18n-title="common.showPassword"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-eye"/></svg></button></div></div></div>
-        <div class="row-wrap reveal" id="sec-revoke-wrap"><div class="reveal-in"><div class="row" id="sec-revoke-row"><span class="rl" data-i18n="general.signOutEverywhere">Sign out all devices</span><div class="row-btns"><button class="btn bg sm" id="sec-revoke" type="button" data-i18n="general.signOutEverywhereBtn">Sign out all</button></div></div></div></div>
+        <div class="row-wrap reveal" id="sec-revoke-wrap"><div class="reveal-in"><div class="row" id="sec-revoke-row"><span class="rl" data-i18n="general.signOutEverywhere">Sign Out All Devices</span><div class="row-btns"><button class="btn bg sm" id="sec-revoke" type="button" data-i18n="general.signOutEverywhereBtn">Sign out all</button></div></div></div></div>
       </div>
       <div id="sec-pw-bars" class="pw-bars d-none" aria-hidden="true"><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div></div>
       <div id="sec-pw-hint" class="pw-hint d-none" role="status"></div>
       <div class="reveal" id="revoke-tip-wrap"><div class="reveal-in"><p class="grp-tip" id="revoke-tip" data-i18n="general.signOutEverywhereTip">Signs out every browser and device, including this one. Use it if you think a session may have been left open or compromised. Your password does not change.</p></div></div>
       <div class="reveal" id="pw-hint-wrap"><div class="reveal-in"><p class="grp-tip" id="pw-hint-static" data-i18n-html="general.passwordTip">Leave blank to keep existing password. Min 15 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.</p></div></div>
       <div class="grp">
-        <div class="row ie-row" id="ie-hosts"><span class="rl" data-i18n="general.allowedHosts">Allowed Addresses</span><span class="rv is-ph" id="ie-hosts-v">Local addresses only</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+        <div class="row ie-row" id="ie-hosts"><span class="rl" data-i18n="general.allowedHosts">Allowed Addresses</span><span class="rv is-ph" id="ie-hosts-v" data-i18n="general.allowedHostsNone">Local addresses only</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
         <div class="row-wrap reveal" id="hosts-add-wrap"><div class="reveal-in"><div class="row"><span class="rl" id="hosts-add-name"></span><div class="row-btns"><button class="btn bg sm" id="hosts-add" type="button" aria-describedby="hosts-add-tip" data-i18n="common.add">+ Add</button></div></div></div></div>
       </div>
       <div class="reveal" id="hosts-add-tip-wrap"><div class="reveal-in"><p class="grp-tip" id="hosts-add-tip" data-i18n="general.allowedHostsAddTip">This page is open on an address that isn’t listed. Add it so a page on another site can’t use up your sign-in attempts.</p></div></div>
@@ -129,8 +129,8 @@
       <div class="grp-hdr" role="heading" aria-level="2" data-i18n="general.backup">Backup</div>
       <div class="grp">
         <div class="row"><span class="rl" data-i18n="general.importExport">Import / Export</span><div class="row-btns"><label class="btn bg sm cursor-ptr"><span data-i18n="common.import">Import</span><input type="file" id="imp" accept=".json" class="file-hidden" aria-label="Import configuration JSON" data-i18n-al="general.importJson"></label><button class="btn bg sm" id="btn-exp" type="button" data-i18n="common.export">Export</button></div></div>
-        <div class="row"><span class="rl" data-i18n="general.importForeign">Import from another dashboard</span><div class="row-btns"><label class="btn bg sm cursor-ptr"><span data-i18n="common.chooseFiles">Choose files</span><input type="file" id="imp-foreign" accept=".yml,.yaml" multiple class="file-hidden" aria-label="Import Homepage or Dashy YAML config" data-i18n-al="general.importForeignFiles"></label></div></div>
-        <div class="row"><span class="rl" id="rl-imp-docker" data-i18n="general.importDocker">Import from Docker labels</span><div class="row-btns"><button class="btn bg sm" id="btn-imp-docker" type="button" aria-labelledby="rl-imp-docker" data-i18n="common.import">Import</button></div></div>
+        <div class="row"><span class="rl" data-i18n="general.importForeign">Import from Another Dashboard</span><div class="row-btns"><label class="btn bg sm cursor-ptr"><span data-i18n="common.chooseFiles">Choose Files</span><input type="file" id="imp-foreign" accept=".yml,.yaml" multiple class="file-hidden" aria-label="Import Homepage or Dashy YAML config" data-i18n-al="general.importForeignFiles"></label></div></div>
+        <div class="row"><span class="rl" id="rl-imp-docker" data-i18n="general.importDocker">Import from Docker Labels</span><div class="row-btns"><button class="btn bg sm" id="btn-imp-docker" type="button" aria-labelledby="rl-imp-docker" data-i18n="common.import">Import</button></div></div>
       </div>
       <p class="grp-tip" data-i18n="general.importForeignTip">Reads gethomepage and Dashy YAML files, and gethomepage labels on your containers through the Docker Socket URL. Links and folders are added to your dashboard; widgets from the other dashboard become plain links.</p>
       <div class="signout-row"><button class="btn bd-btn d-none" id="sec-logout" type="button" data-i18n="general.signOut">Sign out</button></div>
@@ -140,12 +140,12 @@
     <section class="sec" id="sec-appearance" hidden>
       <div class="sec-hdr">
         <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-back"/></svg></a><h1 class="sec-title" data-i18n="nav.appearance">Appearance</h1>
-        <div class="sec-hdr-actions"><button class="btn bp sm" id="bg-save" type="button" data-i18n="common.save">Save</button></div>
+        <div class="sec-hdr-actions"><button class="btn bp sm sv-btn" id="bg-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><span class="sv-done" aria-hidden="true"><svg class="sy-icon" width="16" height="16" aria-hidden="true" focusable="false"><use href="#sy-solid-check"/></svg><span data-i18n="toast.saved">Saved</span></span></button></div>
       </div>
       <div class="grp-hdr" role="heading" aria-level="2" data-i18n="appearance.appTitle">App Title</div>
       <div class="grp">
-        <div class="row"><span class="rl" id="rl-set-lbl-d" data-i18n="appearance.showTitleDesktop">Show App Title On Desktop</span><label class="tog"><input type="checkbox" id="set-lbl-d" aria-labelledby="rl-set-lbl-d"><div class="tr"></div></label></div>
-        <div class="row"><span class="rl" id="rl-set-lbl-m" data-i18n="appearance.showTitleMobile">Show App Title On Mobile</span><label class="tog"><input type="checkbox" id="set-lbl-m" aria-labelledby="rl-set-lbl-m"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl" id="rl-set-lbl-d" data-i18n="appearance.showTitleDesktop">Show App Title on Desktop</span><label class="tog"><input type="checkbox" id="set-lbl-d" aria-labelledby="rl-set-lbl-d"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl" id="rl-set-lbl-m" data-i18n="appearance.showTitleMobile">Show App Title on Mobile</span><label class="tog"><input type="checkbox" id="set-lbl-m" aria-labelledby="rl-set-lbl-m"><div class="tr"></div></label></div>
       </div>
       <div class="grp-hdr" role="heading" aria-level="2" data-i18n="appearance.display">Display</div>
       <div class="grp">
@@ -154,11 +154,15 @@
           <div id="theme-slot"></div>
           <input type="hidden" id="theme-sel" value="system">
         </div>
-        <div class="row"><span class="rl" id="rl-set-awake" data-i18n="appearance.keepAwake">Keep Screen Awake</span><label class="tog"><input type="checkbox" id="set-awake" aria-labelledby="rl-set-awake"><div class="tr"></div></label></div>
-        <div class="row"><span class="rl" id="rl-set-type-search" data-i18n="appearance.typeToSearch">Type to Search</span><label class="tog"><input type="checkbox" id="set-type-search" aria-labelledby="rl-set-type-search"><div class="tr"></div></label></div>
       </div>
       <p class="grp-tip" data-i18n="appearance.displayModeTip">Sets the appearance of the Settings pages. It is stored in this browser, applies to this device only, and takes effect at once.</p>
+      <div class="grp">
+        <div class="row"><span class="rl" id="rl-set-awake" data-i18n="appearance.keepAwake">Keep Screen Awake</span><label class="tog"><input type="checkbox" id="set-awake" aria-labelledby="rl-set-awake"><div class="tr"></div></label></div>
+      </div>
       <p class="grp-tip" data-i18n="appearance.keepAwakeTip">Stops the screen dimming or locking while the dashboard is open. Browsers only allow this over HTTPS, so it has no effect on a plain HTTP address.</p>
+      <div class="grp">
+        <div class="row"><span class="rl" id="rl-set-type-search" data-i18n="appearance.typeToSearch">Type to Search</span><label class="tog"><input type="checkbox" id="set-type-search" aria-labelledby="rl-set-type-search"><div class="tr"></div></label></div>
+      </div>
       <p class="grp-tip" data-i18n="appearance.typeToSearchTip">Typing a letter anywhere on the dashboard opens search. Turn this off if search opens by accident, for example with voice control.</p>
       <div class="grp-hdr" role="heading" aria-level="2" data-i18n="appearance.wallpaper">Wallpaper</div>
       <div class="grp">
@@ -169,7 +173,7 @@
         </div>
         <div id="bg-unsplash-fields">
           <div class="row ie-row" id="ie-apikey"><span class="rl" data-i18n="appearance.unsplashKey">API Key</span><span class="rv" id="ie-apikey-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
-          <div class="row ie-row" id="ie-bgcol"><span class="rl" data-i18n="appearance.collectionId">Collection ID</span><span class="rv is-ph" id="ie-bgcol-v">Collection ID</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+          <div class="row ie-row" id="ie-bgcol"><span class="rl" data-i18n="appearance.collectionId">Collection ID</span><span class="rv is-ph" id="ie-bgcol-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
         </div>
         <div id="bg-url-fields" class="d-none">
           <div class="row">
@@ -178,7 +182,7 @@
             <button type="button" class="row-btn" id="bg-upload-lbl" data-i18n="app.upload">Upload</button>
             <input type="file" id="bg-upload" class="file-hidden" tabindex="-1" aria-hidden="true" accept="image/png,image/jpeg,image/webp,image/avif,image/gif">
           </div>
-          <div class="row ie-row" id="ie-bgurl"><span class="rl" data-i18n="appearance.imageUrl">Image URL</span><span class="rv is-ph" id="ie-bgurl-v">Image URL</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+          <div class="row ie-row" id="ie-bgurl"><span class="rl" data-i18n="appearance.imageUrl">Image URL</span><span class="rv is-ph" id="ie-bgurl-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
           <div class="row">
             <span class="rl" data-i18n="appearance.fit">Fit</span>
             <div id="bg-fit-slot"></div>
@@ -207,8 +211,9 @@
         <div class="sec-hdr">
           <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-back"/></svg></a><h1 class="sec-title" data-i18n="nav.dashboard">Dashboard</h1>
           <div class="sec-hdr-actions">
-            <button class="btn bp sm" id="btn-add" type="button" data-i18n="common.add">+ Add</button>
-            <button class="btn bp sm" id="dash-save" type="button" data-i18n="common.save">Save</button>
+            <button class="btn sm al-reorder" id="btn-reorder" type="button"><span data-i18n="list.reorder">Reorder</span><span data-i18n="list.reorderDone">Done</span></button>
+            <button class="btn bp sm al-add" id="btn-add" type="button" aria-label="Add" title="Add" data-i18n-al="common.addLabel" data-i18n-title="common.addLabel"><svg class="sy-icon" width="20" height="20" aria-hidden="true" focusable="false"><use href="#sy-solid-plus"/></svg></button>
+            <button class="btn bp sm sv-btn" id="dash-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><span class="sv-done" aria-hidden="true"><svg class="sy-icon" width="16" height="16" aria-hidden="true" focusable="false"><use href="#sy-solid-check"/></svg><span data-i18n="toast.saved">Saved</span></span></button>
           </div>
         </div>
         <div class="al-filter d-none" id="al-filter">
@@ -220,7 +225,7 @@
             <button type="button" class="chip" data-flt="folder" aria-pressed="false" data-i18n="dashboard.filterFolders">Folders</button>
           </div>
         </div>
-        <div class="d-none" id="al-grp"><div id="al"></div></div>
+        <div class="d-none" id="al-grp"><div id="al"></div></div><p id="al-move-hint" class="visually-hidden" data-i18n="list.moveHint">Drag, or use the up and down arrow keys.</p>
       </div>
 
       <!-- Push edit view -->
@@ -256,8 +261,8 @@
       </div>
       <div class="grp">
         <a class="row row-link" href="https://stackyard.sandobserver.com/docs/" target="_blank" rel="noopener"><svg class="sy-icon about-ri about-docs" width="15" height="15" aria-hidden="true" focusable="false"><use href="#sy-solid-docs"/></svg><span class="rl" data-i18n="about.documentation">Documentation</span><svg class="sy-icon about-ext" width="12" height="12" aria-hidden="true" focusable="false"><use href="#sy-solid-external"/></svg></a>
-        <a class="row row-link" href="https://github.com/SandObserver/stackyard/issues" target="_blank" rel="noopener"><svg class="sy-icon about-ri about-bug" width="15" height="15" aria-hidden="true" focusable="false"><use href="#sy-solid-bug"/></svg><span class="rl" data-i18n="about.reportIssue">Report an issue</span><svg class="sy-icon about-ext" width="12" height="12" aria-hidden="true" focusable="false"><use href="#sy-solid-external"/></svg></a>
-        <a class="row row-link" href="https://github.com/SandObserver/stackyard/tree/main" target="_blank" rel="noopener"><svg class="sy-icon about-ri" width="15" height="15" aria-hidden="true" focusable="false"><use href="#sy-solid-github"/></svg><span class="rl" data-i18n="about.sourceCode">Source code</span><svg class="sy-icon about-ext" width="12" height="12" aria-hidden="true" focusable="false"><use href="#sy-solid-external"/></svg></a>
+        <a class="row row-link" href="https://github.com/SandObserver/stackyard/issues" target="_blank" rel="noopener"><svg class="sy-icon about-ri about-bug" width="15" height="15" aria-hidden="true" focusable="false"><use href="#sy-solid-bug"/></svg><span class="rl" data-i18n="about.reportIssue">Report an Issue</span><svg class="sy-icon about-ext" width="12" height="12" aria-hidden="true" focusable="false"><use href="#sy-solid-external"/></svg></a>
+        <a class="row row-link" href="https://github.com/SandObserver/stackyard/tree/main" target="_blank" rel="noopener"><svg class="sy-icon about-ri" width="15" height="15" aria-hidden="true" focusable="false"><use href="#sy-solid-github"/></svg><span class="rl" data-i18n="about.sourceCode">Source Code</span><svg class="sy-icon about-ext" width="12" height="12" aria-hidden="true" focusable="false"><use href="#sy-solid-external"/></svg></a>
         <a class="row row-link" href="https://stackyard.sandobserver.com/docs/support/" target="_blank" rel="noopener"><svg class="sy-icon about-ri about-heart" width="15" height="15" aria-hidden="true" focusable="false"><use href="#sy-solid-heart"/></svg><span class="rl" data-i18n="about.support">Support</span><svg class="sy-icon about-ext" width="12" height="12" aria-hidden="true" focusable="false"><use href="#sy-solid-external"/></svg></a>
       </div>
     </section>
@@ -280,7 +285,7 @@
 <input id="bg-col"    type="text"    class="d-none" autocomplete="off">
 <input id="bg-url"    type="url"     class="d-none" autocomplete="off">
 <p id="sr-announce" class="visually-hidden" aria-live="polite"></p>
-<div id="toast"><p id="toast-msg" role="status" aria-live="polite"></p><button type="button" class="toast-x" aria-label="Close" data-i18n-al="common.close"></button></div>
+<div id="toast"><span class="toast-ico" aria-hidden="true"></span><p id="toast-msg" role="status" aria-live="polite"></p><button type="button" class="toast-act" hidden></button><button type="button" class="toast-x" aria-label="Close" data-i18n-al="common.close"></button></div>
 
 <!-- Mobile bottom tab bar (shown only on small screens, when authenticated) -->
 <nav class="mtabbar" aria-label="Settings sections" data-i18n-al="nav.sections">
@@ -327,6 +332,6 @@
   </div></div>
 </div>
 
-<script type="module" src="/js/admin.js?v=5e4c12af"></script>
+<script type="module" src="/js/admin.js?v=cfcbbaa2"></script>
 </body>
 </html>

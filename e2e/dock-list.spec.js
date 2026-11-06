@@ -138,13 +138,33 @@ test('an app dragged out of a folder into the dock leaves the folder', async ({ 
 test('the move buttons stay inside a group', async ({ page, request }) => {
   await seedConfig(request, { items: [docked('dee', 'Dee'), app('alpha', 'Alpha'), docked('eff', 'Eff')] });
   await openDashboardList(page);
-  await expect(rowByName(page, 'Eff').getByRole('button', { name: 'Move down: Eff' })).toBeDisabled();
-  await expect(rowByName(page, 'Alpha').getByRole('button', { name: 'Move up: Alpha' })).toBeDisabled();
+  await page.locator('#btn-reorder').click();
+  await expect(rowByName(page, 'Eff').getByRole('button', { name: /^Move .*Eff.* down$/ })).toBeDisabled();
+  await expect(rowByName(page, 'Alpha').getByRole('button', { name: /^Move .*Alpha.* up$/ })).toBeDisabled();
   const saved = waitForSave(page);
-  await rowByName(page, 'Eff').getByRole('button', { name: 'Move up: Eff' }).click();
+  await rowByName(page, 'Eff')
+    .getByRole('button', { name: /^Move .*Eff.* up$/ })
+    .click();
   await saved;
   expect(await savedDock(request)).toEqual(['eff', 'dee']);
   expect(await groupNames(page, 'home')).toEqual(['Alpha', 'Settings']);
+});
+
+test('reordering locks the filter and keeps rows from opening the editor', async ({ page, request }) => {
+  await seedConfig(request, { items: [docked('dee', 'Dee'), app('alpha', 'Alpha')] });
+  await openDashboardList(page);
+  const toggle = page.locator('#btn-reorder');
+  await expect(rowByName(page, 'Alpha').getByRole('button', { name: /^Move .*Alpha.* up$/ })).toBeHidden();
+  await toggle.click();
+  await expect(toggle).toHaveAccessibleName('Done');
+  await expect(page.locator('#btn-add')).toBeDisabled();
+  await rowByName(page, 'Alpha').locator('.rinf').click();
+  await expect(page.locator('#dash-edit-view')).toBeHidden();
+  await toggle.click();
+  await expect(toggle).toHaveAccessibleName('Reorder');
+  await expect(page.locator('#btn-add')).toBeEnabled();
+  await rowByName(page, 'Alpha').locator('.rinf').click();
+  await expect(page.locator('#dash-edit-view')).toBeVisible();
 });
 
 test('Settings goes into the dock from its editor', async ({ page, request }) => {
@@ -226,7 +246,10 @@ test('a save clears a docked app left in a folder and a hidden Settings left in 
   await rowByName(page, 'Box').locator('.rnm').click();
   await expect(rowByName(page, 'Box').locator('.rmt')).toHaveText('2 apps');
   const saved = waitForSave(page);
-  await rowByName(page, 'Alpha').getByRole('button', { name: 'Move down: Alpha' }).click();
+  await page.locator('#btn-reorder').click();
+  await rowByName(page, 'Alpha')
+    .getByRole('button', { name: /^Move .*Alpha.* down$/ })
+    .click();
   expect((await saved).status()).toBe(200);
   const cfg = await readConfig(request);
   expect(cfg.items.find(i => i.id === 'box').children).toEqual(['bravo', 'alpha']);

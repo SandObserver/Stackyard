@@ -32,7 +32,7 @@ test('a language chosen in Settings is saved and survives a reload', async ({ pa
 
   /* Do not reload here. A language change reloads the page itself, and a second
      navigation aborts the first. */
-  await expect(page.locator('#srv-save')).toHaveText(GERMAN_SAVE);
+  await expect(page.locator('#srv-save .sv-lbl')).toHaveText(GERMAN_SAVE);
   await expect(page.locator('html')).toHaveAttribute('lang', 'de');
 });
 
@@ -88,7 +88,7 @@ test('the pseudolocale renders and is not offered as a language', async ({ page,
   await page.goto('/admin/?lang=en-XA');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en-XA');
   /* Every message is bracketed and accented, so the Save button is neither. */
-  await expect(page.locator('#srv-save')).toHaveText(/^\[.*\]$/);
+  await expect(page.locator('#srv-save .sv-lbl')).toHaveText(/^\[.*\]$/);
   await expect(page.locator('#srv-save')).not.toHaveText('Save');
 
   await page.locator('#lang-btn').click();
@@ -98,14 +98,14 @@ test('the pseudolocale renders and is not offered as a language', async ({ page,
 test('key mode names each string instead of translating it', async ({ page, request }) => {
   await seed(request);
   await page.goto('/admin/?lang=cimode');
-  await expect(page.locator('#srv-save')).toHaveText('common.save');
+  await expect(page.locator('#srv-save .sv-lbl')).toHaveText('common.save');
 });
 
 test('a development locale is not written to the config', async ({ page, request }) => {
   await seed(request, { language: 'de' });
   await page.goto('/admin/?lang=en-XA');
   await page.locator('body.authed').waitFor({ state: 'attached' });
-  await expect(page.locator('#srv-save')).toHaveText(/^\[.*\]$/);
+  await expect(page.locator('#srv-save .sv-lbl')).toHaveText(/^\[.*\]$/);
 
   await page.locator('#log-level-btn').click();
   await page.locator('#log-level-list li[data-val="error"]').click();

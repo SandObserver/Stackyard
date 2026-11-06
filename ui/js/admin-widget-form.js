@@ -1,12 +1,12 @@
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=150973a3';
-import { createListbox } from '/js/listbox.js?v=a797f939';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=ec6ef449';
+import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=0db313c0';
+import { createListbox } from '/js/listbox.js?v=469ae719';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=3d3328d5';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=07377bf7';
+import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=cf072e65';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { focusFirst, q, qi, qa } from '/js/utils.js?v=ab3cac1d';
-import { iconSvg } from '/js/icon-set.js?v=2f4cd1e2';
+import { focusFirst, q, qi, qa } from '/js/utils.js?v=1a7e03c1';
+import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 
 const SIZES_WITH_ICONS = new Set(['small', 'medium', 'large', 'xlarge']);
 

@@ -17,7 +17,7 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=ab3cac1d';
+} from '/js/utils.js?v=1a7e03c1';
 import { t, currentLang } from '/js/i18n.js?v=ed7c5565';
 import { toneForColor } from '/js/label-contrast.js?v=46ab91e5';
 import { mobileMetrics, gridColumnWidth, gridCellCount, dockFit } from '/js/mobile-metrics.js?v=938a32a2';
@@ -76,6 +76,7 @@ function mkMiniIcon(child, pointerEvents) {
   bg.className = 'folder-mini-bg';
   const plate = clr(child.color);
   bg.style.background = plate;
+  bg.dataset.color = child.color ?? '';
   if (pointerEvents === 'none') bg.style.pointerEvents = 'none';
   if (child.iconUrl) {
     const srcs = iconChain(child.iconUrl);

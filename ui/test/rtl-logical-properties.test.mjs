@@ -295,20 +295,17 @@ test('absolutely positioned elements use the inline end', () => {
   assert.match(code('css/admin.css'), /#toast\{[^}]*inset-inline-end:max\(24px,/, 'the toast');
 });
 
-/* The toast is a tinted fill with a border on every side, so it has no leading
-   edge to place. Neither rule may name a side. */
+/* A toast state colours its symbol, never one side of the box. */
 test('the toast state has no edge that could point the wrong way', () => {
   const src = code('css/admin.css');
-  const rules = [...src.matchAll(/#toast\.(?:ok|err)\{([^}]*)\}/g)].map(m => m[1]);
-  assert.equal(rules.length, 2, 'expected an .ok and an .err toast rule');
-  for (const body of rules) {
+  const rules = [...src.matchAll(/#toast\.(?:ok|err|warn)[^{]*\{([^}]*)\}/g)].map(m => m[1]);
+  assert.ok(rules.length >= 2, 'expected the toast state rules');
+  for (const body of rules)
     assert.doesNotMatch(
       body,
       /border-(left|right|inline-start|inline-end)/,
       `a one-sided toast border is back: ${body}`,
     );
-    assert.match(body, /border-color:/, 'the state should colour the whole border');
-  }
 });
 
 /* ── the project really does ship a right-to-left language ────────────────── */

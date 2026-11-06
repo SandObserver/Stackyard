@@ -394,6 +394,19 @@ test('a locked-out sign-in answers with a code the sign-in screen can translate'
   assert.equal(r.status, 429);
   assert.equal(r.body.kind, 'blocked');
   assert.equal(r.body.code, 'blocked.rate-limit');
+  assert.equal(r.body.detail.minutes, 15, 'the wait is the whole window, in minutes');
+});
+
+test('a locked-out password check says how long to wait', async () => {
+  const cfg = loadConfig();
+  cfg.settings.auth = { enabled: true, secret: SECRET, passwordHash: await hashPassword('correct-horse') };
+  saveConfig(cfg);
+  const cookie = 'ds=' + makeToken('s1', SECRET);
+  for (let i = 0; i < 5; i++)
+    await req('POST', '/api/auth/toggle', { enabled: false, currentPassword: 'nope' }, cookie);
+  const r = await req('POST', '/api/auth/toggle', { enabled: false, currentPassword: 'nope' }, cookie);
+  assert.equal(r.status, 429);
+  assert.ok(Number.isInteger(r.body.detail.minutes) && r.body.detail.minutes >= 1 && r.body.detail.minutes <= 15);
 });
 
 test('the pre-auth check tells the sign-in screen the saved language, and only a language tag', async () => {

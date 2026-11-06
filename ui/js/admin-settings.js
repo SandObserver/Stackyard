@@ -9,8 +9,12 @@ import {
   showFieldError,
   clearFieldError,
   clearFieldErrors,
-} from '/js/admin-shared.js?v=150973a3';
-import { socketProbeAdvice } from '/js/admin-error.js?v=f1471df6';
+  confirmSaved,
+  sectionSave,
+  setStatus,
+  errorAction,
+} from '/js/admin-shared.js?v=0db313c0';
+import { socketProbeAdvice } from '/js/admin-error.js?v=0882cee9';
 import { passwordMeter, passwordMismatch, contextWords, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
 import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
 import { t } from '/js/i18n.js?v=ed7c5565';
@@ -21,13 +25,13 @@ import {
   needsCurrentPassword,
   createDirtyTracker,
   BLOCK,
-} from '/js/admin-logic.js?v=07377bf7';
-import { confirmText, promptModal } from '/js/modal.js?v=6df8b6c1';
-import { el, inp, qa, setUserText } from '/js/utils.js?v=ab3cac1d';
+} from '/js/admin-logic.js?v=cf072e65';
+import { confirmText, promptModal } from '/js/modal.js?v=343a3508';
+import { el, inp, qa, setUserText } from '/js/utils.js?v=1a7e03c1';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { serialWrites } from '/js/admin-save-logic.js?v=b83791fb';
-import { renderColorControl } from '/js/admin-color-control.js?v=3921c3fa';
-import { BACKDROP } from '/js/background.js?v=288bfc2a';
+import { serialWrites } from '/js/admin-save-logic.js?v=35fcc1c7';
+import { renderColorControl } from '/js/admin-color-control.js?v=0e960c04';
+import { BACKDROP } from '/js/background.js?v=bf5bd05b';
 import {
   ALLOWED_HOSTS_MAX,
   firstBadHost,
@@ -256,10 +260,10 @@ export function loadSettings(c) {
       node.classList.add('is-ph');
     }
   };
-  _sv('ie-ip-v', s.server?.hostIp, '192.168.1.100');
-  _sv('ie-socket-v', s.server?.socketProxyUrl, 'http://socket-proxy:2375');
-  _sv('ie-pve-url-v', s.server?.proxmox?.url, 'https://192.168.1.10:8006');
-  _sv('ie-pve-token-v', s.server?.proxmox?.tokenId, 'stackyard@pve!dashboard');
+  _sv('ie-ip-v', s.server?.hostIp, t('common.notSet'));
+  _sv('ie-socket-v', s.server?.socketProxyUrl, t('common.notSet'));
+  _sv('ie-pve-url-v', s.server?.proxmox?.url, t('common.notSet'));
+  _sv('ie-pve-token-v', s.server?.proxmox?.tokenId, t('common.notSet'));
   showPveSecretState(!!s.server?.proxmox?.secretSet);
   _sv('ie-hosts-v', (s.server?.allowedHosts || []).join(', '), t('general.allowedHostsNone'));
   _sv('ie-pw-v', '', t('common.notSet')); /* set below after auth check */
@@ -274,13 +278,13 @@ export function loadSettings(c) {
   const pveTls = inp('srv-pve-tls');
   if (pveTls) pveTls.checked = s.server?.proxmox?.skipTlsVerify === true;
   _si('srv-hosts', (s.server?.allowedHosts || []).join(', '));
-  _sv('ie-bgcol-v', s.background?.collection, t('appearance.collectionId'));
+  _sv('ie-bgcol-v', s.background?.collection, t('common.notSet'));
   _si('bg-col-inp', s.background?.collection || '');
   _si('bg-url-inp', s.background?.url || '');
   _si('bg-fit', s.background?.fit === 'fit' ? 'fit' : 'fill');
   showWallpaperFile(s.background?.url || '');
   renderBgColor(s.background?.color || BACKDROP);
-  _sv('ie-bgurl-v', s.background?.url, t('appearance.imageUrl'));
+  _sv('ie-bgurl-v', s.background?.url, t('common.notSet'));
 
   const ipEl = inp('srv-ip');
   if (ipEl) ipEl.value = s.server?.hostIp || '';
@@ -304,9 +308,9 @@ export function loadSettings(c) {
   });
   secRevoke?.addEventListener('click', async () => {
     const ok = await confirmText({
-      title: t('general.signOutEverywhere'),
+      title: t('confirm.revokeTitle'),
       text: t('confirm.revokeSessions'),
-      confirmLabel: t('general.signOutEverywhereBtn'),
+      confirmLabel: t('confirm.revokeBtn'),
       cancelLabel: t('common.cancel'),
       irreversible: true,
     });
@@ -419,12 +423,13 @@ export function wireProxmox() {
   btn?.addEventListener('click', async () => {
     if (!st) return;
     btn.disabled = true;
-    st.textContent = t('app.testing');
+    setStatus(st, '', t('app.testing'));
     try {
       const r = await apiPost('/api/proxmox/test', readProxmoxForm());
-      st.textContent = r.ok ? '✓ ' + t('general.proxmoxConnected', { count: r.guests }) : '✗ ' + errorText(r);
+      if (r.ok) setStatus(st, 'ok', t('general.proxmoxConnected', { count: r.guests }));
+      else setStatus(st, 'err', errorText(r));
     } catch (e) {
-      st.textContent = '✗ ' + errorText(e);
+      setStatus(st, 'err', errorText(e));
     } finally {
       btn.disabled = false;
     }
@@ -487,11 +492,11 @@ function saveSwitchChange(e, apply) {
       c.settings = c.settings || {};
       apply(c.settings);
       await apiPost('/api/config', c);
-      toast(t('toast.saved'));
+      confirmSaved(sectionSave(toggled));
     } catch (err) {
       /* Assigning `checked` fires no event, so this does not loop. */
       if (toggled.checked === value) toggled.checked = !value;
-      toast(t('toast.saveFailed', { err: errorText(err) }), 'err');
+      toast(t('toast.saveFailed', { err: errorText(err) }), 'err', errorAction(err));
     }
   });
 }
@@ -541,15 +546,14 @@ async function saveWallpaper() {
       }
     }
     _bgTrack?.reset();
-    toast(t('toast.saved'));
+    confirmSaved(el('bg-save'));
   } catch (e) {
-    toast(t('toast.saveFailed', { err: errorText(e) }), 'err');
+    toast(t('toast.saveFailed', { err: errorText(e) }), 'err', errorAction(e));
   }
 }
 const PASSWORD_ERROR_KEYS = Object.freeze({
   'invalid.current-password': 'toast.currentPasswordWrong',
   'invalid.password-changed': 'toast.passwordChangedElsewhere',
-  'blocked.rate-limit': 'toast.tooManyAttempts',
   'invalid.password-short': REFUSAL_KEYS.short,
   'invalid.password-long': REFUSAL_KEYS.long,
   'invalid.password-common': REFUSAL_KEYS.common,
@@ -609,7 +613,7 @@ async function saveServer() {
     try {
       probe = await apiPost('/api/docker/test', { url });
     } catch (e) {
-      toast(t('toast.saveFailed', { err: errorText(e) }), 'err');
+      toast(t('toast.saveFailed', { err: errorText(e) }), 'err', errorAction(e));
       return;
     }
     /* The error and the hint are both needed: "connection refused" for an IP is
@@ -640,18 +644,19 @@ async function saveServer() {
   if (needsCurrentPassword({ ...was, newPassword: pw })) {
     const clearing = clearsStoredPassword(was);
     const answer = await promptModal({
-      title: t('general.passwordProtection'),
-      text: t(clearing ? 'confirm.clearPassword' : 'confirm.changePassword'),
+      title: t(clearing ? 'confirm.clearPasswordTitle' : 'confirm.changePasswordTitle'),
+      text: clearing ? t('confirm.clearPassword') : '',
       label: t('general.currentPassword'),
       password: true,
       destructive: clearing,
-      confirmLabel: t(clearing ? 'common.delete' : 'common.save'),
+      confirmLabel: t(clearing ? 'confirm.turnOff' : 'common.save'),
       cancelLabel: t('common.cancel'),
       submit: async currentPassword => {
         try {
           done = await write(currentPassword);
         } catch (e) {
           const code = /** @type {any} */ (e).code;
+          if (code === 'blocked.rate-limit') return errorText(e);
           if (RETRY_IN_DIALOG.has(code)) return t(PASSWORD_ERROR_KEYS[code]);
           failure = e;
         }
@@ -672,12 +677,13 @@ async function saveServer() {
 
   if (failure || !done) {
     const key = PASSWORD_ERROR_KEYS[/** @type {any} */ (failure)?.code];
-    if (key) toast(t(key), 'err');
-    else toast(t('toast.saveFailed', { err: errorText(failure) }), 'err');
+    if (key) toast(t(key), 'err', errorAction(failure));
+    else toast(t('toast.saveFailed', { err: errorText(failure) }), 'err', errorAction(failure));
     await syncAuthFromServer();
     return;
   }
-  toast(socketWarning || t('toast.saved'), socketWarning ? 'warn' : 'ok');
+  if (socketWarning) toast(socketWarning, 'warn');
+  else confirmSaved(el('srv-save'));
   if (done.langChanged) {
     location.reload();
     return;

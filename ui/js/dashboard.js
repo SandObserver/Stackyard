@@ -27,16 +27,17 @@ import {
   storeGet,
   storeSet,
   teardownWidgets,
+  rethemeTiles,
   titleWhenTruncated,
-} from '/js/utils.js?v=ab3cac1d';
+} from '/js/utils.js?v=1a7e03c1';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
-import { initSpotlight } from '/js/spotlight.js?v=93d9e423';
+import { initSpotlight } from '/js/spotlight.js?v=c337a384';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
-import { initI18n, t, currentLang } from '/js/i18n.js?v=ed7c5565';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=e1cf730c';
+import { initI18n, isSupported, t, currentLang } from '/js/i18n.js?v=ed7c5565';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=c03e1465';
 import { passwordMeter, passwordMismatch, contextWords, meterColor } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
-import { setupErrorKey } from '/js/admin-error.js?v=f1471df6';
+import { setupErrorKey } from '/js/admin-error.js?v=0882cee9';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
 import {
@@ -48,10 +49,16 @@ import {
   resetMobileChrome,
   mkFolderGlyph,
   swipePager,
-} from '/js/ui.js?v=dbd45ff7';
-import { badgeMinimum, badgeSignature, computeBadgeVisual, readBadgeUpdate } from '/js/badge-logic.js?v=85b1bc96';
+} from '/js/ui.js?v=3c81baa2';
+import {
+  badgeMinimum,
+  badgeSignature,
+  computeBadgeVisual,
+  folderLabelName,
+  readBadgeUpdate,
+} from '/js/badge-logic.js?v=6d99179d';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=23793736';
+import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=b0a28c3a';
 import { observeGlass } from '/js/glass-rim.js?v=3faec233';
 import {
   configChanged,
@@ -61,13 +68,13 @@ import {
   restorePage,
   wheelPager,
 } from '/js/dashboard-logic.js?v=5fa66027';
-import { applyBackground, BACKDROP, resolveBackground } from '/js/background.js?v=288bfc2a';
+import { applyBackground, BACKDROP, decoded, resolveBackground } from '/js/background.js?v=bf5bd05b';
 import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=46ab91e5';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=2f4cd1e2';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=b279fd98';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { THEME_KEY, applyTheme, prefersDark, readMode, resolveTheme } from '/js/theme.js?v=eeafa4b5';
 
@@ -140,6 +147,7 @@ let _lastTouch = 0;
 const BOOT_TIMEOUT_MS = 15000;
 
 const PAGE_STORE = 'dash_page';
+const LANG_STORE = 'dash_lang';
 
 let items = [],
   pg = 0,
@@ -214,39 +222,67 @@ function bupd(id) {
     if (tile && tileName) tile.setAttribute('aria-label', aria ? `${tileName}, ${aria}` : tileName);
     if (BSIG.get(badge) === sig) return;
     BSIG.set(badge, sig);
-    badge.className = cls;
-    let txtEl = badge.firstElementChild;
-    let unitEl = txtEl?.nextElementSibling;
-    if (!txtEl) {
-      txtEl = document.createElement('span');
-      txtEl.className = 'badge-txt';
-      unitEl = document.createElement('span');
-      unitEl.className = 'badge-unit';
-      badge.append(txtEl, unitEl);
+    BEXIT.get(badge)?.cancel();
+    BEXIT.delete(badge);
+    const leaving = badge.classList.contains('on') && !cls.split(' ').includes('on') && badge.isConnected;
+    if (leaving) {
+      const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const exit = badge.animate(
+        still
+          ? [{ opacity: 1 }, { opacity: 0 }]
+          : [
+              { opacity: 1, transform: 'translateZ(0)' },
+              { opacity: 0, transform: 'translateZ(0) scale(.6)' },
+            ],
+        { duration: 150, easing: 'ease-in', fill: 'forwards' },
+      );
+      BEXIT.set(badge, exit);
+      exit.onfinish = () => {
+        BEXIT.delete(badge);
+        paintBadge(badge, { cls, num, unit, bg, color, nextColor, popover, rows });
+        exit.cancel();
+      };
+      return;
     }
-    txtEl.textContent = num;
-    unitEl.textContent = unit ? ' ' + unit : '';
-    /* The badge belongs to its tile's name, not to a live region of its own.
+    paintBadge(badge, { cls, num, unit, bg, color, nextColor, popover, rows });
+  });
+}
+
+const BEXIT = new WeakMap();
+
+function paintBadge(badge, { cls, num, unit, bg, color, nextColor, popover, rows }) {
+  badge.className = cls;
+  let txtEl = badge.firstElementChild;
+  let unitEl = txtEl?.nextElementSibling;
+  if (!txtEl) {
+    txtEl = document.createElement('span');
+    txtEl.className = 'badge-txt';
+    unitEl = document.createElement('span');
+    unitEl.className = 'badge-unit';
+    badge.append(txtEl, unitEl);
+  }
+  txtEl.textContent = num;
+  unitEl.textContent = unit ? ' ' + unit : '';
+  /* The badge belongs to its tile's name, not to a live region of its own.
        An explicit label on the anchor wins over everything inside it, so a
        badge left to speak for itself is never reached by a reader moving from
        tile to tile. A name change is silent, which is what a figure on a timer
        needs. */
-    badge.setAttribute('aria-hidden', 'true');
-    badge.removeAttribute('role');
-    badge.removeAttribute('aria-label');
-    /* Never the `background` shorthand. It resets background-clip, and the
+  badge.setAttribute('aria-hidden', 'true');
+  badge.removeAttribute('role');
+  badge.removeAttribute('aria-label');
+  /* Never the `background` shorthand. It resets background-clip, and the
        pill behind is painted from this same value. */
-    if (bg) badge.style.setProperty('--badge-bg', bg);
-    else badge.style.removeProperty('--badge-bg');
-    badge.style.color = color;
-    if (nextColor) badge.style.setProperty('--badge-next', nextColor);
-    else badge.style.removeProperty('--badge-next');
-    /* No title attribute. The popover carries the reason, and a badge that can
+  if (bg) badge.style.setProperty('--badge-bg', bg);
+  else badge.style.removeProperty('--badge-bg');
+  badge.style.color = color;
+  if (nextColor) badge.style.setProperty('--badge-next', nextColor);
+  else badge.style.removeProperty('--badge-next');
+  /* No title attribute. The popover carries the reason, and a badge that can
        be hovered would otherwise draw the browser's own tooltip beside it.
        Removed rather than skipped: one set by an earlier paint would persist. */
-    badge.removeAttribute('title');
-    wireBadgePopover(badge, popover ? rows : null);
-  });
+  badge.removeAttribute('title');
+  wireBadgePopover(badge, popover ? rows : null);
 }
 
 function bset(id, type, val) {
@@ -273,7 +309,7 @@ function folderBadge(folder) {
     if (own && Array.isArray(s.values)) {
       own.forEach((l, n) => {
         if (!l || typeof l.path !== 'string' || !l.path) return;
-        labels.push({ ...l, name: `${c.label || c.id} · ${l.name || l.unit || l.path}` });
+        labels.push({ ...l, name: folderLabelName(c.label || c.id, l) });
         values.push(s.values[n]);
       });
       continue;
@@ -504,7 +540,21 @@ function goTo(n, dotEls, announce = true) {
     else d.removeAttribute('aria-current');
   });
   if (MOB && CB.mobPillBump) CB.mobPillBump(pg);
+  syncPager(total);
   applyPollRates();
+}
+
+/** @param {number} total */
+function syncPager(total) {
+  const pager = /** @type {HTMLInputElement|null} */ (el('mob-pager'));
+  if (!pager) return;
+  pager.hidden = !MOB || total < 2;
+  pager.max = String(Math.max(1, total));
+  pager.value = String(pg + 1);
+  pager.setAttribute(
+    'aria-valuetext',
+    t('home.pageAnnounce', { page: formatNumber(pg + 1), total: formatNumber(total) }),
+  );
 }
 
 /* ensureSpace can create overflow pages paginate() did not report, so sync the
@@ -601,6 +651,37 @@ function resampleBg() {
   retone();
 }
 
+let _shownWallpaper = '';
+/** @type {() => void} */
+let _veilLifted = () => {};
+const veilLifted = new Promise(resolve => {
+  _veilLifted = () => resolve(undefined);
+});
+
+function liftVeil() {
+  document.body.classList.add('ready');
+  _veilLifted();
+}
+
+/** @param {HTMLElement} root @param {any} bg */
+async function showWallpaper(root, bg) {
+  const prev = _shownWallpaper;
+  await decoded(bg.url);
+  _shownWallpaper = bg.url;
+  if (!prev) await veilLifted;
+  const style = root.style;
+  if (prev) {
+    for (const k of ['image', 'size', 'brightness'])
+      style.setProperty(`--bg-prev-${k}`, style.getPropertyValue(`--bg-${k}`));
+  }
+  applyBackground(root, bg);
+  const cls = prev ? 'wall-swap' : 'wall-in';
+  root.classList.remove('wall-in', 'wall-swap');
+  void root.offsetWidth;
+  root.classList.add(cls);
+  if (prev) setTimeout(() => root.classList.remove('wall-swap'), 450);
+}
+
 async function applyBg() {
   const root = document.documentElement;
   bgTone = { grid: null, tone: themeTone() };
@@ -608,7 +689,8 @@ async function applyBg() {
   const bg = await resolveBackground(S.background || {});
   showPhotoCredit(el('photo-credit'), bg?.credit ?? null);
   if (!bg) return;
-  applyBackground(root, bg);
+  if (bg.url && bg.url !== _shownWallpaper) await showWallpaper(root, bg);
+  else applyBackground(root, bg);
   if (bg.url) {
     sampleWallpaper(bg.url, Number(bg.brightness), bg.fit);
     return;
@@ -821,7 +903,7 @@ async function boot() {
     items = sanitizeItemLinks(c.items || []);
     S = c.settings || {};
     _rev = c._rev ?? null;
-    await initI18n(S.language || 'en');
+    storeSet(LANG_STORE, await initI18n(S.language || 'en'));
   } catch (e) {
     console.error('[boot]', e);
     apiFailed = true;
@@ -840,17 +922,19 @@ async function boot() {
     /* The catalog is loaded as the last step of the fetch that just failed, so
        without this the only screen left renders its own keys. nginx serves this
        file, the API served the config, so it is still reachable. */
-    await initI18n('en');
+    const lastLang = storeGet(LANG_STORE);
+    await initI18n(isSupported(lastLang) ? lastLang : 'en');
     const msg = document.createElement('div');
     msg.className = 'api-error-screen';
+    msg.setAttribute('role', 'alert');
     setHtml(
       msg,
-      html`<p class="api-error-title">${t('home.apiDownTitle')}</p><p class="api-error-sub">${t('home.apiDownSub')}</p><button class="api-error-btn" type="button">${t('home.retry')}</button>`,
+      html`<h2 class="api-error-title">${t('home.apiDownTitle')}</h2><p class="api-error-sub">${t('home.apiDownSub')}</p><button class="api-error-btn" type="button">${t('home.retry')}</button>`,
     );
     /* Not an inline onclick. The page's CSP refuses those. */
     msg.querySelector('.api-error-btn')?.addEventListener('click', () => location.reload());
     document.body.appendChild(msg);
-    document.body.classList.add('ready');
+    liftVeil();
     return;
   }
 
@@ -935,7 +1019,10 @@ async function boot() {
   /* A pointer or a key must reach the pager on both layouts. The phone layout is
      what a narrow window gets, and there its own swipe is the only pager, so a
      mouse and a keyboard cannot leave page one. */
+  const pager = /** @type {HTMLInputElement} */ (el('mob-pager'));
+  pager.addEventListener('input', () => goTo(Number(pager.value) - 1, null, false));
   document.addEventListener('keydown', e => {
+    if (e.target === pager) return;
     if (el('spot').hasAttribute('open')) return;
     /* The overlay covers the page it would scroll behind. */
     if (document.querySelector('.folder-overlay[open]')) return;
@@ -1007,10 +1094,39 @@ async function boot() {
 
   applyBg();
 
-  const onTheme = () => {
+  const retheme = () => {
     applyTheme(resolveTheme(readMode(), prefersDark()));
+    rethemeTiles();
+    for (const frame of document.querySelectorAll('iframe')) {
+      try {
+        /** @type {any} */ (frame.contentWindow)?.__applyHostTheme?.();
+      } catch {
+        /* A cross-origin page keeps its own theme. */
+      }
+    }
+    refreshBadges();
     applyBg();
-    buildLayout();
+  };
+  let themeWaits = false;
+  const onTheme = () => {
+    /* A hidden page skips a view transition. Run it when the page is seen. */
+    if (document.hidden) {
+      if (themeWaits) return;
+      themeWaits = true;
+      document.addEventListener(
+        'visibilitychange',
+        () => {
+          themeWaits = false;
+          onTheme();
+        },
+        { once: true },
+      );
+      return;
+    }
+    const doc = /** @type {any} */ (document);
+    if (typeof doc.startViewTransition === 'function' && !matchMedia('(prefers-reduced-motion: reduce)').matches)
+      doc.startViewTransition(retheme);
+    else retheme();
   };
   try {
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
@@ -1157,7 +1273,7 @@ async function boot() {
   /* A settings change reloads the page, so this is read once. */
   if (S.keepAwake === true) startWakeLock();
 
-  document.body.classList.add('ready');
+  liftVeil();
 }
 
 boot();

@@ -26,7 +26,7 @@ test('a typed password never shows in its row, and a different confirmation is r
 
   await setInlineRow(page, 'ie-pw2', 'sec-pw2', `${NEW}x`);
   await expect(page.locator('#ie-pw2-v')).toHaveText('New value set');
-  await expect(page.getByText('Passwords do not match.')).toBeVisible();
+  await expect(page.locator('.field-err', { hasText: 'Enter the same password twice.' })).toBeVisible();
   await page.locator('#srv-save').click();
   await expect(page.locator('#sec-pw2')).toHaveAttribute('aria-invalid', 'true');
   expect(sets).toBe(0);

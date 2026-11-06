@@ -1,4 +1,4 @@
-import { clr, el, focusFirst, initial, inp as inpById, isolate, q as qSel, qa, qi, tgt } from '/js/utils.js?v=ab3cac1d';
+import { clr, el, focusFirst, initial, inp as inpById, isolate, q as qSel, qa, qi, tgt } from '/js/utils.js?v=1a7e03c1';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import {
   loadLocalIcons,
@@ -19,7 +19,7 @@ import {
   failureIsMissingApiPath,
   nextActiveIndex,
   sameIconName,
-} from '/js/admin-logic.js?v=07377bf7';
+} from '/js/admin-logic.js?v=cf072e65';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import {
   toast,
@@ -33,13 +33,17 @@ import {
   reveal,
   setTogDisabled,
   swapContent,
-} from '/js/admin-shared.js?v=150973a3';
-import { createListbox } from '/js/listbox.js?v=a797f939';
-import { MAX_LABELS } from '/js/badge-logic.js?v=85b1bc96';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=3921c3fa';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=f1471df6';
+  setStatus,
+  errorAction,
+  showFieldError,
+  clearFieldError,
+} from '/js/admin-shared.js?v=0db313c0';
+import { createListbox } from '/js/listbox.js?v=469ae719';
+import { MAX_LABELS } from '/js/badge-logic.js?v=6d99179d';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=0e960c04';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=0882cee9';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
-import { iconSvg } from '/js/icon-set.js?v=2f4cd1e2';
+import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 
 export function buildFolderForm(body, item) {
   const children = item?.children || [];
@@ -184,7 +188,7 @@ export function buildAppForm(body, item) {
     <p class="grp-hdr" role="heading" aria-level="2">${t('app.badge')}</p>
     <div class="grp">
       <div class="row"><span class="rl">${t('app.healthCheck')}</span>${tog('hc-en', hc.enabled, t('app.healthCheck'))}</div>
-      <div id="hc-sub" class="reveal${hc.enabled ? ' open' : ''}"><div class="reveal-in">
+      <div id="hc-sub" class="reveal${hc.enabled ? ' open' : ''} row-wrap"><div class="reveal-in">
         <div class="row"><span class="rl" id="hc-type-lbl">${t('app.type')}</span><div class="segr" role="group" aria-labelledby="hc-type-lbl">
           <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-con" ${hcType === 'con' ? 'checked' : ''}><span class="segr-dot"></span><span>${t('app.container')}</span></label>
           <label class="segr-opt"><input type="radio" name="hc-type" id="hc-type-ping" ${hcType === 'ping' ? 'checked' : ''}><span class="segr-dot"></span><span>${t('app.ping')}</span></label>
@@ -200,20 +204,13 @@ export function buildAppForm(body, item) {
           <div class="row"><span class="rl"></span><span id="hc-ping-status" class="row-status" role="status"></span><button type="button" class="row-btn" id="hc-ping-test">${t('app.test')}</button></div>
         </div>
       </div></div>
-    </div>
-    ${globalHealthOn ? '' : html`<p class="grp-tip" id="hc-off-tip">${t('app.healthGlobalOff')}</p>`}
-
-    <div class="grp">
       <div class="row"><span class="rl">${t('app.fixedLabel')}</span>${tog('static-en', hasStatic, t('app.fixedLabel'))}</div>
-      <div id="static-sub" class="reveal${hasStatic ? ' open' : ''}"><div class="reveal-in">
+      <div id="static-sub" class="reveal${hasStatic ? ' open' : ''} row-wrap"><div class="reveal-in">
         ${ier('ie-static-label', t('app.labelText'), 'f-static-label', staticBadge.label, t('app.labelPh'))}
         <div id="static-color-slot"></div>
       </div></div>
-    </div>
-
-    <div class="grp">
       <div class="row"><span class="rl">${t('app.liveActivity')}</span>${tog('act-en', act.enabled, t('app.liveActivity'))}</div>
-      <div id="act-sub" class="reveal${act.enabled ? ' open' : ''}"><div class="reveal-in">
+      <div id="act-sub" class="reveal${act.enabled ? ' open' : ''} row-wrap"><div class="reveal-in">
         ${ier('ie-burl', t('app.apiUrl'), 'f-burl', act.url, t('app.apiUrlPh'), 'url')}
         <div class="row"><span class="rl"></span><span id="bst" class="row-status" role="status"></span><button type="button" class="row-btn" id="bfetch">${t('app.fetch')}</button></div>
         <div id="auth-row-wrap">
@@ -231,6 +228,7 @@ export function buildAppForm(body, item) {
         <div id="poll-row"><div class="row"><span class="rl">${t('app.poll')}</span><div class="poll-inline">${pollBefore}<input id="f-bint" type="number" min="10" max="3600" value="${act.interval || 30}" aria-label="${t('app.poll')}">${pollAfter}</div></div></div>
       </div></div>
     </div>
+    ${globalHealthOn ? '' : html`<p class="grp-tip" id="hc-off-tip">${t('app.healthGlobalOff')}</p>`}
     <div id="act-labels-wrap" class="bprow-hidden">
       <div id="act-labels"></div>
       <p class="grp-tip" id="act-label-order">${t('app.labelOrderTip')}</p>
@@ -383,6 +381,8 @@ function repathActLabel(from, to) {
 }
 
 function syncActMode() {
+  const addWrap = el('act-add-label')?.closest('.albl-add-wrap');
+  if (addWrap) clearFieldError(addWrap);
   const ready = state.fnums.length > 0 || state.spaths.length > 0;
   el('act-labels-wrap')?.classList.toggle('bprow-hidden', !ready);
   el('act-combine-row')?.classList.toggle('bprow-hidden', state.spaths.length < 2);
@@ -507,7 +507,7 @@ function renderActLabels(host) {
           captureActLabels();
           if (state.spaths.includes(String(next))) {
             box.setValue(state.spaths[i]);
-            toast(t('app.labelValueTaken'), 'err');
+            showFieldError(el(`albl-path-row-${i}`), t('app.labelValueTaken'));
             return;
           }
           repathActLabel(state.spaths[i], String(next));
@@ -527,13 +527,14 @@ const GRIP_SVG = iconSvg('grip', 14);
 
 function addActLabel() {
   captureActLabels();
+  const addWrap = el('act-add-label')?.closest('.albl-add-wrap');
   if (state.spaths.length >= MAX_LABELS) {
-    toast(t('app.labelMax', { count: MAX_LABELS }), 'err');
+    showFieldError(addWrap, t('app.labelMax', { count: MAX_LABELS }), { focus: false });
     return;
   }
   const free = actValueOptions().find(o => !state.spaths.includes(o.path));
   if (!free) {
-    toast(t('app.noValuesLeft'), 'err');
+    showFieldError(addWrap, t('app.noValuesLeft'), { focus: false });
     return;
   }
   const add = el('act-add-label');
@@ -976,16 +977,16 @@ function wireGuestPicker(saved) {
     async load() {
       if (loaded) return;
       loaded = true;
-      if (st) st.textContent = t('app.loadingGuests');
+      setStatus(st, '', t('app.loadingGuests'));
       try {
         const r = await apiGet('/api/proxmox/guests');
         const options = (r.guests || []).map(g => ({ value: String(g.vmid), label: `${g.name} (${g.vmid})` }));
         if (current && !options.some(o => o.value === current)) options.unshift(...fallback);
         box.setOptions(options, box.getValue() || current);
-        if (st) st.textContent = '';
+        setStatus(st, '', '');
       } catch (e) {
         loaded = false;
-        if (st) st.textContent = '✗ ' + errorText(e);
+        setStatus(st, 'err', errorText(e), errorAction(e));
       }
     },
   };
@@ -995,17 +996,17 @@ async function testPing() {
   const url = inpById('hc-ping')?.value?.trim();
   const st = el('hc-ping-status');
   if (!url) {
-    st.textContent = t('app.enterUrlFirst');
+    setStatus(st, '', t('app.enterUrlFirst'));
     return;
   }
-  st.textContent = t('app.testing');
+  setStatus(st, '', t('app.testing'));
   const skipTls = inpById('f-skip-tls')?.checked || false;
   try {
     const r = await apiPost('/api/ping', { url, skipTls });
-    if (r.ok) st.textContent = '✓ ' + t('app.reachable', { status: r.status });
-    else st.textContent = '✗ ' + (r.status ? t('app.httpError', { status: r.status }) : errorText(r));
+    if (r.ok) setStatus(st, 'ok', t('app.reachable', { status: r.status }));
+    else setStatus(st, 'err', r.status ? t('app.httpError', { status: r.status }) : errorText(r));
   } catch (e) {
-    st.textContent = '✗ ' + errorText(e);
+    setStatus(st, 'err', errorText(e));
   }
 }
 
@@ -1113,9 +1114,8 @@ function warnUrlLogin() {
   if (!st) return false;
   const has = urlHasLogin(inpById('f-burl')?.value || '');
   if (has) {
-    st.style.cssText = 'margin-top:4px;color:var(--warning)';
-    st.textContent = t('app.urlHasLogin');
-  } else if (st.textContent === t('app.urlHasLogin')) st.textContent = '';
+    setStatus(st, 'warn', t('app.urlHasLogin'));
+  } else if (st.textContent === t('app.urlHasLogin')) setStatus(st, '', '');
   return has;
 }
 
@@ -1123,15 +1123,11 @@ async function fetchBadge() {
   const url = inpById('f-burl')?.value?.trim();
   const st = el('bst');
   if (!url) {
-    if (st) st.style.cssText = 'margin-top:4px;color:var(--dm)';
-    if (st) st.textContent = t('app.enterUrlFirst');
+    setStatus(st, '', t('app.enterUrlFirst'));
     return;
   }
   if (warnUrlLogin()) return;
-  if (st) {
-    st.style.cssText = 'margin-top:4px;color:var(--dm)';
-    st.textContent = t('app.fetching');
-  }
+  setStatus(st, '', t('app.fetching'));
   const btn = inpById('bfetch');
   if (btn) btn.disabled = true;
   try {
@@ -1147,14 +1143,10 @@ async function fetchBadge() {
       itemId: state.eid ?? undefined,
     });
     state.fnums = r.numbers || [];
-    if (st) {
-      st.style.cssText = 'margin-top:4px;color:#34c759';
-      if (!state.fnums.length) {
-        const bare = isBareHostUrl(url);
-        if (bare) st.style.cssText = 'margin-top:4px;color:var(--warning)';
-        st.textContent = bare ? t('app.needsApiPath') : '✓ ' + t('app.connectedNoValues');
-      } else st.textContent = '✓ ' + t('app.foundValues', { count: state.fnums.length });
-    }
+    if (!state.fnums.length) {
+      if (isBareHostUrl(url)) setStatus(st, 'warn', t('app.needsApiPath'));
+      else setStatus(st, 'ok', t('app.connectedNoValues'));
+    } else setStatus(st, 'ok', t('app.foundValues', { count: state.fnums.length }));
     el('auth-row-wrap')?.classList.remove('bprow-hidden');
     if (state.fnums.length && !state.spaths.length) addActLabel();
     else syncActMode();
@@ -1162,12 +1154,8 @@ async function fetchBadge() {
     /* Branch on the error's `kind`, never on words inside its message. */
     const advice = badgeErrorAdvice(e);
     const missingPath = failureIsMissingApiPath(url, advice);
-    if (st) {
-      const tone = missingPath || advice.tone === TONE.WARN ? 'var(--warning)' : 'var(--danger)';
-      st.style.cssText = 'margin-top:4px;color:' + tone;
-      if (missingPath) st.textContent = t('app.needsApiPathError');
-      else st.textContent = (advice.tone === TONE.WARN ? '' : '✗ ') + t(advice.key, advice.vars);
-    }
+    const tone = missingPath || advice.tone === TONE.WARN ? 'warn' : 'err';
+    setStatus(st, tone, missingPath ? t('app.needsApiPathError') : t(advice.key, advice.vars));
     if (advice.openAuth && !missingPath) {
       const authCb = inpById('auth-en');
       const authSub = el('auth-sub');

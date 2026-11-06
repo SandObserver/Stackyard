@@ -1,12 +1,14 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
-import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=07377bf7';
-import { el, isolate, q, qa } from '/js/utils.js?v=ab3cac1d';
+import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=cf072e65';
+import { el, isolate, q, qa } from '/js/utils.js?v=1a7e03c1';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { errorAdvice } from '/js/admin-error.js?v=f1471df6';
+import { errorAdvice } from '/js/admin-error.js?v=0882cee9';
 import { formatList, formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { iconChain } from '/js/icons.js?v=5ac01d72';
-import { iconSvg } from '/js/icon-set.js?v=2f4cd1e2';
-import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=e1cf730c';
+import { iconSvg } from '/js/icon-set.js?v=b279fd98';
+import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
+import { slideBlock } from '/js/modal.js?v=343a3508';
+import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=c03e1465';
 
 export const API = '';
 
@@ -29,19 +31,46 @@ function hideToast() {
   e.className = '';
 }
 
+const TOAST_ICON = Object.freeze({ ok: 'success', warn: 'warning', err: 'failure' });
+
 /** @param {string} m @param {'ok'|'warn'|'err'} [tone] 'warn' is for an action
     that worked with a caveat. Neither 'warn' nor 'err' goes away on its own.
     An 'ok' replaces a 'warn' only after the user next presses a key or a
     pointer outside the toast, so the same action's success cannot hide it.
+    @param {{ label: string, run: () => void } | null} [action] one button that
+      does what the message asks for.
     @returns {void} */
-export const toast = (m, tone = 'ok') => {
+export const toast = (m, tone = 'ok', action = null) => {
   const e = el('toast');
   const msg = el('toast-msg');
   if (!e || !msg) return;
   const showing = e.classList.contains('show');
   if (tone === 'ok' && _warnHolds && showing && e.classList.contains('warn')) return;
   _warnHolds = tone === 'warn';
-  msg.textContent = m;
+  const ico = q('.toast-ico', e);
+  if (ico) setHtml(ico, html`${raw(iconSvg(TOAST_ICON[tone] || 'info', 20))}`);
+  /* An error interrupts. A repeat of the same words is read again only when
+     the text changes, so it is cleared first. */
+  msg.setAttribute('role', tone === 'err' ? 'alert' : 'status');
+  msg.setAttribute('aria-live', tone === 'err' ? 'assertive' : 'polite');
+  if (showing && msg.textContent === m) {
+    msg.textContent = '';
+    setTimeout(() => {
+      if (!msg.textContent) msg.textContent = m;
+    }, 50);
+  } else msg.textContent = m;
+  const act = /** @type {HTMLButtonElement|null} */ (q('.toast-act', e));
+  if (act) {
+    act.hidden = !action;
+    act.textContent = action ? action.label : '';
+    act.onclick = action
+      ? ev => {
+          ev.stopPropagation();
+          hideToast();
+          action.run();
+        }
+      : null;
+  }
   e.className = `show ${tone}`;
   clearTimeout(tt);
   if (!_toastWired) {
@@ -68,9 +97,93 @@ export const toast = (m, tone = 'ok') => {
     document.addEventListener('pointerdown', acted, true);
     document.addEventListener('keydown', acted, true);
   }
-  const ms = toastHoldMs(tone, m, 'show');
+  const ms = action ? null : toastHoldMs(tone, m, 'show');
   if (ms != null) tt = setTimeout(hideToast, ms);
 };
+
+/** @param {string} rowId */
+function openGeneralAt(rowId) {
+  if (location.hash === '#general') dispatchEvent(new HashChangeEvent('hashchange'));
+  else location.hash = 'general';
+  setTimeout(() => {
+    const row = el(rowId);
+    const target = /** @type {HTMLElement|null} */ (row?.querySelector('.pe, input, button') ?? row);
+    row?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    target?.focus();
+  }, 250);
+}
+
+/** @param {unknown} e
+    @returns {{ label: string, run: () => void } | null} */
+export function errorAction(e) {
+  const err = /** @type {any} */ (e);
+  const code = typeof err?.code === 'string' ? err.code : '';
+  if (code === 'invalid.socket-missing') {
+    const off = !(/** @type {HTMLInputElement|null} */ (el('srv-hc-en'))?.checked);
+    return { label: t('toast.openGeneral'), run: () => openGeneralAt(off ? 'srv-hc-en' : 'ie-socket') };
+  }
+  if (code === 'invalid.proxmox-missing')
+    return { label: t('toast.openGeneral'), run: () => openGeneralAt('ie-pve-url') };
+  if (err?.status === 409 || code === 'invalid.password-changed')
+    return { label: t('toast.reload'), run: () => location.reload() };
+  return null;
+}
+
+/** @param {Element|null} st
+    @param {'ok'|'warn'|'err'|''} tone '' for a neutral line
+    @param {string} text
+    @param {{ label: string, run: () => void } | null} [action]
+    @returns {void} */
+export function setStatus(st, tone, text, action = null) {
+  if (!st) return;
+  st.classList.remove('ok', 'warn', 'err');
+  if (tone) st.classList.add(tone);
+  st.replaceChildren();
+  if (tone) {
+    const ico = document.createElement('span');
+    ico.className = 'st-ico';
+    setHtml(ico, html`${raw(iconSvg(TOAST_ICON[tone], 14))}`);
+    st.append(ico);
+  }
+  st.append(text);
+  if (action) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'st-act';
+    b.textContent = action.label;
+    b.addEventListener('click', action.run);
+    st.append(' ', b);
+  }
+}
+
+/** @type {WeakMap<Element, number>} */
+const _savedTimers = new WeakMap();
+
+/** Keep `quiet` for list moves. Otherwise the save announcement replaces the position
+    announcement before a screen reader reads it.
+    @param {Element|null|undefined} btn
+    @param {boolean} [quiet]
+    @returns {void} */
+export function confirmSaved(btn, quiet = false) {
+  const b = /** @type {HTMLElement|null|undefined} */ (btn);
+  if (el('toast')?.classList.contains('err')) hideToast();
+  if (!b?.isConnected || !b.getClientRects().length || !b.querySelector('.sv-done')) {
+    if (!quiet) toast(t('toast.saved'));
+    return;
+  }
+  clearTimeout(_savedTimers.get(b));
+  b.classList.add('saved');
+  if (!quiet) announce(t('toast.saved'));
+  _savedTimers.set(
+    b,
+    window.setTimeout(() => b.classList.remove('saved'), 1500),
+  );
+}
+
+/** @param {Element|null} node */
+export function sectionSave(node) {
+  return node?.closest('.sec')?.querySelector('.sec-hdr-actions .sv-btn') ?? null;
+}
 
 let _fieldErrSeq = 0;
 /** @type {WeakMap<Element, AbortController>} */
@@ -98,6 +211,7 @@ export function showFieldError(row, message, { focus = true } = {}) {
   note.id = `field-err-${++_fieldErrSeq}`;
   note.textContent = message;
   box.after(note);
+  slideBlock(note, true);
   box.classList.add('row-invalid');
   const controls = qa('input:not([type="hidden"]), select, textarea, [role="combobox"], button', box);
   for (const c of controls) {
@@ -137,9 +251,13 @@ export function clearFieldError(row) {
   _fieldErrWatch.get(row)?.abort();
   _fieldErrWatch.delete(row);
   row.classList.remove('row-invalid');
-  const note = row.nextElementSibling;
+  const note = /** @type {HTMLElement|null} */ (row.nextElementSibling);
   const noteId = note?.classList.contains('field-err') ? note.id : '';
-  if (noteId) note?.remove();
+  if (note && noteId) {
+    note.removeAttribute('id');
+    note.classList.replace('field-err', 'field-err-out');
+    slideBlock(note, false, () => note.remove());
+  }
   for (const c of qa('[aria-invalid="true"]', row)) c.removeAttribute('aria-invalid');
   if (!noteId) return;
   for (const c of qa('[aria-describedby]', row)) {
@@ -150,13 +268,28 @@ export function clearFieldError(row) {
 }
 
 /** @param {string} text */
-function announce(text) {
+export function announce(text) {
   const region = el('sr-announce');
   if (!region) return;
   region.textContent = '';
   setTimeout(() => {
     region.textContent = text;
   }, 100);
+}
+
+/** @param {Element|null} node */
+export function fadeIn(node) {
+  if (!node) return;
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  node.animate(
+    still
+      ? [{ opacity: 0 }, { opacity: 1 }]
+      : [
+          { opacity: 0, transform: 'translateY(8px)' },
+          { opacity: 1, transform: 'none' },
+        ],
+    { duration: 200, easing: 'cubic-bezier(.32,.72,0,1)' },
+  );
 }
 
 /** @param {ParentNode} root */
@@ -385,17 +518,17 @@ export function plainInput(inp) {
     @param {string} rowId @param {string} inputId
     @param {{ type?: string, placeholder?: string | (() => string),
               onCommit?: (value: string) => void, root?: ParentNode, plain?: boolean, fill?: boolean,
-              render?: (valEl: Element, value: string) => void }} [opts] */
+              render?: (valEl: Element, value: string) => void, empty?: () => string }} [opts] */
 export function initInlineEdit(
   rowId,
   inputId,
-  { type = 'text', placeholder = '', onCommit, root = document, plain = false, fill, render } = {},
+  { type = 'text', placeholder = '', onCommit, root = document, plain = false, fill, render, empty } = {},
 ) {
   const byId = id => (root === document ? el(id) : root.querySelector('#' + CSS.escape(id)));
   const row = /** @type {HTMLElement} */ (byId(rowId));
   const inp = /** @type {HTMLInputElement} */ (byId(inputId));
   if (!row || !inp) return;
-  wireInlineEdit(row, inp, { type, placeholder, onCommit, plain, fill, render });
+  wireInlineEdit(row, inp, { type, placeholder, onCommit, plain, fill, render, empty });
 }
 
 /** Name a row's pencil after its label. Call again once the catalog loads.
@@ -409,19 +542,30 @@ export function nameEditPen(row) {
 /** The same row behaviour for elements a caller already holds. `row` needs an id.
     `fill: false` keeps the input's own value on open. `render` replaces how the
     committed value is shown. `plain` is for an address, host, username or key:
-    no capitals, correction or spelling marks.
+    no capitals, correction or spelling marks. `placeholder` shows only in the
+    open field. `empty` is what an empty row shows, common.notSet by default.
     @param {HTMLElement} row @param {HTMLInputElement} inp
     @param {{ type?: string, placeholder?: string | (() => string), onCommit?: (value: string) => void,
-              fill?: boolean, render?: (valEl: Element, value: string) => void, plain?: boolean }} [opts] */
+              fill?: boolean, render?: (valEl: Element, value: string) => void, plain?: boolean,
+              empty?: () => string }} [opts] */
 export function wireInlineEdit(
   row,
   inp,
-  { type = 'text', placeholder = '', onCommit, fill = true, render, plain = false } = {},
+  {
+    type = 'text',
+    placeholder = '',
+    onCommit,
+    fill = true,
+    render,
+    plain = false,
+    empty = () => t('common.notSet'),
+  } = {},
 ) {
   const ph = () => (typeof placeholder === 'function' ? placeholder() : placeholder);
   const valEl = q('.rv', row);
   const pen = q('.pe', row);
   if (!valEl || !pen) return;
+  if (!render && valEl.classList.contains('is-ph') && !valEl.hasAttribute('data-i18n')) valEl.textContent = empty();
 
   inp.type = type;
   inp.placeholder = ph();
@@ -458,7 +602,7 @@ export function wireInlineEdit(
       valEl.textContent = v;
       valEl.classList.remove('is-ph');
     } else {
-      valEl.textContent = ph() || '';
+      valEl.textContent = empty();
       valEl.classList.add('is-ph');
     }
     onCommit?.(v);

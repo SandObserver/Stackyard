@@ -6,12 +6,12 @@
    Do not use popover. The top layer makes iOS collapse its browser toolbar,
    which exposes a strip of page canvas and misplaces the menu. */
 
-import { nextActiveIndex, singleChoice } from '/js/admin-logic.js?v=07377bf7';
+import { nextActiveIndex, singleChoice } from '/js/admin-logic.js?v=cf072e65';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatList } from '/js/format-number.js?v=abcd4ae4';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { qa } from '/js/utils.js?v=ab3cac1d';
-import { iconSvg } from '/js/icon-set.js?v=2f4cd1e2';
+import { qa } from '/js/utils.js?v=1a7e03c1';
+import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 
 const CHEV = iconSvg('chevrons', 22, 'solid', 'dd-chev');
 
@@ -191,6 +191,7 @@ export function createListbox(
   /** @param {{ animate?: boolean }} [o] */
   const open = ({ animate = false } = {}) => {
     if (open_) return;
+    list.classList.remove('dd-out');
     list.hidden = false;
     open_ = true;
     btn.setAttribute('aria-expanded', 'true');
@@ -228,14 +229,34 @@ export function createListbox(
   const close = ({ focusBtn = false } = {}) => {
     outside?.abort();
     outside = null;
-    list.hidden = true;
     list.classList.remove('dd-in');
     open_ = false;
+    leave(list);
     btn.setAttribute('aria-expanded', 'false');
     items().forEach(li => li.classList.remove('kb-active'));
     fluidHoverClear(list);
     if (focusBtn) btn.focus();
   };
+
+  /** @param {HTMLElement} node */
+  function leave(node) {
+    if (node.hidden || !node.isConnected) {
+      node.hidden = true;
+      return;
+    }
+    node.classList.add('dd-out');
+    let timer = 0;
+    const hide = () => {
+      clearTimeout(timer);
+      node.removeEventListener('animationend', hide);
+      if (open_) return;
+      node.hidden = true;
+      node.classList.remove('dd-out');
+    };
+    node.addEventListener('animationend', hide);
+    /* animationend never fires if the animation is dropped. */
+    timer = setTimeout(hide, 250);
+  }
 
   function commit(li) {
     const val = li.dataset.val;

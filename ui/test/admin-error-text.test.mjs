@@ -40,5 +40,5 @@ test('a web server 413 page is worded as too large', async () => {
 
 test('a message the page wrote itself is shown as written', () => {
   assert.equal(errorText(new ShownError('already translated')), 'already translated');
-  assert.equal(errorText(new TypeError('Failed to fetch')), 'adminError.genericInternal');
+  assert.equal(errorText(new TypeError('Failed to fetch')), 'adminError.offline');
 });

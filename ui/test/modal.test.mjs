@@ -19,7 +19,19 @@ function makeDom() {
   const listeners = new Map();
   let active = null;
 
-  const el = tag => ({
+  const el = tag => {
+    const node = make(tag);
+    /* The close animation ends at once, as it does under Reduce Motion. */
+    node.classList = {
+      add: c => {
+        if (c === 'closing') node._fire('animationend');
+      },
+      remove() {},
+      contains: () => false,
+    };
+    return node;
+  };
+  const make = tag => ({
     tagName: tag.toUpperCase(),
     children: [],
     parent: null,
