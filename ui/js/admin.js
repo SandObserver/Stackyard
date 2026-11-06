@@ -7,7 +7,7 @@ import {
 } from '/js/admin-app-form.js?v=0b91f7aa';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=276d4aa8';
 import { recoveryShown } from '/js/config-recovery.js?v=c03e1465';
-import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=6e1b0245';
+import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=3123c2ac';
 import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=cf072e65';
 import {
   afterImport,
@@ -78,7 +78,7 @@ import {
 } from '/js/import-foreign.js?v=050f6de4';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { clampName } from '/js/limits.js?v=ea61a441';
-import { confirmModal, confirmText, openModal as openDialog, promptModal } from '/js/modal.js?v=bd88cb9e';
+import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=bd88cb9e';
 import {
   THEME_KEY,
   applyTheme,
@@ -504,128 +504,52 @@ function closeModal(focusId = state.eid) {
   state._iframeOpts = {};
 }
 
-function openFolderPicker(appId, targetFolderId = null) {
+function openFolderPicker(folderId) {
   const folders = state.items.filter(i => i.type === 'folder');
-  const currentFolder = folders.find(f => (f.children || []).includes(appId));
-  const appItem = state.items.find(i => i.id === appId);
-  const appName = appItem?.label || appId;
 
-  const dlg = openDialog({
-    title: appId ? t('folder.moveTo', { name: isolate(appName) }) : t('folder.addApp'),
-  });
+  const dlg = openDialog({ title: t('folder.addApp') });
   const list = dlg.body;
   const close = dlg.close;
 
-  const rowBtn = (cls, onAct) => {
+  const rowBtn = onAct => {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'fp-row' + (cls ? ' ' + cls : '');
+    b.className = 'fp-row';
     b.onclick = onAct;
     return b;
   };
 
-  if (targetFolderId) {
-    const tf = folders.find(f => f.id === targetFolderId);
-    const available = tf
-      ? state.items.filter(i => i.type === 'app' && !i.dock && !(tf.children || []).includes(i.id))
-      : [];
-    if (!available.length) {
-      const em = document.createElement('div');
-      em.className = 'dlg-empty';
-      em.textContent = t('folder.allInFolder');
-      list.appendChild(em);
-    }
-    available.forEach(app => {
-      const b = rowBtn('', () => {
-        const before = snapshotItems(state.items);
-        state.items.forEach(f => {
-          if (f.type === 'folder') f.children = (f.children || []).filter(id => id !== app.id);
-        });
-        if (!tf.children) tf.children = [];
-        tf.children.push(app.id);
-        saveOrRevert(before);
-        close();
-      });
-      const ri = document.createElement('span');
-      ri.className = 'fp-ic';
-      ri.style.background = clr(app.color);
-      paintIcon(ri, app.iconUrl, initial(app.label));
-      const nm = document.createElement('span');
-      nm.className = 'fp-nm';
-      setUserText(nm, app.label || app.id);
-      b.append(ri, nm);
-      list.appendChild(b);
-    });
-  } else {
-    const none = rowBtn(currentFolder ? 'muted' : 'cur', () => {
-      const before = snapshotItems(state.items);
-      state.items.forEach(f => {
-        if (f.type === 'folder') f.children = (f.children || []).filter(id => id !== appId);
-      });
-      saveOrRevert(before);
-      close();
-    });
-    const ns = document.createElement('span');
-    ns.textContent = t('folder.none');
-    none.append(ns);
-    list.appendChild(none);
-
-    folders.forEach(f => {
-      const cur = currentFolder?.id === f.id;
-      const b = rowBtn(cur ? 'cur' : '', () => {
-        const before = snapshotItems(state.items);
-        state.items.forEach(ff => {
-          if (ff.type === 'folder') ff.children = (ff.children || []).filter(id => id !== appId);
-        });
-        if (!f.children) f.children = [];
-        if (!f.children.includes(appId)) f.children.push(appId);
-        saveOrRevert(before);
-        close();
-      });
-      const nm = document.createElement('span');
-      setUserText(nm, f.label);
-      const chk = document.createElement('span');
-      chk.className = 'fp-chk';
-      if (cur) chk.textContent = '✓';
-      b.append(nm, chk);
-      list.appendChild(b);
-    });
-
-    const divider = document.createElement('div');
-    divider.className = 'div';
-    divider.style.margin = '4px 8px';
-    list.appendChild(divider);
-
-    const nr = rowBtn('accent', async () => {
-      /* Closed first. Two overlays fighting over the focus trap leave focus in
-         the one underneath. */
-      close();
-      const name = await promptModal({
-        title: t('folder.createNew'),
-        label: t('folder.name'),
-        placeholder: t('folder.namePh'),
-        confirmLabel: t('common.create'),
-        cancelLabel: t('common.cancel'),
-      });
-      if (!name) return;
-      const label = clampName(name);
-      const fid = newItemId(
-        label,
-        'folder',
-        state.items.map(i => i.id),
-      );
-      const before = snapshotItems(state.items);
-      state.items.push({ id: fid, type: 'folder', label, children: [appId] });
-      state.items.forEach(f => {
-        if (f.type === 'folder' && f.id !== fid) f.children = (f.children || []).filter(id => id !== appId);
-      });
-      saveOrRevert(before);
-    });
-    const nrs = document.createElement('span');
-    nrs.textContent = '+ ' + t('folder.createNew');
-    nr.append(nrs);
-    list.appendChild(nr);
+  const tf = folders.find(f => f.id === folderId);
+  const available = tf
+    ? state.items.filter(i => i.type === 'app' && !i.dock && !(tf.children || []).includes(i.id))
+    : [];
+  if (!available.length) {
+    const em = document.createElement('div');
+    em.className = 'dlg-empty';
+    em.textContent = t('folder.allInFolder');
+    list.appendChild(em);
   }
+  available.forEach(app => {
+    const b = rowBtn(() => {
+      const before = snapshotItems(state.items);
+      state.items.forEach(f => {
+        if (f.type === 'folder') f.children = (f.children || []).filter(id => id !== app.id);
+      });
+      if (!tf.children) tf.children = [];
+      tf.children.push(app.id);
+      saveOrRevert(before);
+      close();
+    });
+    const ri = document.createElement('span');
+    ri.className = 'fp-ic';
+    ri.style.background = clr(app.color);
+    paintIcon(ri, app.iconUrl, initial(app.label));
+    const nm = document.createElement('span');
+    nm.className = 'fp-nm';
+    setUserText(nm, app.label || app.id);
+    b.append(ri, nm);
+    list.appendChild(b);
+  });
 
   dlg.addAction(t('common.cancel'), 'bg sm', close);
   dlg.focus(q('button', list));
