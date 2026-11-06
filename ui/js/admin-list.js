@@ -29,7 +29,7 @@ import { widgetGlyph } from '/js/widget-glyphs.js?v=c1502c58';
 import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 
 /** @type {{ openModal: (idx: number|null) => void,
-             openFolderPicker: (appId: string|null, targetFolderId?: string|null) => void,
+             openFolderPicker: (folderId: string) => void,
              save: (before: unknown, done?: string|false) => Promise<boolean>|boolean }} */
 let _page = {
   openModal: () => {},
@@ -436,7 +436,7 @@ function draw(l) {
       addRow.dataset.act = 'add-to';
       addRow.dataset.folderId = item.id;
       setHtml(addRow, html`<span>+</span> ${t('folder.addAppToFolder')}`);
-      addRow.onclick = () => _page.openFolderPicker(null, item.id);
+      addRow.onclick = () => _page.openFolderPicker(item.id);
       homeGrp.appendChild(addRow);
     }
   });

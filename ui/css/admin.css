@@ -77,7 +77,6 @@
   --track-off:rgba(255,255,255,.26);    /* an unfilled switch or meter track */
   --tip-strong:rgba(242,242,247,.65);   /* emphasis inside a footnote */
   --swatch-ring:#FFFFFF;                /* the ring around the chosen colour */
-  --row-selected:rgba(2,122,255,.15);   /* the current folder, a picked backup */
   --row-drop:rgba(0,168,107,.12);       /* a drag hovering over a folder */
   --scrim:rgba(0,0,0,.48);
   --scrim-strong:rgba(0,0,0,.70);
@@ -133,7 +132,6 @@ html[data-theme="light"] {
   --track-off:rgba(120,120,128,.32);
   --tip-strong:rgba(60,60,67,.75);
   --swatch-ring:#000000;
-  --row-selected:rgba(0,122,255,.12);
   --row-drop:rgba(0,168,107,.14);
   --scrim:rgba(0,0,0,.2);
   --scrim-strong:rgba(0,0,0,.45);
@@ -710,13 +708,9 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
 .fp-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:20px;background:none;border:none;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);cursor:pointer;width:100%;text-align:start;font-family:inherit;transition:background var(--t)}
 @media (hover:hover) and (pointer:fine){.fp-row:hover{background:var(--ov)}}
 .fp-row:active{background:var(--fill-tertiary)}
-.fp-row.cur{background:var(--row-selected)}
-.fp-row.muted{color:var(--dm)}
-.fp-row.accent{color:var(--ac2)}
 .fp-ic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--on-tint);flex-shrink:0}
 .fp-ic img{width:18px;height:18px;object-fit:contain}
 .fp-nm{flex:1}
-.fp-chk{color:var(--gn);font-weight:700}
 
 /* ── Icon picker ── */
 /* The list is measured from the field, not from the Icon group: the group also
