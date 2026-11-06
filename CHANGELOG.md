@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add a Confirm Password field and a show-password button to the Settings
   password.
 
+- Add a Reorder mode with Move Up and Move Down buttons to the Dashboard list.
+
+- Add a popover to every badge that names its source and shows when it may be
+  out of date.
+
+- Add a VoiceOver page control to the phone dashboard.
+
 ### Changed
 
 - Require at least 15 characters for a new password and refuse common passwords.
@@ -27,6 +34,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   password is typed.
 
 - Sign out all devices now signs out this browser as well.
+
+- Confirm saves on the Save button and report deletes as Deleted.
+
+- Write error messages as instructions and dialog titles as questions.
+
+- Show the sign-in lockout wait in minutes.
+
+- Keep widgets on a theme change and crossfade instead of reloading them.
+
+- Roll changed digits in System Summary, DNS and Weather.
+
+- Fade in the wallpaper and badges.
+
+- Show the "Stackyard isn't responding" screen in the last used language.
 
 ### Fixed
 
@@ -38,6 +59,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Let password managers save and fill the dashboard password, filed under the
   host name.
+
+- Keep focus on the folder Add button after adding an app to a folder.
+
+- Show Weather in light colours after a live switch to light mode.
 
 ### Security
 
