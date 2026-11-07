@@ -49,6 +49,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show the "Stackyard isn't responding" screen in the last used language.
 
+- Keep catalogue icons in the browser for a day, so repeat visits make fewer
+  requests.
+
+- Request Unsplash wallpapers at the size of the screen and in a modern format.
+
+- Start loading the wallpaper first and show its colour straight away.
+
+- Restore the dashboard instantly with Back, after checking sign-in and
+  settings.
+
+- Show the Settings form only once its real values have loaded.
+
 ### Fixed
 
 - Let the owner set a new password with a setup code when the saved password is
@@ -63,6 +75,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep focus on the folder Add button after adding an app to a folder.
 
 - Show Weather in light colours after a live switch to light mode.
+
+- Fill the screen on a sideways phone when no tall widget needs the extra rows.
+
+- Keep the photo credit clear of widgets on a sideways phone.
 
 ### Security
 
