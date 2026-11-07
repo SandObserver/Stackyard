@@ -44,12 +44,10 @@
     /* ── Boot loading veil — fades out once boot() finishes ── */
     body::after {
       content:''; position:fixed; inset:0; z-index:9999;
-      background:var(--bg-base); pointer-events:none;
+      background:var(--boot-bg,var(--bg-base)); pointer-events:none;
       transition:opacity .2s ease-out;
     }
     body.ready::after { opacity:0; }
-    html.wall-in::before { animation:wall-in .4s ease-out }
-    @keyframes wall-in { from { opacity:0 } }
     html.wall-swap::after {
       content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
       background-image:var(--bg-prev-image,none); background-size:var(--bg-prev-size,cover);
@@ -77,8 +75,6 @@
       animation:boot-wait 1s linear infinite, boot-show .3s ease .6s forwards;
     }
     body.ready::before { animation:none; opacity:0; }
-    @keyframes boot-wait { to { transform:rotate(360deg) } }
-    @keyframes boot-show { to { opacity:1 } }
 
     /* ── Page strip ── */
     #pages {
@@ -443,6 +439,13 @@
     body.is-mob #photo-credit {
       inset-block:max(4px, calc(var(--sa-top) - 16px)) auto; inset-inline:0;
       width:fit-content; max-width:70vw; margin-inline:auto;
+    }
+    @media (orientation:landscape) and (max-height:500px) {
+      body.is-mob #photo-credit {
+        inset-block:auto calc(8px + var(--safe-bottom,0px));
+        inset-inline:auto calc(12px + var(--safe-right,0px));
+        max-width:22vw; margin-inline:0;
+      }
     }
 
     /* ── Search pill — mobile only ── */

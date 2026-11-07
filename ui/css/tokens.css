@@ -316,11 +316,15 @@ html::before {
   content:''; position:fixed; inset:0; z-index:0;
   background-image:var(--bg-image,none);
   background-size:var(--bg-size,cover); background-position:center;
-  background-repeat:no-repeat; background-color:var(--bg-color,var(--bg-base));
+  background-repeat:no-repeat; background-color:var(--bg-color,var(--boot-bg,var(--bg-base)));
   pointer-events:none;
   filter:brightness(var(--bg-brightness,1));
   transform:translateZ(0);
 }
+html.wall-in::before { animation:wall-in .4s ease-out }
+@keyframes wall-in { from { opacity:0 } }
+@keyframes boot-wait { to { transform:rotate(360deg) } }
+@keyframes boot-show { to { opacity:1 } }
 
 /* Forced colors replaces declared colours with the user's palette, but leaves
    background images and backdrop-filter alone. Without this the wallpaper and

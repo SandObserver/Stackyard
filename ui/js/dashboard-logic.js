@@ -14,6 +14,11 @@ export function configChanged(loaded, fetched) {
   return fingerprint(fetched) !== fingerprint(loaded);
 }
 
+/** @param {number} status @param {any} auth the /api/auth/check reply @returns {boolean} */
+export function restoreNeedsReload(status, auth) {
+  return status < 200 || status >= 300 || !!(auth?.enabled && !auth.authenticated);
+}
+
 /** @param {any} c */
 function fingerprint(c) {
   return JSON.stringify(c?.items?.map(i => `${i?.id}|${i?.label}|${i?.href}`)) + JSON.stringify(c?.settings);

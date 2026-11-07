@@ -58,6 +58,42 @@ export function writeWallpaperCache(wallpaper, bg, now) {
   return JSON.stringify({ url: wallpaper.url, credit: wallpaper.credit, key: wallpaperKey(bg), at: now });
 }
 
+const BOOT_HINT_STORE = 'sy-boot';
+
+/** @param {{ url?: string|null, color?: string|null, lang?: string }} hint @returns {void} */
+export function saveBootHint(hint) {
+  try {
+    const was = JSON.parse(localStorage.getItem(BOOT_HINT_STORE) || '{}');
+    localStorage.setItem(BOOT_HINT_STORE, JSON.stringify({ ...was, ...hint }));
+  } catch {}
+}
+
+const WALLPAPER_MAX_PX = 2880;
+
+/** @param {string} url
+    @param {{ width: number, height: number, dpr: number, landscape: boolean }} screen CSS pixels
+    @returns {string} */
+export function sizedWallpaperUrl(url, { width, height, dpr, landscape }) {
+  let u;
+  try {
+    u = new URL(url);
+  } catch {
+    return url;
+  }
+  if (u.hostname !== 'images.unsplash.com' || !(width > 0 && height > 0 && dpr > 0)) return url;
+  const long = Math.max(width, height) * dpr;
+  const short = Math.min(width, height) * dpr;
+  const scale = Math.min(1, WALLPAPER_MAX_PX / long);
+  const l = Math.round(long * scale);
+  const s = Math.round(short * scale);
+  u.searchParams.set('w', String(landscape ? l : s));
+  u.searchParams.set('h', String(landscape ? s : l));
+  u.searchParams.set('q', '75');
+  u.searchParams.set('auto', 'format');
+  u.searchParams.delete('fm');
+  return u.href;
+}
+
 /** @param {any} bg @param {number} [now] @returns {CachedWallpaper|null} */
 export function loadWallpaper(bg, now = Date.now()) {
   let stored = null;

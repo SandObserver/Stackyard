@@ -138,6 +138,12 @@
       "/js/badge-logic.js?v=*": [
         "./ui/js/badge-logic.js"
       ],
+      "/js/boot-hints.js": [
+        "./ui/js/boot-hints.js"
+      ],
+      "/js/boot-hints.js?v=*": [
+        "./ui/js/boot-hints.js"
+      ],
       "/js/clock-captain.js": [
         "./ui/js/clock-captain.js"
       ],

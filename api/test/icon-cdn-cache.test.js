@@ -47,13 +47,13 @@ function stubCdn(t, replies) {
   return urls;
 }
 
-function get(pathname) {
+function get(pathname, headers = {}) {
   return new Promise((resolve, reject) => {
     const server = http.createServer(dispatch);
     server.listen(0, '127.0.0.1', () => {
       const { port } = server.address();
       http
-        .request({ hostname: '127.0.0.1', port, path: pathname, method: 'GET' }, res => {
+        .request({ hostname: '127.0.0.1', port, path: pathname, method: 'GET', headers }, res => {
           const bufs = [];
           res.on('data', c => bufs.push(c));
           res.on('end', () => {
@@ -239,4 +239,30 @@ test('an upstream icon over 512 KB is treated as missing', async t => {
   stubCdn(t, [{ status: 200, body: Buffer.concat([PNG, Buffer.alloc(512 * 1024)]), type: 'image/png' }]);
   const r = await get('/api/icons/cdn?name=oversize-check&ext=png');
   assert.equal(r.status, 404);
+});
+
+test('an icon names a private one-day lifetime and a tag the browser can revalidate', async t => {
+  stubCdn(t, [{ status: 200, body: SVG, type: 'image/svg+xml' }]);
+  const url = '/api/icons/cdn?name=cache-headers&ext=svg';
+  const first = await get(url);
+  assert.equal(first.headers['cache-control'], 'private, max-age=86400');
+  assert.match(first.headers.etag, /^"[\w-]+"$/);
+
+  for (const tag of [first.headers.etag, `W/${first.headers.etag}`, `"other", ${first.headers.etag}`]) {
+    const again = await get(url, { 'If-None-Match': tag });
+    assert.equal(again.status, 304, tag);
+    assert.equal(again.body.length, 0);
+    assert.equal(again.headers['cache-control'], 'private, max-age=86400');
+  }
+  assert.equal((await get(url, { 'If-None-Match': '"other"' })).status, 200);
+});
+
+test('a missing icon names no lifetime', async t => {
+  stubCdn(t, [
+    { status: 404, body: '' },
+    { status: 404, body: '' },
+  ]);
+  const r = await get('/api/icons/cdn?name=cache-headers-missing&ext=svg');
+  assert.equal(r.status, 404);
+  assert.equal(r.headers['cache-control'], undefined);
 });

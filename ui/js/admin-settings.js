@@ -13,7 +13,7 @@ import {
   sectionSave,
   setStatus,
   errorAction,
-} from '/js/admin-shared.js?v=b790c530';
+} from '/js/admin-shared.js?v=290ab8cb';
 import { socketProbeAdvice } from '/js/admin-error.js?v=0882cee9';
 import { passwordMeter, passwordMismatch, contextWords, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
 import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
@@ -27,11 +27,11 @@ import {
   BLOCK,
 } from '/js/admin-logic.js?v=cf072e65';
 import { confirmText, promptModal } from '/js/modal.js?v=bd88cb9e';
-import { el, inp, qa, setUserText } from '/js/utils.js?v=dab8881a';
+import { el, inp, qa, setUserText } from '/js/utils.js?v=14d4695d';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { serialWrites } from '/js/admin-save-logic.js?v=35fcc1c7';
-import { renderColorControl } from '/js/admin-color-control.js?v=4bda577d';
-import { BACKDROP } from '/js/background.js?v=278983c2';
+import { renderColorControl } from '/js/admin-color-control.js?v=433d3f3b';
+import { BACKDROP } from '/js/background.js?v=62662612';
 import {
   ALLOWED_HOSTS_MAX,
   firstBadHost,
