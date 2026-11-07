@@ -1,5 +1,5 @@
 import { iconChain } from '/js/icons.js?v=5ac01d72';
-import { toneForColor } from '/js/label-contrast.js?v=46ab91e5';
+import { toneForColor } from '/js/label-contrast.js?v=7172d36f';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
 import { mkGlassRim } from '/js/glass-rim.js?v=3faec233';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
@@ -11,6 +11,21 @@ export const mk = (tag, a = {}) => {
   Object.assign(e, a);
   return e;
 };
+/** @param {Element|null|undefined} root */
+export function loadImagesNow(root) {
+  root?.querySelectorAll('img[loading="lazy"]').forEach(img => {
+    /** @type {HTMLImageElement} */ (img).loading = 'eager';
+  });
+}
+/** @param {Promise<unknown>} work @param {number} ms @returns {Promise<void>} */
+export function within(work, ms) {
+  return new Promise(resolve => {
+    const done = () => resolve();
+    work.then(done, done);
+    setTimeout(done, ms);
+  });
+}
+
 /* Site storage blocked by the browser throws on every access. */
 /** @param {string} key @returns {string|null} */
 export function storeGet(key) {

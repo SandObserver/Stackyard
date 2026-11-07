@@ -10,6 +10,7 @@ import {
   desktopCols,
   desktopPages,
   landingAfterSetup,
+  restoreNeedsReload,
   restorePage,
   wheelPager,
   fingerSpeed,
@@ -298,4 +299,12 @@ test('the settle starts at the finger speed and never outlasts a page turn', () 
   const fast = settleMs(200, 3);
   assert.ok(fast < PAGE_TURN_MS && fast >= 120, `${fast}`);
   assert.equal(fast, Math.round((0.72 / 0.32) * (200 / 3)));
+});
+
+test('a restored page starts again when the session or the server state no longer fits it', () => {
+  assert.equal(restoreNeedsReload(200, { enabled: false, authenticated: true }), false);
+  assert.equal(restoreNeedsReload(200, { enabled: true, authenticated: true }), false);
+  assert.equal(restoreNeedsReload(200, { enabled: true, authenticated: false }), true);
+  assert.equal(restoreNeedsReload(401, null), true);
+  assert.equal(restoreNeedsReload(503, null), true);
 });

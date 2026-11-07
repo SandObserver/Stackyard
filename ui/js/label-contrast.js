@@ -87,6 +87,22 @@ export function applyBrightness(c, amount) {
   return Math.max(0, Math.min(255, c * amount));
 }
 
+/** @param {HTMLImageElement} img @param {number} brightness @returns {string|null} */
+export function averageColor(img, brightness) {
+  try {
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 1;
+    const ctx = cv.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0, 1, 1);
+    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+    const c = v => Math.round(applyBrightness(v, brightness));
+    return `rgb(${c(r)},${c(g)},${c(b)})`;
+  } catch {
+    return null;
+  }
+}
+
 /** Per-cell luminance of an image drawn at the grid's own size.
 
     @param {ArrayLike<number>} data RGBA, `cols * rows` pixels
@@ -227,9 +243,12 @@ export function loadSamplingImage(url) {
   return new Promise(resolve => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
     img.src = url;
+    img.decode().then(
+      () => resolve(img),
+      () => resolve(null),
+    );
   });
 }
 

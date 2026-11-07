@@ -467,3 +467,15 @@ test('phones keep the iOS grid with or without labels', () => {
     assert.deepEqual(gridCellCount({ gridW: 357, gridH: 696, sc: 1, vw: 393, labels }), { cols: 4, rows: 6 });
   }
 });
+
+test('sideways, the rows follow the tallest widget present', () => {
+  const box = { gridW: 828, gridH: 202, sc: 0.532, vw: 852, labels: false };
+  assert.equal(gridCellCount({ ...box, tallest: 2 }).rows, 4);
+  assert.equal(gridCellCount({ ...box, tallest: 4 }).rows, 4);
+  assert.equal(gridCellCount({ ...box, tallest: 6 }).rows, 6);
+  assert.equal(gridCellCount(box).rows, 6);
+});
+
+test('upright phones keep room for the tallest footprint whatever is present', () => {
+  assert.equal(gridCellCount({ gridW: 357, gridH: 513, sc: 1, vw: 393, labels: false, tallest: 2 }).rows, 6);
+});

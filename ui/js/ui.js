@@ -17,13 +17,13 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=dab8881a';
+} from '/js/utils.js?v=14d4695d';
 import { t, currentLang } from '/js/i18n.js?v=ed7c5565';
-import { toneForColor } from '/js/label-contrast.js?v=46ab91e5';
-import { mobileMetrics, gridColumnWidth, gridCellCount, dockFit } from '/js/mobile-metrics.js?v=938a32a2';
+import { toneForColor } from '/js/label-contrast.js?v=7172d36f';
+import { mobileMetrics, gridColumnWidth, gridCellCount, dockFit } from '/js/mobile-metrics.js?v=3b0d6715';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
 import { mkGlassRim, observeGlass } from '/js/glass-rim.js?v=3faec233';
-import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=5fa66027';
+import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=8e13fcb3';
 
 const PHONE_W = 393;
 
@@ -800,6 +800,12 @@ export function buildMobile() {
     sc,
     vw,
     labels: S().showLabels?.ios === true,
+    tallest: Math.max(
+      1,
+      ...items()
+        .filter(i => i.type === 'widget' && !i.hidden)
+        .map(i => (MOB_FOOTPRINT[i.widgetSize] || MOB_FOOTPRINT.medium)[1]),
+    ),
   });
   css(document.body, { '--mcols': String(COLS), '--mrows': String(ROWS) });
   const rh = gridBox.height / ROWS;

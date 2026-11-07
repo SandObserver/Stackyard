@@ -58,15 +58,17 @@ test('a badge scales in, scales out and crossfades its colour', () => {
   assert.match(dashboard, /BEXIT\.get\(badge\)\?\.cancel\(\);/, 'a late exit would paint over a newer value');
 });
 
-test('the wallpaper fades in after its image has loaded and the veil has lifted', () => {
-  assert.match(css, /html\.wall-in::before \{ animation:wall-in \.4s ease-out \}/);
+test('the wallpaper appears with the first view, and fades in only when it arrives late', () => {
+  const tokens = fs.readFileSync(new URL('../css/tokens.css', import.meta.url), 'utf8');
+  assert.match(tokens, /html\.wall-in::before \{ animation:wall-in \.4s ease-out \}/);
   assert.match(css, /html\.wall-swap::after \{[^}]*background-image:var\(--bg-prev-image,none\)/);
   const show = dashboard.slice(dashboard.indexOf('async function showWallpaper('));
   const decode = show.indexOf('await decoded(bg.url)');
-  const veil = show.indexOf('if (!prev) await veilLifted;');
   const paint = show.indexOf('applyBackground(root, bg)');
-  assert.ok(decode > 0 && decode < veil && veil < paint, 'the fade would run under the boot veil');
-  assert.doesNotMatch(dashboard, /document\.body\.classList\.add\('ready'\);\n(?![\s\S]{0,20}_veilLifted)/);
+  const veil = show.indexOf("if (!prev && !document.body.classList.contains('ready')) return;");
+  const fade = show.indexOf("const cls = prev ? 'wall-swap' : 'wall-in';");
+  assert.ok(decode > 0 && decode < paint && paint < veil && veil < fade, 'a fade under the veil is never seen');
+  assert.match(dashboard, /await within\(\s*firstBuild\.then[\s\S]{0,160}firstViewWait\(\),\s*\);\s*liftVeil\(\);/);
 });
 
 test('the theme crossfade lasts 300 ms and waits for a hidden page', () => {

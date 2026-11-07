@@ -31,12 +31,12 @@ const MIN_COLS = 4;
    stays put and the count follows the box. Scaling a fixed count instead is what
    stretched four columns across a tablet and squeezed six into a phone.
 
-   @param {{ gridW: number, gridH: number, sc: number, vw?: number, labels?: boolean }} o
+   @param {{ gridW: number, gridH: number, sc: number, vw?: number, labels?: boolean, tallest?: number }} o
    @returns {{ cols: number, rows: number }} */
-export function gridCellCount({ gridW, gridH, sc, vw = 0, labels = true }) {
+export function gridCellCount({ gridW, gridH, sc, vw = 0, labels = true, tallest = MIN_ROWS }) {
   const cols = Math.max(MIN_COLS, Math.round(gridW / (BASE_CELL_W * sc)));
   const cellH = vw > WIDEST_PHONE && !labels ? gridW / cols : BASE_CELL_H * sc;
-  const rows = Math.max(MIN_ROWS, Math.round(gridH / cellH));
+  const rows = Math.max(vw > WIDEST_PHONE ? tallest : MIN_ROWS, Math.round(gridH / cellH));
   return { cols, rows };
 }
 
