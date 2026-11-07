@@ -30,6 +30,10 @@ const REASONS = {
     '  Stackyard refused an address because no password is set. To set one',
     '  there, enter this code on the page. A restart makes a new code.',
   ],
+  first: [
+    '  No dashboard password is set. To set the first one, enter this code where',
+    '  Stackyard asks for it. A restart makes a new code.',
+  ],
   damaged: [
     '  The saved dashboard password is damaged, so no password works. To set',
     '  a new one, enter this code on the sign-in page. A restart makes a new code.',
@@ -38,7 +42,7 @@ const REASONS = {
 
 /** Never send the code anywhere but the log. Reading the log is the only
     proof of owning the server.
-    @param {'host'|'damaged'} [reason] */
+    @param {'host'|'first'|'damaged'} [reason] */
 function announce(reason = 'host') {
   if (!_code) {
     _code = newCode();
@@ -51,7 +55,7 @@ function announce(reason = 'host') {
 
 /** With no code yet, prints one. Otherwise an owner holding a code from before
     a restart has no working code in the log.
-    @param {unknown} input @param {'host'|'damaged'} [reason] @returns {boolean} */
+    @param {unknown} input @param {'host'|'first'|'damaged'} [reason] @returns {boolean} */
 function matches(input, reason) {
   if (!_code) {
     announce(reason);
@@ -162,4 +166,5 @@ module.exports = {
   InitialPasswordError,
   CODE_LEN,
   _reset: () => retire(),
+  _current: () => _code,
 };

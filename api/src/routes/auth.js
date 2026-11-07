@@ -12,6 +12,7 @@ const {
   newSessionSecret,
   newSessionId,
   hashPassword,
+  hashQueueFull,
   verifyPassword,
   matchPassword,
   attemptAddress,
@@ -23,6 +24,7 @@ const {
   registerLoginAttempt,
   loginWaitMinutes,
   clearAttempts,
+  refundLoginAttempt,
   isAuthenticated,
   hasValidSession,
   stripDisabledCredentials,
@@ -30,6 +32,7 @@ const {
   passwordDamaged,
   needsRehash,
   storePassword,
+  LOGIN_WINDOW_MS,
 } = require('../auth');
 const setupCode = require('../setup-code');
 
@@ -43,6 +46,7 @@ const LANGUAGE_TAG = /^[a-z]{2,3}(-[A-Za-z]{2,4})?$/;
    through. */
 on('GET', '/api/auth/check', (req, res) => {
   const cfg = loadConfig();
+  if (!IS_DEMO && !cfg.settings?.auth?.passwordHash) setupCode.announce('first');
   const authenticated = isAuthenticated(req);
   const body = {
     /* The effective state, not the stored flag. */
@@ -70,6 +74,57 @@ async function readAuthBody(req, res) {
   return null;
 }
 
+function busy(res) {
+  return json(res, 503, {
+    error: 'Too many passwords are being checked. Try again in a moment.',
+    kind: KIND.BLOCKED,
+    code: 'blocked.busy',
+  });
+}
+
+/* Anyone can cause these lines. Without a cap, a flood rotates the record of
+   the guessing out of the container log. */
+const AUDIT_PER_MINUTE = 30;
+let _auditMinute = 0;
+let _auditLines = 0;
+let _auditUnlogged = 0;
+/** @type {Map<string, number>} */
+const _blockLogged = new Map();
+
+function flushAudit(now = Date.now()) {
+  if (now - _auditMinute < 60_000) return;
+  if (_auditUnlogged) log.audit('sign-in events not logged one by one', { count: _auditUnlogged });
+  _auditMinute = now;
+  _auditLines = 0;
+  _auditUnlogged = 0;
+}
+setInterval(flushAudit, 60_000).unref();
+
+function auditAttempt(message, fields) {
+  flushAudit();
+  if (_auditLines >= AUDIT_PER_MINUTE) {
+    _auditUnlogged++;
+    return;
+  }
+  _auditLines++;
+  log.audit(message, fields);
+}
+
+function auditBlocked(message, ip, key) {
+  const now = Date.now();
+  const at = _blockLogged.get(key);
+  if (at !== undefined && now - at < LOGIN_WINDOW_MS) {
+    flushAudit(now);
+    _auditUnlogged++;
+    return;
+  }
+  if (_blockLogged.size >= 10_000) _blockLogged.clear();
+  _blockLogged.set(key, now);
+  auditAttempt(message, { ip, reason: 'rate_limit' });
+}
+
+const hostOf = req => String(req.headers.host || '').slice(0, 255);
+
 on('POST', '/api/auth/login', async (req, res) => {
   if (!checkOrigin(req, res)) return;
   const ip = getIp(req);
@@ -91,12 +146,16 @@ on('POST', '/api/auth/login', async (req, res) => {
     const key = attemptKey(req, cfg);
     const limitErr = registerLoginAttempt(key);
     if (limitErr) {
-      log.audit('login blocked', { ip, reason: 'rate_limit' });
+      auditBlocked('login blocked', ip, key);
       return json(res, 429, rateLimitBody(limitErr, key));
+    }
+    if (hashQueueFull()) {
+      refundLoginAttempt(key);
+      return busy(res);
     }
     const match = await matchPassword(typeof password === 'string' ? password : '', hash);
     if (!match) {
-      log.audit('login failed', { ip });
+      auditAttempt('login failed', { ip });
       return json(res, 401, { error: 'Incorrect password.', kind: KIND.AUTH });
     }
     clearAttempts(key);
@@ -125,7 +184,7 @@ on('POST', '/api/auth/login', async (req, res) => {
        checked rotated the secret, and signing with it would let the old
        password in. */
     if (loadConfig().settings?.auth?.passwordHash !== current) {
-      log.audit('login failed', { ip, reason: 'password_changed' });
+      auditAttempt('login failed', { ip, reason: 'password_changed' });
       return json(res, 401, { error: 'Incorrect password.', kind: KIND.AUTH });
     }
     log.audit('login success', { ip });
@@ -134,6 +193,7 @@ on('POST', '/api/auth/login', async (req, res) => {
     setSessionCookie(res, makeToken(sessionId, secret), isSecureRequest(req));
     json(res, 200, { ok: true });
   } catch (e) {
+    if (e.busy) return busy(res);
     fail(res, e, { status: 400 });
   }
 });
@@ -169,12 +229,17 @@ async function refuseWrongCurrentPassword(req, res, hash, currentPassword) {
   const key = attemptKey(req, loadConfig());
   const limitErr = registerLoginAttempt(key);
   if (limitErr) {
-    log.audit('password check blocked', { ip, reason: 'rate_limit' });
+    auditBlocked('password check blocked', ip, key);
     json(res, 429, rateLimitBody(limitErr, key));
     return true;
   }
+  if (hashQueueFull()) {
+    refundLoginAttempt(key);
+    busy(res);
+    return true;
+  }
   if (!(await verifyPassword(typeof currentPassword === 'string' ? currentPassword : '', hash))) {
-    log.audit('password check failed', { ip });
+    auditAttempt('password check failed', { ip });
     json(res, 403, { error: 'Current password is incorrect.', kind: KIND.INVALID, code: CURRENT_PASSWORD_CODE });
     return true;
   }
@@ -193,9 +258,16 @@ on('POST', '/api/auth/set-password', async (req, res) => {
     }
     const body = await readAuthBody(req, res);
     if (!body) return;
-    const { password = '', currentPassword } = body;
+    const { password = '', currentPassword, code } = body;
     const refused = newPasswordError(password, hostnameOf(req.headers.host) ?? '');
     if (refused) return json(res, 400, { ...refused, kind: KIND.INVALID });
+    /* Keep. Without it, whoever reaches a new install first owns it: anyone on
+       the network, or anyone on the internet through a proxy that rewrites
+       Host. */
+    if (!storedHash && !setupCode.matches(code, 'first')) {
+      noteRejectedCode(getIp(req));
+      return json(res, 403, { error: 'The setup code is incorrect.', kind: KIND.INVALID, code: 'invalid.setup-code' });
+    }
     if (authActive(before) && (await refuseWrongCurrentPassword(req, res, storedHash, currentPassword))) return;
     const passwordHash = await hashPassword(password);
     /* Read again after the awaits. Saving the earlier copy drops any config
@@ -211,11 +283,15 @@ on('POST', '/api/auth/set-password', async (req, res) => {
     storePassword(cfg, passwordHash);
     saveConfig(cfg);
     setupCode.retire();
-    log.audit('password changed', {});
+    log.audit(storedHash ? 'password changed' : 'password set with setup code', {
+      ip: getIp(req),
+      host: hostOf(req),
+    });
     const sessionId = newSessionId();
     setSessionCookie(res, makeToken(sessionId, cfg.settings.auth.secret), isSecureRequest(req));
     json(res, 200, { ok: true });
   } catch (e) {
+    if (e.busy) return busy(res);
     fail(res, e, { status: 400 });
   }
 });
@@ -259,10 +335,14 @@ on('POST', '/api/auth/setup-password', async (req, res) => {
     storePassword(cfg, passwordHash);
     saveConfig(cfg);
     setupCode.retire();
-    log.audit(damaged ? 'damaged password replaced with setup code' : 'password set with setup code', { ip });
+    log.audit(damaged ? 'damaged password replaced with setup code' : 'password set with setup code', {
+      ip,
+      host: hostOf(req),
+    });
     setSessionCookie(res, makeToken(newSessionId(), cfg.settings.auth.secret), isSecureRequest(req));
     json(res, 200, { ok: true });
   } catch (e) {
+    if (e.busy) return busy(res);
     fail(res, e, { status: 400 });
   }
 });
@@ -333,10 +413,12 @@ on('POST', '/api/auth/toggle', async (req, res) => {
     if (hosts) cfg.settings.server = { ...cfg.settings.server, allowedHosts: hosts };
     saveConfig(cfg);
     setupCode.retire();
-    log.audit('auth toggled', { enabled: !!enabled });
-    if (cleared) log.audit('password cleared', {});
+    const who = { ip: getIp(req), host: hostOf(req) };
+    log.audit('auth toggled', { enabled: !!enabled, ...who });
+    if (cleared) log.audit('password cleared', who);
     json(res, 200, { ok: true });
   } catch (e) {
+    if (e.busy) return busy(res);
     fail(res, e, { status: 400 });
   }
 });

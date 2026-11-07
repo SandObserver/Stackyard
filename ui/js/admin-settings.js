@@ -13,8 +13,8 @@ import {
   sectionSave,
   setStatus,
   errorAction,
-} from '/js/admin-shared.js?v=290ab8cb';
-import { socketProbeAdvice } from '/js/admin-error.js?v=0882cee9';
+} from '/js/admin-shared.js?v=d63044eb';
+import { socketProbeAdvice } from '/js/admin-error.js?v=459ec4f1';
 import { passwordMeter, passwordMismatch, contextWords, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
 import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
 import { t } from '/js/i18n.js?v=ed7c5565';
@@ -23,14 +23,15 @@ import {
   settingsSaveBlocker,
   clearsStoredPassword,
   needsCurrentPassword,
+  needsSetupCode,
   createDirtyTracker,
   BLOCK,
-} from '/js/admin-logic.js?v=cf072e65';
+} from '/js/admin-logic.js?v=f5547d5b';
 import { confirmText, promptModal } from '/js/modal.js?v=bd88cb9e';
 import { el, inp, qa, setUserText } from '/js/utils.js?v=14d4695d';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { serialWrites } from '/js/admin-save-logic.js?v=35fcc1c7';
-import { renderColorControl } from '/js/admin-color-control.js?v=433d3f3b';
+import { renderColorControl } from '/js/admin-color-control.js?v=d7081f2f';
 import { BACKDROP } from '/js/background.js?v=96567a38';
 import {
   ALLOWED_HOSTS_MAX,
@@ -557,6 +558,7 @@ const PASSWORD_ERROR_KEYS = Object.freeze({
   'invalid.password-short': REFUSAL_KEYS.short,
   'invalid.password-long': REFUSAL_KEYS.long,
   'invalid.password-common': REFUSAL_KEYS.common,
+  'invalid.setup-code': 'hostBlock.codeWrong',
 });
 const RETRY_IN_DIALOG = new Set(['invalid.current-password', 'blocked.rate-limit']);
 
@@ -631,7 +633,8 @@ async function saveServer() {
     if (!probe.ok) socketWarning = t('toast.socketUrlUnverified', { reason: socketReason }) + hint;
   }
 
-  const write = currentPassword => writeServer({ enabled, pw, currentPassword, allowedHosts, socketUrlTyped });
+  const write = (currentPassword, code) =>
+    writeServer({ enabled, pw, currentPassword, code, allowedHosts, socketUrlTyped });
 
   /** @type {{ langChanged: boolean } | undefined} */
   let done;
@@ -667,6 +670,24 @@ async function saveServer() {
       if (clearing) await syncAuthFromServer();
       return;
     }
+  } else if (needsSetupCode({ ...was, newPassword: pw })) {
+    const answer = await promptModal({
+      title: t('hostBlock.setupTitle'),
+      text: t('hostBlock.setupHelp'),
+      label: t('hostBlock.code'),
+      confirmLabel: t('common.save'),
+      cancelLabel: t('common.cancel'),
+      submit: async code => {
+        try {
+          done = await write(undefined, code);
+        } catch (e) {
+          if (/** @type {any} */ (e).code === 'invalid.setup-code') return t('hostBlock.codeWrong');
+          failure = e;
+        }
+        return null;
+      },
+    });
+    if (answer === null) return;
   } else {
     try {
       done = await write(undefined);
@@ -705,14 +726,14 @@ function clearNewPassword() {
   }
 }
 
-/** @param {{ enabled: boolean, pw: string, currentPassword: string|undefined,
+/** @param {{ enabled: boolean, pw: string, currentPassword: string|undefined, code?: string,
               allowedHosts: string[], socketUrlTyped: string }} args
     @returns {Promise<{ langChanged: boolean }>} */
-async function writeServer({ enabled, pw, currentPassword, allowedHosts, socketUrlTyped }) {
+async function writeServer({ enabled, pw, currentPassword, code, allowedHosts, socketUrlTyped }) {
   /* Keep before the config read. These writes bump the config revision, and
      a config save built on an earlier read is refused as stale. */
   if (shouldWritePassword({ enabled, newPassword: pw })) {
-    await apiPost('/api/auth/set-password', { password: pw, currentPassword });
+    await apiPost('/api/auth/set-password', { password: pw, currentPassword, code });
     clearNewPassword();
     const pwEl = inp('sec-pw');
     if (pwEl) pwEl.placeholder = `●●●●●●●●●● (${t('common.configured')})`;

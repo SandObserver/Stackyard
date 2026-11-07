@@ -26,6 +26,7 @@ import {
   settingsSaveBlocker,
   clearsStoredPassword,
   needsCurrentPassword,
+  needsSetupCode,
   recoversSession,
   toastMs,
   toastHoldMs,
@@ -528,6 +529,13 @@ test('the current password is not asked while protection is off', () => {
   assert.equal(needsCurrentPassword({ wasEnabled: false, passwordSet: true, enabled: false, newPassword: '' }), false);
   assert.equal(needsCurrentPassword({ wasEnabled: false, passwordSet: false, enabled: true, newPassword: 'x' }), false);
   assert.equal(needsCurrentPassword({ wasEnabled: true, passwordSet: false, enabled: false, newPassword: '' }), false);
+});
+
+test('the setup code is asked for only when a first password is being set', () => {
+  assert.equal(needsSetupCode({ passwordSet: false, enabled: true, newPassword: 'quiet otter lantern 42' }), true);
+  assert.equal(needsSetupCode({ passwordSet: true, enabled: true, newPassword: 'quiet otter lantern 42' }), false);
+  assert.equal(needsSetupCode({ passwordSet: false, enabled: false, newPassword: 'quiet otter lantern 42' }), false);
+  assert.equal(needsSetupCode({ passwordSet: false, enabled: true, newPassword: '' }), false);
 });
 
 /* ── shouldWritePassword ──────────────────────────────────────────────────── */
