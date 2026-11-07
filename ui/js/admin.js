@@ -31,7 +31,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=240302f1';
+} from '/js/admin-settings.js?v=d93c2bc1';
 import {
   apiGet,
   apiPost,
@@ -103,7 +103,7 @@ import {
   tgt,
   within,
 } from '/js/utils.js?v=14d4695d';
-import { applyBackground, firstViewWait, resolveBackground } from '/js/background.js?v=5a21d901';
+import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=96567a38';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
 
@@ -165,6 +165,7 @@ async function applyBg() {
     bg = await resolveBackground(s);
   } catch {}
   if (call !== _bgCall) return;
+  if (bg || !_bgShown) rememberBackground(s, bg);
   if (bg) {
     applyBackground(root, bg);
     _bgShown = true;

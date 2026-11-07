@@ -90,13 +90,14 @@ test('Settings still shows its failure message when the config cannot load', asy
 test('the last wallpaper is requested and its colour painted before the page has built', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('sy-boot', JSON.stringify({ url: '/favicon.ico?hint', color: 'rgb(9,8,7)' }));
+    new MutationObserver(() => {
+      window.__bootBg ||= document.documentElement?.style.getPropertyValue('--boot-bg');
+    }).observe(document, { attributes: true, subtree: true, attributeFilter: ['style'] });
   });
   const hinted = page.waitForRequest(r => r.url().endsWith('/favicon.ico?hint'));
   await page.goto('/');
   await hinted;
-  await expect
-    .poll(() => page.evaluate(() => document.documentElement.style.getPropertyValue('--boot-bg')))
-    .toBe('rgb(9,8,7)');
+  await expect.poll(() => page.evaluate(() => window.__bootBg)).toBe('rgb(9,8,7)');
 });
 
 test('a page restored while the server cannot be reached says so and keeps its old contents hidden', async ({
@@ -155,8 +156,12 @@ test('Settings stops its spinner when it shows a recovery screen instead of the 
   await expect.poll(() => page.evaluate(() => getComputedStyle(document.body, '::after').content)).toBe('none');
 });
 
-const PIXEL = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+const DARK = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGMQEREBAAB8AD2SgCfbAAAAAElFTkSuQmCC',
+  'base64',
+);
+const LIGHT = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP49esXAAXgAu+YSct+AAAAAElFTkSuQmCC',
   'base64',
 );
 const CREDIT = { name: 'Jane Doe', profile: 'https://unsplash.com/@jane', site: 'https://unsplash.com/' };
@@ -172,7 +177,11 @@ async function unsplashOnPhone(page, request, serve) {
     const u = new URL(route.request().url());
     const wide = Number(u.searchParams.get('w')) > Number(u.searchParams.get('h'));
     if (!(await serve(wide))) return route.abort();
-    return route.fulfill({ body: PIXEL, contentType: 'image/png', headers: { 'Access-Control-Allow-Origin': '*' } });
+    return route.fulfill({
+      body: wide ? LIGHT : DARK,
+      contentType: 'image/png',
+      headers: { 'Access-Control-Allow-Origin': '*' },
+    });
   });
   await page.addInitScript(() => {
     window.__orientation = 'portrait-primary';
@@ -206,6 +215,10 @@ test('turning a phone sideways and back keeps the upright photo', async ({ page,
   await rotate(page, 'portrait-primary');
   await page.waitForTimeout(2500);
   expect(await shownShape(page)).toBe('tall');
+  const hint = await page.evaluate(() => JSON.parse(localStorage.getItem('sy-boot') || '{}'));
+  const [, w, h] = hint.url.match(/w=(\d+)&h=(\d+)/);
+  expect(Number(w)).toBeLessThan(Number(h));
+  expect(Number(hint.color.match(/^rgb\((\d+),/)[1])).toBeLessThan(100);
 });
 
 test('a photo that fails to load on rotation keeps the shown photo and its credit', async ({ page, request }) => {
@@ -214,4 +227,31 @@ test('a photo that fails to load on rotation keeps the shown photo and its credi
   await page.waitForTimeout(1000);
   expect(await shownShape(page)).toBe('tall');
   await expect(page.locator('#photo-credit')).toBeVisible();
+});
+
+test('a page that said the server was unreachable reloads once a later restore finds it again', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('body.ready').waitFor({ state: 'attached' });
+  await page.evaluate(() => {
+    window.__sameDocument = true;
+  });
+  await page.route('**/api/**', route => route.abort());
+  await restore(page);
+  await restore(page);
+  await expect(page.locator('.api-error-screen')).toHaveCount(1);
+  await page.unroute('**/api/**');
+  await restore(page);
+  await page.waitForFunction(() => !window.__sameDocument);
+});
+
+test('the unreachable-server screen does not sit on a stored colour', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('sy-boot', JSON.stringify({ color: 'rgb(230,230,225)' }));
+  });
+  await page.route('**/api/**', route => route.abort());
+  await page.goto('/');
+  await expect(page.locator('.api-error-screen')).toBeVisible();
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement, '::before').backgroundColor)).not.toBe(
+    'rgb(230, 230, 225)',
+  );
 });

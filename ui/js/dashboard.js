@@ -71,7 +71,14 @@ import {
   restorePage,
   wheelPager,
 } from '/js/dashboard-logic.js?v=3098e6b2';
-import { applyBackground, BACKDROP, decoded, firstViewWait, resolveBackground } from '/js/background.js?v=5a21d901';
+import {
+  applyBackground,
+  BACKDROP,
+  decoded,
+  firstViewWait,
+  rememberBackground,
+  resolveBackground,
+} from '/js/background.js?v=96567a38';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
@@ -635,8 +642,9 @@ function retone() {
 /* Held so a resize re-samples without fetching the image again. */
 let _bgSample = null;
 
-async function sampleWallpaper(url, brightness, fit) {
+async function sampleWallpaper(url, brightness, fit, call) {
   const img = await loadSamplingImage(url);
+  if (call !== _bgCall) return;
   _bgSample = img ? { img, brightness, fit } : null;
   resampleBg();
   if (img) saveBootHint({ color: averageColor(img, brightness) });
@@ -663,12 +671,15 @@ function resampleBg() {
 }
 
 let _shownWallpaper = '';
+let _bgCall = 0;
 
 function liftVeil() {
   document.body.classList.add('ready');
 }
 
 function showApiDown() {
+  if (document.body.classList.contains('api-down')) return;
+  document.documentElement.style.removeProperty('--boot-bg');
   const msg = document.createElement('div');
   msg.className = 'api-error-screen';
   msg.setAttribute('role', 'alert');
@@ -682,8 +693,6 @@ function showApiDown() {
   document.body.classList.add('api-down');
   document.body.appendChild(msg);
 }
-
-let _bgCall = 0;
 
 /** @param {HTMLElement} root @param {any} bg @param {number} call */
 async function showWallpaper(root, bg, call) {
@@ -718,15 +727,17 @@ async function applyBg() {
   if (!bg) {
     root.style.removeProperty('--boot-bg');
     if (_shownWallpaper) return resampleBg();
+    rememberBackground(S.background, null);
     showPhotoCredit(el('photo-credit'), null);
     return;
   }
+  rememberBackground(S.background, bg);
   showPhotoCredit(el('photo-credit'), bg.credit ?? null);
   if (bg.url && bg.url !== _shownWallpaper) await showWallpaper(root, bg, call);
   else applyBackground(root, bg);
   if (call !== _bgCall) return;
   if (bg.url) {
-    sampleWallpaper(bg.url, Number(bg.brightness), bg.fit);
+    sampleWallpaper(bg.url, Number(bg.brightness), bg.fit, call);
     return;
   }
   bgTone = { grid: null, tone: toneForColor(bg.color) ?? themeTone() };
@@ -1330,7 +1341,7 @@ async function boot() {
     };
     const [auth, config] = await Promise.all([check('/api/auth/check'), check('/api/config')]);
     const action = restoreAction(auth, config, differs);
-    if (action === 'reload') {
+    if (action === 'reload' || (action === 'show' && document.body.classList.contains('api-down'))) {
       location.reload();
       return;
     }

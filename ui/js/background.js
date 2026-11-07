@@ -95,10 +95,13 @@ export async function resolveBackground(bg) {
     if (!photo) return null;
     const url = sizedWallpaperUrl(photo.url, thisScreen());
     if (!(await decoded(url))) return null;
-    saveBootHint({ url });
     return backgroundFor(s, url, photo.credit);
   }
-  const b = backgroundFor(s);
-  saveBootHint(b?.url ? { url: b.url } : { url: null, color: b ? b.color : null });
-  return b;
+  return backgroundFor(s);
+}
+
+/** @param {any} settings the background settings @param {Background|null} bg */
+export function rememberBackground(settings, bg) {
+  if (!bg && settings?.type === 'unsplash') return;
+  saveBootHint(bg?.url ? { url: bg.url } : { url: null, color: bg ? bg.color : null });
 }
