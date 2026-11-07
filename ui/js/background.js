@@ -1,6 +1,12 @@
 // @ts-check
-import { cssColor, sanitizeCssUrl } from '/js/utils.js?v=dab8881a';
-import { loadWallpaper, saveWallpaper, validCredit } from '/js/wallpaper-cache.js?v=321c8003';
+import { cssColor, sanitizeCssUrl } from '/js/utils.js?v=14d4695d';
+import {
+  loadWallpaper,
+  saveBootHint,
+  saveWallpaper,
+  sizedWallpaperUrl,
+  validCredit,
+} from '/js/wallpaper-cache.js?v=cd968718';
 
 export const BACKDROP = '#0d1117';
 
@@ -69,13 +75,33 @@ export const decoded = url =>
     img.src = url;
   });
 
+const thisScreen = () => ({
+  width: screen.width,
+  height: screen.height,
+  dpr: window.devicePixelRatio || 1,
+  landscape: screen.orientation ? screen.orientation.type.startsWith('landscape') : innerWidth >= innerHeight,
+});
+
+/** @returns {number} milliseconds */
+export function firstViewWait() {
+  return /** @type {any} */ (window).__wallpaperHint ? 120 : 0;
+}
+
 /** @param {any} bg @returns {Promise<Background|null>} */
 export async function resolveBackground(bg) {
   const s = bg || {};
   if (s.type === 'unsplash') {
     const photo = await unsplashPhoto(s);
     if (!photo) return null;
-    return (await decoded(photo.url)) ? backgroundFor(s, photo.url, photo.credit) : null;
+    const url = sizedWallpaperUrl(photo.url, thisScreen());
+    if (!(await decoded(url))) return null;
+    return backgroundFor(s, url, photo.credit);
   }
   return backgroundFor(s);
+}
+
+/** @param {any} settings the background settings @param {Background|null} bg */
+export function rememberBackground(settings, bg) {
+  if (!bg && settings?.type === 'unsplash') return;
+  saveBootHint(bg?.url ? { url: bg.url } : { url: null, color: bg ? bg.color : null });
 }

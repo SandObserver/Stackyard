@@ -266,3 +266,17 @@ test('initial upper-cases a letter and falls back to a question mark', () => {
 test('isolate wraps a name in first-strong isolate marks', () => {
   assert.equal(isolate('Home Assistant (dev)'), '\u2068Home Assistant (dev)\u2069');
 });
+
+test('within settles on the work or on the time limit, and never rejects', async () => {
+  const { within } = await import('../js/utils.js');
+  const order = [];
+  await within(
+    Promise.resolve().then(() => order.push('work')),
+    1000,
+  );
+  assert.deepEqual(order, ['work']);
+  const started = Date.now();
+  await within(new Promise(() => {}), 20);
+  assert.ok(Date.now() - started < 500);
+  await within(Promise.reject(new Error('no')), 1000);
+});

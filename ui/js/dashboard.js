@@ -14,6 +14,7 @@ import {
   ICON_R,
   inertAllBut,
   isDashboardEmpty,
+  loadImagesNow,
   mk,
   mkWrap as _mkWrap,
   mountScaledWidget,
@@ -29,9 +30,10 @@ import {
   teardownWidgets,
   rethemeTiles,
   titleWhenTruncated,
-} from '/js/utils.js?v=dab8881a';
+  within,
+} from '/js/utils.js?v=14d4695d';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
-import { initSpotlight } from '/js/spotlight.js?v=82b4584a';
+import { initSpotlight } from '/js/spotlight.js?v=e50cb331';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, isSupported, t, currentLang } from '/js/i18n.js?v=ed7c5565';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=c03e1465';
@@ -49,7 +51,7 @@ import {
   resetMobileChrome,
   mkFolderGlyph,
   swipePager,
-} from '/js/ui.js?v=6de18bf0';
+} from '/js/ui.js?v=9d71ca16';
 import {
   badgeMinimum,
   badgeSignature,
@@ -65,15 +67,30 @@ import {
   desktopCols,
   desktopPages,
   landingAfterSetup,
+  restoreAction,
   restorePage,
   wheelPager,
-} from '/js/dashboard-logic.js?v=5fa66027';
-import { applyBackground, BACKDROP, decoded, resolveBackground } from '/js/background.js?v=278983c2';
+} from '/js/dashboard-logic.js?v=3098e6b2';
+import {
+  applyBackground,
+  BACKDROP,
+  decoded,
+  firstViewWait,
+  rememberBackground,
+  resolveBackground,
+} from '/js/background.js?v=96567a38';
+import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
-import { applyLabelTones, loadSamplingImage, sampleImage, toneForColor } from '/js/label-contrast.js?v=46ab91e5';
+import {
+  averageColor,
+  applyLabelTones,
+  loadSamplingImage,
+  sampleImage,
+  toneForColor,
+} from '/js/label-contrast.js?v=7172d36f';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=b279fd98';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { THEME_KEY, applyTheme, prefersDark, readMode, resolveTheme } from '/js/theme.js?v=eeafa4b5';
@@ -625,10 +642,12 @@ function retone() {
 /* Held so a resize re-samples without fetching the image again. */
 let _bgSample = null;
 
-async function sampleWallpaper(url, brightness, fit) {
+async function sampleWallpaper(url, brightness, fit, call) {
   const img = await loadSamplingImage(url);
+  if (call !== _bgCall) return;
   _bgSample = img ? { img, brightness, fit } : null;
   resampleBg();
+  if (img) saveBootHint({ color: averageColor(img, brightness) });
 }
 
 /* The wallpaper is sized against the viewport, so a resize moves which part of
@@ -652,47 +671,73 @@ function resampleBg() {
 }
 
 let _shownWallpaper = '';
-/** @type {() => void} */
-let _veilLifted = () => {};
-const veilLifted = new Promise(resolve => {
-  _veilLifted = () => resolve(undefined);
-});
+let _bgCall = 0;
 
 function liftVeil() {
   document.body.classList.add('ready');
-  _veilLifted();
 }
 
-/** @param {HTMLElement} root @param {any} bg */
-async function showWallpaper(root, bg) {
+function showApiDown() {
+  if (document.body.classList.contains('api-down')) return;
+  document.documentElement.style.removeProperty('--boot-bg');
+  const msg = document.createElement('div');
+  msg.className = 'api-error-screen';
+  msg.setAttribute('role', 'alert');
+  setHtml(
+    msg,
+    html`<h2 class="api-error-title">${t('home.apiDownTitle')}</h2><p class="api-error-sub">${t('home.apiDownSub')}</p><button class="api-error-btn" type="button">${t('home.retry')}</button>`,
+  );
+  /* Not an inline onclick. The page's CSP refuses those. */
+  msg.querySelector('.api-error-btn')?.addEventListener('click', () => location.reload());
+  for (const child of document.body.children) /** @type {HTMLElement} */ (child).inert = true;
+  document.body.classList.add('api-down');
+  document.body.appendChild(msg);
+}
+
+/** @param {HTMLElement} root @param {any} bg @param {number} call */
+async function showWallpaper(root, bg, call) {
   const prev = _shownWallpaper;
   await decoded(bg.url);
+  if (call !== _bgCall) return;
   _shownWallpaper = bg.url;
-  if (!prev) await veilLifted;
   const style = root.style;
   if (prev) {
     for (const k of ['image', 'size', 'brightness'])
       style.setProperty(`--bg-prev-${k}`, style.getPropertyValue(`--bg-${k}`));
   }
   applyBackground(root, bg);
-  const cls = prev ? 'wall-swap' : 'wall-in';
   root.classList.remove('wall-in', 'wall-swap');
+  if (!prev && !document.body.classList.contains('ready')) return;
+  const cls = prev ? 'wall-swap' : 'wall-in';
   void root.offsetWidth;
   root.classList.add(cls);
   if (prev) setTimeout(() => root.classList.remove('wall-swap'), 450);
 }
 
 async function applyBg() {
+  const call = ++_bgCall;
   const root = document.documentElement;
   bgTone = { grid: null, tone: themeTone() };
   retone();
-  const bg = await resolveBackground(S.background || {});
-  showPhotoCredit(el('photo-credit'), bg?.credit ?? null);
-  if (!bg) return;
-  if (bg.url && bg.url !== _shownWallpaper) await showWallpaper(root, bg);
+  let bg = null;
+  try {
+    bg = await resolveBackground(S.background || {});
+  } catch {}
+  if (call !== _bgCall) return;
+  if (!bg) {
+    root.style.removeProperty('--boot-bg');
+    if (_shownWallpaper) return resampleBg();
+    rememberBackground(S.background, null);
+    showPhotoCredit(el('photo-credit'), null);
+    return;
+  }
+  rememberBackground(S.background, bg);
+  showPhotoCredit(el('photo-credit'), bg.credit ?? null);
+  if (bg.url && bg.url !== _shownWallpaper) await showWallpaper(root, bg, call);
   else applyBackground(root, bg);
+  if (call !== _bgCall) return;
   if (bg.url) {
-    sampleWallpaper(bg.url, Number(bg.brightness), bg.fit);
+    sampleWallpaper(bg.url, Number(bg.brightness), bg.fit, call);
     return;
   }
   bgTone = { grid: null, tone: toneForColor(bg.color) ?? themeTone() };
@@ -904,6 +949,7 @@ async function boot() {
     S = c.settings || {};
     _rev = c._rev ?? null;
     storeSet(LANG_STORE, await initI18n(S.language || 'en'));
+    saveBootHint({ lang: currentLang() });
   } catch (e) {
     console.error('[boot]', e);
     apiFailed = true;
@@ -924,16 +970,7 @@ async function boot() {
        file, the API served the config, so it is still reachable. */
     const lastLang = storeGet(LANG_STORE);
     await initI18n(isSupported(lastLang) ? lastLang : 'en');
-    const msg = document.createElement('div');
-    msg.className = 'api-error-screen';
-    msg.setAttribute('role', 'alert');
-    setHtml(
-      msg,
-      html`<h2 class="api-error-title">${t('home.apiDownTitle')}</h2><p class="api-error-sub">${t('home.apiDownSub')}</p><button class="api-error-btn" type="button">${t('home.retry')}</button>`,
-    );
-    /* Not an inline onclick. The page's CSP refuses those. */
-    msg.querySelector('.api-error-btn')?.addEventListener('click', () => location.reload());
-    document.body.appendChild(msg);
+    showApiDown();
     liftVeil();
     return;
   }
@@ -992,6 +1029,15 @@ async function boot() {
   };
   const spaceMoved = () => innerWidth !== _mw || saSize() !== _saAt;
   /* Mobile measures the viewport as it builds, so it waits for layout. */
+  const loadVisibleIcons = () => {
+    loadImagesNow(el('dock'));
+    loadImagesNow(el('pages').children[pg]);
+  };
+  /** @type {() => void} */
+  let firstBuilt = () => {};
+  const firstBuild = new Promise(resolve => {
+    firstBuilt = () => resolve(undefined);
+  });
   const buildLayout = () => {
     _mw = innerWidth;
     _saAt = saSize();
@@ -1002,17 +1048,23 @@ async function boot() {
           buildMobile();
           syncMobPages();
           goTo(restorePage(storeGet(PAGE_STORE), totalPages), null, false);
+          loadVisibleIcons();
           retone();
+          firstBuilt();
         }),
       );
     } else {
       document.body.classList.remove('is-mob');
       buildDesktop();
       goTo(restorePage(storeGet(PAGE_STORE), totalPages), null, false);
+      loadVisibleIcons();
       retone();
+      firstBuilt();
     }
   };
   buildLayout();
+
+  if (S.background?.type === 'unsplash') screen.orientation?.addEventListener('change', applyBg);
 
   /* Attached once, not per layout: the window can cross the breakpoint later,
      and a listener added on every crossing would fire twice. */
@@ -1092,7 +1144,7 @@ async function boot() {
       !document.querySelector('.folder-overlay[open], .folder-overlay-mobile[open]'),
   });
 
-  applyBg();
+  const wallpaperShown = applyBg();
 
   const retheme = () => {
     applyTheme(resolveTheme(readMode(), prefersDark()));
@@ -1222,13 +1274,17 @@ async function boot() {
   let _pollTimers = [];
   const _repeat = (fn, base) => _pollTimers.push(repeatJittered(fn, base));
 
+  /** @param {any} c a fetched config */
+  const differs = c => {
+    sanitizeItemLinks(c.items || []);
+    return configChanged({ items, settings: S, _rev }, c);
+  };
+
   const pollConfig = async () => {
     try {
       const res = await fetch('/api/config', { cache: 'no-store' });
       if (!res.ok) return;
-      const c = await res.json();
-      sanitizeItemLinks(c.items || []);
-      if (configChanged({ items, settings: S, _rev }, c)) location.reload();
+      if (differs(await res.json())) location.reload();
     } catch {}
   };
 
@@ -1266,6 +1322,39 @@ async function boot() {
     }
   });
 
+  /* Keep the veil until both checks finish. A restored page holds its old
+     contents, including after a sign-out. */
+  window.addEventListener('pagehide', e => {
+    if (e.persisted) document.body.classList.remove('ready');
+  });
+  window.addEventListener('pageshow', async e => {
+    if (!e.persisted) return;
+    const signal = AbortSignal.timeout(BOOT_TIMEOUT_MS);
+    /** @param {string} url @returns {Promise<import('/js/dashboard-logic.js?v=3098e6b2').RestoreCheck>} */
+    const check = async url => {
+      try {
+        const r = await fetch(url, { cache: 'no-store', redirect: 'manual', signal });
+        return { status: r.status, body: r.ok ? await r.json().catch(() => undefined) : undefined };
+      } catch {
+        return null;
+      }
+    };
+    const [auth, config] = await Promise.all([check('/api/auth/check'), check('/api/config')]);
+    const action = restoreAction(auth, config, differs);
+    if (action === 'reload' || (action === 'show' && document.body.classList.contains('api-down'))) {
+      location.reload();
+      return;
+    }
+    if (action === 'offline') {
+      showApiDown();
+      return;
+    }
+    pollBadges();
+    pollHealth();
+    startPolling();
+    liftVeil();
+  });
+
   pollBadges();
   pollHealth();
   startPolling();
@@ -1273,6 +1362,10 @@ async function boot() {
   /* A settings change reloads the page, so this is read once. */
   if (S.keepAwake === true) startWakeLock();
 
+  await within(
+    firstBuild.then(() => wallpaperShown),
+    firstViewWait(),
+  );
   liftVeil();
 }
 

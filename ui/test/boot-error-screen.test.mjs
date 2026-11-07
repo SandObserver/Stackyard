@@ -42,18 +42,29 @@ test('English makes every string on the screen readable', async () => {
   }
 });
 
-test('the error branch loads a catalog before it renders', () => {
+const errorBranch = () => {
   const dashboard = read('js/dashboard.js');
-  const branch = dashboard.slice(dashboard.indexOf('if (apiFailed) {'), dashboard.indexOf('api-error-btn'));
+  const at = dashboard.indexOf('if (apiFailed) {');
+  return dashboard.slice(at, dashboard.indexOf('return;', at));
+};
+const screenBuilder = () => {
+  const dashboard = read('js/dashboard.js');
+  const at = dashboard.indexOf('function showApiDown()');
+  return dashboard.slice(at, dashboard.indexOf('\n}\n', at));
+};
+
+test('the error branch loads a catalog before it renders', () => {
+  const branch = errorBranch();
   assert.match(
     branch,
     /await initI18n\(isSupported\(lastLang\) \? lastLang : 'en'\)/,
     'the screen would render its own keys',
   );
   assert.ok(
-    branch.indexOf('await initI18n(') < branch.indexOf('apiDownTitle'),
+    branch.indexOf('await initI18n(') < branch.indexOf('showApiDown()'),
     'the catalog must load before the screen is built',
   );
+  assert.match(screenBuilder(), /apiDownTitle/);
 });
 
 /* Loading it up front would put a catalog request on every successful boot. */
@@ -116,8 +127,7 @@ test('the screen speaks the language of the last good boot', () => {
 });
 
 test('the screen is an alert with a heading', () => {
-  const dashboard = read('js/dashboard.js');
-  const branch = dashboard.slice(dashboard.indexOf('if (apiFailed) {'), dashboard.indexOf('api-error-btn'));
-  assert.match(branch, /setAttribute\('role', 'alert'\)/);
-  assert.match(branch, /<h2 class="api-error-title">/);
+  const screen = screenBuilder();
+  assert.match(screen, /setAttribute\('role', 'alert'\)/);
+  assert.match(screen, /<h2 class="api-error-title">/);
 });

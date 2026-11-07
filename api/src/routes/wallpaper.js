@@ -161,7 +161,7 @@ function randomPhoto(bg) {
       log.warn('Unsplash returned no image', { status: r.status });
       return { url: null, error: 'No image returned' };
     }
-    const url = `${raw}&w=2800&h=1800&q=85&fm=jpg&fit=crop&crop=entropy`;
+    const url = `${raw}&w=2880&h=1800&q=75&auto=format&fit=crop&crop=entropy`;
     const credit = photoCredit(r.data);
     _photo = { key, at: Date.now(), url, credit };
     reportDownload(r.data, bg.apiKey || '');

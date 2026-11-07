@@ -14,6 +14,25 @@ export function configChanged(loaded, fetched) {
   return fingerprint(fetched) !== fingerprint(loaded);
 }
 
+/** @typedef {{ status: number, body?: any } | null} RestoreCheck null when the
+    server never answered; `body` is undefined when the reply was not JSON. */
+
+/** What a page restored by Back does once its sign-in and config checks are in.
+
+    @param {RestoreCheck} auth the /api/auth/check reply
+    @param {RestoreCheck} config the /api/config reply
+    @param {(config: any) => boolean} changed
+    @returns {'show' | 'reload' | 'offline'} */
+export function restoreAction(auth, config, changed) {
+  const answered = (/** @type {RestoreCheck} */ c) =>
+    !!c && c.status >= 200 && c.status < 300 && !!c.body && typeof c.body === 'object';
+  if (!auth) return 'offline';
+  if (!answered(auth) || (auth.body.enabled && !auth.body.authenticated)) return 'reload';
+  if (!config) return 'offline';
+  if (!answered(config) || changed(config.body)) return 'reload';
+  return 'show';
+}
+
 /** @param {any} c */
 function fingerprint(c) {
   return JSON.stringify(c?.items?.map(i => `${i?.id}|${i?.label}|${i?.href}`)) + JSON.stringify(c?.settings);

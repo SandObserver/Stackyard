@@ -153,7 +153,7 @@ on('GET', '/api/icons/cdn', async (req, res) => {
   /* A format already held is served without asking either host for the other. */
   for (const ext of exts) {
     const hit = _cdnIcons.get(`${source}:${ext}:${name}`);
-    if (hit && Date.now() - hit.at < ICON_CACHE_TTL && hit.status === 200) return sendIcon(res, hit);
+    if (hit && Date.now() - hit.at < ICON_CACHE_TTL && hit.status === 200) return sendIcon(req, res, hit);
   }
 
   let missed = null;
@@ -162,22 +162,29 @@ on('GET', '/api/icons/cdn', async (req, res) => {
     try {
       entry = await fetchIconFile(source, name, ext);
     } catch {}
-    if (entry?.status === 200) return sendIcon(res, entry);
+    if (entry?.status === 200) return sendIcon(req, res, entry);
     if (entry) missed = entry;
   }
   /* Nothing was found, and at least one host never gave a definite answer. */
   if (!missed) return json(res, 502, { error: 'Icon could not be fetched', kind: KIND.UPSTREAM });
-  sendIcon(res, missed);
+  sendIcon(req, res, missed);
 });
 
-/** @param {import('http').ServerResponse} res @param {CdnIconEntry} entry */
-function sendIcon(res, entry) {
+const tagMatches = (header, etag) =>
+  String(header || '')
+    .split(',')
+    .some(t => t.trim().replace(/^W\//, '') === etag);
+
+/** @param {import('http').IncomingMessage} req @param {import('http').ServerResponse} res @param {CdnIconEntry} entry */
+function sendIcon(req, res, entry) {
   if (entry.status !== 200 || !entry.body) return json(res, 404, { error: 'Icon not found', kind: KIND.INVALID });
-  res.writeHead(200, {
-    'Content-Type': entry.type,
-    'Content-Length': entry.body.length,
-    'X-Content-Type-Options': 'nosniff',
-  });
+  const etag = `"${crypto.createHash('sha256').update(entry.body).digest('base64url')}"`;
+  const headers = { 'Cache-Control': 'private, max-age=86400', ETag: etag, 'X-Content-Type-Options': 'nosniff' };
+  if (tagMatches(req.headers['if-none-match'], etag)) {
+    res.writeHead(304, headers);
+    return res.end();
+  }
+  res.writeHead(200, { ...headers, 'Content-Type': entry.type, 'Content-Length': entry.body.length });
   res.end(entry.body);
 }
 

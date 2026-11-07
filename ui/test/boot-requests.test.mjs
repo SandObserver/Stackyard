@@ -75,15 +75,12 @@ for (const failures of [1, 2]) {
     const shown = [];
     const stop = new Error('reached the first-run prompt');
     const boot = new Function(
-      'fetch, loadLocalIcons, document, initI18n, sanitizeItemLinks, showSetupPrompt, setHtml, html, t, BOOT_TIMEOUT_MS, blockingScreenFor, showBlockingScreen, console, storeGet, storeSet, LANG_STORE, isSupported, liftVeil',
+      'fetch, loadLocalIcons, document, initI18n, sanitizeItemLinks, showSetupPrompt, setHtml, html, t, BOOT_TIMEOUT_MS, blockingScreenFor, showBlockingScreen, console, storeGet, storeSet, LANG_STORE, isSupported, liftVeil, saveBootHint, currentLang, showApiDown',
       `let items, S, _rev, widgetReg; ${src} return boot;`,
     )(
       fetch,
       async () => (await fetch('/api/icons/local')).status,
-      {
-        body: { appendChild: el => shown.push(el.className), classList: { add() {} } },
-        createElement: () => ({ querySelector: () => null, setAttribute() {} }),
-      },
+      { body: { classList: { add() {} } } },
       async () => {},
       x => x,
       async () => {
@@ -101,6 +98,9 @@ for (const failures of [1, 2]) {
       'dash_lang',
       () => false,
       () => {},
+      () => {},
+      () => 'en',
+      () => shown.push('api-error-screen'),
     );
     if (failures === 1) await assert.rejects(boot(), stop);
     else await boot();

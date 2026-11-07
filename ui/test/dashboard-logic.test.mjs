@@ -10,6 +10,7 @@ import {
   desktopCols,
   desktopPages,
   landingAfterSetup,
+  restoreAction,
   restorePage,
   wheelPager,
   fingerSpeed,
@@ -298,4 +299,50 @@ test('the settle starts at the finger speed and never outlasts a page turn', () 
   const fast = settleMs(200, 3);
   assert.ok(fast < PAGE_TURN_MS && fast >= 120, `${fast}`);
   assert.equal(fast, Math.round((0.72 / 0.32) * (200 / 3)));
+});
+
+test('a restored page shows only when both checks answered and nothing changed', () => {
+  const open = { status: 200, body: { enabled: false, authenticated: true } };
+  const signedIn = { status: 200, body: { enabled: true, authenticated: true } };
+  const config = { status: 200, body: { items: [] } };
+  const same = () => false;
+  assert.equal(restoreAction(open, config, same), 'show');
+  assert.equal(restoreAction(signedIn, config, same), 'show');
+  assert.equal(
+    restoreAction(signedIn, config, () => true),
+    'reload',
+  );
+});
+
+test('a restored page reloads when the server answers in any other way', () => {
+  const config = { status: 200, body: { items: [] } };
+  const same = () => false;
+  for (const auth of [
+    { status: 200, body: { enabled: true, authenticated: false } },
+    { status: 401, body: undefined },
+    { status: 503, body: undefined },
+    { status: 0, body: undefined },
+    { status: 200, body: undefined },
+    { status: 200, body: null },
+  ])
+    assert.equal(restoreAction(auth, config, same), 'reload', JSON.stringify(auth));
+  const auth = { status: 200, body: { enabled: false } };
+  for (const c of [{ status: 401 }, { status: 200, body: undefined }, { status: 0 }])
+    assert.equal(restoreAction(auth, c, same), 'reload', JSON.stringify(c));
+});
+
+test('a restored page that reaches no server says so instead of showing its old contents', () => {
+  const config = { status: 200, body: { items: [] } };
+  assert.equal(
+    restoreAction(null, config, () => false),
+    'offline',
+  );
+  assert.equal(
+    restoreAction({ status: 200, body: { enabled: false } }, null, () => false),
+    'offline',
+  );
+  assert.equal(
+    restoreAction({ status: 200, body: { enabled: true, authenticated: false } }, null, () => false),
+    'reload',
+  );
 });

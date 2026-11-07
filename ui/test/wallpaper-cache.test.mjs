@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 /* One stored entry serves the dashboard and the settings pages. Two caches, or
    none on one side, show two different photos at the same time. */
 
@@ -7,7 +8,9 @@ import assert from 'node:assert/strict';
 import {
   loadWallpaper,
   readWallpaperCache,
+  saveBootHint,
   saveWallpaper,
+  sizedWallpaperUrl,
   validCredit,
   writeWallpaperCache,
 } from '../js/wallpaper-cache.js';
@@ -94,4 +97,73 @@ test('only a named credit with two unsplash.com links is valid', () => {
   ]) {
     assert.equal(validCredit(bad), null, JSON.stringify(bad));
   }
+});
+
+/* ── the size asked for ───────────────────────────── */
+
+const RAW = 'https://images.unsplash.com/photo-1?ixid=abc&w=2880&h=1800&q=75&auto=format&fit=crop&crop=entropy';
+const params = url => new URL(url).searchParams;
+
+test('a phone gets its own shape in device pixels', () => {
+  const upright = params(sizedWallpaperUrl(RAW, { width: 390, height: 844, dpr: 3, landscape: false }));
+  assert.equal(upright.get('w'), '1170');
+  assert.equal(upright.get('h'), '2532');
+});
+
+test('a phone reports the same screen at any rotation, so rotation alone decides the shape', () => {
+  const sideways = params(sizedWallpaperUrl(RAW, { width: 390, height: 844, dpr: 3, landscape: true }));
+  assert.equal(sideways.get('w'), '2532');
+  assert.equal(sideways.get('h'), '1170');
+});
+
+test('a large screen is capped and keeps its shape', () => {
+  const p = params(sizedWallpaperUrl(RAW, { width: 1728, height: 1117, dpr: 2, landscape: true }));
+  assert.equal(p.get('w'), '2880');
+  assert.equal(p.get('h'), '1862');
+});
+
+test('the photo view tracking value and the crop survive', () => {
+  const p = params(sizedWallpaperUrl(RAW, { width: 1920, height: 1080, dpr: 1, landscape: true }));
+  assert.equal(p.get('ixid'), 'abc');
+  assert.equal(p.get('fit'), 'crop');
+  assert.equal(p.get('w'), '1920');
+});
+
+test('an address stored before this format is brought up to it', () => {
+  const old = 'https://images.unsplash.com/photo-1?ixid=abc&w=2800&h=1800&q=85&fm=jpg&fit=crop&crop=entropy';
+  const p = params(sizedWallpaperUrl(old, { width: 1920, height: 1080, dpr: 1, landscape: true }));
+  assert.equal(p.get('fm'), null);
+  assert.equal(p.get('auto'), 'format');
+  assert.equal(p.get('q'), '75');
+});
+
+test('only Unsplash addresses change', () => {
+  const size = { width: 1920, height: 1080, dpr: 1, landscape: true };
+  for (const url of ['https://example.com/a.jpg?w=1', '/icons/wallpaper/a.jpg', 'not a url'])
+    assert.equal(sizedWallpaperUrl(url, size), url);
+});
+
+test('a screen with no size leaves the address alone', () => {
+  assert.equal(sizedWallpaperUrl(RAW, { width: 0, height: 0, dpr: 1, landscape: true }), RAW);
+});
+
+/* ── hints for the next visit ───────────────────────── */
+
+test('a hint keeps the fields it does not name, under the key the early script reads', t => {
+  const store = new Map();
+  const was = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: { getItem: k => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) },
+  });
+  t.after(() => {
+    if (was) Object.defineProperty(globalThis, 'localStorage', was);
+    else delete globalThis.localStorage;
+  });
+  saveBootHint({ url: 'https://images/a.jpg', color: 'rgb(1,2,3)' });
+  saveBootHint({ lang: 'fa' });
+  assert.deepEqual(JSON.parse(store.get('sy-boot')), { url: 'https://images/a.jpg', color: 'rgb(1,2,3)', lang: 'fa' });
+  const early = fs.readFileSync(new URL('../js/boot-hints.js', import.meta.url), 'utf8');
+  assert.ok(early.includes("localStorage.getItem('sy-boot')"));
+  assert.doesNotMatch(early, /--bg-image|innerHTML|appendChild/, 'a hint may not paint a stored photo or layout');
 });

@@ -498,7 +498,7 @@ test('every /api/ location sends the locked-down API policy', () => {
   }
 
   const locations = [...dashboard.matchAll(/location (?:= )?(\/api\/\S*) \{/g)];
-  assert.equal(locations.length, 3, 'an /api/ location was added or removed; check it sends the API policy');
+  assert.equal(locations.length, 4, 'an /api/ location was added or removed; check it sends the API policy');
   for (const m of locations) {
     const block = dashboard.slice(m.index, dashboard.indexOf('\n    }', m.index));
     assert.ok(block.includes('include /etc/nginx/http.d/csp-api.conf;'), `${m[1]} sends no API policy`);
@@ -565,4 +565,18 @@ test('the API location buffers a settings save in memory, but not a full-size bo
   assert.ok(buffer >= 128 * 1024, `nginx buffers only ${buffer} in memory; a large config is written to a temp file`);
   assert.ok(buffer <= 512 * 1024, `nginx holds up to ${buffer} per request in memory`);
   assert.ok(buffer < BODY_LIMIT);
+});
+
+test('the dashboard page revalidates without no-store, so Back and Forward can restore it', () => {
+  const block = dashboard.match(/location = \/ \{[^}]*\}/)[0];
+  assert.match(block, /add_header Cache-Control "no-cache" always;/);
+  assert.doesNotMatch(block, /no-store|Pragma|Expires/);
+});
+
+test('catalogue icons keep the lifetime the API names, and every other reply is not stored', () => {
+  const block = dashboard.match(/location = \/api\/icons\/cdn \{[^}]*\}/)[0];
+  assert.match(block, /add_header Cache-Control \$icon_cache_control always;/);
+  const map = dashboard.match(/map \$upstream_http_cache_control \$icon_cache_control \{[^}]*\}/)[0];
+  assert.match(map, /""\s+"no-store";/);
+  assert.match(map, /default\s+"";/);
 });
