@@ -51,7 +51,7 @@ import {
   resetMobileChrome,
   mkFolderGlyph,
   swipePager,
-} from '/js/ui.js?v=3f54fbb9';
+} from '/js/ui.js?v=9d71ca16';
 import {
   badgeMinimum,
   badgeSignature,
@@ -67,11 +67,11 @@ import {
   desktopCols,
   desktopPages,
   landingAfterSetup,
-  restoreNeedsReload,
+  restoreAction,
   restorePage,
   wheelPager,
-} from '/js/dashboard-logic.js?v=8e13fcb3';
-import { applyBackground, BACKDROP, decoded, firstViewWait, resolveBackground } from '/js/background.js?v=62662612';
+} from '/js/dashboard-logic.js?v=3098e6b2';
+import { applyBackground, BACKDROP, decoded, firstViewWait, resolveBackground } from '/js/background.js?v=5a21d901';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
@@ -668,10 +668,28 @@ function liftVeil() {
   document.body.classList.add('ready');
 }
 
-/** @param {HTMLElement} root @param {any} bg */
-async function showWallpaper(root, bg) {
+function showApiDown() {
+  const msg = document.createElement('div');
+  msg.className = 'api-error-screen';
+  msg.setAttribute('role', 'alert');
+  setHtml(
+    msg,
+    html`<h2 class="api-error-title">${t('home.apiDownTitle')}</h2><p class="api-error-sub">${t('home.apiDownSub')}</p><button class="api-error-btn" type="button">${t('home.retry')}</button>`,
+  );
+  /* Not an inline onclick. The page's CSP refuses those. */
+  msg.querySelector('.api-error-btn')?.addEventListener('click', () => location.reload());
+  for (const child of document.body.children) /** @type {HTMLElement} */ (child).inert = true;
+  document.body.classList.add('api-down');
+  document.body.appendChild(msg);
+}
+
+let _bgCall = 0;
+
+/** @param {HTMLElement} root @param {any} bg @param {number} call */
+async function showWallpaper(root, bg, call) {
   const prev = _shownWallpaper;
   await decoded(bg.url);
+  if (call !== _bgCall) return;
   _shownWallpaper = bg.url;
   const style = root.style;
   if (prev) {
@@ -688,14 +706,25 @@ async function showWallpaper(root, bg) {
 }
 
 async function applyBg() {
+  const call = ++_bgCall;
   const root = document.documentElement;
   bgTone = { grid: null, tone: themeTone() };
   retone();
-  const bg = await resolveBackground(S.background || {});
-  showPhotoCredit(el('photo-credit'), bg?.credit ?? null);
-  if (!bg) return;
-  if (bg.url && bg.url !== _shownWallpaper) await showWallpaper(root, bg);
+  let bg = null;
+  try {
+    bg = await resolveBackground(S.background || {});
+  } catch {}
+  if (call !== _bgCall) return;
+  if (!bg) {
+    root.style.removeProperty('--boot-bg');
+    if (_shownWallpaper) return resampleBg();
+    showPhotoCredit(el('photo-credit'), null);
+    return;
+  }
+  showPhotoCredit(el('photo-credit'), bg.credit ?? null);
+  if (bg.url && bg.url !== _shownWallpaper) await showWallpaper(root, bg, call);
   else applyBackground(root, bg);
+  if (call !== _bgCall) return;
   if (bg.url) {
     sampleWallpaper(bg.url, Number(bg.brightness), bg.fit);
     return;
@@ -930,16 +959,7 @@ async function boot() {
        file, the API served the config, so it is still reachable. */
     const lastLang = storeGet(LANG_STORE);
     await initI18n(isSupported(lastLang) ? lastLang : 'en');
-    const msg = document.createElement('div');
-    msg.className = 'api-error-screen';
-    msg.setAttribute('role', 'alert');
-    setHtml(
-      msg,
-      html`<h2 class="api-error-title">${t('home.apiDownTitle')}</h2><p class="api-error-sub">${t('home.apiDownSub')}</p><button class="api-error-btn" type="button">${t('home.retry')}</button>`,
-    );
-    /* Not an inline onclick. The page's CSP refuses those. */
-    msg.querySelector('.api-error-btn')?.addEventListener('click', () => location.reload());
-    document.body.appendChild(msg);
+    showApiDown();
     liftVeil();
     return;
   }
@@ -1243,19 +1263,18 @@ async function boot() {
   let _pollTimers = [];
   const _repeat = (fn, base) => _pollTimers.push(repeatJittered(fn, base));
 
-  /** @param {AbortSignal} [signal] @returns {Promise<boolean>} whether the page is reloading */
-  const pollConfig = async signal => {
+  /** @param {any} c a fetched config */
+  const differs = c => {
+    sanitizeItemLinks(c.items || []);
+    return configChanged({ items, settings: S, _rev }, c);
+  };
+
+  const pollConfig = async () => {
     try {
-      const res = await fetch('/api/config', { cache: 'no-store', signal });
-      if (!res.ok) return false;
-      const c = await res.json();
-      sanitizeItemLinks(c.items || []);
-      if (!configChanged({ items, settings: S, _rev }, c)) return false;
-      location.reload();
-      return true;
-    } catch {
-      return false;
-    }
+      const res = await fetch('/api/config', { cache: 'no-store' });
+      if (!res.ok) return;
+      if (differs(await res.json())) location.reload();
+    } catch {}
   };
 
   const stopPolling = () => {
@@ -1268,7 +1287,7 @@ async function boot() {
     stopPolling();
     _repeat(pollBadges, 20_000);
     _repeat(pollHealth, 30_000);
-    _repeat(() => pollConfig(), 15_000);
+    _repeat(pollConfig, 15_000);
   };
 
   /* Keep. Without it Safari leaves the tile scaled after a new tab opens. */
@@ -1300,14 +1319,25 @@ async function boot() {
   window.addEventListener('pageshow', async e => {
     if (!e.persisted) return;
     const signal = AbortSignal.timeout(BOOT_TIMEOUT_MS);
-    try {
-      const r = await fetch('/api/auth/check', { cache: 'no-store', signal });
-      if (restoreNeedsReload(r.status, r.ok ? await r.json() : null)) {
-        location.reload();
-        return;
+    /** @param {string} url @returns {Promise<import('/js/dashboard-logic.js?v=3098e6b2').RestoreCheck>} */
+    const check = async url => {
+      try {
+        const r = await fetch(url, { cache: 'no-store', redirect: 'manual', signal });
+        return { status: r.status, body: r.ok ? await r.json().catch(() => undefined) : undefined };
+      } catch {
+        return null;
       }
-    } catch {}
-    if (await pollConfig(signal)) return;
+    };
+    const [auth, config] = await Promise.all([check('/api/auth/check'), check('/api/config')]);
+    const action = restoreAction(auth, config, differs);
+    if (action === 'reload') {
+      location.reload();
+      return;
+    }
+    if (action === 'offline') {
+      showApiDown();
+      return;
+    }
     pollBadges();
     pollHealth();
     startPolling();

@@ -98,3 +98,120 @@ test('the last wallpaper is requested and its colour painted before the page has
     .poll(() => page.evaluate(() => document.documentElement.style.getPropertyValue('--boot-bg')))
     .toBe('rgb(9,8,7)');
 });
+
+test('a page restored while the server cannot be reached says so and keeps its old contents hidden', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.locator('body.ready').waitFor({ state: 'attached' });
+  await page.evaluate(() => {
+    window.__sameDocument = true;
+  });
+  await page.route('**/api/**', route => route.abort());
+  await restore(page);
+  await expect(page.locator('.api-error-screen')).toBeVisible();
+  await expect(page.locator('#pages')).toHaveAttribute('inert', '');
+  await expect(page.locator('body')).not.toHaveClass(/\bready\b/);
+  expect(await page.evaluate(() => window.__sameDocument)).toBe(true);
+});
+
+for (const [what, reply] of [
+  [
+    'a redirect to a sign-in proxy',
+    route => route.fulfill({ status: 302, headers: { Location: 'https://sso.example.test/' } }),
+  ],
+  ['a sign-in page', route => route.fulfill({ status: 200, contentType: 'text/html', body: '<p>Sign in</p>' })],
+]) {
+  test(`a page restored into ${what} reloads`, async ({ page, browserName }) => {
+    test.skip(what.includes('redirect') && browserName === 'webkit', 'Playwright cannot fulfil a redirect in WebKit');
+    await page.goto('/');
+    await page.locator('body.ready').waitFor({ state: 'attached' });
+    await page.evaluate(() => {
+      window.__sameDocument = true;
+    });
+    await page.route('**/api/auth/check', reply);
+    await restore(page);
+    await page.waitForFunction(() => !window.__sameDocument);
+  });
+}
+
+test('a stored colour gives way to the theme when there is no wallpaper', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('sy-boot', JSON.stringify({ color: 'rgb(220,220,210)' }));
+  });
+  await page.goto('/');
+  await page.locator('body.ready').waitFor({ state: 'attached' });
+  await expect
+    .poll(() => page.evaluate(() => getComputedStyle(document.documentElement, '::before').backgroundColor))
+    .not.toBe('rgb(220, 220, 210)');
+});
+
+test('Settings stops its spinner when it shows a recovery screen instead of the form', async ({ page }) => {
+  await page.route('**/api/auth/check', route =>
+    route.fulfill({ status: 503, json: { error: 'damaged', code: 'auth.password-damaged' } }),
+  );
+  await page.goto('/admin/');
+  await expect(page.locator('.cfg-recovery')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body, '::after').content)).toBe('none');
+});
+
+const PIXEL = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+  'base64',
+);
+const CREDIT = { name: 'Jane Doe', profile: 'https://unsplash.com/@jane', site: 'https://unsplash.com/' };
+
+/** @param {import('@playwright/test').Page} page @param {import('@playwright/test').APIRequestContext} request
+    @param {(wide: boolean) => Promise<boolean>} serve */
+async function unsplashOnPhone(page, request, serve) {
+  await seedConfig(request, { items: [], settings: { background: { type: 'unsplash', collection: '' } } });
+  await page.route('**/api/wallpaper', route =>
+    route.fulfill({ json: { url: 'https://images.unsplash.com/photo-1?ixid=x&w=2880&h=1800', credit: CREDIT } }),
+  );
+  await page.route('https://images.unsplash.com/**', async route => {
+    const u = new URL(route.request().url());
+    const wide = Number(u.searchParams.get('w')) > Number(u.searchParams.get('h'));
+    if (!(await serve(wide))) return route.abort();
+    return route.fulfill({ body: PIXEL, contentType: 'image/png', headers: { 'Access-Control-Allow-Origin': '*' } });
+  });
+  await page.addInitScript(() => {
+    window.__orientation = 'portrait-primary';
+    Object.defineProperty(screen.orientation, 'type', { configurable: true, get: () => window.__orientation });
+  });
+  await page.goto('/');
+  await page.locator('body.ready').waitFor({ state: 'attached' });
+  await expect(page.locator('#photo-credit')).toBeVisible();
+}
+
+/** @param {import('@playwright/test').Page} page @param {string} type */
+const rotate = (page, type) =>
+  page.evaluate(t => {
+    window.__orientation = t;
+    screen.orientation.dispatchEvent(new Event('change'));
+  }, type);
+
+/** @param {import('@playwright/test').Page} page */
+const shownShape = page =>
+  page.evaluate(() => {
+    const m = document.documentElement.style.getPropertyValue('--bg-image').match(/w=(\d+)&h=(\d+)/);
+    return m && Number(m[1]) > Number(m[2]) ? 'wide' : 'tall';
+  });
+
+test('turning a phone sideways and back keeps the upright photo', async ({ page, request }) => {
+  await unsplashOnPhone(page, request, async wide => {
+    if (wide) await new Promise(r => setTimeout(r, 1500));
+    return true;
+  });
+  await rotate(page, 'landscape-primary');
+  await rotate(page, 'portrait-primary');
+  await page.waitForTimeout(2500);
+  expect(await shownShape(page)).toBe('tall');
+});
+
+test('a photo that fails to load on rotation keeps the shown photo and its credit', async ({ page, request }) => {
+  await unsplashOnPhone(page, request, async wide => !wide);
+  await rotate(page, 'landscape-primary');
+  await page.waitForTimeout(1000);
+  expect(await shownShape(page)).toBe('tall');
+  await expect(page.locator('#photo-credit')).toBeVisible();
+});

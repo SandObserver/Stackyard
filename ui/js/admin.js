@@ -31,7 +31,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=115d3cdb';
+} from '/js/admin-settings.js?v=240302f1';
 import {
   apiGet,
   apiPost,
@@ -103,7 +103,7 @@ import {
   tgt,
   within,
 } from '/js/utils.js?v=14d4695d';
-import { applyBackground, firstViewWait, resolveBackground } from '/js/background.js?v=62662612';
+import { applyBackground, firstViewWait, resolveBackground } from '/js/background.js?v=5a21d901';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
 
@@ -153,16 +153,26 @@ async function load() {
   await within(applyBg(), firstViewWait());
 }
 
+let _bgCall = 0;
+let _bgShown = false;
+
 async function applyBg() {
+  const call = ++_bgCall;
+  const root = document.documentElement;
   const s = (state._settings && state._settings.background) || {};
   let bg = null;
   try {
     bg = await resolveBackground(s);
   } catch {}
+  if (call !== _bgCall) return;
   if (bg) {
-    applyBackground(document.documentElement, bg);
-    if (document.body.classList.contains('loaded')) document.documentElement.classList.add('wall-in');
-  } else if (s.type === 'unsplash') toast(t('toast.wallpaperUnavailable'), 'err');
+    applyBackground(root, bg);
+    _bgShown = true;
+    if (document.body.classList.contains('loaded')) root.classList.add('wall-in');
+    return;
+  }
+  root.style.removeProperty('--boot-bg');
+  if (!_bgShown && s.type === 'unsplash') toast(t('toast.wallpaperUnavailable'), 'err');
 }
 /* The list as the server last returned it to this page. A save that finds a
    different list on the server would delete what another tab or device added. */
@@ -1430,8 +1440,9 @@ initTheme();
 
 setReauthHandler(requireLogin);
 
-const loadOrShowFailure = () =>
-  load()
+const loadOrShowFailure = () => {
+  document.body.classList.remove('load-stopped');
+  return load()
     .catch(e => {
       toast(t('toast.configLoadFailed', { err: errorText(e) }), 'err');
       const al = el('al');
@@ -1449,10 +1460,12 @@ const loadOrShowFailure = () =>
       document.documentElement.classList.remove('lang-pending');
       document.body.classList.add('loaded');
     });
+};
 
 screen.orientation?.addEventListener('change', applyBg);
 
 checkAuth(loadOrShowFailure).then(ok => {
-  if (ok) loadOrShowFailure();
-  else document.documentElement.classList.remove('lang-pending');
+  if (ok) return loadOrShowFailure();
+  document.documentElement.classList.remove('lang-pending');
+  document.body.classList.add('load-stopped');
 });

@@ -75,6 +75,7 @@
       animation:boot-wait 1s linear infinite, boot-show .3s ease .6s forwards;
     }
     body.ready::before { animation:none; opacity:0; }
+    body.api-down::before { animation:none; opacity:0; }
 
     /* ── Page strip ── */
     #pages {

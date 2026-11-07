@@ -31,7 +31,7 @@ import { el, inp, qa, setUserText } from '/js/utils.js?v=14d4695d';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { serialWrites } from '/js/admin-save-logic.js?v=35fcc1c7';
 import { renderColorControl } from '/js/admin-color-control.js?v=433d3f3b';
-import { BACKDROP } from '/js/background.js?v=62662612';
+import { BACKDROP } from '/js/background.js?v=5a21d901';
 import {
   ALLOWED_HOSTS_MAX,
   firstBadHost,

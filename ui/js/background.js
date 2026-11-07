@@ -94,8 +94,9 @@ export async function resolveBackground(bg) {
     const photo = await unsplashPhoto(s);
     if (!photo) return null;
     const url = sizedWallpaperUrl(photo.url, thisScreen());
+    if (!(await decoded(url))) return null;
     saveBootHint({ url });
-    return (await decoded(url)) ? backgroundFor(s, url, photo.credit) : null;
+    return backgroundFor(s, url, photo.credit);
   }
   const b = backgroundFor(s);
   saveBootHint(b?.url ? { url: b.url } : { url: null, color: b ? b.color : null });
