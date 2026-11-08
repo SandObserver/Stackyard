@@ -140,6 +140,22 @@ test('wrong codes never lock the owner out or replace the code', async () => {
   assert.equal((await setup(code, 'owner-password-here')).status, 200);
 });
 
+test('rejected codes after the first are logged when the window ends', async () => {
+  const { flushRejectedCodes } = require('../src/routes/auth');
+  const code = printedCode();
+  flushRejectedCodes(Date.now() + 120_000);
+  const audit = mock.method(log, 'audit', () => {});
+  for (let i = 0; i < 3; i++) await setup(`WRONG-${i}`, 'attacker-password');
+  flushRejectedCodes(Date.now() + 240_000);
+  const lines = audit.mock.calls.filter(c => c.arguments[0] === 'setup code rejected');
+  audit.mock.restore();
+  assert.equal(
+    lines.reduce((sum, c) => sum + c.arguments[1].count, 0),
+    3,
+  );
+  assert.equal((await setup(code, 'owner-password-here')).status, 200);
+});
+
 test('an address Stackyard answers gets no setup route', async () => {
   printedCode();
   for (const host of ['192.168.1.10', 'localhost', 'nas.local', 'nas']) {

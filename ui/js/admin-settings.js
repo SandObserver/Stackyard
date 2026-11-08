@@ -17,7 +17,7 @@ import {
   labelsWith,
   planFieldSave,
   serialWrites,
-} from '/js/admin-save-logic.js?v=8f3b48f6';
+} from '/js/admin-save-logic.js?v=4b2b7f18';
 import {
   apiGet,
   apiPost,
@@ -755,7 +755,13 @@ async function saveServer() {
 
   if (failure || !done) {
     const key = PASSWORD_ERROR_KEYS[/** @type {any} */ (failure)?.code];
-    if (/** @type {any} */ (failure)?.passwordWritten)
+    if (/** @type {any} */ (failure)?.protectionOff)
+      toast(
+        t('toast.protectionOffOthersNot', { err: staleText(failure) || errorText(failure) }),
+        'err',
+        errorAction(failure),
+      );
+    else if (/** @type {any} */ (failure)?.passwordWritten)
       toast(
         t('toast.passwordSavedOthersNot', { err: staleText(failure) || errorText(failure) }),
         'err',
@@ -804,6 +810,7 @@ async function writeServer({ enabled, pw, currentPassword, code, allowedHosts })
     if (!list.includes(here)) throw Object.assign(new Error('stale'), { status: 409 });
   }
   let passwordWritten = false;
+  let protectionOff = false;
   try {
     /* Keep before the config read. These writes bump the config revision, and
      a config save built on an earlier read is refused as stale. */
@@ -814,11 +821,13 @@ async function writeServer({ enabled, pw, currentPassword, code, allowedHosts })
       const pwEl = inp('sec-pw');
       if (pwEl) pwEl.placeholder = `●●●●●●●●●● (${t('common.configured')})`;
     }
+    const clearing = !enabled && _passwordSet;
     await apiPost('/api/auth/toggle', {
       enabled,
       currentPassword,
       allowedHosts: planned.includes('allowedHosts') ? allowedHosts : undefined,
     });
+    protectionOff = clearing;
 
     const c = await apiGet('/api/config');
     c.settings = c.settings || {};
@@ -849,6 +858,7 @@ async function writeServer({ enabled, pw, currentPassword, code, allowedHosts })
     return { langChanged };
   } catch (e) {
     if (passwordWritten && e && typeof e === 'object') /** @type {any} */ (e).passwordWritten = true;
+    if (protectionOff && e && typeof e === 'object') /** @type {any} */ (e).protectionOff = true;
     throw e;
   }
 }

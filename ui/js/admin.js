@@ -7,7 +7,7 @@ import {
 } from '/js/admin-app-form.js?v=65525912';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=5ea0223f';
 import { recoveryShown } from '/js/config-recovery.js?v=fd68857f';
-import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=0dcddc27';
+import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=03f7a57f';
 import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=1526c452';
 import {
   afterImport,
@@ -22,7 +22,7 @@ import {
   snapshotItems,
   upsertItem,
   keptWidget,
-} from '/js/admin-save-logic.js?v=8f3b48f6';
+} from '/js/admin-save-logic.js?v=4b2b7f18';
 import {
   loadSettings,
   savedWallpaperUrl,
@@ -32,7 +32,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=7dc3a92f';
+} from '/js/admin-settings.js?v=6d112610';
 import {
   apiGet,
   apiPost,
@@ -76,7 +76,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=6cfa52ff';
+} from '/js/import-foreign.js?v=80477b68';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=bd88cb9e';

@@ -502,7 +502,10 @@ function agedCookie(ms) {
 }
 
 test('a session still in use is extended rather than expiring under the shorter window', async () => {
-  const r = await req('GET', '/api/config', { cookie: agedCookie(RENEW_AFTER_MS + 1000) });
+  const r = await req('GET', '/api/config', {
+    cookie: agedCookie(RENEW_AFTER_MS + 1000),
+    headers: { Referer: 'http://nas/' },
+  });
   assert.equal(r.status, 200);
   const issued = String(r.headers['set-cookie'] || '');
   assert.match(issued, /ds=.+/, 'a session past halfway must come back renewed');

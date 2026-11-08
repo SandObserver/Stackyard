@@ -12,10 +12,10 @@
    reads and writes them too. */
 
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { snapshotItems } from '/js/admin-save-logic.js?v=8f3b48f6';
+import { snapshotItems } from '/js/admin-save-logic.js?v=4b2b7f18';
 import { isShownChild, reorderItems, shownChildren, topLevelRows } from '/js/admin-logic.js?v=1526c452';
 import { listGroup } from '/js/admin-drag-logic.js?v=4aae5094';
-import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=8cd167cd';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=f84fd67f';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { announce, paintIcon, toast } from '/js/admin-shared.js?v=d728efe3';

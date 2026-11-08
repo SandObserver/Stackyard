@@ -153,7 +153,10 @@ on('POST', '/api/auth/login', async (req, res) => {
       refundLoginAttempt(key);
       return busy(res);
     }
-    const match = await matchPassword(typeof password === 'string' ? password : '', hash);
+    const match = await matchPassword(typeof password === 'string' ? password : '', hash).catch(e => {
+      if (e.busy) refundLoginAttempt(key);
+      throw e;
+    });
     if (!match) {
       auditAttempt('login failed', { ip });
       return json(res, 401, { error: 'Incorrect password.', kind: KIND.AUTH });
@@ -238,7 +241,11 @@ async function refuseWrongCurrentPassword(req, res, hash, currentPassword) {
     busy(res);
     return true;
   }
-  if (!(await verifyPassword(typeof currentPassword === 'string' ? currentPassword : '', hash))) {
+  const matches = await verifyPassword(typeof currentPassword === 'string' ? currentPassword : '', hash).catch(e => {
+    if (e.busy) refundLoginAttempt(key);
+    throw e;
+  });
+  if (!matches) {
     auditAttempt('password check failed', { ip });
     json(res, 403, { error: 'Current password is incorrect.', kind: KIND.INVALID, code: CURRENT_PASSWORD_CODE });
     return true;
@@ -300,13 +307,20 @@ on('POST', '/api/auth/set-password', async (req, res) => {
 const REJECT_LOG_MS = 60_000;
 let _rejected = 0;
 let _rejectLoggedAt = 0;
-function noteRejectedCode(ip) {
-  _rejected++;
-  const now = Date.now();
-  if (now - _rejectLoggedAt < REJECT_LOG_MS) return;
-  log.audit('setup code rejected', { ip, count: _rejected });
+let _rejectedIp = '';
+
+function flushRejectedCodes(now = Date.now()) {
+  if (!_rejected || now - _rejectLoggedAt < REJECT_LOG_MS) return;
+  log.audit('setup code rejected', { ip: _rejectedIp, count: _rejected });
   _rejected = 0;
   _rejectLoggedAt = now;
+}
+setInterval(flushRejectedCodes, REJECT_LOG_MS).unref();
+
+function noteRejectedCode(ip) {
+  _rejected++;
+  _rejectedIp = ip;
+  flushRejectedCodes();
 }
 
 on('POST', '/api/auth/setup-password', async (req, res) => {
@@ -437,3 +451,10 @@ on('POST', '/api/auth/toggle', async (req, res) => {
     fail(res, e, { status: 400 });
   }
 });
+
+process.on('exit', () => {
+  flushAudit(Number.MAX_SAFE_INTEGER);
+  flushRejectedCodes(Number.MAX_SAFE_INTEGER);
+});
+
+module.exports = { flushRejectedCodes };

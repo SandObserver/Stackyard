@@ -382,6 +382,7 @@
     "deleted": "已删除",
     "saveFailed": "无法保存。{err}",
     "passwordSavedOthersNot": "密码已更改，但其他设置未保存。{err}",
+    "protectionOffOthersNot": "保护已关闭，密码已删除，但其他设置未保存。{err}",
     "allowedHostInvalid": "{host} 不是主机名或 IP 地址。请输入例如 nas.local 或 192.168.1.10。",
     "allowedHostsKeepCurrent": "请将 {host} 保留在“允许的地址”中，否则此页面将无法使用。如需移除，请使用其他地址。",
     "allowedHostsTooMany": "地址过多。上限为 {max} 个。",
