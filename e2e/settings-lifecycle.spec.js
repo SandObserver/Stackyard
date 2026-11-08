@@ -99,4 +99,16 @@ test('changing Allowed Addresses with another field saves both', async ({ browse
   const { settings } = await (await request.get('/api/config')).json();
   expect(settings.server.allowedHosts).toEqual(['dash.example.com']);
   expect(settings.server.hostIp).toBe('10.0.0.7');
+  const cleared = await page.evaluate(async () => {
+    const config = await (await fetch('/api/config')).json();
+    config.settings.server.allowedHosts = [];
+    return (
+      await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+      })
+    ).status;
+  });
+  expect(cleared).toBe(200);
 });

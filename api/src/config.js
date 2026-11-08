@@ -248,8 +248,9 @@ function _readDisk() {
   let parsed;
   try {
     parsed = JSON.parse(raw);
-  } catch (e) {
-    _markDamaged('corrupt', e.message, _backupCorrupt(raw));
+  } catch {
+    /* Never log the parser's message. It quotes the file, secrets included. */
+    _markDamaged('corrupt', 'not valid JSON', _backupCorrupt(raw));
     return null;
   }
 

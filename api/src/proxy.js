@@ -2,6 +2,7 @@ const http = require('http');
 const https = require('https');
 const net = require('net');
 const resolver = require('./resolve');
+const localNetworks = require('./local-networks');
 const { loadConfig } = require('./config');
 const { PING_MS, FETCH_MS } = require('./timeouts');
 const { IS_DEMO } = require('./demo');
@@ -68,7 +69,7 @@ const isBlockedIPv4 = addr => inRanges(addr, _blockedV4);
 function embeddedIPv4(addr) {
   if (typeof addr !== 'string') return null;
   const s = addr.toLowerCase();
-  const m = s.match(/^(?:::ffff:|64:ff9b::|::)([0-9a-f.:]+)$/);
+  const m = s.match(/^(?:::ffff:|64:ff9b:1::|64:ff9b::|::)([0-9a-f.:]+)$/);
   if (!m) return null;
   const tail = m[1];
   if (tail.includes('.')) return net.isIPv4(tail) ? tail : null;
@@ -83,7 +84,7 @@ function embeddedIPv4(addr) {
 function inAddressSet(addr, v4Ranges, v6Re) {
   if (typeof addr !== 'string' || !addr) return false;
   const s = addr.toLowerCase();
-  if (s.startsWith('::ffff:') || s.startsWith('64:ff9b::')) {
+  if (s.startsWith('::ffff:') || s.startsWith('64:ff9b::') || s.startsWith('64:ff9b:1::')) {
     const v4 = embeddedIPv4(s);
     if (v4) return inRanges(v4, v4Ranges);
     return true; /* unparseable tail behind a wrapper prefix: refuse */
@@ -101,9 +102,15 @@ const isPrivateAddress = addr => inAddressSet(addr, _blockedV4, BLOCKED_IPV6_RE)
 /** Loopback, unspecified or link-local. @param {string} addr @returns {boolean} */
 const isSelfAddress = addr => inAddressSet(addr, _selfV4, SELF_IPV6_RE);
 
-const _linkLocalV4 = toRanges(BLOCKED_IPV4.filter(([base]) => base === '169.254.0.0'));
+/* Cloud metadata services. Refused on every path, ALLOW_PRIVATE_IPS included. */
+const _metadataV4 = toRanges([
+  ['169.254.0.0', 16, 'link-local'],
+  ['100.100.100.200', 32, 'Alibaba Cloud metadata'],
+]);
+const METADATA_V6_RE = /^(fe[89ab][0-9a-f]:|fd00:ec2::254$|fd20:ce::254$)/i;
 /** @param {string} addr @returns {boolean} */
-const isLinkLocal = addr => inAddressSet(addr, _linkLocalV4, /^fe[89ab][0-9a-f]:/i);
+const isMetadataAddress = addr => inAddressSet(addr, _metadataV4, METADATA_V6_RE);
+
 /* Never sniff this from the body alone. A plain-text line like "Version 1.2"
    matches the metric grammar exactly. */
 function looksLikeMetrics(ct, body) {
@@ -205,6 +212,27 @@ const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
    blocked, so the reason travels as this instead. */
 const PRIVATE_ADDRESS = 'private-address';
 const UNRESOLVED = 'unresolved';
+const LINK_LOCAL = 'link-local';
+const METADATA_REFUSED = Object.freeze({ error: 'Blocked: link-local address.', ip: null, reason: LINK_LOCAL });
+
+/** Refuses a connection to a metadata address. A literal host never reaches
+    the lookup, so `host` is checked here too.
+    @param {string} host the host the socket connects to
+    @param {import('net').LookupFunction} lookup
+    @returns {{ refused: boolean, lookup: import('net').LookupFunction }} */
+function metadataGuard(host, lookup) {
+  return {
+    refused: isMetadataAddress(bareHost(host)),
+    lookup: (name, options, cb) => {
+      lookup(name, options, (err, address, family) => {
+        if (err) return cb(err, '');
+        const found = Array.isArray(address) ? address.map(a => a.address) : [address];
+        if (found.some(isMetadataAddress)) return cb(metadataError(), '');
+        cb(null, address, family);
+      });
+    },
+  };
+}
 
 /** @param {URL} u @returns {string|null} */
 function urlPolicyError(u) {
@@ -233,6 +261,8 @@ function lookupWithin(host, ms) {
   });
 }
 
+const metadataError = () => new SsrfBlockedError(METADATA_REFUSED.error, LINK_LOCAL);
+
 async function guardSsrf(rawUrl, ms = FETCH_MS) {
   let u;
   try {
@@ -243,10 +273,11 @@ async function guardSsrf(rawUrl, ms = FETCH_MS) {
   const policy = urlPolicyError(u);
   if (policy) return { error: policy, ip: null };
   const h = bareHost(u.hostname);
+  if (isMetadataAddress(h)) return METADATA_REFUSED;
   if (!ALLOW_PRIVATE_IPS && h === 'localhost')
     return { error: `Blocked: ${h} is a private address.`, ip: null, reason: PRIVATE_ADDRESS };
-  const hostIp = getHostIp();
-  if (hostIp && h === hostIp) return { error: null, ip: null };
+  const hostIp = bareHost(getHostIp());
+  if (net.isIP(hostIp) && h === hostIp) return { error: null, ip: null };
   if (!ALLOW_PRIVATE_IPS && isPrivateAddress(h))
     return { error: `Blocked: ${h} is a private address.`, ip: null, reason: PRIVATE_ADDRESS };
   let address;
@@ -256,7 +287,11 @@ async function guardSsrf(rawUrl, ms = FETCH_MS) {
     if (e instanceof Error && e.message === 'Timed out') throw e;
     return { error: `Blocked: ${h} could not be resolved.`, ip: null, reason: UNRESOLVED };
   }
-  const refused = isDockerServiceName(h) ? isSelfAddress(address) : isPrivateAddress(address);
+  if (isMetadataAddress(address)) return METADATA_REFUSED;
+  /* A service name reaches only a network this container is on. */
+  const refused = isDockerServiceName(h)
+    ? isSelfAddress(address) || (isPrivateAddress(address) && !localNetworks.onLocalNetwork(address))
+    : isPrivateAddress(address);
   if (!ALLOW_PRIVATE_IPS && refused)
     return { error: `Blocked: ${h} resolves to private IP ${address}.`, ip: null, reason: PRIVATE_ADDRESS };
   /* A literal address cannot be rebound. */
@@ -313,6 +348,8 @@ function fetchJSON(raw, opts = {}) {
     /* http.request wants a bare IPv6 address. The bracketed form URL keeps fails
        to resolve. Host header and SNI stay on the bracketed hostname. */
     const connectHost = pin || u.hostname.replace(/^\[|\]$/g, '');
+    const guard = metadataGuard(connectHost, resolver.lookupWithin(opts.timeout || FETCH_MS));
+    if (guard.refused) return reject(metadataError());
     const req = lib.request(
       {
         hostname: connectHost,
@@ -322,7 +359,7 @@ function fetchJSON(raw, opts = {}) {
         headers: hdrs,
         servername: pin ? u.hostname : undefined /* keep SNI and cert validation on the real hostname */,
         timeout: opts.timeout || FETCH_MS,
-        lookup: resolver.lookupWithin(opts.timeout || FETCH_MS),
+        lookup: guard.lookup,
         rejectUnauthorized: !skipTls,
       },
       res => {
@@ -444,13 +481,16 @@ function openWebSocket(raw, opts = {}) {
       signal?.removeEventListener('abort', onAbort);
       fn(arg);
     };
+    const connectHost = pin || u.hostname.replace(/^\[|\]$/g, '');
+    const guard = metadataGuard(connectHost, resolver.lookupWithin(opts.timeout || FETCH_MS));
+    if (guard.refused) return settle(reject, metadataError());
     const req = (secure ? https : http).request({
-      hostname: pin || u.hostname.replace(/^\[|\]$/g, ''),
+      hostname: connectHost,
       port: u.port || (secure ? 443 : 80),
       path: u.pathname + u.search,
       headers,
       servername: pin ? u.hostname : undefined,
-      lookup: resolver.lookupWithin(opts.timeout || FETCH_MS),
+      lookup: guard.lookup,
       rejectUnauthorized: !skipTls,
       agent: false,
     });
@@ -610,12 +650,14 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp, lookup) {
     const { skip, ignored: skipIgnored } = resolveSkipTls(u.hostname, skipTls);
     const pin = pinIp && pinIp !== u.hostname ? pinIp : null;
     const connectHost = pin || u.hostname.replace(/^\[|\]$/g, '');
+    const guard = metadataGuard(connectHost, lookup || resolver.lookupWithin(ms));
+    if (guard.refused) return resolve({ ...PING_LINK_LOCAL });
     const opts = {
       hostname: connectHost,
       port,
       path: u.pathname || '/',
       timeout: ms,
-      lookup: lookup || resolver.lookupWithin(ms),
+      lookup: guard.lookup,
       rejectUnauthorized: !skip,
     };
     if (pin) {
@@ -645,6 +687,7 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp, lookup) {
       /* This result reaches the browser as-is. Keep the code, never the message:
          the message names the address it failed to reach. */
       req.on('error', (/** @type {unknown} */ e) => {
+        if (e instanceof SsrfBlockedError) return dl.settle(resolve, { ...PING_LINK_LOCAL });
         /* u.origin only. The authority can carry credentials and the path and
            query can carry an API key. */
         log.warn('ping failed', { url: u.origin, error: errMessage(e) });
@@ -672,8 +715,9 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp, lookup) {
 
    The only supported ways out. Checked is for a URL that arrived in an HTTP
    request. Unchecked is for one from saved config, which only an admin can
-   write. Put any new rewrite step above the guard, so the URL checked is the URL
-   connected to. */
+   write, and for the Docker and Proxmox connection tests. Both refuse cloud
+   metadata addresses. Put any new rewrite step above the guard, so the URL
+   checked is the URL connected to. */
 
 class SsrfBlockedError extends Error {
   constructor(message, reason) {
@@ -721,7 +765,6 @@ const PING_LINK_LOCAL = Object.freeze({
   code: 'blocked.link-local',
 });
 
-/* Keep the link-local refusal. 169.254.169.254 is the cloud metadata service. */
 async function pingUnchecked(url, ms, skipTls) {
   if (IS_DEMO) return pingUrl(url, ms, skipTls);
   const target = rewriteUrl(url);
@@ -734,7 +777,7 @@ async function pingUnchecked(url, ms, skipTls) {
   const policy = urlPolicyError(parsed);
   if (policy) return pingInvalid(policy);
   const host = bareHost(parsed.hostname);
-  if (net.isIP(host)) return isLinkLocal(host) ? { ...PING_LINK_LOCAL } : pingUrl(target, ms, skipTls);
+  if (net.isIP(host)) return isMetadataAddress(host) ? { ...PING_LINK_LOCAL } : pingUrl(target, ms, skipTls);
   const budget = ms || PING_MS;
   const started = Date.now();
   let found;
@@ -744,8 +787,7 @@ async function pingUnchecked(url, ms, skipTls) {
     if (e instanceof Error && e.message === 'Timed out') return { ...PING_TIMED_OUT };
     found = e instanceof Error ? e : new Error(String(e));
   }
-  if (Array.isArray(found) && found.some(a => isLinkLocal(a.address))) return { ...PING_LINK_LOCAL };
-  /* Connect only to the addresses checked above. A second lookup is never checked. */
+  if (Array.isArray(found) && found.some(a => isMetadataAddress(a.address))) return { ...PING_LINK_LOCAL };
   return pingUrl(target, Math.max(1, budget - (Date.now() - started)), skipTls, null, resolver.lookupFrom(found));
 }
 
@@ -795,6 +837,7 @@ module.exports = {
   isDockerServiceName,
   bareHost,
   isPrivateAddress,
+  isMetadataAddress,
   isBlockedIPv4,
   embeddedIPv4,
   BLOCKED_IPV4,

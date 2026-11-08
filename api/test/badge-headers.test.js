@@ -312,3 +312,21 @@ test('clearing the username removes the stored login', () => {
   preserveItemBadgeSecrets(item, { badge: { login: { username: 'monitor', password: 'stored' } } });
   assert.equal(item.badge.login, undefined);
 });
+
+test('secret rows that share a key each keep their own stored value', () => {
+  const stored = {
+    badge: {
+      params: [
+        { key: 'token', value: 'FIRST', secret: true },
+        { key: 'token', value: 'SECOND', secret: true },
+      ],
+    },
+  };
+  const next = structuredClone(stored);
+  scrubItemBadgeSecrets(next);
+  preserveItemBadgeSecrets(next, stored);
+  assert.deepEqual(
+    next.badge.params.map(r => r.value),
+    ['FIRST', 'SECOND'],
+  );
+});

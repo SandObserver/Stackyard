@@ -4,11 +4,11 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=726803c8';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=2ec4c4ce';
-import { recoveryShown } from '/js/config-recovery.js?v=c03e1465';
-import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=8b112edc';
-import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=cf072e65';
+} from '/js/admin-app-form.js?v=2fe1f503';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=8e2d3ac7';
+import { recoveryShown } from '/js/config-recovery.js?v=70ee5ca8';
+import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=2512472b';
+import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=f5547d5b';
 import {
   afterImport,
   buildAppItem,
@@ -21,7 +21,7 @@ import {
   serialWrites,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=14cced2c';
+} from '/js/admin-save-logic.js?v=ec136d90';
 import {
   loadSettings,
   savedWallpaperUrl,
@@ -31,7 +31,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=9f3117d4';
+} from '/js/admin-settings.js?v=2896eb96';
 import {
   apiGet,
   apiPost,
@@ -52,13 +52,13 @@ import {
   errorAction,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=290ab8cb';
+} from '/js/admin-shared.js?v=7828f8bc';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=a4c22f2d';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=9704cdbb';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=75a71ab4';
-import { createListbox } from '/js/listbox.js?v=db99acbe';
+import { createListbox } from '/js/listbox.js?v=86ddb4ba';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
 import { loadLocalIcons } from '/js/icons.js?v=5ac01d72';
@@ -75,7 +75,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=bc7c0df8';
+} from '/js/import-foreign.js?v=f21d04cc';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { clampName } from '/js/limits.js?v=ea61a441';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=bd88cb9e';

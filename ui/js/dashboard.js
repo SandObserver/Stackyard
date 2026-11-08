@@ -36,10 +36,10 @@ import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { initSpotlight } from '/js/spotlight.js?v=e50cb331';
 import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
 import { initI18n, isSupported, t, currentLang } from '/js/i18n.js?v=ed7c5565';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=c03e1465';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=70ee5ca8';
 import { passwordMeter, passwordMismatch, contextWords, meterColor } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
-import { setupErrorKey } from '/js/admin-error.js?v=0882cee9';
+import { setupErrorKey } from '/js/admin-error.js?v=00b3d1fd';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
 import {
@@ -805,10 +805,11 @@ function showSetupPrompt() {
     ov.setAttribute('aria-labelledby', 'setup-title');
     setHtml(
       ov,
-      html`<form class="setup-card" method="post" novalidate><input type="text" name="username" autocomplete="username" hidden><p id="setup-title" class="setup-title">${t('setup.title')}</p><p class="setup-sub">${t('setup.sub')}</p><div class="setup-field"><input id="setup-pw" type="password" placeholder="${t('setup.newPassword')}" aria-label="${t('setup.newPassword')}" aria-describedby="setup-hint" autocomplete="new-password" class="setup-pw"><button id="setup-reveal" type="button" class="setup-reveal" aria-pressed="false" aria-label="${t('common.showPassword')}" title="${t('common.showPassword')}">${raw(EYE)}</button></div><input id="setup-pw2" type="password" placeholder="${t('setup.confirmPassword')}" aria-label="${t('setup.confirmPassword')}" autocomplete="new-password" class="setup-pw"><div id="setup-bars" class="setup-bars" aria-hidden="true"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div><div id="setup-hint" class="setup-hint" role="status"></div><div id="setup-err" class="setup-err" role="alert"></div><div class="setup-btns"><button id="setup-skip" type="button" class="setup-btn setup-btn-skip">${t('setup.skip')}</button><button id="setup-set" type="submit" class="setup-btn setup-btn-set" disabled>${t('setup.set')}</button></div></form>`,
+      html`<form class="setup-card" method="post" novalidate><input type="text" name="username" autocomplete="username" hidden><p id="setup-title" class="setup-title">${t('setup.title')}</p><p class="setup-sub">${t('setup.sub')}</p><div class="setup-field"><input id="setup-pw" type="password" placeholder="${t('setup.newPassword')}" aria-label="${t('setup.newPassword')}" aria-describedby="setup-hint" autocomplete="new-password" class="setup-pw"><button id="setup-reveal" type="button" class="setup-reveal" aria-pressed="false" aria-label="${t('common.showPassword')}" title="${t('common.showPassword')}">${raw(EYE)}</button></div><input id="setup-pw2" type="password" placeholder="${t('setup.confirmPassword')}" aria-label="${t('setup.confirmPassword')}" autocomplete="new-password" class="setup-pw"><input id="setup-code" type="text" placeholder="${t('hostBlock.code')}" aria-label="${t('hostBlock.code')}" aria-describedby="setup-code-help" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" class="setup-pw"><p id="setup-code-help" class="setup-hint">${t('hostBlock.setupHelp')}</p><div id="setup-bars" class="setup-bars" aria-hidden="true"><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span><span class="pwbar"></span></div><div id="setup-hint" class="setup-hint" role="status"></div><div id="setup-err" class="setup-err" role="alert"></div><div class="setup-btns"><button id="setup-skip" type="button" class="setup-btn setup-btn-skip">${t('setup.skip')}</button><button id="setup-set" type="submit" class="setup-btn setup-btn-set" disabled>${t('setup.set')}</button></div></form>`,
     );
     const pw = qi('#setup-pw', ov);
     const pw2 = qi('#setup-pw2', ov);
+    const code = qi('#setup-code', ov);
     const rev = /** @type {HTMLButtonElement} */ (q('#setup-reveal', ov));
     const bars = qa('.pwbar', ov);
     const hint = q('#setup-hint', ov);
@@ -828,10 +829,11 @@ function showSetupPrompt() {
       const mismatch = pw2.value !== '' && passwordMismatch(pw.value, pw2.value);
       err.textContent = mismatch ? t('setup.mismatch') : '';
       err.style.display = mismatch ? 'block' : 'none';
-      setB.disabled = !ok || !matches();
+      setB.disabled = !ok || !matches() || !code.value.trim();
     };
     pw.addEventListener('input', sync);
     pw2.addEventListener('input', sync);
+    code.addEventListener('input', sync);
 
     wireReveal(rev, [pw, pw2]);
     fillUsernames(ov);
@@ -863,7 +865,7 @@ function showSetupPrompt() {
     };
 
     async function doSet() {
-      if (!passwordMeter(pw.value, words).ok || !matches()) return;
+      if (!passwordMeter(pw.value, words).ok || !matches() || !code.value.trim()) return;
       setB.disabled = true;
       skip.disabled = true;
       err.style.display = 'none';
@@ -871,7 +873,7 @@ function showSetupPrompt() {
         const r = await fetch('/api/auth/set-password', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: pw.value }),
+          body: JSON.stringify({ password: pw.value, code: code.value }),
         });
         if (!r.ok) {
           const body = await r.json().catch(() => null);
@@ -881,10 +883,12 @@ function showSetupPrompt() {
         if (to) location.href = to;
         else location.reload();
       } catch (e) {
-        err.textContent = t(setupErrorKey(e));
+        const key = setupErrorKey(e);
+        err.textContent = t(key);
         err.style.display = 'block';
         setB.disabled = false;
         skip.disabled = false;
+        if (key === 'hostBlock.codeWrong') code.focus();
       }
     }
     q('form', ov).addEventListener('submit', e => {

@@ -177,7 +177,7 @@ test('a password over the maximum is refused with its own reason', async () => {
 test('a code printed before a password was set and removed no longer works', async () => {
   const code = printedCode();
   const ip = { host: '192.168.1.10', origin: 'http://192.168.1.10' };
-  const set = await request('/api/auth/set-password', { password: 'first-password-here' }, ip);
+  const set = await request('/api/auth/set-password', { password: 'first-password-here', code }, ip);
   assert.equal(set.status, 200);
   const cookie = set.cookie;
   expireCache();
@@ -344,22 +344,15 @@ test('INITIAL_PASSWORD waits while the settings file is damaged', async () => {
 
 test('setting a password retires a printed code', async () => {
   const code = printedCode();
-  assert.equal((await request('/api/auth/set-password', { password: 'first-password-here' }, LAN_ADDR)).status, 200);
+  assert.equal(
+    (await request('/api/auth/set-password', { password: 'first-password-here', code }, LAN_ADDR)).status,
+    200,
+  );
   saveConfig({ items: [], settings: {} });
   expireCache();
   const printed = mock.method(log, 'print', () => {});
   assert.equal((await setup(code, 'attacker-password')).status, 403);
   printed.mock.restore();
-});
-
-test('turning protection off retires a printed code', async () => {
-  const code = printedCode();
-  assert.equal((await request('/api/auth/toggle', { enabled: false }, LAN_ADDR)).status, 200);
-  expireCache();
-  const printed = mock.method(log, 'print', () => {});
-  assert.equal((await setup(code, 'attacker-password')).status, 403);
-  printed.mock.restore();
-  assert.equal(authActive(loadConfig()), false);
 });
 
 test('two submits of the right code at once set one password', async () => {

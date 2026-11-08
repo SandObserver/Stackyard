@@ -19,7 +19,7 @@ import {
   failureIsMissingApiPath,
   nextActiveIndex,
   sameIconName,
-} from '/js/admin-logic.js?v=cf072e65';
+} from '/js/admin-logic.js?v=f5547d5b';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import {
   toast,
@@ -37,11 +37,11 @@ import {
   errorAction,
   showFieldError,
   clearFieldError,
-} from '/js/admin-shared.js?v=290ab8cb';
-import { createListbox } from '/js/listbox.js?v=db99acbe';
+} from '/js/admin-shared.js?v=7828f8bc';
+import { createListbox } from '/js/listbox.js?v=86ddb4ba';
 import { MAX_LABELS } from '/js/badge-logic.js?v=6d99179d';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=433d3f3b';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=0882cee9';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=5f4db926';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=00b3d1fd';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 

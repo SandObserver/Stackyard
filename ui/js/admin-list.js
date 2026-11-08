@@ -12,19 +12,19 @@
    reads and writes them too. */
 
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { snapshotItems } from '/js/admin-save-logic.js?v=14cced2c';
-import { isShownChild, reorderItems, shownChildren, topLevelRows } from '/js/admin-logic.js?v=cf072e65';
+import { snapshotItems } from '/js/admin-save-logic.js?v=ec136d90';
+import { isShownChild, reorderItems, shownChildren, topLevelRows } from '/js/admin-logic.js?v=f5547d5b';
 import { listGroup } from '/js/admin-drag-logic.js?v=4aae5094';
-import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=bd5c802f';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=b563b7cf';
 import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=290ab8cb';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=7828f8bc';
 import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=14d4695d';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { sizeLabel } from '/js/admin-widget-form.js?v=a4c22f2d';
+import { sizeLabel } from '/js/admin-widget-form.js?v=9704cdbb';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=c1502c58';
 import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 

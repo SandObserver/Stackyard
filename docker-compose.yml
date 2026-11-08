@@ -46,11 +46,14 @@ services:
       #
       # Socket proxy URL for Docker container health monitoring.
       - SOCKET_PROXY_URL=${SOCKET_PROXY_URL:-}
-      # Set to true if behind a reverse proxy (Nginx Proxy Manager, Traefik, etc.)
+      # Only for a proxy you cannot name in TRUSTED_PROXY: set to true to
+      # believe its X-Forwarded-Proto. TRUSTED_PROXY alone already does this.
       - TRUST_PROXY=${TRUST_PROXY:-}
-      # Where your reverse proxy is, if you have one in front (Nginx Proxy
-      # Manager, Caddy, Traefik), for example 172.18.0.0/16. Without this, every
-      # request through it counts as one client for rate limiting. See
+      # Your reverse proxy's container name or address, if you have one in
+      # front (Nginx Proxy Manager, Caddy, Traefik), for example traefik.
+      # Without this, every request through it counts as one client for rate
+      # limiting. Avoid a whole network such as 172.18.0.0/16: every address
+      # in it can then fake its client address. See
       # https://stackyard.sandobserver.com/docs/reverse-proxy/.
       - TRUSTED_PROXY=${TRUSTED_PROXY:-}
       # Memory used per password hash. Default 16mib suits small hardware;

@@ -7,6 +7,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 const resolver = require('../src/resolve');
+const localNetworks = require('../src/local-networks');
 const { getHostIp, shouldSkipTls, isPrivateAddress, embeddedIPv4, _internals } = require('../src/proxy');
 /* guardSsrf/fetchJSON are private to proxy.js: routes go through the
    fetchChecked/fetchUnchecked boundary. Tests reach the primitives directly. */
@@ -68,17 +69,18 @@ test('guardSsrf blocks IPv4-mapped and NAT64 loopback/metadata literals', async 
     'http://[::7f00:1]/',
     'http://[::127.0.0.1]/',
     'http://[::ffff:7f00:1]/',
-    'http://[::ffff:a9fe:a9fe]/',
     'http://[64:ff9b::7f00:1]/',
     'http://[::1]/',
   ]) {
     const r = await guardSsrf(u);
     assert.match(r.error || '', /private address/, `${u} should be blocked`);
   }
+  assert.equal((await guardSsrf('http://[::ffff:a9fe:a9fe]/')).reason, 'link-local');
 });
 
 test('guardSsrf resolves a dotless Docker service name, allows its private address and pins it', async t => {
   t.mock.method(resolver, 'resolveHost', async () => ({ address: '172.18.0.5', family: 4 }));
+  t.mock.method(localNetworks, 'onLocalNetwork', () => true);
   assert.deepEqual(await guardSsrf('http://navidrome:4533'), { error: null, ip: '172.18.0.5' });
 });
 
@@ -87,7 +89,8 @@ test('guardSsrf blocks a dotless name that resolves to loopback, link-local or t
     t.mock.method(resolver, 'resolveHost', async () => ({ address, family: address.includes(':') ? 6 : 4 }));
     for (const name of ['ip6-localhost', 'ip6-loopback', 'homelab']) {
       const r = await guardSsrf(`http://${name}:8080/`);
-      assert.equal(r.reason, 'private-address', `${name} -> ${address}`);
+      const reason = address === '169.254.169.254' || address === 'fe80::1' ? 'link-local' : 'private-address';
+      assert.equal(r.reason, reason, `${name} -> ${address}`);
       assert.equal(r.ip, null);
     }
   }
@@ -168,7 +171,7 @@ test('guardSsrf blocks a name that resolves to the link-local metadata IP', asyn
   t.mock.method(resolver, 'resolveHost', async () => ({ address: '169.254.169.254', family: 4 }));
   const r = await guardSsrf('http://rebind.example.com/');
   assert.equal(r.ip, null);
-  assert.match(r.error, /private IP/);
+  assert.equal(r.reason, 'link-local');
 });
 
 test('guardSsrf blocks when the hostname cannot be resolved', async t => {

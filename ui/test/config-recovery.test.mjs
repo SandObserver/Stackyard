@@ -117,3 +117,12 @@ test('a refused setup names the right fix', () => {
   assert.equal(setupCodeErrorKey({ code: 'invalid' }), 'setup.failed');
   assert.equal(setupCodeErrorKey(null), 'setup.failed');
 });
+
+test('a refused request that came through a proxy says so, and names the same host', () => {
+  const direct = screenFor({ code: 'blocked.host', detail: { host: '10.0.0.5' } });
+  const proxied = screenFor({ code: 'blocked.host', detail: { host: '10.0.0.5', proxied: true } });
+  assert.equal(direct.why.key, 'hostBlock.why');
+  assert.equal(proxied.why.key, 'hostBlock.whyProxied');
+  assert.deepEqual(proxied.why.vars, { host: '10.0.0.5' });
+  assert.equal(screenFor({ code: 'blocked.host', detail: { host: 'x', proxied: 'yes' } }).why.key, 'hostBlock.why');
+});
