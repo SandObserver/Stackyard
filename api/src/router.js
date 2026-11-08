@@ -6,6 +6,7 @@ const { refusedHost } = require('./host-check');
 const setupCode = require('./setup-code');
 const log = require('./log');
 const { tryDecode } = require('./percent-decode');
+const { LOOPBACK, proxied } = require('./front-proxy');
 
 const SETUP_PATH = '/api/auth/setup-password';
 const PUBLIC_PATHS = new Set(['/health', '/api/auth/login', '/api/auth/check', SETUP_PATH]);
@@ -62,7 +63,7 @@ function route(req, res) {
         error: 'Forbidden: this address is not allowed while no password is set',
         kind: 'blocked',
         code: HOST_BLOCKED_CODE,
-        detail: { host: host.slice(0, 255) },
+        detail: proxied(req) ? { host: host.slice(0, 255), proxied: true } : { host: host.slice(0, 255) },
       });
     }
   }
@@ -149,8 +150,6 @@ function readBodyCapped(req, max) {
 /* Trust X-Real-IP only over loopback, where our own nginx is the only thing that
    can set it. Do not parse a header chain: nginx has already resolved the real
    client from TRUSTED_PROXY. */
-const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
-
 function getIp(req) {
   const peer = req.socket?.remoteAddress || '';
   if (LOOPBACK.has(peer)) {

@@ -12,19 +12,19 @@
    reads and writes them too. */
 
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { snapshotItems } from '/js/admin-save-logic.js?v=35fcc1c7';
-import { isShownChild, reorderItems, shownChildren, topLevelRows } from '/js/admin-logic.js?v=cf072e65';
+import { snapshotItems } from '/js/admin-save-logic.js?v=8f3b48f6';
+import { isShownChild, reorderItems, shownChildren, topLevelRows } from '/js/admin-logic.js?v=1526c452';
 import { listGroup } from '/js/admin-drag-logic.js?v=4aae5094';
-import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=6655c630';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=4274295b';
 import { DOCK_MAX } from '/js/limits.js?v=e5b1e2ba';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=ca2a38f6';
-import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=14d4695d';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=658f8ff9';
+import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=f0b9b030';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { sizeLabel } from '/js/admin-widget-form.js?v=7933f73d';
+import { sizeLabel } from '/js/admin-widget-form.js?v=89cf3a8c';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=c1502c58';
 import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 
@@ -423,7 +423,7 @@ function draw(l) {
   topLevelRows(state.items, false).forEach(item => {
     homeGrp.appendChild(mkRow(item, state.items.indexOf(item)));
     if (item.type === 'folder' && !collapsedFolders.has(item.id)) {
-      (item.children || []).forEach((childId, ci) => {
+      (Array.isArray(item.children) ? item.children : []).forEach((childId, ci) => {
         if (!isShownChild(state.items, childId)) return;
         const childItem = state.items.find(i => i.id === childId);
         homeGrp.appendChild(

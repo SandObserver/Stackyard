@@ -198,6 +198,10 @@ export function needsCurrentPassword({ enabled, wasEnabled, passwordSet, newPass
   return !!wasEnabled && !!passwordSet && (!enabled || !!(newPassword || '').length);
 }
 
+export function needsSetupCode({ enabled, passwordSet, newPassword }) {
+  return !!enabled && !passwordSet && !!(newPassword || '').length;
+}
+
 /* 'unavailable' must not fall through to the custom editor. The server
    withholds that widget's config, so empty fields read as lost settings. */
 export function widgetConfigMode(type, reg) {
@@ -416,4 +420,14 @@ export function singleChoice(value, options) {
   if (value == null) return [];
   const v = String(value);
   return v !== '' || options.some(o => o.group == null && String(o.value) === '') ? [v] : [];
+}
+
+/** @param {unknown} url @returns {string} the last path segment, decoded when it can be */
+export function wallpaperFileName(url) {
+  const last = String(url).split('/').pop() || '';
+  try {
+    return decodeURIComponent(last);
+  } catch {
+    return last;
+  }
 }

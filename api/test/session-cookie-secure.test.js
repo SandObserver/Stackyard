@@ -63,3 +63,26 @@ test('clearing the cookie keeps its flags and expires it at once', () => {
   assert.match(cleared, /HttpOnly/);
   assert.match(cleared, /Max-Age=0$/);
 });
+
+test('a page loaded over https is secure, by its Origin or its Referer', () => {
+  assert.equal(isSecureRequest(request({ origin: 'https://dash.example.com' })), true);
+  assert.equal(isSecureRequest(request({ referer: 'https://dash.example.com/admin/' })), true);
+  assert.equal(isSecureRequest(request({ origin: 'http://192.168.1.10:8700' })), false);
+  assert.equal(isSecureRequest(request({ referer: 'http://192.168.1.10:8700/' })), false);
+  assert.equal(isSecureRequest(request({ origin: 'null' })), false);
+});
+
+test('a page over http is not made secure by a Referer it does not send', () => {
+  assert.equal(
+    isSecureRequest(request({ origin: 'http://192.168.1.10', referer: 'https://elsewhere.example/' })),
+    false,
+    'Origin wins: it names this request’s page',
+  );
+});
+
+test('a proxy named in TRUSTED_PROXY reporting https is secure, through this nginx only', () => {
+  const via = (peer, value) => ({ headers: { 'x-stackyard-https': value }, socket: { remoteAddress: peer } });
+  assert.equal(isSecureRequest(via('127.0.0.1', '1')), true);
+  assert.equal(isSecureRequest(via('127.0.0.1', '0')), false);
+  assert.equal(isSecureRequest(via('172.18.0.5', '1')), false);
+});

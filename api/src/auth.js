@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const net = require('net');
 const { loadConfig, loadConfigForUpdate, saveConfig } = require('./config');
 const { decodeOrRaw } = require('./percent-decode');
+const { trustedProxyHttps } = require('./front-proxy');
 const log = require('./log');
 
 const SECRET_BYTES = 32,
@@ -71,13 +72,52 @@ function _activeProfile() {
 const _b64 = buf => buf.toString('base64').replace(/=+$/, '');
 const _unb64 = str => Buffer.from(str, 'base64');
 
-const _scrypt = (password, salt, params) =>
-  new Promise((resolve, reject) => {
-    const { ln, r, p } = params;
-    crypto.scrypt(password, salt, SCRYPT_KEYLEN, { N: 2 ** ln, r, p, maxmem: _maxmemFor(params) }, (err, key) =>
-      err ? reject(err) : resolve(key),
-    );
+/* Keep one hash at a time. From 64mib up, parallel hashes exceed the
+   container's memory limit: the kernel kills the API and every login counter
+   resets. */
+const HASH_QUEUE_MAX = 16;
+let _hashing = false;
+/** @type {Array<() => void>} */
+const _hashQueue = [];
+
+class HashBusyError extends Error {
+  constructor() {
+    super('too many password checks are waiting');
+    this.busy = true;
+  }
+}
+
+const hashQueueFull = () => _hashing && _hashQueue.length >= HASH_QUEUE_MAX;
+
+/** @template T @param {() => Promise<T>} task @returns {Promise<T>} */
+function _oneAtATime(task) {
+  if (hashQueueFull()) return Promise.reject(new HashBusyError());
+  return new Promise((resolve, reject) => {
+    const run = () => {
+      _hashing = true;
+      task()
+        .then(resolve, reject)
+        .finally(() => {
+          const next = _hashQueue.shift();
+          if (next) next();
+          else _hashing = false;
+        });
+    };
+    if (_hashing) _hashQueue.push(run);
+    else run();
   });
+}
+
+const _scrypt = (password, salt, params) =>
+  _oneAtATime(
+    () =>
+      new Promise((resolve, reject) => {
+        const { ln, r, p } = params;
+        crypto.scrypt(password, salt, SCRYPT_KEYLEN, { N: 2 ** ln, r, p, maxmem: _maxmemFor(params) }, (err, key) =>
+          err ? reject(err) : resolve(key),
+        );
+      }),
+  );
 
 /* Do not change the form. Every stored hash depends on it. */
 const _nfc = password => password.normalize('NFC');
@@ -144,6 +184,7 @@ async function _derivedMatches(password, parsed) {
   try {
     derived = await _scrypt(password, parsed.salt, parsed.params);
   } catch (e) {
+    if (e.busy) throw e;
     log.error('password verification failed', { error: e.message });
     return false;
   }
@@ -237,11 +278,22 @@ const TRUST_PROXY = process.env.TRUST_PROXY === 'true';
    the browser and breaks login with no visible error. */
 function isSecureRequest(req) {
   if (req.socket?.encrypted) return true;
+  if (trustedProxyHttps(req)) return true;
   if (TRUST_PROXY) {
     const proto = req.headers['x-forwarded-proto'];
     if (proto && proto.split(',')[0].trim().toLowerCase() === 'https') return true;
   }
-  return false;
+  return pageScheme(req) === 'https:';
+}
+
+function pageScheme(req) {
+  const source = req.headers.origin || req.headers.referer;
+  if (typeof source !== 'string') return null;
+  try {
+    return new URL(source).protocol;
+  } catch {
+    return null;
+  }
 }
 
 function setSessionCookie(res, token, secure, maxAgeMs = SESSION_MAX_AGE_MS) {
@@ -329,6 +381,11 @@ function loginWaitMinutes(ip) {
 
 function clearAttempts(ip) {
   _loginAttempts.delete(ip);
+}
+
+function refundLoginAttempt(ip) {
+  const rec = _loginAttempts.get(ip);
+  if (rec && rec.count > 0) rec.count -= 1;
 }
 
 const _rateBuckets = new Map();
@@ -456,6 +513,7 @@ module.exports = {
   newSessionSecret,
   newSessionId,
   hashPassword,
+  hashQueueFull,
   verifyPassword,
   matchPassword,
   attemptAddress,
@@ -478,12 +536,14 @@ module.exports = {
   registerLoginAttempt,
   loginWaitMinutes,
   clearAttempts,
+  refundLoginAttempt,
   rateLimit,
   isAuthenticated,
   hasValidSession,
   stripDisabledCredentials,
   _resetRateLimits: () => _rateBuckets.clear(),
   _rateBucketCount: () => _rateBuckets.size,
+  LOGIN_WINDOW_MS,
   SESSION_MAX_AGE_MS,
   SESSION_ABSOLUTE_MS,
   RENEW_AFTER_MS,

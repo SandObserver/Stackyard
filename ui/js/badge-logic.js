@@ -252,7 +252,7 @@ export function computeBadgeVisual({
   const top = fired[0];
   const rows = [];
   const active = top ? true : activity >= min;
-  const fixed = !!(staticBdg.enabled && staticBdg.label);
+  const fixed = !!(staticBdg.enabled && staticBdg.label && typeof staticBdg.label === 'string');
   let cls,
     num = '',
     unit = '',
@@ -269,7 +269,7 @@ export function computeBadgeVisual({
   } else if (active) {
     cls = 'badge on blue';
     num = activity > 99 ? `${fmt(99)}+` : fmt(activity);
-    unit = custom.unit ? custom.unit.slice(0, 8) : '';
+    unit = typeof custom.unit === 'string' ? custom.unit.slice(0, 8) : '';
     bg = cssUsableColor(custom.color, palette);
   } else if (fixed) {
     cls = 'badge on blue';

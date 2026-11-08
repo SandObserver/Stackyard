@@ -29,7 +29,7 @@ export async function loadLocalIcons() {
 const iconPath = filename => `/icons/${encodeURIComponent(filename)}`;
 
 export function resolveIcon(raw) {
-  if (!raw) return '';
+  if (typeof raw !== 'string' || !raw) return '';
   raw = raw.trim();
   if (raw.startsWith('http://') || raw.startsWith('https://')) {
     const filename = raw.split('/').pop().split('?')[0];
@@ -108,7 +108,7 @@ export function throughServer(url) {
 }
 
 export function iconChain(rawIcon) {
-  if (!rawIcon) return [];
+  if (typeof rawIcon !== 'string' || !rawIcon) return [];
   const localUrl = resolveIcon(rawIcon);
   if (rawIcon.startsWith('http://') || rawIcon.startsWith('https://')) {
     const chain = localUrl && localUrl !== rawIcon ? [localUrl] : [];

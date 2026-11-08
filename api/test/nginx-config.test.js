@@ -580,3 +580,27 @@ test('catalogue icons keep the lifetime the API names, and every other reply is 
   assert.match(map, /""\s+"no-store";/);
   assert.match(map, /default\s+"";/);
 });
+
+/* The API reads both headers as nginx's word. A location that does not set them
+   passes a client's own value through. */
+test('every API location sets the proxy and https flags itself', () => {
+  const blocks = [...dashboard.matchAll(/location\s+[^{]*\{([\s\S]*?)\n {4}\}/g)].map(m => m[0]);
+  const api = blocks.filter(b => /proxy_pass\s+http:\/\/127\.0\.0\.1:3000;/.test(b));
+  assert.ok(api.length >= 5, `found ${api.length} API locations`);
+  for (const block of api) {
+    const name = block.split('{')[0].trim();
+    assert.match(block, /proxy_set_header\s+X-Stackyard-Proxied\s+\$stackyard_proxied;/, name);
+    assert.match(block, /proxy_set_header\s+X-Stackyard-Https\s+\$stackyard_https;/, name);
+    assert.match(block, /proxy_set_header\s+X-Stackyard-Trusted-Peer\s+\$stackyard_trusted_peer;/, name);
+  }
+});
+
+test('a request is flagged as proxied by any forwarding header a proxy adds', () => {
+  const map = /map\s+"([^"]+)"\s+\$stackyard_proxied\s*\{([\s\S]*?)\}/.exec(dashboard);
+  assert.ok(map, 'the proxied map is gone');
+  for (const header of ['x_forwarded_for', 'forwarded', 'x_forwarded_host', 'x_forwarded_proto', 'x_real_ip', 'via']) {
+    assert.match(map[1], new RegExp(`\\$http_${header}(?![a-z_])`), header);
+  }
+  assert.match(map[2], /""\s+"0";/);
+  assert.match(map[2], /default\s+"1";/);
+});

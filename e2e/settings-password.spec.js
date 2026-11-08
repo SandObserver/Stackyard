@@ -53,3 +53,37 @@ test('the reveal button shows both fields and keeps the row open', async ({ page
   await expect(field).toBeFocused();
   await expect(eye.locator('use')).toHaveAttribute('href', /-eye-slash$/);
 });
+
+test('a first password asks for the setup code, and a wrong code keeps the dialog open', async ({ page }) => {
+  /** @type {any[]} */
+  const bodies = [];
+  const replies = [
+    { status: 403, json: { error: 'The setup code is incorrect.', kind: 'invalid', code: 'invalid.setup-code' } },
+    { json: { ok: true } },
+  ];
+  await page.route('**/api/auth/set-password', route => {
+    bodies.push(route.request().postDataJSON());
+    return route.fulfill(/** @type {any} */ (replies.shift()));
+  });
+  await page.route('**/api/auth/toggle', route => route.fulfill({ json: { ok: true } }));
+  await setInlineRow(page, 'ie-pw', 'sec-pw', NEW);
+  await setInlineRow(page, 'ie-pw2', 'sec-pw2', NEW);
+  await page.locator('#srv-save').click();
+
+  const prompt = page.locator('dialog.dlg-box');
+  const field = prompt.getByLabel('Setup code');
+  await expect(field).toBeFocused();
+  await expect(prompt).toContainText('Enter the setup code from the container log.');
+  await field.fill('WRONG-CODE');
+  await prompt.getByRole('button', { name: 'Save' }).click();
+  await expect(prompt.locator('.dlg-err')).toHaveText(
+    'The setup code is incorrect. Copy it again from the container log.',
+  );
+  await expect(field).toBeFocused();
+
+  await field.fill('ABCD-EFGH');
+  await prompt.getByRole('button', { name: 'Save' }).click();
+  await expect(prompt).toHaveCount(0);
+  expect(bodies.map(b => b.code)).toEqual(['WRONG-CODE', 'ABCD-EFGH']);
+  expect(bodies[1].password).toBe(NEW);
+});

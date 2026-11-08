@@ -12,6 +12,7 @@ require('../src/routes');
 const { dispatch } = require('../src/router');
 const { loadConfig, loadConfigForUpdate, saveConfig } = require('../src/config');
 const { hashPassword, authActive, makeToken, clearAttempts } = require('../src/auth');
+const { firstPasswordCode } = require('../test-support/setup-code');
 
 const SECRET = 'a'.repeat(64);
 let server, base;
@@ -294,7 +295,7 @@ test('a session token from before the switch off is not honoured again', async (
   const cookie = 'ds=' + makeToken('s1', SECRET);
 
   await req('POST', '/api/auth/toggle', { enabled: false, currentPassword: 'correct-horse' }, cookie);
-  await req('POST', '/api/auth/set-password', { password: 'a-brand-new-one' });
+  await req('POST', '/api/auth/set-password', { password: 'a-brand-new-one', code: firstPasswordCode() });
 
   assert.equal((await req('GET', '/api/config', null, cookie)).status, 401);
 });
@@ -321,7 +322,8 @@ test('a locked install lets the admin back in', async () => {
 
 test('a locked install accepts a password, and auth then takes effect', async () => {
   saveLockedState();
-  assert.equal((await req('POST', '/api/auth/set-password', { password: 'correct-horse-battery' })).status, 200);
+  const code = firstPasswordCode();
+  assert.equal((await req('POST', '/api/auth/set-password', { password: 'correct-horse-battery', code })).status, 200);
   assert.equal((await req('GET', '/api/config')).status, 401, 'auth should apply again immediately');
 });
 

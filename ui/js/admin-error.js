@@ -19,6 +19,7 @@ export const TONE = Object.freeze({ WARN: 'warn', ERROR: 'error' });
 
 const BY_CODE = Object.freeze({
   'blocked.private-address': 'adminError.privateAddress',
+  'blocked.link-local': 'adminError.linkLocal',
   'invalid.retype': 'adminError.retype',
   'upstream.redirect': 'adminError.redirect',
   'upstream.too-large': 'adminError.responseTooLarge',
@@ -34,9 +35,14 @@ const BY_CODE = Object.freeze({
   'upstream.too-many-containers': 'toast.importDockerTooLarge',
   'blocked.unresolved': 'adminError.unreachable',
   'invalid.duplicate-id': 'adminError.duplicateId',
+  'invalid.keep-current-address': 'toast.allowedHostsKeepCurrent',
+  'invalid.duplicate-row-id': 'adminError.duplicateRowId',
   'invalid.missing-children': 'adminError.missingChildren',
   'invalid.bad-children': 'adminError.badChildren',
   'invalid.unsafe-link': 'adminError.unsafeLink',
+  'invalid.bad-item': 'adminError.badItem',
+  'invalid.reserved-id': 'adminError.reservedId',
+  'invalid.bad-setting': 'adminError.badSetting',
   'invalid.dock-full': 'app.dockFull',
   'invalid.config-too-large': 'adminError.configTooLarge',
   'invalid.newer-config': 'adminError.newerConfig',
@@ -176,5 +182,6 @@ export function setupErrorKey(e) {
   if (kind === KIND.AUTH || code === 'invalid.password-changed') return 'toast.passwordChangedElsewhere';
   if (code === 'invalid.password-common') return 'pwStrength.common';
   if (code?.startsWith('internal.') && BY_CODE[code]) return BY_CODE[code];
+  if (code === 'invalid.setup-code') return 'hostBlock.codeWrong';
   return 'setup.failed';
 }
