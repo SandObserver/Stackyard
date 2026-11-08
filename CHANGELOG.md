@@ -102,6 +102,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Failed saves now say why: full disk, no write access, a file mounted on its
   own, or a config over the size limit.
 
+- Turning protection off no longer deletes a password that was changed while the
+  old one was being checked.
+
 ### Security
 
 - Refuse sign-in and password requests larger than 32 KB, so parallel large
