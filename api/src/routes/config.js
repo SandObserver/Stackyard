@@ -8,7 +8,7 @@ const { fail, KIND } = require('../api-error');
 const { firstUnsafeLink } = require('../../../ui/js/link-url.js');
 const { DOCK_MAX, ITEMS_MAX, clampName } = require('../../../ui/js/limits.js');
 const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
-const { rewriteChanged, duplicateRowId } = require('../secret-scope');
+const { rewriteChanged, duplicateRowId, stableEqual } = require('../secret-scope');
 const { getRegistry } = require('../widgets');
 const { firstMalformedRow } = require('../badge-headers');
 const backoff = require('../poll-backoff');
@@ -16,6 +16,7 @@ const { stripDisabledCredentials } = require('../auth');
 const { pruneWallpapers } = require('./wallpaper');
 const { normalizeHostList } = require('../../../ui/js/host-names.js');
 const { scrubProxmox, preserveProxmox } = require('../proxmox');
+const { firstBadItemField, takesReservedId, firstBadFolderChild, firstBadSetting } = require('../config-validate');
 
 /* Real configs nest under 10 levels. Far deeper input is written to disk and
    then breaks every read of the config. */
@@ -30,6 +31,7 @@ function configSize(cfg) {
 }
 
 const MAX_DEPTH = 32;
+const valueAt = (o, path) => path.split('.').reduce((v, k) => v?.[k], o);
 function tooDeep(v, depth = 0) {
   if (!v || typeof v !== 'object') return false;
   if (depth >= MAX_DEPTH) return true;
@@ -99,6 +101,42 @@ on('POST', '/api/config', async (req, res) => {
       });
     const bad = data.items.find(i => !i || typeof i.id !== 'string' || !i.id || typeof i.type !== 'string' || !i.type);
     if (bad) return json(res, 400, { error: 'every item needs a non-empty id and type', kind: KIND.INVALID });
+    const storedConfig = loadConfig();
+    const storedById = new Map((storedConfig.items || []).map(i => [i.id, i]));
+    for (const item of data.items) {
+      const stored = storedById.get(item.id);
+      const field = firstBadItemField(item);
+      /* Keep the comparison. Refusing a value already stored blocks every save
+         on an install with no way to fix it. */
+      if (
+        field &&
+        !(stored && firstBadItemField(stored) === field && stableEqual(valueAt(stored, field), valueAt(item, field)))
+      ) {
+        return json(res, 400, {
+          error: `${item.id}: ${field} holds a value of the wrong type`,
+          kind: KIND.INVALID,
+          code: 'invalid.bad-item',
+          detail: { id: item.id, field },
+        });
+      }
+      if (takesReservedId(item) && !(stored && takesReservedId(stored))) {
+        return json(res, 400, {
+          error: 'the id settings is reserved for the Settings tile',
+          kind: KIND.INVALID,
+          code: 'invalid.reserved-id',
+          detail: { id: item.id },
+        });
+      }
+    }
+    const badSetting = firstBadSetting(data.settings);
+    if (badSetting && firstBadSetting(storedConfig.settings) !== badSetting) {
+      return json(res, 400, {
+        error: `settings.${badSetting} holds a value of the wrong type`,
+        kind: KIND.INVALID,
+        code: 'invalid.bad-setting',
+        detail: { id: badSetting },
+      });
+    }
     /* Lookups take the first match, so a second item sharing an id is
        unreachable. Refuse rather than rename: renaming changes what folder
        children point at. */
@@ -133,6 +171,19 @@ on('POST', '/api/config', async (req, res) => {
           error: `${item.id}: children point at items that are not here: ${dangling.join(', ')}`,
           kind: KIND.INVALID,
           code: 'invalid.missing-children',
+          detail: { id: item.id },
+        });
+      }
+    }
+    const byId = new Map(data.items.map(i => [i.id, i]));
+    for (const item of data.items) {
+      if (item.children == null) continue;
+      const child = firstBadFolderChild(item, byId);
+      if (child !== null && !storedById.get(item.id)?.children?.includes?.(child)) {
+        return json(res, 400, {
+          error: `${item.id}: ${child} cannot be inside a folder`,
+          kind: KIND.INVALID,
+          code: 'invalid.bad-children',
           detail: { id: item.id },
         });
       }

@@ -310,3 +310,10 @@ test('every chain outside the demo stays on this server', async () => {
       for (const u of iconChain(raw)) assert.match(u, /^\/(?!\/)/, `${raw} -> ${u}`);
   });
 });
+
+test('an icon value that is not text is no icon', () => {
+  for (const raw of [5, {}, [], true]) {
+    assert.equal(resolveIcon(raw), '');
+    assert.deepEqual(iconChain(raw), []);
+  }
+});
