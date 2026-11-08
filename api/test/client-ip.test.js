@@ -5,7 +5,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { execFileSync } = require('node:child_process');
+const { execFileSync, spawnSync } = require('node:child_process');
 
 const { getIp } = require('../src/router');
 
@@ -62,24 +62,40 @@ test('an unknown peer with no header is reported as unknown', () => {
 /* The entrypoint renders the trusted-proxy config from TRUSTED_PROXY. Running
    the real script matters here: the alternative is asserting on a copy of its
    logic, which would pass while the shipped script was broken. */
-function render(env) {
+function renderWithLog(env) {
   const dir = tmpDir('realip');
   const out = path.join(dir, 'run', 'realip.conf');
   const stubDir = path.join(dir, 'bin');
   fs.mkdirSync(stubDir);
+  const stub = (name, body) => {
+    fs.writeFileSync(path.join(stubDir, name), `#!/bin/sh\n${body}\n`);
+    fs.chmodSync(path.join(stubDir, name), 0o755);
+  };
   /* The script runs `nginx -t` before exec'ing; there is no nginx here. */
-  fs.writeFileSync(path.join(stubDir, 'nginx'), '#!/bin/sh\nexit 0\n');
-  fs.chmodSync(path.join(stubDir, 'nginx'), 0o755);
+  stub('nginx', 'exit 0');
+  stub('sleep', 'exit 0');
+  stub(
+    'getent',
+    [
+      'case "$2" in',
+      '  traefik) printf "172.20.0.7 STREAM traefik\\n172.20.0.7 DGRAM traefik\\nfd00::7 STREAM traefik\\n" ;;',
+      '  *) exit 2 ;;',
+      'esac',
+    ].join('\n'),
+  );
 
-  execFileSync('sh', entrypointArgs(dir, {}, ['true']), {
+  const r = spawnSync('sh', entrypointArgs(dir, {}, ['true']), {
     env: {
       PATH: `${stubDir}:${process.env.PATH}`,
       ...env,
     },
-    stdio: 'pipe',
+    encoding: 'utf8',
   });
-  return fs.readFileSync(out, 'utf8');
+  if (r.status !== 0) throw Object.assign(new Error(`entrypoint exited ${r.status}`), r);
+  return { conf: fs.readFileSync(out, 'utf8'), stderr: r.stderr };
 }
+
+const render = env => renderWithLog(env).conf;
 
 test('with no proxy configured, nothing is trusted', () => {
   const conf = render({});
@@ -112,13 +128,38 @@ test('an entry that is not an address or network stops the container', () => {
     '10.0.0.1;\rlocation\r/leak/\r{\ralias\r/data/;\r}\r#',
     '10.0.0.1;',
     '$(id)',
-    '172.18.0.0/16 proxy.example',
+    '172.18.0.0/16 proxy!example',
+    '-traefik',
   ]) {
     assert.throws(
       () => render({ TRUSTED_PROXY: value }),
-      err => err.status === 1 && /TRUSTED_PROXY entry is not an IP address or network/.test(String(err.stderr)),
+      err =>
+        err.status === 1 && /TRUSTED_PROXY entry is not an IP address, network or host name/.test(String(err.stderr)),
       JSON.stringify(value),
     );
+  }
+});
+
+test('a proxy name is trusted as its own addresses only', () => {
+  const conf = render({ TRUSTED_PROXY: 'traefik' });
+  assert.deepEqual(conf.match(/^set_real_ip_from .*$/gm), [
+    'set_real_ip_from 172.20.0.7;',
+    'set_real_ip_from fd00::7;',
+  ]);
+  assert.match(conf, /^real_ip_header X-Forwarded-For;$/m);
+});
+
+test('a proxy name that does not resolve is not trusted and does not stop the container', () => {
+  const { conf, stderr } = renderWithLog({ TRUSTED_PROXY: 'not-running 10.0.0.5' });
+  assert.deepEqual(conf.match(/^set_real_ip_from .*$/gm), ['set_real_ip_from 10.0.0.5;']);
+  assert.match(stderr, /TRUSTED_PROXY name "not-running" did not resolve/);
+});
+
+test('a whole network is trusted but warned about; one address is not', () => {
+  assert.match(renderWithLog({ TRUSTED_PROXY: '172.18.0.0/16' }).stderr, /trusts a whole network/);
+  assert.match(renderWithLog({ TRUSTED_PROXY: 'fd00::/8' }).stderr, /trusts a whole network/);
+  for (const one of ['10.0.0.5', '10.0.0.5/32', 'fd00::5/128', 'traefik']) {
+    assert.doesNotMatch(renderWithLog({ TRUSTED_PROXY: one }).stderr, /whole network/, one);
   }
 });
 

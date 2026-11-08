@@ -161,3 +161,10 @@ test('an error status from the address carries the status for the UI to word', a
   assert.equal(r.body.code, 'upstream.status');
   assert.deepEqual(r.body.detail, { status: 500 });
 });
+
+test('a metadata address is refused as blocked, not as a network failure', async () => {
+  const r = await probe('http://169.254.169.254:2375');
+  assert.equal(r.body.ok, false);
+  assert.equal(r.body.fatal, true);
+  assert.equal(r.body.code, 'blocked.link-local');
+});

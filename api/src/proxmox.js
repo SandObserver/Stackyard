@@ -1,4 +1,5 @@
-const { fetchUnchecked, pingErrorText } = require('./proxy');
+const crypto = require('node:crypto');
+const { fetchUnchecked, pingErrorText, SsrfBlockedError } = require('./proxy');
 const { KIND } = require('./api-error');
 const { latest } = require('./latest');
 const { BATCH_MS, PING_MS } = require('./timeouts');
@@ -93,13 +94,16 @@ async function listGuests(conn, timeout) {
 
 /** @returns {Promise<{ guests: Map<number, { status: string }> } | { error: string, code?: string }>} */
 async function guestStates(conn) {
-  const key = `proxmox:${conn.url}|${conn.tokenId}|${conn.skipTlsVerify}`;
+  const secret = crypto.createHash('sha256').update(String(conn.secret)).digest('base64url');
+  const key = `proxmox:${conn.url}|${conn.tokenId}|${conn.skipTlsVerify}|${secret}`;
   const o = await latest(key, () => listGuests(conn, BATCH_MS), { holdMs: BATCH_MS, keepMs: GUESTS_KEEP_MS });
   if (!o) return { error: 'Proxmox did not answer in time.', code: 'timeout.no-answer' };
   if (!o.ok)
     return o.error instanceof ProxmoxError
       ? { error: o.error.message, code: o.error.apiCode }
-      : { error: pingErrorText(o.error) };
+      : o.error instanceof SsrfBlockedError
+        ? { error: o.error.message, code: `blocked.${o.error.detail?.reason}` }
+        : { error: pingErrorText(o.error) };
   return { guests: new Map(o.value.map(g => [g.vmid, { status: g.status }])) };
 }
 

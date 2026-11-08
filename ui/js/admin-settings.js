@@ -1,38 +1,34 @@
+import { renderColorControl } from '/js/admin-color-control.js?v=081135bd';
+import { socketProbeAdvice } from '/js/admin-error.js?v=e8508191';
 import {
-  toast,
+  BLOCK,
+  clearsStoredPassword,
+  createDirtyTracker,
+  needsCurrentPassword,
+  needsSetupCode,
+  settingsSaveBlocker,
+  shouldWritePassword,
+  wallpaperFileName,
+} from '/js/admin-logic.js?v=1526c452';
+import { serialWrites } from '/js/admin-save-logic.js?v=525be427';
+import {
   apiGet,
   apiPost,
-  errorText,
-  reveal,
-  swapContent,
-  wireInlineEdit,
-  showFieldError,
   clearFieldError,
   clearFieldErrors,
   confirmSaved,
+  errorAction,
+  errorText,
+  reveal,
   sectionSave,
   setStatus,
-  errorAction,
-} from '/js/admin-shared.js?v=5d68da70';
-import { socketProbeAdvice } from '/js/admin-error.js?v=07227c65';
-import { passwordMeter, passwordMismatch, contextWords, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
-import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
-import { t } from '/js/i18n.js?v=ed7c5565';
-import {
-  shouldWritePassword,
-  settingsSaveBlocker,
-  clearsStoredPassword,
-  needsCurrentPassword,
-  createDirtyTracker,
-  BLOCK,
-  wallpaperFileName,
-} from '/js/admin-logic.js?v=ae672850';
-import { confirmText, promptModal } from '/js/modal.js?v=bd88cb9e';
-import { el, inp, qa, setUserText } from '/js/utils.js?v=f0b9b030';
-import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { serialWrites } from '/js/admin-save-logic.js?v=525be427';
-import { renderColorControl } from '/js/admin-color-control.js?v=7a8b9002';
+  showFieldError,
+  swapContent,
+  toast,
+  wireInlineEdit,
+} from '/js/admin-shared.js?v=4b6d9de6';
 import { BACKDROP } from '/js/background.js?v=7638c299';
+import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import {
   ALLOWED_HOSTS_MAX,
   firstBadHost,
@@ -40,6 +36,11 @@ import {
   isLocalAddress,
   parseHostList,
 } from '/js/host-names.js?v=98bf44d7';
+import { t } from '/js/i18n.js?v=ed7c5565';
+import { confirmText, promptModal } from '/js/modal.js?v=bd88cb9e';
+import { contextWords, passwordMeter, passwordMismatch, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
+import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
+import { el, inp, qa, setUserText } from '/js/utils.js?v=f0b9b030';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
@@ -266,7 +267,11 @@ export function loadSettings(c) {
   _sv('ie-pve-url-v', s.server?.proxmox?.url, t('common.notSet'));
   _sv('ie-pve-token-v', s.server?.proxmox?.tokenId, t('common.notSet'));
   showPveSecretState(!!s.server?.proxmox?.secretSet);
-  _sv('ie-hosts-v', (s.server?.allowedHosts || []).join(', '), t('general.allowedHostsNone'));
+  _sv(
+    'ie-hosts-v',
+    (Array.isArray(s.server?.allowedHosts) ? s.server.allowedHosts : []).join(', '),
+    t('general.allowedHostsNone'),
+  );
   _sv('ie-pw-v', '', t('common.notSet')); /* set below after auth check */
   const _si = (id, v) => {
     const node = inp(id);
@@ -278,7 +283,7 @@ export function loadSettings(c) {
   _si('srv-pve-token', s.server?.proxmox?.tokenId || '');
   const pveTls = inp('srv-pve-tls');
   if (pveTls) pveTls.checked = s.server?.proxmox?.skipTlsVerify === true;
-  _si('srv-hosts', (s.server?.allowedHosts || []).join(', '));
+  _si('srv-hosts', (Array.isArray(s.server?.allowedHosts) ? s.server.allowedHosts : []).join(', '));
   _sv('ie-bgcol-v', s.background?.collection, t('common.notSet'));
   _si('bg-col-inp', s.background?.collection || '');
   _si('bg-url-inp', s.background?.url || '');
@@ -558,6 +563,7 @@ const PASSWORD_ERROR_KEYS = Object.freeze({
   'invalid.password-short': REFUSAL_KEYS.short,
   'invalid.password-long': REFUSAL_KEYS.long,
   'invalid.password-common': REFUSAL_KEYS.common,
+  'invalid.setup-code': 'hostBlock.codeWrong',
 });
 const RETRY_IN_DIALOG = new Set(['invalid.current-password', 'blocked.rate-limit']);
 
@@ -632,7 +638,8 @@ async function saveServer() {
     if (!probe.ok) socketWarning = t('toast.socketUrlUnverified', { reason: socketReason }) + hint;
   }
 
-  const write = currentPassword => writeServer({ enabled, pw, currentPassword, allowedHosts, socketUrlTyped });
+  const write = (currentPassword, code) =>
+    writeServer({ enabled, pw, currentPassword, code, allowedHosts, socketUrlTyped });
 
   /** @type {{ langChanged: boolean } | undefined} */
   let done;
@@ -668,6 +675,24 @@ async function saveServer() {
       if (clearing) await syncAuthFromServer();
       return;
     }
+  } else if (needsSetupCode({ ...was, newPassword: pw })) {
+    const answer = await promptModal({
+      title: t('hostBlock.setupTitle'),
+      text: t('hostBlock.setupHelp'),
+      label: t('hostBlock.code'),
+      confirmLabel: t('common.save'),
+      cancelLabel: t('common.cancel'),
+      submit: async code => {
+        try {
+          done = await write(undefined, code);
+        } catch (e) {
+          if (/** @type {any} */ (e).code === 'invalid.setup-code') return t('hostBlock.codeWrong');
+          failure = e;
+        }
+        return null;
+      },
+    });
+    if (answer === null) return;
   } else {
     try {
       done = await write(undefined);
@@ -706,14 +731,14 @@ function clearNewPassword() {
   }
 }
 
-/** @param {{ enabled: boolean, pw: string, currentPassword: string|undefined,
+/** @param {{ enabled: boolean, pw: string, currentPassword: string|undefined, code?: string,
               allowedHosts: string[], socketUrlTyped: string }} args
     @returns {Promise<{ langChanged: boolean }>} */
-async function writeServer({ enabled, pw, currentPassword, allowedHosts, socketUrlTyped }) {
+async function writeServer({ enabled, pw, currentPassword, code, allowedHosts, socketUrlTyped }) {
   /* Keep before the config read. These writes bump the config revision, and
      a config save built on an earlier read is refused as stale. */
   if (shouldWritePassword({ enabled, newPassword: pw })) {
-    await apiPost('/api/auth/set-password', { password: pw, currentPassword });
+    await apiPost('/api/auth/set-password', { password: pw, currentPassword, code });
     clearNewPassword();
     const pwEl = inp('sec-pw');
     if (pwEl) pwEl.placeholder = `●●●●●●●●●● (${t('common.configured')})`;

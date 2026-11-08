@@ -552,6 +552,42 @@ test('POST /api/config refuses values a reader cannot use and leaves the file al
   assert.equal(unchanged.body._rev, initial.body._rev);
 });
 
+test('values already stored do not block a save, and new bad values are refused', async () => {
+  const initial = loadConfig();
+  const items = [
+    { id: 'a', type: 'app', label: 'A', href: 'https://a.invalid' },
+    { id: 'old', type: 'app', label: 1337, href: 'https://b.invalid' },
+    { id: 'w', type: 'widget', widgetType: 'clock', label: 'W' },
+    { id: 'f', type: 'folder', label: 'F', children: ['w'] },
+  ];
+  saveConfig({ ...initial, items });
+  try {
+    const same = await req('POST', '/api/config', { cookie: validCookie, body: { items, settings: {} } });
+    assert.equal(same.status, 200);
+    const added = await req('POST', '/api/config', {
+      cookie: validCookie,
+      body: { items: [...items, { id: 'new', type: 'app', label: 42, href: 'https://c.invalid' }], settings: {} },
+    });
+    assert.equal(added.status, 400);
+    assert.equal(added.body.code, 'invalid.bad-item');
+    assert.deepEqual(added.body.detail, { id: 'new', field: 'label' });
+  } finally {
+    saveConfig(initial);
+  }
+});
+
+test('an ordinary id cannot claim the Settings tile marker', async () => {
+  const r = await req('POST', '/api/config', {
+    cookie: validCookie,
+    body: {
+      items: [{ id: 'mine', type: 'app', label: 'M', href: 'https://m.invalid', system: 'settings' }],
+      settings: {},
+    },
+  });
+  assert.equal(r.status, 400);
+  assert.equal(r.body.code, 'invalid.reserved-id');
+});
+
 test('POST /api/config rejects a folder whose children are not a list of ids', async () => {
   const app = { id: 'a', type: 'app', label: 'A', href: 'https://a.invalid' };
   for (const children of ['a', { a: 1 }, [1], ['a', null]]) {

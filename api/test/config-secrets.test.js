@@ -388,6 +388,24 @@ test('without savedRow a removed row still withholds by position', () => {
   assert.deepEqual(withheld, [{ id: 'b1', label: 'b1' }]);
 });
 
+const ID_A = { ...DUP_A, id: 'a' };
+const ID_B = { ...DUP_B, id: 'b' };
+
+test('rows saved with ids keep their own secrets after a reorder', () => {
+  const next = backupWith([urlOnly(ID_B), urlOnly(ID_A)]);
+  const { withheld } = preserveAllSecrets(next, backupWith([ID_A, ID_B]));
+  assert.deepEqual(next.items[0].widgetConfig.slots, [ID_B, ID_A]);
+  assert.deepEqual(withheld, []);
+});
+
+test('a changed row that repeats a saved row id does not get that row secret', () => {
+  const moved = { provider: 'duplicati', dupUrl: 'http://evil:8200', id: 'a' };
+  const next = backupWith([{ ...urlOnly(ID_A), savedRow: 0 }, moved]);
+  preserveAllSecrets(next, backupWith([ID_A]));
+  assert.equal(next.items[0].widgetConfig.slots[0].dupPass, 'PASS-A');
+  assert.equal(next.items[0].widgetConfig.slots[1].dupPass, undefined);
+});
+
 const loginApp = (url, username, login = { username }) => ({
   items: [{ id: 'l1', type: 'app', monitoring: { activity: { enabled: true, url, login } } }],
 });

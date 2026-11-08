@@ -282,6 +282,12 @@ test('a field that reaches the request still takes the stored credential out of 
   }
 });
 
+test('a row posted without an id keeps the secret of its saved row that has one', () => {
+  const saved = { services: [{ id: 'svc_1', type: 'netbird', url: 'http://a', token: 'STORED' }] };
+  const posted = { services: [{ type: 'netbird', url: 'http://a', savedRow: 0 }] };
+  assert.equal(alignSavedConfig(posted, saved, connections).config.services[0].token, 'STORED');
+});
+
 /* ── alignSavedConfig ─────────────────────────────────────────────────────── */
 
 const backup = getRegistry().backup;

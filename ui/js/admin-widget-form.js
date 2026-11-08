@@ -1,12 +1,12 @@
+import { carriesTypedValues, rejectionLines, sizesForView, widgetConfigMode } from '/js/admin-logic.js?v=1526c452';
+import { initInlineEdit, PE_SVG, swapContent } from '/js/admin-shared.js?v=4b6d9de6';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { PE_SVG, initInlineEdit, swapContent } from '/js/admin-shared.js?v=5d68da70';
-import { createListbox } from '/js/listbox.js?v=f6816868';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=33ebcd10';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { sizesForView, widgetConfigMode, rejectionLines, carriesTypedValues } from '/js/admin-logic.js?v=ae672850';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { focusFirst, q, qi, qa } from '/js/utils.js?v=f0b9b030';
 import { iconSvg } from '/js/icon-set.js?v=b279fd98';
+import { createListbox } from '/js/listbox.js?v=5ab21954';
+import { focusFirst, q, qa, qi } from '/js/utils.js?v=f0b9b030';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=fc0d407e';
 
 const SIZES_WITH_ICONS = new Set(['small', 'medium', 'large', 'xlarge']);
 
@@ -30,7 +30,7 @@ export function buildWidgetForm(body, item) {
   const wc = item?.widgetConfig || {};
   state._wtype = wt;
   state._wsize = ws;
-  state._wlabel = item?.label || '';
+  state._wlabel = typeof item?.label === 'string' ? item.label : '';
   state._wAutoCfg = Object.assign({}, wc);
   _renderWidgetForm(body);
 }

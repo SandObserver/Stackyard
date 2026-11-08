@@ -25,7 +25,7 @@ function firstBadItemField(item) {
 /** The Settings tile takes this id. A second item holding it is stored as a
     duplicate, and every later save is refused.
     @param {any} item @returns {boolean} */
-const takesReservedId = item => item.id === 'settings' && item.system !== 'settings';
+const takesReservedId = item => (item.id === 'settings') !== (item.system === 'settings');
 
 /** The first folder child that is not an app, or null. This also refuses a
     folder that lists itself and folders that list each other.

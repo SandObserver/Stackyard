@@ -133,6 +133,8 @@ async function probeSocketProxy(url) {
       };
     return { ok: true, version: String(r.data.ApiVersion) };
   } catch (e) {
+    if (e?.name === 'SsrfBlockedError')
+      return { ok: false, fatal: true, error: e.message, code: `blocked.${e.detail?.reason}` };
     const host = bareHost(u.hostname);
     const code = errCode(e) ?? '';
     const fatal = WRONG_ADDRESS_CODES.has(code) || (!code && isLiteralAddress(host));

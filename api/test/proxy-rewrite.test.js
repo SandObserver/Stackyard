@@ -28,6 +28,7 @@ fs.writeFileSync(
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const resolver = require('../src/resolve');
+const localNetworks = require('../src/local-networks');
 const { rewriteUrl, _internals } = require('../src/proxy');
 const { guardSsrf } = _internals;
 
@@ -91,6 +92,7 @@ test('rewriting changes the host, so the guard must run after it', async () => {
 
 test('guarding the rewritten URL also passes, via the dotless-name branch', async t => {
   t.mock.method(resolver, 'resolveHost', async () => ({ address: '172.18.0.5', family: 4 }));
+  t.mock.method(localNetworks, 'onLocalNetwork', () => true);
   assert.deepEqual(await guardSsrf(rewriteUrl('http://192.168.1.50:8096/')), { error: null, ip: '172.18.0.5' });
 });
 
@@ -104,7 +106,7 @@ test('guarding the rewritten URL also passes, via the dotless-name branch', asyn
 test('guardSsrf blocks a private IPv6 literal rather than trusting it as a service name', async () => {
   for (const url of ['http://[fd00::1]/', 'http://[::1]/', 'http://[fe80::1]/']) {
     const r = await guardSsrf(url);
-    assert.match(String(r.error), /private address/, url);
+    assert.match(String(r.error), /private address|link-local/, url);
     assert.equal(r.ip, null, url);
   }
 });
@@ -118,5 +120,6 @@ test('guardSsrf blocks an IPv4-in-IPv6 wrapper around a loopback address', async
    narrow rather than a blanket refusal of short hostnames. */
 test('guardSsrf still trusts an ordinary dotless container name', async t => {
   t.mock.method(resolver, 'resolveHost', async () => ({ address: '172.18.0.5', family: 4 }));
+  t.mock.method(localNetworks, 'onLocalNetwork', () => true);
   assert.deepEqual(await guardSsrf('http://jellyfin:8096/'), { error: null, ip: '172.18.0.5' });
 });

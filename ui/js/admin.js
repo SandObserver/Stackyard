@@ -4,16 +4,16 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=ffa9691d';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=3a9b059a';
-import { recoveryShown } from '/js/config-recovery.js?v=c03e1465';
-import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=a5ade28c';
-import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=ae672850';
+} from '/js/admin-app-form.js?v=ede1d329';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=a3fa3635';
+import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=58e5127c';
+import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=1526c452';
 import {
   afterImport,
   buildAppItem,
   claimFolderChildren,
   importCounts,
+  keptWidget,
   newItemId,
   restoreBody,
   restoresSettings,
@@ -21,51 +21,49 @@ import {
   serialWrites,
   snapshotItems,
   upsertItem,
-  keptWidget,
 } from '/js/admin-save-logic.js?v=525be427';
 import {
+  applyHealthChecks,
   loadSettings,
   savedWallpaperUrl,
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-  wireUnsplashKey,
   wireProxmox,
-  applyHealthChecks,
-} from '/js/admin-settings.js?v=419abf88';
+  wireUnsplashKey,
+} from '/js/admin-settings.js?v=816c3d2a';
 import {
   apiGet,
   apiPost,
-  fadeIn,
-  initInlineEdit,
-  nameEditPen,
-  paintIcon,
-  reveal,
-  errorText,
-  responseError,
-  ShownError,
-  setReauthHandler,
-  swapContent,
-  showFieldError,
   clearFieldError,
   clearFieldErrors,
   confirmSaved,
   errorAction,
+  errorText,
+  fadeIn,
+  initInlineEdit,
+  nameEditPen,
+  paintIcon,
+  responseError,
+  reveal,
+  ShownError,
+  setReauthHandler,
+  showFieldError,
+  swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=5d68da70';
+} from '/js/admin-shared.js?v=4b6d9de6';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=b3c7bcc6';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=68c8e954';
+import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=7638c299';
+import { recoveryShown } from '/js/config-recovery.js?v=70ee5ca8';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=75a71ab4';
-import { createListbox } from '/js/listbox.js?v=f6816868';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
-import { loadLocalIcons } from '/js/icons.js?v=76c29d43';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=b279fd98';
-import { passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
-import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
+import { loadLocalIcons } from '/js/icons.js?v=76c29d43';
 import {
   clearSkipTls,
   convert,
@@ -79,17 +77,21 @@ import {
 } from '/js/import-foreign.js?v=9c454f6d';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { clampName } from '/js/limits.js?v=ea61a441';
+import { createListbox } from '/js/listbox.js?v=5ab21954';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=bd88cb9e';
+import { passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
+import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import {
-  THEME_KEY,
   applyTheme,
   prefersDark,
   readMode,
   resolveTheme,
+  THEME_KEY,
   watchSystemTheme,
   writeMode,
 } from '/js/theme.js?v=eeafa4b5';
 import {
+  clr,
   el,
   focusFirst,
   initial,
@@ -97,14 +99,12 @@ import {
   isolate,
   q,
   qa,
-  clr,
   setUserText,
   storeGet,
   storeSet,
   tgt,
   within,
 } from '/js/utils.js?v=f0b9b030';
-import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=7638c299';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
 
@@ -628,7 +628,7 @@ async function doSave(orig) {
         };
         if (Object.keys(ifo).length) item.iframe = ifo;
       } else if (orig) {
-        item = keptWidget(orig, wlabel, state._wsize);
+        item = keptWidget(orig, wlabel, orig.widgetSize);
       } else {
         return;
       }
