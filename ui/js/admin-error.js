@@ -35,6 +35,7 @@ const BY_CODE = Object.freeze({
   'upstream.too-many-containers': 'toast.importDockerTooLarge',
   'blocked.unresolved': 'adminError.unreachable',
   'invalid.duplicate-id': 'adminError.duplicateId',
+  'invalid.keep-current-address': 'toast.allowedHostsKeepCurrent',
   'invalid.duplicate-row-id': 'adminError.duplicateRowId',
   'invalid.missing-children': 'adminError.missingChildren',
   'invalid.bad-children': 'adminError.badChildren',
@@ -172,5 +173,6 @@ export function setupErrorKey(e) {
   const { kind, code } = readError(e);
   if (kind === KIND.AUTH || code === 'invalid.password-changed') return 'toast.passwordChangedElsewhere';
   if (code === 'invalid.password-common') return 'pwStrength.common';
+  if (code === 'invalid.setup-code') return 'hostBlock.codeWrong';
   return 'setup.failed';
 }

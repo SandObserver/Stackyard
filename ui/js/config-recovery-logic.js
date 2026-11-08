@@ -19,14 +19,15 @@ export const HOST_BLOCKED_CODE = 'blocked.host';
 export const PASSWORD_DAMAGED_CODE = 'auth.password-damaged';
 
 /** The address an API error body refuses, or null when it refuses none.
-    @param {unknown} body @returns {{ host: string } | null} */
+    @param {unknown} body @returns {{ host: string, proxied: boolean } | null} */
 export function readHostBlock(body) {
   if (!body || typeof body !== 'object') return null;
   const b = /** @type {Record<string, any>} */ (body);
   if (b.code !== HOST_BLOCKED_CODE) return null;
   const host = b.detail && typeof b.detail.host === 'string' ? b.detail.host : '';
   // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are what it refuses
-  return { host: /^[^\u0000-\u001f\u007f]{1,255}$/.test(host) ? host : '' };
+  const clean = /^[^\u0000-\u001f\u007f]{1,255}$/.test(host);
+  return { host: clean ? host : '', proxied: b.detail?.proxied === true };
 }
 
 /** The damage an API error body reports, or null when it reports none.
@@ -144,7 +145,7 @@ export function screenFor(body, fallbackHost = '') {
     const host = block.host || fallbackHost;
     return {
       title: 'hostBlock.title',
-      why: { key: 'hostBlock.why', vars: { host } },
+      why: { key: block.proxied ? 'hostBlock.whyProxied' : 'hostBlock.why', vars: { host } },
       safe: 'hostBlock.safe',
       stepsTitle: 'hostBlock.otherWays',
       steps: [
