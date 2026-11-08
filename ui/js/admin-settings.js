@@ -13,8 +13,8 @@ import {
   sectionSave,
   setStatus,
   errorAction,
-} from '/js/admin-shared.js?v=d63044eb';
-import { socketProbeAdvice } from '/js/admin-error.js?v=459ec4f1';
+} from '/js/admin-shared.js?v=c6c6bd4f';
+import { socketProbeAdvice } from '/js/admin-error.js?v=d5201a7b';
 import { passwordMeter, passwordMismatch, contextWords, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
 import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
 import { t } from '/js/i18n.js?v=ed7c5565';
@@ -31,7 +31,7 @@ import { confirmText, promptModal } from '/js/modal.js?v=bd88cb9e';
 import { el, inp, qa, setUserText } from '/js/utils.js?v=14d4695d';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { serialWrites } from '/js/admin-save-logic.js?v=35fcc1c7';
-import { renderColorControl } from '/js/admin-color-control.js?v=d7081f2f';
+import { renderColorControl } from '/js/admin-color-control.js?v=e9e89299';
 import { BACKDROP } from '/js/background.js?v=96567a38';
 import {
   ALLOWED_HOSTS_MAX,

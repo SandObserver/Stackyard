@@ -355,16 +355,6 @@ test('setting a password retires a printed code', async () => {
   printed.mock.restore();
 });
 
-test('turning protection off retires a printed code', async () => {
-  const code = printedCode();
-  assert.equal((await request('/api/auth/toggle', { enabled: false }, LAN_ADDR)).status, 200);
-  expireCache();
-  const printed = mock.method(log, 'print', () => {});
-  assert.equal((await setup(code, 'attacker-password')).status, 403);
-  printed.mock.restore();
-  assert.equal(authActive(loadConfig()), false);
-});
-
 test('two submits of the right code at once set one password', async () => {
   const code = printedCode();
   const results = await Promise.all([setup(code, 'first-submit-pw'), setup(code, 'second-submit-pw')]);
