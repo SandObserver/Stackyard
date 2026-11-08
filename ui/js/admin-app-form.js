@@ -9,7 +9,7 @@ import {
   throughServer,
 } from '/js/icons.js?v=76c29d43';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { DOCK_MAX } from '/js/limits.js?v=761ceea4';
+import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import {
   isDockBlocked,
@@ -37,11 +37,11 @@ import {
   errorAction,
   showFieldError,
   clearFieldError,
-} from '/js/admin-shared.js?v=81dc9e36';
+} from '/js/admin-shared.js?v=d728efe3';
 import { createListbox } from '/js/listbox.js?v=5ab21954';
 import { MAX_LABELS } from '/js/badge-logic.js?v=04a4ece8';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=21417bf2';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=373c6453';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=9be6e317';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=d1f8f6f4';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 

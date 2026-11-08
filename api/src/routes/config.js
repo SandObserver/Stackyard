@@ -1,12 +1,19 @@
 const { on, json, readBody, checkOrigin } = require('../router');
 const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
-const { loadConfig, loadConfigForUpdate, saveConfig, ensureSystemItems, migrate } = require('../config');
+const {
+  loadConfig,
+  loadConfigForUpdate,
+  saveConfig,
+  ensureSystemItems,
+  migrate,
+  SCHEMA_VERSION,
+} = require('../config');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
 /* Shared with the browser rather than copied. The Dockerfile places this file
    where the same relative path resolves inside the image. */
 const { firstUnsafeLink } = require('../../../ui/js/link-url.js');
-const { DOCK_MAX, ITEMS_MAX, clampName } = require('../../../ui/js/limits.js');
+const { CONFIG_MAX_BYTES, DOCK_MAX, ITEMS_MAX, clampName } = require('../../../ui/js/limits.js');
 const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
 const { rewriteChanged, duplicateRowId, stableEqual } = require('../secret-scope');
 const { getRegistry } = require('../widgets');
@@ -86,7 +93,13 @@ on('POST', '/api/config', async (req, res) => {
     const data = JSON.parse(await readBody(req));
     if (tooDeep(data))
       return json(res, 400, { error: `config nests deeper than ${MAX_DEPTH} levels`, kind: KIND.INVALID });
-    if (!Array.isArray(data.items)) return json(res, 400, { error: 'items must be an array', kind: KIND.INVALID });
+    if (!Array.isArray(data?.items)) return json(res, 400, { error: 'items must be an array', kind: KIND.INVALID });
+    if (Number(data._schemaVersion) > SCHEMA_VERSION)
+      return json(res, 400, {
+        error: 'this config was made by a newer release',
+        kind: KIND.INVALID,
+        code: 'invalid.newer-config',
+      });
     /* An array or a primitive here drops the stored password on write. */
     if (data.settings != null && (typeof data.settings !== 'object' || Array.isArray(data.settings)))
       return json(res, 400, { error: 'settings must be an object', kind: KIND.INVALID });
@@ -316,6 +329,13 @@ on('POST', '/api/config', async (req, res) => {
     const { items } = clientConfig();
     json(res, 200, withheld.length ? { ok: true, items, withheld } : { ok: true, items });
   } catch (e) {
+    if (e.oversize)
+      return json(res, 413, {
+        error: 'config is over the size limit',
+        kind: KIND.INVALID,
+        code: 'invalid.config-too-large',
+        detail: { max: CONFIG_MAX_BYTES / (1024 * 1024) },
+      });
     fail(res, e, { status: 400 });
   }
 });

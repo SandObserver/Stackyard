@@ -4,7 +4,7 @@ const { KIND } = require('../api-error');
 const LIMITS = require('../poll-limits');
 const fs = require('node:fs');
 const path = require('node:path');
-const { loadConfig, CONFIG_PATH, ICONS_PATH } = require('../config');
+const { loadConfig, configFileIsMount, CONFIG_PATH, ICONS_PATH } = require('../config');
 const {
   pingUnchecked,
   urlPolicyError,
@@ -264,12 +264,17 @@ function unwritableDataDirs() {
   });
 }
 
+const fileMounted = configFileIsMount();
+if (fileMounted)
+  log.warn('config file is mounted on its own; saves will fail. Mount its folder instead', { path: CONFIG_PATH });
+
 on('GET', '/health', (_, res) => {
   const now = unwritableDataDirs();
   for (const dir of now)
     if (!unwritable.includes(dir)) log.warn('cannot write the data folder; saves will fail', { path: dir });
   unwritable = now;
-  json(res, now.length ? 503 : 200, { ok: !now.length });
+  const ok = !now.length;
+  json(res, ok ? 200 : 503, { ok });
 });
 
 on('GET', '/api/health', async (req, res) => {

@@ -44,6 +44,11 @@ const BY_CODE = Object.freeze({
   'invalid.reserved-id': 'adminError.reservedId',
   'invalid.bad-setting': 'adminError.badSetting',
   'invalid.dock-full': 'app.dockFull',
+  'invalid.config-too-large': 'adminError.configTooLarge',
+  'invalid.newer-config': 'adminError.newerConfig',
+  'internal.disk-full': 'adminError.diskFull',
+  'internal.config-not-writable': 'adminError.configNotWritable',
+  'internal.config-file-mounted': 'adminError.configFileMounted',
   'invalid.too-many-items': 'adminError.tooManyItems',
   'network.refused': 'adminError.refused',
   'network.not-found': 'adminError.hostNotFound',
@@ -177,6 +182,7 @@ export function setupErrorKey(e) {
   const { kind, code } = readError(e);
   if (kind === KIND.AUTH || code === 'invalid.password-changed') return 'toast.passwordChangedElsewhere';
   if (code === 'invalid.password-common') return 'pwStrength.common';
+  if (code?.startsWith('internal.') && BY_CODE[code]) return BY_CODE[code];
   if (code === 'invalid.setup-code') return 'hostBlock.codeWrong';
   return 'setup.failed';
 }

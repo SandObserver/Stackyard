@@ -1,4 +1,4 @@
-import { setupErrorKey } from '/js/admin-error.js?v=373c6453';
+import { setupErrorKey } from '/js/admin-error.js?v=d1f8f6f4';
 import {
   applyBackground,
   BACKDROP,
@@ -15,7 +15,7 @@ import {
   readBadgeUpdate,
 } from '/js/badge-logic.js?v=04a4ece8';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=652dd5df';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=70ee5ca8';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=fd68857f';
 import {
   configChanged,
   desktopCols,
@@ -42,7 +42,7 @@ import {
   toneForColor,
 } from '/js/label-contrast.js?v=7172d36f';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
-import { DOCK_MAX } from '/js/limits.js?v=761ceea4';
+import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';

@@ -308,6 +308,21 @@ function loadConfigForUpdate() {
   return structuredClone(loadConfig());
 }
 
+const WRITE_FAILURES = {
+  ENOSPC: [507, 'internal.disk-full'],
+  EDQUOT: [507, 'internal.disk-full'],
+  EACCES: [500, 'internal.config-not-writable'],
+  EPERM: [500, 'internal.config-not-writable'],
+  EROFS: [500, 'internal.config-not-writable'],
+  EBUSY: [500, 'internal.config-file-mounted'],
+};
+
+function tagWriteFailure(e) {
+  const known = WRITE_FAILURES[e?.code];
+  if (known) [e.status, e.apiCode] = known;
+  return e;
+}
+
 /* keepRev is only for writes the browser never sees. Every open dashboard
    reloads when _rev changes. */
 function saveConfig(data, { keepRev = false } = {}) {
@@ -323,13 +338,12 @@ function saveConfig(data, { keepRev = false } = {}) {
      after the file is replaced: every later read clones it and fails too. */
   const copy = structuredClone(data);
   const dir = path.dirname(CONFIG_PATH);
-  fs.mkdirSync(dir, { recursive: true });
   const tmp = CONFIG_PATH + '.tmp';
 
   /* Write, flush, rename, flush the directory. Without both flushes a power cut
      leaves the rename applied and the contents lost. */
-  let fd;
   try {
+    fs.mkdirSync(dir, { recursive: true });
     /* Keep the unlink. A temp file left by a crash keeps its mode through the
        rename and exposes the secrets. */
     try {
@@ -337,14 +351,13 @@ function saveConfig(data, { keepRev = false } = {}) {
     } catch (e) {
       if (e.code !== 'ENOENT') throw e;
     }
-    fd = fs.openSync(tmp, 'wx', 0o600);
-    fs.writeFileSync(fd, JSON.stringify(data, null, 2), 'utf8');
-    fs.fsyncSync(fd);
-  } finally {
-    if (fd !== undefined) fs.closeSync(fd);
-  }
-
-  try {
+    const fd = fs.openSync(tmp, 'wx', 0o600);
+    try {
+      fs.writeFileSync(fd, JSON.stringify(data, null, 2), 'utf8');
+      fs.fsyncSync(fd);
+    } finally {
+      fs.closeSync(fd);
+    }
     fs.renameSync(tmp, CONFIG_PATH);
   } catch (e) {
     try {
@@ -352,7 +365,7 @@ function saveConfig(data, { keepRev = false } = {}) {
     } catch {
       /* nothing more to do */
     }
-    throw e;
+    throw tagWriteFailure(e);
   }
 
   try {
@@ -370,6 +383,21 @@ function saveConfig(data, { keepRev = false } = {}) {
   /* Only after the write succeeded. */
   _cfgCache = copy;
   _cfgCacheAt = Date.now();
+}
+
+/** Saves replace the file by rename, which a mount point refuses.
+    @param {string} [mountinfo] @returns {boolean} */
+function configFileIsMount(mountinfo) {
+  let text = mountinfo;
+  if (text === undefined) {
+    try {
+      text = fs.readFileSync('/proc/self/mountinfo', 'utf8');
+    } catch {
+      return false;
+    }
+  }
+  const decode = s => s.replace(/\\([0-7]{3})/g, (_, o) => String.fromCharCode(parseInt(o, 8)));
+  return text.split('\n').some(line => decode(line.split(' ')[4] || '') === CONFIG_PATH);
 }
 
 const SYSTEM_SETTINGS_ITEM = {
@@ -400,6 +428,7 @@ module.exports = {
   loadConfig,
   loadConfigForUpdate,
   configDamage,
+  configFileIsMount,
   saveConfig,
   ensureSystemItems,
   migrate,

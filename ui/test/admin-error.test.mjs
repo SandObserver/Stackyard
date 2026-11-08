@@ -228,6 +228,7 @@ test('a refused first-run password maps to a translated sentence', () => {
   assert.equal(setupErrorKey({ kind: 'auth' }), 'toast.passwordChangedElsewhere');
   assert.equal(setupErrorKey({ kind: 'invalid', code: 'invalid.password-changed' }), 'toast.passwordChangedElsewhere');
   assert.equal(setupErrorKey({ kind: 'blocked' }), 'setup.failed');
+  assert.equal(setupErrorKey({ kind: 'internal', code: 'internal.disk-full' }), 'adminError.diskFull');
   assert.equal(setupErrorKey({ kind: 'invalid', code: 'invalid.setup-code' }), 'hostBlock.codeWrong');
   assert.equal(setupErrorKey(new TypeError('Failed to fetch')), 'setup.failed');
   assert.equal(typeof lookup('setup.failed'), 'string');
