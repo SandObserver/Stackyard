@@ -292,6 +292,7 @@
     "diskFull": "El disco está lleno. Libera espacio y vuelve a guardar.",
     "configNotWritable": "Stackyard no puede escribir en su carpeta de datos. Da permiso de escritura al usuario que ejecuta Stackyard y comprueba que la carpeta no sea de solo lectura.",
     "configFileMounted": "El archivo de configuración está montado por separado. Monta su carpeta en su lugar.",
+    "tooManyItems": "El límite es {max}. Elimina algunos primero.",
     "socketRefused": "El proxy de socket rechazó la solicitud.",
     "notSocketProxy": "Algo respondió ahí, pero no es un proxy de socket de Docker.",
     "socketMissing": "Activa Comprobaciones de estado en General e introduce la URL del socket de Docker.",

@@ -1,5 +1,5 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=f218cf4a';
-import { socketProbeAdvice } from '/js/admin-error.js?v=4d254e7a';
+import { renderColorControl } from '/js/admin-color-control.js?v=9be6e317';
+import { socketProbeAdvice } from '/js/admin-error.js?v=d1f8f6f4';
 import {
   BLOCK,
   clearsStoredPassword,
@@ -33,7 +33,7 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=658f8ff9';
+} from '/js/admin-shared.js?v=d728efe3';
 import { BACKDROP } from '/js/background.js?v=7638c299';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import {

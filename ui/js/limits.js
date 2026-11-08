@@ -5,6 +5,8 @@ export const DOCK_MAX = 4;
 
 export const NAME_MAX = 64;
 
+export const ITEMS_MAX = 5000;
+
 /** @param {string} name @returns {string} */
 export function clampName(name) {
   const s = String(name);

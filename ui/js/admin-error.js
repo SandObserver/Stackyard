@@ -49,6 +49,7 @@ const BY_CODE = Object.freeze({
   'internal.disk-full': 'adminError.diskFull',
   'internal.config-not-writable': 'adminError.configNotWritable',
   'internal.config-file-mounted': 'adminError.configFileMounted',
+  'invalid.too-many-items': 'adminError.tooManyItems',
   'network.refused': 'adminError.refused',
   'network.not-found': 'adminError.hostNotFound',
   'network.unreachable': 'adminError.hostUnreachable',

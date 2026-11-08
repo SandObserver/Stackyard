@@ -286,6 +286,7 @@
     "diskFull": "The disk is full. Free some space, then save again.",
     "configNotWritable": "Stackyard cannot write to its data folder. Give the user running Stackyard write access, and check that the folder is not read-only.",
     "configFileMounted": "The config file is mounted on its own. Mount its folder instead.",
+    "tooManyItems": "The item limit is {max}. Remove some first.",
     "socketRefused": "The socket proxy refused the request.",
     "notSocketProxy": "Something answered there, but it is not a Docker socket proxy.",
     "socketMissing": "Turn on Health Checks in General and enter the Docker Socket URL.",

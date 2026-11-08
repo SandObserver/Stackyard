@@ -4,10 +4,10 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=605cece8';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=236a503d';
+} from '/js/admin-app-form.js?v=65525912';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=5ea0223f';
 import { recoveryShown } from '/js/config-recovery.js?v=fd68857f';
-import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=f39bcbbd';
+import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=0dcddc27';
 import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=1526c452';
 import {
   afterImport,
@@ -32,7 +32,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=26f7fa4b';
+} from '/js/admin-settings.js?v=7dc3a92f';
 import {
   apiGet,
   apiPost,
@@ -53,9 +53,9 @@ import {
   errorAction,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=658f8ff9';
+} from '/js/admin-shared.js?v=d728efe3';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=89cf3a8c';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=5f68231c';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=75a71ab4';
@@ -76,9 +76,9 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=c3ad097f';
+} from '/js/import-foreign.js?v=6cfa52ff';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
-import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=e5b1e2ba';
+import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=bd88cb9e';
 import {
   THEME_KEY,

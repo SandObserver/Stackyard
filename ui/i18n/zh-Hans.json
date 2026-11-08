@@ -280,6 +280,7 @@
     "diskFull": "磁盘已满。请释放一些空间，然后重新保存。",
     "configNotWritable": "Stackyard 无法写入其数据文件夹。请为运行它的用户授予写入权限。",
     "configFileMounted": "配置文件是单独挂载的。请改为挂载其所在文件夹。",
+    "tooManyItems": "上限为 {max}。请先删除一些项目。",
     "socketRefused": "套接字代理拒绝了该请求。",
     "notSocketProxy": "该地址有响应，但不是 Docker 套接字代理。",
     "socketMissing": "请在“通用”中打开健康检查，并填写 Docker 套接字代理地址。",
