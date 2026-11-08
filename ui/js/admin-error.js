@@ -35,6 +35,7 @@ const BY_CODE = Object.freeze({
   'blocked.unresolved': 'adminError.unreachable',
   'invalid.duplicate-id': 'adminError.duplicateId',
   'invalid.keep-current-address': 'toast.allowedHostsKeepCurrent',
+  'invalid.duplicate-row-id': 'adminError.duplicateRowId',
   'invalid.missing-children': 'adminError.missingChildren',
   'invalid.bad-children': 'adminError.badChildren',
   'invalid.unsafe-link': 'adminError.unsafeLink',

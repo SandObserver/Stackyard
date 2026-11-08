@@ -292,6 +292,7 @@
     "noConnection": "Nada respondió en esa dirección. Comprueba que el proxy de socket esté en marcha.",
     "offline": "Stackyard no responde. Comprueba que el contenedor esté en marcha y vuelve a intentarlo.",
     "duplicateId": "Dos elementos comparten el id {id}. Cada elemento necesita su propio id.",
+    "duplicateRowId": "Dos filas de {id} comparten el id. Elimina una y guarda de nuevo.",
     "missingChildren": "La carpeta {id} incluye elementos que no están en el archivo.",
     "badChildren": "La carpeta {id} enumera su contenido en un formato que Stackyard no puede leer.",
     "unsafeLink": "El elemento {id} tiene un enlace no permitido. Los enlaces deben usar http o https.",
