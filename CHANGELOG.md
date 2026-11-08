@@ -105,6 +105,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Turning protection off no longer deletes a password that was changed while the
   old one was being checked.
 
+- A sign-in refused as busy no longer uses up an attempt.
+
+- Settings says when protection was turned off but other settings were not
+  saved.
+
+- A backup from an early version with non-app items in a folder can be restored.
+
 ### Security
 
 - Refuse sign-in and password requests larger than 32 KB, so parallel large
@@ -146,6 +153,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   entries out of the log.
 
 - Mark the session cookie `Secure` when the page was loaded over https.
+
+- Keep the `Secure` flag on the session cookie when a renewal request does not
+  show the page scheme.
 
 ## [1.21.0] - 2026-11-01
 
