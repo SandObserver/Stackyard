@@ -18,7 +18,7 @@ import {
 } from '/js/admin-drag-logic.js?v=4aae5094';
 import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { snapshotItems } from '/js/admin-save-logic.js?v=525be427';
+import { snapshotItems } from '/js/admin-save-logic.js?v=8f3b48f6';
 import { qa } from '/js/utils.js?v=f0b9b030';
 
 /** @type {(before: unknown) => void} */

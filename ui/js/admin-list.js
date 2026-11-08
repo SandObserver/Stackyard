@@ -11,22 +11,22 @@
    The filter and the collapsed folders are in admin-state.js, because the page
    reads and writes them too. */
 
-import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=60881ba6';
-import { listGroup } from '/js/admin-drag-logic.js?v=4aae5094';
-import { isShownChild, reorderItems, shownChildren, topLevelRows } from '/js/admin-logic.js?v=1526c452';
-import { snapshotItems } from '/js/admin-save-logic.js?v=525be427';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=4b6d9de6';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { sizeLabel } from '/js/admin-widget-form.js?v=68c8e954';
-import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=ed7c5565';
-import { iconSvg } from '/js/icon-set.js?v=b279fd98';
+import { snapshotItems } from '/js/admin-save-logic.js?v=8f3b48f6';
+import { isShownChild, reorderItems, shownChildren, topLevelRows } from '/js/admin-logic.js?v=1526c452';
+import { listGroup } from '/js/admin-drag-logic.js?v=4aae5094';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=ff98d8f6';
 import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
+import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=4b6d9de6';
+import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=f0b9b030';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
-import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=f0b9b030';
+import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
+import { t } from '/js/i18n.js?v=ed7c5565';
+import { sizeLabel } from '/js/admin-widget-form.js?v=68c8e954';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=c1502c58';
+import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 
 /** @type {{ openModal: (idx: number|null) => void,
              openFolderPicker: (folderId: string) => void,

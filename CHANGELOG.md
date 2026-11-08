@@ -88,6 +88,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Keep each stored value when two secret badge rows share a name.
 
+- Saving Settings no longer reverts a change made on another device.
+
 ### Security
 
 - Refuse sign-in and password requests larger than 32 KB, so parallel large
