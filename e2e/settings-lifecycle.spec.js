@@ -89,3 +89,14 @@ test('a stale Settings page cannot overwrite the same field', async ({ browser, 
   const { settings } = await (await request.get('/api/config')).json();
   expect(settings.server.hostIp).toBe('10.0.0.1');
 });
+
+test('changing Allowed Addresses with another field saves both', async ({ browser, baseURL, request }) => {
+  const page = await openSettings(browser, baseURL);
+  await setField(page, 'srv-hosts', 'dash.example.com');
+  await setField(page, 'srv-ip', '10.0.0.7');
+  await saveGeneral(page);
+  await expect(page.getByText('This setting was changed elsewhere.')).toHaveCount(0);
+  const { settings } = await (await request.get('/api/config')).json();
+  expect(settings.server.allowedHosts).toEqual(['dash.example.com']);
+  expect(settings.server.hostIp).toBe('10.0.0.7');
+});

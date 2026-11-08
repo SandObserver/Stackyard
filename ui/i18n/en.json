@@ -376,6 +376,7 @@
     "saved": "Saved",
     "deleted": "Deleted",
     "saveFailed": "Could not save. {err}",
+    "passwordSavedOthersNot": "Your password was changed, but the other settings were not saved. {err}",
     "allowedHostInvalid": "{host} is not a host name or IP address. Enter one such as nas.local or 192.168.1.10.",
     "allowedHostsKeepCurrent": "Keep {host} in Allowed Addresses, or this page stops working. To remove it, use another address.",
     "allowedHostsTooMany": "Too many addresses. The limit is {max}.",

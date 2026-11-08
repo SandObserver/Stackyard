@@ -225,6 +225,15 @@ export function planFieldSave({ formBase, form, serverBase, server }) {
   return { changed, conflicts: changed.filter(k => !sameData(server[k], serverBase[k])) };
 }
 
+/** `base` with `keys` moved to the values in `server`.
+    @param {Record<string, unknown>} base @param {Iterable<string>} keys
+    @param {Record<string, unknown>} server */
+export function advancedBase(base, keys, server) {
+  const next = { ...base };
+  for (const k of keys) next[k] = server[k];
+  return next;
+}
+
 /** The label setting with one switch moved and the other kept from the server.
     @param {any} current @param {'desktop'|'ios'} key @param {boolean} value */
 export function labelsWith(current, key, value) {

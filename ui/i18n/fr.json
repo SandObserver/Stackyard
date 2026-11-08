@@ -383,6 +383,7 @@
     "saved": "Enregistré",
     "deleted": "Supprimé",
     "saveFailed": "Impossible d’enregistrer. {err}",
+    "passwordSavedOthersNot": "Votre mot de passe a été modifié, mais les autres réglages n’ont pas été enregistrés. {err}",
     "allowedHostInvalid": "{host} n’est ni un nom d’hôte ni une adresse IP. Saisissez par exemple nas.local ou 192.168.1.10.",
     "allowedHostsKeepCurrent": "Gardez {host} dans les Adresses autorisées, sinon cette page cessera de fonctionner. Pour la retirer, utilisez une autre adresse.",
     "allowedHostsTooMany": "Trop d’adresses. La limite est de {max}.",

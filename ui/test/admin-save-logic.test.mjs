@@ -740,3 +740,18 @@ test('labelsWith moves one switch and keeps the other from the server', async ()
   assert.deepEqual(labelsWith({ desktop: false, ios: true }, 'ios', false), { desktop: false, ios: false });
   assert.deepEqual(labelsWith(undefined, 'ios', true), { desktop: true, ios: true });
 });
+
+test('advancedBase moves only the fields written', async () => {
+  const { advancedBase, planFieldSave } = await import('../js/admin-save-logic.js');
+  const base = { logLevel: 'info', hostIp: '' };
+  const server = { logLevel: 'debug', hostIp: '10.0.0.2' };
+  const next = advancedBase(base, ['hostIp'], server);
+  assert.deepEqual(next, { logLevel: 'info', hostIp: '10.0.0.2' });
+  const later = planFieldSave({
+    formBase: { logLevel: 'info' },
+    form: { logLevel: 'error' },
+    serverBase: next,
+    server,
+  });
+  assert.deepEqual(later.conflicts, ['logLevel']);
+});

@@ -383,6 +383,7 @@
     "saved": "Guardado",
     "deleted": "Eliminado",
     "saveFailed": "No se pudo guardar. {err}",
+    "passwordSavedOthersNot": "Se cambió la contraseña, pero los demás ajustes no se guardaron. {err}",
     "allowedHostInvalid": "{host} no es un nombre de host ni una dirección IP. Introduce uno como nas.local o 192.168.1.10.",
     "allowedHostsKeepCurrent": "Deja {host} en Direcciones permitidas o esta página dejará de funcionar. Para quitarla, usa otra dirección.",
     "allowedHostsTooMany": "Demasiadas direcciones. El límite es {max}.",

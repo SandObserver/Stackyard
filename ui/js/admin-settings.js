@@ -1,43 +1,39 @@
+import { renderColorControl } from '/js/admin-color-control.js?v=433d3f3b';
+import { socketProbeAdvice } from '/js/admin-error.js?v=0882cee9';
 import {
-  toast,
+  BLOCK,
+  clearsStoredPassword,
+  createDirtyTracker,
+  needsCurrentPassword,
+  settingsSaveBlocker,
+  shouldWritePassword,
+} from '/js/admin-logic.js?v=cf072e65';
+import {
+  advancedBase,
+  applyGeneralFields,
+  generalServerFields,
+  labelsWith,
+  planFieldSave,
+  serialWrites,
+} from '/js/admin-save-logic.js?v=14cced2c';
+import {
   apiGet,
   apiPost,
-  errorText,
-  reveal,
-  swapContent,
-  wireInlineEdit,
-  showFieldError,
   clearFieldError,
   clearFieldErrors,
   confirmSaved,
+  errorAction,
+  errorText,
+  reveal,
   sectionSave,
   setStatus,
-  errorAction,
+  showFieldError,
+  swapContent,
+  toast,
+  wireInlineEdit,
 } from '/js/admin-shared.js?v=290ab8cb';
-import { socketProbeAdvice } from '/js/admin-error.js?v=0882cee9';
-import { passwordMeter, passwordMismatch, contextWords, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
-import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
-import { t } from '/js/i18n.js?v=ed7c5565';
-import {
-  shouldWritePassword,
-  settingsSaveBlocker,
-  clearsStoredPassword,
-  needsCurrentPassword,
-  createDirtyTracker,
-  BLOCK,
-} from '/js/admin-logic.js?v=cf072e65';
-import { confirmText, promptModal } from '/js/modal.js?v=bd88cb9e';
-import { el, inp, qa, setUserText } from '/js/utils.js?v=14d4695d';
-import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import {
-  serialWrites,
-  generalServerFields,
-  applyGeneralFields,
-  planFieldSave,
-  labelsWith,
-} from '/js/admin-save-logic.js?v=14cced2c';
-import { renderColorControl } from '/js/admin-color-control.js?v=433d3f3b';
 import { BACKDROP } from '/js/background.js?v=96567a38';
+import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import {
   ALLOWED_HOSTS_MAX,
   firstBadHost,
@@ -45,6 +41,11 @@ import {
   isLocalAddress,
   parseHostList,
 } from '/js/host-names.js?v=98bf44d7';
+import { t } from '/js/i18n.js?v=ed7c5565';
+import { confirmText, promptModal } from '/js/modal.js?v=bd88cb9e';
+import { contextWords, passwordMeter, passwordMismatch, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
+import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
+import { el, inp, qa, setUserText } from '/js/utils.js?v=14d4695d';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
@@ -116,6 +117,9 @@ const readGeneralFields = () => ({
   logLevel: inp('log-level')?.value || 'info',
   language: inp('lang-sel')?.value || 'en',
 });
+
+/* An Unsplash key save creates an empty object. That is not a wallpaper change. */
+const storedBackground = s => (s?.background && Object.keys(s.background).length ? s.background : undefined);
 
 function readBackgroundFields() {
   const type = inp('bg-type')?.value || 'unsplash';
@@ -375,7 +379,7 @@ export function loadSettings(c) {
   _srvTrack = trackSave('srv-save', readServerForm);
   _bgTrack = trackSave('bg-save', readWallpaperForm);
   _srvBase = { form: readGeneralFields(), server: generalServerFields(s) };
-  _bgBase = { form: readBackgroundFields(), server: { background: s.background } };
+  _bgBase = { form: readBackgroundFields(), server: { background: storedBackground(s) } };
   syncAuthFromServer().then(() => _srvTrack?.reset(false));
 }
 
@@ -572,7 +576,7 @@ async function saveWallpaper() {
     const type = bg.type;
     const c = await apiGet('/api/config');
     c.settings = c.settings || {};
-    if (fieldsToWrite(_bgBase, form, { background: c.settings.background }).length) {
+    if (fieldsToWrite(_bgBase, form, { background: storedBackground(c.settings) }).length) {
       c.settings.background = bg;
       await apiPost('/api/config', c);
       _bgBase = { form, server: { background: bg } };
@@ -726,7 +730,13 @@ async function saveServer() {
 
   if (failure || !done) {
     const key = PASSWORD_ERROR_KEYS[/** @type {any} */ (failure)?.code];
-    if (key) toast(t(key), 'err', errorAction(failure));
+    if (/** @type {any} */ (failure)?.passwordWritten)
+      toast(
+        t('toast.passwordSavedOthersNot', { err: staleText(failure) || errorText(failure) }),
+        'err',
+        errorAction(failure),
+      );
+    else if (key) toast(t(key), 'err', errorAction(failure));
     else if (staleText(failure)) toast(staleText(failure), 'err', errorAction(failure));
     else toast(t('toast.saveFailed', { err: errorText(failure) }), 'err', errorAction(failure));
     await syncAuthFromServer();
@@ -763,38 +773,57 @@ async function writeServer({ enabled, pw, currentPassword, allowedHosts }) {
   const form = readGeneralFields();
   const before = await apiGet('/api/config');
   const planned = fieldsToWrite(_srvBase, form, generalServerFields(before.settings));
-  /* Keep before the config read. These writes bump the config revision, and
+  const here = hostnameOf(location.host);
+  if (!enabled && here && !isLocalAddress(here)) {
+    const list = planned.includes('allowedHosts') ? allowedHosts : before.settings?.server?.allowedHosts || [];
+    if (!list.includes(here)) throw Object.assign(new Error('stale'), { status: 409 });
+  }
+  let passwordWritten = false;
+  try {
+    /* Keep before the config read. These writes bump the config revision, and
      a config save built on an earlier read is refused as stale. */
-  if (shouldWritePassword({ enabled, newPassword: pw })) {
-    await apiPost('/api/auth/set-password', { password: pw, currentPassword });
-    clearNewPassword();
-    const pwEl = inp('sec-pw');
-    if (pwEl) pwEl.placeholder = `●●●●●●●●●● (${t('common.configured')})`;
-  }
-  await apiPost('/api/auth/toggle', {
-    enabled,
-    currentPassword,
-    allowedHosts: planned.includes('allowedHosts') ? allowedHosts : undefined,
-  });
+    if (shouldWritePassword({ enabled, newPassword: pw })) {
+      await apiPost('/api/auth/set-password', { password: pw, currentPassword });
+      passwordWritten = true;
+      clearNewPassword();
+      const pwEl = inp('sec-pw');
+      if (pwEl) pwEl.placeholder = `●●●●●●●●●● (${t('common.configured')})`;
+    }
+    await apiPost('/api/auth/toggle', {
+      enabled,
+      currentPassword,
+      allowedHosts: planned.includes('allowedHosts') ? allowedHosts : undefined,
+    });
 
-  const c = await apiGet('/api/config');
-  c.settings = c.settings || {};
-  const changed = fieldsToWrite(_srvBase, form, generalServerFields(c.settings));
-  const langChanged = changed.includes('language');
-  if (changed.length) {
-    applyGeneralFields(c.settings, changed, form);
-    await apiPost('/api/config', c);
+    const c = await apiGet('/api/config');
+    c.settings = c.settings || {};
+    const serverNow = generalServerFields(c.settings);
+    const ownWrite = planned.includes('allowedHosts') ? ['allowedHosts'] : [];
+    const expected = { ..._srvBase, server: advancedBase(_srvBase.server, ownWrite, serverNow) };
+    const changed = fieldsToWrite(expected, form, serverNow).filter(k => !ownWrite.includes(k));
+    const langChanged = changed.includes('language');
+    if (changed.length) {
+      applyGeneralFields(c.settings, changed, form);
+      await apiPost('/api/config', c);
+    }
+    if (!enabled) {
+      const pwEl = inp('sec-pw');
+      if (pwEl) pwEl.placeholder = '';
+      /* Whatever was typed was not stored. */
+      clearNewPassword();
+    }
+    clearPveSecretInput();
+    _srvTrack?.reset();
+    const after = await apiGet('/api/config').catch(() => null);
+    if (after) showPveSecretState(!!after.settings?.server?.proxmox?.secretSet);
+    const stored = generalServerFields(after?.settings ?? c.settings);
+    _srvBase = {
+      form: { ...form, proxmox: readGeneralFields().proxmox },
+      server: advancedBase(_srvBase.server, [...ownWrite, ...changed], stored),
+    };
+    return { langChanged };
+  } catch (e) {
+    if (passwordWritten && e && typeof e === 'object') /** @type {any} */ (e).passwordWritten = true;
+    throw e;
   }
-  if (!enabled) {
-    const pwEl = inp('sec-pw');
-    if (pwEl) pwEl.placeholder = '';
-    /* Whatever was typed was not stored. */
-    clearNewPassword();
-  }
-  clearPveSecretInput();
-  _srvTrack?.reset();
-  const after = await apiGet('/api/config').catch(() => null);
-  if (after) showPveSecretState(!!after.settings?.server?.proxmox?.secretSet);
-  _srvBase = { form: readGeneralFields(), server: generalServerFields(after?.settings ?? c.settings) };
-  return { langChanged };
 }
