@@ -61,6 +61,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show the Settings form only once its real values have loaded.
 
+- `TRUSTED_PROXY` accepts the proxy's container name, and warns when an entry
+  covers a whole network.
+
+- Audit lines for password and protection changes record the client address and
+  host.
+
 ### Fixed
 
 - Let the owner set a new password with a setup code when the saved password is
@@ -110,6 +116,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   when `ALLOW_PRIVATE_IPS` is off.
 
 - Apply the Host IP exception only when the setting holds an IP address.
+
+- Require the setup code from the container log to set the first password.
+
+- Refuse requests that came through a proxy on an unlisted address while no
+  password is set.
+
+- Check one password at a time, so parallel sign-ins at a large
+  `PASSWORD_HASH_MEMORY` no longer exhaust the container's memory.
+
+- Cap sign-in log lines so a flood of refused attempts cannot push earlier
+  entries out of the log.
+
+- Mark the session cookie `Secure` when the page was loaded over https.
 
 ## [1.21.0] - 2026-11-01
 
