@@ -104,10 +104,16 @@ function scrubRows(rows) {
 function preserveRows(newRows, oldRows) {
   const nrows = toRows(newRows);
   const orows = toRows(oldRows);
+  /* Never match by key alone. Rows that share a key then all get the first
+     stored value and the others are lost. */
+  const seen = new Map();
   for (const r of nrows) {
+    const nth = seen.get(r.key) || 0;
+    seen.set(r.key, nth + 1);
     const needsValue = r.value == null || r.value === '';
     if (needsValue) {
-      const donor = r.secret ? orows.find(o => o.key === r.key && o.value != null && o.value !== '') : null;
+      const old = r.secret ? orows.filter(o => o.key === r.key)[nth] : null;
+      const donor = old && old.value != null && old.value !== '' ? old : null;
       if (donor) r.value = donor.value;
       else if (!r.secret) r.value = '';
     }
