@@ -251,3 +251,11 @@ test('the guest list without a connection asks for one', async () => {
   assert.equal(r.status, 400);
   assert.equal(r.body.code, 'invalid.proxmox-missing');
 });
+
+test('a request with a changed secret never shares a result fetched with the old one', async () => {
+  const { guestStates } = require('../src/proxmox');
+  const conn = secret => ({ url: pveBase, tokenId: TOKEN, secret, skipTlsVerify: false });
+  const [old, now] = await Promise.all([guestStates(conn('0000-old')), guestStates(conn(SECRET))]);
+  assert.ok(old.error);
+  assert.ok(now.guests, JSON.stringify(now));
+});

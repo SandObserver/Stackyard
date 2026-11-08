@@ -146,8 +146,8 @@ test('TRUST_PROXY without TRUSTED_PROXY warns exactly once, naming the fix', asy
   const out = await boot({ TRUST_PROXY: 'true' });
   const w = trustWarnings(out);
   assert.equal(w.length, 1, `one warning, got ${w.length}: ${w.join(' | ')}`);
-  assert.match(w[0], /set TRUSTED_PROXY to the proxy address/);
-  assert.match(w[0], /TRUSTED_PROXY=172\.18\.0\.0\/16/, 'an example value the reader can copy');
+  assert.match(w[0], /set TRUSTED_PROXY to the proxy container name or address/);
+  assert.match(w[0], /TRUSTED_PROXY=traefik/, 'an example value the reader can copy');
   assert.match(w[0], /docker-compose\.yml/, 'where the value has to go to take effect');
 });
 

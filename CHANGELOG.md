@@ -61,6 +61,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show the Settings form only once its real values have loaded.
 
+- `TRUSTED_PROXY` accepts the proxy's container name, and warns when an entry
+  covers a whole network.
+
+- Audit lines for password and protection changes record the client address and
+  host.
+
 ### Fixed
 
 - Let the owner set a new password with a setup code when the saved password is
@@ -80,6 +86,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Keep the photo credit clear of widgets on a sideways phone.
 
+- Keep each stored value when two secret badge rows share a name.
+
+- Saving Settings no longer reverts a change made on another device.
+
 ### Security
 
 - Refuse sign-in and password requests larger than 32 KB, so parallel large
@@ -90,6 +100,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Count failed sign-ins from one IPv6 /64 against a single limit.
 
 - Hide a newly typed password in Settings instead of showing it in the row.
+
+- Never send a stored widget secret to a row whose address changed when two rows
+  share an id.
+
+- Accept only a GitHub login name as the GitHub widget username.
+
+- Use a changed Proxmox secret at once instead of a result fetched with the old
+  one.
+
+- Keep text of a damaged config file out of the log.
+
+- Refuse cloud metadata addresses on every outbound request, even with
+  `ALLOW_PRIVATE_IPS=true`.
+
+- Allow a container name to reach only containers on a shared Docker network
+  when `ALLOW_PRIVATE_IPS` is off.
+
+- Apply the Host IP exception only when the setting holds an IP address.
+
+- Require the setup code from the container log to set the first password.
+
+- Refuse requests that came through a proxy on an unlisted address while no
+  password is set.
+
+- Check one password at a time, so parallel sign-ins at a large
+  `PASSWORD_HASH_MEMORY` no longer exhaust the container's memory.
+
+- Cap sign-in log lines so a flood of refused attempts cannot push earlier
+  entries out of the log.
+
+- Mark the session cookie `Secure` when the page was loaded over https.
 
 ## [1.21.0] - 2026-11-01
 

@@ -73,6 +73,12 @@ before(async () => {
         widgetConfig: { provider: 'audiobookshelf', absUrl: realBase, absKey: SECRET_VALUE },
       },
       {
+        id: 'w-rows',
+        type: 'widget',
+        widgetType: 'connections',
+        widgetConfig: { view: 'map', services: [{ id: 's1', type: 'netbird', url: realBase, token: SECRET_VALUE }] },
+      },
+      {
         id: 'w-inherited',
         type: 'widget',
         widgetType: 'books',
@@ -237,6 +243,30 @@ test('widget-options does not send the stored credential to a caller-chosen host
   assert.ok(!sawSecret(evilSeen), `the stored credential leaked: ${JSON.stringify(evilSeen)}`);
 });
 
+const dupRows = () => ({
+  view: 'map',
+  services: [
+    { id: 's1', type: 'netbird', url: realBase, savedRow: 0 },
+    { id: 's1', type: 'netbird', url: evilBase },
+  ],
+});
+
+test('widget-options refuses rows that share an id and sends nothing', async () => {
+  evilSeen.length = 0;
+  const r = await post('/api/widget-options/w-rows', { widgetType: 'connections', widgetConfig: dupRows() });
+  assert.equal(r.status, 400);
+  assert.equal(evilSeen.length, 0);
+});
+
+test('a config save refuses rows that share an id and stores nothing', async () => {
+  const r = await post('/api/config', {
+    items: [{ id: 'w-rows', type: 'widget', widgetType: 'connections', widgetConfig: dupRows() }],
+  });
+  assert.equal(r.status, 400);
+  assert.equal(r.body.kind, 'invalid');
+  assert.equal(loadConfig().items.find(i => i.id === 'w-rows').widgetConfig.services.length, 1);
+});
+
 test('widget-options reports a plain failure when no stored credential was held back', async () => {
   const r = await post('/api/widget-options/w1', {
     widgetType: 'books',
@@ -311,4 +341,45 @@ test('a failed Unsplash key save leaves the served config unchanged', async () =
   assert.notEqual(status, 200);
   assert.deepEqual((await get('/api/settings/unsplash-key')).body, { configured: false });
   assert.equal((await get('/api/config')).body._rev, rev);
+});
+
+test('a repeated row id already stored does not block a save, and a new one is refused', async () => {
+  const initial = loadConfig();
+  const rows = [
+    { id: 's1', type: 'netbird', url: realBase, token: 'A' },
+    { id: 's1', type: 'netbird', url: `${realBase}/b`, token: 'B' },
+  ];
+  saveConfig({
+    ...initial,
+    items: [
+      ...initial.items,
+      { id: 'w-old', type: 'widget', widgetType: 'connections', widgetConfig: { services: rows } },
+    ],
+  });
+  try {
+    const current = loadConfig();
+    const posted = {
+      ...current,
+      items: current.items.map(i =>
+        i.id === 'w-old' ? { ...i, widgetConfig: { services: rows.map(({ token, ...row }) => row) } } : i,
+      ),
+    };
+    const kept = await post('/api/config', posted);
+    assert.equal(kept.status, 200);
+    const tokens = loadConfig()
+      .items.find(i => i.id === 'w-old')
+      .widgetConfig.services.map(row => row.token);
+    assert.deepEqual(tokens, ['A', 'B']);
+    const added = await post('/api/config', {
+      ...loadConfig(),
+      items: [
+        ...loadConfig().items,
+        { id: 'w-new', type: 'widget', widgetType: 'connections', widgetConfig: { services: rows } },
+      ],
+    });
+    assert.equal(added.status, 400);
+    assert.equal(added.body.code, 'invalid.duplicate-row-id');
+  } finally {
+    saveConfig(initial);
+  }
 });

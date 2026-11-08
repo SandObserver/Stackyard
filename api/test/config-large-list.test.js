@@ -49,6 +49,21 @@ test('a list at the item limit is accepted', async () => {
   assert.equal((await post(apps(ITEMS_MAX - 1))).status, 200);
 });
 
+test('widget group rows count toward the limit', async () => {
+  const services = Array.from({ length: ITEMS_MAX + 1 }, (_, i) => ({ id: `r${i}`, type: 'netbird', url: 'http://a' }));
+  const r = await post([{ id: 'w', type: 'widget', widgetType: 'connections', widgetConfig: { services } }]);
+  assert.equal(r.status, 400);
+  assert.equal((await r.json()).code, 'invalid.too-many-items');
+});
+
+test('a stored list over the limit can still shrink', async () => {
+  const stored = apps(ITEMS_MAX + 3);
+  saveConfig({ items: stored, settings: {} });
+  assert.equal((await post(stored.slice(0, ITEMS_MAX + 1))).status, 200);
+  assert.equal((await post(stored)).status, 400);
+  saveConfig({ items: [], settings: {} });
+});
+
 test('the refill work grows linearly with the list', () => {
   let reads = 0;
   const counted = list =>

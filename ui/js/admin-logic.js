@@ -198,6 +198,10 @@ export function needsCurrentPassword({ enabled, wasEnabled, passwordSet, newPass
   return !!wasEnabled && !!passwordSet && (!enabled || !!(newPassword || '').length);
 }
 
+export function needsSetupCode({ enabled, passwordSet, newPassword }) {
+  return !!enabled && !passwordSet && !!(newPassword || '').length;
+}
+
 /* 'unavailable' must not fall through to the custom editor. The server
    withholds that widget's config, so empty fields read as lost settings. */
 export function widgetConfigMode(type, reg) {

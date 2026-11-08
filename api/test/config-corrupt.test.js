@@ -179,3 +179,19 @@ test('a hand edit made after the last read survives a read-modify-write', () => 
   assert.equal(onDisk.settings.theme, 'light');
   assert.equal(onDisk.settings.language, 'de');
 });
+
+test('the damage log never quotes the unparseable file', () => {
+  reset();
+  fs.writeFileSync(CFG, '{"items":[{"apiKey": Q7mK2pX9vL4tR8wZ"}]}');
+  const log = require('../src/log');
+  const lines = [];
+  const orig = log.error;
+  log.error = (msg, fields) => lines.push(JSON.stringify({ msg, fields }));
+  try {
+    fresh().loadConfig();
+  } finally {
+    log.error = orig;
+  }
+  assert.ok(lines.length > 0);
+  assert.ok(!lines.some(l => l.includes('Q7mK2p')), lines.join('\n'));
+});
