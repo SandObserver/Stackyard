@@ -22,6 +22,14 @@ function blockHoldsSecret(block) {
   return !!block && (rowsHoldSecret(block.headers) || rowsHoldSecret(block.params) || !!loginOf(block.login)?.password);
 }
 
+/* First match wins, as every other lookup by id does. */
+/** @param {any[]} items @param {(item: any) => boolean} [keep] @returns {Map<any, any>} */
+function firstById(items, keep = () => true) {
+  const byId = new Map();
+  for (const item of items) if (item && keep(item) && !byId.has(item.id)) byId.set(item.id, item);
+  return byId;
+}
+
 const asRequest = block => ({ url: block?.url, headers: block?.headers, params: block?.params, login: block?.login });
 
 function widgetHoldsSecret(config, entry) {
@@ -49,15 +57,19 @@ const mayHoldSecret = (config, entry) =>
     @returns {{ withheld: Array<{ id: string, label: string }> }} */
 function preserveAllSecrets(newCfg, oldCfg) {
   const withheld = [];
+  const noted = new Set();
   const note = item => {
-    if (!withheld.some(w => w.id === item.id)) withheld.push({ id: item.id, label: item.label || item.id });
+    if (noted.has(item.id)) return;
+    noted.add(item.id);
+    withheld.push({ id: item.id, label: item.label || item.id });
   };
   const savedItems = Array.isArray(oldCfg?.items) ? oldCfg.items : [];
+  const savedById = firstById(savedItems);
   const redirected = rewriteChanged(newCfg.settings?.server, oldCfg?.settings?.server);
   if (redirected && Array.isArray(newCfg.items)) {
     const reg = getRegistry();
     for (const item of newCfg.items) {
-      const prev = item && savedItems.find(e => e && e.id === item.id);
+      const prev = item && savedById.get(item.id);
       if (!prev) continue;
       const holds =
         prev.type === 'widget'
@@ -67,7 +79,7 @@ function preserveAllSecrets(newCfg, oldCfg) {
     }
   }
   const oldItems = redirected ? [] : savedItems;
-  const prevOf = item => oldItems.find(e => e && e.id === item.id);
+  const prevOf = item => (redirected ? undefined : savedById.get(item.id));
 
   if (Array.isArray(newCfg.items)) {
     const reg = getRegistry();
@@ -93,10 +105,11 @@ function preserveAllSecrets(newCfg, oldCfg) {
     /* preserveConfigSecrets matches oldCfg.items by id. Hide an item from it to
        stop its secret being refilled. */
     scopedForWidgets.items = newCfg.items;
+    const newWidgets = firstById(newCfg.items, n => n.type === 'widget');
     const oldForWidgets = {
       ...oldCfg,
       items: oldItems.flatMap(o => {
-        const match = newCfg.items.find(n => n && n.id === o.id && n.type === 'widget');
+        const match = o ? newWidgets.get(o.id) : undefined;
         if (!match || !keepWidget.has(match)) return [o];
         const keep = keepWidget.get(match);
         return keep ? [keep] : [];

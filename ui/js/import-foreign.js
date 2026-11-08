@@ -5,7 +5,7 @@
 
 import { buildAppItem, newItemId } from '/js/admin-save-logic.js?v=35fcc1c7';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
-import { clampName } from '/js/limits.js?v=ea61a441';
+import { clampName } from '/js/limits.js?v=761ceea4';
 
 export const SKIP = Object.freeze({
   NO_LABEL: 'no-label',

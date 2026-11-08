@@ -6,7 +6,7 @@ const { fail, KIND } = require('../api-error');
 /* Shared with the browser rather than copied. The Dockerfile places this file
    where the same relative path resolves inside the image. */
 const { firstUnsafeLink } = require('../../../ui/js/link-url.js');
-const { DOCK_MAX, clampName } = require('../../../ui/js/limits.js');
+const { DOCK_MAX, ITEMS_MAX, clampName } = require('../../../ui/js/limits.js');
 const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
 const { rewriteChanged } = require('../secret-scope');
 const { firstMalformedRow } = require('../badge-headers');
@@ -77,6 +77,13 @@ on('POST', '/api/config', async (req, res) => {
     /* An array or a primitive here drops the stored password on write. */
     if (data.settings != null && (typeof data.settings !== 'object' || Array.isArray(data.settings)))
       return json(res, 400, { error: 'settings must be an object', kind: KIND.INVALID });
+    if (data.items.length > ITEMS_MAX)
+      return json(res, 400, {
+        error: `at most ${ITEMS_MAX} items are allowed`,
+        kind: KIND.INVALID,
+        code: 'invalid.too-many-items',
+        detail: { max: ITEMS_MAX },
+      });
     const bad = data.items.find(i => !i || typeof i.id !== 'string' || !i.id || typeof i.type !== 'string' || !i.type);
     if (bad) return json(res, 400, { error: 'every item needs a non-empty id and type', kind: KIND.INVALID });
     /* Lookups take the first match, so a second item sharing an id is

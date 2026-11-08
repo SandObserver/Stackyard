@@ -274,6 +274,7 @@
     "readOnly": "在线演示中已关闭保存功能。",
     "fileType": "不支持该文件类型。",
     "invalidUrl": "请输入以 http:// 或 https:// 开头的地址。",
+    "tooManyItems": "上限为 {max}。请先删除一些项目。",
     "socketRefused": "套接字代理拒绝了该请求。",
     "notSocketProxy": "该地址有响应，但不是 Docker 套接字代理。",
     "socketMissing": "请在“通用”中打开健康检查，并填写 Docker 套接字代理地址。",

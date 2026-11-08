@@ -280,6 +280,7 @@
     "readOnly": "Saving is turned off in the live demo.",
     "fileType": "That file type is not supported.",
     "invalidUrl": "Enter an address that starts with http:// or https://.",
+    "tooManyItems": "The item limit is {max}. Remove some first.",
     "socketRefused": "The socket proxy refused the request.",
     "notSocketProxy": "Something answered there, but it is not a Docker socket proxy.",
     "socketMissing": "Turn on Health Checks in General and enter the Docker Socket URL.",
