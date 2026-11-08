@@ -5,7 +5,7 @@ const log = require('../log');
 const { fail, KIND } = require('../api-error');
 const { normalizeHostList, hostnameOf } = require('../../../ui/js/host-names.js');
 const { newPasswordError } = require('../new-password');
-const { knownHost, refusedHost } = require('../host-check');
+const { knownHost, refusedHost, proxiedNameLost } = require('../host-check');
 const {
   getOrCreateSecret,
   rotateSessionSecret,
@@ -392,6 +392,16 @@ on('POST', '/api/auth/toggle', async (req, res) => {
     if (hosts === null)
       return json(res, 400, { error: 'allowedHosts must be a list of host names', kind: KIND.INVALID });
     const before = loadConfig();
+    if (!enabled) {
+      const lost = proxiedNameLost(req, hosts ?? before.settings?.server?.allowedHosts);
+      if (lost)
+        return json(res, 400, {
+          error: `${lost} is not in Allowed Addresses`,
+          kind: KIND.INVALID,
+          code: 'invalid.keep-current-address',
+          detail: { host: lost },
+        });
+    }
     if (!enabled && authActive(before)) {
       if (await refuseWrongCurrentPassword(req, res, before.settings.auth.passwordHash, currentPassword)) return;
     }
@@ -411,8 +421,9 @@ on('POST', '/api/auth/toggle', async (req, res) => {
     stripDisabledCredentials(cfg.settings.auth);
     if (enabled && !cfg.settings.auth.secret) cfg.settings.auth.secret = newSessionSecret();
     if (hosts) cfg.settings.server = { ...cfg.settings.server, allowedHosts: hosts };
+    const hadPassword = cleared || !!cfg.settings.auth.passwordHash;
     saveConfig(cfg);
-    setupCode.retire();
+    if (hadPassword) setupCode.retire();
     const who = { ip: getIp(req), host: hostOf(req) };
     log.audit('auth toggled', { enabled: !!enabled, ...who });
     if (cleared) log.audit('password cleared', who);

@@ -165,12 +165,18 @@ test('through a proxy, an IP or one-label Host is refused like a public name', a
 test('through a proxy, a listed name is answered, as Host or as X-Forwarded-Host', async () => {
   saveConfig({ items: [], settings: { server: { allowedHosts: ['dash.example.com'] } } });
   assert.equal((await request('GET', '/api/config', { host: 'dash.example.com', headers: PROXIED })).status, 200);
-  const forwarded = { ...PROXIED, 'X-Forwarded-Host': 'dash.example.com' };
+  const forwarded = { ...PROXIED, 'X-Stackyard-Trusted-Peer': '1', 'X-Forwarded-Host': 'dash.example.com' };
   assert.equal((await request('GET', '/api/config', { host: 'stackyard', headers: forwarded })).status, 200);
-  const other = { ...PROXIED, 'X-Forwarded-Host': 'evil.example' };
+  const other = { ...PROXIED, 'X-Stackyard-Trusted-Peer': '1', 'X-Forwarded-Host': 'evil.example' };
   const refused = await request('GET', '/api/config', { host: 'stackyard', headers: other });
   assert.equal(refused.status, 403);
   assert.equal(refused.body.detail.host, 'evil.example', 'the screen names the address the visitor used');
+});
+
+test('X-Forwarded-Host from a peer not in TRUSTED_PROXY does not pass the gate', async () => {
+  saveConfig({ items: [], settings: { server: { allowedHosts: ['dash.example.com'] } } });
+  const headers = { ...PROXIED, 'X-Forwarded-Host': 'dash.example.com' };
+  assert.equal((await request('GET', '/api/config', { host: 'evil.example', headers })).status, 403);
 });
 
 test('without the proxy flag a local address is answered as before', async () => {
@@ -190,6 +196,26 @@ test('through a proxy, the setup code route answers so the owner can set a passw
     body: { code, password: PASSWORD },
   });
   assert.equal(r.status, 200);
+});
+
+test('turning protection off through a proxy needs the name in the list', () => {
+  const { proxiedNameLost } = require('../src/host-check');
+  const req = headers => ({ socket: { remoteAddress: '127.0.0.1' }, headers });
+  const proxiedReq = req({ host: 'stackyard', 'x-stackyard-proxied': '1' });
+  assert.equal(proxiedNameLost(proxiedReq, []), 'stackyard');
+  assert.equal(proxiedNameLost(proxiedReq, ['stackyard']), null);
+  assert.equal(proxiedNameLost(req({ host: 'stackyard' }), []), null);
+});
+
+test('a toggle with no password stored keeps the setup code', async () => {
+  saveConfig({ items: [], settings: {} });
+  const printed = mock.method(log, 'print', () => {});
+  setupCode.announce('host');
+  printed.mock.restore();
+  const code = setupCode._current();
+  const r = await request('POST', '/api/auth/toggle', { body: { enabled: false } });
+  assert.equal(r.status, 200);
+  assert.equal(setupCode._current(), code);
 });
 
 test('with a password set, a proxied request is gated by the session, not the address', async () => {

@@ -151,7 +151,7 @@ stackyard_main() {
             ;;
           *)
             case "$entry" in
-              *[!0-9A-Za-z.-]* | -* | .*) fail "TRUSTED_PROXY entry is not an IP address, network or host name: \"$entry\"" ;;
+              *[!0-9A-Za-z._-]* | -* | .*) fail "TRUSTED_PROXY entry is not an IP address, network or host name: \"$entry\"" ;;
             esac
             addrs="$(resolve_proxy_name "$entry")"
             if [ -z "$addrs" ]; then

@@ -128,7 +128,7 @@ test('an entry that is not an address or network stops the container', () => {
     '10.0.0.1;\rlocation\r/leak/\r{\ralias\r/data/;\r}\r#',
     '10.0.0.1;',
     '$(id)',
-    '172.18.0.0/16 proxy_example',
+    '172.18.0.0/16 proxy!example',
     '-traefik',
   ]) {
     assert.throws(

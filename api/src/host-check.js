@@ -2,7 +2,7 @@ const { loadConfig } = require('./config');
 const { authActive } = require('./auth');
 const { IS_DEMO } = require('./demo');
 const { hostnameOf, isLocalAddress } = require('../../ui/js/host-names.js');
-const { proxied } = require('./front-proxy');
+const { proxied, trustedPeer } = require('./front-proxy');
 
 /* While no password is set, answer only addresses a page on another site
    cannot point at this server (DNS rebinding). Never add a name to the list
@@ -20,6 +20,20 @@ const listed = (cfg, host) => {
   return !!host && Array.isArray(list) && list.includes(host);
 };
 
+const forwardedName = req =>
+  trustedPeer(req) ? hostnameOf(String(req.headers['x-forwarded-host'] || '').split(',')[0]) : null;
+
+/** The proxied name this request would lose if protection went off with this
+    list, or null. @returns {string | null} */
+function proxiedNameLost(req, list) {
+  if (!proxied(req)) return null;
+  const hosts = Array.isArray(list) ? list : [];
+  const host = hostnameOf(req.headers.host);
+  const forwarded = forwardedName(req);
+  if ((forwarded && hosts.includes(forwarded)) || (host && hosts.includes(host))) return null;
+  return forwarded || host || null;
+}
+
 /** @returns {string | null} the refused host name, or null when allowed */
 function refusedHost(req) {
   if (IS_DEMO) return null;
@@ -29,7 +43,7 @@ function refusedHost(req) {
   /* Only listed names through a proxy. A proxy can send an IP or a one-label
      name as Host for a request from the internet. */
   if (proxied(req)) {
-    const forwarded = hostnameOf(String(req.headers['x-forwarded-host'] || '').split(',')[0]);
+    const forwarded = forwardedName(req);
     if (listed(cfg, forwarded) || listed(cfg, host)) return null;
     return forwarded || host || String(req.headers.host || '');
   }
@@ -37,4 +51,4 @@ function refusedHost(req) {
   return host || String(req.headers.host || '');
 }
 
-module.exports = { refusedHost, knownHost };
+module.exports = { refusedHost, knownHost, proxiedNameLost };

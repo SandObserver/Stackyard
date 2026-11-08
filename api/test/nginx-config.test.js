@@ -591,6 +591,7 @@ test('every API location sets the proxy and https flags itself', () => {
     const name = block.split('{')[0].trim();
     assert.match(block, /proxy_set_header\s+X-Stackyard-Proxied\s+\$stackyard_proxied;/, name);
     assert.match(block, /proxy_set_header\s+X-Stackyard-Https\s+\$stackyard_https;/, name);
+    assert.match(block, /proxy_set_header\s+X-Stackyard-Trusted-Peer\s+\$stackyard_trusted_peer;/, name);
   }
 });
 
