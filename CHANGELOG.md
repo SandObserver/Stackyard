@@ -80,6 +80,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Keep the photo credit clear of widgets on a sideways phone.
 
+- Keep each stored value when two secret badge rows share a name.
+
 ### Security
 
 - Refuse sign-in and password requests larger than 32 KB, so parallel large
@@ -90,6 +92,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Count failed sign-ins from one IPv6 /64 against a single limit.
 
 - Hide a newly typed password in Settings instead of showing it in the row.
+
+- Never send a stored widget secret to a row whose address changed when two rows
+  share an id.
+
+- Accept only a GitHub login name as the GitHub widget username.
+
+- Use a changed Proxmox secret at once instead of a result fetched with the old
+  one.
+
+- Keep text of a damaged config file out of the log.
 
 ## [1.21.0] - 2026-11-01
 
