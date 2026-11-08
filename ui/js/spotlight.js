@@ -1,5 +1,5 @@
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
-import { mk, clr, el, initial, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=14d4695d';
+import { mk, clr, el, initial, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=f0b9b030';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
@@ -44,7 +44,13 @@ export function initSpotlight({
     res.replaceChildren();
     const apps = getItems().filter(i => i.type === 'app' || i.type === 'folder');
     const qq = query.toLowerCase().trim();
-    cur = qq ? apps.filter(a => (a.label || a.id).toLowerCase().includes(qq)) : apps;
+    cur = qq
+      ? apps.filter(a =>
+          String(a.label || a.id)
+            .toLowerCase()
+            .includes(qq),
+        )
+      : apps;
     si = 0;
     if (!cur.length) {
       const e = mk('div');

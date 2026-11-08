@@ -526,6 +526,32 @@ test('POST /api/config rejects an item missing id or type', async () => {
   assert.equal(r.status, 400);
 });
 
+test('POST /api/config refuses values a reader cannot use and leaves the file alone', async () => {
+  const initial = await req('GET', '/api/config', { cookie: validCookie });
+  const app = { id: 'a', type: 'app', label: 'A', href: 'https://a.invalid' };
+  const cases = [
+    [[{ ...app, iconUrl: 5 }], {}, 'invalid.bad-item', { id: 'a', field: 'iconUrl' }],
+    [
+      [{ id: 'w', type: 'widget', widgetType: 'clock', widgetSize: 'huge' }],
+      {},
+      'invalid.bad-item',
+      { id: 'w', field: 'widgetSize' },
+    ],
+    [[{ id: 'settings', type: 'app', label: 'Mine' }], {}, 'invalid.reserved-id', { id: 'settings' }],
+    [[app, { id: 'f', type: 'folder', label: 'F', children: ['f'] }], {}, 'invalid.bad-children', { id: 'f' }],
+    [[app], { background: 'x' }, 'invalid.bad-setting', { id: 'background' }],
+    [[app], { server: { proxmox: 'x' } }, 'invalid.bad-setting', { id: 'server.proxmox' }],
+  ];
+  for (const [items, settings, code, detail] of cases) {
+    const r = await req('POST', '/api/config', { cookie: validCookie, body: { items, settings } });
+    assert.equal(r.status, 400, code);
+    assert.equal(r.body.code, code);
+    assert.deepEqual(r.body.detail, detail);
+  }
+  const unchanged = await req('GET', '/api/config', { cookie: validCookie });
+  assert.equal(unchanged.body._rev, initial.body._rev);
+});
+
 test('POST /api/config rejects a folder whose children are not a list of ids', async () => {
   const app = { id: 'a', type: 'app', label: 'A', href: 'https://a.invalid' };
   for (const children of ['a', { a: 1 }, [1], ['a', null]]) {

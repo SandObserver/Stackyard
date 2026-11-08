@@ -1,5 +1,5 @@
 // @ts-check
-import { cssColor, sanitizeCssUrl } from '/js/utils.js?v=14d4695d';
+import { cssColor, sanitizeCssUrl } from '/js/utils.js?v=f0b9b030';
 import {
   loadWallpaper,
   saveBootHint,

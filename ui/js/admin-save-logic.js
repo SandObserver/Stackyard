@@ -230,6 +230,13 @@ export function claimFolderChildren(items, folderId, childIds) {
   return list;
 }
 
+/** A widget whose type has no manifest. Its form cannot edit the settings, so
+    only the name and the size change.
+    @param {any} orig @param {string} label @param {string} size @returns {any} */
+export function keptWidget(orig, label, size) {
+  return { ...orig, label, widgetSize: size };
+}
+
 /** One stored Live Activity label. Array order is priority order.
 
     @param {string} path @param {any} [style]

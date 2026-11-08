@@ -1,4 +1,4 @@
-import { iconChain } from '/js/icons.js?v=5ac01d72';
+import { iconChain } from '/js/icons.js?v=76c29d43';
 import { widgetSrc, cardPreset, fixedAppearance, uniqueTitle, WIDGET_DESIGN } from '/js/widget-types.js?v=b0e8f76d';
 import {
   mk,
@@ -17,13 +17,13 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=14d4695d';
+} from '/js/utils.js?v=f0b9b030';
 import { t, currentLang } from '/js/i18n.js?v=ed7c5565';
 import { toneForColor } from '/js/label-contrast.js?v=7172d36f';
 import { mobileMetrics, gridColumnWidth, gridCellCount, dockFit } from '/js/mobile-metrics.js?v=3b0d6715';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
 import { mkGlassRim, observeGlass } from '/js/glass-rim.js?v=3faec233';
-import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=3098e6b2';
+import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=e53affb9';
 
 const PHONE_W = 393;
 

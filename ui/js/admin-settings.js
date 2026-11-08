@@ -13,8 +13,8 @@ import {
   sectionSave,
   setStatus,
   errorAction,
-} from '/js/admin-shared.js?v=290ab8cb';
-import { socketProbeAdvice } from '/js/admin-error.js?v=0882cee9';
+} from '/js/admin-shared.js?v=5d68da70';
+import { socketProbeAdvice } from '/js/admin-error.js?v=07227c65';
 import { passwordMeter, passwordMismatch, contextWords, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
 import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
 import { t } from '/js/i18n.js?v=ed7c5565';
@@ -25,13 +25,14 @@ import {
   needsCurrentPassword,
   createDirtyTracker,
   BLOCK,
-} from '/js/admin-logic.js?v=cf072e65';
+  wallpaperFileName,
+} from '/js/admin-logic.js?v=ae672850';
 import { confirmText, promptModal } from '/js/modal.js?v=bd88cb9e';
-import { el, inp, qa, setUserText } from '/js/utils.js?v=14d4695d';
+import { el, inp, qa, setUserText } from '/js/utils.js?v=f0b9b030';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { serialWrites } from '/js/admin-save-logic.js?v=35fcc1c7';
-import { renderColorControl } from '/js/admin-color-control.js?v=433d3f3b';
-import { BACKDROP } from '/js/background.js?v=96567a38';
+import { serialWrites } from '/js/admin-save-logic.js?v=525be427';
+import { renderColorControl } from '/js/admin-color-control.js?v=7a8b9002';
+import { BACKDROP } from '/js/background.js?v=7638c299';
 import {
   ALLOWED_HOSTS_MAX,
   firstBadHost,
@@ -363,7 +364,7 @@ async function syncAuthFromServer() {
 export function showWallpaperFile(url) {
   const node = el('bg-file-v');
   if (!node) return;
-  const name = url ? decodeURIComponent(String(url).split('/').pop() || '') : '';
+  const name = url ? wallpaperFileName(url) : '';
   if (name) {
     setUserText(node, name);
     node.classList.remove('is-ph');

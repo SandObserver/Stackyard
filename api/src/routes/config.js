@@ -15,6 +15,7 @@ const { stripDisabledCredentials } = require('../auth');
 const { pruneWallpapers } = require('./wallpaper');
 const { normalizeHostList } = require('../../../ui/js/host-names.js');
 const { scrubProxmox, preserveProxmox } = require('../proxmox');
+const { firstBadItemField, takesReservedId, firstBadFolderChild, firstBadSetting } = require('../config-validate');
 
 /* Real configs nest under 10 levels. Far deeper input is written to disk and
    then breaks every read of the config. */
@@ -79,6 +80,34 @@ on('POST', '/api/config', async (req, res) => {
       return json(res, 400, { error: 'settings must be an object', kind: KIND.INVALID });
     const bad = data.items.find(i => !i || typeof i.id !== 'string' || !i.id || typeof i.type !== 'string' || !i.type);
     if (bad) return json(res, 400, { error: 'every item needs a non-empty id and type', kind: KIND.INVALID });
+    for (const item of data.items) {
+      const field = firstBadItemField(item);
+      if (field) {
+        return json(res, 400, {
+          error: `${item.id}: ${field} holds a value of the wrong type`,
+          kind: KIND.INVALID,
+          code: 'invalid.bad-item',
+          detail: { id: item.id, field },
+        });
+      }
+      if (takesReservedId(item)) {
+        return json(res, 400, {
+          error: 'the id settings is reserved for the Settings tile',
+          kind: KIND.INVALID,
+          code: 'invalid.reserved-id',
+          detail: { id: item.id },
+        });
+      }
+    }
+    const badSetting = firstBadSetting(data.settings);
+    if (badSetting) {
+      return json(res, 400, {
+        error: `settings.${badSetting} holds a value of the wrong type`,
+        kind: KIND.INVALID,
+        code: 'invalid.bad-setting',
+        detail: { id: badSetting },
+      });
+    }
     /* Lookups take the first match, so a second item sharing an id is
        unreachable. Refuse rather than rename: renaming changes what folder
        children point at. */
@@ -113,6 +142,19 @@ on('POST', '/api/config', async (req, res) => {
           error: `${item.id}: children point at items that are not here: ${dangling.join(', ')}`,
           kind: KIND.INVALID,
           code: 'invalid.missing-children',
+          detail: { id: item.id },
+        });
+      }
+    }
+    const byId = new Map(data.items.map(i => [i.id, i]));
+    for (const item of data.items) {
+      if (item.children == null) continue;
+      const child = firstBadFolderChild(item, byId);
+      if (child !== null) {
+        return json(res, 400, {
+          error: `${item.id}: ${child} cannot be inside a folder`,
+          kind: KIND.INVALID,
+          code: 'invalid.bad-children',
           detail: { id: item.id },
         });
       }

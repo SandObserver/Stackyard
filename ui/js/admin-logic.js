@@ -417,3 +417,13 @@ export function singleChoice(value, options) {
   const v = String(value);
   return v !== '' || options.some(o => o.group == null && String(o.value) === '') ? [v] : [];
 }
+
+/** @param {unknown} url @returns {string} the last path segment, decoded when it can be */
+export function wallpaperFileName(url) {
+  const last = String(url).split('/').pop() || '';
+  try {
+    return decodeURIComponent(last);
+  } catch {
+    return last;
+  }
+}

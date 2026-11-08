@@ -1,10 +1,10 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
-import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=cf072e65';
-import { el, isolate, q, qa } from '/js/utils.js?v=14d4695d';
+import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=ae672850';
+import { el, isolate, q, qa } from '/js/utils.js?v=f0b9b030';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { errorAdvice } from '/js/admin-error.js?v=0882cee9';
+import { errorAdvice } from '/js/admin-error.js?v=07227c65';
 import { formatList, formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { iconChain } from '/js/icons.js?v=5ac01d72';
+import { iconChain } from '/js/icons.js?v=76c29d43';
 import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { slideBlock } from '/js/modal.js?v=bd88cb9e';
