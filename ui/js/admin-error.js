@@ -44,6 +44,7 @@ const BY_CODE = Object.freeze({
   'invalid.reserved-id': 'adminError.reservedId',
   'invalid.bad-setting': 'adminError.badSetting',
   'invalid.dock-full': 'app.dockFull',
+  'invalid.too-many-items': 'adminError.tooManyItems',
   'network.refused': 'adminError.refused',
   'network.not-found': 'adminError.hostNotFound',
   'network.unreachable': 'adminError.hostUnreachable',

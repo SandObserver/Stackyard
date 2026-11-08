@@ -287,6 +287,7 @@
     "readOnly": "L’enregistrement est désactivé dans la démo en ligne.",
     "fileType": "Ce type de fichier n’est pas pris en charge.",
     "invalidUrl": "Saisissez une adresse qui commence par http:// ou https://.",
+    "tooManyItems": "La limite est de {max}. Supprimez-en d’abord quelques-uns.",
     "socketRefused": "Le proxy de socket a refusé la requête.",
     "notSocketProxy": "Quelque chose a répondu, mais ce n’est pas un proxy de socket Docker.",
     "socketMissing": "Activez Vérifications de l’état dans Général et saisissez l’URL du socket Docker.",

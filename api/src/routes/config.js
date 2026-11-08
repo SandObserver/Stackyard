@@ -6,7 +6,7 @@ const { fail, KIND } = require('../api-error');
 /* Shared with the browser rather than copied. The Dockerfile places this file
    where the same relative path resolves inside the image. */
 const { firstUnsafeLink } = require('../../../ui/js/link-url.js');
-const { DOCK_MAX, clampName } = require('../../../ui/js/limits.js');
+const { DOCK_MAX, ITEMS_MAX, clampName } = require('../../../ui/js/limits.js');
 const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
 const { rewriteChanged, duplicateRowId, stableEqual } = require('../secret-scope');
 const { getRegistry } = require('../widgets');
@@ -20,6 +20,16 @@ const { firstBadItemField, takesReservedId, firstBadFolderChild, firstBadSetting
 
 /* Real configs nest under 10 levels. Far deeper input is written to disk and
    then breaks every read of the config. */
+/* Group rows count too: the secret refill compares each one. */
+function configSize(cfg) {
+  let size = 0;
+  for (const item of cfg.items || []) {
+    size += 1;
+    for (const value of Object.values(item?.widgetConfig || {})) if (Array.isArray(value)) size += value.length;
+  }
+  return size;
+}
+
 const MAX_DEPTH = 32;
 const valueAt = (o, path) => path.split('.').reduce((v, k) => v?.[k], o);
 function tooDeep(v, depth = 0) {
@@ -80,6 +90,15 @@ on('POST', '/api/config', async (req, res) => {
     /* An array or a primitive here drops the stored password on write. */
     if (data.settings != null && (typeof data.settings !== 'object' || Array.isArray(data.settings)))
       return json(res, 400, { error: 'settings must be an object', kind: KIND.INVALID });
+    const size = configSize(data);
+    /* Keep the growth check. Refusing a stored size blocks every save, deletes included. */
+    if (size > ITEMS_MAX && size > configSize(loadConfig()))
+      return json(res, 400, {
+        error: `at most ${ITEMS_MAX} items are allowed`,
+        kind: KIND.INVALID,
+        code: 'invalid.too-many-items',
+        detail: { max: ITEMS_MAX },
+      });
     const bad = data.items.find(i => !i || typeof i.id !== 'string' || !i.id || typeof i.type !== 'string' || !i.type);
     if (bad) return json(res, 400, { error: 'every item needs a non-empty id and type', kind: KIND.INVALID });
     const storedConfig = loadConfig();

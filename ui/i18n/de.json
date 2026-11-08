@@ -281,6 +281,7 @@
     "readOnly": "In der Live-Demo ist das Speichern deaktiviert.",
     "fileType": "Dieser Dateityp wird nicht unterstützt.",
     "invalidUrl": "Gib eine Adresse ein, die mit http:// oder https:// beginnt.",
+    "tooManyItems": "Das Limit liegt bei {max} Elementen. Entferne zuerst einige.",
     "socketRefused": "Der Socket-Proxy hat die Anfrage abgelehnt.",
     "notSocketProxy": "Dort hat etwas geantwortet, aber es ist kein Docker-Socket-Proxy.",
     "socketMissing": "Schalte unter „Allgemein“ die Zustandsprüfungen ein und gib die Docker-Socket-URL ein.",

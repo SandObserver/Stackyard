@@ -168,10 +168,12 @@ function scrubConfigSecrets(cfgCopy) {
 function preserveConfigSecrets(newCfg, oldCfg) {
   const reg = getRegistry();
   if (Array.isArray(newCfg.items)) {
-    const oldItems = Array.isArray(oldCfg && oldCfg.items) ? oldCfg.items : [];
+    const oldById = new Map();
+    for (const e of Array.isArray(oldCfg && oldCfg.items) ? oldCfg.items : [])
+      if (e && !oldById.has(e.id)) oldById.set(e.id, e);
     for (const item of newCfg.items) {
       if (!item || item.type !== 'widget') continue;
-      const prev = oldItems.find(e => e && e.id === item.id);
+      const prev = oldById.get(item.id);
       const entry = reg[item.widgetType];
       /* A transport flag. Never persist it. */
       delete item[WITHHELD_FLAG];

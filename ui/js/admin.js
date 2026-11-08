@@ -4,10 +4,10 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=ede1d329';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=a3fa3635';
+} from '/js/admin-app-form.js?v=9d3ab41c';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=8e9abd4c';
 import { recoveryShown } from '/js/config-recovery.js?v=70ee5ca8';
-import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=70a464d4';
+import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=0b20b894';
 import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=1526c452';
 import {
   afterImport,
@@ -32,7 +32,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=1eb6b995';
+} from '/js/admin-settings.js?v=53672341';
 import {
   apiGet,
   apiPost,
@@ -53,9 +53,9 @@ import {
   errorAction,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=4b6d9de6';
+} from '/js/admin-shared.js?v=81dc9e36';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=68c8e954';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=c38c5257';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=75a71ab4';
@@ -76,9 +76,9 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=6cc712bb';
+} from '/js/import-foreign.js?v=4020a061';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
-import { clampName } from '/js/limits.js?v=ea61a441';
+import { clampName } from '/js/limits.js?v=761ceea4';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=bd88cb9e';
 import {
   THEME_KEY,

@@ -1,4 +1,4 @@
-import { setupErrorKey } from '/js/admin-error.js?v=e8508191';
+import { setupErrorKey } from '/js/admin-error.js?v=373c6453';
 import {
   applyBackground,
   BACKDROP,
@@ -42,7 +42,7 @@ import {
   toneForColor,
 } from '/js/label-contrast.js?v=7172d36f';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
-import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
+import { DOCK_MAX } from '/js/limits.js?v=761ceea4';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
