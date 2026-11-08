@@ -221,6 +221,20 @@ test('github contributions link the profile unless a link URL is set', async () 
   assert.equal((await dataFn(recordingCtx(own, reply).ctx)).profileUrl, 'https://me.example');
 });
 
+test('a GitHub username with an underscore is accepted', async () => {
+  const seen = [];
+  const ctx = {
+    config: { ...PRS, githubUser: 'octocat_acme' },
+    fetchJSON: async url => {
+      seen.push(url);
+      return { status: 200, data: { items: [], total_count: 0 } };
+    },
+    ...errorParts(),
+  };
+  await dataFn(ctx).catch(() => {});
+  assert.ok(seen.length > 0);
+});
+
 test('a GitHub username that is not a login name fails before any request', async () => {
   let called = false;
   const ctx = {

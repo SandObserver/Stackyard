@@ -342,3 +342,44 @@ test('a failed Unsplash key save leaves the served config unchanged', async () =
   assert.deepEqual((await get('/api/settings/unsplash-key')).body, { configured: false });
   assert.equal((await get('/api/config')).body._rev, rev);
 });
+
+test('a repeated row id already stored does not block a save, and a new one is refused', async () => {
+  const initial = loadConfig();
+  const rows = [
+    { id: 's1', type: 'netbird', url: realBase, token: 'A' },
+    { id: 's1', type: 'netbird', url: `${realBase}/b`, token: 'B' },
+  ];
+  saveConfig({
+    ...initial,
+    items: [
+      ...initial.items,
+      { id: 'w-old', type: 'widget', widgetType: 'connections', widgetConfig: { services: rows } },
+    ],
+  });
+  try {
+    const current = loadConfig();
+    const posted = {
+      ...current,
+      items: current.items.map(i =>
+        i.id === 'w-old' ? { ...i, widgetConfig: { services: rows.map(({ token, ...row }) => row) } } : i,
+      ),
+    };
+    const kept = await post('/api/config', posted);
+    assert.equal(kept.status, 200);
+    const tokens = loadConfig()
+      .items.find(i => i.id === 'w-old')
+      .widgetConfig.services.map(row => row.token);
+    assert.deepEqual(tokens, ['A', 'B']);
+    const added = await post('/api/config', {
+      ...loadConfig(),
+      items: [
+        ...loadConfig().items,
+        { id: 'w-new', type: 'widget', widgetType: 'connections', widgetConfig: { services: rows } },
+      ],
+    });
+    assert.equal(added.status, 400);
+    assert.equal(added.body.code, 'invalid.duplicate-row-id');
+  } finally {
+    saveConfig(initial);
+  }
+});

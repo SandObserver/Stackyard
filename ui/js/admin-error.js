@@ -34,6 +34,7 @@ const BY_CODE = Object.freeze({
   'upstream.too-many-containers': 'toast.importDockerTooLarge',
   'blocked.unresolved': 'adminError.unreachable',
   'invalid.duplicate-id': 'adminError.duplicateId',
+  'invalid.duplicate-row-id': 'adminError.duplicateRowId',
   'invalid.missing-children': 'adminError.missingChildren',
   'invalid.bad-children': 'adminError.badChildren',
   'invalid.unsafe-link': 'adminError.unsafeLink',

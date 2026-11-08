@@ -217,12 +217,16 @@ on('POST', '/api/config', async (req, res) => {
     for (const item of data.items) {
       if (item.type !== 'widget') continue;
       const dup = duplicateRowId(item.widgetConfig, reg[item.widgetType]);
-      if (dup)
-        return json(res, 400, {
-          error: `${item.id}: two ${dup.group} rows share the id ${dup.id}`,
-          kind: KIND.INVALID,
-          detail: { id: item.id },
-        });
+      if (!dup) continue;
+      const stored = (existing.items || []).find(i => i.id === item.id && i.type === 'widget');
+      const known = stored && duplicateRowId(stored.widgetConfig, reg[stored.widgetType]);
+      if (known && known.group === dup.group && known.id === dup.id) continue;
+      return json(res, 400, {
+        error: `${item.id}: two ${dup.group} rows share the id ${dup.id}`,
+        kind: KIND.INVALID,
+        code: 'invalid.duplicate-row-id',
+        detail: { id: item.label || item.id },
+      });
     }
     const { withheld } = preserveAllSecrets(data, existing);
     if (redirected && existing.settings?.background?.apiKey && !data.settings?.background?.apiKey)

@@ -286,6 +286,7 @@
     "noConnection": "Unter dieser Adresse hat nichts geantwortet. Prüfe, ob der Socket-Proxy läuft.",
     "offline": "Stackyard antwortet nicht. Prüfe, ob der Container läuft, und versuche es dann erneut.",
     "duplicateId": "Zwei Einträge haben dieselbe ID {id}. Jeder Eintrag braucht eine eigene ID.",
+    "duplicateRowId": "Zwei Zeilen in {id} haben dieselbe ID. Entferne eine davon und speichere erneut.",
     "missingChildren": "Der Ordner {id} verweist auf Einträge, die nicht in der Datei sind.",
     "badChildren": "Der Ordner {id} listet seinen Inhalt in einer Form, die Stackyard nicht lesen kann.",
     "unsafeLink": "Der Eintrag {id} hat einen unzulässigen Link. Links müssen http oder https verwenden.",

@@ -13,7 +13,7 @@ module.exports = async function (ctx) {
   if (service === 'github') {
     /* Keep this check. The username goes into the search unquoted. Other text
        adds search terms that run with the stored token. */
-    if (!/^[A-Za-z0-9-]{1,39}$/.test(username)) ctx.fail('GitHub username is not valid', { kind: ctx.KIND.INVALID });
+    if (!/^[A-Za-z0-9_-]{1,39}$/.test(username)) ctx.fail('GitHub username is not valid', { kind: ctx.KIND.INVALID });
     if (config.githubView === 'contributions') return contributions(ctx, token, username);
     return pullRequests(ctx, token, username, config);
   }

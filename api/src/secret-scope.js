@@ -52,7 +52,8 @@ function savedRowFor(row, i, oldRows) {
     const n = row[SAVED_ROW];
     return Number.isInteger(n) && n >= 0 ? oldRows[n] : undefined;
   }
-  return row && row.id != null ? oldRows.find(r => r && r.id === row.id) : oldRows[i];
+  if (!row || row.id == null) return oldRows[i];
+  return oldRows[i]?.id === row.id ? oldRows[i] : oldRows.find(r => r && r.id === row.id);
 }
 
 /** The saved config with each secret-holding group lined up row for row with
@@ -80,7 +81,9 @@ function alignSavedConfig(newConfig, savedConfig, entry) {
     config[gk] = cfg[gk].map((row, i) => {
       const old = savedRowFor(row, i, oldRows);
       if (!old) return {};
-      if (widgetConfigMatchesSaved({ [gk]: [row] }, { [gk]: [old] }, entry)) return old;
+      const { id: _id, ...oldNoId } = old;
+      const compared = row && Object.hasOwn(row, 'id') ? old : oldNoId;
+      if (widgetConfigMatchesSaved({ [gk]: [row] }, { [gk]: [compared] }, entry)) return old;
       if (subKeys.some(k => blankStored(row, old, k))) dropped = true;
       return {};
     });
