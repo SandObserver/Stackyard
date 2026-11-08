@@ -18,13 +18,13 @@ import { listGroup } from '/js/admin-drag-logic.js?v=4aae5094';
 import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=47a8868d';
 import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=c6c6bd4f';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=7828f8bc';
 import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=14d4695d';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { sizeLabel } from '/js/admin-widget-form.js?v=65b57354';
+import { sizeLabel } from '/js/admin-widget-form.js?v=9704cdbb';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=c1502c58';
 import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 

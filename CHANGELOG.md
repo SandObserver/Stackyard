@@ -103,6 +103,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Keep text of a damaged config file out of the log.
 
+- Refuse cloud metadata addresses on every outbound request, even with
+  `ALLOW_PRIVATE_IPS=true`.
+
+- Allow a container name to reach only containers on a shared Docker network
+  when `ALLOW_PRIVATE_IPS` is off.
+
+- Apply the Host IP exception only when the setting holds an IP address.
+
 ## [1.21.0] - 2026-11-01
 
 ### Added

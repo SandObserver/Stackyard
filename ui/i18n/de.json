@@ -263,6 +263,7 @@
     "authRequired": "Authentifizierung erforderlich. Schalte unten „Authentifizierung“ ein und trage deinen API-Schlüssel ein.",
     "unreachable": "Diese Adresse ist aus Docker nicht erreichbar. Versuch es mit dem Containernamen.",
     "privateAddress": "Die meisten Homelab-Dienste laufen unter privaten IP-Adressen. Setze ALLOW_PRIVATE_IPS=true und starte den Container neu.",
+    "linkLocal": "Stackyard verbindet sich nie mit dieser Adresse. Sie ist für Link-Local und Cloud-Metadaten reserviert.",
     "retype": "Diese Konfiguration hat sich seit dem Speichern geändert, daher wurden die gespeicherten Zugangsdaten nicht verwendet. Gib die Zugangsdaten ein, um diese Einstellungen zu testen.",
     "redirect": "Die Adresse hat mit einer Weiterleitung geantwortet (HTTP {status}). Gib die Adresse ein, auf die sie weiterleitet.",
     "responseTooLarge": "Die Antwort des Dienstes ist zu groß, um sie vollständig zu lesen. Verwende einen API-Pfad, der weniger zurückgibt.",
