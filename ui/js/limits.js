@@ -17,3 +17,5 @@ export function clampName(name) {
         .map(p => p.segment)
         .join('');
 }
+
+export const CONFIG_MAX_BYTES = 2 * 1024 * 1024;

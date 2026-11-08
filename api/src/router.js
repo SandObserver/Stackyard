@@ -1,5 +1,6 @@
 const { isAuthenticated, refreshSession } = require('./auth');
 const { configDamage } = require('./config');
+const { CONFIG_MAX_BYTES } = require('../../ui/js/limits.js');
 const { DAMAGE_CODES, HOST_BLOCKED_CODE } = require('../../ui/js/config-recovery-logic.js');
 const { refusedHost } = require('./host-check');
 const setupCode = require('./setup-code');
@@ -114,7 +115,7 @@ function json(res, status, data) {
 }
 
 /* Buffered in memory before parsing, so this is a memory limit too. */
-const BODY_LIMIT = 2 * 1024 * 1024;
+const BODY_LIMIT = CONFIG_MAX_BYTES;
 /* Sign-in routes take bodies before any session check. Raising this lets
    parallel requests exhaust the API's memory. The largest real body is ~20 KB. */
 const AUTH_BODY_LIMIT = 32 * 1024;

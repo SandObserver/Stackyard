@@ -4,10 +4,10 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=726803c8';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=2ec4c4ce';
+} from '/js/admin-app-form.js?v=9e57e9b1';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=b8b722ea';
 import { recoveryShown } from '/js/config-recovery.js?v=c03e1465';
-import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=10fb2d6c';
+import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=20f96a60';
 import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=cf072e65';
 import {
   afterImport,
@@ -31,7 +31,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=d93c2bc1';
+} from '/js/admin-settings.js?v=3f9fd14f';
 import {
   apiGet,
   apiPost,
@@ -52,9 +52,9 @@ import {
   errorAction,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=290ab8cb';
+} from '/js/admin-shared.js?v=ca2a38f6';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=a4c22f2d';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=7933f73d';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=75a71ab4';
@@ -75,9 +75,9 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=050f6de4';
+} from '/js/import-foreign.js?v=6374d4c5';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
-import { clampName } from '/js/limits.js?v=ea61a441';
+import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=e5b1e2ba';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=bd88cb9e';
 import {
   THEME_KEY,
@@ -1174,6 +1174,9 @@ el('imp').onchange = async e => {
   const f = tgt(e).files[0];
   if (!f) return;
   try {
+    /* nginx answers a larger body with a page the admin cannot read. */
+    if (f.size > CONFIG_MAX_BYTES)
+      throw new ShownError(t('adminError.configTooLarge', { max: formatNumber(CONFIG_MAX_BYTES / (1024 * 1024)) }));
     const d = JSON.parse(await f.text());
     if (!d || !Array.isArray(d.items)) throw new ShownError(t('toast.importNotStackyard'));
     const { added, updated, deleted } = importCounts((await apiGet('/api/config/export')).items, d.items);
