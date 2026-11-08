@@ -67,6 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Audit lines for password and protection changes record the client address and
   host.
 
+- Importing a backup from a newer Stackyard version is now refused.
+
 ### Fixed
 
 - Let the owner set a new password with a setup code when the saved password is
@@ -96,6 +98,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An item with the id `settings` no longer blocks every later save.
 
 - Saving a very large dashboard no longer stalls the server.
+
+- Failed saves now say why: full disk, no write access, a file mounted on its
+  own, or a config over the size limit.
 
 ### Security
 
