@@ -90,6 +90,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Saving Settings no longer reverts a change made on another device.
 
+- An imported file with invalid values no longer freezes the dashboard or stops
+  Settings from loading.
+
+- An item with the id `settings` no longer blocks every later save.
+
 ### Security
 
 - Refuse sign-in and password requests larger than 32 KB, so parallel large
