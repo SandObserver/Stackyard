@@ -94,6 +94,22 @@ function widgetConfigMatchesSaved(newConfig, savedConfig, entry) {
   return stableEqual(stripped(newConfig), stripped(savedConfig));
 }
 
+/** The first row id repeated inside a secret-holding group, or null.
+    @returns {{ group: string, id: unknown } | null} */
+function duplicateRowId(config, entry) {
+  if (!entry || !config || typeof config !== 'object') return null;
+  for (const gk of Object.keys(secretSpec(entry).groups)) {
+    if (!Array.isArray(config[gk])) continue;
+    const seen = new Set();
+    for (const row of config[gk]) {
+      if (!row || typeof row !== 'object' || row.id == null) continue;
+      if (seen.has(row.id)) return { group: gk, id: row.id };
+      seen.add(row.id);
+    }
+  }
+  return null;
+}
+
 const blankStored = (obj, old, k) => !!old && old[k] != null && old[k] !== '' && !(obj && obj[k]);
 
 /** Whether the config leaves blank a secret the saved config holds. */
@@ -156,6 +172,7 @@ module.exports = {
   widgetConfigMatchesSaved,
   alignSavedConfig,
   leavesStoredSecretBlank,
+  duplicateRowId,
   rowsMatch,
   badgeRequestMatchesSaved,
   rewriteChanged,

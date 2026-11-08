@@ -73,6 +73,12 @@ before(async () => {
         widgetConfig: { provider: 'audiobookshelf', absUrl: realBase, absKey: SECRET_VALUE },
       },
       {
+        id: 'w-rows',
+        type: 'widget',
+        widgetType: 'connections',
+        widgetConfig: { view: 'map', services: [{ id: 's1', type: 'netbird', url: realBase, token: SECRET_VALUE }] },
+      },
+      {
         id: 'w-inherited',
         type: 'widget',
         widgetType: 'books',
@@ -235,6 +241,30 @@ test('widget-options does not send the stored credential to a caller-chosen host
   });
   assert.equal(r.body.code, 'invalid.retype', 'the widget should run without the stored credential');
   assert.ok(!sawSecret(evilSeen), `the stored credential leaked: ${JSON.stringify(evilSeen)}`);
+});
+
+const dupRows = () => ({
+  view: 'map',
+  services: [
+    { id: 's1', type: 'netbird', url: realBase, savedRow: 0 },
+    { id: 's1', type: 'netbird', url: evilBase },
+  ],
+});
+
+test('widget-options refuses rows that share an id and sends nothing', async () => {
+  evilSeen.length = 0;
+  const r = await post('/api/widget-options/w-rows', { widgetType: 'connections', widgetConfig: dupRows() });
+  assert.equal(r.status, 400);
+  assert.equal(evilSeen.length, 0);
+});
+
+test('a config save refuses rows that share an id and stores nothing', async () => {
+  const r = await post('/api/config', {
+    items: [{ id: 'w-rows', type: 'widget', widgetType: 'connections', widgetConfig: dupRows() }],
+  });
+  assert.equal(r.status, 400);
+  assert.equal(r.body.kind, 'invalid');
+  assert.equal(loadConfig().items.find(i => i.id === 'w-rows').widgetConfig.services.length, 1);
 });
 
 test('widget-options reports a plain failure when no stored credential was held back', async () => {

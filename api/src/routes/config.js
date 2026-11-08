@@ -8,7 +8,8 @@ const { fail, KIND } = require('../api-error');
 const { firstUnsafeLink } = require('../../../ui/js/link-url.js');
 const { DOCK_MAX, clampName } = require('../../../ui/js/limits.js');
 const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
-const { rewriteChanged } = require('../secret-scope');
+const { rewriteChanged, duplicateRowId } = require('../secret-scope');
+const { getRegistry } = require('../widgets');
 const { firstMalformedRow } = require('../badge-headers');
 const backoff = require('../poll-backoff');
 const { stripDisabledCredentials } = require('../auth');
@@ -212,6 +213,17 @@ on('POST', '/api/config', async (req, res) => {
     /* Migrate first. A migration that renames a widget type after the refill
        stores secrets the new manifest does not scrub. */
     migrate(data);
+    const reg = getRegistry();
+    for (const item of data.items) {
+      if (item.type !== 'widget') continue;
+      const dup = duplicateRowId(item.widgetConfig, reg[item.widgetType]);
+      if (dup)
+        return json(res, 400, {
+          error: `${item.id}: two ${dup.group} rows share the id ${dup.id}`,
+          kind: KIND.INVALID,
+          detail: { id: item.id },
+        });
+    }
     const { withheld } = preserveAllSecrets(data, existing);
     if (redirected && existing.settings?.background?.apiKey && !data.settings?.background?.apiKey)
       withheld.push({ id: 'background', label: 'Unsplash' });

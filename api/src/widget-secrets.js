@@ -97,7 +97,7 @@ function scrubWidgetSecrets(item, entry) {
 
 /* Mutates newItem.widgetConfig. Never store a "<key>Set" marker. A stored
    marker outlives the secret it describes and can be asserted by the caller.
-   oldItem rows must line up with newItem rows: see alignSavedConfig. */
+   oldItem must come from alignSavedConfig. Unaligned rows get the wrong secret. */
 function preserveWidgetSecrets(newItem, oldItem, entry) {
   const e = _entryFor(newItem, entry);
   if (!e || !newItem || !newItem.widgetConfig) return;
@@ -115,9 +115,9 @@ function preserveWidgetSecrets(newItem, oldItem, entry) {
     nwc[gk].forEach((row, i) => {
       if (!row || typeof row !== 'object') return;
       delete row[SAVED_ROW];
-      /* Match by id first. Position alone misassigns a stored secret after a
-         reorder or a delete. */
-      const oldRow = (row.id != null ? oldRows.find(r => r && r.id === row.id) : oldRows[i]) || {};
+      /* Position only. A match by id can take a row the alignment refused and
+         send its secret to another destination. */
+      const oldRow = oldRows[i] || {};
       for (const sk of subKeys) {
         if (!Object.hasOwn(row, sk) && oldRow[sk] != null) row[sk] = oldRow[sk];
         delete row[sk + 'Set'];

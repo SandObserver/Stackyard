@@ -139,20 +139,11 @@ test('preserveWidgetSecrets restores an object secret omitted by the browser', (
   assert.equal(newItem.widgetConfig.network.enabled, false);
 });
 
-test('preserveWidgetSecrets matches group rows by id regardless of order', () => {
-  const oldItem = {
-    widgetConfig: {
-      services: [
-        { id: 'a', token: 'tok-a' },
-        { id: 'b', token: 'tok-b' },
-      ],
-    },
-  };
-  /* Rows reordered and one omits its token; id matching must still restore the
-     right secret to each row rather than lining them up by position. */
-  const newItem = { widgetConfig: { services: [{ id: 'b', token: 'tok-b-new' }, { id: 'a' }] } };
+test('preserveWidgetSecrets takes the aligned row at the same position, never one named by id', () => {
+  const oldItem = { widgetConfig: { services: [{}, { id: 'a', token: 'tok-a' }] } };
+  const newItem = { widgetConfig: { services: [{ id: 'a' }, { id: 'a' }] } };
   preserveWidgetSecrets(newItem, oldItem, ENTRY2);
-  assert.equal(newItem.widgetConfig.services[0].token, 'tok-b-new');
+  assert.equal(newItem.widgetConfig.services[0].token, undefined);
   assert.equal(newItem.widgetConfig.services[1].token, 'tok-a');
   assert.equal(newItem.widgetConfig.services[1].tokenSet, undefined);
 });

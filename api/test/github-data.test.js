@@ -220,3 +220,16 @@ test('github contributions link the profile unless a link URL is set', async () 
   const own = { ...CONTRIBUTIONS, githubHref: 'https://me.example' };
   assert.equal((await dataFn(recordingCtx(own, reply).ctx)).profileUrl, 'https://me.example');
 });
+
+test('a GitHub username that is not a login name fails before any request', async () => {
+  let called = false;
+  const ctx = {
+    config: { ...PRS, githubUser: 'octo repo:owner/private' },
+    fetchJSON: async () => {
+      called = true;
+    },
+    ...errorParts(),
+  };
+  await assert.rejects(dataFn(ctx), /not valid/);
+  assert.equal(called, false);
+});
