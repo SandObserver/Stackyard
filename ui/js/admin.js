@@ -7,7 +7,7 @@ import {
 } from '/js/admin-app-form.js?v=2fe1f503';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=8e2d3ac7';
 import { recoveryShown } from '/js/config-recovery.js?v=70ee5ca8';
-import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=09d51325';
+import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=2512472b';
 import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=f5547d5b';
 import {
   afterImport,
@@ -21,7 +21,7 @@ import {
   serialWrites,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=35fcc1c7';
+} from '/js/admin-save-logic.js?v=ec136d90';
 import {
   loadSettings,
   savedWallpaperUrl,
@@ -31,7 +31,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=799c9c0d';
+} from '/js/admin-settings.js?v=2896eb96';
 import {
   apiGet,
   apiPost,
@@ -75,7 +75,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=050f6de4';
+} from '/js/import-foreign.js?v=f21d04cc';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { clampName } from '/js/limits.js?v=ea61a441';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=bd88cb9e';

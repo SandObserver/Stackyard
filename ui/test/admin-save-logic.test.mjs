@@ -702,3 +702,56 @@ test('a reverting save passes its message to the write', async () => {
   await save([]);
   assert.deepEqual(got, [['Deleted'], []]);
 });
+
+test('planFieldSave writes only what this page changed', async () => {
+  const { planFieldSave } = await import('../js/admin-save-logic.js');
+  const base = { a: '1', b: '1' };
+  assert.deepEqual(
+    planFieldSave({ formBase: base, form: { a: '2', b: '1' }, serverBase: base, server: { a: '1', b: 'other' } }),
+    { changed: ['a'], conflicts: [] },
+  );
+});
+
+test('planFieldSave reports a field changed on both sides', async () => {
+  const { planFieldSave } = await import('../js/admin-save-logic.js');
+  const base = { a: { url: 'x' } };
+  assert.deepEqual(
+    planFieldSave({ formBase: base, form: { a: { url: 'y' } }, serverBase: base, server: { a: { url: 'z' } } }),
+    { changed: ['a'], conflicts: ['a'] },
+  );
+});
+
+test('applyGeneralFields keeps every field it was not given', async () => {
+  const { applyGeneralFields } = await import('../js/admin-save-logic.js');
+  const settings = { logLevel: 'debug', language: 'fr', server: { hostIp: 'old', socketProxyUrl: 'keep' } };
+  applyGeneralFields(settings, ['hostIp'], { hostIp: 'new', socketProxyUrl: 'stale', logLevel: 'info' });
+  assert.deepEqual(settings, { logLevel: 'debug', language: 'fr', server: { hostIp: 'new', socketProxyUrl: 'keep' } });
+});
+
+test('applyGeneralFields writes log level at the top level', async () => {
+  const { applyGeneralFields } = await import('../js/admin-save-logic.js');
+  const settings = { server: {} };
+  applyGeneralFields(settings, ['logLevel'], { logLevel: 'error' });
+  assert.deepEqual(settings, { logLevel: 'error', server: {} });
+});
+
+test('labelsWith moves one switch and keeps the other from the server', async () => {
+  const { labelsWith } = await import('../js/admin-save-logic.js');
+  assert.deepEqual(labelsWith({ desktop: false, ios: true }, 'ios', false), { desktop: false, ios: false });
+  assert.deepEqual(labelsWith(undefined, 'ios', true), { desktop: true, ios: true });
+});
+
+test('advancedBase moves only the fields written', async () => {
+  const { advancedBase, planFieldSave } = await import('../js/admin-save-logic.js');
+  const base = { logLevel: 'info', hostIp: '' };
+  const server = { logLevel: 'debug', hostIp: '10.0.0.2' };
+  const next = advancedBase(base, ['hostIp'], server);
+  assert.deepEqual(next, { logLevel: 'info', hostIp: '10.0.0.2' });
+  const later = planFieldSave({
+    formBase: { logLevel: 'info' },
+    form: { logLevel: 'error' },
+    serverBase: next,
+    server,
+  });
+  assert.deepEqual(later.conflicts, ['logLevel']);
+});
