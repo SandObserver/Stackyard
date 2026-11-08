@@ -236,3 +236,29 @@ test('an INITIAL_PASSWORD_FILE that cannot be read stops the start before the AP
     child.kill('SIGKILL');
   }
 });
+
+test('a stop signal ends the server cleanly', async () => {
+  const child = spawn(process.execPath, [SERVER], {
+    env: {
+      ...process.env,
+      PORT: String(await freePort()),
+      CONFIG_PATH: path.join(tmpDir('boot-signal'), 'apps.json'),
+      WIDGETS_PATH: widgetsDir(),
+    },
+    stdio: ['ignore', 'pipe', 'ignore'],
+  });
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('never ready')), 15000);
+    child.stdout.on('data', d => {
+      if (String(d).includes('server ready')) {
+        clearTimeout(timer);
+        resolve();
+      }
+    });
+  });
+  const code = await new Promise(resolve => {
+    child.on('exit', resolve);
+    child.kill('SIGTERM');
+  });
+  assert.equal(code, 0);
+});

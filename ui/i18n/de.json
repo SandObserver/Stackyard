@@ -389,6 +389,7 @@
     "deleted": "Gelöscht",
     "saveFailed": "Speichern nicht möglich. {err}",
     "passwordSavedOthersNot": "Dein Passwort wurde geändert, die anderen Einstellungen wurden aber nicht gespeichert. {err}",
+    "protectionOffOthersNot": "Der Schutz ist aus und das Passwort wurde entfernt, die anderen Einstellungen wurden aber nicht gespeichert. {err}",
     "allowedHostInvalid": "{host} ist weder ein Hostname noch eine IP-Adresse. Gib zum Beispiel nas.local oder 192.168.1.10 ein.",
     "allowedHostsKeepCurrent": "Lass {host} in „Erlaubte Adressen“, sonst funktioniert diese Seite nicht mehr. Um sie zu entfernen, öffne Stackyard über eine andere Adresse.",
     "allowedHostsTooMany": "Zu viele Adressen. Die Grenze liegt bei {max}.",

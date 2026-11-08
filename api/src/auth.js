@@ -492,6 +492,8 @@ function refreshSession(req, res) {
   if (!authActive(cfg)) return false;
   const read = readSession(req, cfg);
   if (!read || Date.now() - read.iat < RENEW_AFTER_MS) return false;
+  /* Keep. With no signal of the page's scheme, a renewal would replace a Secure cookie with a plain one. */
+  if (!isSecureRequest(req) && pageScheme(req) === null) return false;
   const left = Math.min(SESSION_MAX_AGE_MS, read.createdAt + SESSION_ABSOLUTE_MS - Date.now());
   setSessionCookie(
     res,

@@ -18,6 +18,7 @@ function fatal(kind) {
 }
 process.on('uncaughtException', fatal('uncaughtException'));
 process.on('unhandledRejection', fatal('unhandledRejection'));
+for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => process.exit(0));
 
 require('./routes');
 require('./widgets');

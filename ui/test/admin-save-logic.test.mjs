@@ -755,3 +755,12 @@ test('advancedBase moves only the fields written', async () => {
   });
   assert.deepEqual(later.conflicts, ['logLevel']);
 });
+
+test('restoreBody drops folder children that are not apps', () => {
+  const items = [
+    { id: 'a', type: 'app' },
+    { id: 'w', type: 'widget' },
+    { id: 'f', type: 'folder', children: ['a', 'w', 'gone'] },
+  ];
+  assert.deepEqual(restoreBody({ items }, {}).items[2].children, ['a']);
+});

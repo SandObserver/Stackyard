@@ -65,7 +65,7 @@ test('a token past its window no longer verifies', () => {
 });
 
 function reqRes(cookie) {
-  const req = { headers: cookie ? { cookie: `ds=${cookie}` } : {}, socket: {} };
+  const req = { headers: cookie ? { cookie: `ds=${cookie}`, referer: 'http://nas/' } : {}, socket: {} };
   const res = Object.assign(new EventEmitter(), {
     headers: {},
     setHeader(k, v) {
@@ -84,6 +84,14 @@ function authOn() {
 test('a fresh session is left alone', () => {
   const secret = authOn();
   const { req, res } = reqRes(makeToken(newSessionId(), secret));
+  assert.equal(refreshSession(req, res), false);
+  assert.equal(res.headers['set-cookie'], undefined);
+});
+
+test('a session is not renewed when nothing shows the page scheme', () => {
+  const secret = authOn();
+  const { req, res } = reqRes(tokenAgedBy(RENEW_AFTER_MS + 1000, secret, newSessionId()));
+  delete req.headers.referer;
   assert.equal(refreshSession(req, res), false);
   assert.equal(res.headers['set-cookie'], undefined);
 });

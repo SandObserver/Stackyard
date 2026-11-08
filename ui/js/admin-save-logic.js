@@ -164,6 +164,15 @@ export function restoresSettings(file, live) {
   return !sameData(next, now);
 }
 
+/* Early versions could drop any item on a folder. The server refuses those. */
+function withoutBadFolderChildren(items) {
+  if (!Array.isArray(items)) return items;
+  const apps = new Set(items.filter(i => i?.type === 'app').map(i => i.id));
+  return items.map(i =>
+    i?.type === 'folder' && Array.isArray(i.children) ? { ...i, children: i.children.filter(id => apps.has(id)) } : i,
+  );
+}
+
 /** The config write that restores a backup over `live`. It carries the file's
     schema version so the server migrates what an older release wrote.
     @param {any} file @param {any} live
@@ -178,7 +187,7 @@ export function restoreBody(file, live, keepBackground = false) {
   return {
     _rev: live?._rev,
     _schemaVersion: file?._schemaVersion,
-    items: file?.items,
+    items: withoutBadFolderChildren(file?.items),
     settings: settings || live?.settings,
   };
 }
