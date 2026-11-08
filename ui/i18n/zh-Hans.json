@@ -381,6 +381,7 @@
     "currentPasswordWrong": "当前密码不正确。",
     "passwordChangedElsewhere": "密码已在其他地方更改。请重新加载页面后重试。",
     "dashboardChangedElsewhere": "仪表板已在其他地方更改。请重新加载页面后重试。",
+    "settingsChangedElsewhere": "此设置已在其他地方更改。请重新加载页面后重试。",
     "openGeneral": "打开“通用”",
     "reload": "重新加载",
     "tooManyAttempts": "尝试次数过多。请等几分钟后再试。",

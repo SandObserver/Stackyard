@@ -395,6 +395,7 @@
     "currentPasswordWrong": "Le mot de passe actuel est incorrect.",
     "passwordChangedElsewhere": "Le mot de passe a été modifié ailleurs. Rechargez la page et réessayez.",
     "dashboardChangedElsewhere": "Le tableau de bord a été modifié ailleurs. Rechargez la page et réessayez.",
+    "settingsChangedElsewhere": "Ce réglage a été modifié ailleurs. Rechargez la page et réessayez.",
     "openGeneral": "Ouvrir Général",
     "reload": "Recharger",
     "tooManyAttempts": "Trop de tentatives. Patientez quelques minutes, puis réessayez.",

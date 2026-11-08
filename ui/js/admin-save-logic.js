@@ -183,6 +183,54 @@ export function restoreBody(file, live, keepBackground = false) {
   };
 }
 
+const GENERAL_SERVER_FIELDS = [
+  'hostIp',
+  'healthChecks',
+  'socketProxyUrl',
+  'hideHealthyBadge',
+  'proxmox',
+  'allowedHosts',
+];
+const GENERAL_TOP_FIELDS = ['logLevel', 'language'];
+
+/** The General values as the server holds them, one entry per field.
+    @param {any} settings @returns {Record<string, unknown>} */
+export function generalServerFields(settings) {
+  /** @type {Record<string, unknown>} */
+  const out = {};
+  for (const k of GENERAL_SERVER_FIELDS) out[k] = settings?.server?.[k];
+  for (const k of GENERAL_TOP_FIELDS) out[k] = settings?.[k];
+  return out;
+}
+
+/** Copies only `changed` from the form into `settings`.
+    @param {any} settings @param {string[]} changed @param {Record<string, unknown>} form */
+export function applyGeneralFields(settings, changed, form) {
+  const server = { ...settings.server };
+  for (const k of changed) {
+    if (GENERAL_TOP_FIELDS.includes(k)) settings[k] = form[k];
+    else server[k] = form[k];
+  }
+  settings.server = server;
+}
+
+/** Which fields a section may write. The form and the server can hold a value
+    in different shapes, so each side is compared only with its own earlier copy.
+
+    @param {{ formBase: Record<string, unknown>, form: Record<string, unknown>,
+              serverBase: Record<string, unknown>, server: Record<string, unknown> }} args
+    @returns {{ changed: string[], conflicts: string[] }} */
+export function planFieldSave({ formBase, form, serverBase, server }) {
+  const changed = Object.keys(form).filter(k => !sameData(form[k], formBase[k]));
+  return { changed, conflicts: changed.filter(k => !sameData(server[k], serverBase[k])) };
+}
+
+/** The label setting with one switch moved and the other kept from the server.
+    @param {any} current @param {'desktop'|'ios'} key @param {boolean} value */
+export function labelsWith(current, key, value) {
+  return { desktop: current?.desktop !== false, ios: current?.ios === true, [key]: value };
+}
+
 /** Run writes one at a time, in the order asked. A write asked for while
     another runs waits for it instead of being dropped.
 

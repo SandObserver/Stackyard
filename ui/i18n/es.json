@@ -395,6 +395,7 @@
     "currentPasswordWrong": "La contraseña actual es incorrecta.",
     "passwordChangedElsewhere": "La contraseña se cambió en otro lugar. Recarga la página e inténtalo de nuevo.",
     "dashboardChangedElsewhere": "El panel se cambió en otro lugar. Recarga la página e inténtalo de nuevo.",
+    "settingsChangedElsewhere": "Este ajuste se cambió en otro lugar. Recarga la página e inténtalo de nuevo.",
     "openGeneral": "Abrir General",
     "reload": "Recargar",
     "tooManyAttempts": "Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",

@@ -29,7 +29,13 @@ import {
 import { confirmText, promptModal } from '/js/modal.js?v=bd88cb9e';
 import { el, inp, qa, setUserText } from '/js/utils.js?v=14d4695d';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { serialWrites } from '/js/admin-save-logic.js?v=35fcc1c7';
+import {
+  serialWrites,
+  generalServerFields,
+  applyGeneralFields,
+  planFieldSave,
+  labelsWith,
+} from '/js/admin-save-logic.js?v=14cced2c';
 import { renderColorControl } from '/js/admin-color-control.js?v=433d3f3b';
 import { BACKDROP } from '/js/background.js?v=96567a38';
 import {
@@ -49,6 +55,10 @@ let _srvTrack = null;
 /** @type {{ dirty: () => boolean, reset: (force?: boolean) => void } | null} */
 let _bgTrack = null;
 let _savedWallpaperUrl = '';
+/** @type {{ form: Record<string, unknown>, server: Record<string, unknown> }} */
+let _srvBase = { form: {}, server: {} };
+/** @type {{ form: Record<string, unknown>, server: Record<string, unknown> }} */
+let _bgBase = { form: {}, server: {} };
 let _unsplashKeySet = false;
 let _pveSecretSet = false;
 
@@ -95,6 +105,40 @@ const readWallpaperForm = () =>
     _val('bg-color-val'),
     _val('bg-apikey-inp'),
   ]);
+
+const readGeneralFields = () => ({
+  hostIp: inp('srv-ip')?.value?.trim() || '',
+  healthChecks: inp('srv-hc-en')?.checked !== false,
+  socketProxyUrl: inp('srv-socket')?.value?.trim() || '',
+  hideHealthyBadge: inp('srv-hide-healthy')?.checked !== false,
+  proxmox: readProxmoxForm(),
+  allowedHosts: parseHostList(inp('srv-hosts')?.value || ''),
+  logLevel: inp('log-level')?.value || 'info',
+  language: inp('lang-sel')?.value || 'en',
+});
+
+function readBackgroundFields() {
+  const type = inp('bg-type')?.value || 'unsplash';
+  const background = { type, brightness: parseFloat(inp('bg-br')?.value || '0.62') };
+  if (type === 'unsplash') {
+    background.collection = (inp('bg-col-inp') || inp('bg-col'))?.value?.trim() || '';
+  } else if (type === 'url') {
+    background.url = (inp('bg-url-inp') || inp('bg-url'))?.value?.trim() || '';
+    background.fit = inp('bg-fit')?.value === 'fit' ? 'fit' : 'fill';
+  } else if (type === 'color') {
+    background.color = inp('bg-color-val')?.value?.trim() || '';
+  }
+  return { background };
+}
+
+/** @param {{ form: Record<string, unknown>, server: Record<string, unknown> }} base
+    @param {Record<string, unknown>} form @param {Record<string, unknown>} server
+    @returns {string[]} the fields to write */
+function fieldsToWrite(base, form, server) {
+  const { changed, conflicts } = planFieldSave({ formBase: base.form, form, serverBase: base.server, server });
+  if (conflicts.length) throw Object.assign(new Error('stale'), { status: 409 });
+  return changed;
+}
 
 /** Disables `buttonId` while its section matches what was last saved. */
 function trackSave(buttonId, read) {
@@ -330,6 +374,8 @@ export function loadSettings(c) {
 
   _srvTrack = trackSave('srv-save', readServerForm);
   _bgTrack = trackSave('bg-save', readWallpaperForm);
+  _srvBase = { form: readGeneralFields(), server: generalServerFields(s) };
+  _bgBase = { form: readBackgroundFields(), server: { background: s.background } };
   syncAuthFromServer().then(() => _srvTrack?.reset(false));
 }
 
@@ -503,8 +549,11 @@ function saveSwitchChange(e, apply) {
 
 /** @param {Event} e */
 function saveLabels(e) {
+  const toggled = /** @type {HTMLInputElement} */ (e.target);
+  const key = toggled.id === 'set-lbl-d' ? 'desktop' : 'ios';
+  const value = toggled.checked;
   return saveSwitchChange(e, settings => {
-    settings.showLabels = { desktop: inp('set-lbl-d')?.checked !== false, ios: inp('set-lbl-m')?.checked || false };
+    settings.showLabels = labelsWith(settings.showLabels, key, value);
   });
 }
 
@@ -518,21 +567,16 @@ function saveSwitch(e, key) {
 }
 async function saveWallpaper() {
   try {
-    const type = inp('bg-type')?.value || 'unsplash';
-    const br = parseFloat(inp('bg-br')?.value || '0.62');
-    const bg = { type, brightness: br };
-    if (type === 'unsplash') {
-      bg.collection = (inp('bg-col-inp') || inp('bg-col'))?.value?.trim() || '';
-    } else if (type === 'url') {
-      bg.url = (inp('bg-url-inp') || inp('bg-url'))?.value?.trim() || '';
-      bg.fit = inp('bg-fit')?.value === 'fit' ? 'fit' : 'fill';
-    } else if (type === 'color') {
-      bg.color = inp('bg-color-val')?.value?.trim() || '';
-    }
+    const form = readBackgroundFields();
+    const bg = form.background;
+    const type = bg.type;
     const c = await apiGet('/api/config');
     c.settings = c.settings || {};
-    c.settings.background = bg;
-    await apiPost('/api/config', c);
+    if (fieldsToWrite(_bgBase, form, { background: c.settings.background }).length) {
+      c.settings.background = bg;
+      await apiPost('/api/config', c);
+      _bgBase = { form, server: { background: bg } };
+    }
     _savedWallpaperUrl = bg.url || '';
     /* After the main config. GET /api/config strips the key, so a config write
        that follows would overwrite it with nothing. */
@@ -548,7 +592,7 @@ async function saveWallpaper() {
     _bgTrack?.reset();
     confirmSaved(el('bg-save'));
   } catch (e) {
-    toast(t('toast.saveFailed', { err: errorText(e) }), 'err', errorAction(e));
+    toast(staleText(e) || t('toast.saveFailed', { err: errorText(e) }), 'err', errorAction(e));
   }
 }
 const PASSWORD_ERROR_KEYS = Object.freeze({
@@ -558,6 +602,11 @@ const PASSWORD_ERROR_KEYS = Object.freeze({
   'invalid.password-long': REFUSAL_KEYS.long,
   'invalid.password-common': REFUSAL_KEYS.common,
 });
+/** @param {unknown} e @returns {string} the message for a section changed elsewhere, or '' */
+function staleText(e) {
+  const err = /** @type {any} */ (e);
+  return err?.status === 409 && !err?.code ? t('toast.settingsChangedElsewhere') : '';
+}
 const RETRY_IN_DIALOG = new Set(['invalid.current-password', 'blocked.rate-limit']);
 
 async function saveServer() {
@@ -631,7 +680,7 @@ async function saveServer() {
     if (!probe.ok) socketWarning = t('toast.socketUrlUnverified', { reason: socketReason }) + hint;
   }
 
-  const write = currentPassword => writeServer({ enabled, pw, currentPassword, allowedHosts, socketUrlTyped });
+  const write = currentPassword => writeServer({ enabled, pw, currentPassword, allowedHosts });
 
   /** @type {{ langChanged: boolean } | undefined} */
   let done;
@@ -678,6 +727,7 @@ async function saveServer() {
   if (failure || !done) {
     const key = PASSWORD_ERROR_KEYS[/** @type {any} */ (failure)?.code];
     if (key) toast(t(key), 'err', errorAction(failure));
+    else if (staleText(failure)) toast(staleText(failure), 'err', errorAction(failure));
     else toast(t('toast.saveFailed', { err: errorText(failure) }), 'err', errorAction(failure));
     await syncAuthFromServer();
     return;
@@ -706,9 +756,13 @@ function clearNewPassword() {
 }
 
 /** @param {{ enabled: boolean, pw: string, currentPassword: string|undefined,
-              allowedHosts: string[], socketUrlTyped: string }} args
+              allowedHosts: string[] }} args
     @returns {Promise<{ langChanged: boolean }>} */
-async function writeServer({ enabled, pw, currentPassword, allowedHosts, socketUrlTyped }) {
+async function writeServer({ enabled, pw, currentPassword, allowedHosts }) {
+  /* Before the password writes. A refused save must change nothing. */
+  const form = readGeneralFields();
+  const before = await apiGet('/api/config');
+  const planned = fieldsToWrite(_srvBase, form, generalServerFields(before.settings));
   /* Keep before the config read. These writes bump the config revision, and
      a config save built on an earlier read is refused as stale. */
   if (shouldWritePassword({ enabled, newPassword: pw })) {
@@ -717,25 +771,20 @@ async function writeServer({ enabled, pw, currentPassword, allowedHosts, socketU
     const pwEl = inp('sec-pw');
     if (pwEl) pwEl.placeholder = `●●●●●●●●●● (${t('common.configured')})`;
   }
-  await apiPost('/api/auth/toggle', { enabled, currentPassword, allowedHosts });
+  await apiPost('/api/auth/toggle', {
+    enabled,
+    currentPassword,
+    allowedHosts: planned.includes('allowedHosts') ? allowedHosts : undefined,
+  });
 
   const c = await apiGet('/api/config');
   c.settings = c.settings || {};
-  const prevLang = c.settings.language || 'en';
-  c.settings.server = {
-    ...c.settings.server,
-    hostIp: inp('srv-ip')?.value?.trim() || '',
-    healthChecks: inp('srv-hc-en')?.checked !== false,
-    socketProxyUrl: socketUrlTyped,
-    hideHealthyBadge: inp('srv-hide-healthy')?.checked !== false,
-    proxmox: readProxmoxForm(),
-    allowedHosts,
-  };
-  c.settings.logLevel = inp('log-level')?.value || 'info';
-  c.settings.language = inp('lang-sel')?.value || 'en';
-  const langChanged = c.settings.language !== prevLang;
-
-  await apiPost('/api/config', c);
+  const changed = fieldsToWrite(_srvBase, form, generalServerFields(c.settings));
+  const langChanged = changed.includes('language');
+  if (changed.length) {
+    applyGeneralFields(c.settings, changed, form);
+    await apiPost('/api/config', c);
+  }
   if (!enabled) {
     const pwEl = inp('sec-pw');
     if (pwEl) pwEl.placeholder = '';
@@ -746,5 +795,6 @@ async function writeServer({ enabled, pw, currentPassword, allowedHosts, socketU
   _srvTrack?.reset();
   const after = await apiGet('/api/config').catch(() => null);
   if (after) showPveSecretState(!!after.settings?.server?.proxmox?.secretSet);
+  _srvBase = { form: readGeneralFields(), server: generalServerFields(after?.settings ?? c.settings) };
   return { langChanged };
 }

@@ -388,6 +388,7 @@
     "currentPasswordWrong": "Das aktuelle Passwort ist falsch.",
     "passwordChangedElsewhere": "Das Passwort wurde anderswo geändert. Lade die Seite neu und versuche es erneut.",
     "dashboardChangedElsewhere": "Das Dashboard wurde anderswo geändert. Lade die Seite neu und versuche es erneut.",
+    "settingsChangedElsewhere": "Diese Einstellung wurde anderswo geändert. Lade die Seite neu und versuche es erneut.",
     "openGeneral": "Allgemein öffnen",
     "reload": "Neu laden",
     "tooManyAttempts": "Zu viele Versuche. Warte ein paar Minuten und versuche es dann erneut.",
