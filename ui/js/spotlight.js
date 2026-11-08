@@ -1,8 +1,8 @@
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
-import { mk, clr, el, initial, inp as inpById, q, qa, setUserText } from '/js/utils.js?v=14d4695d';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
+import { clr, el, initial, inp as inpById, mk, q, qa, setUserText } from '/js/utils.js?v=f0b9b030';
 
 /* Attached to the window so a re-open can undo the previous one. */
 const _w = /** @type {any} */ (window);
@@ -44,7 +44,13 @@ export function initSpotlight({
     res.replaceChildren();
     const apps = getItems().filter(i => i.type === 'app' || i.type === 'folder');
     const qq = query.toLowerCase().trim();
-    cur = qq ? apps.filter(a => (a.label || a.id).toLowerCase().includes(qq)) : apps;
+    cur = qq
+      ? apps.filter(a =>
+          String(a.label || a.id)
+            .toLowerCase()
+            .includes(qq),
+        )
+      : apps;
     si = 0;
     if (!cur.length) {
       const e = mk('div');
@@ -326,7 +332,7 @@ export function initSpotlight({
   document.addEventListener(
     'keydown',
     e => {
-      if (ov.open || !typeToOpen()) return;
+      if (ov.open || ov.inert || !typeToOpen()) return;
       if (e.key === 'Escape' || e.key.length !== 1 || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === ' ' && e.target instanceof Element && e.target.closest(ACTIVATES_ON_SPACE)) return;
       e.stopImmediatePropagation();

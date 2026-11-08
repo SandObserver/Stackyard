@@ -76,7 +76,7 @@ for (const failures of [1, 2]) {
     const stop = new Error('reached the first-run prompt');
     const boot = new Function(
       'fetch, loadLocalIcons, document, initI18n, sanitizeItemLinks, showSetupPrompt, setHtml, html, t, BOOT_TIMEOUT_MS, blockingScreenFor, showBlockingScreen, console, storeGet, storeSet, LANG_STORE, isSupported, liftVeil, saveBootHint, currentLang, showApiDown',
-      `let items, S, _rev, widgetReg; ${src} return boot;`,
+      `let items, S, _rev, widgetReg; const withKnownSizes = x => x, WIDGET_COLS = { desktop: {} }; ${src} return boot;`,
     )(
       fetch,
       async () => (await fetch('/api/icons/local')).status,

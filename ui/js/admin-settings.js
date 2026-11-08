@@ -1,5 +1,5 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=5f4db926';
-import { socketProbeAdvice } from '/js/admin-error.js?v=00b3d1fd';
+import { renderColorControl } from '/js/admin-color-control.js?v=081135bd';
+import { socketProbeAdvice } from '/js/admin-error.js?v=e8508191';
 import {
   BLOCK,
   clearsStoredPassword,
@@ -8,7 +8,8 @@ import {
   needsSetupCode,
   settingsSaveBlocker,
   shouldWritePassword,
-} from '/js/admin-logic.js?v=f5547d5b';
+  wallpaperFileName,
+} from '/js/admin-logic.js?v=1526c452';
 import {
   advancedBase,
   applyGeneralFields,
@@ -16,7 +17,7 @@ import {
   labelsWith,
   planFieldSave,
   serialWrites,
-} from '/js/admin-save-logic.js?v=ec136d90';
+} from '/js/admin-save-logic.js?v=8f3b48f6';
 import {
   apiGet,
   apiPost,
@@ -32,8 +33,8 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=7828f8bc';
-import { BACKDROP } from '/js/background.js?v=96567a38';
+} from '/js/admin-shared.js?v=4b6d9de6';
+import { BACKDROP } from '/js/background.js?v=7638c299';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import {
   ALLOWED_HOSTS_MAX,
@@ -46,7 +47,7 @@ import { t } from '/js/i18n.js?v=ed7c5565';
 import { confirmText, promptModal } from '/js/modal.js?v=bd88cb9e';
 import { contextWords, passwordMeter, passwordMismatch, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
 import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
-import { el, inp, qa, setUserText } from '/js/utils.js?v=14d4695d';
+import { el, inp, qa, setUserText } from '/js/utils.js?v=f0b9b030';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
@@ -314,7 +315,11 @@ export function loadSettings(c) {
   _sv('ie-pve-url-v', s.server?.proxmox?.url, t('common.notSet'));
   _sv('ie-pve-token-v', s.server?.proxmox?.tokenId, t('common.notSet'));
   showPveSecretState(!!s.server?.proxmox?.secretSet);
-  _sv('ie-hosts-v', (s.server?.allowedHosts || []).join(', '), t('general.allowedHostsNone'));
+  _sv(
+    'ie-hosts-v',
+    (Array.isArray(s.server?.allowedHosts) ? s.server.allowedHosts : []).join(', '),
+    t('general.allowedHostsNone'),
+  );
   _sv('ie-pw-v', '', t('common.notSet')); /* set below after auth check */
   const _si = (id, v) => {
     const node = inp(id);
@@ -326,7 +331,7 @@ export function loadSettings(c) {
   _si('srv-pve-token', s.server?.proxmox?.tokenId || '');
   const pveTls = inp('srv-pve-tls');
   if (pveTls) pveTls.checked = s.server?.proxmox?.skipTlsVerify === true;
-  _si('srv-hosts', (s.server?.allowedHosts || []).join(', '));
+  _si('srv-hosts', (Array.isArray(s.server?.allowedHosts) ? s.server.allowedHosts : []).join(', '));
   _sv('ie-bgcol-v', s.background?.collection, t('common.notSet'));
   _si('bg-col-inp', s.background?.collection || '');
   _si('bg-url-inp', s.background?.url || '');
@@ -414,7 +419,7 @@ async function syncAuthFromServer() {
 export function showWallpaperFile(url) {
   const node = el('bg-file-v');
   if (!node) return;
-  const name = url ? decodeURIComponent(String(url).split('/').pop() || '') : '';
+  const name = url ? wallpaperFileName(url) : '';
   if (name) {
     setUserText(node, name);
     node.classList.remove('is-ph');

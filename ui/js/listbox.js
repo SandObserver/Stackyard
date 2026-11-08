@@ -6,11 +6,11 @@
    Do not use popover. The top layer makes iOS collapse its browser toolbar,
    which exposes a strip of page canvas and misplaces the menu. */
 
-import { nextActiveIndex, singleChoice } from '/js/admin-logic.js?v=f5547d5b';
+import { nextActiveIndex, singleChoice } from '/js/admin-logic.js?v=1526c452';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatList } from '/js/format-number.js?v=abcd4ae4';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { qa } from '/js/utils.js?v=14d4695d';
+import { qa } from '/js/utils.js?v=f0b9b030';
 import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 
 const CHEV = iconSvg('chevrons', 22, 'solid', 'dd-chev');

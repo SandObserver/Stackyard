@@ -1,67 +1,21 @@
-import { loadLocalIcons, iconChain } from '/js/icons.js?v=5ac01d72';
+import { setupErrorKey } from '/js/admin-error.js?v=e8508191';
 import {
-  WIDGET_HEIGHTS,
-  WIDGET_DESIGN,
-  WIDGET_COLS,
-  WIDGET_ROWS,
-  widgetSrc,
-  cardPreset,
-  fixedAppearance,
-  uniqueTitle,
-} from '/js/widget-types.js?v=b0e8f76d';
-import {
-  el,
-  ICON_R,
-  inertAllBut,
-  isDashboardEmpty,
-  loadImagesNow,
-  mk,
-  mkWrap as _mkWrap,
-  mountScaledWidget,
-  pageDir,
-  renderEmptyState,
-  q,
-  qa,
-  qi,
-  scrollsSideways,
-  setCentredText,
-  storeGet,
-  storeSet,
-  teardownWidgets,
-  rethemeTiles,
-  titleWhenTruncated,
-  within,
-} from '/js/utils.js?v=14d4695d';
-import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
-import { initSpotlight } from '/js/spotlight.js?v=e50cb331';
-import { html, setHtml, raw } from '/js/html.js?v=c71f8903';
-import { initI18n, isSupported, t, currentLang } from '/js/i18n.js?v=ed7c5565';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=70ee5ca8';
-import { passwordMeter, passwordMismatch, contextWords, meterColor } from '/js/password-policy.js?v=0c0fd0af';
-import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
-import { setupErrorKey } from '/js/admin-error.js?v=00b3d1fd';
-import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
-import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
-import {
-  initUI,
-  mkFolder,
-  openFolderDesktop,
-  openFolderMobile,
-  buildMobile,
-  resetMobileChrome,
-  mkFolderGlyph,
-  swipePager,
-} from '/js/ui.js?v=9d71ca16';
+  applyBackground,
+  BACKDROP,
+  decoded,
+  firstViewWait,
+  rememberBackground,
+  resolveBackground,
+} from '/js/background.js?v=7638c299';
 import {
   badgeMinimum,
   badgeSignature,
   computeBadgeVisual,
   folderLabelName,
   readBadgeUpdate,
-} from '/js/badge-logic.js?v=6d99179d';
-import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
+} from '/js/badge-logic.js?v=04a4ece8';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=652dd5df';
-import { observeGlass } from '/js/glass-rim.js?v=3faec233';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=70ee5ca8';
 import {
   configChanged,
   desktopCols,
@@ -70,30 +24,77 @@ import {
   restoreAction,
   restorePage,
   wheelPager,
-} from '/js/dashboard-logic.js?v=3098e6b2';
-import {
-  applyBackground,
-  BACKDROP,
-  decoded,
-  firstViewWait,
-  rememberBackground,
-  resolveBackground,
-} from '/js/background.js?v=96567a38';
-import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
-import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
+  withKnownSizes,
+} from '/js/dashboard-logic.js?v=e53affb9';
+import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
+import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
+import { observeGlass } from '/js/glass-rim.js?v=3faec233';
+import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
+import { currentLang, initI18n, isSupported, t } from '/js/i18n.js?v=ed7c5565';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=b279fd98';
+import { iconChain, loadLocalIcons } from '/js/icons.js?v=76c29d43';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
-import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
-import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import {
-  averageColor,
   applyLabelTones,
+  averageColor,
   loadSamplingImage,
   sampleImage,
   toneForColor,
 } from '/js/label-contrast.js?v=7172d36f';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=b279fd98';
+import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
+import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
+import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
-import { THEME_KEY, applyTheme, prefersDark, readMode, resolveTheme } from '/js/theme.js?v=eeafa4b5';
+import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
+import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
+import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
+import { initSpotlight } from '/js/spotlight.js?v=5d72f1f9';
+import { applyTheme, prefersDark, readMode, resolveTheme, THEME_KEY } from '/js/theme.js?v=eeafa4b5';
+import {
+  buildMobile,
+  initUI,
+  mkFolder,
+  mkFolderGlyph,
+  openFolderDesktop,
+  openFolderMobile,
+  resetMobileChrome,
+  swipePager,
+} from '/js/ui.js?v=0dad05ce';
+import {
+  mkWrap as _mkWrap,
+  el,
+  ICON_R,
+  inertAllBut,
+  isDashboardEmpty,
+  loadImagesNow,
+  mk,
+  mountScaledWidget,
+  pageDir,
+  q,
+  qa,
+  qi,
+  renderEmptyState,
+  rethemeTiles,
+  scrollsSideways,
+  setCentredText,
+  storeGet,
+  storeSet,
+  teardownWidgets,
+  titleWhenTruncated,
+  within,
+} from '/js/utils.js?v=f0b9b030';
+import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
+import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
+import {
+  cardPreset,
+  fixedAppearance,
+  uniqueTitle,
+  WIDGET_COLS,
+  WIDGET_DESIGN,
+  WIDGET_HEIGHTS,
+  WIDGET_ROWS,
+  widgetSrc,
+} from '/js/widget-types.js?v=b0e8f76d';
 
 ensureSprite();
 
@@ -694,6 +695,20 @@ function showApiDown() {
   document.body.appendChild(msg);
 }
 
+function showBuildFailed() {
+  document.documentElement.style.removeProperty('--boot-bg');
+  const msg = document.createElement('div');
+  msg.className = 'api-error-screen';
+  msg.setAttribute('role', 'alert');
+  setHtml(
+    msg,
+    html`<h2 class="api-error-title">${t('home.loadFailed')}</h2><a class="api-error-btn" href="/admin/">${t('home.emptyAction')}</a>`,
+  );
+  for (const child of document.body.children) /** @type {HTMLElement} */ (child).inert = true;
+  document.body.classList.add('api-down');
+  document.body.appendChild(msg);
+}
+
 /** @param {HTMLElement} root @param {any} bg @param {number} call */
 async function showWallpaper(root, bg, call) {
   const prev = _shownWallpaper;
@@ -949,7 +964,7 @@ async function boot() {
     const c = await res.json();
     /* Saving rejects these, but a config written earlier still reaches here.
        See ui/js/link-url.js. */
-    items = sanitizeItemLinks(c.items || []);
+    items = withKnownSizes(sanitizeItemLinks(c.items || []), WIDGET_COLS.desktop);
     S = c.settings || {};
     _rev = c._rev ?? null;
     storeSet(LANG_STORE, await initI18n(S.language || 'en'));
@@ -1049,11 +1064,16 @@ async function boot() {
       document.body.classList.add('is-mob');
       requestAnimationFrame(() =>
         requestAnimationFrame(() => {
-          buildMobile();
-          syncMobPages();
-          goTo(restorePage(storeGet(PAGE_STORE), totalPages), null, false);
-          loadVisibleIcons();
-          retone();
+          try {
+            buildMobile();
+            syncMobPages();
+            goTo(restorePage(storeGet(PAGE_STORE), totalPages), null, false);
+            loadVisibleIcons();
+            retone();
+          } catch (e) {
+            console.error('dashboard build failed', e);
+            showBuildFailed();
+          }
           firstBuilt();
         }),
       );
@@ -1334,7 +1354,7 @@ async function boot() {
   window.addEventListener('pageshow', async e => {
     if (!e.persisted) return;
     const signal = AbortSignal.timeout(BOOT_TIMEOUT_MS);
-    /** @param {string} url @returns {Promise<import('/js/dashboard-logic.js?v=3098e6b2').RestoreCheck>} */
+    /** @param {string} url @returns {Promise<import('/js/dashboard-logic.js?v=e53affb9').RestoreCheck>} */
     const check = async url => {
       try {
         const r = await fetch(url, { cache: 'no-store', redirect: 'manual', signal });
@@ -1373,4 +1393,10 @@ async function boot() {
   liftVeil();
 }
 
-boot();
+boot().catch(async e => {
+  console.error('[boot]', e);
+  const lastLang = storeGet(LANG_STORE);
+  await initI18n(isSupported(lastLang) ? lastLang : 'en').catch(() => {});
+  showBuildFailed();
+  liftVeil();
+});
