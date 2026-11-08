@@ -86,6 +86,9 @@ export function setupCodeErrorKey(body) {
   if (code === 'invalid.password-short') return 'hostBlock.tooShort';
   if (code === 'invalid.password-long') return 'hostBlock.tooLong';
   if (code === 'invalid.password-common') return 'pwStrength.common';
+  if (code === 'internal.disk-full') return 'adminError.diskFull';
+  if (code === 'internal.config-not-writable') return 'adminError.configNotWritable';
+  if (code === 'internal.config-file-mounted') return 'adminError.configFileMounted';
   return 'setup.failed';
 }
 

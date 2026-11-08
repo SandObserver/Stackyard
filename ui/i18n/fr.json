@@ -289,7 +289,7 @@
     "configTooLarge": "Cette configuration dépasse la limite de {max} Mo.",
     "newerConfig": "Cette sauvegarde provient d’une version plus récente de Stackyard. Mettez à jour, puis importez-la.",
     "diskFull": "Le disque est plein. Libérez de l’espace, puis enregistrez à nouveau.",
-    "configNotWritable": "Stackyard ne peut pas écrire dans son dossier de données. Donnez à l’utilisateur node l’accès en écriture.",
+    "configNotWritable": "Stackyard ne peut pas écrire dans son dossier de données. Donnez l’accès en écriture à l’utilisateur qui exécute Stackyard et vérifiez que le dossier n’est pas en lecture seule.",
     "configFileMounted": "Le fichier de configuration est monté seul. Montez plutôt son dossier.",
     "socketRefused": "Le proxy de socket a refusé la requête.",
     "notSocketProxy": "Quelque chose a répondu, mais ce n’est pas un proxy de socket Docker.",

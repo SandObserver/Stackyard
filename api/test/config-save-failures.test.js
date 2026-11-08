@@ -94,3 +94,13 @@ test('a single-file mount of the config is detected', () => {
   assert.equal(configFileIsMount(`${line('/')}\n${line(path.dirname(CONFIG_PATH))}\n`), false);
   assert.equal(configFileIsMount(line(CONFIG_PATH.replace(/ /g, '\\040'))), true);
 });
+
+test('a route with no error handling still reports why the write failed', async () => {
+  saveConfig({ items: [], settings: {} });
+  failWrite('ENOSPC');
+  const r = await fetch(`${base}/api/auth/dismiss-setup`, { method: 'POST', headers: { Origin: base } });
+  assert.equal(r.status, 507);
+  const body = await r.json();
+  assert.equal(body.code, 'internal.disk-full');
+  assert.doesNotMatch(JSON.stringify(body), /secret\/path/);
+});

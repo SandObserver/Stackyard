@@ -1174,11 +1174,11 @@ el('imp').onchange = async e => {
   const f = tgt(e).files[0];
   if (!f) return;
   try {
-    /* nginx answers a larger body with a page the admin cannot read. */
-    if (f.size > CONFIG_MAX_BYTES)
-      throw new ShownError(t('adminError.configTooLarge', { max: formatNumber(CONFIG_MAX_BYTES / (1024 * 1024)) }));
     const d = JSON.parse(await f.text());
     if (!d || !Array.isArray(d.items)) throw new ShownError(t('toast.importNotStackyard'));
+    /* The compact body, as sent. nginx answers a larger one with a page the admin cannot read. */
+    if (new Blob([JSON.stringify(d)]).size > CONFIG_MAX_BYTES)
+      throw new ShownError(t('adminError.configTooLarge', { max: formatNumber(CONFIG_MAX_BYTES / (1024 * 1024)) }));
     const { added, updated, deleted } = importCounts((await apiGet('/api/config/export')).items, d.items);
     const settingsToo = restoresSettings(d, await apiGet('/api/config'));
     if (added + updated + deleted === 0 && !settingsToo) {

@@ -104,7 +104,8 @@ function onError(req, res, err) {
     return;
   }
   try {
-    json(res, 500, { error: 'Internal server error', kind: 'internal' });
+    const code = typeof err?.apiCode === 'string' ? { code: err.apiCode } : {};
+    json(res, err?.apiCode ? err.status || 500 : 500, { error: 'Internal server error', kind: 'internal', ...code });
   } catch {}
 }
 

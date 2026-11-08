@@ -271,7 +271,7 @@ on('GET', '/health', (_, res) => {
   for (const dir of now)
     if (!unwritable.includes(dir)) log.warn('cannot write the data folder; saves will fail', { path: dir });
   unwritable = now;
-  const ok = !now.length && !fileMounted;
+  const ok = !now.length;
   json(res, ok ? 200 : 503, { ok });
 });
 
