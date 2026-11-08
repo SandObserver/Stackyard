@@ -7,7 +7,7 @@ const { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds } = 
 const { getRegistry, WIDGETS_PATH } = require('./widgets');
 const { translatorFor } = require('./widget-i18n');
 const { preserveWidgetSecrets } = require('./widget-secrets');
-const { alignSavedConfig, leavesStoredSecretBlank, RETYPE_MESSAGE } = require('./secret-scope');
+const { alignSavedConfig, duplicateRowId, leavesStoredSecretBlank, RETYPE_MESSAGE } = require('./secret-scope');
 const { dispatchProvider } = require('./provider-dispatch');
 const { widgetSettings } = require('./widget-settings');
 const { withManifestDefaults } = require('./widget-defaults');
@@ -219,6 +219,8 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
     widgetType: body.widgetType,
     widgetConfig: body.widgetConfig || {},
   };
+  if (duplicateRowId(item.widgetConfig, entry))
+    return json(res, 400, { error: 'two rows share an id', kind: KIND.INVALID });
   const saved = (loadConfig().items || []).find(
     i => i.id === req.params.id && i.type === 'widget' && i.widgetType === body.widgetType,
   );

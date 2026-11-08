@@ -281,6 +281,7 @@
     "noConnection": "该地址没有响应。请检查套接字代理是否在运行。",
     "offline": "Stackyard 没有响应。请检查容器是否在运行，然后重试。",
     "duplicateId": "两个项目使用了相同的 ID {id}。每个项目都需要自己的 ID。",
+    "duplicateRowId": "{id} 中有两行使用了相同的 ID。请删除其中一行，然后重新保存。",
     "missingChildren": "文件夹 {id} 列出了文件中不存在的项目。",
     "badChildren": "Stackyard 无法读取文件夹 {id} 中的项目列表。",
     "unsafeLink": "项目 {id} 包含不允许的链接。链接必须使用 http 或 https。",

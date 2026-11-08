@@ -293,6 +293,7 @@
     "noConnection": "Rien n’a répondu à cette adresse. Vérifiez que le proxy de socket est démarré.",
     "offline": "Stackyard ne répond pas. Vérifiez que le conteneur est démarré, puis réessayez.",
     "duplicateId": "Deux éléments partagent l’identifiant {id}. Chaque élément doit avoir son propre identifiant.",
+    "duplicateRowId": "Deux lignes de {id} partagent le même identifiant. Supprimez-en une, puis enregistrez à nouveau.",
     "missingChildren": "Le dossier {id} contient des éléments absents du fichier.",
     "badChildren": "Le dossier {id} décrit son contenu sous une forme que Stackyard ne peut pas lire.",
     "unsafeLink": "L’élément {id} a un lien non autorisé. Les liens doivent utiliser http ou https.",
