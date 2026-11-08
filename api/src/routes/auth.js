@@ -408,6 +408,10 @@ on('POST', '/api/auth/toggle', async (req, res) => {
     const cfg = loadConfigForUpdate();
     cfg.settings = cfg.settings || {};
     cfg.settings.auth = cfg.settings.auth || {};
+    /* Keep. The check above waits for the hash. A password changed meanwhile
+       must not be deleted on the strength of the old one. */
+    if (!enabled && authActive(before) && cfg.settings.auth.passwordHash !== before.settings.auth.passwordHash)
+      return json(res, 409, { error: 'The password changed.', kind: KIND.INVALID, code: 'invalid.password-changed' });
     /* Auth on with no password stored locks the install: every login is refused
        and setting a password is itself behind the gate. */
     if (enabled && !cfg.settings.auth.passwordHash) {
