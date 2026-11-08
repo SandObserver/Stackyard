@@ -133,3 +133,9 @@ test('a host name in the host IP setting gets no exemption', async t => {
 test('pingChecked reports a metadata address as blocked', async () => {
   await assert.rejects(pingChecked('http://169.254.169.254/', 1000, false), SsrfBlockedError);
 });
+
+test('the Google IPv6 and local-use NAT64 metadata forms are metadata addresses', () => {
+  assert.equal(isMetadataAddress('fd20:ce::254'), true);
+  assert.equal(isMetadataAddress('64:ff9b:1::a9fe:a9fe'), true);
+  assert.equal(isMetadataAddress('64:ff9b:1::808:808'), false);
+});

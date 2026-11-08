@@ -39,7 +39,7 @@ import { initI18n, isSupported, t, currentLang } from '/js/i18n.js?v=ed7c5565';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=c03e1465';
 import { passwordMeter, passwordMismatch, contextWords, meterColor } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
-import { setupErrorKey } from '/js/admin-error.js?v=0882cee9';
+import { setupErrorKey } from '/js/admin-error.js?v=4fa11a4e';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { DOCK_MAX } from '/js/limits.js?v=ea61a441';
 import {

@@ -1,4 +1,4 @@
-const { fetchUnchecked, pingErrorText } = require('./proxy');
+const { fetchUnchecked, pingErrorText, SsrfBlockedError } = require('./proxy');
 const { KIND } = require('./api-error');
 const { latest } = require('./latest');
 const { BATCH_MS, PING_MS } = require('./timeouts');
@@ -99,7 +99,9 @@ async function guestStates(conn) {
   if (!o.ok)
     return o.error instanceof ProxmoxError
       ? { error: o.error.message, code: o.error.apiCode }
-      : { error: pingErrorText(o.error) };
+      : o.error instanceof SsrfBlockedError
+        ? { error: o.error.message, code: `blocked.${o.error.detail?.reason}` }
+        : { error: pingErrorText(o.error) };
   return { guests: new Map(o.value.map(g => [g.vmid, { status: g.status }])) };
 }
 

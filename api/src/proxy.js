@@ -69,7 +69,7 @@ const isBlockedIPv4 = addr => inRanges(addr, _blockedV4);
 function embeddedIPv4(addr) {
   if (typeof addr !== 'string') return null;
   const s = addr.toLowerCase();
-  const m = s.match(/^(?:::ffff:|64:ff9b::|::)([0-9a-f.:]+)$/);
+  const m = s.match(/^(?:::ffff:|64:ff9b:1::|64:ff9b::|::)([0-9a-f.:]+)$/);
   if (!m) return null;
   const tail = m[1];
   if (tail.includes('.')) return net.isIPv4(tail) ? tail : null;
@@ -84,7 +84,7 @@ function embeddedIPv4(addr) {
 function inAddressSet(addr, v4Ranges, v6Re) {
   if (typeof addr !== 'string' || !addr) return false;
   const s = addr.toLowerCase();
-  if (s.startsWith('::ffff:') || s.startsWith('64:ff9b::')) {
+  if (s.startsWith('::ffff:') || s.startsWith('64:ff9b::') || s.startsWith('64:ff9b:1::')) {
     const v4 = embeddedIPv4(s);
     if (v4) return inRanges(v4, v4Ranges);
     return true; /* unparseable tail behind a wrapper prefix: refuse */
@@ -107,7 +107,7 @@ const _metadataV4 = toRanges([
   ['169.254.0.0', 16, 'link-local'],
   ['100.100.100.200', 32, 'Alibaba Cloud metadata'],
 ]);
-const METADATA_V6_RE = /^(fe[89ab][0-9a-f]:|fd00:ec2::254$)/i;
+const METADATA_V6_RE = /^(fe[89ab][0-9a-f]:|fd00:ec2::254$|fd20:ce::254$)/i;
 /** @param {string} addr @returns {boolean} */
 const isMetadataAddress = addr => inAddressSet(addr, _metadataV4, METADATA_V6_RE);
 

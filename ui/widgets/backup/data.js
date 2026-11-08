@@ -32,6 +32,7 @@ const authKind = (r, ctx) => ([400, 401, 403].includes(r.status) ? ctx.KIND.AUTH
 
 function thrownKind(e, ctx) {
   if (e && typeof e.kind === 'string') return e.kind;
+  if (e && e.name === 'SsrfBlockedError') return ctx.KIND.BLOCKED;
   if (e && e.message === 'Timed out') return ctx.KIND.TIMEOUT;
   if (e && e.message === 'Response too large') return ctx.KIND.UPSTREAM;
   return ctx.KIND.NETWORK;

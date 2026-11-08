@@ -19,6 +19,7 @@ export const TONE = Object.freeze({ WARN: 'warn', ERROR: 'error' });
 
 const BY_CODE = Object.freeze({
   'blocked.private-address': 'adminError.privateAddress',
+  'blocked.link-local': 'adminError.linkLocal',
   'invalid.retype': 'adminError.retype',
   'upstream.redirect': 'adminError.redirect',
   'upstream.too-large': 'adminError.responseTooLarge',

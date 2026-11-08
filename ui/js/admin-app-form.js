@@ -37,11 +37,11 @@ import {
   errorAction,
   showFieldError,
   clearFieldError,
-} from '/js/admin-shared.js?v=290ab8cb';
+} from '/js/admin-shared.js?v=6a5c8216';
 import { createListbox } from '/js/listbox.js?v=db99acbe';
 import { MAX_LABELS } from '/js/badge-logic.js?v=6d99179d';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=433d3f3b';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=0882cee9';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=1f632116';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=4fa11a4e';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 
