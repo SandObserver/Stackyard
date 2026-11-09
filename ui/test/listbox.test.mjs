@@ -33,12 +33,15 @@ test('the open state is announced', () => {
 });
 
 test('Escape returns focus to the trigger', () => {
-  assert.match(src, /case 'Escape':[\s\S]{0,80}close\(\{ focusBtn: true \}\)/);
+  assert.match(src, /case 'Escape':[\s\S]{0,80}close\(\{ focusBtn: true, instant: true \}\)/);
 });
 
 /* The list is last on <body>. The browser's Tab from there leaves the form. */
 test('Tab moves on from the trigger, not from the list', () => {
-  assert.match(src, /case 'Tab':\s*e\.preventDefault\(\);\s*close\(\);\s*focusBeside\(btn, e\.shiftKey \? -1 : 1\)/);
+  assert.match(
+    src,
+    /case 'Tab':\s*e\.preventDefault\(\);\s*close\(\{ instant: true \}\);\s*focusBeside\(btn, e\.shiftKey \? -1 : 1\)/,
+  );
 });
 
 /* The menu is fixed and the settings pane scrolls by itself. */
@@ -106,7 +109,7 @@ test('the anchored list is placed inside the viewport', () => {
 /* Twelve entries are taller than a phone screen. Every list scrolls, not just
    the multi-select one that happened to have a cap. */
 test('every list has a height cap it can scroll', () => {
-  assert.match(css, /\.row-dd-list\{[^}]*max-height:min\(360px,60vh\)/);
+  assert.match(css, /\.row-dd-list\{[^}]*max-height:min\(360px,60dvh\)/);
   assert.match(css, /\.row-dd-list\{[^}]*overflow-y:auto/);
 });
 
@@ -232,10 +235,25 @@ test('every single-choice value goes through singleChoice', () => {
    trigger's corner, which flips with the side the menu is anchored to. */
 test('only a pointer open animates, from the trigger side', () => {
   assert.match(src, /open\(\{ animate: e\.detail > 0 \}\)/);
-  assert.match(src, /if \(animate\) list\.classList\.add\('dd-in'\)/);
-  assert.match(src, /list\.classList\.remove\('dd-in'\)/, 'a close is instant');
+  assert.match(
+    src,
+    /if \(animate && !leaving\) \{\s*list\.classList\.add\('dd-pre'\);\s*void list\.offsetWidth;\s*list\.classList\.remove\('dd-pre'\);/,
+  );
   assert.match(src, /transformOrigin = `\$\{above \? 'bottom' : 'top'\} \$\{rtl \? 'left' : 'right'\}`/);
   assert.match(src, /width: list\.offsetWidth, height: list\.offsetHeight/, 'the scaled rect would misplace the list');
-  assert.match(css, /\.row-dd-list\.dd-in\{animation:pop-in /);
-  assert.match(css, /@keyframes pop-in\{from\{opacity:0;transform:scale\(\.97\)\}\}/);
+  assert.match(css, /\.row-dd-list\.dd-pre\{opacity:0;transform:scale\(\.97\);transition:none\}/);
+  assert.doesNotMatch(css, /dd-out\{animation/, 'a keyframe cannot be caught mid-way');
+  assert.match(css, /\.row-dd-list\.dd-out\{[^}]*transition-duration:calc\(var\(--t-reveal\) \* \.6\)/);
+});
+
+test('a keyboard close does not animate', () => {
+  assert.match(src, /commit\(o\[active\], true\)/);
+  assert.match(src, /case 'Escape':\s*e\.preventDefault\(\);\s*close\(\{ focusBtn: true, instant: true \}\)/);
+  assert.match(src, /close\(\{ instant: true \}\);\s*focusBeside/);
+  assert.match(src, /if \(instant \|\| node\.hidden/);
+});
+
+test('drop-down width limit does not use a percentage of its own wrapper', () => {
+  const rule = read('css/admin.css').match(/\.row-dd\{[^}]*\}/)[0];
+  assert.doesNotMatch(rule, /max-width:[\d.]+%/);
 });

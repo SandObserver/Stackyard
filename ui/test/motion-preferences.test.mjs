@@ -90,11 +90,12 @@ test('code that waits on transitionend has a way out under reduced motion', () =
     .filter(f => /'transitionend'/.test(read(`js/${f}`)));
   assert.deepEqual(
     waiters.sort(),
-    ['admin-drag.js', 'admin-shared.js', 'dashboard.js'],
+    ['admin-drag.js', 'admin-shared.js', 'dashboard.js', 'listbox.js'],
     'a new transitionend listener needs a fallback',
   );
   assert.match(read('js/admin-shared.js'), /timer = setTimeout\(end, \d+\)/);
   assert.match(read('js/admin-drag.js'), /timer = setTimeout\(done, \d+\)/);
+  assert.match(read('js/listbox.js'), /timer = setTimeout\(\(\) => hide\(\), \d+\)/);
   assert.match(
     dashboard.slice(dashboard.indexOf('@media (prefers-reduced-motion')),
     /#pages \{ transition: none !important; \}/,

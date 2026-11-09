@@ -4,6 +4,7 @@ import {
   canJoinFolder,
   canDropInGroup,
   dropTargetKind,
+  edgeScrollSpeed,
   applyDrop,
   folderRowZone,
   listGroup,
@@ -326,4 +327,13 @@ test('a touch lifts the row only after it travels 8px', () => {
   assert.equal(pastLiftSlop(5, 5), false);
   assert.equal(pastLiftSlop(0, 8), true);
   assert.equal(pastLiftSlop(-6, -6), true);
+});
+
+test('edge scrolling ramps with depth and stops outside the zones', () => {
+  assert.equal(edgeScrollSpeed(400, 0, 800), 0);
+  assert.equal(edgeScrollSpeed(0, 0, 800), -1.2);
+  assert.equal(edgeScrollSpeed(800, 0, 800), 1.2);
+  assert.ok(Math.abs(edgeScrollSpeed(70, 0, 800)) < Math.abs(edgeScrollSpeed(10, 0, 800)));
+  assert.ok(edgeScrollSpeed(760, 0, 800) > 0);
+  assert.equal(edgeScrollSpeed(900, 0, 800), 1.2, 'a finger past the edge stays at full speed');
 });

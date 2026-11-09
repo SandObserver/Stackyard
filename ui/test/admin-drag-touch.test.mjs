@@ -207,6 +207,28 @@ test('a lost capture for another pointer leaves the drag alone', () => {
   handle.dispatchEvent(ptr('pointercancel', 10, 400));
 });
 
+test('a second finger does not start a second drag', () => {
+  const first = drawRow(state.items[0]);
+  const second = drawRow(state.items[1], { left: 0, top: 300, width: 300, height: 68 });
+  lift(first.handle);
+  second.handle.dispatchEvent(ptr('pointerdown', 10, 330));
+  second.handle.dispatchEvent(ptr('pointermove', 10, 500));
+  assert.equal([...connected].filter(e => e.classes.has('drag-ghost')).length, 1);
+  first.handle.dispatchEvent(ptr('pointercancel', 10, 400));
+});
+
+test('a held edge scroll re-reads the row under a still finger', () => {
+  const { handle } = drawRow(state.items[0]);
+  const target = drawRow(state.items[1], { left: 0, top: 700, width: 300, height: 68 }).row;
+  lift(handle, 780);
+  under = target;
+  assert.equal(target.classList.contains('drag-above') || target.classList.contains('drag-below'), false);
+  runFrames();
+  assert.equal(target.classList.contains('drag-above') || target.classList.contains('drag-below'), true);
+  under = null;
+  handle.dispatchEvent(ptr('pointercancel', 10, 780));
+});
+
 test('autoscroll ends the drag once its handle leaves the page', () => {
   const { row, handle } = drawRow(state.items[0]);
   lift(handle, 780);

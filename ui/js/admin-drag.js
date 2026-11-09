@@ -13,9 +13,10 @@ import {
   applyDrop,
   canDropInGroup,
   canJoinFolder,
+  edgeScrollSpeed,
   folderRowZone,
   pastLiftSlop,
-} from '/js/admin-drag-logic.js?v=4aae5094';
+} from '/js/admin-drag-logic.js?v=7101ca25';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { snapshotItems } from '/js/admin-save-logic.js?v=4b2b7f18';
@@ -27,15 +28,20 @@ let _save = () => {};
 let _dockFull = () => {};
 /** @type {() => void} */
 let _redraw = () => {};
+/** @type {(id: string) => void} */
+let _slideNext = () => {};
 
 /** The list writes the config and shows notices, not this module. Call once
     at start-up.
     @param {(before: unknown) => void} save @param {() => void} dockFull
-    @param {() => void} [redraw] @returns {void} */
-export function initDrag(save, dockFull, redraw = () => {}) {
+    @param {() => void} [redraw]
+    @param {(id: string) => void} [slideNext] the next redraw slides every row but this one
+    @returns {void} */
+export function initDrag(save, dockFull, redraw = () => {}, slideNext = () => {}) {
   _save = save;
   _dockFull = dockFull;
   _redraw = redraw;
+  _slideNext = slideNext;
   /* Capture runs before the row handlers, which set it again over a refusing
      row. So it describes the element under the pointer now. */
   document.addEventListener('dragover', () => (_refused = false), true);
@@ -46,6 +52,7 @@ export function initDrag(save, dockFull, redraw = () => {}) {
 function commit(opts) {
   const before = snapshotItems(state.items);
   if (!applyDrop(state.items, { ...opts, dockMax: DOCK_MAX })) return false;
+  _slideNext(opts.srcId);
   _save(before);
   return true;
 }
@@ -147,6 +154,7 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
     if (e.pointerType === 'mouse') return;
     if (row.draggable === false) return; /* hidden while filtering */
     e.preventDefault();
+    if (_dragging) return;
     const srcId = row.dataset.itemId;
     const pointerId = e.pointerId;
     handle.setPointerCapture(pointerId);
@@ -156,6 +164,8 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
     /** @type {HTMLElement|null} */
     let ghost = null;
     let startRect = null,
+      lastX = x0,
+      lastY = y0,
       offY = 0,
       hovered = null,
       dropAbove = false,
@@ -167,7 +177,7 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
       startRect = row.getBoundingClientRect();
       offY = y0 - startRect.top;
       ghost = /** @type {HTMLElement} */ (row.cloneNode(true));
-      ghost.className = 'row drow drag-ghost';
+      ghost.className = 'row drow drag-ghost' + (row.closest('.reordering') ? ' reordering' : '');
       ghost.style.width = startRect.width + 'px';
       ghost.style.left = startRect.left + 'px';
       ghost.style.top = startRect.top + 'px';
@@ -209,31 +219,28 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
         mark(tr, dropAbove ? 'drag-above' : 'drag-below');
       }
     };
-    /* Scaled by elapsed time, not by frame. A frame is 16ms at 60Hz and 8ms at
-       120Hz, so a fixed step per frame scrolls twice as fast on the faster
-       display. */
-    const SCROLL_PX_PER_MS = 12 / 16;
+    const scrollBottom = () => {
+      const bar = qa('.mtabbar')[0];
+      return bar?.getClientRects().length ? bar.getBoundingClientRect().top : window.innerHeight;
+    };
     const autoscroll = y => {
       if (scrollTimer) {
         cancelAnimationFrame(scrollTimer);
         scrollTimer = null;
       }
       const rect =
-        scroller === document.scrollingElement
-          ? { top: 0, bottom: window.innerHeight }
-          : scroller.getBoundingClientRect();
-      const M = 52;
-      const up = y < rect.top + M,
-        dn = y > rect.bottom - M;
-      if (!up && !dn) return;
+        scroller === document.scrollingElement ? { top: 0, bottom: scrollBottom() } : scroller.getBoundingClientRect();
+      const speed = edgeScrollSpeed(y, rect.top, rect.bottom);
+      if (!speed) return;
       let last = performance.now();
       const step = now => {
         if (!handle.isConnected) {
           cancel();
           return;
         }
-        scrollByPx(scroller, (up ? -1 : 1) * (now - last) * SCROLL_PX_PER_MS);
+        scrollByPx(scroller, speed * (now - last));
         last = now;
+        place(lastX, lastY);
         scrollTimer = requestAnimationFrame(step);
       };
       scrollTimer = requestAnimationFrame(step);
@@ -243,8 +250,10 @@ function wireTouchDrag(row, handle, { indent, folderId }) {
         if (!pastLiftSlop(ev.clientX - x0, ev.clientY - y0)) return;
         lift();
       }
-      place(ev.clientX, ev.clientY);
-      autoscroll(ev.clientY);
+      lastX = ev.clientX;
+      lastY = ev.clientY;
+      place(lastX, lastY);
+      autoscroll(lastY);
     };
     const end = () => {
       handle.removeEventListener('pointermove', move);
@@ -325,7 +334,9 @@ function settle(ghost, from, to) {
   ghost.addEventListener('transitionend', done, { once: true });
   /* transitionend never fires if the transition is dropped. */
   timer = setTimeout(done, 400);
-  ghost.style.transition = 'transform var(--t-reveal) var(--ease-reveal), opacity var(--t-reveal) var(--ease-reveal)';
+  ghost.style.transition =
+    'transform var(--t-reveal) var(--ease-reveal), opacity var(--t-reveal) var(--ease-reveal), scale var(--t-reveal) var(--ease-reveal)';
+  ghost.style.scale = '1';
   if (shown) ghost.style.transform = `translate(${rect.left - from.left}px, ${rect.top - from.top}px)`;
   else ghost.style.opacity = '0';
 }

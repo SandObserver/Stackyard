@@ -191,6 +191,7 @@ export function createListbox(
   /** @param {{ animate?: boolean }} [o] */
   const open = ({ animate = false } = {}) => {
     if (open_) return;
+    const leaving = list.classList.contains('dd-out');
     list.classList.remove('dd-out');
     list.hidden = false;
     open_ = true;
@@ -223,42 +224,47 @@ export function createListbox(
     const o = items();
     const first = o.findIndex(li => li.getAttribute('aria-selected') === 'true');
     setActive(Math.max(first, 0));
-    if (animate) list.classList.add('dd-in');
+    if (animate && !leaving) {
+      list.classList.add('dd-pre');
+      void list.offsetWidth;
+      list.classList.remove('dd-pre');
+    }
   };
 
-  const close = ({ focusBtn = false } = {}) => {
+  const close = ({ focusBtn = false, instant = false } = {}) => {
     outside?.abort();
     outside = null;
-    list.classList.remove('dd-in');
     open_ = false;
-    leave(list);
+    leave(list, instant);
     btn.setAttribute('aria-expanded', 'false');
     items().forEach(li => li.classList.remove('kb-active'));
     fluidHoverClear(list);
     if (focusBtn) btn.focus();
   };
 
-  /** @param {HTMLElement} node */
-  function leave(node) {
-    if (node.hidden || !node.isConnected) {
+  /** @param {HTMLElement} node @param {boolean} instant */
+  function leave(node, instant) {
+    if (instant || node.hidden || !node.isConnected) {
       node.hidden = true;
+      node.classList.remove('dd-out');
       return;
     }
     node.classList.add('dd-out');
     let timer = 0;
-    const hide = () => {
+    const hide = e => {
+      if (e && (e.target !== node || e.propertyName !== 'opacity')) return;
       clearTimeout(timer);
-      node.removeEventListener('animationend', hide);
+      node.removeEventListener('transitionend', hide);
       if (open_) return;
       node.hidden = true;
       node.classList.remove('dd-out');
     };
-    node.addEventListener('animationend', hide);
-    /* animationend never fires if the animation is dropped. */
-    timer = setTimeout(hide, 250);
+    node.addEventListener('transitionend', hide);
+    /* transitionend never fires if the transition is dropped. */
+    timer = setTimeout(() => hide(), 250);
   }
 
-  function commit(li) {
+  function commit(li, instant = false) {
     const val = li.dataset.val;
     if (val == null) return;
     if (multiple) {
@@ -270,7 +276,7 @@ export function createListbox(
     } else {
       chosen = new Set([val]);
       paint();
-      close({ focusBtn: true });
+      close({ focusBtn: true, instant });
     }
     onChange?.(getValue());
     if (!btn.isConnected && btn.id) document.getElementById(btn.id)?.focus();
@@ -296,7 +302,7 @@ export function createListbox(
 
   btn.addEventListener('click', e => {
     e.stopPropagation();
-    if (open_) close();
+    if (open_) close({ instant: e.detail === 0 });
     else open({ animate: e.detail > 0 });
   });
   btn.addEventListener('keydown', e => {
@@ -325,15 +331,15 @@ export function createListbox(
       case ' ':
       case 'Enter':
         e.preventDefault();
-        if (o[active]) commit(o[active]);
+        if (o[active]) commit(o[active], true);
         break;
       case 'Escape':
         e.preventDefault();
-        close({ focusBtn: true });
+        close({ focusBtn: true, instant: true });
         break;
       case 'Tab':
         e.preventDefault();
-        close();
+        close({ instant: true });
         focusBeside(btn, e.shiftKey ? -1 : 1);
         break;
       default:

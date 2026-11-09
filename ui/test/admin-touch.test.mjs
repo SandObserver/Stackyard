@@ -197,11 +197,11 @@ test('address, host, username and header fields take no capitals or correction',
 
 test('a touch drag moves its copy by transform and settles it on release', () => {
   const drag = read('js/admin-drag.js');
-  const place = drag.slice(drag.indexOf('const place = (x, y) => {'), drag.indexOf('const SCROLL_PX_PER_MS'));
+  const place = drag.slice(drag.indexOf('const place = (x, y) => {'), drag.indexOf('const autoscroll'));
   assert.match(place, /ghost\.style\.transform = `translateY\(/);
   assert.doesNotMatch(place, /style\.top/, 'a top write forces a layout on every move');
   assert.match(drag, /if \(!pastLiftSlop\(ev\.clientX - x0, ev\.clientY - y0\)\) return;/);
-  assert.match(drag, /transition = 'transform var\(--t-reveal\) var\(--ease-reveal\)/);
+  assert.match(drag, /transition =\s*'transform var\(--t-reveal\) var\(--ease-reveal\)/);
   assert.match(drag, /prefers-reduced-motion: reduce\)'\)\.matches\) \{\s*ghost\.remove\(\);/);
   assert.match(drag, /timer = setTimeout\(done, 400\)/, 'without it a dropped transition strands the copy');
   assert.match(

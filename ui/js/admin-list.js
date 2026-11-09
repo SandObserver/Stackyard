@@ -14,17 +14,18 @@
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
 import { snapshotItems } from '/js/admin-save-logic.js?v=4b2b7f18';
 import { isShownChild, reorderItems, shownChildren, topLevelRows } from '/js/admin-logic.js?v=1526c452';
-import { listGroup } from '/js/admin-drag-logic.js?v=4aae5094';
-import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=f84fd67f';
+import { listGroup } from '/js/admin-drag-logic.js?v=7101ca25';
+import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=b6facea9';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=d728efe3';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=f240ee70';
 import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=f0b9b030';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { sizeLabel } from '/js/admin-widget-form.js?v=5f68231c';
+import { sizeLabel } from '/js/admin-widget-form.js?v=959966bb';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=c1502c58';
 import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 
@@ -41,7 +42,15 @@ let _page = {
     @param {typeof _page} page @returns {void} */
 export function initList(page) {
   _page = page;
-  initDrag(page.save, () => toast(t('app.dockFull', { max: formatNumber(DOCK_MAX) })), render);
+  initDrag(
+    page.save,
+    () => toast(t('app.dockFull', { max: formatNumber(DOCK_MAX) })),
+    render,
+    id => {
+      _slideNext = true;
+      _slideSkip = id;
+    },
+  );
 }
 
 /* Constant markup only. No user data reaches these. */
@@ -68,6 +77,7 @@ function moveRow(item, dir, opts = {}) {
   const before = snapshotItems(state.items);
   if (!reorderItems(state.items, item, dir, opts)) return;
   _slideNext = true;
+  _slideSkip = null;
   render();
   announceSpot(item, opts.folderId);
   _page.save(before, false);
@@ -92,6 +102,8 @@ function announceSpot(item, folderId) {
 }
 
 let _slideNext = false;
+/** @type {string|null} */
+let _slideSkip = null;
 let _reordering = false;
 
 /** @returns {boolean} */
@@ -123,16 +135,17 @@ function rowTops(l) {
   return tops;
 }
 
-/** @param {HTMLElement} l @param {Map<string, number>} tops */
-function slideRows(l, tops) {
+/** @param {HTMLElement} l @param {Map<string, number>} tops @param {string|null} skip */
+function slideRows(l, tops, skip) {
   for (const r of qa('.drow', l)) {
+    if (r.dataset.itemId === skip) continue;
     const was = tops.get(r.dataset.itemId);
     if (was == null) continue;
     const dy = was - r.getBoundingClientRect().top;
     if (Math.abs(dy) < 1) continue;
     r.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], {
       duration: 200,
-      easing: 'cubic-bezier(.32,.72,0,1)',
+      easing: EASE_IOS,
     });
   }
 }
@@ -319,6 +332,8 @@ export function render() {
   const l = el('al');
   const slide = _slideNext && !!l && !matchMedia('(prefers-reduced-motion: reduce)').matches;
   _slideNext = false;
+  const skip = _slideSkip;
+  _slideSkip = null;
   const tops = slide ? rowTops(l) : null;
   const was = /** @type {HTMLElement|null} */ (document.activeElement);
   const inList = !!was && !!l?.contains(was);
@@ -332,7 +347,7 @@ export function render() {
       const old = icons.get(r.dataset.itemId);
       if (old) r.querySelector('.rico')?.replaceWith(old);
     }
-  if (tops) slideRows(l, tops);
+  if (tops) slideRows(l, tops, skip);
   if (act === 'add-to') focusFirst(qa('.fp-add', l).find(b => b.dataset.folderId === id));
   else if (act) focusRow(id, act);
 }
