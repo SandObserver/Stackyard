@@ -2,6 +2,8 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const os = require('node:os');
+const { execFileSync } = require('node:child_process');
 const yaml = require('js-yaml');
 
 /* GITHUB_TOKEN starts no workflow run, so a tag or a release page it creates
@@ -77,6 +79,45 @@ test('a stable release asks the documentation site to rebuild', () => {
   assert.doesNotMatch(script, /echo\s+"?\$HOOK/, 'the hook URL is a credential and must not be printed');
 });
 
+function findMergedPr(pulls) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'changelog-pr-'));
+  const out = path.join(dir, 'output');
+  const body = path.join(dir, 'body');
+  fs.writeFileSync(out, '');
+  fs.writeFileSync(path.join(dir, 'pulls.json'), JSON.stringify(pulls));
+  fs.writeFileSync(path.join(dir, 'gh'), `#!/bin/sh\nexec jq "$4" "${dir}/pulls.json"\n`, { mode: 0o755 });
+  execFileSync('bash', [path.join(ROOT, 'scripts', 'changelog-merged-pr.sh')], {
+    stdio: 'pipe',
+    env: {
+      ...process.env,
+      PATH: `${dir}:${process.env.PATH}`,
+      SHA: 'abc',
+      REPO: 'o/r',
+      BODY_FILE: body,
+      GITHUB_OUTPUT: out,
+      RETRY_DELAY: '0',
+    },
+  });
+  const result = {
+    output: fs.readFileSync(out, 'utf8'),
+    body: fs.existsSync(body) ? fs.readFileSync(body, 'utf8') : null,
+  };
+  fs.rmSync(dir, { recursive: true });
+  return result;
+}
+
+test('the changelog job finds the pull request merged as the pushed commit', () => {
+  const merged = { number: 7, body: 'text', merged_at: '2026-11-09T00:00:00Z', merge_commit_sha: 'abc' };
+  assert.deepEqual(findMergedPr([merged]), { output: 'number=7\n', body: 'text\n' });
+});
+
+test('the changelog job ignores unmerged and unrelated pull requests', () => {
+  const none = { output: '', body: null };
+  assert.deepEqual(findMergedPr([]), none);
+  assert.deepEqual(findMergedPr([{ number: 7, body: 'x', merged_at: null, merge_commit_sha: 'abc' }]), none);
+  assert.deepEqual(findMergedPr([{ number: 8, body: 'x', merged_at: '2026-11-09', merge_commit_sha: 'def' }]), none);
+});
+
 test('the release runs one at a time', () => {
   for (const f of ['release-prep.yml', 'release-tag.yml']) {
     const doc = yaml.load(wf(f));
@@ -88,7 +129,13 @@ test('the changelog write job never runs pull request code', () => {
   const doc = yaml.load(wf('changelog.yml'));
   assert.deepEqual(doc.permissions, {});
   const write = doc.jobs.write;
-  assert.match(write.if, /merged == true/, 'an unmerged pull request must not write the changelog');
+  assert.equal(doc.on.pull_request_target, undefined, 'GitHub blocks this trigger by default in public repositories');
+  assert.match(write.if, /event_name == 'push'/, 'only a push to the default branch may write the changelog');
+  assert.match(
+    write.if,
+    /!startsWith\(.*'Update the changelog for'\)/,
+    'the commit this job pushes must not start it again',
+  );
   const checkout = write.steps.find(s => String(s.uses).startsWith('actions/checkout'));
   assert.equal(checkout.with.ref, '${{ github.event.repository.default_branch }}');
   assert.equal(checkout.with['persist-credentials'], false);

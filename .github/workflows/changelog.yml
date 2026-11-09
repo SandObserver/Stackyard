@@ -3,8 +3,7 @@ name: Changelog
 on:
   pull_request:
     types: [opened, edited, reopened, synchronize]
-  pull_request_target:
-    types: [closed]
+  push:
     branches:
       - main
 
@@ -32,27 +31,42 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: node scripts/changelog-pr.js --check
 
-  # Runs the default branch's copy of this file and script. Never check out the
-  # pull request head here: this job holds a token that can write to main.
+  # Never check out a pull request head here. This job holds a token that can
+  # write to main.
   write:
-    if: github.event_name == 'pull_request_target' && github.event.pull_request.merged == true
+    # The commit this job pushes starts a new run. The check stops a loop.
+    if: github.event_name == 'push' && !startsWith(github.event.head_commit.message, 'Update the changelog for')
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
-      - name: Mint a token for the release app
-        id: app
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
-        with:
-          client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-
       - name: Checkout default branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.repository.default_branch }}
           persist-credentials: false
 
+      - name: Find the merged pull request
+        id: pr
+        env:
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+          BODY_FILE: ${{ runner.temp }}/pr-body
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/changelog-merged-pr.sh
+
+      - name: Mint a token for the release app
+        if: steps.pr.outputs.number != ''
+        id: app
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
       - name: Set up Node.js
+        if: steps.pr.outputs.number != ''
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '26'
@@ -60,10 +74,11 @@ jobs:
       # A concurrency group keeps only one pending run, so a third merge in a
       # row would cancel the second. Each run retries its push instead.
       - name: Add the entries to CHANGELOG.md
+        if: steps.pr.outputs.number != ''
         env:
-          PR_BODY: ${{ github.event.pull_request.body }}
-          NUMBER: ${{ github.event.pull_request.number }}
+          BODY_FILE: ${{ runner.temp }}/pr-body
+          NUMBER: ${{ steps.pr.outputs.number }}
           BASE: ${{ github.event.repository.default_branch }}
           REPO: ${{ github.repository }}
           GH_TOKEN: ${{ steps.app.outputs.token }}
-        run: bash scripts/changelog-push.sh
+        run: PR_BODY="$(cat "${BODY_FILE}")" bash scripts/changelog-push.sh
