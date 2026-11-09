@@ -71,6 +71,11 @@ test('the Compose hardening is in place', () => {
   assert.match(read('docker-entrypoint-lib.sh'), /user=node/, 'started as root, the API should run as node');
 });
 
+test('the Compose example has a read-only root with a tmpfs for run-time files', () => {
+  assert.match(compose, /^ {4}read_only: true$/m);
+  assert.match(compose, /^ {4}tmpfs:\n(?: {6}- .*\n)* {6}- \/run\/stackyard$/m);
+});
+
 /* A named volume is created with the image's ownership. A bind mount Docker
    creates belongs to root, and the node account cannot write it. */
 test('the Compose example stores data in named volumes', () => {

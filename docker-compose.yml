@@ -13,6 +13,10 @@ services:
     security_opt:
       - no-new-privileges:true
     privileged: false
+    read_only: true
+    # The container stops at startup without this.
+    tmpfs:
+      - /run/stackyard
     mem_limit: 384m
     mem_reservation: 96m
     memswap_limit: 384m
