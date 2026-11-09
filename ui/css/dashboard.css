@@ -1168,6 +1168,7 @@ html[data-theme="light"] .setup-bars .pwbar { background: rgba(0,0,0,.1); }
 .sy-sprite{position:absolute;width:0;height:0;overflow:hidden}
 .sy-icon{flex-shrink:0;--icon-accent:var(--accent)}
 .sy-i{fill:currentColor}
+.sy-i2{fill:currentColor;fill-opacity:.18}
 .sy-i3{fill:currentColor;fill-opacity:.4}
 .sy-a{fill:var(--icon-accent,currentColor)}
 .sy-is{stroke:currentColor}
