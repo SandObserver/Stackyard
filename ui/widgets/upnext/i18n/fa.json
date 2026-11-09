@@ -20,6 +20,7 @@
   "href.hint": "آدرسی که مرورگرتان برای این سرویس استفاده می‌کند. اگر مرورگرتان به آدرس بالا دسترسی دارد، خالی بگذارید.",
   "unmonitored.label": "شامل موارد پایش‌نشده",
   "ui.today": "امروز",
+  "ui.todayShort": "امروز",
   "ui.episode": "فصل {season} · قسمت {episode}",
   "ui.episodes": "فصل {season} · قسمت {first}–{last}",
   "ui.special": "ویژه",

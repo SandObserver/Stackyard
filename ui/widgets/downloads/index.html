@@ -29,10 +29,11 @@
   .hdr { position: absolute; z-index: 3; inset-inline: 18px 14px; top: 15px; display: flex; align-items: flex-start; gap: 8px; }
   .lead { flex: 1; min-width: 0; }
   .medium .lead { display: flex; align-items: baseline; gap: 10px; }
-  .big { display: block; font-weight: 700; font-size: 24px; line-height: 1; letter-spacing: -0.02em; white-space: nowrap; }
+  .big { display: block; font-weight: 700; font-size: 24px; line-height: 1; letter-spacing: -0.02em; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; padding-block-end: 0.12em; margin-block-end: -0.12em; }
   .big.time { font-size: 22px; }
   .big .period { font-size: 0.55em; font-weight: 600; letter-spacing: 0; margin-inline-start: 2px; }
-  .medium .big { font-size: 27px; }
+  .medium .big { flex: none; font-size: 27px; }
   .sub { display: block; margin-top: 3px; font-size: 12px; font-weight: 500; color: var(--sub);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .medium .sub { margin-top: 0; font-size: 13px; }
@@ -48,6 +49,8 @@
     background: none; color: inherit; cursor: pointer; border-radius: 999px; }
   .pager button::after { content: ""; position: absolute; inset: -9px -7px; }
   .pager button:focus-visible { outline: 2px solid var(--run); outline-offset: 1px; }
+  .pager button:active { background: rgba(128,128,128,.32); }
+  @media (hover: hover) and (pointer: fine) { .pager button:hover { background: rgba(128,128,128,.22); } }
   .pager .sy-icon { width: 10px; height: 10px; }
   .pager .next .sy-icon { transform: scaleX(-1); }
   .pager .count { min-width: 22px; text-align: center; }
@@ -85,6 +88,10 @@
   .sy-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
   .sy-i { fill: currentColor; } .sy-is { stroke: currentColor; }
   @media (prefers-reduced-motion: reduce) { .track, .lid, .tp .fill, .flap g { transition: none; } }
+  @media (prefers-contrast: more) {
+    :root { --sub: #EBEBF5; }
+    html[data-theme="light"] { --sub: #3C3C43; }
+  }
 </style>
 </head>
 <body>
@@ -102,8 +109,8 @@
 </div>
 <script type="module">
 import {
-  poll, getConfig, loadStrings, wt, wtCount, formatNumber, formatList, localiseDigits, linkTo, errorState, readingTime,
-} from '/js/widget-toolbox.js?v=fa75ad9e';
+  poll, getConfig, loadStrings, wt, wtCount, formatNumber, formatList, localiseDigits, linkTo, errorState, readingTime, fitText, placeholder,
+} from '/js/widget-toolbox.js?v=9eafe764';
 import { ensureSprite } from '/js/icon-set.js?v=b8068a58';
 import { variations, finishedToday, hoursMinutes, leftover, lidOpen, finishParts, readerHourCycle } from './belt-logic.js';
 
@@ -171,16 +178,17 @@ function chevron() {
 const iso = text => `\u2068${text}\u2069`;
 /* Spoken text carries no isolates. */
 const plain = text => text.replace(/[\u2068\u2069]/g, '');
-const unit = (v, u, digits = 0) =>
-  iso(formatNumber(v, { style: 'unit', unit: u, unitDisplay: 'short', maximumFractionDigits: digits }));
-function duration(seconds) {
+const unit = (v, u, digits = 0, unitDisplay = 'short') =>
+  iso(formatNumber(v, { style: 'unit', unit: u, unitDisplay, maximumFractionDigits: digits }));
+function duration(seconds, unitDisplay) {
+  const part = (v, u) => unit(v, u, 0, unitDisplay);
   const { h, m } = hoursMinutes(seconds);
   if (h >= 24) {
     const days = Math.floor(h / 24);
-    return h % 24 ? `${unit(days, 'day')} ${unit(h % 24, 'hour')}` : unit(days, 'day');
+    return h % 24 ? `${part(days, 'day')} ${part(h % 24, 'hour')}` : part(days, 'day');
   }
-  if (!h) return unit(m, 'minute');
-  return m ? `${unit(h, 'hour')} ${unit(m, 'minute')}` : unit(h, 'hour');
+  if (!h) return part(m, 'minute');
+  return m ? `${part(h, 'hour')} ${part(m, 'minute')}` : part(h, 'hour');
 }
 function speed(bps) {
   const mb = bps / 1e6;
@@ -216,7 +224,7 @@ const reasonText = r => (REASON[r] || REASON.error)();
 /** The detail line under a name, and its spoken form. */
 function detail(it, medium) {
   if (it.state !== 'run') return { text: `${percent(it.progress)} · `, problem: reasonText(it.reason), cls: it.state };
-  const parts = it.eta != null ? [percent(it.progress), duration(it.eta)] : [percent(it.progress)];
+  const parts = it.eta != null ? [percent(it.progress), duration(it.eta, 'narrow')] : [percent(it.progress)];
   return { text: parts.join(' · '), problem: '', cls: '' };
 }
 function spoken(it) {
@@ -503,6 +511,7 @@ function render(data) {
   );
   const sameRow = items.length === shown.length && items.every((it, i) => it.name === shown[i]?.name && it.state === shown[i]?.state);
   const summary = header(data, now);
+  fitText(bigEl, 15);
 
   if (sameRow && track.children.length === items.length) {
     items.forEach((it, i) => {
@@ -565,6 +574,8 @@ async function start() {
   w.classList.toggle('medium', medium);
   drawBelt(null);
   drawGhosts();
+  bigEl.replaceChildren(placeholder(78, 20, 6));
+  subEl.replaceChildren(placeholder(58, 10));
   let lastData = null;
   let failedBelt;
   /* The dashboard sets the page's direction after it loads. */

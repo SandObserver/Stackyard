@@ -20,6 +20,7 @@
   "href.hint": "The address your browser uses for this app. Leave blank to use the one above, if your browser can reach it.",
   "unmonitored.label": "Include Unmonitored",
   "ui.today": "Today",
+  "ui.todayShort": "Today",
   "ui.episode": "S{season} · E{episode}",
   "ui.episodes": "S{season} · E{first}–{last}",
   "ui.special": "Special",

@@ -41,7 +41,7 @@
   .bk::after{content:"";position:absolute;left:0;right:0;bottom:5px;height:1px;background:currentColor;opacity:.18}
   .bk:focus{outline:none}
   .bk:focus-visible{outline:1.5px solid #0091FF;outline-offset:2px}
-  .bk.up{will-change:transform;transform:translateY(-4px);filter:brightness(1.06)}
+  .bk.up{transform:translateY(-4px);filter:brightness(1.06)}
   .books.pointing .bk:not(.up){filter:brightness(.82)}
   .bk.lean{transform-origin:left bottom;transform:rotate(-8deg);margin-inline-start:10px}
   .bk.lean.up{transform:rotate(-8deg) translateY(-4px)}
@@ -59,9 +59,9 @@
     background:currentColor;opacity:.55;pointer-events:none}
 
   .foot{flex:none;display:flex;align-items:center;gap:8px;margin-top:8px;height:15px;min-width:0}
-  .foot .t{flex:0 1 auto;min-width:0;font-size:12px;font-weight:600;color:#FFFFFF;
+  .foot .t{flex:0 1 auto;min-width:0;text-align:start;font-size:12px;font-weight:600;color:#FFFFFF;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .foot .a{flex:1 1 0;min-width:0;font-size:12px;color:#8E8E93;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .foot .a{flex:1 1 0;min-width:0;text-align:start;font-size:12px;color:#8E8E93;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .foot .p{flex:none;margin-inline-start:auto;font-size:12px;font-weight:500;color:#8E8E93;font-variant-numeric:tabular-nums}
   .foot .p.done{color:#30D158}
   .foot .bar{flex:none;width:44px;height:3px;border-radius:2px;background:rgba(120,120,128,.36);overflow:hidden}
@@ -81,28 +81,32 @@
   html[data-theme="light"] .shelf { border-bottom:1px solid rgba(0,0,0,0.5) }
   html[data-theme="light"] .shelf::after { background:radial-gradient(50% 100% at 50% 100%,rgba(0,0,0,0.175),transparent) }
   html[data-theme="light"] .foot .t { color:#000000 }
+  @media (prefers-contrast:more){
+    .head,.shelf-lbl,.empty,.foot .a,.foot .p{color:#EBEBF5}
+    html[data-theme="light"] .head,html[data-theme="light"] .shelf-lbl,html[data-theme="light"] .empty,html[data-theme="light"] .foot .a,html[data-theme="light"] .foot .p{color:#3C3C43}
+  }
 </style>
 </head>
 <body>
 <div class="card" id="card" role="group" aria-label="Books">
   <div class="bk-link" id="bk-link"></div>
-  <div class="head" id="lbl"></div>
+  <div class="head" id="lbl" dir="auto"></div>
   <div class="shelves" id="shelves">
     <div class="shelf-wrap">
-      <span class="shelf-lbl" hidden></span>
+      <span class="shelf-lbl" dir="auto" hidden></span>
       <div class="shelf" id="shelf">
         <ul class="books" id="books"></ul>
       </div>
     </div>
   </div>
   <div class="foot" id="foot" aria-hidden="true">
-    <span class="t" id="f-t"></span><span class="a" id="f-a"></span><span class="bar" id="f-bar" hidden><i id="f-fill"></i></span><span class="p" id="f-p"></span>
+    <span class="t" id="f-t" dir="auto"></span><span class="a" id="f-a" dir="auto"></span><span class="bar" id="f-bar" hidden><i id="f-fill"></i></span><span class="p" id="f-p"></span>
   </div>
   <div class="wt-cap" id="cap" hidden></div>
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-  import { poll, linkTo, loadStrings, wt, formatNumber, errorState, placeholder } from '/js/widget-toolbox.js?v=fa75ad9e';
+  import { poll, linkTo, loadStrings, wt, formatNumber, errorState, placeholder } from '/js/widget-toolbox.js?v=9eafe764';
   await loadStrings();
   document.getElementById('card').setAttribute('aria-label', wt('widget.label', 'Books'));
   const API='/api';
@@ -194,7 +198,7 @@
       if(b.finished){ const f=document.createElement('span'); f.className='fin'; el.appendChild(f); }
       el.tabIndex=0;
       el.setAttribute('aria-label',describe(b));
-      const on=()=>{ el.classList.add('up'); list.classList.add('pointing'); paintFoot(b); sr.textContent=describe(b); };
+      const on=e=>{ el.classList.add('up'); list.classList.add('pointing'); paintFoot(b); if(e.type==='mouseenter') sr.textContent=describe(b); };
       const off=()=>{ el.classList.remove('up'); list.classList.remove('pointing'); paintFoot(resting); };
       el.addEventListener('mouseenter',on); el.addEventListener('mouseleave',off);
       el.addEventListener('focus',on); el.addEventListener('blur',off);
@@ -242,17 +246,8 @@
     const state = errorState({ root:card, content:document.getElementById('shelves'),
       caption:document.getElementById('cap') });
 
-    poll({ interval:POLL_MS,
-      isEmpty:d=>(Array.isArray(d&&d.shelves)?d.shelves:[]).every(sh=>!(sh&&Array.isArray(sh.books)&&sh.books.length)),
-      onEmpty:d=>{
-        lbl.textContent=SHELVES>1?wt('widget.label','Books'):shelfName((d&&d.shelves||[])[0]);
-        for(const bay of bays){ bay.list.replaceChildren(); bay.list.removeAttribute('aria-hidden'); }
-        paintFoot(null); state.empty(wt('ui.noBooks','No books'));
-      },
-      onError:({error,everOk,stale,since})=>{ if(!everOk||stale) state.fail(error,{since,inert:everOk}); },
-      render:d=>{
-      state.ok();
-      setLink(d);
+    let shownData=null;
+    const paintShelves=d=>{
       const shelves=Array.isArray(d.shelves)?d.shelves:[];
       lbl.textContent=SHELVES>1?wt('widget.label','Books'):shelfName(shelves[0]);
       const rows=bays.map((_,i)=>{ const sh=shelves[i]||{books:[]}; return decorate((Array.isArray(sh.books)?sh.books:[]).slice(0,SHOW)); });
@@ -265,6 +260,23 @@
         render(rows[i],bay.list,bay.shelf);
       });
       paintFoot(resting);
+    };
+    addEventListener('resize',()=>{ if(shownData) paintShelves(shownData); });
+
+    poll({ interval:POLL_MS,
+      isEmpty:d=>(Array.isArray(d&&d.shelves)?d.shelves:[]).every(sh=>!(sh&&Array.isArray(sh.books)&&sh.books.length)),
+      onEmpty:d=>{
+        shownData=null;
+        lbl.textContent=SHELVES>1?wt('widget.label','Books'):shelfName((d&&d.shelves||[])[0]);
+        for(const bay of bays){ bay.list.replaceChildren(); bay.list.removeAttribute('aria-hidden'); }
+        paintFoot(null); state.empty(wt('ui.noBooks','No books'));
+      },
+      onError:({error,everOk,stale,since})=>{ if(!everOk||stale) state.fail(error,{since,inert:everOk}); },
+      render:d=>{
+      state.ok();
+      setLink(d);
+      shownData=d;
+      paintShelves(d);
     } });
   }
   boot();

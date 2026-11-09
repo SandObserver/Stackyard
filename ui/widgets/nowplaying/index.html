@@ -23,7 +23,7 @@
     background:linear-gradient(180deg,#FFFFFF,#d2d2d2);border-radius:14px;
     border:1px solid rgba(0,0,0,.18);box-shadow:0 1px 2px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6);
     padding:8px 12px 22px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
-  .title{font-size:13px;font-weight:700;line-height:1.16;color:#1C1C1E;
+  .title{font-size:13px;font-weight:700;line-height:1.16;color:#1C1C1E;overflow-wrap:anywhere;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .sub{flex:none;font-size:11px;font-weight:600;line-height:1.12;letter-spacing:.02em;color:#48484A;margin-top:auto;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
@@ -69,8 +69,10 @@
     display:flex;flex-direction:column;gap:6px;opacity:.5}
   .ticks i{display:block;width:12px;height:2px;background:#FFFFFF;border-radius:1px}
 
-  .nav{width:19px;height:19px;border:0;border-radius:6px;background:transparent;color:inherit;cursor:pointer;
+  .nav{position:relative;width:19px;height:19px;border:0;border-radius:6px;background:transparent;color:inherit;cursor:pointer;
     display:flex;align-items:center;justify-content:center}
+  .nav::after{content:"";position:absolute;inset:-7px -3px}
+  .nav:active{background:rgba(128,128,128,.32)}
   .nav svg{width:10px;height:10px}
   @media(hover:hover) and (pointer:fine){ .nav:hover{background:rgba(128,128,128,.22)} }
   .nav:focus-visible{outline:2px solid currentColor;outline-offset:-2px}
@@ -132,7 +134,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, errorState, localiseDigits, placeholder, whileOnScreen } from '/js/widget-toolbox.js?v=fa75ad9e';
+import { poll, fetchData, linkTo, loadStrings, wt, errorState, localiseDigits, placeholder, whileOnScreen } from '/js/widget-toolbox.js?v=9eafe764';
 await loadStrings();
 document.getElementById('w').setAttribute('aria-label', wt('widget.label', 'Now Playing'));
 document.getElementById('prev').setAttribute('aria-label', wt('ui.previous', 'Previous item'));
@@ -201,7 +203,7 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
     linked=linkTo(linkEl, (s&&s.link)||baseLink||href);
     const label=describe(s);
     name(label);
-    if(announce) srEl.textContent=label;
+    if(announce&&srEl.textContent!==label) srEl.textContent=label;
     const many=sessions.length>1;
     ctlEl.hidden=!many;
     countEl.textContent=many ? localiseDigits(`${idx+1}/${sessions.length}`) : '';
@@ -240,11 +242,12 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
   async function npFetch(){
     return fetchData();
   }
+  const spokenKey=list=>JSON.stringify(list.map(s=>[s.title,s.subtitle,s.player,s.state]));
   function apply(d){
     provider=d.provider||provider;
     baseLink=d.link||'';
     const next=Array.isArray(d.sessions)?d.sessions:[];
-    const changed=JSON.stringify(next)!==JSON.stringify(sessions);
+    const changed=spokenKey(next)!==spokenKey(sessions);
     sessions=next;
     if(idx>=sessions.length) idx=0;
     paint(changed);

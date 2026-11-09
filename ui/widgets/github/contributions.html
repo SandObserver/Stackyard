@@ -52,8 +52,6 @@
   .wt-inert .clickable, .clickable.wt-inert { pointer-events: auto; }
   .cap { justify-content: center; }
 
-  .arrive .num, .arrive .l1, .arrive .l2, .arrive .l3, .arrive .l4 { animation: fade 0.25s ease-out both; }
-  @keyframes fade { from { opacity: 0; } }
 
   html[data-theme="light"], html[data-theme="light"] body { background: #FFFFFF; }
   html[data-theme="light"] .num { color: #000000; }
@@ -66,8 +64,9 @@
   html[data-theme="light"] .cell.on { box-shadow: 0 0 0 1.5px #000000; }
   html[data-theme="light"] .tip { color: #000000; background: #FFFFFF; box-shadow: 0 1px 6px rgba(0,0,0,0.18); }
 
-  @media (prefers-reduced-motion: reduce) {
-    .arrive .num, .arrive .l1, .arrive .l2, .arrive .l3, .arrive .l4 { animation: none; }
+  @media (prefers-contrast: more) {
+    .lbl, .sub { color: #EBEBF5; }
+    html[data-theme="light"] .lbl, html[data-theme="light"] .sub { color: #3C3C43; }
   }
   @media (forced-colors: active) {
     .cell { forced-color-adjust: none; background: Canvas; outline: 1px solid CanvasText; outline-offset: -1px; }
@@ -81,7 +80,7 @@
 <div class="tip" id="tip" hidden aria-hidden="true"></div>
 <div class="cap" id="cap"></div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, fitText, cssZoom } from '/js/widget-toolbox.js?v=fa75ad9e';
+import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, fitText, cssZoom } from '/js/widget-toolbox.js?v=9eafe764';
 import { slotWeeks } from '/js/contribution-calendar.js?v=c88b8def';
 await loadStrings();
 
@@ -217,7 +216,6 @@ document.documentElement.addEventListener('mouseleave', endHover);
 window.addEventListener('blur', endHover);
 document.addEventListener('visibilitychange', endHover);
 
-let arrived = false;
 function render(data) {
   const cal = Array.isArray(data.slots) ? slotWeeks(data.slots) : data;
   const weeks = Array.isArray(cal.weeks) ? cal.weeks : [];
@@ -229,11 +227,6 @@ function render(data) {
   fitText(num);
   sub.textContent = wt('ui.lastYear', 'Past 12 months');
   name(wt('ui.contributionsAria', 'Contributions: {total} in the past 12 months').replace('{total}', total));
-  if (!arrived) {
-    arrived = true;
-    w.classList.add('arrive');
-    setTimeout(() => w.classList.remove('arrive'), 600);
-  }
 }
 
 const state = errorState({ root: document.body, caption: cap, content: () => [w] });

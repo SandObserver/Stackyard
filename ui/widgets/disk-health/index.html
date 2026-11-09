@@ -51,21 +51,28 @@
     cursor:default;
     display:flex;
     transform-origin:center;
-    transition: transform 0.2s cubic-bezier(.34,1.2,.64,1), box-shadow 0.2s ease, background-color 0.2s ease;
+    transition: transform 150ms cubic-bezier(.23,1,.32,1), background-color 150ms ease;
   }
   .bay.empty { background-color:#2C2C2E; }
   .bay.unread { background-color:#2C2C2E; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.22); }
   .bay.unread .bay-name { color:rgba(255,255,255,0.5); }
   .bay.assigned { cursor:pointer; }
   #root.size-medium .bay { border-width:1px; border-radius:8px; }
-  .bay.assigned:hover,
   .bay.assigned.touch-active {
-    will-change:transform;
-    transform: scale(1.08);
+    transform: scale(1.04);
     background-color:#48484A;
     z-index:3;
     box-shadow: 0 6px 16px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.06);
   }
+  @media (hover:hover) and (pointer:fine) {
+    .bay.assigned:hover {
+      transform: scale(1.04);
+      background-color:#48484A;
+      z-index:3;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.06);
+    }
+  }
+  .bay.assigned:focus-visible { outline:2px solid #0091FF; outline-offset:1px; }
 
   .bay-name {
     flex:1; min-height:0;
@@ -75,6 +82,7 @@
     color:rgba(255,255,255,0.62);
     white-space:nowrap; overflow:hidden; pointer-events:none;
   }
+  #root.size-medium .bay-name { justify-content:flex-start; padding-inline-start:18px; }
   .led {
     position:absolute; top:6px; inset-inline:0; margin-inline:auto;
     width:6px; height:6px; border-radius:50%;
@@ -135,10 +143,17 @@
   #tip .t1 i.green { background:#30D158; } #tip .t1 i.red { background:#FF4245; }
   #tip .t1 i.unread { background:transparent; box-shadow: inset 0 0 0 1.5px #8E8E93; }
   #tip .nm { font-size:12px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  #tip .meta { font-size:11px; font-weight:500; color:rgba(255,255,255,0.62); white-space:nowrap; padding-inline-start:13px; }
+  #tip .meta { font-size:11px; font-weight:500; color:rgba(255,255,255,0.62); white-space:normal; overflow-wrap:anywhere; padding-inline-start:13px; }
 
   @media (prefers-reduced-motion: reduce){
     .bay,#tip{transition:none !important}
+    .bay.assigned:hover,.bay.assigned.touch-active{transform:none}
+  }
+  @media (prefers-reduced-transparency: reduce){
+    #tip{-webkit-backdrop-filter:none;backdrop-filter:none}
+  }
+  @media (prefers-contrast: more){
+    .bay-name,.bay.unread .bay-name,#nums span,#tip .meta{color:#EBEBF5}
   }
 </style>
 </head>
@@ -161,7 +176,7 @@
       <i id="sysled" aria-hidden="true"></i>
     </div>
   </div></div>
-  <div id="tip" role="status" aria-live="polite">
+  <div id="tip" aria-hidden="true">
     <div class="t1"><i id="tip-led"></i><span class="nm" id="tip-name"></span></div>
     <div class="meta" id="tip-meta"></div>
     <div class="meta" id="tip-free" hidden></div>
@@ -169,7 +184,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, wtCount, formatNumber, formatList, errorState, cssZoom } from '/js/widget-toolbox.js?v=fa75ad9e';
+import { poll, fetchData, openUrl, loadStrings, wt, wtCount, formatNumber, formatList, errorState, cssZoom } from '/js/widget-toolbox.js?v=9eafe764';
 await loadStrings();
 document.getElementById('root').setAttribute('aria-label', wt('ui.diskHealth','Disk health'));
 const params    = new URLSearchParams(location.search);
@@ -350,10 +365,11 @@ function openBay(i) {
 }
 
 function addEvents(bay, i) {
-  const touch = () => 'ontouchstart' in window;
-  bay.addEventListener('mouseenter', () => { if (!touch() && bayData[i]) showTip(i); });
-  bay.addEventListener('mouseleave', () => { if (!touch()) hideTip(); });
-  bay.addEventListener('click',      () => { if (!touch()) openBay(i); });
+  let lastPointer = '';
+  bay.addEventListener('pointerdown', e => { lastPointer = e.pointerType; });
+  bay.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse' && bayData[i]) showTip(i); });
+  bay.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+  bay.addEventListener('click', () => { if (lastPointer !== 'touch') openBay(i); });
   bay.addEventListener('keydown', e => { if ((e.key==='Enter'||e.key===' ') && bayData[i]) { e.preventDefault(); openBay(i); } });
   bay.addEventListener('focus', () => { if (bayData[i]) showTip(i); });
   bay.addEventListener('blur',  () => hideTip());

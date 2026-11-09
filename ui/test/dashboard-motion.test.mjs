@@ -111,7 +111,7 @@ test('the analog clock redraws its face when the theme changes', () => {
 });
 
 test('widgets with a large live figure roll it', () => {
-  assert.match(read('widgets/system-summary/index.html'), /rollText\(r\.val, r\.latest\)/);
+  assert.match(read('widgets/system-summary/index.html'), /rollText\(r\.val, r\.latest, /);
   assert.match(read('widgets/dns/index.html'), /rollText\(pctEl,/);
   assert.match(read('widgets/weather/index.html'), /rollText\(tempEl,/);
 });
@@ -125,6 +125,31 @@ test('a figure that grows rolls up, one that shrinks rolls down', () => {
   assert.equal(rollDirection('11%', '14%'), true);
   assert.equal(rollDirection('14%', '4%'), false);
   assert.equal(rollDirection('—', '4%'), true, 'an unreadable value rolls up');
+});
+
+test('a Persian figure rolls in the direction its digits moved', () => {
+  assert.equal(rollDirection('۴۱٪', '۴۲٪'), true);
+  assert.equal(rollDirection('۴۲٪', '۴۱٪'), false);
+  assert.equal(rollDirection('٤٢٪', '٤١٪'), false, 'Arabic-Indic digits read the same');
+  assert.equal(rollDirection('۴۲٫۵', '۴۲٫۱'), false, 'the Persian decimal separator keeps the fraction');
+});
+
+test('an instant write leaves the next large change able to roll', () => {
+  const el = { textContent: '', firstElementChild: null, childNodes: [], animate() {} };
+  rollText(el, '41%', { instant: true });
+  rollText(el, '42%', { instant: true });
+  assert.equal(el.textContent, '42%');
+  let rolled = 0;
+  const replaceChildren = () => {
+    rolled++;
+  };
+  Object.assign(el, { replaceChildren, querySelectorAll: () => [] });
+  try {
+    rollText(el, '60%');
+  } catch {
+    /* The fake has no rolled glyphs to animate. */
+  }
+  assert.equal(rolled, 1, 'the value already shown was recorded');
 });
 
 test('the first value is written at once, with nothing to roll from', () => {

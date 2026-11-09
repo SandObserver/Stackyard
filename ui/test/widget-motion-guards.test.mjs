@@ -59,7 +59,7 @@ test('a running backup keeps its spinner across polls', () => {
 test('backup loops pause off screen and times refresh between polls', () => {
   const page = read('widgets/backup/backup.html');
   assert.match(page, /whileOnScreen\(w, v => w\.classList\.toggle\('off', !v\)\)/);
-  assert.match(page, /\.off \.card-back\.running, \.off \.sync-icon \{ animation-play-state: paused/);
+  assert.match(page, /\.off \.sync-icon \{ animation-play-state: paused/);
   assert.match(page, /setInterval\(refreshTimes, 60000\)/);
   assert.match(page, /function applyError\(line\) \{\n {2}_shownJobs=null;/);
 });
@@ -70,10 +70,10 @@ test('rolled and clock figures use tabular digits', () => {
   assert.match(read('widgets/clock/digital.html'), /\.fig \{[^}]*tabular-nums/);
 });
 
-test('book spines hold a layer only while raised', () => {
+test('book spines carry no layer hint', () => {
   const page = read('widgets/books/index.html');
   assert.doesNotMatch(/\.bk\{[^}]*\}/.exec(page)[0], /will-change/);
-  assert.match(page, /\.bk\.up\{will-change:transform/);
+  assert.doesNotMatch(page, /\.bk\.up\{will-change/);
 });
 
 test('weather rebuilds the icon only when it changes', () => {
