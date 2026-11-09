@@ -55,7 +55,7 @@ async function scrutinyDeviceOptions(ctx) {
     .filter(([, e]) => e?.device)
     .map(([key, e]) => {
       const id = scrutinyDeviceIds(key, e.device)[0];
-      return { value: id, label: e.device.model_name || e.device.device_name || id };
+      return { value: id, label: e.device.friendly_name || e.device.model_name || e.device.device_name || id };
     });
   return { options };
 }
@@ -145,7 +145,11 @@ async function diskHealthScrutiny(ctx) {
       device_id: deviceId,
       device_status: failed ? 2 : 0,
       hasSmart: !!entry.smart && failed !== null,
-      model_name: entry.device.model_name || entry.device.device_serial_id || entry.device.device_name,
+      model_name:
+        entry.device.friendly_name ||
+        entry.device.model_name ||
+        entry.device.device_serial_id ||
+        entry.device.device_name,
       device_name: entry.device.device_name,
       temp: entry.smart?.temp ?? null,
       capacity: entry.device.capacity || null,
