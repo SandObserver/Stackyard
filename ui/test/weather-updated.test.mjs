@@ -19,7 +19,7 @@ test('the hover and screen-reader text say when the reading arrived', () => {
     page,
     /wt\('ui\.updated', '\{summary\}\. Updated \{time\}', \{ summary: _summary, time: sinceLabel\(_fetchedAt\) \}\)/,
   );
-  assert.match(page, /setInterval\(describe, 60000\)/);
+  assert.match(page, /setInterval\(\(\) => \{ if \(document\.hidden\) return; describe\(\); \}, 60000\)/);
 });
 
 test('the updated time is when the service produced the reading', () => {

@@ -53,6 +53,7 @@
   .widget:focus-visible .aq-cap,.widget.peek .aq-cap{opacity:1;visibility:visible}
   .widget.hush .aq-cap{opacity:0;visibility:hidden}
   @media(prefers-reduced-motion:reduce){.aq-cap{transition:none}}
+  @media(prefers-reduced-transparency:reduce){.aq-cap{-webkit-backdrop-filter:none;backdrop-filter:none}}
   .sy-sprite{position:absolute;width:0;height:0;overflow:hidden}
   .sy-icon{flex-shrink:0}
   .sy-i{fill:currentColor}
@@ -77,7 +78,7 @@
   <div class="sr-only" id="sr"></div>
 </div>
 <script type="module">
-import { poll, fetchData, rollText, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, setHtml } from '/js/widget-toolbox.js?v=fa75ad9e';
+import { poll, fetchData, rollText, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, setHtml } from '/js/widget-toolbox.js?v=9eafe764';
 import { ensureSprite } from '/js/icon-set.js?v=b8068a58';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('widget.label', 'Weather'));
@@ -368,7 +369,7 @@ function describe() {
   widgetEl.setAttribute('aria-label', text);
   srEl.textContent = text;
 }
-setInterval(describe, 60000);
+setInterval(() => { if (document.hidden) return; describe(); }, 60000);
 
 const still=matchMedia('(prefers-reduced-motion: reduce)');
 const bounce=(t,period)=>{const x=(t/period)%2;return x<1?x:2-x;};

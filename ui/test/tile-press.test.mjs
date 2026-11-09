@@ -30,7 +30,7 @@ test('every tile shares the desktop press', () => {
 });
 
 test('the desktop folder lifts on hover like an app tile', () => {
-  const rule = css.match(/@media \(hover:hover\) \{\s*\.icon:hover \.iwrap,[^}]*\}/)?.[0] ?? '';
+  const rule = css.match(/@media \(hover:hover\) and \(pointer:fine\) \{\s*\.icon:hover \.iwrap,[^}]*\}/)?.[0] ?? '';
   assert.ok(rule.includes('.icon:hover .dyn-folder-box'));
   assert.match(rule, /transform:scale\(1\.03\)/);
 });
@@ -100,9 +100,10 @@ test('a drag that starts on a tile is not a press', () => {
 });
 
 test('a long press on a phone tile shows no link preview', () => {
-  for (const cls of ['dyn-mob-icon', 'dyn-dock-icon']) {
-    assert.match(css, new RegExp(`\\.${cls}\\s+\\{[^}]*-webkit-touch-callout:none`), cls);
-  }
+  const held = css.match(/:is\(([^)]*)\)\s*\{[^}]*-webkit-touch-callout:none/);
+  assert.ok(held, 'no shared rule turns the preview off');
+  const tiles = held[1].split(',').map(s => s.trim());
+  for (const cls of ['dyn-mob-icon', 'dyn-dock-icon']) assert.ok(tiles.includes(`.${cls}`), cls);
 });
 
 test('reduced motion drops the scale on every tile', () => {

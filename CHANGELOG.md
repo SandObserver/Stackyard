@@ -80,6 +80,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Disk Health shows the friendly name set in Scrutiny.
 
+- Dashboard buttons and page dots respond when pressed.
+
 ### Fixed
 
 - Let the owner set a new password with a setup code when the saved password is
@@ -147,6 +149,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Small Settings controls have larger touch areas.
 
 - Settings scrolling respects the reduced motion preference.
+
+- The phone search button no longer changes shape when the page loads.
+
+- Keyboard focus stays visible on bright wallpapers and no longer changes a
+  control's shape.
+
+- Page dots stay distinguishable with Increase Contrast.
+
+- Reduce Transparency now gives solid dashboard surfaces.
+
+- Long badge labels stay inside the badge.
+
+- Persian search results show addresses and arrows in the right direction.
+
+- A config change no longer reloads the dashboard during search, a folder or a
+  drag.
 
 ### Security
 

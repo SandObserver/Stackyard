@@ -603,7 +603,6 @@ const UNMEASURED_INK = [
   ['#mob-search-pill .msp-icon (dark)', 'white with a text shadow over the wallpaper; the shadow is not modelled'],
   ['textarea::placeholder (dark)', 'one rule with input::placeholder, which is measured'],
   ['textarea::placeholder (light)', 'one rule with input::placeholder, which is measured'],
-  ['.setup-reveal:hover (dark)', 'brighter than .setup-reveal, which is measured'],
 ];
 
 const LITERAL_INK =

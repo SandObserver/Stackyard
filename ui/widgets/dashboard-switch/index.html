@@ -13,7 +13,6 @@
   #root{width:100%;height:100%}
   svg{display:block;width:100%;height:100%}
   .nm{fill:#d6d6db;font-size:11px;font-weight:500;transition:fill .14s ease}
-  .empty{fill:#8E8E93;font-size:12px}
   .kc{cursor:pointer;-webkit-tap-highlight-color:transparent}
   .kc:focus{outline:none}
   .kc .focus{opacity:0}
@@ -24,7 +23,7 @@
   .kc:focus-visible .chain,.kc.cur .chain{transform:scale(1.07)}
   .kc:focus-visible .chain{filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
   .key{transform-box:view-box}
-  .kc:focus-visible .key,.kc.cur .key{
+  .kc.cur .key{
     animation-name:sway;animation-timing-function:cubic-bezier(.33,.68,.36,1);animation-fill-mode:both}
   @keyframes sway{0%{transform:rotate(0)}35%{transform:rotate(var(--amp))}70%{transform:rotate(calc(var(--amp) * -0.35))}100%{transform:rotate(0)}}
   @media (prefers-reduced-motion:reduce){.chain{transition:none}.key{animation:none!important}}
@@ -46,9 +45,11 @@
 <body>
 <div id="root"></div>
 <script type="module">
-  import { widgetId, getConfig, loadStrings, wt } from '/js/widget-toolbox.js?v=fa75ad9e';
+  import { widgetId, getConfig, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=9eafe764';
   await loadStrings();
   import { buildModel, fitName, textDirection } from '/js/dashboard-switch-model.js?v=a2176749';
+
+  const state = errorState({ root: document.body, content: () => [], place: 'center' });
 
   const NS = 'http://www.w3.org/2000/svg';
   const ART = '/widgets/dashboard-switch/art/';
@@ -121,10 +122,9 @@
 
     const slots = model.slots;
     if (!slots.length) {
-      const t = document.createElementNS(NS, 'text');
-      t.setAttribute('x', W / 2); t.setAttribute('y', H / 2); t.setAttribute('text-anchor', 'middle');
-      t.setAttribute('class', 'empty'); t.textContent = wt('ui.empty','Add a dashboard in settings');
-      svg.appendChild(t); root.appendChild(svg); return;
+      root.appendChild(svg);
+      state.empty(wt('ui.empty','Add a dashboard in settings'));
+      return;
     }
 
     const innerW = W - 2 * padX;
@@ -185,8 +185,8 @@
     try {
       const data = await getConfig();
       render(buildModel(data.widgetConfig || {}, { size, currentHref: currentHref() }));
-    } catch {
-      render({ slots: [], openIn: 'same' });
+    } catch (e) {
+      state.fail(e);
     }
   }
   if (widgetId()) load(); else render({ slots: [], openIn: 'same' });

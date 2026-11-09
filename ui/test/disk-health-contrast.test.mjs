@@ -26,7 +26,7 @@ const fill = selector => hex(/background(?:-color)?:(#[0-9A-Fa-f]{6})/.exec(rule
 /* SC 1.4.3: 11px text needs 4.5:1. */
 for (const [text, on, bg] of [
   ['bay name', '.bay-name', '.bay'],
-  ['bay name on a pressed bay', '.bay-name', '.bay.assigned:hover,\n  .bay.assigned.touch-active'],
+  ['bay name on a pressed bay', '.bay-name', '.bay.assigned.touch-active'],
   ['unread bay name', '.bay.unread .bay-name', '.bay.unread'],
   ['bay number', '#nums span', '#panel'],
 ]) {
