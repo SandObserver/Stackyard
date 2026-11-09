@@ -84,6 +84,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - System Summary figures animate only on larger changes.
 
+- Settings sections no longer slide when switching.
+
 ### Fixed
 
 - Let the owner set a new password with a setup code when the saved password is
@@ -179,6 +181,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Widgets follow Increase Contrast.
 
 - Dashboard Switch shows an error when its settings fail to load.
+
+- Keyboard focus is visible on the row being edited and on the selected colour.
+
+- Save and other long actions show that they are working and ignore a second
+  press.
+
+- Reduce Transparency and Increase Contrast now apply to Settings surfaces.
+
+- Dialogs and controls fit on the smallest phones.
+
+- Searching a long app list no longer stutters.
+
+- Screen readers announce how many items match a search.
 
 ### Security
 
