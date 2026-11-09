@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=9f9804bd';
+import { renderColorControl } from '/js/admin-color-control.js?v=3c35a0c0';
 import { socketProbeAdvice } from '/js/admin-error.js?v=d1f8f6f4';
 import {
   BLOCK,
@@ -9,7 +9,7 @@ import {
   settingsSaveBlocker,
   shouldWritePassword,
   wallpaperFileName,
-} from '/js/admin-logic.js?v=1526c452';
+} from '/js/admin-logic.js?v=245bc319';
 import {
   advancedBase,
   applyGeneralFields,
@@ -21,6 +21,7 @@ import {
 import {
   apiGet,
   apiPost,
+  busyPress,
   clearFieldError,
   clearFieldErrors,
   confirmSaved,
@@ -33,7 +34,7 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=1a0eba6c';
+} from '/js/admin-shared.js?v=781c2d91';
 import { BACKDROP } from '/js/background.js?v=828d3e11';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import {
@@ -53,9 +54,9 @@ import { el, inp, qa, setUserText } from '/js/utils.js?v=a09f4f39';
 let _passwordSet = false;
 let _authEnabled = false;
 
-/** @type {{ dirty: () => boolean, reset: (force?: boolean) => void } | null} */
+/** @type {{ sync: () => void, dirty: () => boolean, reset: (force?: boolean) => void } | null} */
 let _srvTrack = null;
-/** @type {{ dirty: () => boolean, reset: (force?: boolean) => void } | null} */
+/** @type {{ sync: () => void, dirty: () => boolean, reset: (force?: boolean) => void } | null} */
 let _bgTrack = null;
 let _savedWallpaperUrl = '';
 /** @type {{ form: Record<string, unknown>, server: Record<string, unknown> }} */
@@ -152,6 +153,7 @@ function trackSave(buttonId, read) {
   const tr = createDirtyTracker(read);
   let touched = false;
   const sync = () => {
+    if (btn?.getAttribute('aria-busy') === 'true') return;
     if (btn) btn.disabled = !tr.dirty();
   };
   /* On the document, not the section: a picker's option list is attached to
@@ -166,6 +168,7 @@ function trackSave(buttonId, read) {
     );
   sync();
   return {
+    sync,
     dirty: tr.dirty,
     /* Do not re-baseline a touched form. The edit is swallowed and Save never
        lights again.
@@ -297,7 +300,10 @@ export function loadSettings(c) {
       if (brVal) brVal.textContent = twoPlaces(brEl.value);
     });
   }
-  el('bg-save').addEventListener('click', saveWallpaper);
+  el('bg-save').addEventListener(
+    'click',
+    busyPress(/** @type {HTMLButtonElement} */ (el('bg-save')), saveWallpaper, () => _bgTrack?.sync()),
+  );
 
   const _sv = (id, v, ph = '') => {
     const node = el(id);
@@ -351,7 +357,10 @@ export function loadSettings(c) {
   }
   if (hideHealthyEl) hideHealthyEl.checked = s.server?.hideHealthyBadge !== false;
   if (socketEl) socketEl.value = s.server?.socketProxyUrl || '';
-  el('srv-save').addEventListener('click', saveServer);
+  el('srv-save').addEventListener(
+    'click',
+    busyPress(/** @type {HTMLButtonElement} */ (el('srv-save')), saveServer, () => _srvTrack?.sync()),
+  );
 
   const secEnEl = inp('sec-en');
   const secLogout = el('sec-logout');

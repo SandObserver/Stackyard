@@ -5,10 +5,10 @@
    The contrast gate cannot see this: it measures declarations, and the defect
    is an absence. These tests read the absence instead. */
 
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -46,7 +46,7 @@ test('the default resolves to a colour, not to nothing', () => {
 test('every placeholder in the markup is covered', () => {
   const markup = read('admin/index.html') + read('index.html');
   const fields = [...markup.matchAll(/<input\b[^>]*placeholder=/g)];
-  assert.ok(fields.length >= 4, 'expected the known placeholder fields');
+  assert.ok(fields.length >= 3, 'expected the known placeholder fields');
   for (const [, css] of [
     ['admin.css', admin],
     ['dashboard.css', dashboard],

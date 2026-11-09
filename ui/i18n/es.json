@@ -15,6 +15,8 @@
     "pageTitle": "Ajustes de Stackyard"
   },
   "common": {
+    "saving": "Guardando…",
+    "working": "Procesando…",
     "save": "Guardar",
     "import": "Importar",
     "export": "Exportar",
@@ -456,7 +458,10 @@
     "changePasswordTitle": "¿Cambiar la contraseña?"
   },
   "list": {
-    "empty": "Aún no hay aplicaciones. Haz clic en +Añadir.",
+    "matchCount_one": "{count} coincidencia",
+    "matchCount_many": "{count} de coincidencias",
+    "matchCount_other": "{count} coincidencias",
+    "empty": "Aún no hay aplicaciones. Usa el botón más para añadir una.",
     "noMatches": "Sin coincidencias.",
     "dockTip": "Aparece en la parte inferior de cada página.",
     "dockEmpty": "Arrastra una aplicación aquí, o ábrela y activa «Mostrar en el Dock».",
@@ -623,9 +628,6 @@
     "incorrect": "Contraseña incorrecta."
   },
   "setpw": {
-    "title": "Establece una contraseña",
-    "desc": "Elige una contraseña segura para tu panel.",
-    "newPassword": "Nueva contraseña",
     "submit": "Establecer contraseña"
   },
   "pill": {

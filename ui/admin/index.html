@@ -13,7 +13,7 @@
   <script src="/js/boot-hints.js?v=d40eebe3"></script>
   <script src="/js/page-zoom.js?v=01ccc9cf"></script>
   <link rel="stylesheet" href="/css/tokens.css?v=42d82f6f">
-  <link rel="stylesheet" href="/css/admin.css?v=f673dc0c">
+  <link rel="stylesheet" href="/css/admin.css?v=1963be04">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=53b91d5f">
   <link rel="stylesheet" href="/css/config-recovery.css?v=9f8ca0ab">
 </head>
@@ -59,7 +59,7 @@
       <div class="sec-hdr">
         <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-back"/></svg></a><h1 class="sec-title" data-i18n="nav.general">General</h1>
         <div class="sec-hdr-actions">
-          <button class="btn bp sm sv-btn" id="srv-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><span class="sv-done" aria-hidden="true"><svg class="sy-icon" width="16" height="16" aria-hidden="true" focusable="false"><use href="#sy-solid-check"/></svg><span data-i18n="toast.saved">Saved</span></span></button>
+          <button class="btn bp sm sv-btn" id="srv-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><span class="sv-busy" aria-hidden="true" data-i18n="common.saving">Saving…</span><span class="sv-done" aria-hidden="true"><svg class="sy-icon" width="16" height="16" aria-hidden="true" focusable="false"><use href="#sy-solid-check"/></svg><span data-i18n="toast.saved">Saved</span></span></button>
         </div>
       </div>
       <div class="grp">
@@ -141,7 +141,7 @@
     <section class="sec" id="sec-appearance" hidden>
       <div class="sec-hdr">
         <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-back"/></svg></a><h1 class="sec-title" data-i18n="nav.appearance">Appearance</h1>
-        <div class="sec-hdr-actions"><button class="btn bp sm sv-btn" id="bg-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><span class="sv-done" aria-hidden="true"><svg class="sy-icon" width="16" height="16" aria-hidden="true" focusable="false"><use href="#sy-solid-check"/></svg><span data-i18n="toast.saved">Saved</span></span></button></div>
+        <div class="sec-hdr-actions"><button class="btn bp sm sv-btn" id="bg-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><span class="sv-busy" aria-hidden="true" data-i18n="common.saving">Saving…</span><span class="sv-done" aria-hidden="true"><svg class="sy-icon" width="16" height="16" aria-hidden="true" focusable="false"><use href="#sy-solid-check"/></svg><span data-i18n="toast.saved">Saved</span></span></button></div>
       </div>
       <div class="grp-hdr" role="heading" aria-level="2" data-i18n="appearance.appTitle">App Title</div>
       <div class="grp">
@@ -218,7 +218,7 @@
           </div>
         </div>
         <div class="al-filter d-none" id="al-filter">
-          <input id="al-search" type="search" class="al-search" placeholder="Search" aria-label="Search" data-i18n-ph="dashboard.searchPh" data-i18n-al="dashboard.searchPh">
+          <input id="al-search" type="search" autocapitalize="none" class="al-search" placeholder="Search" aria-label="Search" data-i18n-ph="dashboard.searchPh" data-i18n-al="dashboard.searchPh">
           <div class="al-chips" role="group" aria-label="Filter by type" data-i18n-al="dashboard.filterByType">
             <button type="button" class="chip on" data-flt="all" aria-pressed="true" data-i18n="dashboard.filterAll">All</button>
             <button type="button" class="chip" data-flt="app" aria-pressed="false" data-i18n="dashboard.filterApps">Apps</button>
@@ -239,7 +239,7 @@
           <h1 class="sec-title" id="ev-title">General</h1>
           <div class="sec-hdr-actions">
             <button class="btn bd-btn sm d-none" id="ev-delete" type="button" data-i18n="common.delete">Delete</button>
-            <button class="btn bp sm" id="ev-save" type="button" data-i18n="common.save">Save</button>
+            <button class="btn bp sm sv-btn" id="ev-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><span class="sv-busy" aria-hidden="true" data-i18n="common.saving">Saving…</span></button>
           </div>
         </div>
         <!-- Add New selector + form render here -->
@@ -318,21 +318,11 @@
     <form id="login-form" class="login-form" method="post" novalidate>
     <input type="text" name="username" autocomplete="username" hidden>
     <div id="login-err" class="login-err" role="alert"></div>
-    <input id="login-pw" name="password" type="password" placeholder="Password" aria-label="Password" data-i18n-ph="login.password" data-i18n-al="login.password" autocomplete="current-password" class="login-pw">
+    <input id="login-pw" name="password" type="password" placeholder="Password" aria-label="Password" data-i18n-ph="login.password" data-i18n-al="login.password" autocomplete="current-password" enterkeyhint="go" class="login-pw">
     <button id="login-btn" type="submit" class="login-btn" data-i18n="login.signIn">Sign in</button>
     </form>
   </div>
 </dialog>
-<div id="setpw-screen" class="setpw-screen">
-  <div class="setpw-wrap"><div class="setpw-card">
-    <div class="setpw-title" data-i18n="setpw.title">Set a password</div><div class="setpw-desc" data-i18n="setpw.desc">Choose a strong password for your dashboard.</div>
-    <input id="setpw-input" type="password" placeholder="New password" aria-label="New password" data-i18n-ph="setpw.newPassword" data-i18n-al="setpw.newPassword" autocomplete="new-password" class="setpw-input">
-    <div id="setpw-bars" class="setpw-bars"><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div></div>
-    <div id="setpw-hint" class="setpw-hint"></div><div id="setpw-err" class="setpw-err" role="alert"></div>
-    <button id="setpw-btn" type="button" class="setpw-btn" data-i18n="setpw.submit">Set password</button>
-  </div></div>
-</div>
-
-<script type="module" src="/js/admin.js?v=0007c73c"></script>
+<script type="module" src="/js/admin.js?v=8cea86b4"></script>
 </body>
 </html>

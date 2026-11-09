@@ -353,7 +353,7 @@ const SPLIT_PAIRS = [
 
 test('every filled control the stylesheet declares is paired with its ink', () => {
   const found = filledRules().map(r => r.what);
-  for (const sel of ['.bp', '.login-btn', '.setpw-btn', '.chip.on']) {
+  for (const sel of ['.bp', '.login-btn', '.chip.on']) {
     assert.ok(
       found.includes(sel),
       `${sel} is filled with a role colour and no longer names --on-fill: ${found.join(', ')}`,
@@ -566,7 +566,6 @@ test('the measured Settings rules name the measured tokens', () => {
     ['.kv-k::placeholder', 'color', 'var(--dm-strong)'],
     ['.icon-srch::placeholder', 'color', 'var(--dm-strong)'],
     ['.login-sub', 'color', 'var(--dm-strong)'],
-    ['.setpw-desc', 'color', 'var(--dm-strong)'],
     ['.sb-ver', 'color', 'var(--dm-strong)'],
     ['.p-hd', 'color', 'var(--chip-hd-fg)'],
     ['.p-hd', 'background', 'var(--chip-hd-bg)'],
@@ -574,7 +573,6 @@ test('the measured Settings rules name the measured tokens', () => {
     ['.dash-load-fail .retry-btn', 'color', 'var(--tx)'],
     ['.dash-load-fail .retry-btn', 'background', 'var(--btn-fill)'],
     ['.login-wrap', 'background', 'var(--glass-bg)'],
-    ['.setpw-card', 'background', 'var(--glass-bg)'],
   ];
   for (const light of [false, true]) {
     for (const [selector, prop, want] of uses) {

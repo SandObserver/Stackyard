@@ -5,6 +5,19 @@
    form, and nothing else. Opening the editor again is a new session, so the
    saved config wins, or one widget's form would fill in from the last widget of
    the same type that was open. */
+/** @param {{ q: string, type: string }} filter @returns {boolean} */
+export function filterActive(filter) {
+  return !!(filter.q || filter.type !== 'all');
+}
+
+/** @param {any} item @param {{ q: string, type: string }} filter @returns {boolean} */
+export function itemMatchesFilter(item, filter) {
+  if (filter.type !== 'all' && item.type !== filter.type) return false;
+  if (!filter.q) return true;
+  const hay = ((item.label || '') + ' ' + (item.href || '') + ' ' + (item.widgetType || '')).toLowerCase();
+  return hay.includes(filter.q.toLowerCase());
+}
+
 export function carriesTypedValues(cached, wtype, session) {
   if (!cached || !cached.form) return false;
   return cached.type === wtype && cached.session === session;

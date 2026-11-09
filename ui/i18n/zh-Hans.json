@@ -15,6 +15,8 @@
     "pageTitle": "Stackyard 设置"
   },
   "common": {
+    "saving": "正在保存…",
+    "working": "正在处理…",
     "save": "保存",
     "import": "导入",
     "export": "导出",
@@ -440,7 +442,8 @@
     "changePasswordTitle": "更改密码？"
   },
   "list": {
-    "empty": "还没有应用。点击“+ 添加”。",
+    "matchCount_other": "{count} 个匹配项",
+    "empty": "还没有应用。使用加号按钮添加一个。",
     "noMatches": "没有匹配项。",
     "dockTip": "显示在每页底部。",
     "dockEmpty": "将应用拖到这里，或打开应用并开启“在程序坞中显示”。",
@@ -591,9 +594,6 @@
     "incorrect": "密码错误。"
   },
   "setpw": {
-    "title": "设置密码",
-    "desc": "为仪表板设置强密码。",
-    "newPassword": "新密码",
     "submit": "设置密码"
   },
   "pill": {

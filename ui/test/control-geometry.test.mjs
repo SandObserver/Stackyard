@@ -1,7 +1,7 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 /* Control geometry against the kit. These are measured values, not
@@ -65,9 +65,12 @@ test('the pressed knob stretches by transform only', () => {
   const knob = rule(admin, '.tr::after');
   assert.match(knob, /transition:transform \.2s var\(--ease-reveal\)/);
   assert.doesNotMatch(knob, /transition:[^;]*width/);
-  assert.match(rule(admin, '.tog:active input:not(:disabled)+.tr::after'), /transform:scaleX\(1\.2105\)/);
   assert.match(
-    rule(admin, '.tog:active input:checked:not(:disabled)+.tr::after'),
+    rule(admin, '.tog:not(.tog-disabled):active input:not(:disabled)+.tr::after'),
+    /transform:scaleX\(1\.2105\)/,
+  );
+  assert.match(
+    rule(admin, '.tog:not(.tog-disabled):active input:checked:not(:disabled)+.tr::after'),
     /translateX\(14px\) scaleX\(1\.2105\)/,
   );
   assert.ok(Math.abs(38 * 1.2105 - 46) < 0.01);

@@ -1,15 +1,16 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
-import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=1526c452';
-import { el, isolate, q, qa } from '/js/utils.js?v=a09f4f39';
-import { t } from '/js/i18n.js?v=ed7c5565';
+
 import { errorAdvice } from '/js/admin-error.js?v=d1f8f6f4';
-import { formatList, formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { iconChain } from '/js/icons.js?v=76c29d43';
-import { iconSvg } from '/js/icon-set.js?v=b8068a58';
-import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
-import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
+import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=245bc319';
 import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=f06a966c';
+import { formatList, formatNumber } from '/js/format-number.js?v=abcd4ae4';
+import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
+import { t } from '/js/i18n.js?v=ed7c5565';
+import { iconSvg } from '/js/icon-set.js?v=b8068a58';
+import { iconChain } from '/js/icons.js?v=76c29d43';
+import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
+import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
+import { el, isolate, q, qa } from '/js/utils.js?v=a09f4f39';
 
 export const API = '';
 
@@ -29,12 +30,14 @@ function hideToast() {
     else active.blur();
   }
   _toastReturn = null;
-  e.className = '';
+  e.classList.remove('show');
   const act = /** @type {HTMLButtonElement|null} */ (q('.toast-act', e));
-  if (act) {
-    act.hidden = true;
-    act.onclick = null;
-  }
+  if (act) act.onclick = null;
+  setTimeout(() => {
+    if (e.classList.contains('show')) return;
+    e.className = '';
+    if (act) act.hidden = true;
+  }, 200);
 }
 
 const TOAST_ICON = Object.freeze({ ok: 'success', warn: 'warning', err: 'failure' });
@@ -102,10 +105,86 @@ export const toast = (m, tone = 'ok', action = null) => {
     };
     document.addEventListener('pointerdown', acted, true);
     document.addEventListener('keydown', acted, true);
+    document.addEventListener('visibilitychange', () => {
+      clearTimeout(tt);
+      if (document.hidden || !e.classList.contains('show')) return;
+      if (act && !act.hidden) return;
+      if (e.matches(':hover') || e.contains(document.activeElement)) return;
+      release();
+    });
   }
   const ms = action ? null : toastHoldMs(tone, m, 'show');
-  if (ms != null) tt = setTimeout(hideToast, ms);
+  if (ms != null && !document.hidden) tt = setTimeout(hideToast, ms);
 };
+
+/** Runs `fn` 300 ms from now, or once no dialog is open, whichever is later.
+    @param {() => void} fn @returns {() => void} cancels the call */
+function afterDialogs(fn) {
+  let timer = setTimeout(function tick() {
+    if (document.querySelector('dialog.dlg-box[open]')) timer = setTimeout(tick, 150);
+    else fn();
+  }, 300);
+  return () => clearTimeout(timer);
+}
+
+/** Disabling a control drops its focus, so it is given back once the control works again.
+    @param {HTMLElement} node @param {boolean} had */
+function refocus(node, had) {
+  if (had && (!document.activeElement || document.activeElement === document.body)) node.focus();
+}
+
+/** A Save press that ignores a second press and shows the saving label on a slow write.
+    @param {HTMLButtonElement} btn @param {(...args: any[]) => Promise<any>} run
+    @param {() => void} [after] @returns {(...args: any[]) => Promise<void>} */
+export function busyPress(btn, run, after) {
+  return async (...args) => {
+    if (btn.getAttribute('aria-busy') === 'true') return;
+    const had = document.activeElement === btn;
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    const cancel = afterDialogs(() => btn.classList.add('busy'));
+    try {
+      await run(...args);
+    } finally {
+      cancel();
+      btn.classList.remove('busy');
+      btn.removeAttribute('aria-busy');
+      btn.disabled = false;
+      after?.();
+      refocus(btn, had);
+    }
+  };
+}
+
+/** A row action that ignores a second press and shows a status line on a slow run.
+    @param {HTMLButtonElement|HTMLInputElement} node
+    @param {(...args: any[]) => Promise<any>} run @returns {(...args: any[]) => Promise<void>} */
+export function rowBusy(node, run) {
+  return async (...args) => {
+    if (node.getAttribute('aria-busy') === 'true') return;
+    const had = document.activeElement === node;
+    node.disabled = true;
+    node.setAttribute('aria-busy', 'true');
+    /** @type {HTMLElement|null} */
+    let status = null;
+    const cancel = afterDialogs(() => {
+      status = document.createElement('span');
+      status.className = 'row-status end';
+      status.setAttribute('role', 'status');
+      status.textContent = t('common.working');
+      node.closest('.row')?.querySelector('.row-btns')?.before(status);
+    });
+    try {
+      await run(...args);
+    } finally {
+      cancel();
+      status?.remove();
+      node.removeAttribute('aria-busy');
+      node.disabled = false;
+      refocus(node, had);
+    }
+  };
+}
 
 function scrollBehavior() {
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
@@ -289,6 +368,12 @@ export function announce(text) {
   setTimeout(() => {
     region.textContent = text;
   }, 100);
+}
+
+/** @param {Element|null} node */
+export function fadeOpacity(node) {
+  if (!node || typeof node.animate !== 'function') return;
+  node.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150, easing: EASE_IOS });
 }
 
 /** @param {Element|null} node */

@@ -1,6 +1,6 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { register } from 'node:module';
+import { test } from 'node:test';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
@@ -17,7 +17,7 @@ function fakeToast() {
       classes.clear();
       for (const c of String(v).split(/\s+/).filter(Boolean)) classes.add(c);
     },
-    classList: { contains: c => classes.has(c) },
+    classList: { contains: c => classes.has(c), remove: c => classes.delete(c) },
     contains: () => false,
     querySelector: () => null,
     setAttribute() {},

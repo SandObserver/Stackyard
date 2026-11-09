@@ -1,51 +1,51 @@
-import { clr, el, focusFirst, initial, inp as inpById, isolate, q as qSel, qa, qi, tgt } from '/js/utils.js?v=a09f4f39';
-import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
+import { BADGE_DEFAULT, renderColorControl } from '/js/admin-color-control.js?v=3c35a0c0';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=d1f8f6f4';
 import {
+  clearsStoredSecret,
+  failureIsMissingApiPath,
+  isBareHostUrl,
+  isDockBlocked,
+  nextActiveIndex,
+  sameIconName,
+  urlHasLogin,
+} from '/js/admin-logic.js?v=245bc319';
+import {
+  apiGet,
+  apiPost,
+  clearFieldError,
+  errorAction,
+  errorText,
+  fadeIn,
+  initInlineEdit,
+  PE_SVG,
+  responseError,
+  reveal,
+  setStatus,
+  setTogDisabled,
+  showFieldError,
+  swapContent,
+  toast,
+  wireInlineEdit,
+} from '/js/admin-shared.js?v=781c2d91';
+import { state } from '/js/admin-state.js?v=064b9b85';
+import { MAX_LABELS } from '/js/badge-logic.js?v=04a4ece8';
+import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
+import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
+import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
+import { t } from '/js/i18n.js?v=ed7c5565';
+import { iconSvg } from '/js/icon-set.js?v=b8068a58';
+import {
+  cdnIconRef,
+  iconChain,
   loadLocalIcons,
   resolveIcon,
-  iconChain,
-  cdnIconRef,
   splitIconRef,
   throughServer,
 } from '/js/icons.js?v=76c29d43';
-import { state } from '/js/admin-state.js?v=064b9b85';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
-import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import {
-  isDockBlocked,
-  clearsStoredSecret,
-  isBareHostUrl,
-  urlHasLogin,
-  failureIsMissingApiPath,
-  nextActiveIndex,
-  sameIconName,
-} from '/js/admin-logic.js?v=1526c452';
-import { t } from '/js/i18n.js?v=ed7c5565';
-import {
-  toast,
-  errorText,
-  responseError,
-  apiGet,
-  apiPost,
-  PE_SVG,
-  initInlineEdit,
-  wireInlineEdit,
-  reveal,
-  fadeIn,
-  setTogDisabled,
-  swapContent,
-  setStatus,
-  errorAction,
-  showFieldError,
-  clearFieldError,
-} from '/js/admin-shared.js?v=1a0eba6c';
+import { createListbox } from '/js/listbox.js?v=d0743e73';
 import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
-import { createListbox } from '/js/listbox.js?v=7ed8457d';
-import { MAX_LABELS } from '/js/badge-logic.js?v=04a4ece8';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=9f9804bd';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=d1f8f6f4';
-import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
-import { iconSvg } from '/js/icon-set.js?v=b8068a58';
+import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=a09f4f39';
 
 export function buildFolderForm(body, item) {
   const children = item?.children || [];
@@ -227,7 +227,7 @@ export function buildAppForm(body, item) {
             <div id="bhdr-rows" class="kv-rows"></div>
           </div></div>
         </div>
-        <div id="poll-row"><div class="row"><span class="rl">${t('app.poll')}</span><div class="poll-inline">${pollBefore}<input id="f-bint" type="number" min="10" max="3600" value="${act.interval || 30}" aria-label="${t('app.poll')}">${pollAfter}</div></div></div>
+        <div id="poll-row"><div class="row"><span class="rl">${t('app.poll')}</span><div class="poll-inline">${pollBefore}<input id="f-bint" type="number" inputmode="numeric" min="10" max="3600" value="${act.interval || 30}" aria-label="${t('app.poll')}">${pollAfter}</div></div></div>
       </div></div>
     </div>
     ${globalHealthOn ? '' : html`<p class="grp-tip" id="hc-off-tip">${t('app.healthGlobalOff')}</p>`}
@@ -797,7 +797,7 @@ function wireIcon() {
   };
 
   const upInput = inpById('ip-upload');
-  const upBtn = el('ip-upload-lbl');
+  const upBtn = /** @type {HTMLButtonElement} */ (el('ip-upload-lbl'));
   if (upBtn && upInput) {
     upBtn.onclick = () => upInput.click();
     upInput.onchange = async () => {
@@ -805,6 +805,7 @@ function wireIcon() {
       if (!file) return;
       const origText = upBtn.textContent;
       upBtn.textContent = '↑ ' + t('appearance.uploading');
+      upBtn.disabled = true;
       try {
         const form = new FormData();
         form.append('icon', file, file.name);
@@ -823,6 +824,7 @@ function wireIcon() {
         toast(t('toast.uploadFailed', { err: errorText(e) }), 'err');
       } finally {
         upBtn.textContent = origText;
+        upBtn.disabled = false;
         upInput.value = '';
       }
     };

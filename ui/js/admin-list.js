@@ -11,23 +11,30 @@
    The filter and the collapsed folders are in admin-state.js, because the page
    reads and writes them too. */
 
-import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { snapshotItems } from '/js/admin-save-logic.js?v=4b2b7f18';
-import { isShownChild, reorderItems, shownChildren, topLevelRows } from '/js/admin-logic.js?v=1526c452';
-import { listGroup } from '/js/admin-drag-logic.js?v=7101ca25';
-import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=b8b58462';
-import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
+import { listGroup } from '/js/admin-drag-logic.js?v=7101ca25';
+import {
+  filterActive,
+  isShownChild,
+  itemMatchesFilter,
+  reorderItems,
+  shownChildren,
+  topLevelRows,
+} from '/js/admin-logic.js?v=245bc319';
+import { snapshotItems } from '/js/admin-save-logic.js?v=4b2b7f18';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=781c2d91';
+import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
+import { sizeLabel } from '/js/admin-widget-form.js?v=c5216175';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=1a0eba6c';
-import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=a09f4f39';
-import { pageTheme } from '/js/palette.js?v=3fb8ae43';
-import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=ed7c5565';
-import { sizeLabel } from '/js/admin-widget-form.js?v=337311e0';
-import { widgetGlyph } from '/js/widget-glyphs.js?v=246e649c';
 import { iconSvg } from '/js/icon-set.js?v=b8068a58';
+import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
+import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
+import { pageTheme } from '/js/palette.js?v=3fb8ae43';
+import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
+import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=a09f4f39';
+import { widgetGlyph } from '/js/widget-glyphs.js?v=246e649c';
 
 /** @type {{ openModal: (idx: number|null) => void,
              openFolderPicker: (folderId: string) => void,
@@ -102,6 +109,7 @@ function announceSpot(item, folderId) {
 }
 
 let _slideNext = false;
+let _fadeNewRows = false;
 /** @type {string|null} */
 let _slideSkip = null;
 let _reordering = false;
@@ -140,6 +148,7 @@ function slideRows(l, tops, skip) {
   for (const r of qa('.drow', l)) {
     if (r.dataset.itemId === skip) continue;
     const was = tops.get(r.dataset.itemId);
+    if (was == null && _fadeNewRows) fadeNewRow(r);
     if (was == null) continue;
     const dy = was - r.getBoundingClientRect().top;
     if (Math.abs(dy) < 1) continue;
@@ -148,6 +157,11 @@ function slideRows(l, tops, skip) {
       easing: EASE_IOS,
     });
   }
+}
+
+/** @param {Element|undefined} node */
+function fadeNewRow(node) {
+  node?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150, easing: 'ease-out' });
 }
 
 /** @param {HTMLElement|null} chevron @param {string} from */
@@ -159,7 +173,11 @@ function turnFrom(chevron, from) {
   chevron.style.transform = to;
 }
 
-export function mkRow(item, idx, { indent = false, childIdx = null, folderId = null } = {}) {
+export function mkRow(
+  item,
+  idx,
+  { indent = false, childIdx = null, folderId = null, top = { dock: [], home: [] } } = {},
+) {
   const row = document.createElement('div');
   row.className = 'row drow';
   const _filtering = !!(filter.q || filter.type !== 'all');
@@ -183,10 +201,10 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
     canUp = p > 0;
     canDown = p < shown.length - 1;
   } else {
-    const top = topLevelRows(state.items, listGroup(item) === 'dock');
-    const p = top.indexOf(item);
+    const peers = top[listGroup(item) === 'dock' ? 'dock' : 'home'];
+    const p = peers.indexOf(item);
     canUp = p > 0;
-    canDown = p < top.length - 1;
+    canDown = p < peers.length - 1;
   }
   const name = item.label || item.id || t('type.app');
   const handle = document.createElement('button');
@@ -237,7 +255,11 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
     const chevron = document.createElement('span');
     chevron.style.cssText = 'font-size:10px;color:var(--dm);transition:transform .15s;flex-shrink:0;';
     chevron.textContent = '▼';
-    chevron.style.transform = collapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+    chevron.style.transform = collapsed
+      ? document.dir === 'rtl'
+        ? 'rotate(90deg)'
+        : 'rotate(-90deg)'
+      : 'rotate(0deg)';
     chevron.id = 'chev-' + item.id;
     nm.append(chevron, setUserText(document.createElement('span'), item.label));
     nm.onclick = e => {
@@ -247,8 +269,14 @@ export function mkRow(item, idx, { indent = false, childIdx = null, folderId = n
       } else {
         collapsedFolders.add(item.id);
       }
+      const animate = e.detail !== 0;
+      _slideNext = animate;
+      _fadeNewRows = animate;
       render();
-      turnFrom(document.getElementById('chev-' + item.id), chevron.style.transform);
+      _fadeNewRows = false;
+      if (animate && !collapsedFolders.has(item.id) && !matchMedia('(prefers-reduced-motion: reduce)').matches)
+        fadeNewRow(qa('.fp-add', el('al')).find(b => b.dataset.folderId === item.id));
+      if (animate) turnFrom(document.getElementById('chev-' + item.id), chevron.style.transform);
     };
   } else {
     setUserText(nm, item.label || item.id);
@@ -400,29 +428,14 @@ function draw(l) {
     return;
   }
   l.replaceChildren();
-  if (filter.q || filter.type !== 'all') {
-    const q = filter.q.toLowerCase();
-    const matches = state.items.filter(it => {
-      if (filter.type !== 'all' && it.type !== filter.type) return false;
-      if (q) {
-        const hay = ((it.label || '') + ' ' + (it.href || '') + ' ' + (it.widgetType || '')).toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    });
-    if (!matches.length) {
-      setHtml(l, html`<div class="empty"><p class="empty-msg">${t('list.noMatches')}</p></div>`);
-      return;
-    }
-    const g = document.createElement('div');
-    g.className = 'grp';
-    matches.forEach(item => g.appendChild(mkRow(item, state.items.indexOf(item))));
-    l.appendChild(g);
+  const top = { dock: topLevelRows(state.items, true), home: topLevelRows(state.items, false) };
+  if (filterActive(filter)) {
+    drawFiltered(l, top);
     return;
   }
-  const docked = topLevelRows(state.items, true);
+  const docked = top.dock;
   const dockGrp = listSection(l, 'dock', t('home.dock'), `${formatNumber(docked.length)}/${formatNumber(DOCK_MAX)}`);
-  docked.forEach(item => dockGrp.appendChild(mkRow(item, state.items.indexOf(item))));
+  docked.forEach(item => dockGrp.appendChild(mkRow(item, state.items.indexOf(item), { top })));
   if (!docked.length) {
     const zone = document.createElement('div');
     zone.className = 'row al-dock-empty';
@@ -435,14 +448,14 @@ function draw(l) {
   tip.textContent = t('list.dockTip');
   l.appendChild(tip);
   const homeGrp = listSection(l, 'home', t('home.homeScreen'));
-  topLevelRows(state.items, false).forEach(item => {
-    homeGrp.appendChild(mkRow(item, state.items.indexOf(item)));
+  top.home.forEach(item => {
+    homeGrp.appendChild(mkRow(item, state.items.indexOf(item), { top }));
     if (item.type === 'folder' && !collapsedFolders.has(item.id)) {
       (Array.isArray(item.children) ? item.children : []).forEach((childId, ci) => {
         if (!isShownChild(state.items, childId)) return;
         const childItem = state.items.find(i => i.id === childId);
         homeGrp.appendChild(
-          mkRow(childItem, state.items.indexOf(childItem), { indent: true, childIdx: ci, folderId: item.id }),
+          mkRow(childItem, state.items.indexOf(childItem), { indent: true, childIdx: ci, folderId: item.id, top }),
         );
       });
       const addRow = document.createElement('button');
@@ -456,6 +469,56 @@ function draw(l) {
     }
   });
 }
+
+/** @param {HTMLElement} g @param {HTMLElement} empty */
+function showMatches(g, empty) {
+  const byId = new Map(state.items.map(i => [i.id, i]));
+  let shown = 0;
+  for (const r of /** @type {any} */ (g.children)) {
+    const it = byId.get(r.dataset.itemId);
+    const on = !!it && itemMatchesFilter(it, filter);
+    r.classList.toggle('d-none', !on);
+    if (on) shown++;
+  }
+  g.classList.toggle('d-none', !shown);
+  empty.classList.toggle('d-none', !!shown);
+}
+
+/** @param {HTMLElement} l @param {{ dock: any[], home: any[] }} top */
+function drawFiltered(l, top) {
+  const g = document.createElement('div');
+  g.className = 'grp';
+  g.dataset.flat = '1';
+  state.items.forEach((item, i) => g.appendChild(mkRow(item, i, { top })));
+  const empty = document.createElement('div');
+  empty.className = 'empty d-none';
+  empty.dataset.flat = '1';
+  const p = document.createElement('p');
+  p.className = 'empty-msg';
+  p.textContent = t('list.noMatches');
+  empty.appendChild(p);
+  l.append(g, empty);
+  showMatches(g, empty);
+}
+
+/** Shows the rows that match the filter. Rows already drawn are only hidden or shown.
+    @returns {void} */
+export function applyFilter() {
+  const l = el('al');
+  const g = /** @type {HTMLElement|null} */ (l?.querySelector(':scope > .grp[data-flat]') ?? null);
+  const empty = /** @type {HTMLElement|null} */ (l?.querySelector(':scope > .empty[data-flat]') ?? null);
+  if (!filterActive(filter) || !g || !empty) {
+    render();
+    return;
+  }
+  showMatches(g, empty);
+}
+
+/** @returns {number} */
+export function filterMatchCount() {
+  return state.items.filter(it => itemMatchesFilter(it, filter)).length;
+}
+
 export function syncFilterUI() {
   const s = /** @type {HTMLInputElement} */ (el('al-search'));
   if (s) s.value = filter.q;
