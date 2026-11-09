@@ -1,5 +1,6 @@
 /* admin.css v33 */
 :root{
+  --press-dim:.7;
   /* Surfaces and borders, darkest first, from the system greys. */
   --bg-outer:var(--sy-gray6);
   --sb:#141517;
@@ -158,15 +159,16 @@ html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable;-webkit-t
 button,a,[role="button"],label.tog,.segr-opt{touch-action:manipulation}
 
 /* ── Outer: wallpaper shows here, panel centered ── */
-.adm-outer{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:44px 0}
+.nl,.mtab,.btn,.chip,.row-btn,.row-dd-btn,.tile-opt,.rord,.segr-opt,.tog,.fp-row,.rmove-btn,.ract-edit,.ev-back,.m-back,.row-link,.row.drow{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.adm-outer{min-height:100dvh;display:flex;align-items:flex-start;justify-content:center;padding:44px 0}
 
 /* ── Panel card ── */
-.adm{display:flex;width:100%;max-width:1039px;min-height:calc(100vh - 88px);background:var(--sb);border-radius:var(--r);box-shadow:var(--shadow-dlg);overflow:clip}
+.adm{display:flex;width:100%;max-width:1039px;min-height:calc(100dvh - 88px);background:var(--sb);border-radius:var(--r);box-shadow:var(--shadow-dlg);overflow:clip}
 
 /* ── Sidebar ── */
-.sb{width:var(--sbw);flex-shrink:0;background:var(--sb);display:flex;flex-direction:column;padding:0 10px 10px;position:sticky;top:0;align-self:flex-start;max-height:100vh;min-height:calc(100vh - 88px);overflow-y:auto}
+.sb{width:var(--sbw);flex-shrink:0;background:var(--sb);display:flex;flex-direction:column;padding:0 10px 10px;position:sticky;top:0;align-self:flex-start;max-height:100dvh;min-height:calc(100dvh - 88px);overflow-y:auto;overscroll-behavior:contain}
 .sb-brand{display:flex;align-items:center;gap:10px;padding:18px 8px 20px;text-decoration:none;color:inherit}
-.sb-brand:active{opacity:.7}
+.sb-brand:active{opacity:var(--press-dim)}
 .sb-name{font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:700;color:var(--tx)}
 .sb-ver{font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2);color:var(--dm-strong);margin-top:1px;min-height:1lh}
 .sb-nav{list-style:none;display:flex;flex-direction:column;gap:0}
@@ -191,7 +193,7 @@ button,a,[role="button"],label.tog,.segr-opt{touch-action:manipulation}
 .sec-hdr-actions{display:flex;gap:6px;flex-shrink:0}
 .ev-back{display:flex;align-items:center;justify-content:center;gap:3px;background:var(--glass-bg);-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);box-shadow:inset 0 0 0 .5px var(--glass-rim),var(--shadow-glass-btn);border:none;border-radius:999px;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;font-family:inherit;cursor:pointer;min-width:44px;min-height:44px;padding-block:0;padding-inline:10px 14px;flex-shrink:0}
 @media (hover:hover) and (pointer:fine){.ev-back:hover{opacity:.8}}
-.ev-back:active{opacity:.7}
+.ev-back:active{opacity:var(--press-dim)}
 
 /* ── Groups ── */
 /* Nothing left to show. It would otherwise draw its border as a stray rule
@@ -229,6 +231,7 @@ button,a,[role="button"],label.tog,.segr-opt{touch-action:manipulation}
 /* The `.fh-hl` variants are the same rule for a group whose first child is the
    hover highlight. Without them the top row loses its corners and squares off
    the group. */
+.grp[data-flat] > .row:not(.d-none):not(.row:not(.d-none) ~ .row),
 .grp > .row:first-child,.grp > .row-wrap:first-child > .row:first-child,
 .grp > .reveal:first-child > .reveal-in > .row:first-child,
 .grp > .fh-hl + .row,.grp > .fh-hl + .row-wrap > .row:first-child,
@@ -248,6 +251,8 @@ button,a,[role="button"],label.tog,.segr-opt{touch-action:manipulation}
 .ie-row .row-inp{display:none;flex:2;background:transparent;border:none;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-family:inherit;text-align:end;padding:0;min-width:0;outline:none}
 .ie-row.editing .row-inp{display:block}
 .ie-row.editing{background:var(--ov-soft)}
+.ie-row.editing:focus-within{box-shadow:inset 0 0 0 2px var(--ac)}
+@media (forced-colors:active){.ie-row.editing:focus-within{outline:2px solid Highlight;outline-offset:-2px}}
 .ie-row .pw-reveal{display:none;flex:none;align-items:center;justify-content:center;width:44px;height:44px;margin-block:-12px;margin-inline:4px -12px;padding:0;border:none;border-radius:50%;background:none;color:var(--dm-strong);cursor:pointer}
 .ie-row.editing .pw-reveal{display:flex}
 .pw-reveal[aria-pressed="true"]{color:var(--ac)}
@@ -267,7 +272,7 @@ button,a,[role="button"],label.tog,.segr-opt{touch-action:manipulation}
 .row-dd-btn{display:flex;align-items:center;gap:6px;background:transparent;border:none;color:var(--dm);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-family:inherit;cursor:pointer;padding:4px 8px;border-radius:6px;max-width:100%;transition:color var(--t),opacity var(--t)}
 .row-dd-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (hover:hover) and (pointer:fine){.row-dd-btn:hover{color:var(--tx)}}
-.row-dd-btn:active{opacity:.55}
+.row-dd-btn:active{opacity:var(--press-dim)}
 .dd-chev{flex-shrink:0;width:18px;height:18px;color:inherit}
 .row-dd-list{position:fixed;inset:auto;margin:0;top:-9999px;z-index:9000;background:var(--menu-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--menu-rim);border-radius:34px;list-style:none;min-width:250px;max-width:min(320px,calc(100vw - 16px));max-height:min(360px,60dvh);overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--shadow-pop);padding:10px 0;transition:opacity calc(var(--t-reveal) * .9) var(--ease-reveal),transform calc(var(--t-reveal) * .9) var(--ease-reveal)}
 @media (prefers-reduced-transparency: reduce){.row-dd-list{background:var(--bg-outer);-webkit-backdrop-filter:none;backdrop-filter:none}}
@@ -316,9 +321,9 @@ button,a,[role="button"],label.tog,.segr-opt{touch-action:manipulation}
 .chip{padding:7px 14px;min-height:36px;border-radius:999px;border:none;background:var(--btn-fill);color:var(--chip-text);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:600;cursor:pointer;transition:background var(--t),color var(--t);font-family:inherit}
 .chip.on{background:var(--ac);color:var(--on-fill);font-weight:600}
 @media (hover:hover) and (pointer:fine){.chip:hover:not(.on){color:var(--tx)}}
-.chip:active{opacity:.8}
+.chip:active{opacity:var(--press-dim)}
 .row.drow{display:grid;grid-template-columns:24px 48px 1fr auto auto;gap:12px;padding:10px 16px;min-height:68px;cursor:pointer;align-items:center}
-.row.drow[data-indent]{padding-inline-start:28px;background:rgba(255,255,255,.02);border-inline-start:2px solid var(--bd);margin-inline-start:8px;border-start-end-radius:var(--rs);border-end-end-radius:var(--rs)}
+.row.drow[data-indent]{padding-inline-start:28px;background:var(--ov-soft);border-inline-start:2px solid var(--bd);margin-inline-start:8px;border-start-end-radius:var(--rs);border-end-end-radius:var(--rs)}
 @media (hover:hover) and (pointer:fine){.row.drow:hover{background:var(--ov-soft)}
 .grp:has(> .fh-hl.on) .row.drow:hover{background:transparent}}
 .row.drow.dragging{opacity:.4;cursor:grabbing}
@@ -332,7 +337,7 @@ button,a,[role="button"],label.tog,.segr-opt{touch-action:manipulation}
 /* touch-action:none, or a drag starting on the handle scrolls the list instead. */
 .rord{display:flex;align-items:center;justify-content:center;align-self:stretch;min-height:44px;padding:0;border:0;border-radius:8px;background:none;font-family:inherit;color:var(--dm);font-size:var(--fs-callout);line-height:var(--lh-callout);letter-spacing:var(--tr-callout);touch-action:none;cursor:grab}
 .rord:focus-visible,.ract-edit:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
-.row.drow:active,.ract-edit:active{opacity:.7}
+.row.drow:not(.dragging):active,.ract-edit:active{opacity:var(--press-dim)}
 .rico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--on-tint);flex-shrink:0;overflow:hidden;box-shadow:inset 0 0 0 1px var(--icon-ring)}
 .rico img{width:30px;height:30px;object-fit:contain}
 .rico img.rico-settings{width:36px;height:36px}
@@ -343,7 +348,7 @@ button,a,[role="button"],label.tog,.segr-opt{touch-action:manipulation}
 /* On a folder the name is the collapse control, so it is a target and not a
    label. 24px is the WCAG 2.5.8 minimum; the coarse-pointer block raises it. */
 button.rnm{font-family:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;min-height:24px}
-button.rnm:active{opacity:.55}
+button.rnm:active{opacity:var(--press-dim)}
 .rmt{font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);color:var(--dm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* An address reads left to right in every language. In a right-to-left page the
    ellipsis otherwise cuts the scheme and host. */
@@ -368,14 +373,14 @@ button.rnm:active{opacity:.55}
 .reordering .ract-edit{opacity:0;visibility:hidden;transition-delay:0s,var(--t-reveal)}
 .reordering .rpills{opacity:0;visibility:hidden;transition-delay:0s,var(--t-reveal)}
 .reordering .row.drow{cursor:default}
-.reordering .row.drow:active{opacity:1}
+.reordering .row.drow:not(.dragging):active{opacity:1}
 .rmove-btn{flex:none;display:grid;place-items:center;width:44px;height:44px;padding:4px;border:0;border-radius:50%;background:var(--btn-fill) content-box;color:var(--tx);cursor:pointer}
-.rmove-btn:active:not(:disabled){opacity:.7}
+.rmove-btn:active:not(:disabled){opacity:var(--press-dim)}
 .rmove-btn:disabled{opacity:.3;cursor:default}
 .rmove-btn:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
 .btn.al-reorder{display:inline-grid;justify-items:center}
 .sec-hdr-actions .btn.al-reorder{background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;color:var(--ac);padding-inline:8px;transition:opacity var(--t)}
-.sec-hdr-actions .btn.al-reorder:active{opacity:.6}
+.sec-hdr-actions .btn.al-reorder:active{opacity:var(--press-dim)}
 .sec-hdr-actions .btn.al-add{width:36px;padding:0;display:inline-grid;place-items:center;border-radius:50%}
 html.is-mobile .sec-hdr-actions .btn.al-add{width:44px;padding:0}
 .al-filter{transition:opacity var(--t-reveal) var(--ease-reveal)}
@@ -396,19 +401,21 @@ html:not(.is-mobile) .p-type{display:none}
 .tile-opt{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;background:none;border:none;border-radius:12px;padding:4px;cursor:pointer;font-family:inherit;color:var(--dm);transition:color var(--t)}
 .tile-opt.on{color:var(--tx)}
 @media (hover:hover) and (pointer:fine){.tile-opt:hover{color:var(--tx)}}
-.tile-opt:active{opacity:.55}
+.tile-opt:active{opacity:var(--press-dim)}
 .tile-opt:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .tile-ico{width:48px;height:48px;display:flex;align-items:center;justify-content:center;color:inherit}
 .tile-ico svg{width:38px;height:38px}
 .tile-cap{white-space:nowrap;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:400;color:var(--tx);padding:3px 12px;border-radius:50px;transition:background var(--t),color var(--t)}
 .tile-opt.on .tile-cap{background:var(--ac);color:var(--on-fill)}
+@media (max-width:430px){.tile-cap{padding-inline:8px;white-space:normal;text-align:center}}
 
 /* ── Color control: swatch row + HSB sliders + code (PSD Icon/Label/Activity) ── */
 .cc-row{padding-top:13px;padding-bottom:13px}
 .cc-sw{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;margin-inline-start:auto;flex:0 1 auto}
 .cc-swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:none;padding:0;outline:2px solid transparent;outline-offset:2px;transition:outline-color var(--t);flex-shrink:0}
 .cc-swatch.on{outline-color:var(--swatch-ring)}
-.cc-swatch:active{opacity:.8}
+.cc-swatch.on:focus-visible{outline-color:var(--ac);outline-offset:3px}
+.cc-swatch:active{opacity:var(--press-dim)}
 @media (forced-colors: active){
   .cc-swatch{border:1px solid CanvasText;outline-color:Canvas}
   .cc-swatch.on{outline-color:Highlight}
@@ -432,15 +439,22 @@ html:not(.is-mobile) .p-type{display:none}
 .segr-dot{display:none}
 .segr-opt:has(input:checked){background:var(--segment-on);box-shadow:0 2px 20px rgba(0,0,0,.06)}
 .segr-opt:has(input:checked) span{color:var(--tx)}
-.segr-opt:not(:has(input:checked)):active{opacity:.55}
+.segr-opt:not(:has(input:checked)):active{opacity:var(--press-dim)}
+@media (max-width:360px){
+  .row:has(>.segr){flex-wrap:wrap;padding-block:8px}
+  .row:has(>.segr) .rl{flex:0 0 100%}
+  .row:has(>.segr) .segr{flex:1 1 100%;margin-inline-start:0}
+}
 /* The input is 0 by 0, so an outline on it is invisible. The segment wears it. */
 .segr-opt:has(input:focus-visible){outline:2px solid var(--ac);outline-offset:2px}
 .btn:has(>.file-hidden:focus-visible){outline:2px solid var(--ac);outline-offset:2px}
+.btn.bg:has(> .file-hidden:disabled){color:var(--dm);cursor:not-allowed;pointer-events:none}
 
 /* ── In-row trailing button + status (Upload/Test/Fetch) ── */
 .row-btn{background:var(--btn-fill);border:none;color:var(--tx);font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:500;font-family:inherit;padding:5px 12px;min-height:28px;border-radius:999px;cursor:pointer;flex-shrink:0;transition:background var(--t),opacity var(--t)}
-@media (hover:hover) and (pointer:fine){.row-btn:hover{opacity:.8}}
-.row-btn:active:not(:disabled){opacity:.8}
+@media (hover:hover) and (pointer:fine){.row-btn:hover:not(:disabled){opacity:.8}}
+.row-btn:active:not(:disabled){opacity:var(--press-dim)}
+.row-btn:disabled{opacity:.45;cursor:not-allowed}
 /* A status row writes no label. The empty spacer still grows, so a failure
    message gets about half the width it could have. */
 .row .rl:empty{flex:0 0 auto}
@@ -453,6 +467,9 @@ html:not(.is-mobile) .p-type{display:none}
 .row.row-invalid::after{content:none}
 .row-invalid .rl{color:var(--danger)}
 .row-status.warn{color:var(--warning)}
+.st-ico{display:inline-flex;vertical-align:-2px;margin-inline-end:4px}
+.st-act{min-height:24px;padding:2px 10px;border:0;border-radius:999px;background:var(--fill-tertiary);color:var(--tx);font:inherit;font-weight:600;cursor:pointer}
+.st-act:active{opacity:var(--press-dim)}
 .grp-tip.warn{color:var(--warning)}
 
 /* ── Textarea row (Add to URL / Add to Header) ── */
@@ -477,14 +494,14 @@ input::placeholder,textarea::placeholder{color:var(--dm-strong)}
 .kv-cred input:focus-visible+.kv-box{outline:2px solid var(--ac);outline-offset:2px}
 .kv-cred-lbl{font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1);color:var(--dm)}
 .kv-cred input:checked~.kv-cred-lbl{color:var(--tx)}
-.kv-cred:active{opacity:.55}
+.kv-cred:active{opacity:var(--press-dim)}
 .kv-del{flex-shrink:0;background:none;border:none;color:var(--dm);cursor:pointer;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);padding:4px;border-radius:6px}
 @media (hover:hover) and (pointer:fine){.kv-del:hover{color:var(--tx)}}
 .kv-add{background:none;border:none;color:var(--ac2);cursor:pointer;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:600;padding:4px 0}
-.kv-del:active,.kv-add:active{opacity:.55}
-.dash-load-fail{padding:32px;text-align:center;color:var(--dm);font-size:14px}
+.kv-del:active,.kv-add:active{opacity:var(--press-dim)}
+.dash-load-fail{padding:32px;text-align:center;color:var(--dm);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 .dash-load-fail .retry-btn{padding:8px 20px;border-radius:16px;background:var(--btn-fill);border:0;color:var(--tx);cursor:pointer;font-size:14px;font-family:inherit}
-.dash-load-fail .retry-btn:active{opacity:.8}
+.dash-load-fail .retry-btn:active{opacity:var(--press-dim)}
 .wcf-add-label{color:var(--ac2)}
 /* App form: icon source row, poll, value list */
 .icon-src-row{gap:12px}
@@ -501,12 +518,12 @@ input::placeholder,textarea::placeholder{color:var(--dm-strong)}
 .bprow-hidden{display:none}
 /* Settings-row native select (Widget Type, slot Resource) */
 .upd-link{color:var(--ac2)}
-.upd-link:active{opacity:.55}
+.upd-link:active{opacity:var(--press-dim)}
 /* Widget config-form: in-card hints, repeatable-group header/add */
 .grp-tip.in-card{margin:0;padding:7px 16px 12px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 .grp-hdr-row{display:flex;align-items:center;justify-content:space-between}
 .grp-hdr-rm{background:none;border:none;color:var(--danger);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-family:inherit;cursor:pointer;padding:2px 4px}
-.grp-hdr-rm:active:not(:disabled){opacity:.55}
+.grp-hdr-rm:active:not(:disabled){opacity:var(--press-dim)}
 .albl-hdr{display:flex;align-items:center;gap:6px;touch-action:none}
 .albl-grip{display:inline-flex;color:var(--dm);cursor:grab;flex-shrink:0}
 .albl-hdr.albl-dragging{opacity:.5}
@@ -553,9 +570,9 @@ input::placeholder,textarea::placeholder{color:var(--dm-strong)}
 .tog input:checked+.tr::after{transform:translateX(22px)}
 /* translateX has no logical form, so the travel is mirrored explicitly. */
 [dir="rtl"] .tog input:checked+.tr::after{transform:translateX(-22px)}
-.tog:active input:not(:disabled)+.tr::after{transform:scaleX(1.2105)}
-.tog:active input:checked:not(:disabled)+.tr::after{transform:translateX(14px) scaleX(1.2105)}
-[dir="rtl"] .tog:active input:checked:not(:disabled)+.tr::after{transform:translateX(-14px) scaleX(1.2105)}
+.tog:not(.tog-disabled):active input:not(:disabled)+.tr::after{transform:scaleX(1.2105)}
+.tog:not(.tog-disabled):active input:checked:not(:disabled)+.tr::after{transform:translateX(14px) scaleX(1.2105)}
+[dir="rtl"] .tog:not(.tog-disabled):active input:checked:not(:disabled)+.tr::after{transform:translateX(-14px) scaleX(1.2105)}
 .tog input:focus-visible+.tr{outline:2px solid var(--ac);outline-offset:3px}
 /* Still focusable and announced, so it needs a real focus ring rather than
    pointer-events:none. */
@@ -576,7 +593,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 
 /* ── Buttons ── */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:999px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;min-height:36px;cursor:pointer;border:none;text-decoration:none;transition:background var(--t),opacity var(--t);white-space:nowrap;font-family:inherit}
-.btn:active:not(:disabled){opacity:.8}
+.btn:active:not(:disabled){opacity:var(--press-dim);transition-duration:0s}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .bp{background:var(--ac);color:var(--on-fill);font-weight:600}
 .bp:disabled{background:var(--btn-fill);color:var(--dm);opacity:1}
@@ -595,6 +612,9 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .sv-btn.saved .sv-done{opacity:1;transform:none;transition-delay:calc(var(--t-reveal) * .4);transition-duration:var(--t-reveal)}
 .sv-btn.saved:disabled{color:var(--tx)}
 .sv-btn.saved:disabled .sy-icon{color:var(--gn)}
+.sv-btn .sv-busy{opacity:0}
+.sv-btn.busy .sv-lbl{opacity:0;transition-delay:0s;transition-duration:calc(var(--t-reveal) * .6)}
+.sv-btn.busy .sv-busy{opacity:1;transition-delay:calc(var(--t-reveal) * .4)}
 .sm{padding:5px 12px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);min-height:28px}
 .sec-hdr-actions .btn{min-height:36px;padding:7px 16px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);box-shadow:var(--shadow-glass-btn)}
 .sec-hdr-actions .bg{background:var(--glass-bg);-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);box-shadow:inset 0 0 0 .5px var(--glass-rim),var(--shadow-glass-btn)}
@@ -609,17 +629,17 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .pw-hint{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);margin-top:4px;min-height:16px;padding-inline:16px}
 
 /* ── Toast ── */
-#toast{position:fixed;bottom:24px;inset-inline-end:max(24px,var(--safe-left),var(--safe-right));background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-group);display:flex;align-items:flex-start;gap:10px;padding-block:14px;padding-inline:18px 12px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);color:var(--tx);box-shadow:var(--shadow-pop);opacity:0;transform:translateY(8px);transition:opacity var(--t-reveal) var(--ease-reveal),transform var(--t-reveal) var(--ease-reveal);pointer-events:none;z-index:9999;max-width:320px}
+#toast{position:fixed;bottom:24px;inset-inline-end:max(24px,var(--safe-left),var(--safe-right));background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-group);display:flex;align-items:flex-start;gap:10px;padding-block:14px;padding-inline:18px 12px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);color:var(--tx);box-shadow:var(--shadow-pop);opacity:0;transform:translateY(8px);transition:opacity var(--t-reveal) var(--ease-reveal),transform var(--t-reveal) var(--ease-reveal);pointer-events:none;z-index:9999;max-width:min(320px,calc(100vw - 48px))}
 /* Only the shown toast takes pointer events. A hidden one would swallow a
    click. */
 #toast.show{opacity:1;transform:translateY(0);pointer-events:auto;cursor:pointer;-webkit-user-select:text;user-select:text}
-#toast.show:active{opacity:.8}
+#toast.show:active{opacity:var(--press-dim)}
 .toast-ico{flex-shrink:0;display:grid;color:var(--gn)}
 #toast.err .toast-ico{color:var(--rd)}
 #toast.warn .toast-ico{color:var(--warning)}
 .toast-act{flex-shrink:0;align-self:center;font:inherit;font-weight:600;color:var(--tx);background:var(--fill-tertiary);border:0;border-radius:999px;min-height:28px;padding:4px 12px;margin-block:-4px;cursor:pointer}
 .toast-act[hidden]{display:none}
-.toast-act:active{opacity:.55}
+.toast-act:active{opacity:var(--press-dim)}
 .toast-act:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 @media (pointer:coarse){.toast-act{min-height:44px;margin-block:-12px}}
 #toast-msg{margin:0;flex:1;min-width:0;overflow-wrap:anywhere}
@@ -627,7 +647,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 #toast.show .toast-x{visibility:visible;transition-delay:0s}
 .toast-x::before,.toast-x::after{content:'';position:absolute;top:50%;left:50%;width:12px;height:2px;border-radius:1px;background:currentColor;transform:translate(-50%,-50%) rotate(45deg)}
 .toast-x::after{transform:translate(-50%,-50%) rotate(-45deg)}
-.toast-x:active{opacity:.55}
+.toast-x:active{opacity:var(--press-dim)}
 .toast-x:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 @media (pointer:coarse){.toast-x{width:44px;height:44px;margin-block:-12px;margin-inline-end:-8px;background:radial-gradient(circle,var(--fill-tertiary) 15px,transparent 15.5px)}}
 html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
@@ -678,15 +698,15 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
 @media (prefers-reduced-motion: reduce){.dlg-box[open]{animation-name:swap-in;animation-duration:.18s!important}}
 @media (prefers-reduced-motion: reduce){.dlg-box.closing{animation-name:fade-out;animation-duration:.12s!important}}
 .dlg-box.wide{max-width:560px;max-height:80dvh}
-.dlg-hdr{padding:22px 22px 12px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline)}
+.dlg-hdr{overflow-wrap:anywhere;min-width:0;padding:22px 22px 12px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline)}
 /* flex:1 sets flex-basis:0, so the body contributes nothing to a dialog that
    is sizing to its content and WebKit collapses it to a clipped row.
    flex-basis:auto sizes it to its content; min-height:0 lets it shrink and
    scroll once the box reaches its maximum height. */
-.dlg-body{overflow-y:auto;flex:1 1 auto;min-height:0;padding:0 14px}
+.dlg-body{overflow-y:auto;overscroll-behavior:contain;flex:1 1 auto;min-height:0;padding:0 14px}
 .dlg-body:last-child{padding-bottom:14px}
-.dlg-foot{padding:16px 14px 14px;display:flex;justify-content:flex-end;gap:8px}
-.dlg-foot .btn{flex:1}
+.dlg-foot{padding:16px 14px 14px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.dlg-foot .btn{flex:1 1 auto}
 /* An alert's buttons are capsules and taller than a settings button. Named with
    .sm too, so this outranks the touch block that sizes a small button. */
 .dlg-foot .btn,.dlg-foot .btn.sm{min-height:48px;border-radius:24px;padding-inline:16px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline)}
@@ -694,21 +714,21 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
 .dlg-field span{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm)}
 .dlg-err{margin:-4px 0 0;padding:0 12px 10px;color:var(--danger);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 .dlg-field .inp[aria-invalid="true"]{box-shadow:inset 0 0 0 1px var(--danger)}
-.dlg-lead{padding:0 8px 8px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body)}
+.dlg-lead{overflow-wrap:anywhere;min-width:0;padding:0 8px 8px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body)}
 .dlg-sec{padding:12px 12px 4px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-weight:500;color:var(--dm)}
 .dlg-ul{list-style:none;margin:0;padding:0 12px 8px;display:flex;flex-direction:column;gap:4px}
 .dlg-li{display:flex;align-items:baseline;gap:8px;overflow-wrap:anywhere;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 .dlg-li .dlg-why{color:var(--dm);font-size:var(--fs-caption-1);line-height:var(--lh-caption-1);letter-spacing:var(--tr-caption-1)}
 .dlg-choice{display:flex;align-items:flex-start;gap:8px;padding:0 12px 4px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);cursor:pointer}
 .dlg-choice input{margin-block-start:2px;flex:none}
-.dlg-choice:active{opacity:.55}
+.dlg-choice:active{opacity:var(--press-dim)}
 .dlg-empty{padding:24px;text-align:center;color:var(--dm);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 .fp-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:20px;background:none;border:none;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);cursor:pointer;width:100%;text-align:start;font-family:inherit;transition:background var(--t)}
 @media (hover:hover) and (pointer:fine){.fp-row:hover{background:var(--ov)}}
 .fp-row:active{background:var(--fill-tertiary)}
 .fp-ic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--on-tint);flex-shrink:0}
 .fp-ic img{width:18px;height:18px;object-fit:contain}
-.fp-nm{flex:1}
+.fp-nm{flex:1;overflow-wrap:anywhere;min-width:0}
 
 /* ── Icon picker ── */
 /* The list is measured from the field, not from the Icon group: the group also
@@ -716,11 +736,10 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
    below the field it belongs to. */
 .icon-src-anchor{position:relative}
 .ipv{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--on-tint);flex-shrink:0}
-.iprs{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-group);padding:6px;max-height:180px;overflow-y:auto;display:none;z-index:50;box-shadow:var(--shadow-pop)}
+.iprs{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-group);padding:6px;max-height:180px;overflow-y:auto;overscroll-behavior:contain;display:none;z-index:50;box-shadow:var(--shadow-pop)}
 .iprs.open{display:block}
 .ipr{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:20px;background:none;border:none;width:100%;text-align:start;cursor:pointer;color:var(--tx);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-family:inherit;position:relative;z-index:1}
 /* No hover background of its own: the glide highlight draws it. */
-@media not ((hover:hover) and (pointer:fine)){.ipr:hover{background:var(--ov)}}
 .ipr.kb-active{background:none}
 .ipr:active{background:var(--fill-tertiary)}
 .ipr img{width:24px;height:24px;object-fit:contain;flex-shrink:0}
@@ -739,10 +758,10 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
 .bprow-hidden{display:none!important}
 
 /* ── Auth overlays ── */
-.login-screen{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;color:var(--tx);background:var(--scrim-strong);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
+.login-screen{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding-block:max(16px,var(--safe-top)) max(16px,var(--safe-bottom));padding-inline:max(16px,var(--safe-left),var(--safe-right));border:0;color:var(--tx);background:var(--scrim-strong);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
 .login-screen[open]{display:flex}
 .login-screen::backdrop{background:transparent}
-.login-wrap{background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-window);padding:28px 22px 22px;width:100%;max-width:360px;box-shadow:var(--shadow-login);display:flex;flex-direction:column;gap:14px}
+.login-wrap{background:var(--glass-bg);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-window);padding:28px 22px 22px;width:100%;max-width:360px;box-shadow:var(--shadow-login);display:flex;flex-direction:column;gap:14px}
 .login-form{display:contents}
 .login-header{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:4px}
 .login-mark{height:34px;width:auto;color:var(--tx);margin-bottom:4px}
@@ -756,22 +775,9 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
 }
 .login-btn{background:var(--ac);color:var(--on-fill);border:none;border-radius:999px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline);min-height:48px;padding:13px;cursor:pointer;transition:background var(--t)}
 @media (hover:hover) and (pointer:fine){.login-btn:hover{background:var(--ac2)}}
-.login-btn:active{opacity:.8}
+.login-btn:active:not(:disabled){opacity:var(--press-dim)}
+.login-btn:disabled{background:var(--btn-fill);color:var(--dm);cursor:default}
 .login-err{color:var(--rd);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);text-align:center;display:none}
-.setpw-screen{position:fixed;inset:0;z-index:8000;background:var(--scrim-strong);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
-.setpw-wrap{width:100%;max-width:360px;padding:24px}
-.setpw-card{background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-window);padding:22px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow-dlg)}
-.setpw-title{font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline)}
-.setpw-desc{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm-strong)}
-.setpw-input,.setpw-btn{width:100%;font-family:inherit}
-.setpw-input{background:var(--btn-fill);border:none;border-radius:26px;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;min-height:52px;padding:0 18px}
-.setpw-input:focus{outline:2px solid var(--ac);outline-offset:0}
-.setpw-bars{display:flex;gap:4px}
-.setpw-hint{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);min-height:16px}
-.setpw-err{color:var(--rd);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);display:none}
-.setpw-btn{background:var(--ac);color:var(--on-fill);border:none;border-radius:999px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline);min-height:48px;padding:13px;cursor:pointer;transition:background var(--t)}
-@media (hover:hover) and (pointer:fine){.setpw-btn:hover{background:var(--ac2)}}
-.setpw-btn:active{opacity:.8}
 
 /* ── Form inside push edit view (#ev-body) — restyle to match PSD ── */
 /* Do not use a sibling combinator below. The editor parks display:none helpers
@@ -798,8 +804,8 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
 @media (min-width:769px) and (max-width:1024px) {
   :root { --sbw:220px; }
   .adm-outer { padding:24px max(16px,var(--safe-left),var(--safe-right)); }
-  .adm { min-height:calc(100vh - 48px); }
-  .sb { min-height:calc(100vh - 48px); }
+  .adm { min-height:calc(100dvh - 48px); }
+  .sb { min-height:calc(100dvh - 48px); }
 }
 
 @media (max-width:768px) {
@@ -841,6 +847,9 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
   /* The offset keeps this hit area off the secret checkbox. */
   .kv-del::after { content:''; position:absolute; top:50%; inset-inline-end:-16px; transform:translateY(-50%); width:44px; height:44px; }
   .rord::before { content:''; position:absolute; inset-block:0; inset-inline-start:-16px; width:44px; }
+  .kv-cred { position:relative; }
+  .kv-cred::before { content:''; position:absolute; inset:-11px 0; }
+  .dash-load-fail .retry-btn { min-height:44px; }
   .albl-ctl { gap:6px; }
   .albl-move { padding-inline:12px; }
 }
@@ -867,7 +876,7 @@ html.is-mobile .sec-title{order:1;flex-basis:100%;min-width:0;overflow-wrap:brea
 html.is-mobile .sec-hdr-actions{margin-inline-start:auto}
 html.is-mobile .sec-hdr-actions .btn{min-height:44px;padding-inline:18px}
 html.is-mobile .m-back{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:var(--glass-bg);-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);box-shadow:inset 0 0 0 .5px var(--glass-rim),var(--shadow-glass-btn);color:var(--tx);text-decoration:none;flex-shrink:0}
-html.is-mobile .m-back:active{opacity:.7}
+html.is-mobile .m-back:active{opacity:var(--press-dim)}
 /* Under 16px, iOS zooms the page on focus and does not zoom back. */
 html.is-mobile .kv-k,html.is-mobile .kv-v{font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body)}
 @media (orientation:landscape) and (max-height:500px) and (pointer:coarse){.kv-k,.kv-v{font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body)}}
@@ -951,6 +960,11 @@ html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadlin
     --bd:#B4B4B8;
     --bd-inner:var(--sy-gray2);
     --tx:var(--label-primary);
+    --glass-bg:var(--cp);
+    --glass-rim:var(--bd);
+    --btn-fill:rgba(120,120,128,.4);
+    --track-off:rgba(255,255,255,.45);
+    --row-sep:var(--sy-gray2);
   }
   html[data-theme="light"] {
     --dm:#4A4A4E;
@@ -958,6 +972,11 @@ html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadlin
     --bd:#4A4A4E;
     --bd-inner:var(--sy-gray3);
     --tx:var(--label-primary);
+    --glass-bg:var(--cp);
+    --glass-rim:var(--bd);
+    --btn-fill:rgba(120,120,128,.28);
+    --track-off:rgba(120,120,128,.6);
+    --row-sep:var(--sy-gray3);
   }
   /* The custom controls draw their own focus ring, so each is named here. A
      generic rule misses them. */
@@ -968,6 +987,10 @@ html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadlin
   .tog input:focus-visible+.tr {
     outline-width:3px;
   }
+}
+
+@media (prefers-reduced-transparency:reduce){
+  :root,html[data-theme="light"]{--glass-bg:var(--cp)}
 }
 
 /* ── Moving pill ── */

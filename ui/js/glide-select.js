@@ -20,7 +20,7 @@ const GLIDE_MS = 320;
 /** Places each nav's pill on its active item. Both navs are in the document at
     once and the one belonging to the other layout is hidden, so the hidden one
     is left alone rather than placed against a zero rect. */
-export function syncGlideSelect(root = document) {
+export function syncGlideSelect(root = document, { snap = false } = {}) {
   for (const cfg of NAVS) {
     for (const container of root.querySelectorAll(cfg.container)) {
       if (!measurable(container)) continue;
@@ -29,7 +29,7 @@ export function syncGlideSelect(root = document) {
       const was = at.get(container);
       /* The label ink is held only for a real move. On the first placement
          there is nothing to travel from, so the pill and the ink land together. */
-      if (cfg.holdInk && was && was !== active) {
+      if (cfg.holdInk && !snap && was && was !== active) {
         container.classList.add('gs-moving');
         clearTimeout(timers.get(container));
         timers.set(
@@ -37,7 +37,14 @@ export function syncGlideSelect(root = document) {
           setTimeout(() => container.classList.remove('gs-moving'), GLIDE_MS),
         );
       }
-      if (placePill(container, ensurePill(container, 'gs-pill'), active)) at.set(container, active);
+      const pill = ensurePill(container, 'gs-pill');
+      if (snap) {
+        clearTimeout(timers.get(container));
+        container.classList.remove('gs-moving');
+        pill.classList.add('mp-snap');
+        requestAnimationFrame(() => requestAnimationFrame(() => pill.classList.remove('mp-snap')));
+      }
+      if (placePill(container, pill, active)) at.set(container, active);
     }
   }
 }

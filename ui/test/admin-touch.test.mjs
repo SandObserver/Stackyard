@@ -2,10 +2,10 @@
    state of its own, no grey tap flash, no zoom on focus, and no capitals in an
    address. */
 
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -68,7 +68,7 @@ test('rows, pencils, pickers and tabs press differently from how they hover', ()
   assert.match(css, /\.nl:not\(\.active\):active\{background:var\(--fill-tertiary\)\}/);
   assert.match(css, /\.row-link:active\{background:var\(--fill-tertiary\)\}/);
   assert.match(css, /\.pe:active\{[^}]*background:var\(--fill-tertiary\)/);
-  assert.match(css, /\.row-dd-btn:active\{opacity:\.55\}/);
+  assert.match(css, /\.row-dd-btn:active\{opacity:var\(--press-dim\)\}/);
   assert.match(css, /html\.is-mobile \.mtab:not\(\.active\):active\{background:var\(--fill-tertiary\)\}/);
 });
 
@@ -214,7 +214,7 @@ test('a folder chevron turns from its old angle after the list is rebuilt', () =
   const list = read('js/admin-list.js');
   assert.match(
     list,
-    /render\(\);\s*turnFrom\(document\.getElementById\('chev-' \+ item\.id\), chevron\.style\.transform\);/,
+    /render\(\);\s*_fadeNewRows = false;[\s\S]{0,240}turnFrom\(document\.getElementById\('chev-' \+ item\.id\), chevron\.style\.transform\);/,
   );
   assert.match(
     list,

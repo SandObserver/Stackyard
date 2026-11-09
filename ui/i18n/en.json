@@ -15,6 +15,8 @@
     "pageTitle": "Stackyard Settings"
   },
   "common": {
+    "saving": "Saving…",
+    "working": "Working…",
     "save": "Save",
     "import": "Import",
     "export": "Export",
@@ -448,7 +450,9 @@
     "changePasswordTitle": "Change Password?"
   },
   "list": {
-    "empty": "No apps yet. Click +Add.",
+    "matchCount_one": "{count} match",
+    "matchCount_other": "{count} matches",
+    "empty": "No apps yet. Use the plus button to add one.",
     "noMatches": "No matches.",
     "dockTip": "Shown at the bottom of every page.",
     "dockEmpty": "Drag an app here, or open it and turn on Show in Dock.",
@@ -607,9 +611,6 @@
     "incorrect": "Incorrect password."
   },
   "setpw": {
-    "title": "Set a password",
-    "desc": "Choose a strong password for your dashboard.",
-    "newPassword": "New password",
     "submit": "Set password"
   },
   "pill": {

@@ -4,16 +4,25 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=039a7253';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=417c5c6c';
-import { recoveryShown } from '/js/config-recovery.js?v=f06a966c';
-import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=ae0cfd2b';
-import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=1526c452';
+} from '/js/admin-app-form.js?v=80d1aaae';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=f1169e03';
+import {
+  applyFilter,
+  filterMatchCount,
+  focusRow,
+  initList,
+  isReordering,
+  render,
+  setReordering,
+  syncFilterUI,
+} from '/js/admin-list.js?v=b24874b6';
+import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=245bc319';
 import {
   afterImport,
   buildAppItem,
   claimFolderChildren,
   importCounts,
+  keptWidget,
   newItemId,
   restoreBody,
   restoresSettings,
@@ -21,51 +30,53 @@ import {
   serialWrites,
   snapshotItems,
   upsertItem,
-  keptWidget,
 } from '/js/admin-save-logic.js?v=4b2b7f18';
 import {
+  applyHealthChecks,
   loadSettings,
   savedWallpaperUrl,
   settingsDirty,
   showBgFields,
   showWallpaperFile,
-  wireUnsplashKey,
   wireProxmox,
-  applyHealthChecks,
-} from '/js/admin-settings.js?v=63184c5a';
+  wireUnsplashKey,
+} from '/js/admin-settings.js?v=74cf6b4b';
 import {
+  announce,
   apiGet,
   apiPost,
-  fadeIn,
-  initInlineEdit,
-  nameEditPen,
-  paintIcon,
-  reveal,
-  errorText,
-  responseError,
-  ShownError,
-  setReauthHandler,
-  swapContent,
-  showFieldError,
+  busyPress,
   clearFieldError,
   clearFieldErrors,
   confirmSaved,
   errorAction,
+  errorText,
+  fadeIn,
+  fadeOpacity,
+  initInlineEdit,
+  nameEditPen,
+  paintIcon,
+  responseError,
+  reveal,
+  rowBusy,
+  ShownError,
+  setReauthHandler,
+  showFieldError,
+  swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=b88d6c8d';
+} from '/js/admin-shared.js?v=2ae7752e';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=c33eb636';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=24ceac11';
+import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=7638c299';
+import { recoveryShown } from '/js/config-recovery.js?v=f06a966c';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
-import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=75a71ab4';
-import { createListbox } from '/js/listbox.js?v=1440ddfa';
+import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=0c57b286';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
-import { loadLocalIcons } from '/js/icons.js?v=76c29d43';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=b8068a58';
-import { passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
-import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
+import { loadLocalIcons } from '/js/icons.js?v=76c29d43';
 import {
   clearSkipTls,
   convert,
@@ -79,17 +90,21 @@ import {
 } from '/js/import-foreign.js?v=80477b68';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
+import { createListbox } from '/js/listbox.js?v=6b33bd63';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=c4c1c4c4';
+import { passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
+import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import {
-  THEME_KEY,
   applyTheme,
   prefersDark,
   readMode,
   resolveTheme,
+  THEME_KEY,
   watchSystemTheme,
   writeMode,
 } from '/js/theme.js?v=eeafa4b5';
 import {
+  clr,
   el,
   focusFirst,
   initial,
@@ -97,14 +112,12 @@ import {
   isolate,
   q,
   qa,
-  clr,
   setUserText,
   storeGet,
   storeSet,
   tgt,
   within,
 } from '/js/utils.js?v=f0b9b030';
-import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=7638c299';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
 
@@ -329,11 +342,20 @@ async function saveOrRevert(before, done) {
   }
 }
 
+let _keyboardPress = false;
+document.addEventListener(
+  'click',
+  e => {
+    _keyboardPress = e.detail === 0;
+  },
+  true,
+);
+
 /** @param {string|null} [focusId] the item whose row takes focus */
 function showListView(focusId = null) {
   el('dash-list-view').classList.remove('d-none');
   el('dash-edit-view').classList.add('d-none');
-  fadeIn(el('dash-list-view'));
+  if (!_keyboardPress) fadeIn(el('dash-list-view'));
   if (!focusRow(focusId)) focusFirst(el('btn-add'));
 }
 function scrollSettingsTop() {
@@ -345,7 +367,7 @@ function showEditView() {
   el('dash-list-view').classList.add('d-none');
   el('dash-edit-view').classList.remove('d-none');
   scrollSettingsTop();
-  fadeIn(el('dash-edit-view'));
+  if (!_keyboardPress) fadeIn(el('dash-edit-view'));
 }
 
 /* Read at draw time. The catalog is not loaded when this module evaluates. */
@@ -454,13 +476,13 @@ function openModal(idx) {
     evTitle.removeAttribute('dir');
   }
   const delBtn = el('ev-delete');
-  const saveBtn = el('ev-save');
+  const saveBtn = /** @type {HTMLButtonElement} */ (el('ev-save'));
   if (delBtn) {
     delBtn.classList.toggle('d-none', !isEdit || state.ctype === 'settings');
     delBtn.onclick = () => _evDelete(item, idx);
   }
   if (saveBtn) {
-    saveBtn.onclick = () => doSave(item);
+    saveBtn.onclick = busyPress(saveBtn, () => doSave(item));
   }
   const backBtn = el('ev-back');
   if (backBtn) backBtn.onclick = () => closeModal();
@@ -471,6 +493,12 @@ function openModal(idx) {
   _renderEditBody();
 
   showEditView();
+}
+
+let _filterTimer;
+function runFilter() {
+  applyFilter();
+  if (filter.q || filter.type !== 'all') announce(t('list.matchCount', { count: filterMatchCount() }));
 }
 
 async function _evDelete(item, idx) {
@@ -494,14 +522,18 @@ async function _evDelete(item, idx) {
   const s = inp('al-search');
   if (s)
     s.addEventListener('input', () => {
-      filter.q = s.value.trim();
-      render();
+      clearTimeout(_filterTimer);
+      _filterTimer = setTimeout(() => {
+        if (isReordering()) return;
+        filter.q = s.value.trim();
+        runFilter();
+      }, 120);
     });
   qa('#al-filter .chip').forEach(c => {
     c.addEventListener('click', () => {
       filter.type = c.dataset.flt;
       syncFilterUI();
-      render();
+      runFilter();
     });
   });
 }
@@ -569,12 +601,7 @@ function openFolderPicker(folderId) {
   dlg.focus(q('button', list));
 }
 
-/* A second press during the write would add a new item a second time. */
-let _editorSaving = false;
-
 async function doSave(orig) {
-  if (_editorSaving) return;
-  _editorSaving = true;
   clearFieldErrors(el('ev-body'));
   try {
     /** @type {Record<string, any>} */
@@ -706,8 +733,6 @@ async function doSave(orig) {
     toast(t(replaced ? 'toast.updated' : 'toast.added'));
   } catch (e) {
     toast(t('toast.saveFailed', { err: errorText(e) }), 'err', errorAction(e));
-  } finally {
-    _editorSaving = false;
   }
 }
 
@@ -718,7 +743,7 @@ function initNav() {
 
   let shown = '';
   /* Do not scroll on the restoring first call. Only a picked section. */
-  function show(requested, picked) {
+  function show(requested, picked, ev) {
     const id = resolveAdminSection(requested, sections);
     if (id === null) return;
     if (requested && id !== requested) console.warn('admin: unknown section', requested, '- showing', id);
@@ -727,18 +752,19 @@ function initNav() {
     qa('.sec', document).forEach(s => {
       s.hidden = s.id !== 'sec-' + id;
     });
-    if (picked && changed) fadeIn(el('sec-' + id));
+    const keyboard = ev?.detail === 0;
+    if (picked && changed && !keyboard) fadeOpacity(el('sec-' + id));
     links.forEach(l => {
       const on = l.dataset.sec === id;
       l.classList.toggle('active', on);
       if (on) l.setAttribute('aria-current', 'page');
       else l.removeAttribute('aria-current');
     });
-    syncGlideSelect();
+    syncGlideSelect(document, { snap: keyboard });
     storeSet(STORE, id);
     if (picked) scrollSettingsTop();
   }
-  links.forEach(l => l.addEventListener('click', () => show(l.dataset.sec, true)));
+  links.forEach(l => l.addEventListener('click', e => show(l.dataset.sec, true, e)));
   addEventListener('hashchange', () => show(location.hash.slice(1), true));
   show(location.hash.slice(1) || storeGet(STORE));
   initGlideSelect();
@@ -985,13 +1011,14 @@ function setWallpaperUrl(url) {
 
 function initWallpaperUpload() {
   const input = inp('bg-upload');
-  const btn = el('bg-upload-lbl');
+  const btn = /** @type {HTMLButtonElement} */ (el('bg-upload-lbl'));
   if (!input || !btn) return;
   input.onchange = async () => {
     const file = /** @type {HTMLInputElement} */ (input).files?.[0];
     if (!file) return;
     const orig = btn.textContent;
     btn.textContent = t('appearance.uploading');
+    btn.disabled = true;
     try {
       const form = new FormData();
       form.append('wallpaper', file, file.name);
@@ -1004,6 +1031,7 @@ function initWallpaperUpload() {
       toast(t('toast.wallpaperFailed', { err: errorText(e) }), 'err');
     } finally {
       btn.textContent = orig;
+      btn.disabled = false;
       /** @type {HTMLInputElement} */ (input).value = '';
     }
   };
@@ -1155,7 +1183,7 @@ addEventListener('beforeunload', e => {
 
 /* Fetched, never reached by navigating a link. A link hands the request to the
    browser, which saves an error body under the backup's own filename. */
-el('btn-exp').onclick = async () => {
+el('btn-exp').onclick = rowBusy(/** @type {HTMLButtonElement} */ (el('btn-exp')), async () => {
   let url;
   try {
     const config = await apiGet('/api/config/export');
@@ -1174,8 +1202,8 @@ el('btn-exp').onclick = async () => {
        click just started. */
     if (url) requestAnimationFrame(() => URL.revokeObjectURL(url));
   }
-};
-el('imp').onchange = async e => {
+});
+el('imp').onchange = rowBusy(/** @type {HTMLInputElement} */ (el('imp')), async e => {
   const f = tgt(e).files[0];
   if (!f) return;
   try {
@@ -1218,7 +1246,7 @@ el('imp').onchange = async e => {
     toast(t('toast.importFailed', { err: why }), 'err');
   }
   tgt(e).value = '';
-};
+});
 
 /* Written out as literals, so a key can be traced from the catalog back to
    here. */
@@ -1273,7 +1301,7 @@ function dlgSection(parent, heading, rows) {
   parent.append(h, ul);
 }
 
-el('imp-foreign').onchange = async e => {
+el('imp-foreign').onchange = rowBusy(/** @type {HTMLInputElement} */ (el('imp-foreign')), async e => {
   const input = tgt(e);
   const files = [...(input.files || [])];
   if (!files.length) return;
@@ -1316,12 +1344,9 @@ el('imp-foreign').onchange = async e => {
     toast(t('toast.importFailed', { err: errorText(err) }), 'err');
   }
   input.value = '';
-};
+});
 
-let dockerImporting = false;
-el('btn-imp-docker').onclick = async () => {
-  if (dockerImporting) return;
-  dockerImporting = true;
+el('btn-imp-docker').onclick = rowBusy(/** @type {HTMLButtonElement} */ (el('btn-imp-docker')), async () => {
   try {
     const r = await apiGet('/api/docker/labels');
     let out;
@@ -1335,8 +1360,7 @@ el('btn-imp-docker').onclick = async () => {
   } catch (err) {
     toast(t('toast.importFailed', { err: errorText(err) }), 'err');
   }
-  dockerImporting = false;
-};
+});
 
 /** @param {any[]} items @param {any[]} skipped @param {any[]} notes @param {string} nothingKey */
 async function reviewImport(items, skipped, notes, nothingKey) {

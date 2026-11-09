@@ -6,10 +6,10 @@
    The module owns a live DOM, so these are assertions about the source, in the
    same shape as the other tests for this file. */
 
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -164,7 +164,12 @@ test('the results list uses the shared highlight', () => {
   assert.match(read('js/fluid-hover.js'), /container: '#iprs', item: '\.ipr'/);
   assert.match(form, /fluidHoverKb\(act\)/, 'the keyboard cursor does not move the highlight');
   assert.match(form, /fluidHoverClear\(rs\)/, 'the highlight outlives the closed list');
-  assert.match(css, /@media not \(\(hover:hover\) and \(pointer:fine\)\)\{\.ipr:hover/);
+  assert.doesNotMatch(
+    css,
+    /@media not \(\(hover:hover\) and \(pointer:fine\)\)\{\.ipr:hover/,
+    'a tapped row stays lit',
+  );
+  assert.match(css, /\.ipr:active\{background:var\(--fill-tertiary\)\}/, 'a touch press has no feedback');
 });
 
 test('every string the picker shows is translated', () => {

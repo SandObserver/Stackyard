@@ -15,6 +15,8 @@
     "pageTitle": "Réglages de Stackyard"
   },
   "common": {
+    "saving": "Enregistrement…",
+    "working": "Traitement…",
     "save": "Enregistrer",
     "import": "Importer",
     "export": "Exporter",
@@ -456,7 +458,10 @@
     "changePasswordTitle": "Modifier le mot de passe ?"
   },
   "list": {
-    "empty": "Aucune application pour le moment. Cliquez sur +Ajouter.",
+    "matchCount_one": "{count} correspondance",
+    "matchCount_many": "{count} de correspondances",
+    "matchCount_other": "{count} correspondances",
+    "empty": "Aucune application pour le moment. Utilisez le bouton plus pour en ajouter une.",
     "noMatches": "Aucune correspondance.",
     "dockTip": "Affiché en bas de chaque page.",
     "dockEmpty": "Faites glisser une application ici, ou ouvrez-la et activez « Afficher dans le Dock ».",
@@ -623,9 +628,6 @@
     "incorrect": "Mot de passe incorrect."
   },
   "setpw": {
-    "title": "Définir un mot de passe",
-    "desc": "Choisissez un mot de passe fort pour votre tableau de bord.",
-    "newPassword": "Nouveau mot de passe",
     "submit": "Définir le mot de passe"
   },
   "pill": {

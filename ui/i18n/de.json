@@ -15,6 +15,8 @@
     "pageTitle": "Stackyard-Einstellungen"
   },
   "common": {
+    "saving": "Wird gespeichert…",
+    "working": "Wird bearbeitet…",
     "save": "Speichern",
     "import": "Importieren",
     "export": "Exportieren",
@@ -448,7 +450,9 @@
     "changePasswordTitle": "Passwort ändern?"
   },
   "list": {
-    "empty": "Noch keine Apps. Klicke auf +Hinzufügen.",
+    "matchCount_one": "{count} Treffer",
+    "matchCount_other": "{count} Treffer",
+    "empty": "Noch keine Apps. Füge mit der Plus-Taste eine hinzu.",
     "noMatches": "Keine Treffer.",
     "dockTip": "Erscheint unten auf jeder Seite.",
     "dockEmpty": "Ziehe eine App hierher oder öffne sie und aktiviere „Im Dock anzeigen“.",
@@ -607,9 +611,6 @@
     "incorrect": "Falsches Passwort."
   },
   "setpw": {
-    "title": "Passwort festlegen",
-    "desc": "Wähle ein starkes Passwort für dein Dashboard.",
-    "newPassword": "Neues Passwort",
     "submit": "Passwort festlegen"
   },
   "pill": {
