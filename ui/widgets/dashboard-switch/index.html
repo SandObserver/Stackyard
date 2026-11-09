@@ -18,13 +18,13 @@
   .kc:focus{outline:none}
   .kc .focus{opacity:0}
   .kc:focus-visible .focus{opacity:1}
-  .kc:hover .nm,.kc:focus-visible .nm,.kc.cur .nm{fill:#fff;font-weight:700}
+  .kc:focus-visible .nm,.kc.cur .nm{fill:#fff;font-weight:700}
   /* Only the keychain moves forward on hover; the label stays put. */
   .chain{transition:transform .14s ease;transform-box:fill-box;transform-origin:50% 60%}
-  .kc:hover .chain,.kc:focus-visible .chain,.kc.cur .chain{transform:scale(1.07)}
-  .kc:hover .chain,.kc:focus-visible .chain{filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+  .kc:focus-visible .chain,.kc.cur .chain{transform:scale(1.07)}
+  .kc:focus-visible .chain{filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
   .key{transform-box:view-box}
-  .kc:hover .key,.kc:focus-visible .key,.kc.cur .key{
+  .kc:focus-visible .key,.kc.cur .key{
     animation-name:sway;animation-timing-function:cubic-bezier(.33,.68,.36,1);animation-fill-mode:both}
   @keyframes sway{0%{transform:rotate(0)}35%{transform:rotate(var(--amp))}70%{transform:rotate(calc(var(--amp) * -0.35))}100%{transform:rotate(0)}}
   @media (prefers-reduced-motion:reduce){.chain{transition:none}.key{animation:none!important}}
@@ -32,14 +32,21 @@
   html[data-theme="light"] .rail { fill:rgba(0,0,0,.07); stroke:rgba(0,0,0,.14) }
   html[data-theme="light"],html[data-theme="light"] body { background:#ffffff; color:#000000 }
   html[data-theme="light"] .nm { fill:#3a3a3c }
-  html[data-theme="light"] .kc:hover .nm,html[data-theme="light"] .kc:focus-visible .nm,html[data-theme="light"] .kc.cur .nm { fill:#000000 }
-  html[data-theme="light"] .kc:hover .chain,html[data-theme="light"] .kc:focus-visible .chain { filter:drop-shadow(0 3px 4px rgba(0,0,0,0.175)) }
+  html[data-theme="light"] .kc:focus-visible .nm,html[data-theme="light"] .kc.cur .nm { fill:#000000 }
+  html[data-theme="light"] .kc:focus-visible .chain { filter:drop-shadow(0 3px 4px rgba(0,0,0,0.175)) }
+  @media (hover:hover) and (pointer:fine){
+    .kc:hover .nm{fill:#fff;font-weight:700}
+    .kc:hover .chain{transform:scale(1.07);filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+    .kc:hover .key{animation-name:sway;animation-timing-function:cubic-bezier(.33,.68,.36,1);animation-fill-mode:both}
+    html[data-theme="light"] .kc:hover .nm { fill:#000000 }
+    html[data-theme="light"] .kc:hover .chain { filter:drop-shadow(0 3px 4px rgba(0,0,0,0.175)) }
+  }
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="module">
-  import { widgetId, getConfig, loadStrings, wt } from '/js/widget-toolbox.js?v=373740c4';
+  import { widgetId, getConfig, loadStrings, wt } from '/js/widget-toolbox.js?v=ae422d8d';
   await loadStrings();
   import { buildModel, fitName, textDirection } from '/js/dashboard-switch-model.js?v=a2176749';
 

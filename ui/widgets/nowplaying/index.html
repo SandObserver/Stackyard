@@ -90,12 +90,12 @@
   <div class="np-link" id="np-link"></div>
   <div class="stage">
     <div class="sticker" id="sticker">
-      <div class="title" id="title"></div>
-      <div class="sub" id="sub"></div>
+      <div class="title" id="title" dir="auto"></div>
+      <div class="sub" id="sub" dir="auto"></div>
       <div class="np-cap" id="np-cap" hidden></div>
     </div>
     <div class="band">
-      <div class="player" id="player"></div>
+      <div class="player" id="player" dir="auto"></div>
       <div class="ctl" id="ctl" hidden>
         <button class="nav" id="prev" type="button" aria-label="Previous item">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.4 5.4 9 12l6.4 6.6-1.6 1.6L5.8 12l8-8.2z"/></svg>
@@ -132,7 +132,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, errorState, localiseDigits, placeholder, whileOnScreen } from '/js/widget-toolbox.js?v=373740c4';
+import { poll, fetchData, linkTo, loadStrings, wt, errorState, localiseDigits, placeholder, whileOnScreen } from '/js/widget-toolbox.js?v=ae422d8d';
 await loadStrings();
 document.getElementById('w').setAttribute('aria-label', wt('widget.label', 'Now Playing'));
 document.getElementById('prev').setAttribute('aria-label', wt('ui.previous', 'Previous item'));
