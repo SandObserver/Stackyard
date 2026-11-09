@@ -69,6 +69,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Importing a backup from a newer Stackyard version is now refused.
 
+- Widget animations use less CPU and pause off screen.
+
 ### Fixed
 
 - Let the owner set a new password with a setup code when the saved password is
@@ -111,6 +113,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   saved.
 
 - A backup from an early version with non-app items in a folder can be restored.
+
+- Dashboard Switch keys no longer stay raised after a tap on a touch screen.
+
+- Numbers in Clock, DNS and Weather no longer shift sideways as they change.
+
+- Backup job times stay current between refreshes.
+
+- Now Playing shows right-to-left titles in the correct direction.
 
 ### Security
 
