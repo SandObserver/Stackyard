@@ -1,4 +1,4 @@
-import { clr, el, focusFirst, initial, inp as inpById, isolate, q as qSel, qa, qi, tgt } from '/js/utils.js?v=f0b9b030';
+import { clr, el, focusFirst, initial, inp as inpById, isolate, q as qSel, qa, qi, tgt } from '/js/utils.js?v=a09f4f39';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import {
   loadLocalIcons,
@@ -38,11 +38,11 @@ import {
   errorAction,
   showFieldError,
   clearFieldError,
-} from '/js/admin-shared.js?v=b88d6c8d';
+} from '/js/admin-shared.js?v=1a0eba6c';
 import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
-import { createListbox } from '/js/listbox.js?v=1440ddfa';
+import { createListbox } from '/js/listbox.js?v=7ed8457d';
 import { MAX_LABELS } from '/js/badge-logic.js?v=04a4ece8';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=cfe0bd71';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=9f9804bd';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=d1f8f6f4';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { iconSvg } from '/js/icon-set.js?v=b8068a58';

@@ -6,7 +6,7 @@ import {
   firstViewWait,
   rememberBackground,
   resolveBackground,
-} from '/js/background.js?v=7638c299';
+} from '/js/background.js?v=828d3e11';
 import {
   badgeMinimum,
   badgeSignature,
@@ -14,7 +14,7 @@ import {
   folderLabelName,
   readBadgeUpdate,
 } from '/js/badge-logic.js?v=04a4ece8';
-import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=a3c8d206';
+import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=cfd5b6a6';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=f06a966c';
 import {
   configChanged,
@@ -41,7 +41,7 @@ import {
   loadSamplingImage,
   sampleImage,
   toneForColor,
-} from '/js/label-contrast.js?v=7172d36f';
+} from '/js/label-contrast.js?v=e046296b';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
@@ -49,7 +49,7 @@ import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
-import { initSpotlight } from '/js/spotlight.js?v=ce6c53b7';
+import { initSpotlight } from '/js/spotlight.js?v=13398a26';
 import { applyTheme, prefersDark, readMode, resolveTheme, THEME_KEY } from '/js/theme.js?v=eeafa4b5';
 import {
   buildMobile,
@@ -60,7 +60,7 @@ import {
   openFolderMobile,
   resetMobileChrome,
   swipePager,
-} from '/js/ui.js?v=e983cd15';
+} from '/js/ui.js?v=c26b5e36';
 import {
   mkWrap as _mkWrap,
   el,
@@ -83,7 +83,7 @@ import {
   teardownWidgets,
   titleWhenTruncated,
   within,
-} from '/js/utils.js?v=f0b9b030';
+} from '/js/utils.js?v=a09f4f39';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import {
@@ -155,7 +155,7 @@ function desktopRows(hasDock) {
   return Math.max(1, Math.min(4, Math.floor((ih - top - bottom + gm.rowGap) / (gm.tile + gm.rowGap))));
 }
 
-const CB = { spotOpen: null, spotClose: null, mobPillBump: null, homeSwipe: null };
+const CB = { spotOpen: null, spotClose: null, mobPillBump: null, mobPillSync: null, homeSwipe: null };
 
 /* A touch produces a compatibility mouse event after it. */
 const COMPAT_POINTER_MS = 500;
@@ -551,7 +551,7 @@ function syncPageInert(current) {
 }
 
 let _willChangeTimer = 0;
-function goTo(n, dotEls, announce = true) {
+function goTo(n, dotEls, announce = true, bump = true) {
   const total = dotEls ? dotEls.length : totalPages;
   const was = pg;
   pg = Math.max(0, Math.min(total - 1, n));
@@ -573,7 +573,7 @@ function goTo(n, dotEls, announce = true) {
     if (i === pg) d.setAttribute('aria-current', 'true');
     else d.removeAttribute('aria-current');
   });
-  if (MOB && CB.mobPillBump) CB.mobPillBump(pg);
+  if (MOB && bump && CB.mobPillBump) CB.mobPillBump(pg);
   syncPager(total);
   applyPollRates();
 }
@@ -1089,7 +1089,8 @@ async function boot() {
           try {
             buildMobile();
             syncMobPages();
-            goTo(restorePage(storeGet(PAGE_STORE), totalPages), null, false);
+            goTo(restorePage(storeGet(PAGE_STORE), totalPages), null, false, false);
+            CB.mobPillSync?.(pg);
             loadVisibleIcons();
             retone();
           } catch (e) {
@@ -1147,6 +1148,8 @@ async function boot() {
     },
     { passive: false },
   );
+  const overlayOpen = () =>
+    el('spot').hasAttribute('open') || !!document.querySelector('.folder-overlay[open], .folder-overlay-mobile[open]');
   let _dMx = 0,
     _dDragging = false;
   document.addEventListener('mousedown', e => {
@@ -1157,6 +1160,10 @@ async function boot() {
     if (Math.abs(e.clientX - _dMx) > 8) _dDragging = true;
   });
   document.addEventListener('mouseup', e => {
+    if (overlayOpen()) {
+      _dDragging = false;
+      return;
+    }
     if (!_dDragging) return;
     _dDragging = false;
     /* A swipe is followed by a compatibility mouse event. Acting on both pages
@@ -1329,7 +1336,7 @@ async function boot() {
     try {
       const res = await fetch('/api/config', { cache: 'no-store' });
       if (!res.ok) return;
-      if (differs(await res.json())) location.reload();
+      if (differs(await res.json()) && !overlayOpen() && !strip.classList.contains('dragging')) location.reload();
     } catch {}
   };
 
@@ -1363,6 +1370,7 @@ async function boot() {
     } else {
       pollBadges();
       pollHealth();
+      pollConfig();
       startPolling();
     }
   });

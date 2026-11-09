@@ -1,6 +1,6 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
 import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=1526c452';
-import { el, isolate, q, qa } from '/js/utils.js?v=f0b9b030';
+import { el, isolate, q, qa } from '/js/utils.js?v=a09f4f39';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import { errorAdvice } from '/js/admin-error.js?v=d1f8f6f4';
 import { formatList, formatNumber } from '/js/format-number.js?v=abcd4ae4';

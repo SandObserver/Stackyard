@@ -222,7 +222,9 @@ export function wireBadgePopover(badge, rows) {
 
   const tile = tileOf(badge);
   if (tile) {
-    tile.addEventListener('focus', () => open(badge));
+    tile.addEventListener('focus', () => {
+      if (tile.matches(':focus-visible')) open(badge);
+    });
     tile.addEventListener('blur', () => closeBadgePopover());
   }
 }

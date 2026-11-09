@@ -113,8 +113,8 @@ test('the desktop overlay takes focus itself too', () => {
 });
 
 /* A non-passive touchmove listener holds every scroll on the main thread. */
-test('the folder box stops panning by touch-action, not by a blocking listener', () => {
-  assert.match(css, /\.dyn-box-mob\s+\{[^}]*touch-action:none/);
+test('the folder box keeps pinch zoom and pages by touch-action, not by a blocking listener', () => {
+  assert.match(css, /\.dyn-box-mob\s+\{[^}]*touch-action:pan-y pinch-zoom/);
   assert.doesNotMatch(
     overlay,
     /passive: false \}\);\s*box\.addEventListener|box\.addEventListener\(\s*'touchmove',[\s\S]{0,200}preventDefault/,

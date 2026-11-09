@@ -17,9 +17,9 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=f0b9b030';
+} from '/js/utils.js?v=a09f4f39';
 import { t, currentLang } from '/js/i18n.js?v=ed7c5565';
-import { toneForColor } from '/js/label-contrast.js?v=7172d36f';
+import { toneForColor } from '/js/label-contrast.js?v=e046296b';
 import { mobileMetrics, gridColumnWidth, gridCellCount, dockFit } from '/js/mobile-metrics.js?v=3b0d6715';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
 import { mkGlassRim, observeGlass } from '/js/glass-rim.js?v=3faec233';
@@ -364,7 +364,9 @@ function folderMotion(ov, parts, tile) {
     still
       ? { duration: 150, easing: 'ease-out' }
       : prop === 'opacity'
-        ? { duration: opening ? 120 : 250, easing: opening ? 'ease-out' : 'cubic-bezier(.6,0,1,1)' }
+        ? opening
+          ? { duration: 120, easing: 'ease-out' }
+          : { duration: 160, delay: 90, easing: 'ease-out' }
         : { duration: opening ? 300 : 250, easing: EASE_IOS };
   let running = steps.map(s => s.el.animate({ [s.prop]: [s.shut, s.open] }, timing(s.prop, true)));
   return () => {
@@ -377,7 +379,7 @@ function folderMotion(ov, parts, tile) {
       .slice(1)
       .flatMap((s, i) => [
         s.el.animate({ transform: [now[i + 1], s.shut] }, { ...timing('transform', false), fill: 'forwards' }),
-        s.el.animate({ opacity: [now[0], 0] }, { ...timing('opacity', false), fill: 'forwards' }),
+        s.el.animate({ opacity: [now[0], 0] }, { ...timing('opacity', false), fill: 'both' }),
       ]);
     running[0].finished.then(
       () => ov.remove(),
@@ -484,45 +486,7 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
     }, 500);
     openFolderMobile(item, isz, ir, im, sc, a);
   }
-  let _tStarted = false,
-    _tMoved = false,
-    _tSX = 0,
-    _tSY = 0;
-  a.addEventListener(
-    'touchstart',
-    e => {
-      e.preventDefault();
-      _tStarted = true;
-      _tMoved = false;
-      _tSX = e.touches[0].clientX;
-      _tSY = e.touches[0].clientY;
-    },
-    { passive: false },
-  );
-  a.addEventListener(
-    'touchmove',
-    e => {
-      if (!_tStarted) return;
-      if (Math.abs(e.touches[0].clientX - _tSX) > 10 || Math.abs(e.touches[0].clientY - _tSY) > 10) _tMoved = true;
-    },
-    { passive: true },
-  );
-  a.addEventListener(
-    'touchend',
-    e => {
-      e.preventDefault();
-      if (!_tStarted || _tMoved) {
-        _tStarted = false;
-        _tMoved = false;
-        return;
-      }
-      _tStarted = false;
-      _tMoved = false;
-      _openFolder();
-    },
-    { passive: false },
-  );
-  a.onclick = () => _openFolder();
+  onTap(a, _openFolder);
   const box = mk('div');
   box.className = 'dyn-sz dyn-box';
   css(box, { '--sz': eff + 'px' });
@@ -619,7 +583,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc, tile) {
     '--tfs': titleFs + 'px',
     'inset-inline-start': titleLeft + 'px',
     width: boxW - padH + 'px',
-    top: boxTop - titleRendH - titleGap + Math.round(8 * ptScale) + 'px',
+    top: 'max(var(--sa-top), ' + (boxTop - titleRendH - titleGap + Math.round(8 * ptScale)) + 'px)',
   });
   setUserText(titleEl, folder.label || t('type.folder'));
 
@@ -766,6 +730,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc, tile) {
 const MOB_FOOTPRINT = { small: [2, 2], medium: [4, 2], large: [4, 4], xlarge: [4, 6] };
 
 export function buildMobile() {
+  folderOverlayMob?.close();
   /* The previous widgets' observers and timers outlive their DOM. Stop them
      before it is replaced. */
   teardownWidgets();
@@ -1025,7 +990,7 @@ export function buildMobile() {
     dk.appendChild(a);
   });
 
-  const pillSearchW = Math.round(96 * sc);
+  const pillSearchW = Math.max(Math.round(96 * sc), 92);
   const _pdotSz = Math.round(8 * sc),
     _pdotGap = Math.round(5 * sc),
     _pdotPad = Math.round(14 * sc);
@@ -1080,12 +1045,16 @@ export function buildMobile() {
     }, 260);
   }
   function pillBump(newPg) {
+    if (pillNewDots.children.length < 2) return;
     pillPaging(true);
     pillDotEls.forEach((d, i) => d.classList.toggle('on', i === newPg));
     clearTimeout(_pillIdleTimer);
     _pillIdleTimer = setTimeout(() => pillPaging(false), 1500);
   }
   CB().mobPillBump = pillBump;
+  CB().mobPillSync = newPg => {
+    Array.from(pillNewDots.children).forEach((d, i) => d.classList.toggle('on', i === newPg));
+  };
 
   const { _mobTsCleanup, _mobTeCleanup } = st();
   if (_mobTsCleanup) document.removeEventListener('touchstart', _mobTsCleanup);
@@ -1107,6 +1076,7 @@ export function resetMobileChrome() {
   pill.style.cssText = '';
   pill.classList.remove('paging');
   CB().mobPillBump = null;
+  CB().mobPillSync = null;
   const { _mobTsCleanup, _mobTeCleanup } = st();
   if (_mobTsCleanup) document.removeEventListener('touchstart', _mobTsCleanup);
   if (_mobTeCleanup) document.removeEventListener('touchend', _mobTeCleanup);
