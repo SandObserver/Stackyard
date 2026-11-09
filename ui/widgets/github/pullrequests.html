@@ -40,16 +40,16 @@
   .wt-inert .clickable, .clickable.wt-inert { pointer-events: auto; }
   .cap { justify-content: center; }
 
-  .arrive .num, .arrive .list { animation: fade 0.25s ease-out both; }
-  @keyframes fade { from { opacity: 0; } }
 
   html[data-theme="light"], html[data-theme="light"] body { background: #FFFFFF; }
   html[data-theme="light"] .num, html[data-theme="light"] .title { color: #000000; }
   html[data-theme="light"] .lbl, html[data-theme="light"] .sub,
   html[data-theme="light"] .repo, html[data-theme="light"] .none { color: #6C6C70; }
 
-  @media (prefers-reduced-motion: reduce) {
-    .arrive .num, .arrive .list { animation: none; }
+  @media (prefers-contrast: more) {
+    .lbl, .sub, .repo, .none { color: #EBEBF5; }
+    html[data-theme="light"] .lbl, html[data-theme="light"] .sub,
+    html[data-theme="light"] .repo, html[data-theme="light"] .none { color: #3C3C43; }
   }
 </style>
 </head>
@@ -57,7 +57,7 @@
 <div class="widget" id="widget" role="group" aria-label="Pull requests"></div>
 <div class="cap" id="cap"></div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, errorState, formatNumber, fitText, placeholder, formatList } from '/js/widget-toolbox.js?v=fa75ad9e';
+import { poll, fetchData, linkTo, loadStrings, wt, errorState, formatNumber, fitText, placeholder, formatList } from '/js/widget-toolbox.js?v=9eafe764';
 await loadStrings();
 
 const TICK_MS = 60000;
@@ -72,7 +72,6 @@ const w = document.getElementById('widget');
 let user = '';
 let gitlab = false;
 let noun = wt('ui.pullRequests', 'Pull requests');
-let arrived = false;
 
 function el(tag, cls, text) {
   const n = document.createElement(tag);
@@ -128,11 +127,6 @@ function render(data) {
       'aria-label',
       `${noun}, ${total} ${label}, ${wt('ui.viewAll', 'view all')}`,
     );
-  if (!arrived) {
-    arrived = true;
-    w.classList.add('arrive');
-    setTimeout(() => w.classList.remove('arrive'), 600);
-  }
   if (!ROWS) return;
 
   const items = (Array.isArray(data.items) ? data.items : []).filter(pr => pr && typeof pr === 'object' && (pr.title || pr.number)).slice(0, ROWS);

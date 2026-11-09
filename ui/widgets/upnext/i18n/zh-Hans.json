@@ -20,6 +20,7 @@
   "href.hint": "浏览器访问此服务所用的地址。留空则使用上方地址（前提是浏览器能访问它）。",
   "unmonitored.label": "包含未监控项",
   "ui.today": "今天",
+  "ui.todayShort": "今天",
   "ui.episode": "第{season}季 · 第{episode}集",
   "ui.episodes": "第{season}季 · 第{first}–{last}集",
   "ui.special": "特别篇",

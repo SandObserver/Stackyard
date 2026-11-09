@@ -45,6 +45,10 @@
   .src-node { fill:#fff }
   html[data-theme="light"] .src-node { fill:#1c1c1e }
   html[data-theme="light"] .sub, html[data-theme="light"] .legend { color:rgba(0,0,0,0.62) }
+  @media (prefers-contrast:more) {
+    .sub, .legend { color:#EBEBF5 }
+    html[data-theme="light"] .sub, html[data-theme="light"] .legend { color:#3C3C43 }
+  }
 </style>
 </head>
 <body>
@@ -62,7 +66,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, rollText, linkTo, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=fa75ad9e';
+import { poll, fetchData, rollText, linkTo, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=9eafe764';
 await loadStrings();
 /* These two are in the markup, so the widget still reads correctly in English
    if the catalog fetch fails. */

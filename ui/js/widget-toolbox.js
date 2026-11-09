@@ -335,14 +335,14 @@ const ROLL_MS = 240;
 const ROLL_EASE = 'cubic-bezier(.33,1,.68,1)';
 const _rolled = new WeakMap();
 
-/** @param {HTMLElement} el @param {string} text */
-export function rollText(el, text) {
+/** @param {HTMLElement} el @param {string} text @param {{ instant?: boolean }} [opts] */
+export function rollText(el, text, { instant = false } = {}) {
   const next = String(text ?? '');
   const shown = _rolled.get(el);
   const prev = shown != null && shownText(el) === shown ? shown : null;
   _rolled.set(el, next);
   if (prev === next) return;
-  if (prev == null || typeof el.animate !== 'function') {
+  if (instant || prev == null || typeof el.animate !== 'function') {
     el.textContent = next;
     return;
   }
@@ -416,7 +416,14 @@ function shownText(el) {
 
 /** @param {string} prev @param {string} next */
 export function rollDirection(prev, next) {
-  const num = s => Number.parseFloat(String(s).replace(/[^\d.-]/g, ''));
+  const num = s =>
+    Number.parseFloat(
+      String(s)
+        .replace(/[\u06f0-\u06f9]/g, d => String(d.charCodeAt(0) - 0x6f0))
+        .replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x660))
+        .replace(/\u066b/g, '.')
+        .replace(/[^\d.-]/g, ''),
+    );
   const p = num(prev);
   const n = num(next);
   return !(Number.isFinite(p) && Number.isFinite(n) && n < p);

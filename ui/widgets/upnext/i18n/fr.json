@@ -20,6 +20,7 @@
   "href.hint": "L’adresse que votre navigateur utilise pour ce service. Laissez vide pour utiliser celle ci-dessus, si votre navigateur peut l’atteindre.",
   "unmonitored.label": "Inclure les éléments non surveillés",
   "ui.today": "Aujourd’hui",
+  "ui.todayShort": "Auj.",
   "ui.episode": "S{season} · É{episode}",
   "ui.episodes": "S{season} · É{first}–{last}",
   "ui.special": "Épisode spécial",

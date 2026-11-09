@@ -65,9 +65,7 @@
     -webkit-box-orient: vertical; overflow: hidden;
   }
   .card-back-name.cut, .card-front-name.cut { display: block; white-space: nowrap; text-overflow: ellipsis; }
-  .card-back.running { animation: pulse-bg 2s ease-in-out infinite; }
-  .off .card-back.running, .off .sync-icon { animation-play-state: paused; }
-  @keyframes pulse-bg { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.15)} }
+  .off .sync-icon { animation-play-state: paused; }
 
   /* Front card */
   .card-front {
@@ -94,9 +92,11 @@
     width: 100%; height: 100%;
     display: block;
   }
-  .card-wrap:hover .card-front,
   .card-wrap:focus-visible .card-front,
   .card-wrap:active .card-front { opacity: 0; }
+  @media (hover: hover) and (pointer: fine) {
+    .card-wrap:hover .card-front { opacity: 0; }
+  }
 
   .card-front-name-zone {
     position: absolute; bottom: 0; left: 0; right: 0;
@@ -125,7 +125,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom, whileOnScreen } from '/js/widget-toolbox.js?v=fa75ad9e';
+import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom, whileOnScreen } from '/js/widget-toolbox.js?v=9eafe764';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const id   = new URLSearchParams(location.search).get('id')   || '';
@@ -504,7 +504,6 @@ function buildShell() {
         let _revealTimer = null;
         wrap.addEventListener('touchend', (e) => {
           const href = cardLink(idx);
-          if (!href) return;
           e.preventDefault();
           const isRevealed = wrap.classList.contains('touch-revealed');
           /* Reset all cards and clear any pending timers */
@@ -515,7 +514,7 @@ function buildShell() {
             if (f) f.style.opacity = '';
           });
           if (isRevealed) {
-            openUrl(href);
+            if (href) openUrl(href);
           } else {
             wrap.classList.add('touch-revealed');
             const front = wrap.querySelector('.card-front');
@@ -641,7 +640,6 @@ function applyCard(idx, job) {
   if (wrapEl && !wrapEl.classList.contains('inactive')) linkTo(wrapEl, cardLink(idx));
   if(!job) {
     back.style.background='rgba(255,255,255,0.06)'; back.style.color='';
-    back.classList.remove('running');
     return;
   }
 
@@ -651,7 +649,6 @@ function applyCard(idx, job) {
 
   back.style.background = color||'rgba(255,255,255,0.08)';
   back.style.color = fg;
-  back.classList.toggle('running', job.status==='running');
   front.style.setProperty('--status-color', color||'rgba(100,100,110,0.28)');
 
   /* Redraw back canvas with updated text color when status changes */
@@ -677,9 +674,11 @@ function paintTimes(idx, job) {
     if(running){
       if(!bmeta.querySelector('.sync-icon')) bmeta.innerHTML=`<span class="sync-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5a5.5 5.5 0 0 1 4 1.73"/><path d="M13.5 2.5v2.5H11"/></svg></span>${wt('ui.runningNow','Running…')}<br>&nbsp;`;
     } else {
+      const failed = job.status==='error' || job.status==='missed';
+      const first = failed ? wt(STATUS_KEY[job.status],STATUS_EN[job.status]) : wt('ui.lastAt','Last {when}',{when:last});
       setHtml(bmeta, next
-        ? html`${wt('ui.lastAt','Last {when}',{when:last})}<br>${wt('ui.nextAt','Next {when}',{when:next})}`
-        : html`${wt('ui.lastAt','Last {when}',{when:last})}`);
+        ? html`${first}<br>${wt('ui.nextAt','Next {when}',{when:next})}`
+        : html`${first}`);
     }
   }
   /* Screen-reader summary on the visible face — status is otherwise colour-only */
@@ -703,7 +702,7 @@ function applyCardError(idx, line) {
   const bmeta = document.getElementById(`back-meta-${idx}`);
   const fname = document.getElementById(`front-name-${idx}`);
   /* Set both. An unset colour inherits black onto a dark card. */
-  if(back){ back.style.background='rgba(255,255,255,0.06)'; back.style.color='#fff'; back.classList.remove('running'); }
+  if(back){ back.style.background='rgba(255,255,255,0.06)'; back.style.color='#fff'; }
   if(front){ front.setAttribute('role','img'); front.setAttribute('aria-label', line); front.style.removeProperty('--status-color'); }
   if(bname) fitName(bname, line);
   if(bmeta) setHtml(bmeta, html`&nbsp;<br>&nbsp;`);

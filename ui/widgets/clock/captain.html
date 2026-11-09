@@ -315,7 +315,7 @@ async function boot() {
     .then(r => (r.ok ? r.json() : null))
     .catch(() => null);
   const [toolbox, lib, dates] = await Promise.all([
-    import('/js/widget-toolbox.js?v=fa75ad9e'),
+    import('/js/widget-toolbox.js?v=9eafe764'),
     import('/js/clock-captain.js?v=c571e432'),
     import('/js/clock-date.js?v=de40b876'),
   ]);

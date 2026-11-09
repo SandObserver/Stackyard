@@ -20,6 +20,7 @@
   "href.hint": "La dirección con la que tu navegador abre este servicio. Déjalo en blanco para usar la de arriba, si tu navegador puede acceder a ella.",
   "unmonitored.label": "Incluir no monitorizados",
   "ui.today": "Hoy",
+  "ui.todayShort": "Hoy",
   "ui.episode": "T{season} · E{episode}",
   "ui.episodes": "T{season} · E{first}–{last}",
   "ui.special": "Especial",

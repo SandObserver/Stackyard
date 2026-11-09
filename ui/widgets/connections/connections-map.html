@@ -34,6 +34,8 @@
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   #map-link{position:absolute;inset:0;pointer-events:none;border-radius:inherit}
   #map-link:focus-visible{outline:2px solid #0091FF;outline-offset:-3px}
+  #tt{-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%)}
+  @media (prefers-reduced-transparency:reduce){#tt{-webkit-backdrop-filter:none;backdrop-filter:none}}
 </style>
 </head>
 <body>
@@ -183,7 +185,7 @@ window.__MAP=(function(D){
 })(window.__DOTS);
 </script>
 <script type="module">
-import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen } from '/js/widget-toolbox.js?v=fa75ad9e';
+import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen } from '/js/widget-toolbox.js?v=9eafe764';
 await loadStrings();
 document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World map of connections'));
 (function(){
@@ -385,7 +387,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
   const tt=document.createElement('div');tt.id='tt';
   tt.style.cssText='position:absolute;pointer-events:none;z-index:6;opacity:0;transition:opacity .12s ease;'+
     'min-width:118px;max-width:210px;padding:9px 11px;border-radius:13px;'+
-    'background:rgba(30,30,34,.84);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);'+
+    'background:rgba(30,30,34,.84);'+
     'box-shadow:0 8px 26px rgba(0,0,0,.5);border:.5px solid rgba(255,255,255,.1);'+
     'font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif;color:#fff;';
   document.body.appendChild(tt);
