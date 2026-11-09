@@ -78,6 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Redraw the interface icons in one consistent style.
 
+- Disk Health shows the friendly name set in Scrutiny.
+
 ### Fixed
 
 - Let the owner set a new password with a setup code when the saved password is
