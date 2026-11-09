@@ -71,6 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Widget animations use less CPU and pause off screen.
 
+- Remove the bounce from dashboard tile presses.
+
 ### Fixed
 
 - Let the owner set a new password with a setup code when the saved password is
@@ -121,6 +123,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backup job times stay current between refreshes.
 
 - Now Playing shows right-to-left titles in the correct direction.
+
+- Show badges without animating them when the dashboard loads.
+
+- Scrolling search results on a phone no longer opens a result.
+
+- Folder page dots work with assistive technology, and arrow keys turn folder
+  pages.
+
+- The empty search message is readable in the light theme.
 
 ### Security
 
