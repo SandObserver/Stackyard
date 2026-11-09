@@ -31,16 +31,18 @@ import {
   initInlineEdit,
   wireInlineEdit,
   reveal,
+  fadeIn,
   setTogDisabled,
   swapContent,
   setStatus,
   errorAction,
   showFieldError,
   clearFieldError,
-} from '/js/admin-shared.js?v=d728efe3';
-import { createListbox } from '/js/listbox.js?v=5ab21954';
+} from '/js/admin-shared.js?v=f240ee70';
+import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
+import { createListbox } from '/js/listbox.js?v=9847b20c';
 import { MAX_LABELS } from '/js/badge-logic.js?v=04a4ece8';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=9be6e317';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=94ff0d7e';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=d1f8f6f4';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { iconSvg } from '/js/icon-set.js?v=b279fd98';
@@ -1051,7 +1053,9 @@ function renderKvRows(host, rows, ph) {
   add.onclick = () => {
     rows.push({ key: '', value: '', secret: false, valueSet: false });
     renderKvRows(host, rows, ph);
-    focusFirst(qa('.kv-row .kv-k', host).at(-1));
+    const added = qa('.kv-row', host).at(-1);
+    fadeIn(added);
+    focusFirst(added?.querySelector('.kv-k'));
   };
   host.appendChild(add);
 }
@@ -1093,10 +1097,13 @@ function kvRowEl(host, rows, row, ph) {
   };
   dEl.onclick = () => {
     const idx = rows.indexOf(row);
-    if (idx >= 0) rows.splice(idx, 1);
-    renderKvRows(host, rows, ph);
-    const dels = qa('.kv-del', host);
-    focusFirst(dels[idx], dels[idx - 1], qSel('.kv-add', host));
+    if (idx < 0) return;
+    rows.splice(idx, 1);
+    slideBlock(rowEl, false, () => {
+      renderKvRows(host, rows, ph);
+      const dels = qa('.kv-del', host);
+      focusFirst(dels[idx], dels[idx - 1], qSel('.kv-add', host));
+    });
   };
   return rowEl;
 }

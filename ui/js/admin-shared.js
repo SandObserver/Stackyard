@@ -7,7 +7,8 @@ import { formatList, formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { iconChain } from '/js/icons.js?v=76c29d43';
 import { iconSvg } from '/js/icon-set.js?v=b279fd98';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { slideBlock } from '/js/modal.js?v=bd88cb9e';
+import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
+import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
 import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=fd68857f';
 
 export const API = '';
@@ -106,6 +107,10 @@ export const toast = (m, tone = 'ok', action = null) => {
   if (ms != null) tt = setTimeout(hideToast, ms);
 };
 
+function scrollBehavior() {
+  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+}
+
 /** @param {string} rowId */
 function openGeneralAt(rowId) {
   if (location.hash === '#general') dispatchEvent(new HashChangeEvent('hashchange'));
@@ -113,7 +118,7 @@ function openGeneralAt(rowId) {
   setTimeout(() => {
     const row = el(rowId);
     const target = /** @type {HTMLElement|null} */ (row?.querySelector('.pe, input, button') ?? row);
-    row?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    row?.scrollIntoView({ block: 'center', behavior: scrollBehavior() });
     target?.focus();
   }, 250);
 }
@@ -251,7 +256,7 @@ export function showFieldError(row, message, { focus = true } = {}) {
     );
     target?.focus();
   }
-  box.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  box.scrollIntoView({ block: 'center', behavior: scrollBehavior() });
 }
 
 /** @param {Element} row */
@@ -288,7 +293,7 @@ export function announce(text) {
 
 /** @param {Element|null} node */
 export function fadeIn(node) {
-  if (!node) return;
+  if (!node || typeof node.animate !== 'function' || typeof matchMedia !== 'function') return;
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   node.animate(
     still
@@ -297,7 +302,7 @@ export function fadeIn(node) {
           { opacity: 0, transform: 'translateY(8px)' },
           { opacity: 1, transform: 'none' },
         ],
-    { duration: 200, easing: 'cubic-bezier(.32,.72,0,1)' },
+    { duration: 200, easing: EASE_IOS },
   );
 }
 

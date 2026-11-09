@@ -87,6 +87,6 @@ test('an admin dialog fades and scales in from its centre, and fades only under 
   assert.doesNotMatch(/\.dlg-box\{([^}]*)\}/.exec(css)[1], /transform-origin/, 'it must scale about its centre');
   assert.match(
     css,
-    /@media \(prefers-reduced-motion: reduce\)\{\.row-dd-list\.dd-in,\.dlg-box\[open\]\{animation-name:swap-in\}\}/,
+    /@media \(prefers-reduced-motion: reduce\)\{\.dlg-box\[open\]\{animation-name:swap-in;animation-duration:\.18s!important\}\}/,
   );
 });

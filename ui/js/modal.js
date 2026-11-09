@@ -1,6 +1,8 @@
 // @ts-check
 /* Structure only; callers fill the body. */
 
+import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
+
 /* A counter, not randomness. Six base-36 characters collide plausibly over a
    long session, and an id that changes per run cannot be asserted on. */
 let _seq = 0;
@@ -39,7 +41,7 @@ export function slideBlock(node, open, done) {
           { ...shut, opacity: 0 },
         ];
   node.style.overflow = 'hidden';
-  const a = node.animate(frames, { duration: open ? 240 : 180, easing: 'cubic-bezier(.32,.72,0,1)' });
+  const a = node.animate(frames, { duration: open ? 200 : 160, easing: EASE_IOS });
   const end = () => {
     node.style.overflow = '';
     done?.();

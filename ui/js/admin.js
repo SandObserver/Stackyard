@@ -4,10 +4,10 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=65525912';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=5ea0223f';
+} from '/js/admin-app-form.js?v=1c464bb2';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=1f81d440';
 import { recoveryShown } from '/js/config-recovery.js?v=fd68857f';
-import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=03f7a57f';
+import { focusRow, initList, isReordering, render, setReordering, syncFilterUI } from '/js/admin-list.js?v=a58a8ec0';
 import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=1526c452';
 import {
   afterImport,
@@ -32,7 +32,7 @@ import {
   wireUnsplashKey,
   wireProxmox,
   applyHealthChecks,
-} from '/js/admin-settings.js?v=6d112610';
+} from '/js/admin-settings.js?v=383a9d42';
 import {
   apiGet,
   apiPost,
@@ -53,13 +53,13 @@ import {
   errorAction,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=d728efe3';
+} from '/js/admin-shared.js?v=f240ee70';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=5f68231c';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=959966bb';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=75a71ab4';
-import { createListbox } from '/js/listbox.js?v=5ab21954';
+import { createListbox } from '/js/listbox.js?v=9847b20c';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
 import { loadLocalIcons } from '/js/icons.js?v=76c29d43';
@@ -79,7 +79,7 @@ import {
 } from '/js/import-foreign.js?v=80477b68';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
-import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=bd88cb9e';
+import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=c4c1c4c4';
 import {
   THEME_KEY,
   applyTheme,
