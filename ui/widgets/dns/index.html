@@ -22,7 +22,7 @@
   .widget.clickable:focus-visible{outline:2px solid #0091FF;outline-offset:-3px}
 
   .hero { display:flex; flex-direction:column; gap:2px; flex-shrink:0; }
-  .pct  { font-size:clamp(26px,9cqw,36px); font-weight:700; color:#FF4245; line-height:1; letter-spacing:-0.02em; transition: color 0.15s ease; }
+  .pct  { font-size:clamp(26px,9cqw,36px); font-weight:700; color:#FF4245; line-height:1; letter-spacing:-0.02em; font-variant-numeric:tabular-nums; transition: color 0.15s ease; }
   .sub  { font-size:clamp(11px,3.6cqw,13px); font-weight:600; color:rgba(235,235,245,0.6); }
 
   .flow { flex:1; min-height:0; margin-top:13px; position:relative; touch-action:pan-y; }
@@ -62,7 +62,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, rollText, linkTo, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=373740c4';
+import { poll, fetchData, rollText, linkTo, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=ae422d8d';
 await loadStrings();
 /* These two are in the markup, so the widget still reads correctly in English
    if the catalog fetch fails. */

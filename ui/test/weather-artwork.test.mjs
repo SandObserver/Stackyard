@@ -203,13 +203,32 @@ test('a falling part restarts at a new spot inside its lane', () => {
   assert.equal(transform, undefined);
 });
 
+test('squall streaks move as HTML boxes in artwork units', () => {
+  for (const day of [true, false]) {
+    const svg = buildIcon('squall', day);
+    assert.equal(svg.match(/<div class="wx-gust wx-mist">/g).length, 3);
+    assert.match(svg, /<div class="wx-flow" style="--d:-[\d.]+%;/);
+    assert.doesNotMatch(svg, /<path class="wx-flow"/);
+  }
+});
+
+test('ambient drift uses the unit of the part it moves', () => {
+  const drift = new Function(`${/const drift=.*/.exec(page)[0]}; return drift;`)();
+  const box = { tagName: 'DIV', style: {} };
+  const part = { tagName: 'g', style: {} };
+  drift(box, 1.5);
+  drift(part, 1.5);
+  assert.equal(box.style.transform, 'translateX(1.50%)');
+  assert.equal(part.style.transform, 'translateX(1.50px)');
+});
+
 test('the lightning flash is hidden at rest', () => {
-  for (const day of [true, false])
-    assert.match(buildIcon('thunder', day), /<path class="wx-flash[^"]*"[^>]*opacity="0"/);
+  for (const day of [true, false]) assert.match(buildIcon('thunder', day), /<div class="wx-flash[^"]*">/);
+  assert.match(page, /\.wx-flash\{opacity:0;/);
 });
 
 test('the lightning flash drifts with the cloud it lights', () => {
-  for (const day of [true, false]) assert.match(buildIcon('thunder', day), /<path class="wx-flash wx-front"/);
+  for (const day of [true, false]) assert.match(buildIcon('thunder', day), /<div class="wx-flash wx-front">/);
 });
 
 test('a faint far layer keeps its opacity off the animated element', () => {
