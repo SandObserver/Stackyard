@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=80d1aaae';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=f1169e03';
+} from '/js/admin-app-form.js?v=f8d710b8';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=4462dd4e';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=b24874b6';
+} from '/js/admin-list.js?v=cd71f6ec';
 import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=245bc319';
 import {
   afterImport,
@@ -40,7 +40,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=74cf6b4b';
+} from '/js/admin-settings.js?v=6ab2819c';
 import {
   announce,
   apiGet,
@@ -65,10 +65,10 @@ import {
   swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=2ae7752e';
+} from '/js/admin-shared.js?v=781c2d91';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=24ceac11';
-import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=7638c299';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=c5216175';
+import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=828d3e11';
 import { recoveryShown } from '/js/config-recovery.js?v=f06a966c';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
@@ -90,7 +90,7 @@ import {
 } from '/js/import-foreign.js?v=80477b68';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=6b33bd63';
+import { createListbox } from '/js/listbox.js?v=d0743e73';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=c4c1c4c4';
 import { passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
@@ -117,7 +117,7 @@ import {
   storeSet,
   tgt,
   within,
-} from '/js/utils.js?v=f0b9b030';
+} from '/js/utils.js?v=a09f4f39';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
 
