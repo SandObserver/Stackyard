@@ -82,6 +82,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Dashboard buttons and page dots respond when pressed.
 
+- System Summary figures animate only on larger changes.
+
 ### Fixed
 
 - Let the owner set a new password with a setup code when the saved password is
@@ -165,6 +167,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A config change no longer reloads the dashboard during search, a folder or a
   drag.
+
+- Long names and translated text stay inside widgets.
+
+- Screen readers no longer repeat Now Playing on every refresh.
+
+- Disk Health works with a mouse on touch-capable devices.
+
+- Backup status is shown in words on the card back.
+
+- Widgets follow Increase Contrast.
+
+- Dashboard Switch shows an error when its settings fail to load.
 
 ### Security
 
