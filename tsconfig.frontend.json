@@ -308,6 +308,12 @@
       "/js/link-url.js?v=*": [
         "./ui/js/link-url.js"
       ],
+      "/js/motion-curve.js": [
+        "./ui/js/motion-curve.js"
+      ],
+      "/js/motion-curve.js?v=*": [
+        "./ui/js/motion-curve.js"
+      ],
       "/js/modal.js": [
         "./ui/js/modal.js"
       ],

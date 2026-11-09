@@ -461,6 +461,7 @@ const DASHBOARD_TEXT = [
   ['Spotlight result address', '.srh', SPOTLIGHT, 'wallpaper'],
   ['Spotlight selected result address', '.srh', [...SPOTLIGHT, '.sr.sel'], 'wallpaper'],
   ['Spotlight section header', '.sr-section', SPOTLIGHT, 'wallpaper'],
+  ['Spotlight no results', '.sr-empty', SPOTLIGHT, 'wallpaper'],
   ['Spotlight external-link arrow', '.sra', SPOTLIGHT, 'wallpaper'],
   ['Spotlight selected external-link arrow', '.sra', [...SPOTLIGHT, '.sr.sel'], 'wallpaper'],
   ['phone Spotlight Cancel', 'body.is-mob #spot-cancel', PHONE_SPOTLIGHT, 'wallpaper'],

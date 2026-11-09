@@ -14,7 +14,6 @@
          is a hairline: the colour carries the contrast, not the shadow. */
       --label-color-dark:  rgba(0,0,0,.92);
       --label-shadow-dark: 0 0 2px rgba(255,255,255,.55);
-      --bounce-spring:    cubic-bezier(.34,1.56,.64,1);
       --page-ease:        cubic-bezier(.32,.72,0,1);
       /* The page behind the wallpaper, and the boot veil over the unstyled
          first paint. */
@@ -82,6 +81,7 @@
       position:fixed; inset:0; z-index:10;
       display:flex;
       transition:transform .28s var(--page-ease);
+      touch-action:pan-y pinch-zoom;
     }
     .page {
       flex:0 0 100vw; width:100vw; height:100vh; height:100dvh;
@@ -219,7 +219,6 @@
       align-items:center;
       justify-content:center;
       flex-shrink:0; overflow:visible;
-      transition:transform .18s var(--bounce-spring);
     }
     .iwrap { border-radius:16px }
     .dwrap { border-radius:15px }
@@ -243,7 +242,7 @@
     .fb.fb-on-light { color:var(--on-tint-dark) }
 
     .iwrap, .dwrap, .dyn-folder-box,
-    .dyn-mob-icon > .plate, .dyn-dock-icon > .plate, .dyn-mob-btn > .dyn-box, .dyn-fold-anchor > .plate { transition:transform .32s var(--bounce-spring), filter .2s ease-out }
+    .dyn-mob-icon > .plate, .dyn-dock-icon > .plate, .dyn-mob-btn > .dyn-box, .dyn-fold-anchor > .plate { transition:transform .2s cubic-bezier(.23,1,.32,1), filter .2s ease-out }
     @media (hover:hover) {
       .icon:hover .iwrap,
       .icon:hover .dyn-folder-box,
@@ -304,8 +303,7 @@
       background:var(--badge-bg,transparent);
       transition:background-color .2s ease;
     }
-    .badge.on  { display:flex; animation:badge-in .3s cubic-bezier(.33,1,.68,1) }
-    @keyframes badge-in { from { opacity:0; transform:translateZ(0) scale(.5) } }
+    .badge.on  { display:flex }
     .badge-txt { flex-shrink:0 }
     /* The pill is a corner marker. A unit makes it wider than the icon it marks,
        measured at 66px on a 72px icon. The popover names every value. */
@@ -402,7 +400,7 @@
     .dot {
       width:8px; height:8px; border-radius:50%;
       background:transparent; border:1.5px solid var(--dots-ink,rgba(255,255,255,.75));
-      transition:background .2s,border-color .2s,transform .2s,width .25s,opacity .25s;
+      transition:background .2s,border-color .2s,transform .2s,opacity .25s;
       cursor:pointer; flex-shrink:0; box-sizing:border-box;
       padding:0; -webkit-appearance:none; appearance:none;
     }
@@ -465,8 +463,9 @@
       -webkit-user-select:none; user-select:none;
       -webkit-touch-callout:none;
       overflow:hidden;
-      transition:clip-path .25s cubic-bezier(.4,0,.2,1);
+      transition:clip-path .25s cubic-bezier(.4,0,.2,1), scale .16s ease-out;
     }
+    #mob-search-pill:active { scale:.96; transition:clip-path .25s cubic-bezier(.4,0,.2,1), scale .1s ease-out }
     /* Search content — shown when idle */
     #mob-search-pill .msp-search {
       display:flex;
@@ -601,6 +600,7 @@
       flex-direction:column;
       padding-top:max(var(--safe-top),80px);
       box-sizing:border-box;
+      transition:none;
     }
     /* Search bar as a floating card at the top */
     body:not(.is-mob) #sbox {
@@ -693,6 +693,10 @@
     body.is-mob #sres .sri img { width:calc(30px * var(--sc,1)) !important; height:calc(30px * var(--sc,1)) !important; }
 
     /* ── Spotlight result rows ── */
+    .sr-empty {
+      padding:24px; text-align:center; color:rgba(235,235,245,.7);
+      font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);
+    }
     .sr-section {
       font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); font-weight:600; color:rgba(235,235,245,.7);
       padding:6px 12px 6px;
@@ -791,6 +795,7 @@
       text-align:start; line-height:1.05;
       text-shadow:0 1px 6px rgba(0,0,0,.45);
       -webkit-user-select:none; user-select:none;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
     .folder-dots {
       display:flex; justify-content:center; align-items:center;
@@ -798,6 +803,7 @@
     }
     .folder-dot {
       border-radius:50%; cursor:pointer; flex-shrink:0;
+      border:0; -webkit-appearance:none; appearance:none; -webkit-tap-highlight-color:transparent;
       background:rgba(255,255,255,.35);
       transition:background .2s,transform .2s;
     }
@@ -809,14 +815,16 @@
     .folder-overlay {
       position:fixed; inset:0; z-index:800;
       display:flex;
-      align-items:center;
+      align-items:flex-start;
       justify-content:center;
+      overflow:auto;
       background:rgba(0,0,0,.45);
       -webkit-backdrop-filter:blur(24px); backdrop-filter:blur(24px);
     }
     .folder-outer {
       display:flex; flex-direction:column; align-items:center;
       gap:16px; max-width:600px; width:90vw;
+      margin-block:auto;
     }
     .folder-title-desktop {
       font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2); font-weight:600; color:rgba(255,255,255,.95);
@@ -898,9 +906,9 @@
   .icon:active .iwrap, .folder-icon-link:active .iwrap, .di:active .dwrap,
   .icon .dyn-folder-box, .dyn-mob-icon > .plate, .dyn-dock-icon > .plate, .dyn-mob-btn > .dyn-box, .dyn-fold-anchor > .plate,
   .dot.on { transform: none !important; }
-  .badge.on { animation-name:badge-fade }
+  html.wall-swap::after, html.wall-in::before { animation-duration:.4s !important; }
+  #mob-search-pill:active { scale:none; opacity:.7; }
 }
-@keyframes badge-fade { from { opacity:0 } }
 
 /* ── Empty dashboard welcome ── */
 /* Toned from the wallpaper by label-contrast.js, never by the theme. */
@@ -1207,6 +1215,7 @@ html[data-theme="light"] #spot #sin::placeholder,
 html[data-theme="light"] #spot-cancel { color:var(--search-ink-light) }
 html[data-theme="light"] body.is-mob #spot-cancel { color:var(--accent-strong) }
 html[data-theme="light"] body.is-mob #spot #sin::placeholder { color:rgba(60,60,67,.85) }
+html[data-theme="light"] .sr-empty { color:rgba(60,60,67,.85) }
 html[data-theme="light"] .sr-section, html[data-theme="light"] .srh { color:rgba(60,60,67,.85); border-color:rgba(0,0,0,.08) }
 html[data-theme="light"] .sra { color:rgba(60,60,67,.85) }
 html[data-theme="light"] .sr:hover, html[data-theme="light"] .sr:active,

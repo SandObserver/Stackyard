@@ -156,6 +156,22 @@ test('the overlay respects the safe area on both edges', () => {
   assert.match(css, /body\.is-mob #spot #sbox \{[^}]*var\(--safe-bottom\)/);
 });
 
+test('a scroll that lifts on a result does not open it', () => {
+  const handler = js.match(/a\.addEventListener\('touchend', e => \{([\s\S]*?)\n {6}\}\);/);
+  assert.ok(handler, 'the row touch handler is gone');
+  assert.match(handler[1], /if \(moved \|\| res\.scrollTop !== top\) return;[\s\S]*doOpen\(true\)/);
+});
+
+test('no results is readable in both themes', () => {
+  assert.doesNotMatch(js, /rgba\(255,255,255,\.35\)/);
+  assert.match(css, /\.sr-empty \{[^}]*color:rgba\(235,235,245,\.7\)/);
+  assert.match(css, /html\[data-theme="light"\] \.sr-empty \{ color:rgba\(60,60,67,\.85\) \}/);
+});
+
+test('desktop search opens from a key and does not fade', () => {
+  assert.match(css, /body:not\(\.is-mob\) #spot \{[^}]*transition:none/);
+});
+
 test('no floating close button remains', () => {
   assert.doesNotMatch(html, /spot-cancel-mob/);
   assert.doesNotMatch(css, /spot-cancel-mob/);
