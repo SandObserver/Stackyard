@@ -181,6 +181,9 @@ test('a colour code that is not a colour is announced and clears when a swatch i
   await rowByName(page, 'Alpha').getByRole('button', { name: /^Edit/ }).click();
   await page.locator('#icon-col-style-btn').click();
   await page.locator('#icon-col-style-list [data-val="color"]').click();
+  await expect
+    .poll(() => page.locator('#icon-color-slot .cc-tune').evaluate(tune => tune.getAnimations().length))
+    .toBe(0);
   await setInlineRow(page, 'icon-col-code-row', 'icon-col-hex', 'notacolour');
 
   const note = page.locator('#icon-col-code-row + .field-err');
