@@ -34,14 +34,14 @@
   .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     color:#8E8E93;font-size:11px}
 
-  .bk{flex:none;position:relative;overflow:hidden;border-radius:1.5px 1.5px 0 0;transform-origin:center bottom;will-change:transform;
+  .bk{flex:none;position:relative;overflow:hidden;border-radius:1.5px 1.5px 0 0;transform-origin:center bottom;
     box-shadow:inset 0 .5px 0 rgba(255,255,255,.24),inset -1px 0 0 rgba(0,0,0,.14),inset 1px 0 0 rgba(255,255,255,.06);
     background-image:linear-gradient(180deg,rgba(255,255,255,.07),rgba(0,0,0,.07));
     transition:transform .2s cubic-bezier(.2,.8,.2,1),filter .2s}
   .bk::after{content:"";position:absolute;left:0;right:0;bottom:5px;height:1px;background:currentColor;opacity:.18}
   .bk:focus{outline:none}
   .bk:focus-visible{outline:1.5px solid #0091FF;outline-offset:2px}
-  .bk.up{transform:translateY(-4px);filter:brightness(1.06)}
+  .bk.up{will-change:transform;transform:translateY(-4px);filter:brightness(1.06)}
   .books.pointing .bk:not(.up){filter:brightness(.82)}
   .bk.lean{transform-origin:left bottom;transform:rotate(-8deg);margin-inline-start:10px}
   .bk.lean.up{transform:rotate(-8deg) translateY(-4px)}
@@ -102,7 +102,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-  import { poll, linkTo, loadStrings, wt, formatNumber, errorState, placeholder } from '/js/widget-toolbox.js?v=373740c4';
+  import { poll, linkTo, loadStrings, wt, formatNumber, errorState, placeholder } from '/js/widget-toolbox.js?v=ae422d8d';
   await loadStrings();
   document.getElementById('card').setAttribute('aria-label', wt('widget.label', 'Books'));
   const API='/api';

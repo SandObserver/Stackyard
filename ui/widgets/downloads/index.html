@@ -72,8 +72,8 @@
   .lid { position: absolute; transition: clip-path 0.6s cubic-bezier(.3,0,.2,1); }
   .flap { position: absolute; overflow: visible; }
   .flap g { transition: transform 0.6s cubic-bezier(.3,0,.2,1); }
-  .tp { position: absolute; left: 0; top: 0; }
-  .tp .fill { position: absolute; left: 0; top: 0; bottom: 0; transition: width 0.6s cubic-bezier(.3,0,.2,1); }
+  .tp { position: absolute; left: 0; top: 0; overflow: hidden; }
+  .tp .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; transition: transform 0.6s cubic-bezier(.3,0,.2,1); }
   .tp .fill.tab::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 5px; background: rgba(0,0,0,0.3); }
   .end-torn { clip-path: polygon(0 0, calc(100% - 3px) 0, 100% 16%, calc(100% - 3px) 33%, 100% 50%, calc(100% - 3px) 67%, 100% 84%, calc(100% - 3px) 100%, 0 100%); }
   .end-angled { clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 100%, 0 100%); }
@@ -103,7 +103,7 @@
 <script type="module">
 import {
   poll, getConfig, loadStrings, wt, wtCount, formatNumber, formatList, localiseDigits, linkTo, errorState, readingTime,
-} from '/js/widget-toolbox.js?v=373740c4';
+} from '/js/widget-toolbox.js?v=ae422d8d';
 import { ensureSprite } from '/js/icon-set.js?v=b279fd98';
 import { variations, finishedToday, hoursMinutes, leftover, lidOpen, finishParts, readerHourCycle } from './belt-logic.js';
 
@@ -323,6 +323,8 @@ function slotX(i) {
   return rtl() ? geom.w - geom.x0 - geom.depth - (i + 1) * geom.box : geom.x0 + i * geom.box;
 }
 
+const tapeShift = progress => `translateX(${Math.max(4, progress * 100) - 100}%)`;
+
 function lidClip(fw, off) {
   return `polygon(0px 100%, ${fw.toFixed(1)}px 100%, ${(fw + off).toFixed(1)}px 0px, ${off.toFixed(1)}px 0px)`;
 }
@@ -364,7 +366,7 @@ function makeBox(it, v, x) {
   const tp = el('div', { class: 'tp' });
   Object.assign(tp.style, { width: bw + 'px', height: th + 'px' });
   const fill = el('div', { class: `fill end-${v.end}${v.end === 'tab' ? ' tab' : ''}` });
-  Object.assign(fill.style, { width: Math.max(4, it.progress * 100) + '%', background: colour });
+  Object.assign(fill.style, { transform: tapeShift(it.progress), background: colour });
   tp.append(fill);
 
   const shadow = el('div', { class: 'face' });
@@ -505,7 +507,7 @@ function render(data) {
   if (sameRow && track.children.length === items.length) {
     items.forEach((it, i) => {
       const p = track.children[i]._parts;
-      p.fill.style.width = Math.max(4, it.progress * 100) + '%';
+      p.fill.style.transform = tapeShift(it.progress);
       p.lid.style.clipPath = lidClip(p.bw * it.progress, p.off);
       setFlap(p.flap, p.roomy && lidOpen(p.v, it));
       const dt = detail(it, medium);

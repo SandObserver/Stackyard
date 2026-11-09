@@ -331,7 +331,7 @@ const ROLL_CSS =
   '.wt-roll{display:inline-block;position:relative;white-space:pre;clip-path:inset(0 -1em)}' +
   '.wt-roll-in{display:inline-block}' +
   '.wt-roll-out{position:absolute;inset:0;pointer-events:none}';
-const ROLL_MS = 350;
+const ROLL_MS = 240;
 const ROLL_EASE = 'cubic-bezier(.33,1,.68,1)';
 const _rolled = new WeakMap();
 

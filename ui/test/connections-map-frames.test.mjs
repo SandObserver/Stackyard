@@ -78,3 +78,17 @@ test('the pulse repaints only the marker, not the map dots', async () => {
     map.restore();
   }
 });
+
+test('a frame inside the pulse interval paints nothing but keeps the loop', async () => {
+  const map = await mount();
+  try {
+    map.render(PULSING);
+    map.runFrames();
+    const drawn = map.painted();
+    map.runFrames();
+    assert.equal(map.painted(), drawn);
+    assert.equal(map.frames.size, 1);
+  } finally {
+    map.restore();
+  }
+});
