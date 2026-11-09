@@ -34,6 +34,7 @@
     html {
       width:100vw; height:100vh; height:100dvh; overflow:hidden;
       overscroll-behavior:none; -webkit-text-size-adjust:100%; text-size-adjust:100%;
+      -webkit-tap-highlight-color:transparent;
       background: var(--bg-color, var(--bg-base));
       font-family:var(--font-ui);
       -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
@@ -90,6 +91,7 @@
       align-items:center;
       justify-content:start;
       overflow:hidden;
+      contain:layout paint;
       /* Top clears the controls bar, bottom clears the dots and the dock:
          #dots bottom 160px plus its 30px height. The fluid horizontal
          padding keeps .grid inside the content box on a narrow-wide
@@ -196,8 +198,6 @@
     .widget[data-card="translucent"],
     .mob-widget-card[data-card="translucent"] {
       background: var(--glass-bg);
-      -webkit-backdrop-filter: blur(22px) saturate(140%);
-              backdrop-filter: blur(22px) saturate(140%);
     }
     /* Shared by an app's link and a folder's button, so it carries the reset a
        button needs to look like the tile beside it. */
@@ -243,7 +243,7 @@
 
     .iwrap, .dwrap, .dyn-folder-box,
     .dyn-mob-icon > .plate, .dyn-dock-icon > .plate, .dyn-mob-btn > .dyn-box, .dyn-fold-anchor > .plate { transition:transform .2s cubic-bezier(.23,1,.32,1), filter .2s ease-out }
-    @media (hover:hover) {
+    @media (hover:hover) and (pointer:fine) {
       .icon:hover .iwrap,
       .icon:hover .dyn-folder-box,
       .folder-icon-link:hover .iwrap,
@@ -304,7 +304,7 @@
       transition:background-color .2s ease;
     }
     .badge.on  { display:flex }
-    .badge-txt { flex-shrink:0 }
+    .badge-txt { flex-shrink:1; min-width:0; overflow:hidden; text-overflow:ellipsis }
     /* The pill is a corner marker. A unit makes it wider than the icon it marks,
        measured at 66px on a 72px icon. The popover names every value. */
     .badge-unit { display:none }
@@ -405,6 +405,11 @@
       padding:0; -webkit-appearance:none; appearance:none;
     }
     .dot.on { background:var(--dots-ink,var(--control-knob)); transform:scale(1.25) }
+    .dot:active { opacity:.7; transition-duration:.1s }
+    @media (hover:hover) and (pointer:fine) {
+      .dot:not(.on):hover { background:var(--dots-ink,rgba(255,255,255,.75)); opacity:.55 }
+      .dot:not(.on):active { opacity:.4 }
+    }
 
     /* Apple's guidance for a translucent control over rich content: dim what is
        bright, leave what is dark. The tone is sampled from the wallpaper behind
@@ -430,10 +435,14 @@
     }
     #photo-credit[data-place="top"] { inset-block:calc(12px + var(--safe-top)) auto }
     #photo-credit[data-tone="dark"] { color:var(--label-color-2-dark); text-shadow:var(--label-shadow-dark) }
-    #photo-credit:hover, #photo-credit:focus-within { color:var(--label-color) }
-    #photo-credit[data-tone="dark"]:hover, #photo-credit[data-tone="dark"]:focus-within { color:var(--label-color-dark) }
+    #photo-credit:focus-within { color:var(--label-color) }
+    #photo-credit[data-tone="dark"]:focus-within { color:var(--label-color-dark) }
     #photo-credit a { color:inherit; text-decoration:none }
-    #photo-credit a:hover { text-decoration:underline }
+    @media (hover:hover) and (pointer:fine) {
+      #photo-credit:hover { color:var(--label-color) }
+      #photo-credit[data-tone="dark"]:hover { color:var(--label-color-dark) }
+      #photo-credit a:hover { text-decoration:underline }
+    }
     #photo-credit a:focus-visible { outline:2px solid currentColor; outline-offset:2px; border-radius:2px }
     body.is-mob #photo-credit {
       inset-block:max(4px, calc(var(--sa-top) - 16px)) auto; inset-inline:0;
@@ -463,9 +472,9 @@
       -webkit-user-select:none; user-select:none;
       -webkit-touch-callout:none;
       overflow:hidden;
-      transition:clip-path .25s cubic-bezier(.4,0,.2,1), scale .16s ease-out;
+      transition:clip-path .25s var(--page-ease), scale .16s ease-out;
     }
-    #mob-search-pill:active { scale:.96; transition:clip-path .25s cubic-bezier(.4,0,.2,1), scale .1s ease-out }
+    #mob-search-pill:active { scale:.96; transition:clip-path .25s var(--page-ease), scale .1s ease-out }
     /* Search content — shown when idle */
     #mob-search-pill .msp-search {
       display:flex;
@@ -481,7 +490,7 @@
       font-style:normal; text-shadow:var(--label-shadow);
     }
     #mob-search-pill .msp-label {
-      font-size:calc(12px * var(--sc,1));line-height:1; font-weight:600; color:#FFFFFF; text-shadow:var(--label-shadow);
+      font-size:max(11px, calc(12px * var(--sc,1)));line-height:1; font-weight:600; color:#FFFFFF; text-shadow:var(--label-shadow);
       white-space:nowrap; 
     }
     /* Dots row — shown when paging */
@@ -531,6 +540,7 @@
       background:var(--glass-surface-bg);
       -webkit-backdrop-filter:var(--glass-surface-blur); backdrop-filter:var(--glass-surface-blur);
     }
+    :is(.folder-overlay, .folder-overlay-mobile) .glass-surface { -webkit-backdrop-filter:none; backdrop-filter:none }
     .glass-rim {
       position:absolute; inset:0; width:100%; height:100%; z-index:2;
       pointer-events:none; overflow:visible; fill:none;
@@ -570,8 +580,8 @@
     /* ── Spotlight — mobile layout (default, overridden for desktop below) ── */
     #spot {
       background:rgba(0,0,0,.62);
-      -webkit-backdrop-filter:blur(40px) saturate(180%) brightness(.76);
-      backdrop-filter:blur(40px) saturate(180%) brightness(.76);
+      -webkit-backdrop-filter:blur(20px) saturate(180%) brightness(.76);
+      backdrop-filter:blur(20px) saturate(180%) brightness(.76);
       align-items:stretch;
       justify-content:flex-end;
       padding-bottom:0; box-sizing:border-box;
@@ -606,7 +616,6 @@
     body:not(.is-mob) #sbox {
       width:min(680px,92vw);
       background:rgba(30,30,32,.72);
-      -webkit-backdrop-filter:blur(32px) saturate(180%); backdrop-filter:blur(32px) saturate(180%);
       border:.5px solid rgba(255,255,255,.12); border-radius:999px;
       box-shadow:0 8px 48px rgba(0,0,0,.45); overflow:hidden;
       flex-shrink:0; padding:0; order:-1;
@@ -617,7 +626,6 @@
       max-height:60vh; overflow-y:auto; 
       padding:10px 8px; margin-top:10px; flex:none; min-height:0;
       background:rgba(30,30,32,.72);
-      -webkit-backdrop-filter:blur(32px) saturate(180%); backdrop-filter:blur(32px) saturate(180%);
       border:.5px solid rgba(255,255,255,.12); border-radius:34px;
       box-shadow:0 8px 48px rgba(0,0,0,.45);
     }
@@ -675,7 +683,9 @@
       padding:0 4px; white-space:nowrap;
       align-items:center;
       justify-content:center;
+      transition:opacity .16s ease-out;
     }
+    #spot-cancel:active { opacity:.6; transition-duration:.1s }
     body.is-mob #spot-cancel {
       min-width:44px; min-height:44px; padding:0 8px;
       color:var(--accent);
@@ -704,10 +714,13 @@
     .sr {
       display:flex;
       align-items:center;
-      gap:14px; padding:10px 12px; border-radius:22px; cursor:pointer; text-decoration:none;
+      gap:18px; padding:14px 20px; border-radius:22px; cursor:pointer; text-decoration:none;
       transition:background .12s;
     }
-    .sr:hover, .sr:active, .sr.sel { background:rgba(255,255,255,.07) }
+    .sr:active, .sr.sel { background:rgba(255,255,255,.07) }
+    @media (hover:hover) and (pointer:fine) {
+      .sr:hover { background:rgba(255,255,255,.07) }
+    }
     /* The moving highlight replaces the row fill while it is on screen. The
        press state is not a cursor and stays. */
     #sres:has(> .fh-hl.on) .sr:hover,
@@ -730,6 +743,7 @@
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
     .sra { margin-inline-start:auto; color:rgba(255,255,255,.65); font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
+    .sra:dir(rtl) { transform:scaleX(-1) }
 
     /* The side reserves, used by both layouts. A device that reserves no side
        edge reports 0px, which leaves every gutter at its design value. */
@@ -755,6 +769,7 @@
     }
     .mob-page {
       flex:0 0 100vw; width:100vw; height:var(--pgh,100dvh); overflow:hidden;
+      contain:layout paint;
       padding-block:var(--sa-top) calc(var(--sa-bottom) + var(--dh,108px) + var(--dz,52px));
       padding-inline:max(var(--sm,18px), var(--sa-left,0px)) max(var(--sm,18px), var(--sa-right,0px));
     }
@@ -804,10 +819,10 @@
     .folder-dot {
       border-radius:50%; cursor:pointer; flex-shrink:0;
       border:0; -webkit-appearance:none; appearance:none; -webkit-tap-highlight-color:transparent;
-      background:rgba(255,255,255,.35);
-      transition:background .2s,transform .2s;
+      background:transparent; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.75);
+      transition:background .2s,box-shadow .2s,transform .2s;
     }
-    .folder-dot.on { background:var(--control-knob); transform:scale(1.25) }
+    .folder-dot.on { background:var(--control-knob); box-shadow:none; transform:scale(1.25) }
     .folder-dot { position:relative }
     .folder-dot::after { content:''; position:absolute; inset:-4px calc((var(--dsz) - 24px) / 2) calc(var(--dsz) - 20px) }
 
@@ -867,7 +882,7 @@
     .dyn-folder-box { position:relative; width:var(--iw); height:var(--iw); flex-shrink:0; }
     .dyn-grid       { display:grid; grid-template-columns:repeat(6,var(--iw)); gap:24px; justify-content:center; }
     .dyn-mob-btn    { flex:1; height:var(--rh); background:none; border:none; padding:0; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; -webkit-tap-highlight-color:transparent; -webkit-appearance:none; }
-    .dyn-mob-icon   { display:flex; flex-direction:column; align-items:center; justify-content:center; width:var(--cw); height:var(--rh); cursor:pointer; text-decoration:none; flex-shrink:0; -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; }
+    .dyn-mob-icon   { display:flex; flex-direction:column; align-items:center; justify-content:center; width:var(--cw); height:var(--rh); cursor:pointer; text-decoration:none; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
     .dyn-mob-label  { font-weight:500; color:#FFFFFF; text-align:center; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.65); font-size:var(--lfs); width:var(--lw); }
     .dyn-fold-label { font-weight:500; color:#FFFFFF; text-align:center; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.70); font-size:var(--lfs); width:var(--lw); }
     .dyn-fold-wrap  { position:absolute; inset:0; pointer-events:none; border-radius:var(--br); display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:var(--gap); padding:var(--pad); overflow:hidden; }
@@ -884,18 +899,15 @@
     .dyn-fold-anchor { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; -webkit-tap-highlight-color:transparent; }
     .dyn-fold-inner-label { font-weight:400; color:rgba(255,255,255,.90); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.6); font-size:var(--lfs); width:var(--fiw); }
     .dyn-title-mob  { position:absolute; pointer-events:none; font-size:var(--tfs); }
-    .dyn-box-mob    { position:absolute; touch-action:none; display:flex; flex-direction:column; align-items:center; inset-inline-start:var(--left); width:var(--bw); height:var(--bh); top:var(--top); border-radius:var(--br); padding:var(--pt) var(--ph) var(--pb); }
-    .dyn-dock-icon  { display:flex; align-items:center; justify-content:center; flex:0 1 auto; min-width:0; height:100%; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; overflow:visible; position:relative; }
+    .dyn-box-mob    { position:absolute; touch-action:pan-y pinch-zoom; display:flex; flex-direction:column; align-items:center; inset-inline-start:var(--left); width:var(--bw); height:var(--bh); top:var(--top); border-radius:var(--br); padding:var(--pt) var(--ph) var(--pb); }
+    .dyn-dock-icon  { display:flex; align-items:center; justify-content:center; flex:0 1 auto; min-width:0; height:100%; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; overflow:visible; position:relative; }
+    :is(.icon, .di, .folder-icon-link, .dyn-fold-anchor, .dyn-mob-icon, .dyn-mob-btn, .dyn-dock-icon) { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+    :is(#dock, #dots, #mob-search-pill, #spot, .folder-overlay, .folder-overlay-mobile) { touch-action:manipulation; }
 
 /* Strip backdrop-filter blur for anyone who asks for reduced motion or
    transparency. */
 /* The general rules for both preferences live in tokens.css. What remains here
    is only what the dashboard defines. */
-
-/* Reduced transparency → drop blur/material (legibility), keep motion as-is */
-@media (prefers-reduced-transparency: reduce) {
-  :root { --glass-surface-blur: none; }
-}
 
 /* Reduced motion: neutralize slides, springs, and lift transforms. */
 @media (prefers-reduced-motion: reduce) {
@@ -963,7 +975,9 @@
   margin-block-start: var(--sp-20); color: var(--label-link); text-decoration: none;
   font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);
 }
-.empty-state-hint:hover { text-decoration: underline }
+@media (hover:hover) and (pointer:fine) {
+  .empty-state-hint:hover { text-decoration: underline }
+}
 @media (max-height: 480px) {
   .empty-state-mark { display: none }
   .empty-state-sub { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body) }
@@ -985,6 +999,7 @@
 .api-error-sub   { font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color: rgba(255,255,255,.6); margin: 0; }
 .api-error-btn   {
   margin-top: 8px; padding: 13px 24px; border-radius: 999px; min-height: 48px;
+  display: inline-flex; align-items: center; justify-content: center; text-decoration: none;
   background: var(--glass-surface-bg); border: .5px solid rgba(255,255,255,.22);
   -webkit-backdrop-filter: var(--glass-surface-blur); backdrop-filter: var(--glass-surface-blur); font-weight: 500;
   color: var(--label-primary); font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); cursor: pointer; font-family: inherit;
@@ -1004,8 +1019,12 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
 .dot:focus-visible, .dyn-mob-icon:focus-visible, .dyn-mob-btn:focus-visible,
 .dyn-dock-icon:focus-visible, .dyn-fold-anchor:focus-visible,
 .folder-icon-link:focus-visible {
-  outline:2px solid var(--accent); outline-offset:3px; border-radius:8px;
+  outline:2px solid var(--accent); outline-offset:3px;
 }
+:is(.icon, .di, .dot, .dyn-mob-icon, .dyn-mob-btn, .dyn-dock-icon, .dyn-fold-anchor, .folder-icon-link):focus-visible {
+  outline-offset:2px; box-shadow:0 0 0 2px rgba(0,0,0,.72);
+}
+:is(.icon, .di, .dyn-mob-icon, .dyn-mob-btn, .dyn-dock-icon, .dyn-fold-anchor, .folder-icon-link):focus-visible { border-radius:8px; }
 #sin:focus-visible { outline:none; }
 /* On the box, not the bar. The box clips everything inside it. */
 body:not(.is-mob) #sbox:has(#sin:focus-visible) { outline:2px solid var(--accent); outline-offset:2px; }
@@ -1042,9 +1061,12 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
   .srh, .sr-section { color:rgba(235,235,245,.85); }
   .widget, .mob-widget-card { border-color:rgba(255,255,255,.35); }
   /* A translucent card cannot honour a contrast request and stay translucent. */
-  .widget[data-card="translucent"], .mob-widget-card[data-card="translucent"] { background:rgba(0,0,0,.62); }
+  .widget[data-card="translucent"], .mob-widget-card[data-card="translucent"] {
+    background:rgba(0,0,0,.62);
+    -webkit-backdrop-filter:blur(22px) saturate(140%); backdrop-filter:blur(22px) saturate(140%);
+  }
   .widget[data-card="light"], .mob-widget-card[data-card="light"] { border-color:rgba(0,0,0,.45); }
-  .dot { background:rgba(255,255,255,.75); }
+  .dot { border-width:2px; }
   .badge { box-shadow:0 0 0 1.5px rgba(0,0,0,.85); }
 }
 
@@ -1073,7 +1095,7 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
   max-width: none; max-height: none; width: 100%; height: 100%;
   margin: 0; border: 0; color: inherit;
   position: fixed; inset: 0; z-index: 10001;
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: safe center; justify-content: center; overflow-y: auto;
   background: rgba(0,0,0,.48);
   font-family: inherit; padding: 24px;
 }
@@ -1099,13 +1121,15 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
   .setup-pw:focus { outline:2px solid Highlight; }
 }
 .setup-field { position: relative; display: flex; align-items: center; }
-.setup-field .setup-pw { padding-inline-end: 48px; }
+.setup-field .setup-pw { padding-inline-end: 52px; }
 .setup-reveal {
-  position: absolute; inset-inline-end: 8px; display: flex; align-items: center; justify-content: center;
-  width: 36px; height: 36px; padding: 0; border: none; border-radius: 50%;
+  position: absolute; inset-inline-end: 6px; display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; padding: 0; border: none; border-radius: 50%;
   background: none; color: rgba(235,235,245,.6); cursor: pointer;
 }
-.setup-reveal:hover { color: rgba(255,255,255,.9); }
+@media (hover:hover) and (pointer:fine) {
+  .setup-reveal:hover { color: rgba(255,255,255,.9); }
+}
 .setup-reveal[aria-pressed="true"] { color: var(--accent); }
 .setup-bars { display: flex; gap: 4px; padding-inline: 8px; }
 .setup-bars .pwbar { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.1); transition: background .15s; }
@@ -1119,13 +1143,21 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
 .setup-btn-skip { background: rgba(118,118,128,.32); color: var(--label-primary); }
 .setup-btn-set  { background: var(--accent); color: var(--on-fill); }
 .setup-btn-set:disabled { opacity: .4; cursor: default; }
+:is(.empty-state-btn, .api-error-btn, .setup-btn) { transition: transform .16s ease-out; }
+:is(.empty-state-btn, .api-error-btn, .setup-btn):not(:disabled):active { transform: scale(.97); transition-duration: .1s; }
+.folder-dot:active, .setup-reveal:active, .empty-state-hint:active { opacity: .7; }
+@media (prefers-reduced-motion: reduce) {
+  :is(.empty-state-btn, .api-error-btn, .setup-btn):not(:disabled):active { transform: none; opacity: .7; }
+}
 html[data-theme="light"] .setup-card { background: rgba(255,255,255,.95); border-color: rgba(0,0,0,.08); box-shadow: 0 8px 48px rgba(0,0,0,.18); }
 html[data-theme="light"] .setup-sub,
 html[data-theme="light"] .setup-hint,
 html[data-theme="light"] .setup-reveal,
 html[data-theme="light"] input::placeholder,
 html[data-theme="light"] textarea::placeholder { color: rgba(60,60,67,.85); }
-html[data-theme="light"] .setup-reveal:hover { color: var(--label-primary); }
+@media (hover:hover) and (pointer:fine) {
+  html[data-theme="light"] .setup-reveal:hover { color: var(--label-primary); }
+}
 html[data-theme="light"] .setup-reveal[aria-pressed="true"] { color: var(--accent); }
 html[data-theme="light"] .setup-pw,
 html[data-theme="light"] .setup-btn-skip { background: rgba(118,118,128,.12); }
@@ -1198,10 +1230,14 @@ html[data-theme="light"] #mob-search-pill .msp-icon,
 html[data-theme="light"] #mob-search-pill .msp-label { color:var(--pill-ink-light); text-shadow:none }
 html[data-theme="light"] #mob-search-pill .msp-dot { background:rgba(60,60,67,.3) }
 html[data-theme="light"] #mob-search-pill .msp-dot.on { background:rgba(0,0,0,.8) }
+html:not([data-theme="light"]) #mob-search-pill[data-tone="dark"] { background:rgba(255,255,255,.72); border-color:rgba(0,0,0,.08) }
+html:not([data-theme="light"]) #mob-search-pill[data-tone="dark"] :is(.msp-icon, .msp-label) { color:var(--pill-ink-light); text-shadow:none }
+html:not([data-theme="light"]) #mob-search-pill[data-tone="dark"] .msp-dot { background:rgba(60,60,67,.3) }
+html:not([data-theme="light"]) #mob-search-pill[data-tone="dark"] .msp-dot.on { background:rgba(0,0,0,.8) }
 html[data-theme="light"] #spot { background:rgba(242,242,247,.9) }
 html[data-theme="light"] body:not(.is-mob) #spot { background:rgba(242,242,247,.5) }
 html[data-theme="light"] body.is-mob #spot {
-  -webkit-backdrop-filter:blur(40px) saturate(180%); backdrop-filter:blur(40px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%); backdrop-filter:blur(20px) saturate(180%);
 }
 html[data-theme="light"] body:not(.is-mob) #sbox,
 html[data-theme="light"] body:not(.is-mob) #sres {
@@ -1219,8 +1255,11 @@ html[data-theme="light"] body.is-mob #spot #sin::placeholder { color:rgba(60,60,
 html[data-theme="light"] .sr-empty { color:rgba(60,60,67,.85) }
 html[data-theme="light"] .sr-section, html[data-theme="light"] .srh { color:rgba(60,60,67,.85); border-color:rgba(0,0,0,.08) }
 html[data-theme="light"] .sra { color:rgba(60,60,67,.85) }
-html[data-theme="light"] .sr:hover, html[data-theme="light"] .sr:active,
+html[data-theme="light"] .sr:active,
 html[data-theme="light"] .sr.sel, html[data-theme="light"] .fh-hl { background:rgba(0,0,0,.06) }
+@media (hover:hover) and (pointer:fine) {
+  html[data-theme="light"] .sr:hover { background:rgba(0,0,0,.06) }
+}
 html[data-theme="light"] body.is-mob #sres .sr + .sr { border-top-color:rgba(0,0,0,.08) }
 html[data-theme="light"] .badge-pop {
   background:rgba(255,255,255,.96); border-color:rgba(0,0,0,.1); color:#000;
@@ -1235,8 +1274,8 @@ html[data-theme="light"] .folder-overlay-mobile {
 html[data-theme="light"] .folder-title-desktop { color:rgba(0,0,0,.88); text-shadow:0 1px 8px rgba(255,255,255,.6) }
 html[data-theme="light"] .folder-title-mobile { text-shadow:none }
 html[data-theme="light"] .folder-box-desktop { box-shadow:0 32px 80px rgba(0,0,0,.2) }
-html[data-theme="light"] .folder-dot { background:rgba(0,0,0,.25) }
-html[data-theme="light"] .folder-dot.on { background:rgba(0,0,0,.8) }
+html[data-theme="light"] .folder-dot { box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.55) }
+html[data-theme="light"] .folder-dot.on { background:rgba(0,0,0,.8); box-shadow:none }
 html[data-theme="light"] .dyn-fold-inner-label { color:rgba(0,0,0,.88); text-shadow:0 0 2px rgba(255,255,255,.55) }
 html[data-theme="light"] .api-error-btn { background:rgba(0,0,0,.06); border-color:rgba(0,0,0,.12) }
 html[data-theme="light"] .api-error-screen { color:rgba(0,0,0,.7) }
@@ -1263,4 +1302,17 @@ html:not([data-theme="light"]) .mob-widget-card[data-appearance="light"] {
   html[data-theme="light"] { --glass-bg:rgba(255,255,255,.97); --glass-border:rgba(0,0,0,.35) }
   html[data-theme="light"] .widget:not([data-appearance="dark"]),
   html[data-theme="light"] .mob-widget-card:not([data-appearance="dark"]) { border-color:rgba(0,0,0,.35) }
+}
+
+/* Keep after the theme rules. Earlier, the light theme overrides win and the
+   surfaces stay see-through. */
+@media (prefers-reduced-transparency: reduce) {
+  :root { --glass-surface-blur: none; --glass-surface-bg:rgba(44,44,46,.94); }
+  html[data-theme="light"] { --glass-surface-blur: none; --glass-surface-bg:rgba(242,242,247,.94); }
+  .folder-overlay-mobile, .folder-overlay { background:rgba(0,0,0,.82); }
+  html[data-theme="light"] .folder-overlay-mobile, html[data-theme="light"] .folder-overlay { background:rgba(255,255,255,.92); }
+  #spot, body:not(.is-mob) #spot { background:rgba(0,0,0,.82); }
+  html[data-theme="light"] #spot, html[data-theme="light"] body:not(.is-mob) #spot { background:rgba(242,242,247,.94); }
+  #dots { background:rgba(44,44,46,.94); }
+  html[data-theme="light"] #mob-search-pill { background:rgba(255,255,255,.94); }
 }

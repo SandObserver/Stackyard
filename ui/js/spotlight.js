@@ -3,7 +3,7 @@ import { SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=8b2dad40';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
-import { clr, el, initial, inp as inpById, mk, q, qa, setUserText } from '/js/utils.js?v=f0b9b030';
+import { clr, el, initial, inp as inpById, mk, q, qa, setUserText } from '/js/utils.js?v=a09f4f39';
 
 /* Attached to the window so a re-open can undo the previous one. */
 const _w = /** @type {any} */ (window);
@@ -83,7 +83,7 @@ export function initSpotlight({
       a.setAttribute('aria-label', app.label || app.id);
       a.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
       a.style.cssText =
-        'display:flex;align-items:center;gap:18px;padding:14px 20px;text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent;';
+        'display:flex;align-items:center;text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent;';
       /* A click also follows the link. Opening here as well opens two tabs. */
       const doOpen = viaTouch => {
         close();
@@ -171,7 +171,7 @@ export function initSpotlight({
       setUserText(nm, app.label || app.id);
       const ht = mk('div');
       ht.className = 'srh';
-      ht.textContent = (app.href || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+      setUserText(ht, (app.href || '').replace(/^https?:\/\//, '').replace(/\/$/, ''));
       tx.append(nm, ht);
       a.append(ic, tx);
       if (!isInternal) {
@@ -358,6 +358,7 @@ export function initSpotlight({
   document.addEventListener(
     'keydown',
     e => {
+      if (document.querySelector('dialog[open]:not(#spot)')) return;
       if (ov.open || ov.inert || !typeToOpen()) return;
       if (e.key === 'Escape' || e.key.length !== 1 || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === ' ' && e.target instanceof Element && e.target.closest(ACTIVATES_ON_SPACE)) return;

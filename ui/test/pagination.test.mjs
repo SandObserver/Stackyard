@@ -92,7 +92,7 @@ test('the current page differs from the others by shape, not only by fill', () =
 /* The bar and the dots are tinted over the wallpaper, so they need the reading
    the icon labels already get. */
 test('the indicator is enrolled in the wallpaper sampling', () => {
-  assert.match(read('js/label-contrast.js'), /LABEL_SELECTOR = '[^']*#dots/, 'the indicator is not sampled');
+  assert.match(read('js/label-contrast.js'), /LABEL_SELECTOR =\s+'[^']*#dots/, 'the indicator is not sampled');
   assert.match(read('css/dashboard.css'), /#dots\[data-tone="dark"\]/, 'nothing responds to the sampled tone');
 });
 
