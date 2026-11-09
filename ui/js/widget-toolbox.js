@@ -4,7 +4,7 @@
 import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
 import { jitter } from '/js/jitter.js?v=087a1fcf';
-import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-error.js?v=3bfb691c';
+import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-error.js?v=d1dfeaf9';
 import { formatNumber, setNumberLanguage } from '/js/format-number.js?v=abcd4ae4';
 
 export { esc, html, setHtml };

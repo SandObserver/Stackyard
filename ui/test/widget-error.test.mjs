@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { register } from 'node:module';
+
+register('./js-root-hooks.mjs', import.meta.url);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { errorKind, errorCopy, ERROR_KINDS } = await import('../js/widget-error.js');
@@ -185,4 +188,12 @@ test('the failure caption and its time suffix meet 4.5:1 on every card', () => {
     const r = ratio(fg, bg);
     assert.ok(r >= 4.5, `${card} card: ${r.toFixed(2)}:1`);
   }
+});
+
+test('every failure glyph is an icon from the shared set', async () => {
+  const { ICONS } = await import('../js/icon-set.js');
+  const src = fs.readFileSync(path.join(root, 'js/widget-error.js'), 'utf8');
+  const glyphs = [...src.matchAll(/^\s+\w+: \['(\w+)', 'err/gm)].map(m => m[1]);
+  assert.ok(glyphs.length >= 6);
+  for (const g of glyphs) assert.ok(ICONS['err-' + g], g);
 });

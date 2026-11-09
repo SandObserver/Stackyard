@@ -4,15 +4,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const { ICONS, STYLES, symbol } = await import('../js/icon-set.js');
+const { ICONS, STYLES, WEIGHTS, symbol } = await import('../js/icon-set.js');
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = p => fs.readFileSync(path.join(repo, p), 'utf8');
 
 function segments(d) {
   const out = [];
-  const re = /([MLHVAZmlhvaz])([^MLHVAZmlhvaz]*)/g;
-  const arity = { m: 2, l: 2, h: 1, v: 1, a: 7, z: 0 };
+  const re = /([MLHVACSQTZmlhvacsqtz])([^MLHVACSQTZmlhvacsqtz]*)/g;
+  const arity = { m: 2, l: 2, h: 1, v: 1, a: 7, c: 6, s: 4, q: 4, t: 2, z: 0 };
   let [x, y, sx, sy] = [0, 0, 0, 0];
   for (const [, c, args] of d.matchAll(re)) {
     const lc = c.toLowerCase();
@@ -118,6 +118,74 @@ test('the docs section icons have one accent part and stay inside the grid', () 
     assertInsideGrid(id);
     for (const styleId of Object.keys(STYLES)) assert.match(symbol(id, ICONS[id], styleId).sym, /<path|<rect/);
   }
+});
+
+const LOGOS = new Set(['logo', 'logo-ink', 'logo-arc']);
+const UTILITY = [
+  'edit',
+  'chevrons',
+  'back',
+  'up',
+  'hue-lo',
+  'hue-hi',
+  'sat-lo',
+  'sat-hi',
+  'bright-lo',
+  'bright-hi',
+  'external',
+  'docs',
+  'bug',
+  'heart',
+  'grip',
+  'eye',
+  'eye-slash',
+  'search',
+  'arrow-down',
+  'arrow-up',
+  'check',
+  'plus',
+  'info',
+  'success',
+  'failure',
+  'warning',
+];
+
+test('every icon stays inside the grid', () => {
+  for (const id of Object.keys(ICONS)) if (!LOGOS.has(id)) assertInsideGrid(id);
+});
+
+test('an icon has at most one accent part and a utility glyph has none', () => {
+  for (const [id, ic] of Object.entries(ICONS)) {
+    if (LOGOS.has(id)) continue;
+    const accents = ic.shapes.filter(p => p.role === 'a').length;
+    assert.ok(accents <= 1, `${id} has ${accents} accent parts`);
+    if (UTILITY.includes(id)) assert.equal(accents, 0, `${id} is a utility glyph`);
+  }
+});
+
+test('every style, weight and corner type draws every icon with unique ids', () => {
+  const ids = new Set();
+  for (const styleId of Object.keys(STYLES))
+    for (const sw of Object.values(WEIGHTS))
+      for (const sharp of [false, true])
+        for (const [id, ic] of Object.entries(ICONS)) {
+          const { defs, sym } = symbol(id, ic, styleId, sharp, sw);
+          assert.doesNotMatch(defs + sym, /NaN|undefined|style=/, `${id} ${styleId} ${sw}`);
+          for (const [, v] of (defs + sym).matchAll(/\bid="([^"]+)"/g)) {
+            assert.ok(!ids.has(v), `duplicate id ${v}`);
+            ids.add(v);
+          }
+        }
+});
+
+test('the default style keeps its sprite ids', () => {
+  assert.match(symbol('edit', ICONS.edit).sym, /<symbol id="sy-solid-edit"/);
+});
+
+test('filled draws a frame as one body and keeps the accent on open background', () => {
+  const { defs, sym } = symbol('widget', ICONS.widget, 'filled');
+  assert.match(sym, /<rect x="2" y="4" width="20" height="16"/);
+  assert.match(defs, /<mask/);
 });
 
 /* ── the standalone logo files ────────────────────────────────────────────── */

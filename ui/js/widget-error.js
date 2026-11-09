@@ -5,38 +5,7 @@
    Never draw a response's error message. It names hosts, ports and status
    codes, and it is not translated. */
 
-/* Nodes, not markup: this file is covered by the innerHTML ratchet. */
-const GLYPHS = {
-  offline: [
-    ['path', { d: 'M4 4l16 16' }],
-    ['path', { d: 'M12 18.6h.01' }],
-    ['path', { d: 'M8.1 14.7a5.5 5.5 0 0 1 3.9-1.6' }],
-  ],
-  slow: [
-    ['circle', { cx: '12', cy: '12', r: '7.6' }],
-    ['path', { d: 'M12 7.8V12l3 1.8' }],
-  ],
-  key: [
-    ['rect', { x: '5.4', y: '10.6', width: '13.2', height: '8.4', rx: '2.4' }],
-    ['path', { d: 'M8.6 10.6V8.2a3.4 3.4 0 0 1 6.8 0v2.4' }],
-  ],
-  blocked: [
-    ['circle', { cx: '12', cy: '12', r: '7.6' }],
-    ['path', { d: 'M6.6 6.6l10.8 10.8' }],
-  ],
-  unset: [
-    ['path', { d: 'M4.6 8.4h14.8M4.6 15.6h14.8' }],
-    ['circle', { cx: '9.4', cy: '8.4', r: '2.1' }],
-    ['circle', { cx: '14.6', cy: '15.6', r: '2.1' }],
-  ],
-  odd: [
-    ['circle', { cx: '12', cy: '12', r: '7.6' }],
-    ['path', { d: 'M12 8.2v4.6' }],
-    ['path', { d: 'M12 16h.01' }],
-  ],
-};
-
-const SVG_NS = 'http://www.w3.org/2000/svg';
+import { ICONS, symbol } from '/js/icon-set.js?v=b8068a58';
 
 /* kind -> [glyph, catalog key, English] */
 const COPY = {
@@ -65,26 +34,14 @@ export function errorKind(err) {
   return err ? 'network' : FALLBACK;
 }
 
-/** @param {string} kind @param {Document} doc @returns {SVGElement} */
+/** @param {string} kind @param {Document} doc @returns {Element} */
 function errorGlyph(kind, doc) {
   const [g] = COPY[kind] || COPY[FALLBACK];
-  const svg = doc.createElementNS(SVG_NS, 'svg');
-  for (const [k, v] of Object.entries({
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    'stroke-width': '1.7',
-    'stroke-linecap': 'round',
-    'stroke-linejoin': 'round',
-    'aria-hidden': 'true',
-  }))
-    svg.setAttribute(k, v);
-  for (const [tag, attrs] of GLYPHS[g]) {
-    const el = doc.createElementNS(SVG_NS, tag);
-    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
-    svg.appendChild(el);
-  }
-  return svg;
+  const id = `err-${g}`;
+  const { defs, sym } = symbol(id, ICONS[id]);
+  const src = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><defs>${defs}</defs>${sym.replace(/<\/?symbol[^>]*>/g, '')}</svg>`;
+  const Parser = doc.defaultView.DOMParser;
+  return doc.importNode(new Parser().parseFromString(src, 'image/svg+xml').documentElement, true);
 }
 
 /** The catalog key and English wording for a kind.
@@ -110,6 +67,8 @@ const CSS = `
 .wt-cap[hidden] { display: none; }
 html[data-theme="light"] .wt-cap { color: var(--wt-cap-color, #636366); }
 .wt-cap svg { width: 12px; height: 12px; flex: 0 0 auto; opacity: 0.85; }
+.wt-cap .sy-i { fill: currentColor; }
+.wt-cap .sy-is { stroke: currentColor; }
 .wt-cap b { font-weight: 500; overflow: hidden; min-width: 0;
   /* Two lines, then clip. The narrowest card cannot hold the longest line on
      one, and an ellipsised failure does not say what failed. */

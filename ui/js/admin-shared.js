@@ -5,11 +5,11 @@ import { t } from '/js/i18n.js?v=ed7c5565';
 import { errorAdvice } from '/js/admin-error.js?v=d1f8f6f4';
 import { formatList, formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { iconChain } from '/js/icons.js?v=76c29d43';
-import { iconSvg } from '/js/icon-set.js?v=b279fd98';
+import { iconSvg } from '/js/icon-set.js?v=b8068a58';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
-import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=fd68857f';
+import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=f06a966c';
 
 export const API = '';
 

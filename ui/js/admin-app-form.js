@@ -38,14 +38,14 @@ import {
   errorAction,
   showFieldError,
   clearFieldError,
-} from '/js/admin-shared.js?v=f240ee70';
+} from '/js/admin-shared.js?v=b88d6c8d';
 import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
-import { createListbox } from '/js/listbox.js?v=9847b20c';
+import { createListbox } from '/js/listbox.js?v=1440ddfa';
 import { MAX_LABELS } from '/js/badge-logic.js?v=04a4ece8';
-import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=94ff0d7e';
+import { renderColorControl, BADGE_DEFAULT } from '/js/admin-color-control.js?v=cfe0bd71';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=d1f8f6f4';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
-import { iconSvg } from '/js/icon-set.js?v=b279fd98';
+import { iconSvg } from '/js/icon-set.js?v=b8068a58';
 
 export function buildFolderForm(body, item) {
   const children = item?.children || [];
