@@ -23,7 +23,9 @@ import { toneForColor } from '/js/label-contrast.js?v=7172d36f';
 import { mobileMetrics, gridColumnWidth, gridCellCount, dockFit } from '/js/mobile-metrics.js?v=3b0d6715';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
 import { mkGlassRim, observeGlass } from '/js/glass-rim.js?v=3faec233';
-import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=e53affb9';
+import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=8b2dad40';
+import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
+import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 
 const PHONE_W = 393;
 
@@ -262,6 +264,7 @@ export function swipePager(target, strip, o) {
         strip.style.transition = 'none';
         strip.style.willChange = 'transform';
         strip.classList.add('dragging');
+        x0 = px;
       }
       speed.add(px, ts);
       const ends = [rest(0), rest(Math.max(0, o.total() - 1))];
@@ -341,7 +344,6 @@ export function swipePager(target, strip, o) {
     @param {Element} [tile] @returns {() => void} */
 function folderMotion(ov, parts, tile) {
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const ease = 'cubic-bezier(.32,.72,0,1)';
   /** @param {HTMLElement} p */
   const intoTile = p => {
     const from = !still && tile?.isConnected ? tile.getBoundingClientRect() : null;
@@ -363,7 +365,7 @@ function folderMotion(ov, parts, tile) {
       ? { duration: 150, easing: 'ease-out' }
       : prop === 'opacity'
         ? { duration: opening ? 120 : 250, easing: opening ? 'ease-out' : 'cubic-bezier(.6,0,1,1)' }
-        : { duration: opening ? 300 : 250, easing: ease };
+        : { duration: opening ? 300 : 250, easing: EASE_IOS };
   let running = steps.map(s => s.el.animate({ [s.prop]: [s.shut, s.open] }, timing(s.prop, true)));
   return () => {
     if (ov.contains(document.activeElement)) /** @type {HTMLElement} */ (document.activeElement).blur();
@@ -648,7 +650,11 @@ export function openFolderMobile(folder, isz, _ir, _im, sc, tile) {
   function gotoPage(n) {
     curPage = Math.max(0, Math.min(pages.length - 1, n));
     strip.style.transform = strip.style.webkitTransform = `translateX(${-pageDir() * curPage * pageW}px)`;
-    dotEls.forEach((d, j) => d.classList.toggle('on', j === curPage));
+    dotEls.forEach((d, j) => {
+      d.classList.toggle('on', j === curPage);
+      if (j === curPage) d.setAttribute('aria-current', 'true');
+      else d.removeAttribute('aria-current');
+    });
     inertAllBut(strip, curPage);
   }
 
@@ -698,14 +704,18 @@ export function openFolderMobile(folder, isz, _ir, _im, sc, tile) {
       gap: Math.max(dotSz + 2, Math.min(24, Math.floor(pageW / pages.length))) - dotSz + 'px',
     });
     dotEls = pages.map((_, i) => {
-      const d = mk('div');
+      const d = mk('button');
+      d.type = 'button';
       d.className = 'folder-dot dyn-dot';
+      d.setAttribute(
+        'aria-label',
+        t('home.goToPage', { page: formatNumber(i + 1), total: formatNumber(pages.length) }),
+      );
       css(d, { '--dsz': dotSz + 'px' });
       d.onclick = () => gotoPage(i);
       return d;
     });
     dotEls.forEach(d => dotsEl.appendChild(d));
-    gotoPage(0);
   }
 
   pages.forEach(pg => strip.appendChild(buildPage(pg)));
@@ -714,8 +724,17 @@ export function openFolderMobile(folder, isz, _ir, _im, sc, tile) {
   if (dotsEl) box.appendChild(dotsEl);
   children.forEach(c => bupd(c.id));
 
-  if (pages.length > 1)
+  if (pages.length > 1) {
+    gotoPage(0);
     swipePager(box, strip, { width: () => pageW, page: () => curPage, total: () => pages.length, turn: gotoPage });
+    ov.addEventListener('keydown', e => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      const inPage = strip.contains(document.activeElement);
+      gotoPage(curPage + (e.key === 'ArrowRight' ? pageDir() : -pageDir()));
+      /* Keep preventScroll. A focus scroll moves the clipped strip off its page. */
+      if (inPage) strip.children[curPage].querySelector('a')?.focus({ preventScroll: true });
+    });
+  }
   for (const type of ['touchstart', 'touchmove', 'touchend'])
     box.addEventListener(type, e => e.stopPropagation(), { passive: true });
   ov.appendChild(titleEl);

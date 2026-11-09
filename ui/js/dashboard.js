@@ -14,18 +14,19 @@ import {
   folderLabelName,
   readBadgeUpdate,
 } from '/js/badge-logic.js?v=04a4ece8';
-import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=652dd5df';
+import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=a3c8d206';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=fd68857f';
 import {
   configChanged,
   desktopCols,
   desktopPages,
   landingAfterSetup,
+  PAGE_TURN_MS,
   restoreAction,
   restorePage,
   wheelPager,
   withKnownSizes,
-} from '/js/dashboard-logic.js?v=e53affb9';
+} from '/js/dashboard-logic.js?v=8b2dad40';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { observeGlass } from '/js/glass-rim.js?v=3faec233';
@@ -48,7 +49,7 @@ import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
-import { initSpotlight } from '/js/spotlight.js?v=5d72f1f9';
+import { initSpotlight } from '/js/spotlight.js?v=ce6c53b7';
 import { applyTheme, prefersDark, readMode, resolveTheme, THEME_KEY } from '/js/theme.js?v=eeafa4b5';
 import {
   buildMobile,
@@ -59,7 +60,7 @@ import {
   openFolderMobile,
   resetMobileChrome,
   swipePager,
-} from '/js/ui.js?v=0dad05ce';
+} from '/js/ui.js?v=e983cd15';
 import {
   mkWrap as _mkWrap,
   el,
@@ -239,6 +240,7 @@ function bupd(id) {
     const tileName = tile?.dataset.tileName;
     if (tile && tileName) tile.setAttribute('aria-label', aria ? `${tileName}, ${aria}` : tileName);
     if (BSIG.get(badge) === sig) return;
+    const painted = BSIG.has(badge);
     BSIG.set(badge, sig);
     BEXIT.get(badge)?.cancel();
     BEXIT.delete(badge);
@@ -252,7 +254,7 @@ function bupd(id) {
               { opacity: 1, transform: 'translateZ(0)' },
               { opacity: 0, transform: 'translateZ(0) scale(.6)' },
             ],
-        { duration: 150, easing: 'ease-in', fill: 'forwards' },
+        { duration: 150, easing: 'cubic-bezier(.23,1,.32,1)', fill: 'forwards' },
       );
       BEXIT.set(badge, exit);
       exit.onfinish = () => {
@@ -262,8 +264,23 @@ function bupd(id) {
       };
       return;
     }
+    const entering = !_firstPolls && painted && !badge.classList.contains('on') && cls.split(' ').includes('on');
     paintBadge(badge, { cls, num, unit, bg, color, nextColor, popover, rows });
+    if (entering) badgeEnter(badge);
   });
+}
+
+function badgeEnter(badge) {
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  badge.animate(
+    still
+      ? [{ opacity: 0 }, { opacity: 1 }]
+      : [
+          { opacity: 0, transform: 'translateZ(0) scale(.8)' },
+          { opacity: 1, transform: 'translateZ(0)' },
+        ],
+    { duration: still ? 150 : 300, easing: 'cubic-bezier(.33,1,.68,1)' },
+  );
 }
 
 const BEXIT = new WeakMap();
@@ -533,25 +550,24 @@ function syncPageInert(current) {
   if (strip) inertAllBut(strip, current);
 }
 
+let _willChangeTimer = 0;
 function goTo(n, dotEls, announce = true) {
   const total = dotEls ? dotEls.length : totalPages;
   const was = pg;
   pg = Math.max(0, Math.min(total - 1, n));
+  if (pg !== was) closeBadgePopover();
   if (pg !== was && announce) announcePage(pg, total);
   if (_stateRef) _stateRef.pg = pg;
   storeSet(PAGE_STORE, String(pg));
   const strip = el('pages');
   syncPageInert(pg);
-  const shift = `translateX(${-pageDir() * pg * 100}vw)`;
+  const shift = `translateX(${-pageDir() * pg * 100}%)`;
   strip.style.transform = strip.style.webkitTransform = shift;
   strip.style.willChange = 'transform';
-  strip.addEventListener(
-    'transitionend',
-    () => {
-      strip.style.willChange = 'auto';
-    },
-    { once: true },
-  );
+  clearTimeout(_willChangeTimer);
+  _willChangeTimer = window.setTimeout(() => {
+    if (!strip.classList.contains('dragging')) strip.style.willChange = 'auto';
+  }, PAGE_TURN_MS + 50);
   (dotEls ?? document.querySelectorAll('.dot')).forEach((d, i) => {
     d.classList.toggle('on', i === pg);
     if (i === pg) d.setAttribute('aria-current', 'true');
@@ -762,6 +778,8 @@ async function applyBg() {
 function refreshBadges() {
   for (const id of BEL.keys()) bupd(id);
 }
+/* Badges the first polls turn on are existing state, not a change. */
+let _firstPolls = 2;
 async function pollBadges() {
   try {
     const res = await fetch('/api/badges', { cache: 'no-store' });
@@ -787,6 +805,8 @@ async function pollBadges() {
       badgesStale = true;
       refreshBadges();
     }
+  } finally {
+    if (_firstPolls) _firstPolls--;
   }
 }
 async function pollHealth() {
@@ -808,6 +828,8 @@ async function pollHealth() {
       healthStale = true;
       refreshBadges();
     }
+  } finally {
+    if (_firstPolls) _firstPolls--;
   }
 }
 
@@ -1101,7 +1123,7 @@ async function boot() {
     if (e.target === pager) return;
     if (el('spot').hasAttribute('open')) return;
     /* The overlay covers the page it would scroll behind. */
-    if (document.querySelector('.folder-overlay[open]')) return;
+    if (document.querySelector('.folder-overlay[open], .folder-overlay-mobile[open]')) return;
     if (e.key === 'ArrowRight') goTo(pg + pageDir());
     if (e.key === 'ArrowLeft') goTo(pg - pageDir());
   });
@@ -1200,8 +1222,7 @@ async function boot() {
       return;
     }
     const doc = /** @type {any} */ (document);
-    if (typeof doc.startViewTransition === 'function' && !matchMedia('(prefers-reduced-motion: reduce)').matches)
-      doc.startViewTransition(retheme);
+    if (typeof doc.startViewTransition === 'function') doc.startViewTransition(retheme);
     else retheme();
   };
   try {
@@ -1354,7 +1375,7 @@ async function boot() {
   window.addEventListener('pageshow', async e => {
     if (!e.persisted) return;
     const signal = AbortSignal.timeout(BOOT_TIMEOUT_MS);
-    /** @param {string} url @returns {Promise<import('/js/dashboard-logic.js?v=e53affb9').RestoreCheck>} */
+    /** @param {string} url @returns {Promise<import('/js/dashboard-logic.js?v=8b2dad40').RestoreCheck>} */
     const check = async url => {
       try {
         const r = await fetch(url, { cache: 'no-store', redirect: 'manual', signal });

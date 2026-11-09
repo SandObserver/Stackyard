@@ -51,9 +51,10 @@ test('a running poll draws its last data again when the theme changes', () => {
   assert.match(src, /_themed\.delete\(onTheme\)/, 'a stopped poll would keep drawing');
 });
 
-test('a badge scales in, scales out and crossfades its colour', () => {
-  assert.match(css, /\.badge\.on\s*\{[^}]*animation:badge-in \.3s/);
-  assert.match(css, /@keyframes badge-in \{ from \{ opacity:0; transform:translateZ\(0\) scale\(\.5\) \} \}/);
+test('a badge scales in only on a live change, scales out and crossfades its colour', () => {
+  assert.doesNotMatch(css, /animation:badge-in/, 'every rebuild would pop every badge');
+  assert.match(dashboard, /const entering = !_firstPolls && painted && !badge\.classList\.contains\('on'\)/);
+  assert.match(dashboard, /transform: 'translateZ\(0\) scale\(\.8\)'/);
   assert.match(css, /\.badge \{[^}]*transition:background-color \.2s ease;/);
   assert.match(dashboard, /BEXIT\.get\(badge\)\?\.cancel\(\);/, 'a late exit would paint over a newer value');
 });
@@ -187,4 +188,40 @@ test('a changed digit rolls its full height inside a clipped slot', () => {
   assert.match(src, /const enter = up \? '100%' : '-100%';/);
   assert.match(src, /const leave = up \? '-100%' : '100%';/);
   assert.match(src, /filter: 'blur\(2px\)'/);
+});
+
+test('the shared curve, the page curve and the release slope agree', async () => {
+  const { EASE_IOS } = await import('../js/motion-curve.js');
+  const { PAGE_EASE_SLOPE } = await import('../js/dashboard-logic.js');
+  const [x1, y1, x2, y2] = EASE_IOS.match(/[\d.]+/g).map(Number);
+  assert.deepEqual([x2, y2], [0, 1]);
+  assert.equal(PAGE_EASE_SLOPE, y1 / x1, 'a flick would no longer leave at finger speed');
+  assert.ok(css.includes(`--page-ease:        ${EASE_IOS}`));
+});
+
+test('a tile settles without overshoot', () => {
+  assert.doesNotMatch(css, /bounce-spring|1\.56/);
+});
+
+test('the home strip keeps vertical pan and pinch zoom', () => {
+  assert.match(css, /#pages \{[^}]*touch-action:pan-y pinch-zoom/);
+});
+
+test('the phone search pill answers a press without touching its inline transform', () => {
+  assert.match(css, /#mob-search-pill:active \{ scale:\.96;/);
+});
+
+test('folder pages are reachable without touch', () => {
+  const ui = read('js/ui.js');
+  assert.match(ui, /const d = mk\('button'\);\s*d\.type = 'button';\s*d\.className = 'folder-dot dyn-dot';/);
+  assert.match(ui, /e\.key !== 'ArrowRight' && e\.key !== 'ArrowLeft'/);
+  assert.match(ui, /focus\(\{ preventScroll: true \}\)/, 'a focus scroll knocks the clipped strip off its page');
+  assert.match(
+    dashboard,
+    /if \(document\.querySelector\('\.folder-overlay\[open\], \.folder-overlay-mobile\[open\]'\)\) return;\s*if \(e\.key === 'ArrowRight'\)/,
+  );
+});
+
+test('a page turn closes the badge popover', () => {
+  assert.match(dashboard, /if \(pg !== was\) closeBadgePopover\(\);/);
 });

@@ -183,7 +183,7 @@ window.__MAP=(function(D){
 })(window.__DOTS);
 </script>
 <script type="module">
-import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen } from '/js/widget-toolbox.js?v=373740c4';
+import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen } from '/js/widget-toolbox.js?v=ae422d8d';
 await loadStrings();
 document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World map of connections'));
 (function(){
@@ -210,8 +210,14 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
   /* One frame pending at most. Each poll and resize asks for a frame; queuing
      a new one each time stacks endless animation loops. */
   let raf=0;
-  function kick(){if(!raf)raf=requestAnimationFrame(frame);}
-  function frame(now){raf=0;draw(now);}
+  const PULSE_MS=66;
+  let repaint=false, lastDraw=-Infinity;
+  function kick(){repaint=true;if(!raf)raf=requestAnimationFrame(frame);}
+  function frame(now){
+    raf=0;
+    if(repaint||now-lastDraw>=PULSE_MS){repaint=false;lastDraw=now;draw(now);}
+    if(!reduce&&points.length&&onScreen&&!raf)raf=requestAnimationFrame(frame);
+  }
   let onScreen=false;
   whileOnScreen(cv,v=>{onScreen=v;if(v)kick();});
 
@@ -368,7 +374,6 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
       ctx.fillStyle=rgbCss(pt.col);
       disc(cx(pt.cell[0]),cy(pt.cell[1]),p*2/3*pulse);
     }
-    if(!reduce&&points.length&&onScreen)kick();
   }
   function redraw(){relayout();kick();}
 

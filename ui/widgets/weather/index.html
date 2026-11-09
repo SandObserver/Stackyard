@@ -18,9 +18,10 @@
   .ico svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
   .wx-pos,.wx-pos>div{position:absolute;inset:0}
   .wx-pos{transform-origin:0 0}
+  .wx-gust,.wx-gust div,.ico>.wx-flash{position:absolute;inset:0}
   .meta{position:absolute;left:18px;right:18px;bottom:14px;display:flex;flex-direction:column;gap:2px}
   .cond{font-size:15px;font-weight:600;color:#2C2C2E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .temp{font-size:42px;font-weight:700;line-height:1;letter-spacing:-0.01em;color:#f0852a}
+  .temp{font-size:42px;font-weight:700;line-height:1;letter-spacing:-0.01em;color:#f0852a;font-variant-numeric:tabular-nums}
   .msg{margin-top:3px}
   /* Falling parts are HTML boxes the size of the icon, so 1% is one unit of the artwork. */
   @keyframes wxdrop{0%{transform:translate(0,0);opacity:0}22%{opacity:1}80%{opacity:1}100%{transform:translate(-7.5%,15.2%);opacity:0}}
@@ -35,7 +36,7 @@
   .wx-pellet{animation:wxpellet 1.5s cubic-bezier(.4,0,.9,.7) infinite}
   .wx-flow{animation:wxslide 2.4s linear infinite}
   .wx-spin{stroke-dasharray:28 72;animation:wxspin 1.2s linear infinite}
-  .wx-flash{animation:wxflash 6.5s linear infinite}
+  .wx-flash{opacity:0;animation:wxflash 6.5s linear infinite}
   .wx-bolt{animation:wxbolt 6.5s linear infinite}
   .wx-draw{stroke-dasharray:1}
   .ico.off *{animation-play-state:paused}
@@ -76,7 +77,7 @@
   <div class="sr-only" id="sr"></div>
 </div>
 <script type="module">
-import { poll, fetchData, rollText, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, setHtml } from '/js/widget-toolbox.js?v=373740c4';
+import { poll, fetchData, rollText, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, setHtml } from '/js/widget-toolbox.js?v=ae422d8d';
 import { ensureSprite } from '/js/icon-set.js?v=b279fd98';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('widget.label', 'Weather'));
@@ -160,7 +161,7 @@ function snow(day){
 function storm(day){
   const z=`M4 ${f(BASE-6)}L-6 ${f(BASE+10)}L4 ${f(BASE+11)}L-8 ${f(BASE+30)}`;
   const bolt=`</svg><div class="wx-pos wx-flip" data-lo="40" data-hi="58" style="transform:translateX(50%)"><div class="wx-bolt">${LAYER}<path class="wx-draw" pathLength="1" d="${z}" fill="none" stroke="#FFD600" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>${LAYER}`;
-  return bolt+cloud(day,...PC)+`<path class="wx-flash wx-front" d="${cloudPath(...PC)}" fill="#FFFFFF" opacity="0"/>`;
+  return bolt+cloud(day,...PC)+`</svg><div class="wx-flash wx-front">${LAYER}<path d="${cloudPath(...PC)}" fill="#FFFFFF"/></svg></div>${LAYER}`;
 }
 const BANDS=[[10,14,80,.5],[0,28,96,.75],[14,42,84,.9],[2,56,90,.65],[18,68,66,.4]];
 function haze(colours,op,bands=BANDS){
@@ -171,8 +172,8 @@ function haze(colours,op,bands=BANDS){
 const grey=day=>day?'#8E8E93':'#FFFFFF';
 function gust(day,x,y,w,i,h){
   const r=h/2,d=`M${x+w-r} ${y-r}A${r} ${r} 0 0 1 ${x+w-r} ${y+r}L${x} ${y+.5}A.5 .5 0 0 1 ${x} ${y-.5}z`;
-  const len=w-r-4,seg=f(len*.24),id=`wx-c${clipN++}`;
-  return `<g class="wx-mist">${glass(day,d,{rim:1})}<clipPath id="${id}"><rect x="${x+8}" y="${y-2}" width="${f(len-3)}" height="4"/></clipPath><g clip-path="url(#${id})"><path class="wx-flow" d="M${f(x+w-r+seg)} ${y}h${-seg}" stroke="#FFFFFF" stroke-opacity="${day?.95:.85}" stroke-width="1.6" stroke-linecap="round" style="--d:${f(-(len+seg))}px;animation-duration:${f(1.3+i*.3)}s;animation-delay:-${f(i*.5)}s"/></g></g>`;
+  const len=w-r-4,seg=f(len*.24),clip=`inset(${f(y-2)}% ${f(100-(x+8+len-3))}% ${f(100-(y+2))}% ${x+8}%)`;
+  return `</svg><div class="wx-gust wx-mist">${LAYER}${glass(day,d,{rim:1})}</svg><div style="clip-path:${clip}"><div class="wx-flow" style="--d:${f(-(len+seg))}%;animation-duration:${f(1.3+i*.3)}s;animation-delay:-${f(i*.5)}s">${LAYER}<path d="M${f(x+w-r+seg)} ${y}h${-seg}" stroke="#FFFFFF" stroke-opacity="${day?.95:.85}" stroke-width="1.6" stroke-linecap="round"/></svg></div></div></div>${LAYER}`;
 }
 const FUNNEL=[[50,13,38],[54,25,27],[54,37,18],[51,49,11],[47,61,6.5],[45,71,3.5]];
 function tornado(day){
@@ -316,6 +317,7 @@ document.addEventListener('keydown',e=>{
 });
 for(const ev of ['mouseleave','focusout'])widgetEl.addEventListener(ev,()=>widgetEl.classList.remove('hush'));
 
+let iconKey='';
 function render(d){
   state.ok();
   const m=mapCode(d.code,d.condition);
@@ -328,8 +330,12 @@ function render(d){
   widgetEl.style.background = bg;
   setCardAppearance(!lightCard);
 
-  icoEl.innerHTML=(LAYER+buildIcon(m.cond,day)+'</svg>').replaceAll(LAYER+'</svg>','');
-  if(ambientTimer)ambient();
+  const nextIcon=`${m.cond}|${day}`;
+  if(nextIcon!==iconKey){
+    iconKey=nextIcon;
+    icoEl.innerHTML=(LAYER+buildIcon(m.cond,day)+'</svg>').replaceAll(LAYER+'</svg>','');
+    if(ambientTimer)ambient();
+  }
   condEl.textContent=m.label;
   fitText(condEl,11);
   const unitSym = d.units==='f' ? '°F' : '°C';
@@ -366,12 +372,14 @@ setInterval(describe, 60000);
 
 const still=matchMedia('(prefers-reduced-motion: reduce)');
 const bounce=(t,period)=>{const x=(t/period)%2;return x<1?x:2-x;};
+/* An HTML box the size of the icon needs %, an svg part needs px, for one unit of the artwork. */
+const drift=(e,units)=>{e.style.transform=`translateX(${units.toFixed(2)}${e.tagName==='DIV'?'%':'px'})`;};
 let ambientTimer=0,onScreen=true;
 function ambient(){
   const t=performance.now()/1000;
-  for(const e of icoEl.querySelectorAll('.wx-front'))e.style.transform=`translateX(${(bounce(t,18)*5-2.5).toFixed(2)}px)`;
-  for(const e of icoEl.querySelectorAll('.wx-back'))e.style.transform=`translateX(${(2.5-bounce(t,26)*5).toFixed(2)}px)`;
-  icoEl.querySelectorAll('.wx-mist').forEach((e,i)=>{e.style.transform=`translateX(${(bounce(t+2*i,8+3*i)*6-3).toFixed(2)}px)`;});
+  for(const e of icoEl.querySelectorAll('.wx-front'))drift(e,bounce(t,18)*5-2.5);
+  for(const e of icoEl.querySelectorAll('.wx-back'))drift(e,2.5-bounce(t,26)*5);
+  icoEl.querySelectorAll('.wx-mist').forEach((e,i)=>drift(e,bounce(t+2*i,8+3*i)*6-3));
 }
 function runAmbient(){
   clearInterval(ambientTimer);

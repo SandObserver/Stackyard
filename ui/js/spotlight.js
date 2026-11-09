@@ -1,4 +1,5 @@
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
+import { SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=8b2dad40';
 import { t } from '/js/i18n.js?v=ed7c5565';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
@@ -54,7 +55,7 @@ export function initSpotlight({
     si = 0;
     if (!cur.length) {
       const e = mk('div');
-      e.style.cssText = 'padding:24px;text-align:center;color:rgba(255,255,255,.35);font-size:14px';
+      e.className = 'sr-empty';
       e.textContent = t('home.noResults');
       res.appendChild(e);
       if (live) live.textContent = t('home.noResults');
@@ -97,7 +98,32 @@ export function initSpotlight({
           window.open(app.href, '_blank', 'noreferrer,noopener');
         }
       };
+      let sx = 0,
+        sy = 0,
+        top = 0,
+        moved = false;
+      a.addEventListener(
+        'touchstart',
+        e => {
+          const touch = e.changedTouches[0];
+          sx = touch.clientX;
+          sy = touch.clientY;
+          top = res.scrollTop;
+          moved = e.touches.length > 1;
+        },
+        { passive: true },
+      );
+      a.addEventListener(
+        'touchmove',
+        e => {
+          const touch = e.changedTouches[0];
+          if (touch && Math.hypot(touch.clientX - sx, touch.clientY - sy) >= SWIPE_LOCK_PX) moved = true;
+        },
+        { passive: true },
+      );
       a.addEventListener('touchend', e => {
+        /* A scroll that lifts on a row must not open it. */
+        if (moved || res.scrollTop !== top) return;
         e.preventDefault();
         doOpen(true);
       });

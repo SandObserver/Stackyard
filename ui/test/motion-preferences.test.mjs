@@ -90,7 +90,7 @@ test('code that waits on transitionend has a way out under reduced motion', () =
     .filter(f => /'transitionend'/.test(read(`js/${f}`)));
   assert.deepEqual(
     waiters.sort(),
-    ['admin-drag.js', 'admin-shared.js', 'dashboard.js', 'listbox.js'],
+    ['admin-drag.js', 'admin-shared.js', 'listbox.js'],
     'a new transitionend listener needs a fallback',
   );
   assert.match(read('js/admin-shared.js'), /timer = setTimeout\(end, \d+\)/);
@@ -100,6 +100,18 @@ test('code that waits on transitionend has a way out under reduced motion', () =
     dashboard.slice(dashboard.indexOf('@media (prefers-reduced-motion')),
     /#pages \{ transition: none !important; \}/,
   );
+  assert.match(read('js/dashboard.js'), /_willChangeTimer = window\.setTimeout\(/, 'will-change would stay on');
+});
+
+test('reduced motion keeps the wallpaper crossfade', () => {
+  const motion = dashboard.slice(dashboard.indexOf('@media (prefers-reduced-motion'));
+  assert.match(motion, /html\.wall-swap::after, html\.wall-in::before \{ animation-duration:\.4s !important; \}/);
+});
+
+test('reduced motion keeps the theme crossfade and fades a new badge', () => {
+  const js = read('js/dashboard.js');
+  assert.match(js, /if \(typeof doc\.startViewTransition === 'function'\) doc\.startViewTransition\(retheme\);/);
+  assert.match(js, /still\s*\? \[\{ opacity: 0 \}, \{ opacity: 1 \}\]/);
 });
 
 test('every page ends up honouring all three preferences', () => {

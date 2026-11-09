@@ -66,6 +66,7 @@
   }
   .card-back-name.cut, .card-front-name.cut { display: block; white-space: nowrap; text-overflow: ellipsis; }
   .card-back.running { animation: pulse-bg 2s ease-in-out infinite; }
+  .off .card-back.running, .off .sync-icon { animation-play-state: paused; }
   @keyframes pulse-bg { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.15)} }
 
   /* Front card */
@@ -124,7 +125,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom } from '/js/widget-toolbox.js?v=373740c4';
+import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom, whileOnScreen } from '/js/widget-toolbox.js?v=ae422d8d';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const id   = new URLSearchParams(location.search).get('id')   || '';
@@ -404,6 +405,7 @@ async function boot() {
   buildShell();
   /* The gap shrinks to 5s while any slot reports running. */
   const w = document.getElementById('widget');
+  whileOnScreen(w, v => w.classList.toggle('off', !v));
   const state = errorState({
     root: w,
     content: () => Array.from(w.querySelectorAll('.card-wrap')),
@@ -415,6 +417,7 @@ async function boot() {
     onError: ({ error, everOk, stale, since }) => {
       if (!everOk || stale) applyError(state.fail(error, { since, inert: everOk }));
     } });
+  setInterval(refreshTimes, 60000);
 }
 
 function buildShell() {
@@ -589,7 +592,18 @@ async function fetchJobs() {
   return fetchData('slots');
 }
 
+let _shownJobs=null;
+
+function refreshTimes() {
+  if(!_shownJobs||document.hidden) return;
+  slotList().forEach((jobId,idx)=>{
+    const job=jobId?_shownJobs[idx]:null;
+    if(job&&!job.error&&job.status!=='running') paintTimes(idx,job);
+  });
+}
+
 function apply(jobs) {
+  _shownJobs=jobs;
   /* jobs is indexed by slot. Map by index, never by id, or slots sharing a
      container lose their own name and status. */
   slotList().forEach((jobId,idx)=>{
@@ -649,12 +663,19 @@ function applyCard(idx, job) {
   if(bname) fitName(bname, job.name||'—');
   if(fname) fitName(fname, job.name||'—');
 
+  paintTimes(idx, job);
+  back.setAttribute('aria-hidden','true');
+}
+
+function paintTimes(idx, job) {
+  const front = document.getElementById(`front-${idx}`);
+  const bmeta = document.getElementById(`back-meta-${idx}`);
   const running = job.status==='running';
   const last = running ? '' : relTime(job.lastFinished);
   const next = (!running && job.nextRun) ? relTime(job.nextRun) : '';
   if(bmeta) {
     if(running){
-      bmeta.innerHTML=`<span class="sync-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5a5.5 5.5 0 0 1 4 1.73"/><path d="M13.5 2.5v2.5H11"/></svg></span>${wt('ui.runningNow','Running…')}<br>&nbsp;`;
+      if(!bmeta.querySelector('.sync-icon')) bmeta.innerHTML=`<span class="sync-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5a5.5 5.5 0 0 1 4 1.73"/><path d="M13.5 2.5v2.5H11"/></svg></span>${wt('ui.runningNow','Running…')}<br>&nbsp;`;
     } else {
       setHtml(bmeta, next
         ? html`${wt('ui.lastAt','Last {when}',{when:last})}<br>${wt('ui.nextAt','Next {when}',{when:next})}`
@@ -668,10 +689,10 @@ function applyCard(idx, job) {
   if(last) parts.push(wt('ui.lastAria','last run {when}',{when:last}));
   if(next) parts.push(wt('ui.nextAria','next run {when}',{when:next}));
   front.setAttribute('aria-label', formatList(parts,'plain'));
-  back.setAttribute('aria-hidden','true');
 }
 
 function applyError(line) {
+  _shownJobs=null;
   slotList().forEach((_,idx)=>applyCardError(idx, line));
 }
 

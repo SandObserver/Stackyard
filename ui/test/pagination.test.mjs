@@ -220,7 +220,7 @@ test('a page turns in 280ms on an ease-out curve', () => {
 test('both page strips move by the direction of the page', () => {
   assert.match(
     dashboard,
-    /translateX\(\$\{-pageDir\(\) \* pg \* 100\}vw\)/,
+    /translateX\(\$\{-pageDir\(\) \* pg \* 100\}%\)/,
     'the dashboard strip is fixed to one direction',
   );
   assert.match(
