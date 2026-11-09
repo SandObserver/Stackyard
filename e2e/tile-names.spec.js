@@ -9,12 +9,9 @@
 const { test, expect } = require('@playwright/test');
 const { seedConfig, dismissSetupPrompt, app, animationsDone } = require('./helpers');
 
-/* A host that cannot resolve, so the check fails the same way on every run. */
-const DEAD = 'http://does-not-resolve.invalid/';
-
 const watched = (id, label) => ({
   ...app(id, label),
-  monitoring: { healthcheck: { enabled: true, pingUrl: DEAD } },
+  monitoring: { healthcheck: { enabled: true, pingUrl: 'http://service.invalid/' } },
 });
 
 /* Three badged tiles, not one: a live region per badge only shows as
@@ -26,7 +23,11 @@ const ITEMS = [watched('watched', 'Watched'), watched('w2', 'Second'), watched('
 test.describe('tile names', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'needs CDP');
 
-  test.beforeEach(async ({ request }) => {
+  test.beforeEach(async ({ page, request }) => {
+    const unhealthy = { unhealthy: true, pingStatus: 0, pingError: 'Could not connect' };
+    await page.route('**/api/health', route =>
+      route.fulfill({ json: { watched: unhealthy, w2: unhealthy, w3: unhealthy } }),
+    );
     await seedConfig(request, { items: ITEMS, settings: { showLabels: { desktop: false } } });
     await dismissSetupPrompt(request);
   });
