@@ -73,6 +73,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Remove the bounce from dashboard tile presses.
 
+- Dragging near a screen edge scrolls faster the closer the pointer is to the
+  edge.
+
 ### Fixed
 
 - Let the owner set a new password with a setup code when the saved password is
@@ -132,6 +135,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pages.
 
 - The empty search message is readable in the light theme.
+
+- Long values in Settings drop-downs no longer collapse or shift the row.
+
+- Dragging a row on a phone scrolls above the tab bar.
+
+- Small Settings controls have larger touch areas.
+
+- Settings scrolling respects the reduced motion preference.
 
 ### Security
 
