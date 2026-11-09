@@ -76,6 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dragging near a screen edge scrolls faster the closer the pointer is to the
   edge.
 
+- Redraw the interface icons in one consistent style.
+
 ### Fixed
 
 - Let the owner set a new password with a setup code when the saved password is
