@@ -193,6 +193,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep the `Secure` flag on the session cookie when a renewal request does not
   show the page scheme.
 
+- Run the Compose example with a read-only root filesystem.
+
 ## [1.21.0] - 2026-11-01
 
 ### Added
