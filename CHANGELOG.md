@@ -197,6 +197,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Screen readers announce how many items match a search.
 
+- An app with the id `settings` no longer blocks every Settings save.
+
+- A folder whose app list is malformed no longer stops the dashboard and
+  Settings from loading.
+
 ### Security
 
 - Refuse sign-in and password requests larger than 32 KB, so parallel large
