@@ -574,6 +574,75 @@ test('values already stored do not block a save, and new bad values are refused'
     assert.equal(added.status, 400);
     assert.equal(added.body.code, 'invalid.bad-item');
     assert.deepEqual(added.body.detail, { id: 'new', field: 'label' });
+    const worse = items.map(i => (i.id === 'old' ? { ...i, iconUrl: 5 } : i));
+    const another = await req('POST', '/api/config', { cookie: validCookie, body: { items: worse, settings: {} } });
+    assert.equal(another.status, 400);
+    assert.equal(another.body.code, 'invalid.bad-item');
+    assert.deepEqual(another.body.detail, { id: 'old', field: 'iconUrl' });
+  } finally {
+    saveConfig(initial);
+  }
+});
+
+test('a stored bad setting passes only while its value is unchanged', async () => {
+  const initial = loadConfig();
+  saveConfig({ ...initial, settings: { ...initial.settings, background: 'x' } });
+  try {
+    const settings = { ...loadConfig().settings };
+    const same = await req('POST', '/api/config', { cookie: validCookie, body: { items: [], settings } });
+    assert.equal(same.status, 200);
+    const changed = await req('POST', '/api/config', {
+      cookie: validCookie,
+      body: { items: [], settings: { ...settings, background: 'y' } },
+    });
+    assert.equal(changed.status, 400);
+    assert.equal(changed.body.code, 'invalid.bad-setting');
+    assert.deepEqual(changed.body.detail, { id: 'background' });
+  } finally {
+    saveConfig(initial);
+  }
+});
+
+test('a stored ordinary item with the id settings is renamed, and its folder follows it', async () => {
+  const initial = loadConfig();
+  const items = [
+    { id: 'settings', type: 'app', label: 'Mine', href: 'https://m.invalid' },
+    { id: 'settings-2', type: 'app', label: 'Taken', href: 'https://t.invalid' },
+    { id: 'f', type: 'folder', label: 'F', children: ['settings', 'settings-2'] },
+  ];
+  fs.writeFileSync(process.env.CONFIG_PATH, JSON.stringify({ ...initial, items }));
+  loadConfigForUpdate();
+  try {
+    const got = await req('GET', '/api/config', { cookie: validCookie });
+    assert.equal(got.status, 200);
+    assert.equal(got.body.items.filter(i => i.id === 'settings').length, 1);
+    assert.equal(got.body.items.find(i => i.id === 'settings').system, 'settings');
+    assert.equal(got.body.items.find(i => i.id === 'settings-3').label, 'Mine');
+    assert.deepEqual(got.body.items.find(i => i.id === 'f').children, ['settings-3', 'settings-2']);
+    const saved = await req('POST', '/api/config', { cookie: validCookie, body: got.body });
+    assert.equal(saved.status, 200);
+    assert.deepEqual(loadConfig().items.find(i => i.id === 'f').children, ['settings-3', 'settings-2']);
+  } finally {
+    saveConfig(initial);
+  }
+});
+
+test('a stored folder whose children is not a list loads as an empty folder', async () => {
+  const initial = loadConfig();
+  const items = [
+    { id: 'nas', type: 'app', label: 'NAS', href: 'https://n.invalid' },
+    { id: 'f', type: 'folder', label: 'F', children: 'nas' },
+    { id: 'g', type: 'folder', label: 'G', children: { a: 'nas' } },
+  ];
+  fs.writeFileSync(process.env.CONFIG_PATH, JSON.stringify({ ...initial, items }));
+  loadConfigForUpdate();
+  try {
+    const got = await req('GET', '/api/config', { cookie: validCookie });
+    assert.equal(got.status, 200);
+    assert.deepEqual(got.body.items.find(i => i.id === 'f').children, []);
+    assert.deepEqual(got.body.items.find(i => i.id === 'g').children, []);
+    const saved = await req('POST', '/api/config', { cookie: validCookie, body: got.body });
+    assert.equal(saved.status, 200);
   } finally {
     saveConfig(initial);
   }

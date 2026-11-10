@@ -330,3 +330,15 @@ test('secret rows that share a key each keep their own stored value', () => {
     ['FIRST', 'SECOND'],
   );
 });
+
+test('20,000 secret rows that share a key refill in well under a second', () => {
+  const rows = Array.from({ length: 20_000 }, (_, i) => ({ key: 'k', value: `v${i}`, secret: true }));
+  const stored = { monitoring: { activity: { enabled: true, headers: rows } } };
+  const next = structuredClone(stored);
+  scrubItemBadgeSecrets(next);
+  const start = performance.now();
+  preserveItemBadgeSecrets(next, stored);
+  const ms = performance.now() - start;
+  assert.ok(ms < 500, `took ${Math.round(ms)} ms`);
+  assert.equal(next.monitoring.activity.headers[19_999].value, 'v19999');
+});

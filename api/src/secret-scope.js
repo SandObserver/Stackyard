@@ -6,6 +6,7 @@
 const { SAVED_ROW, secretSpec, cosmeticSpec, transientSpec } = require('./widget-secrets');
 const { toRows, loginOf } = require('./badge-headers');
 const { withManifestDefaults } = require('./widget-defaults');
+const { KIND } = require('./api-error');
 
 function stableEqual(a, b) {
   if (a === b) return true;
@@ -113,6 +114,22 @@ function duplicateRowId(config, entry) {
   return null;
 }
 
+/** The 400 body for a widget whose rows repeat an id the stored widget does
+    not already repeat, or null.
+    @param {any} item @param {any} stored @param {Record<string, any>} registry */
+function duplicateRowRefusal(item, stored, registry) {
+  const dup = duplicateRowId(item.widgetConfig, registry[item.widgetType]);
+  if (!dup) return null;
+  const known = stored && duplicateRowId(stored.widgetConfig, registry[stored.widgetType]);
+  if (known && known.group === dup.group && known.id === dup.id) return null;
+  return {
+    error: `${item.id}: two ${dup.group} rows share the id ${dup.id}`,
+    kind: KIND.INVALID,
+    code: 'invalid.duplicate-row-id',
+    detail: { id: item.label || stored?.label || item.id },
+  };
+}
+
 const blankStored = (obj, old, k) => !!old && old[k] != null && old[k] !== '' && !(obj && obj[k]);
 
 /** Whether the config leaves blank a secret the saved config holds. */
@@ -176,6 +193,7 @@ module.exports = {
   alignSavedConfig,
   leavesStoredSecretBlank,
   duplicateRowId,
+  duplicateRowRefusal,
   rowsMatch,
   badgeRequestMatchesSaved,
   rewriteChanged,

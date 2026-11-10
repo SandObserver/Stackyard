@@ -6,20 +6,19 @@ const absent = v => v === undefined || v === null;
 const isText = v => absent(v) || typeof v === 'string';
 const isBlock = v => absent(v) || isPlainObject(v);
 
-/** The first item field no reader can use, or null.
-    @param {any} item @returns {string | null} */
-function firstBadItemField(item) {
-  for (const f of TEXT_FIELDS) if (!isText(item[f])) return f;
-  if (!absent(item.widgetSize) && !VALID_WIDGET_SIZES.has(item.widgetSize)) return 'widgetSize';
-  if (!isBlock(item.widgetConfig)) return 'widgetConfig';
-  if (!isBlock(item.badge)) return 'badge';
-  if (!isBlock(item.monitoring)) return 'monitoring';
-  const m = item.monitoring || {};
-  for (const f of ['healthcheck', 'activity', 'staticBadge']) if (!isBlock(m[f])) return `monitoring.${f}`;
-  if (!isText(m.staticBadge?.label)) return 'monitoring.staticBadge.label';
-  if (!isBlock(m.activity?.custom)) return 'monitoring.activity.custom';
-  if (!isText(m.activity?.custom?.unit)) return 'monitoring.activity.custom.unit';
-  return null;
+/** Every item field no reader can use.
+    @param {any} item @returns {string[]} */
+function badItemFields(item) {
+  const bad = TEXT_FIELDS.filter(f => !isText(item[f]));
+  if (!absent(item.widgetSize) && !VALID_WIDGET_SIZES.has(item.widgetSize)) bad.push('widgetSize');
+  for (const f of ['widgetConfig', 'badge', 'monitoring']) if (!isBlock(item[f])) bad.push(f);
+  const m = isPlainObject(item.monitoring) ? item.monitoring : {};
+  for (const f of ['healthcheck', 'activity', 'staticBadge']) if (!isBlock(m[f])) bad.push(`monitoring.${f}`);
+  if (isPlainObject(m.staticBadge) && !isText(m.staticBadge.label)) bad.push('monitoring.staticBadge.label');
+  const activity = isPlainObject(m.activity) ? m.activity : {};
+  if (!isBlock(activity.custom)) bad.push('monitoring.activity.custom');
+  if (isPlainObject(activity.custom) && !isText(activity.custom.unit)) bad.push('monitoring.activity.custom.unit');
+  return bad;
 }
 
 /** The Settings tile takes this id. A second item holding it is stored as a
@@ -35,15 +34,16 @@ function firstBadFolderChild(folder, byId) {
   return null;
 }
 
-/** The first setting that would drop a stored key or break a page, or null.
-    @param {any} settings @returns {string | null} */
-function firstBadSetting(settings) {
-  if (!settings) return null;
-  if (!isBlock(settings.background)) return 'background';
-  if (!isText(settings.background?.url)) return 'background.url';
-  if (!isBlock(settings.server)) return 'server';
-  if (!isBlock(settings.server?.proxmox)) return 'server.proxmox';
-  return null;
+/** Every setting that would drop a stored key or break a page.
+    @param {any} settings @returns {string[]} */
+function badSettings(settings) {
+  if (!settings) return [];
+  const bad = [];
+  if (!isBlock(settings.background)) bad.push('background');
+  else if (!isText(settings.background?.url)) bad.push('background.url');
+  if (!isBlock(settings.server)) bad.push('server');
+  else if (!isBlock(settings.server?.proxmox)) bad.push('server.proxmox');
+  return bad;
 }
 
-module.exports = { VALID_WIDGET_SIZES, firstBadItemField, takesReservedId, firstBadFolderChild, firstBadSetting };
+module.exports = { VALID_WIDGET_SIZES, badItemFields, takesReservedId, firstBadFolderChild, badSettings };
