@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=3c35a0c0';
+import { renderColorControl } from '/js/admin-color-control.js?v=88e710de';
 import { socketProbeAdvice } from '/js/admin-error.js?v=d1f8f6f4';
 import {
   BLOCK,
@@ -34,7 +34,7 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=781c2d91';
+} from '/js/admin-shared.js?v=51eeae2e';
 import { BACKDROP } from '/js/background.js?v=828d3e11';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import {

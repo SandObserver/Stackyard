@@ -278,6 +278,12 @@
       "/js/i18n.js?v=*": [
         "./ui/js/i18n.js"
       ],
+      "/js/icon-motion.js": [
+        "./ui/js/icon-motion.js"
+      ],
+      "/js/icon-motion.js?v=*": [
+        "./ui/js/icon-motion.js"
+      ],
       "/js/icon-set.js": [
         "./ui/js/icon-set.js"
       ],
