@@ -10,7 +10,15 @@ const crypto = require('node:crypto');
 require('../src/routes');
 const { dispatch } = require('../src/router');
 const { saveConfig } = require('../src/config');
-const { hashPassword, verifyPassword, hashQueueFull, clearAttempts } = require('../src/auth');
+const fs = require('node:fs');
+const {
+  hashPassword,
+  verifyPassword,
+  hashQueueFull,
+  clearAttempts,
+  HASH_QUEUE_WAIT_MS,
+  _hashQueueLength,
+} = require('../src/auth');
 const log = require('../src/log');
 
 const PASSWORD = 'quiet otter lantern 42';
@@ -132,6 +140,72 @@ test('a full queue answers busy at once, and the refused sign-in costs no guess'
     statuses.filter(s => s !== 401),
     [],
   );
+
+  const later = [];
+  for (let i = 0; i < 6; i++) later.push((await login('wrong password here', ip)).status);
+  assert.deepEqual(later, [401, 401, 401, 401, 401, 429], 'all five guesses are still there');
+  clearAttempts(ip);
+});
+
+test('the queue wait stays well below the nginx timeout for sign-in requests', () => {
+  const conf = fs.readFileSync(path.join(__dirname, '../../nginx/dashboard.conf'), 'utf8');
+  const block = conf.slice(conf.indexOf('location ^~ /api/auth/ {'));
+  const seconds = Number(/proxy_read_timeout\s+(\d+)s;/.exec(block)[1]);
+  assert.ok(HASH_QUEUE_WAIT_MS + 3000 <= seconds * 1000, `${HASH_QUEUE_WAIT_MS} ms against ${seconds} s`);
+});
+
+test('a hash whose turn comes after the queue wait does not run', async () => {
+  const gate = holdScrypt();
+  const first = hashPassword('a');
+  let late;
+  try {
+    await until(() => gate.held.length === 1, 'the first hash');
+    late = hashPassword('b').catch(e => e);
+    await until(() => _hashQueueLength() === 1, 'the queued hash');
+    const start = Date.now();
+    mock.method(Date, 'now', () => start + HASH_QUEUE_WAIT_MS + 1);
+  } finally {
+    await gate.releaseUntil([first, late]);
+    gate.restore();
+  }
+  assert.equal((await late)?.busy, true);
+});
+
+test('a hash queued for a closed connection does not run', async () => {
+  const gate = holdScrypt();
+  const first = hashPassword('a');
+  const ac = new AbortController();
+  let gone;
+  try {
+    await until(() => gate.held.length === 1, 'the first hash');
+    gone = hashPassword('b', { signal: ac.signal }).catch(e => e);
+    await until(() => _hashQueueLength() === 1, 'the queued hash');
+    ac.abort();
+  } finally {
+    await gate.releaseUntil([first, gone]);
+    gate.restore();
+  }
+  assert.equal((await gone)?.busy, true);
+});
+
+test('a sign-in that waited too long answers busy and costs no guess', async () => {
+  const gate = holdScrypt();
+  const ahead = login('wrong password here', freshIp());
+  const ip = freshIp();
+  let late;
+  try {
+    await until(() => gate.held.length === 1, 'the first check');
+    late = login('wrong password here', ip);
+    await until(() => _hashQueueLength() === 1, 'the queued check');
+    const start = Date.now();
+    mock.method(Date, 'now', () => start + HASH_QUEUE_WAIT_MS + 1);
+  } finally {
+    await gate.releaseUntil([ahead, late]);
+    gate.restore();
+  }
+  const r = await late;
+  assert.equal(r.status, 503);
+  assert.equal(r.body.code, 'blocked.busy');
 
   const later = [];
   for (let i = 0; i < 6; i++) later.push((await login('wrong password here', ip)).status);

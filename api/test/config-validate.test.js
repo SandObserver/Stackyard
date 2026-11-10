@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { firstBadItemField, takesReservedId, firstBadFolderChild, firstBadSetting } = require('../src/config-validate');
+const { badItemFields, takesReservedId, firstBadFolderChild, badSettings } = require('../src/config-validate');
 
 test('item fields of the wrong type are named', () => {
   const cases = [
@@ -26,7 +26,7 @@ test('item fields of the wrong type are named', () => {
     [{ monitoring: { activity: { custom: 'x' } } }, 'monitoring.activity.custom'],
     [{ monitoring: { activity: { custom: { unit: 5 } } } }, 'monitoring.activity.custom.unit'],
   ];
-  for (const [item, field] of cases) assert.equal(firstBadItemField(item), field, JSON.stringify(item));
+  for (const [item, field] of cases) assert.deepEqual(badItemFields(item), [field], JSON.stringify(item));
 });
 
 test('items the editor writes pass', () => {
@@ -43,20 +43,29 @@ test('items the editor writes pass', () => {
       staticBadge: { enabled: true, label: 'New', color: 'blue' },
     },
   };
-  assert.equal(firstBadItemField(app), null);
+  assert.deepEqual(badItemFields(app), []);
   for (const widgetSize of ['small', 'medium', 'large', 'xlarge', undefined, null])
-    assert.equal(firstBadItemField({ type: 'widget', widgetType: 'clock', widgetSize, widgetConfig: {} }), null);
+    assert.deepEqual(badItemFields({ type: 'widget', widgetType: 'clock', widgetSize, widgetConfig: {} }), []);
+});
+
+test('every bad item field is named, not only the first', () => {
+  assert.deepEqual(badItemFields({ label: 1337, iconUrl: 5, widgetSize: 'huge', monitoring: { activity: 7 } }), [
+    'label',
+    'iconUrl',
+    'widgetSize',
+    'monitoring.activity',
+  ]);
 });
 
 test('the shipped demo config passes every rule', () => {
   const demo = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'demo', 'demo-config.json'), 'utf8'));
   const byId = new Map(demo.items.map(i => [i.id, i]));
   for (const item of demo.items) {
-    assert.equal(firstBadItemField(item), null, item.id);
+    assert.deepEqual(badItemFields(item), [], item.id);
     assert.equal(takesReservedId(item), false, item.id);
     if (item.children) assert.equal(firstBadFolderChild(item, byId), null, item.id);
   }
-  assert.equal(firstBadSetting(demo.settings), null);
+  assert.deepEqual(badSettings(demo.settings), []);
 });
 
 test('only the Settings tile may take the id settings', () => {
@@ -81,11 +90,12 @@ test('a folder holds apps only', () => {
 });
 
 test('settings blocks of the wrong type are named', () => {
-  assert.equal(firstBadSetting({ background: 'x' }), 'background');
-  assert.equal(firstBadSetting({ background: [] }), 'background');
-  assert.equal(firstBadSetting({ background: { url: {} } }), 'background.url');
-  assert.equal(firstBadSetting({ server: 'z' }), 'server');
-  assert.equal(firstBadSetting({ server: { proxmox: 'x' } }), 'server.proxmox');
-  assert.equal(firstBadSetting({ background: { type: 'url', url: '/x' }, server: { proxmox: {} } }), null);
-  assert.equal(firstBadSetting(undefined), null);
+  assert.deepEqual(badSettings({ background: 'x' }), ['background']);
+  assert.deepEqual(badSettings({ background: [] }), ['background']);
+  assert.deepEqual(badSettings({ background: { url: {} } }), ['background.url']);
+  assert.deepEqual(badSettings({ server: 'z' }), ['server']);
+  assert.deepEqual(badSettings({ server: { proxmox: 'x' } }), ['server.proxmox']);
+  assert.deepEqual(badSettings({ background: { type: 'url', url: '/x' }, server: { proxmox: {} } }), []);
+  assert.deepEqual(badSettings(undefined), []);
+  assert.deepEqual(badSettings({ background: 'x', server: 'z' }), ['background', 'server']);
 });

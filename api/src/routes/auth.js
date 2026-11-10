@@ -74,6 +74,13 @@ async function readAuthBody(req, res) {
   return null;
 }
 
+/** @param {import('http').ServerResponse} res */
+function connectionSignal(res) {
+  const ac = new AbortController();
+  res.once('close', () => ac.abort());
+  return ac.signal;
+}
+
 function busy(res) {
   return json(res, 503, {
     error: 'Too many passwords are being checked. Try again in a moment.',
@@ -153,7 +160,8 @@ on('POST', '/api/auth/login', async (req, res) => {
       refundLoginAttempt(key);
       return busy(res);
     }
-    const match = await matchPassword(typeof password === 'string' ? password : '', hash).catch(e => {
+    const signal = connectionSignal(res);
+    const match = await matchPassword(typeof password === 'string' ? password : '', hash, { signal }).catch(e => {
       if (e.busy) refundLoginAttempt(key);
       throw e;
     });
@@ -167,7 +175,7 @@ on('POST', '/api/auth/login', async (req, res) => {
        way and the old hash still verifies. */
     if (match.unnormalized || needsRehash(hash)) {
       try {
-        const upgraded = await hashPassword(password);
+        const upgraded = await hashPassword(password, { signal });
         const fresh = loadConfigForUpdate();
         const stored = fresh.settings?.auth?.passwordHash;
         if (stored === hash) {
@@ -241,7 +249,10 @@ async function refuseWrongCurrentPassword(req, res, hash, currentPassword) {
     busy(res);
     return true;
   }
-  const matches = await verifyPassword(typeof currentPassword === 'string' ? currentPassword : '', hash).catch(e => {
+  const signal = connectionSignal(res);
+  const matches = await verifyPassword(typeof currentPassword === 'string' ? currentPassword : '', hash, {
+    signal,
+  }).catch(e => {
     if (e.busy) refundLoginAttempt(key);
     throw e;
   });
@@ -276,7 +287,7 @@ on('POST', '/api/auth/set-password', async (req, res) => {
       return json(res, 403, { error: 'The setup code is incorrect.', kind: KIND.INVALID, code: 'invalid.setup-code' });
     }
     if (authActive(before) && (await refuseWrongCurrentPassword(req, res, storedHash, currentPassword))) return;
-    const passwordHash = await hashPassword(password);
+    const passwordHash = await hashPassword(password, { signal: connectionSignal(res) });
     /* Read again after the awaits. Saving the earlier copy drops any config
        write made in between. */
     const cfg = loadConfigForUpdate();
@@ -342,7 +353,7 @@ on('POST', '/api/auth/setup-password', async (req, res) => {
       noteRejectedCode(ip);
       return json(res, 403, { error: 'The setup code is incorrect.', kind: KIND.INVALID, code: 'invalid.setup-code' });
     }
-    const passwordHash = await hashPassword(password);
+    const passwordHash = await hashPassword(password, { signal: connectionSignal(res) });
     const cfg = loadConfigForUpdate();
     if (authActive(cfg) && !passwordDamaged(cfg))
       return json(res, 409, { error: 'A password is already set.', kind: KIND.INVALID, code: 'invalid.password-set' });

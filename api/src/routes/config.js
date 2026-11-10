@@ -15,7 +15,7 @@ const { fail, KIND } = require('../api-error');
 const { firstUnsafeLink } = require('../../../ui/js/link-url.js');
 const { CONFIG_MAX_BYTES, DOCK_MAX, ITEMS_MAX, clampName } = require('../../../ui/js/limits.js');
 const { scrubAllSecrets, preserveAllSecrets } = require('../config-secrets');
-const { rewriteChanged, duplicateRowId, stableEqual } = require('../secret-scope');
+const { rewriteChanged, duplicateRowRefusal, stableEqual } = require('../secret-scope');
 const { getRegistry } = require('../widgets');
 const { firstMalformedRow } = require('../badge-headers');
 const backoff = require('../poll-backoff');
@@ -23,7 +23,7 @@ const { stripDisabledCredentials } = require('../auth');
 const { pruneWallpapers } = require('./wallpaper');
 const { normalizeHostList } = require('../../../ui/js/host-names.js');
 const { scrubProxmox, preserveProxmox } = require('../proxmox');
-const { firstBadItemField, takesReservedId, firstBadFolderChild, firstBadSetting } = require('../config-validate');
+const { badItemFields, takesReservedId, firstBadFolderChild, badSettings } = require('../config-validate');
 
 /* Real configs nest under 10 levels. Far deeper input is written to disk and
    then breaks every read of the config. */
@@ -118,13 +118,10 @@ on('POST', '/api/config', async (req, res) => {
     const storedById = new Map((storedConfig.items || []).map(i => [i.id, i]));
     for (const item of data.items) {
       const stored = storedById.get(item.id);
-      const field = firstBadItemField(item);
       /* Keep the comparison. Refusing a value already stored blocks every save
          on an install with no way to fix it. */
-      if (
-        field &&
-        !(stored && firstBadItemField(stored) === field && stableEqual(valueAt(stored, field), valueAt(item, field)))
-      ) {
+      const field = badItemFields(item).find(f => !(stored && stableEqual(valueAt(stored, f), valueAt(item, f))));
+      if (field) {
         return json(res, 400, {
           error: `${item.id}: ${field} holds a value of the wrong type`,
           kind: KIND.INVALID,
@@ -141,8 +138,10 @@ on('POST', '/api/config', async (req, res) => {
         });
       }
     }
-    const badSetting = firstBadSetting(data.settings);
-    if (badSetting && firstBadSetting(storedConfig.settings) !== badSetting) {
+    const badSetting = badSettings(data.settings).find(
+      f => !stableEqual(valueAt(storedConfig.settings, f), valueAt(data.settings, f)),
+    );
+    if (badSetting) {
       return json(res, 400, {
         error: `settings.${badSetting} holds a value of the wrong type`,
         kind: KIND.INVALID,
@@ -299,17 +298,9 @@ on('POST', '/api/config', async (req, res) => {
     const reg = getRegistry();
     for (const item of data.items) {
       if (item.type !== 'widget') continue;
-      const dup = duplicateRowId(item.widgetConfig, reg[item.widgetType]);
-      if (!dup) continue;
       const stored = (existing.items || []).find(i => i.id === item.id && i.type === 'widget');
-      const known = stored && duplicateRowId(stored.widgetConfig, reg[stored.widgetType]);
-      if (known && known.group === dup.group && known.id === dup.id) continue;
-      return json(res, 400, {
-        error: `${item.id}: two ${dup.group} rows share the id ${dup.id}`,
-        kind: KIND.INVALID,
-        code: 'invalid.duplicate-row-id',
-        detail: { id: item.label || item.id },
-      });
+      const refusal = duplicateRowRefusal(item, stored, reg);
+      if (refusal) return json(res, 400, refusal);
     }
     const { withheld } = preserveAllSecrets(data, existing);
     if (redirected && existing.settings?.background?.apiKey && !data.settings?.background?.apiKey)

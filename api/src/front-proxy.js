@@ -18,9 +18,4 @@ function trustedProxyHttps(req) {
   return viaOwnNginx(req) && req.headers['x-stackyard-https'] === '1';
 }
 
-/** The peer is named in TRUSTED_PROXY. @param {import('http').IncomingMessage} req */
-function trustedPeer(req) {
-  return viaOwnNginx(req) && req.headers['x-stackyard-trusted-peer'] === '1';
-}
-
-module.exports = { LOOPBACK, viaOwnNginx, proxied, trustedProxyHttps, trustedPeer };
+module.exports = { LOOPBACK, viaOwnNginx, proxied, trustedProxyHttps };
