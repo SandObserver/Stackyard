@@ -152,9 +152,10 @@ test('a route with other headers than its folder page serves a copy with a rule 
   assert.match(pages['/'], /^\/demo-routes\/[0-9a-f]{12}\.html$/);
   assert.equal(redirectRules(pages), `/ ${pages['/']} 200\n`);
   const text = headerRules({ ...files, [pages['/']]: root }, { '/': root });
-  const copy = text.split('\n\n').find(r => r.startsWith('/demo-routes/'));
-  assert.match(copy, /! Cache-Control\n {2}Cache-Control: no-cache/);
-  assert.match(text, /^\/\n {2}! Cache-Control\n {2}Cache-Control: no-cache$/m);
+  assert.match(text, /^\/\*\n(?: {2}.*\n)* {2}Cache-Control: no-cache\n/, 'the root route sets the base');
+  assert.match(text, /^\/index\.html\n {2}! Cache-Control\n {2}Cache-Control: no-store$/m);
+  assert.doesNotMatch(text, /^\/demo-routes\//m);
+  assert.doesNotMatch(text, /^\/\n/m, 'a rule for / cannot replace a base header');
 });
 
 test('the replay script loads before anything else in the page', () => {

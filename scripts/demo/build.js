@@ -101,9 +101,10 @@ function diffLines(base, h) {
     @param {Record<string, Record<string, string>>} routes headers per route that is not a file */
 function headerRules(files, routes = {}) {
   /* The main page's headers are the base, so a path no rule names gets the
-     strictest policy, not the widgets' inline-script one. */
+     strictest policy, not the widgets' inline-script one. Cloudflare ignores a
+     detach in a rule for /, so the root route's headers must be the base. */
   if (!files['/index.html']) throw new Error('the web root has no /index.html');
-  const base = pick(files['/index.html']);
+  const base = pick(routes['/'] ?? files['/index.html']);
   const rules = [['/*', RULE_HEADERS.filter(n => base[n] !== undefined).map(n => `${TITLE[n]}: ${base[n]}`)]];
   const covered = [];
 
