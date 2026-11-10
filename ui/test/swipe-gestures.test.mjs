@@ -131,6 +131,42 @@ test('a click opens Search, except the one a swipe leaves behind', () => {
   assert.equal(opened, 2);
 });
 
+const click = detail => {
+  const e = new Event('click');
+  Object.defineProperty(e, 'detail', { value: detail });
+  return e;
+};
+
+test('a key press after a swipe opens Search', () => {
+  const pill = new EventTarget();
+  let opened = 0;
+  onTap(pill, () => opened++);
+  drag([pill], 0, 300, 200);
+  pill.dispatchEvent(click(0));
+  assert.equal(opened, 1, 'the first Enter or Space after a swipe was swallowed');
+});
+
+test('only a click right after a swipe is taken as the swipe', () => {
+  const now = performance.now;
+  let clock = 1000;
+  performance.now = () => clock;
+  try {
+    const pill = new EventTarget();
+    let opened = 0;
+    onTap(pill, () => opened++);
+    drag([pill], 0, 300, 200);
+    clock += 100;
+    pill.dispatchEvent(click(1));
+    assert.equal(opened, 0, 'the click the swipe left behind opened Search');
+    drag([pill], 0, 300, 200);
+    clock += 5000;
+    pill.dispatchEvent(click(1));
+    assert.equal(opened, 1, 'a later pointer click was swallowed');
+  } finally {
+    performance.now = now;
+  }
+});
+
 test('the phone Search pill opens through the tap handler', () => {
   const ui = fs.readFileSync(path.join(root, 'js/ui.js'), 'utf8');
   const build = ui.slice(ui.indexOf('export function buildMobile('), ui.indexOf('export function resetMobileChrome('));

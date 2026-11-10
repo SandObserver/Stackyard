@@ -134,6 +134,54 @@ test('a Persian figure rolls in the direction its digits moved', () => {
   assert.equal(rollDirection('۴۲٫۵', '۴۲٫۱'), false, 'the Persian decimal separator keeps the fraction');
 });
 
+const { formatNumber, setNumberLanguage } = await import('../js/format-number.js');
+
+/** @param {string} tag the reader's locale @param {string} language the interface language */
+function inLocale(tag, language, fn) {
+  const had = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  Object.defineProperty(globalThis, 'navigator', { value: { language: tag }, configurable: true });
+  setNumberLanguage(language);
+  try {
+    fn();
+  } finally {
+    if (had) Object.defineProperty(globalThis, 'navigator', had);
+    else delete globalThis.navigator;
+    setNumberLanguage('en');
+  }
+}
+
+test('a Persian negative figure keeps its sign', () => {
+  inLocale('fa', 'fa', () => {
+    const [cold, milder] = [formatNumber(-5), formatNumber(-3)];
+    assert.match(cold, /\u2212/, 'this locale no longer writes U+2212');
+    assert.equal(rollDirection(cold + '°', milder + '°'), true, '-5 to -3 rose');
+    assert.equal(rollDirection(milder + '°', cold + '°'), false, '-3 to -5 fell');
+  });
+});
+
+test('a grouped figure reads by the separators it was written with', () => {
+  inLocale('de-DE', 'de', () => {
+    assert.equal(formatNumber(1000), '1.000');
+    assert.equal(rollDirection('999', '1.000'), true, '999 to 1.000 rose');
+    assert.equal(rollDirection('1.000', '999'), false);
+    assert.equal(rollDirection('1,5', '1,25'), false, 'the comma is the decimal point');
+  });
+  inLocale('fr-FR', 'fr', () => {
+    const written = formatNumber(1000.5);
+    assert.equal(rollDirection(written, formatNumber(1000.4)), false, '1 000,5 read as 1000.5');
+    assert.equal(rollDirection(written, formatNumber(1000.6)), true);
+    assert.equal(rollDirection(written, '999'), false);
+    assert.equal(rollDirection('1 000,5', '1 000,4'), false, 'a plain space groups too');
+  });
+  inLocale('en-US', 'en', () => {
+    assert.equal(rollDirection('999', '1,000'), true);
+    assert.equal(rollDirection('1.5', '1.25'), false);
+    assert.equal(rollDirection('-5', '-3'), true);
+    assert.equal(rollDirection('n/a', '3'), true, 'an unreadable value rolls up');
+    assert.equal(rollDirection('3', 'n/a'), true);
+  });
+});
+
 test('an instant write leaves the next large change able to roll', () => {
   const el = { textContent: '', firstElementChild: null, childNodes: [], animate() {} };
   rollText(el, '41%', { instant: true });

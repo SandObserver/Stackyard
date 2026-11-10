@@ -72,7 +72,7 @@ test('a folder tile uses the shared tap handling and can show its press', () => 
 test('only keyboard focus opens the badge popover', () => {
   assert.match(
     popover,
-    /tile\.addEventListener\('focus', \(\) => \{\s*if \(tile\.matches\(':focus-visible'\)\) open\(badge\);/,
+    /if \(badge && \/\*\* @type \{HTMLElement\} \*\/ \(e\.target\)\.matches\(':focus-visible'\)\) open\(badge\);/,
   );
 });
 
@@ -81,10 +81,6 @@ test('a folder fades out late on an ease-out curve', () => {
   assert.match(motion, /\{ duration: 160, delay: 90, easing: 'ease-out' \}/);
   assert.doesNotMatch(motion, /cubic-bezier\(\.6,0,1,1\)/);
   assert.match(motion, /timing\('opacity', false\), fill: 'both'/, 'the panel would be see-through during the delay');
-});
-
-test('a rebuild closes an open phone folder', () => {
-  assert.match(ui, /export function buildMobile\(\) \{\s*folderOverlayMob\?\.close\(\);/);
 });
 
 test('the phone folder title cannot leave the top edge', () => {

@@ -59,6 +59,35 @@ export function formatNumber(value, options) {
   return cached.format(value);
 }
 
+const BIDI_MARKS = /[\u200e\u200f\u061c]/g;
+
+/** @type {{ group: string, decimal: string, minus: string } | null} */
+let symbols = null;
+let symbolsFor = '';
+
+/** The group, decimal and minus signs formatNumber writes, without bidi marks.
+    @returns {{ group: string, decimal: string, minus: string }} */
+export function numberSymbols() {
+  const loc = locale();
+  const key = `${loc}|${language}`;
+  if (!symbols || symbolsFor !== key) {
+    const parts = { group: '', decimal: '.', minus: '-' };
+    try {
+      const nu = numberingSystem(loc);
+      const fmt = new Intl.NumberFormat(loc, nu ? { numberingSystem: nu } : undefined);
+      for (const part of fmt.formatToParts(-12345.6)) {
+        const value = part.value.replace(BIDI_MARKS, '');
+        if (part.type === 'group') parts.group = value;
+        else if (part.type === 'decimal') parts.decimal = value;
+        else if (part.type === 'minusSign') parts.minus = value;
+      }
+    } catch {}
+    symbols = parts;
+    symbolsFor = key;
+  }
+  return symbols;
+}
+
 /** Join items the way the interface language writes a list.
     @param {string[]} items @param {'conjunction'|'plain'} [type]
     @returns {string} */

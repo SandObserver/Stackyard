@@ -187,3 +187,14 @@ test('the badge sets no title attribute', () => {
 test('an open popover is moved to the next badge, not shown again', () => {
   assert.match(popover, /if \(!p\.matches\(':popover-open'\)\) p\.showPopover\(\);/);
 });
+
+test('keyboard focus finds the tile when it happens, not when the badge was wired', () => {
+  const wire = popover.slice(popover.indexOf('export function wireBadgePopover('));
+  assert.doesNotMatch(
+    wire.slice(0, wire.indexOf('\n}\n')),
+    /tileOf\(badge\)/,
+    'a badge painted before it joins its tile gets no focus listener',
+  );
+  assert.match(popover, /document\.addEventListener\('focusin'/);
+  assert.match(popover, /document\.addEventListener\('focusout'/);
+});
