@@ -131,8 +131,38 @@ function migrate(cfg) {
     migrateLegacyBadge(cfg);
     v = 8;
   }
+  freeSettingsId(cfg);
+  dropBadChildren(cfg);
   cfg._schemaVersion = SCHEMA_VERSION;
   return cfg;
+}
+
+function freeSettingsId(cfg) {
+  if (!Array.isArray(cfg.items)) return;
+  const clashing = cfg.items.filter(i => i && i.id === 'settings' && i.system !== 'settings');
+  if (!clashing.length) return;
+  const first = cfg.items.find(i => i && i.id === 'settings');
+  const taken = new Set(cfg.items.map(i => i?.id));
+  let n = 2;
+  let firstNewId = null;
+  for (const item of clashing) {
+    while (taken.has(`settings-${n}`)) n++;
+    item.id = `settings-${n}`;
+    taken.add(item.id);
+    if (item === first) firstNewId = item.id;
+  }
+  if (!firstNewId) return;
+  for (const folder of cfg.items) {
+    if (Array.isArray(folder?.children))
+      folder.children = folder.children.map(id => (id === 'settings' ? firstNewId : id));
+  }
+}
+
+/* Keep. Every page reads children as a list, and a string or object there
+   stops the dashboard and Settings from drawing. */
+function dropBadChildren(cfg) {
+  if (!Array.isArray(cfg.items)) return;
+  for (const item of cfg.items) if (item && item.children != null && !Array.isArray(item.children)) item.children = [];
 }
 
 let _demoCfg = null;

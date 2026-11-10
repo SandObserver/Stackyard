@@ -1,3 +1,5 @@
+import { folderChildren } from '/js/admin-logic.js?v=c1ed16c7';
+
 /* Only apps may live inside a folder. Widgets and folders stay at the top
    level. */
 
@@ -69,7 +71,7 @@ export function dropTargetKind({ srcType, targetIsFolder = false, indent = false
 
 /* An app belongs to one folder, or the dashboard draws it twice. */
 function leaveFolders(items, id) {
-  for (const f of items) if (f.type === 'folder') f.children = (f.children || []).filter(c => c !== id);
+  for (const f of items) if (f.type === 'folder') f.children = folderChildren(f).filter(c => c !== id);
 }
 
 /* Applies a drag move in place. `d` describes the dragged row and the target:
@@ -89,7 +91,7 @@ export function applyDrop(items, d) {
 
   if (d.srcFolderId) {
     const sf = items.find(i => i.id === d.srcFolderId);
-    if (sf) sf.children = (sf.children || []).filter(id => id !== src.id);
+    if (sf) sf.children = folderChildren(sf).filter(id => id !== src.id);
   } else {
     const si = items.indexOf(src);
     if (si >= 0) items.splice(si, 1);

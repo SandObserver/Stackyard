@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=ae7f2112';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=cf0efe81';
+} from '/js/admin-app-form.js?v=8a07c2e9';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=2529721d';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,8 +15,8 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=28ad07c5';
-import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=245bc319';
+} from '/js/admin-list.js?v=b4f38ab8';
+import { folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=c1ed16c7';
 import {
   afterImport,
   buildAppItem,
@@ -24,13 +24,14 @@ import {
   importCounts,
   keptWidget,
   newItemId,
+  removeItem,
   restoreBody,
   restoresSettings,
   revertingSaves,
   serialWrites,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=4b2b7f18';
+} from '/js/admin-save-logic.js?v=81636161';
 import {
   applyHealthChecks,
   loadSettings,
@@ -40,7 +41,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=dfe843cf';
+} from '/js/admin-settings.js?v=67db7c0e';
 import {
   announce,
   apiGet,
@@ -65,9 +66,9 @@ import {
   swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=d722d1ff';
+} from '/js/admin-shared.js?v=bb375b32';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=c47027c7';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=b6f96409';
 import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=e9980cbc';
 import { recoveryShown } from '/js/config-recovery.js?v=9b0a0ed6';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
@@ -88,10 +89,10 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=80477b68';
+} from '/js/import-foreign.js?v=5be7e56b';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=82de0e58';
+import { createListbox } from '/js/listbox.js?v=5cf876f8';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=c4c1c4c4';
 import { passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
@@ -497,7 +498,7 @@ function openModal(idx) {
   const saveBtn = /** @type {HTMLButtonElement} */ (el('ev-save'));
   if (delBtn) {
     delBtn.classList.toggle('d-none', !isEdit || state.ctype === 'settings');
-    delBtn.onclick = () => _evDelete(item, idx);
+    delBtn.onclick = () => _evDelete(item);
   }
   if (saveBtn) {
     saveBtn.onclick = busyPress(saveBtn, () => doSave(item));
@@ -519,7 +520,7 @@ function runFilter() {
   if (filter.q || filter.type !== 'all') announce(t('list.matchCount', { count: filterMatchCount() }));
 }
 
-async function _evDelete(item, idx) {
+async function _evDelete(item) {
   if (!item) return;
   const isFolder = item.type === 'folder';
   const ok = await confirmText({
@@ -530,11 +531,13 @@ async function _evDelete(item, idx) {
   });
   if (!ok) return;
   const before = snapshotItems(state.items);
-  state.items.forEach(f => {
-    if (f.type === 'folder') f.children = (f.children || []).filter(id => id !== item.id);
-  });
-  state.items.splice(idx, 1);
-  if (await saveOrRevert(before, t('toast.deleted'))) showListView();
+  if (!removeItem(state.items, item.id)) {
+    closeModal(null);
+    toast(t('toast.dashboardChangedElsewhere'), 'err');
+    return;
+  }
+  const session = state._evSession;
+  if ((await saveOrRevert(before, t('toast.deleted'))) && session === state._evSession) showListView();
 }
 {
   const s = inp('al-search');
@@ -585,7 +588,7 @@ function openFolderPicker(folderId) {
 
   const tf = folders.find(f => f.id === folderId);
   const available = tf
-    ? state.items.filter(i => i.type === 'app' && !i.dock && !(tf.children || []).includes(i.id))
+    ? state.items.filter(i => i.type === 'app' && !i.dock && !folderChildren(tf).includes(i.id))
     : [];
   if (!available.length) {
     const em = document.createElement('div');
@@ -597,9 +600,8 @@ function openFolderPicker(folderId) {
     const b = rowBtn(() => {
       const before = snapshotItems(state.items);
       state.items.forEach(f => {
-        if (f.type === 'folder') f.children = (f.children || []).filter(id => id !== app.id);
+        if (f.type === 'folder') f.children = folderChildren(f).filter(id => id !== app.id);
       });
-      if (!tf.children) tf.children = [];
       tf.children.push(app.id);
       saveOrRevert(before);
       close();
@@ -745,9 +747,10 @@ async function doSave(orig) {
     /* By id, never by position. */
     const before = snapshotItems(state.items);
     const { replaced } = upsertItem(state.items, state.eid, item);
+    const session = state._evSession;
     /* The editor stays open on a failed write, with the form intact. */
     if (!(await saveOrRevert(before))) return;
-    closeModal(item.id);
+    if (session === state._evSession) closeModal(item.id);
     toast(t(replaced ? 'toast.updated' : 'toast.added'));
   } catch (e) {
     toast(t('toast.saveFailed', { err: errorText(e) }), 'err', errorAction(e));
@@ -805,16 +808,18 @@ function initPasswordRows() {
     if (pw.value && pw2.value && passwordMismatch(pw.value, pw2.value))
       showFieldError(el('ie-pw2'), t('setup.mismatch'), { focus: false });
   };
+  const settle = () => {
+    el('sec-pw-bars')?.classList.add('d-none');
+    el('sec-pw-hint')?.classList.add('d-none');
+    checkMatch();
+  };
   initInlineEdit('ie-pw', 'sec-pw', {
     type: 'password',
     placeholder: () => t('general.passwordPh'),
     fill: false,
     render: renderSecret,
-    onCommit() {
-      el('sec-pw-bars')?.classList.add('d-none');
-      el('sec-pw-hint')?.classList.add('d-none');
-      checkMatch();
-    },
+    onCommit: settle,
+    onCancel: settle,
   });
   initInlineEdit('ie-pw2', 'sec-pw2', {
     type: 'password',
@@ -822,6 +827,7 @@ function initPasswordRows() {
     fill: false,
     render: renderSecret,
     onCommit: checkMatch,
+    onCancel: checkMatch,
   });
   pw.addEventListener('input', () => reveal(el('ie-pw2-wrap'), pw.value !== ''));
   wireReveal(/** @type {HTMLButtonElement[]} */ (qa('#ie-pw .pw-reveal, #ie-pw2 .pw-reveal')), [pw, pw2]);
@@ -1416,7 +1422,7 @@ async function reviewImport(items, skipped, notes, nothingKey) {
       .map(i => ({
         name: i.label,
         group: '',
-        why: t('importForeign.appCount', { n: formatNumber(i.children.length) }),
+        why: t('importForeign.appCount', { n: formatNumber(folderChildren(i).length) }),
       })),
   );
   dlgSection(

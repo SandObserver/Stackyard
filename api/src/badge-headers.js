@@ -103,7 +103,13 @@ function scrubRows(rows) {
    a row scrubRows sends to the browser in full. */
 function preserveRows(newRows, oldRows) {
   const nrows = toRows(newRows);
-  const orows = toRows(oldRows);
+  /** @type {Map<string, any[]>} */
+  const byKey = new Map();
+  for (const o of toRows(oldRows)) {
+    const same = byKey.get(o.key);
+    if (same) same.push(o);
+    else byKey.set(o.key, [o]);
+  }
   /* Never match by key alone. Rows that share a key then all get the first
      stored value and the others are lost. */
   const seen = new Map();
@@ -112,7 +118,7 @@ function preserveRows(newRows, oldRows) {
     seen.set(r.key, nth + 1);
     const needsValue = r.value == null || r.value === '';
     if (needsValue) {
-      const old = r.secret ? orows.filter(o => o.key === r.key)[nth] : null;
+      const old = r.secret ? byKey.get(r.key)?.[nth] : null;
       const donor = old && old.value != null && old.value !== '' ? old : null;
       if (donor) r.value = donor.value;
       else if (!r.secret) r.value = '';

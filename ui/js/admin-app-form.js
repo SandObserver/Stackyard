@@ -1,14 +1,15 @@
-import { BADGE_DEFAULT, renderColorControl } from '/js/admin-color-control.js?v=4fbe9190';
+import { BADGE_DEFAULT, renderColorControl } from '/js/admin-color-control.js?v=29a2c296';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=d1f8f6f4';
 import {
   clearsStoredSecret,
   failureIsMissingApiPath,
+  folderChildren,
   isBareHostUrl,
   isDockBlocked,
   nextActiveIndex,
   sameIconName,
   urlHasLogin,
-} from '/js/admin-logic.js?v=245bc319';
+} from '/js/admin-logic.js?v=c1ed16c7';
 import {
   apiGet,
   apiPost,
@@ -26,7 +27,7 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=d722d1ff';
+} from '/js/admin-shared.js?v=bb375b32';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { MAX_LABELS } from '/js/badge-logic.js?v=04a4ece8';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
@@ -43,12 +44,12 @@ import {
   throughServer,
 } from '/js/icons.js?v=76c29d43';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=82de0e58';
+import { createListbox } from '/js/listbox.js?v=5cf876f8';
 import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
 import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=ff7e1e5f';
 
 export function buildFolderForm(body, item) {
-  const children = item?.children || [];
+  const children = folderChildren(item);
   const apps = state.items.filter(i => i.type === 'app' && !i.dock);
   children.forEach(cid => {
     if (!apps.some(a => a.id === cid)) {

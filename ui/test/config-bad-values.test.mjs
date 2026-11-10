@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
+import { register } from 'node:module';
 import { test } from 'node:test';
 import { wallpaperFileName } from '../js/admin-logic.js';
-import { keptWidget } from '../js/admin-save-logic.js';
 import { computeBadgeVisual } from '../js/badge-logic.js';
 import { desktopPages, withKnownSizes } from '../js/dashboard-logic.js';
+
+register('./js-root-hooks.mjs', import.meta.url);
+const { keptWidget } = await import('../js/admin-save-logic.js');
 
 test('an unknown widget size becomes medium and known sizes stay', () => {
   const sizes = { small: 2, medium: 2, large: 4, xlarge: 4 };

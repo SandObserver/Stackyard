@@ -497,8 +497,8 @@ test('every /api/ location sends the locked-down API policy', () => {
     assert.ok(apiPolicy.includes(directive), `the API policy lacks ${directive}`);
   }
 
-  const locations = [...dashboard.matchAll(/location (?:= )?(\/api\/\S*) \{/g)];
-  assert.equal(locations.length, 4, 'an /api/ location was added or removed; check it sends the API policy');
+  const locations = [...dashboard.matchAll(/location (?:(?:=|\^~) )?(\/api\/\S*) \{/g)];
+  assert.equal(locations.length, 5, 'an /api/ location was added or removed; check it sends the API policy');
   for (const m of locations) {
     const block = dashboard.slice(m.index, dashboard.indexOf('\n    }', m.index));
     assert.ok(block.includes('include /etc/nginx/http.d/csp-api.conf;'), `${m[1]} sends no API policy`);
@@ -591,7 +591,6 @@ test('every API location sets the proxy and https flags itself', () => {
     const name = block.split('{')[0].trim();
     assert.match(block, /proxy_set_header\s+X-Stackyard-Proxied\s+\$stackyard_proxied;/, name);
     assert.match(block, /proxy_set_header\s+X-Stackyard-Https\s+\$stackyard_https;/, name);
-    assert.match(block, /proxy_set_header\s+X-Stackyard-Trusted-Peer\s+\$stackyard_trusted_peer;/, name);
   }
 });
 

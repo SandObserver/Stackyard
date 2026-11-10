@@ -255,6 +255,8 @@ test('widget-options refuses rows that share an id and sends nothing', async () 
   evilSeen.length = 0;
   const r = await post('/api/widget-options/w-rows', { widgetType: 'connections', widgetConfig: dupRows() });
   assert.equal(r.status, 400);
+  assert.equal(r.body.code, 'invalid.duplicate-row-id');
+  assert.ok(r.body.detail?.id);
   assert.equal(evilSeen.length, 0);
 });
 
@@ -379,6 +381,12 @@ test('a repeated row id already stored does not block a save, and a new one is r
     });
     assert.equal(added.status, 400);
     assert.equal(added.body.code, 'invalid.duplicate-row-id');
+    const options = await post('/api/widget-options/w-old', {
+      widgetType: 'connections',
+      widgetConfig: { services: rows.map(({ token, ...row }) => row) },
+    });
+    assert.notEqual(options.body.code, 'invalid.duplicate-row-id');
+    assert.notEqual(options.status, 400);
   } finally {
     saveConfig(initial);
   }

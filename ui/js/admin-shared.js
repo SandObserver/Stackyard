@@ -1,7 +1,7 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
 
 import { errorAdvice } from '/js/admin-error.js?v=d1f8f6f4';
-import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=245bc319';
+import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=c1ed16c7';
 import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=9b0a0ed6';
 import { formatList, formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
@@ -616,18 +616,19 @@ export function plainInput(inp) {
     before the catalog is fetched, so a translated one has to be read later.
     @param {string} rowId @param {string} inputId
     @param {{ type?: string, placeholder?: string | (() => string),
-              onCommit?: (value: string) => void, root?: ParentNode, plain?: boolean, fill?: boolean,
-              render?: (valEl: Element, value: string) => void, empty?: () => string }} [opts] */
+              onCommit?: (value: string) => void, onCancel?: (value: string) => void, root?: ParentNode,
+              plain?: boolean, fill?: boolean, render?: (valEl: Element, value: string) => void,
+              empty?: () => string }} [opts] */
 export function initInlineEdit(
   rowId,
   inputId,
-  { type = 'text', placeholder = '', onCommit, root = document, plain = false, fill, render, empty } = {},
+  { type = 'text', placeholder = '', onCommit, onCancel, root = document, plain = false, fill, render, empty } = {},
 ) {
   const byId = id => (root === document ? el(id) : root.querySelector('#' + CSS.escape(id)));
   const row = /** @type {HTMLElement} */ (byId(rowId));
   const inp = /** @type {HTMLInputElement} */ (byId(inputId));
   if (!row || !inp) return;
-  wireInlineEdit(row, inp, { type, placeholder, onCommit, plain, fill, render, empty });
+  wireInlineEdit(row, inp, { type, placeholder, onCommit, onCancel, plain, fill, render, empty });
 }
 
 /** Name a row's pencil after its label. Call again once the catalog loads.
@@ -643,10 +644,11 @@ export function nameEditPen(row) {
     committed value is shown. `plain` is for an address, host, username or key:
     no capitals, correction or spelling marks. `placeholder` shows only in the
     open field. `empty` is what an empty row shows, common.notSet by default.
+    Escape restores the value from before the edit and runs `onCancel` with it.
     @param {HTMLElement} row @param {HTMLInputElement} inp
     @param {{ type?: string, placeholder?: string | (() => string), onCommit?: (value: string) => void,
-              fill?: boolean, render?: (valEl: Element, value: string) => void, plain?: boolean,
-              empty?: () => string }} [opts] */
+              onCancel?: (value: string) => void, fill?: boolean,
+              render?: (valEl: Element, value: string) => void, plain?: boolean, empty?: () => string }} [opts] */
 export function wireInlineEdit(
   row,
   inp,
@@ -654,6 +656,7 @@ export function wireInlineEdit(
     type = 'text',
     placeholder = '',
     onCommit,
+    onCancel,
     fill = true,
     render,
     plain = false,
@@ -707,21 +710,36 @@ export function wireInlineEdit(
     onCommit?.(v);
   }
 
+  function cancel() {
+    if (!row.classList.contains('editing')) return;
+    row.classList.remove('editing');
+    if (inp.value !== before) {
+      inp.value = before;
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    onCancel?.(before);
+  }
+
   pen.addEventListener('click', open);
   valEl.addEventListener('click', open);
-  inp.addEventListener('blur', commit);
-  inp.addEventListener(
+  row.addEventListener(
+    'focusout',
+    /** @param {FocusEvent} e */ e => {
+      const to = /** @type {Node|null} */ (e.relatedTarget);
+      if (!to || !row.contains(to)) commit();
+    },
+  );
+  row.addEventListener(
     'keydown',
     /** @param {KeyboardEvent} e */ e => {
-      if (e.key === 'Enter') {
+      if (!row.classList.contains('editing')) return;
+      if (e.key === 'Enter' && e.target === inp) {
         e.preventDefault();
         commit();
         pen.focus();
-      }
-      if (e.key === 'Escape') {
+      } else if (e.key === 'Escape') {
         e.preventDefault();
-        inp.value = before;
-        row.classList.remove('editing');
+        cancel();
         pen.focus();
       }
     },

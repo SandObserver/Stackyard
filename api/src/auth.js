@@ -76,6 +76,9 @@ const _unb64 = str => Buffer.from(str, 'base64');
    container's memory limit: the kernel kills the API and every login counter
    resets. */
 const HASH_QUEUE_MAX = 16;
+/* Keep well below proxy_read_timeout of /api/auth/ in nginx/dashboard.conf. A
+   longer wait stores a password change after nginx answered 504. */
+const HASH_QUEUE_WAIT_MS = 10_000;
 let _hashing = false;
 /** @type {Array<() => void>} */
 const _hashQueue = [];
@@ -89,26 +92,35 @@ class HashBusyError extends Error {
 
 const hashQueueFull = () => _hashing && _hashQueue.length >= HASH_QUEUE_MAX;
 
-/** @template T @param {() => Promise<T>} task @returns {Promise<T>} */
-function _oneAtATime(task) {
+function _runNext() {
+  const next = _hashQueue.shift();
+  if (next) next();
+  else _hashing = false;
+}
+
+/** @template T @param {() => Promise<T>} task @param {AbortSignal} [signal]
+    @returns {Promise<T>} */
+function _oneAtATime(task, signal) {
   if (hashQueueFull()) return Promise.reject(new HashBusyError());
+  const queuedAt = Date.now();
   return new Promise((resolve, reject) => {
     const run = () => {
+      if (signal?.aborted || Date.now() - queuedAt > HASH_QUEUE_WAIT_MS) {
+        reject(new HashBusyError());
+        _runNext();
+        return;
+      }
       _hashing = true;
       task()
-        .then(resolve, reject)
-        .finally(() => {
-          const next = _hashQueue.shift();
-          if (next) next();
-          else _hashing = false;
-        });
+        .then(value => (signal?.aborted ? reject(new HashBusyError()) : resolve(value)), reject)
+        .finally(_runNext);
     };
     if (_hashing) _hashQueue.push(run);
     else run();
   });
 }
 
-const _scrypt = (password, salt, params) =>
+const _scrypt = (password, salt, params, signal) =>
   _oneAtATime(
     () =>
       new Promise((resolve, reject) => {
@@ -117,16 +129,17 @@ const _scrypt = (password, salt, params) =>
           err ? reject(err) : resolve(key),
         );
       }),
+    signal,
   );
 
 /* Do not change the form. Every stored hash depends on it. */
 const _nfc = password => password.normalize('NFC');
 
-/** @param {string} password @returns {Promise<string>} */
-async function hashPassword(password) {
+/** @param {string} password @param {{ signal?: AbortSignal }} [opts] @returns {Promise<string>} */
+async function hashPassword(password, { signal } = {}) {
   const params = _activeProfile();
   const salt = crypto.randomBytes(SALT_BYTES);
-  const key = await _scrypt(_nfc(password), salt, params);
+  const key = await _scrypt(_nfc(password), salt, params, signal);
   return `$scrypt$ln=${params.ln},r=${params.r},p=${params.p}$${_b64(salt)}$${_b64(key)}`;
 }
 
@@ -174,15 +187,16 @@ function parseHash(stored) {
   return null;
 }
 
-/** @param {string} password @param {unknown} hash @returns {Promise<boolean>} */
-async function verifyPassword(password, hash) {
-  return (await matchPassword(password, hash)) !== null;
+/** @param {string} password @param {unknown} hash @param {{ signal?: AbortSignal }} [opts]
+    @returns {Promise<boolean>} */
+async function verifyPassword(password, hash, opts) {
+  return (await matchPassword(password, hash, opts)) !== null;
 }
 
-async function _derivedMatches(password, parsed) {
+async function _derivedMatches(password, parsed, signal) {
   let derived;
   try {
-    derived = await _scrypt(password, parsed.salt, parsed.params);
+    derived = await _scrypt(password, parsed.salt, parsed.params, signal);
   } catch (e) {
     if (e.busy) throw e;
     log.error('password verification failed', { error: e.message });
@@ -199,18 +213,18 @@ async function _derivedMatches(password, parsed) {
 /** Must never throw. A damaged hash fails the login rather than taking the
     server down. `unnormalized` is true when the hash was made from the
     password as typed, before hashes were normalized; it needs a rehash.
-    @param {string} password @param {unknown} hash
+    @param {string} password @param {unknown} hash @param {{ signal?: AbortSignal }} [opts]
     @returns {Promise<{ unnormalized: boolean }|null>} null when it does not match */
-async function matchPassword(password, hash) {
+async function matchPassword(password, hash, { signal } = {}) {
   const parsed = parseHash(hash);
   if (!parsed) {
     if (hash) log.error('stored password hash is malformed, login cannot succeed', { reason: 'bad_hash_format' });
     return null;
   }
   const nfc = _nfc(password);
-  if (await _derivedMatches(nfc, parsed)) return { unnormalized: false };
+  if (await _derivedMatches(nfc, parsed, signal)) return { unnormalized: false };
   /* Keep. A hash stored before normalization only matches the typed form. */
-  if (nfc !== password && (await _derivedMatches(password, parsed))) return { unnormalized: true };
+  if (nfc !== password && (await _derivedMatches(password, parsed, signal))) return { unnormalized: true };
   return null;
 }
 
@@ -516,6 +530,8 @@ module.exports = {
   newSessionId,
   hashPassword,
   hashQueueFull,
+  HASH_QUEUE_WAIT_MS,
+  _hashQueueLength: () => _hashQueue.length,
   verifyPassword,
   matchPassword,
   attemptAddress,
