@@ -846,20 +846,14 @@ function initAllInlineEdits() {
   });
 
   initPasswordRows();
-  const pwInp = el('sec-pw');
-  if (pwInp) {
-    pwInp.addEventListener(
-      'input',
-      () => {
-        const bars = el('sec-pw-bars');
-        const hint = el('sec-pw-hint');
-        bars?.classList.remove('d-none');
-        hint?.classList.remove('d-none');
-        wirePasswordStrength('sec-pw', 'sec-pw-bars', 'sec-pw-hint');
-      },
-      { once: true },
-    );
-  }
+  let meterWired = false;
+  el('sec-pw')?.addEventListener('input', () => {
+    el('sec-pw-bars')?.classList.remove('d-none');
+    el('sec-pw-hint')?.classList.remove('d-none');
+    if (meterWired) return;
+    meterWired = true;
+    wirePasswordStrength('sec-pw', 'sec-pw-bars', 'sec-pw-hint');
+  });
 
   wireUnsplashKey();
   wireProxmox();

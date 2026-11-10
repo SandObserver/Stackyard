@@ -54,6 +54,19 @@ test('the reveal button shows both fields and keeps the row open', async ({ page
   await expect(eye.locator('use')).toHaveAttribute('href', /-eye-slash$/);
 });
 
+test('the strength meter shows again on every new edit', async ({ page }) => {
+  const bars = page.locator('#sec-pw-bars');
+  const hint = page.locator('#sec-pw-hint');
+  await setInlineRow(page, 'ie-pw', 'sec-pw', 'short');
+  await expect(bars).toBeHidden();
+  await expect(hint).toBeHidden();
+
+  await page.locator('#ie-pw .rv').click();
+  await page.locator('#sec-pw').fill(NEW);
+  await expect(bars).toBeVisible();
+  await expect(hint).toHaveText('Long enough');
+});
+
 test('a first password asks for the setup code, and a wrong code keeps the dialog open', async ({ page }) => {
   /** @type {any[]} */
   const bodies = [];
