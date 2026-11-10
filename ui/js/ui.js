@@ -17,14 +17,14 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=a09f4f39';
-import { t, currentLang } from '/js/i18n.js?v=ed7c5565';
+} from '/js/utils.js?v=ff7e1e5f';
+import { t, currentLang } from '/js/i18n.js?v=ec60b9bd';
 import { toneForColor } from '/js/label-contrast.js?v=e046296b';
 import { mobileMetrics, gridColumnWidth, gridCellCount, dockFit } from '/js/mobile-metrics.js?v=3b0d6715';
 import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
 import { mkGlassRim, observeGlass } from '/js/glass-rim.js?v=3faec233';
 import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=8b2dad40';
-import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
+import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 
 const PHONE_W = 393;
@@ -172,13 +172,16 @@ export function mkFolder(item) {
   return a;
 }
 
+const SWIPE_CLICK_MS = 600;
+
 /** Runs `fn` on a tap or a click. A touch that moved the pager's lock
     distance is a swipe and runs nothing.
     @param {HTMLElement} node @param {() => void} fn */
 export function onTap(node, fn) {
   let x0 = 0,
     y0 = 0,
-    moved = false;
+    moved = false,
+    swipedAt = Number.NEGATIVE_INFINITY;
   node.addEventListener(
     'touchstart',
     /** @param {TouchEvent} e */ e => {
@@ -201,17 +204,25 @@ export function onTap(node, fn) {
     'touchend',
     /** @param {TouchEvent} e */ e => {
       /* Do not stop a swipe. The home pager never sees the lift and the strip stays between pages. */
-      if (moved) return;
+      if (moved) {
+        swipedAt = performance.now();
+        return;
+      }
       e.preventDefault();
       e.stopPropagation();
       fn();
     },
     { passive: false },
   );
-  node.addEventListener('click', () => {
-    if (moved) moved = false;
-    else fn();
-  });
+  node.addEventListener(
+    'click',
+    /** @param {MouseEvent} e */ e => {
+      const fromSwipe = e.detail !== 0 && performance.now() - swipedAt < SWIPE_CLICK_MS;
+      moved = false;
+      swipedAt = Number.NEGATIVE_INFINITY;
+      if (!fromSwipe) fn();
+    },
+  );
 }
 
 /** @typedef {{ down: (id: number|string, x: number, y: number, t: number) => void,
@@ -370,6 +381,7 @@ function folderMotion(ov, parts, tile) {
         : { duration: opening ? 300 : 250, easing: EASE_IOS };
   let running = steps.map(s => s.el.animate({ [s.prop]: [s.shut, s.open] }, timing(s.prop, true)));
   return () => {
+    if (!ov.isConnected) return;
     if (ov.contains(document.activeElement)) /** @type {HTMLElement} */ (document.activeElement).blur();
     const now = steps.map(s => getComputedStyle(s.el)[s.prop]);
     steps.forEach((s, i) => s.el.style.setProperty(s.prop, now[i]));
@@ -389,6 +401,17 @@ function folderMotion(ov, parts, tile) {
 }
 
 let folderOverlay = null;
+
+export function closeFolders() {
+  for (const ov of [folderOverlay, folderOverlayMob]) {
+    if (!ov) continue;
+    ov.close();
+    ov.remove();
+  }
+  folderOverlay = null;
+  folderOverlayMob = null;
+}
+
 /** @param {any} folder @param {Element} [tile] */
 export function openFolderDesktop(folder, tile) {
   if (folderOverlay) {
@@ -449,7 +472,7 @@ export function openFolderDesktop(folder, tile) {
     stopGlass();
     registeredBadges.forEach(badge => BEL().forEach((_, id) => bunreg(id, badge)));
     shrink();
-    folderOverlay = null;
+    if (folderOverlay === ov) folderOverlay = null;
   });
   /* The overlay is the scrim, so a click reported against it is a click
      outside the folder. */
@@ -540,7 +563,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc, tile) {
   ov.addEventListener('close', () => {
     qa('.badge', ov).forEach(badge => BEL().forEach((_, id) => bunreg(id, badge)));
     shrink();
-    folderOverlayMob = null;
+    if (folderOverlayMob === ov) folderOverlayMob = null;
   });
 
   /* Phone size on every window. A wider window centres the folder instead of
@@ -730,7 +753,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc, tile) {
 const MOB_FOOTPRINT = { small: [2, 2], medium: [4, 2], large: [4, 4], xlarge: [4, 6] };
 
 export function buildMobile() {
-  folderOverlayMob?.close();
+  closeFolders();
   /* The previous widgets' observers and timers outlive their DOM. Stop them
      before it is replaced. */
   teardownWidgets();

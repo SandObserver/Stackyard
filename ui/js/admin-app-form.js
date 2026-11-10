@@ -1,4 +1,4 @@
-import { BADGE_DEFAULT, renderColorControl } from '/js/admin-color-control.js?v=50b04dfb';
+import { BADGE_DEFAULT, renderColorControl } from '/js/admin-color-control.js?v=4fbe9190';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=d1f8f6f4';
 import {
   clearsStoredSecret,
@@ -26,13 +26,13 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=6d9b0329';
+} from '/js/admin-shared.js?v=d722d1ff';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { MAX_LABELS } from '/js/badge-logic.js?v=04a4ece8';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
-import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
+import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=ed7c5565';
+import { t } from '/js/i18n.js?v=ec60b9bd';
 import { iconSvg } from '/js/icon-set.js?v=b7e5d7d1';
 import {
   cdnIconRef,
@@ -43,9 +43,9 @@ import {
   throughServer,
 } from '/js/icons.js?v=76c29d43';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=7634ef71';
+import { createListbox } from '/js/listbox.js?v=82de0e58';
 import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
-import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=a09f4f39';
+import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=ff7e1e5f';
 
 export function buildFolderForm(body, item) {
   const children = item?.children || [];

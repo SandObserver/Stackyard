@@ -6,7 +6,7 @@ import {
   firstViewWait,
   rememberBackground,
   resolveBackground,
-} from '/js/background.js?v=828d3e11';
+} from '/js/background.js?v=e9980cbc';
 import {
   badgeMinimum,
   badgeSignature,
@@ -14,8 +14,8 @@ import {
   folderLabelName,
   readBadgeUpdate,
 } from '/js/badge-logic.js?v=04a4ece8';
-import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=cfd5b6a6';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=49e8d68e';
+import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=88c0f93d';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=9b0a0ed6';
 import {
   configChanged,
   desktopCols,
@@ -28,10 +28,10 @@ import {
   withKnownSizes,
 } from '/js/dashboard-logic.js?v=8b2dad40';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
-import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
+import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import { observeGlass } from '/js/glass-rim.js?v=3faec233';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { currentLang, initI18n, isSupported, t } from '/js/i18n.js?v=ed7c5565';
+import { currentLang, initI18n, isSupported, t } from '/js/i18n.js?v=ec60b9bd';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=b7e5d7d1';
 import { iconChain, loadLocalIcons } from '/js/icons.js?v=76c29d43';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
@@ -49,10 +49,11 @@ import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
-import { initSpotlight } from '/js/spotlight.js?v=13398a26';
+import { initSpotlight } from '/js/spotlight.js?v=8f5b3158';
 import { applyTheme, prefersDark, readMode, resolveTheme, THEME_KEY } from '/js/theme.js?v=eeafa4b5';
 import {
   buildMobile,
+  closeFolders,
   initUI,
   mkFolder,
   mkFolderGlyph,
@@ -60,7 +61,7 @@ import {
   openFolderMobile,
   resetMobileChrome,
   swipePager,
-} from '/js/ui.js?v=c26b5e36';
+} from '/js/ui.js?v=3a8b6601';
 import {
   mkWrap as _mkWrap,
   el,
@@ -83,7 +84,7 @@ import {
   teardownWidgets,
   titleWhenTruncated,
   within,
-} from '/js/utils.js?v=a09f4f39';
+} from '/js/utils.js?v=ff7e1e5f';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import {
@@ -469,6 +470,7 @@ function mkDot(i, total, current, go) {
 function buildDesktop() {
   /* Removing the DOM does not stop the observers and timers the previous
      widgets started. */
+  closeFolders();
   teardownWidgets();
   closeBadgePopover();
   BEL.clear();

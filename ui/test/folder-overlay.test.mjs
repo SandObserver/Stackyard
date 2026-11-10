@@ -18,6 +18,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { register } from 'node:module';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
@@ -160,4 +161,116 @@ test('a closing folder takes no input and shrinks from where it is', () => {
     /querySelector\('\.folder-overlay'\)|'\.folder-overlay, \.folder-overlay-mobile'/,
     'a closing folder would block the pager',
   );
+});
+
+/* A rebuild removes the tile a folder shrinks into and drops the badges its
+   apps registered. */
+test('every rebuild closes an open folder first', () => {
+  const dash = read('js/dashboard.js');
+  const desktop = dash.slice(dash.indexOf('function buildDesktop('), dash.indexOf('const OFF_PAGE_RATE'));
+  assert.match(desktop, /^function buildDesktop\(\) \{[\s\S]{0,200}closeFolders\(\);/);
+  const mobile = ui.slice(ui.indexOf('export function buildMobile('), ui.indexOf('export function resetMobileChrome('));
+  assert.match(mobile, /^export function buildMobile\(\) \{\s*closeFolders\(\);/);
+});
+
+function fakeDom() {
+  const animations = [];
+  class Node extends EventTarget {
+    constructor(tag) {
+      super();
+      this.tag = tag;
+      this.children = [];
+      this.parent = null;
+      this.dataset = {};
+      this.style = { setProperty: (k, v) => (this.style[k] = v) };
+      this.open = false;
+    }
+    get isConnected() {
+      return this === doc.body || Boolean(this.parent?.isConnected);
+    }
+    setAttribute() {}
+    appendChild(c) {
+      c.parent = this;
+      this.children.push(c);
+      return c;
+    }
+    append(...cs) {
+      for (const c of cs) this.appendChild(c);
+    }
+    prepend(c) {
+      this.appendChild(c);
+    }
+    remove() {
+      if (!this.parent) return;
+      this.parent.children = this.parent.children.filter(c => c !== this);
+      this.parent = null;
+    }
+    replaceChildren() {}
+    contains() {
+      return false;
+    }
+    querySelectorAll() {
+      return [];
+    }
+    focus() {}
+    getBoundingClientRect() {
+      return { left: 0, top: 0, width: 100, height: 100 };
+    }
+    animate() {
+      const a = { cancel() {}, finished: new Promise(() => {}) };
+      animations.push(a);
+      return a;
+    }
+    showModal() {
+      this.open = true;
+    }
+    close() {
+      if (!this.open) return;
+      this.open = false;
+      queueMicrotask(() => this.dispatchEvent(new Event('close')));
+    }
+    set textContent(_v) {
+      this.children = [];
+    }
+  }
+  const doc = { createElement: tag => new Node(tag), addEventListener() {}, activeElement: null };
+  doc.body = new Node('body');
+  return { doc, animations };
+}
+
+test('closing folders for a rebuild removes the folder at once, with no shrink', async () => {
+  const { doc, animations } = fakeDom();
+  register('./js-root-hooks.mjs', import.meta.url);
+  Object.assign(globalThis, {
+    window: globalThis,
+    document: doc,
+    addEventListener() {},
+    matchMedia: () => ({ matches: false, addEventListener() {} }),
+    getComputedStyle: () => ({ opacity: '1', transform: 'none' }),
+    ResizeObserver: class {
+      observe() {}
+      disconnect() {}
+    },
+  });
+  const { initUI, openFolderDesktop, closeFolders } = await import('../js/ui.js');
+  initUI({ items: [], S: {}, BEL: new Map(), bupd() {}, breg() {}, bunreg() {} });
+  const tile = doc.createElement('button');
+  doc.body.appendChild(tile);
+
+  openFolderDesktop({ id: 'f', children: [] }, tile);
+  const folder = doc.body.children.find(c => c.tag === 'dialog');
+  assert.ok(folder?.open, 'the folder did not open');
+  tile.remove();
+  const opened = animations.length;
+
+  closeFolders();
+  assert.equal(folder.open, false, 'the folder is still open over the new dashboard');
+  assert.equal(folder.isConnected, false, 'the folder is left on the page');
+  await new Promise(r => setTimeout(r, 0));
+  assert.equal(animations.length, opened, 'the folder shrank toward a tile that is gone');
+
+  openFolderDesktop({ id: 'f', children: [] }, tile);
+  const again = doc.body.children.find(c => c.tag === 'dialog');
+  assert.ok(again?.open, 'the next folder press closed a folder that was already gone');
+  closeFolders();
 });

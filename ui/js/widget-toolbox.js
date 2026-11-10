@@ -5,7 +5,7 @@ import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
 import { jitter } from '/js/jitter.js?v=087a1fcf';
 import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-error.js?v=bf679408';
-import { formatNumber, setNumberLanguage } from '/js/format-number.js?v=abcd4ae4';
+import { formatNumber, numberSymbols, setNumberLanguage } from '/js/format-number.js?v=9dcba1ce';
 
 export { esc, html, setHtml };
 
@@ -416,14 +416,23 @@ function shownText(el) {
 
 /** @param {string} prev @param {string} next */
 export function rollDirection(prev, next) {
-  const num = s =>
-    Number.parseFloat(
-      String(s)
-        .replace(/[\u06f0-\u06f9]/g, d => String(d.charCodeAt(0) - 0x6f0))
-        .replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x660))
-        .replace(/\u066b/g, '.')
-        .replace(/[^\d.-]/g, ''),
-    );
+  const { group, decimal, minus } = numberSymbols();
+  /** @param {string} s */
+  const num = s => {
+    let text = String(s).replace(/[\u200e\u200f\u061c\s]/g, '');
+    if (group) text = text.split(group).join('');
+    text = text
+      .split(decimal)
+      .join('.')
+      .split(minus)
+      .join('-')
+      .replace(/\u2212/g, '-')
+      .replace(/[\u06f0-\u06f9]/g, d => String(d.charCodeAt(0) - 0x6f0))
+      .replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x660))
+      .replace(/\u066b/g, '.')
+      .replace(/[^\d.-]/g, '');
+    return Number.parseFloat(text);
+  };
   const p = num(prev);
   const n = num(next);
   return !(Number.isFinite(p) && Number.isFinite(n) && n < p);
@@ -642,7 +651,7 @@ export function wtCount(key, count, fallback, vars) {
 /* Digit shape follows the interface language. Re-exported here so a widget takes it
    from the toolbox rather than reaching for toLocaleString, which is the same
    thing until someone passes it a language. */
-export { formatNumber, formatList, localiseDigits } from '/js/format-number.js?v=abcd4ae4';
+export { formatNumber, formatList, localiseDigits } from '/js/format-number.js?v=9dcba1ce';
 
 export function sinceLabel(ts) {
   if (!ts) return '';
@@ -817,6 +826,8 @@ export function poll(opts = {}) {
     stopped = false,
     lastData = null,
     timer = null;
+  /** @type {(() => void) | null} */
+  let showFailure = null;
   let paused = false;
   let inFlight = false;
   let lastTick = 0;
@@ -838,6 +849,7 @@ export function poll(opts = {}) {
         if (!everOk) revealFirstData();
       }
       fails = 0;
+      showFailure = null;
       lastOk = readingTime(data);
       everOk = true;
       lastData = data;
@@ -846,8 +858,14 @@ export function poll(opts = {}) {
       const e = fetched ? asInternal(caught) : caught;
       fails++;
       const stale = fails >= staleAfter();
-      if (custom) opts.onError({ error: e, everOk, stale, since: lastOk ? sinceLabel(lastOk) : '' });
-      else if (!everOk || stale) ov.fail(e, { since: everOk && lastOk ? sinceLabel(lastOk) : '' });
+      if (custom) {
+        const info = { error: e, everOk, stale, since: lastOk ? sinceLabel(lastOk) : '' };
+        showFailure = () => opts.onError(info);
+      } else if (!everOk || stale) {
+        const info = { since: everOk && lastOk ? sinceLabel(lastOk) : '' };
+        showFailure = () => ov.fail(e, info);
+      }
+      showFailure?.();
     }
   }
 
@@ -886,7 +904,9 @@ export function poll(opts = {}) {
   }
   _polls.add(onRate);
   const onTheme = () => {
-    if (!stopped && lastData != null && opts.render && !isEmpty(lastData)) opts.render(lastData);
+    if (stopped || lastData == null || !opts.render || isEmpty(lastData)) return;
+    opts.render(lastData);
+    if (fails > 0) showFailure?.();
   };
   _themed.add(onTheme);
 

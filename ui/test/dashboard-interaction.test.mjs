@@ -83,10 +83,6 @@ test('a folder fades out late on an ease-out curve', () => {
   assert.match(motion, /timing\('opacity', false\), fill: 'both'/, 'the panel would be see-through during the delay');
 });
 
-test('a rebuild closes an open phone folder', () => {
-  assert.match(ui, /export function buildMobile\(\) \{\s*folderOverlayMob\?\.close\(\);/);
-});
-
 test('the phone folder title cannot leave the top edge', () => {
   assert.match(ui, /top: 'max\(var\(--sa-top\), ' \+ \(boxTop - titleRendH/);
 });
