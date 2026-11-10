@@ -207,6 +207,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A slow save no longer closes an editor opened while it ran.
 
+- Keyboard focus opens a badge's popover again after the dashboard redraws.
+
 ### Security
 
 - Refuse sign-in and password requests larger than 32 KB, so parallel large
