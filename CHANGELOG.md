@@ -202,6 +202,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A folder whose app list is malformed no longer stops the dashboard and
   Settings from loading.
 
+- Deleting from an editor removes that item, even after a backup restore or an
+  import changed the list.
+
+- A slow save no longer closes an editor opened while it ran.
+
 ### Security
 
 - Refuse sign-in and password requests larger than 32 KB, so parallel large
