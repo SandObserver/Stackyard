@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=8a07c2e9';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=2529721d';
+} from '/js/admin-app-form.js?v=995a9884';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=4a325995';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=b4f38ab8';
+} from '/js/admin-list.js?v=ce3f1426';
 import { folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=c1ed16c7';
 import {
   afterImport,
@@ -41,7 +41,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=67db7c0e';
+} from '/js/admin-settings.js?v=1edf685d';
 import {
   announce,
   apiGet,
@@ -66,18 +66,18 @@ import {
   swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=bb375b32';
+} from '/js/admin-shared.js?v=38a1c498';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=b6f96409';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=37caf794';
 import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=e9980cbc';
-import { recoveryShown } from '/js/config-recovery.js?v=9b0a0ed6';
+import { recoveryShown } from '/js/config-recovery.js?v=5e8a2c4c';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=0c57b286';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ec60b9bd';
-import { animateIcon } from '/js/icon-motion.js?v=4021def9';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=b7e5d7d1';
+import { animateIcon } from '/js/icon-motion.js?v=92727d1c';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=4d944cec';
 import { loadLocalIcons } from '/js/icons.js?v=76c29d43';
 import {
   clearSkipTls,
@@ -92,7 +92,7 @@ import {
 } from '/js/import-foreign.js?v=5be7e56b';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=5cf876f8';
+import { createListbox } from '/js/listbox.js?v=a49cc891';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=c4c1c4c4';
 import { passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
