@@ -5,7 +5,7 @@ import { sanitizeI18nMarkup } from '/js/i18n-markup.js?v=8c90e1dd';
 import { fillNames, pickLanguage, screenFor, setupCodeErrorKey } from '/js/config-recovery-logic.js?v=d3529225';
 import { contextWords, passwordMismatch, passwordProblem, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=b8068a58';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=b7e5d7d1';
 
 let _shown = false;
 export const recoveryShown = () => _shown;

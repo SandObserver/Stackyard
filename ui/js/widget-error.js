@@ -5,7 +5,7 @@
    Never draw a response's error message. It names hosts, ports and status
    codes, and it is not translated. */
 
-import { ICONS, symbol } from '/js/icon-set.js?v=b8068a58';
+import { ICONS, symbol } from '/js/icon-set.js?v=b7e5d7d1';
 
 /* kind -> [glyph, catalog key, English] */
 const COPY = {

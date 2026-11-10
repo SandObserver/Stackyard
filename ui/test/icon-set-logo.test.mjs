@@ -83,12 +83,14 @@ function extent(p) {
   return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
 }
 
+const still = ic => ic.shapes.filter(p => p.only !== 'motion');
+
 /* Filled parts must paint inside 2 to 22, round ends included. A stroked line
    keeps its centreline there, as every line in the set does. */
 function assertInsideGrid(id) {
   for (const styleId of Object.keys(STYLES)) {
     const st = STYLES[styleId];
-    for (const p0 of ICONS[id].shapes) {
+    for (const p0 of still(ICONS[id])) {
       const p = st.line && p0.lineAlt ? { ...p0, ...p0.lineAlt } : p0;
       const [x0, y0, x1, y1] = extent(p);
       const eps = 1e-6;
@@ -157,7 +159,7 @@ test('every icon stays inside the grid', () => {
 test('an icon has at most one accent part and a utility glyph has none', () => {
   for (const [id, ic] of Object.entries(ICONS)) {
     if (LOGOS.has(id)) continue;
-    const accents = ic.shapes.filter(p => p.role === 'a').length;
+    const accents = still(ic).filter(p => p.role === 'a').length;
     assert.ok(accents <= 1, `${id} has ${accents} accent parts`);
     if (UTILITY.includes(id)) assert.equal(accents, 0, `${id} is a utility glyph`);
   }

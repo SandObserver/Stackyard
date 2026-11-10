@@ -1,5 +1,5 @@
 // @ts-check
-import { iconSvg } from '/js/icon-set.js?v=b8068a58';
+import { iconSvg } from '/js/icon-set.js?v=b7e5d7d1';
 
 /* Keys are the glyph names in widget.json files. Renaming one breaks that widget. */
 /** @type {Record<string, string>} */

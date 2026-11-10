@@ -292,6 +292,20 @@ test('adding a widget stores its type', async ({ page, request }) => {
   expect(widget.widgetType).toBe('clock');
 });
 
+test('switching the type keeps the type tiles and moves the selection', async ({ page }) => {
+  await openDashboardList(page);
+  await page.locator('#btn-add').click();
+  const folder = page.locator('#ev-body .tile-opt[data-ctype="folder"]');
+  await folder.evaluate(el => {
+    el.dataset.kept = '1';
+  });
+  await folder.click();
+  await expect(folder).toHaveAttribute('aria-pressed', 'true');
+  await expect(folder).toHaveAttribute('data-kept', '1');
+  await expect(page.locator('#ev-body .tile-opt[data-ctype="app"]')).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('#ev-body > .add-new-card')).toHaveCount(1);
+});
+
 test('switching section on a phone starts the new section at the top', async ({ page, request }) => {
   /* Enough items that the Dashboard section scrolls well past one screen. */
   await seedConfig(request, {
