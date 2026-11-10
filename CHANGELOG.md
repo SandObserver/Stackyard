@@ -209,6 +209,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Keyboard focus opens a badge's popover again after the dashboard redraws.
 
+- Show the password strength meter again when the password is edited a second
+  time.
+
 ### Security
 
 - Refuse sign-in and password requests larger than 32 KB, so parallel large
