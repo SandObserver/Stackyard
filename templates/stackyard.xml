@@ -24,62 +24,259 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.21.0 - 2026-11-01
+### 1.22.0 - 2026-11-10
 
 ### Added
 
-- Run the container as any non-root user, with every capability dropped.
+- Print a one-time setup code to the container log when an address is refused,
+  so a password can be set on that address.
 
-- Add `LISTEN_PORT` to set the port nginx listens on inside the container.
+- Add `INITIAL_PASSWORD` and `INITIAL_PASSWORD_FILE` to set the dashboard
+  password on the first start.
 
-- Support a read-only root filesystem with a tmpfs on `/run/stackyard`.
+- Add a Confirm Password field and a show-password button to the Settings
+  password.
 
-- Show free space per drive in the Disk Health tooltip with Scrutiny 1.78.0 or
-  later.
+- Add a Reorder mode with Move Up and Move Down buttons to the Dashboard list.
+
+- Add a popover to every badge that names its source and shows when it may be
+  out of date.
+
+- Add a VoiceOver page control to the phone dashboard.
+
+- Animate the Settings navigation icons and the Add New type tiles on hover.
 
 ### Changed
 
-- Reject a `TRUSTED_PROXY` entry that is not an IP address or network.
+- Require at least 15 characters for a new password and refuse common passwords.
+  Existing passwords keep working.
 
-- The example Compose file stores config and icons in the `data` and `icons`
-  volumes. Existing installs keep their `./data` and `./icons` lines.
+- Show a character count toward the minimum instead of a strength score while a
+  password is typed.
 
-- The health check fails while the API cannot write `/data` or `/icons`.
+- Sign out all devices now signs out this browser as well.
 
-- Run on Node.js 26.
+- Confirm saves on the Save button and report deletes as Deleted.
 
-- Notices for actions that succeeded with a caveat use an amber warning colour
-  instead of red.
+- Write error messages as instructions and dialog titles as questions.
 
-- Sign out all devices, and an import that deletes items, focus Cancel first.
-  Deleting an item no longer uses a red button.
+- Show the sign-in lockout wait in minutes.
 
-### Removed
+- Keep widgets on a theme change and crossfade instead of reloading them.
 
-- Stop attaching a not-affected statement for CVE-2026-107891 to Docker Hub
-  images.
+- Roll changed digits in System Summary, DNS and Weather.
+
+- Fade in the wallpaper and badges.
+
+- Show the "Stackyard isn't responding" screen in the last used language.
+
+- Keep catalogue icons in the browser for a day, so repeat visits make fewer
+  requests.
+
+- Request Unsplash wallpapers at the size of the screen and in a modern format.
+
+- Start loading the wallpaper first and show its colour straight away.
+
+- Restore the dashboard instantly with Back, after checking sign-in and
+  settings.
+
+- Show the Settings form only once its real values have loaded.
+
+- `TRUSTED_PROXY` accepts the proxy's container name, and warns when an entry
+  covers a whole network.
+
+- Audit lines for password and protection changes record the client address and
+  host.
+
+- Importing a backup from a newer Stackyard version is now refused.
+
+- Widget animations use less CPU and pause off screen.
+
+- Remove the bounce from dashboard tile presses.
+
+- Dragging near a screen edge scrolls faster the closer the pointer is to the
+  edge.
+
+- Redraw the interface icons in one consistent style.
+
+- Disk Health shows the friendly name set in Scrutiny.
+
+- Dashboard buttons and page dots respond when pressed.
+
+- System Summary figures animate only on larger changes.
+
+- Settings sections no longer slide when switching.
 
 ### Fixed
 
-- Admin form errors now appear under the field they refer to, which is marked
-  invalid and focused.
+- Let the owner set a new password with a setup code when the saved password is
+  damaged, instead of being locked out.
 
-- A wrong current password keeps the password dialog open with the error under
-  the field.
+- Accept a password with accents whether the device types them composed or
+  decomposed.
 
-- When the session runs out during a save in a dialog, sign-in opens on top and
-  the save finishes afterwards.
+- Let password managers save and fill the dashboard password, filed under the
+  host name.
 
-- On phones, notices no longer cover the tab bar, and every notice has a Close
-  button.
+- Keep focus on the folder Add button after adding an app to a folder.
+
+- Show Weather in light colours after a live switch to light mode.
+
+- Fill the screen on a sideways phone when no tall widget needs the extra rows.
+
+- Keep the photo credit clear of widgets on a sideways phone.
+
+- Keep each stored value when two secret badge rows share a name.
+
+- Saving Settings no longer reverts a change made on another device.
+
+- An imported file with invalid values no longer freezes the dashboard or stops
+  Settings from loading.
+
+- An item with the id `settings` no longer blocks every later save.
+
+- Saving a very large dashboard no longer stalls the server.
+
+- Failed saves now say why: full disk, no write access, a file mounted on its
+  own, or a config over the size limit.
+
+- Turning protection off no longer deletes a password that was changed while the
+  old one was being checked.
+
+- A sign-in refused as busy no longer uses up an attempt.
+
+- Settings says when protection was turned off but other settings were not
+  saved.
+
+- A backup from an early version with non-app items in a folder can be restored.
+
+- Dashboard Switch keys no longer stay raised after a tap on a touch screen.
+
+- Numbers in Clock, DNS and Weather no longer shift sideways as they change.
+
+- Backup job times stay current between refreshes.
+
+- Now Playing shows right-to-left titles in the correct direction.
+
+- Show badges without animating them when the dashboard loads.
+
+- Scrolling search results on a phone no longer opens a result.
+
+- Folder page dots work with assistive technology, and arrow keys turn folder
+  pages.
+
+- The empty search message is readable in the light theme.
+
+- Long values in Settings drop-downs no longer collapse or shift the row.
+
+- Dragging a row on a phone scrolls above the tab bar.
+
+- Small Settings controls have larger touch areas.
+
+- Settings scrolling respects the reduced motion preference.
+
+- The phone search button no longer changes shape when the page loads.
+
+- Keyboard focus stays visible on bright wallpapers and no longer changes a
+  control's shape.
+
+- Page dots stay distinguishable with Increase Contrast.
+
+- Reduce Transparency now gives solid dashboard surfaces.
+
+- Long badge labels stay inside the badge.
+
+- Persian search results show addresses and arrows in the right direction.
+
+- A config change no longer reloads the dashboard during search, a folder or a
+  drag.
+
+- Long names and translated text stay inside widgets.
+
+- Screen readers no longer repeat Now Playing on every refresh.
+
+- Disk Health works with a mouse on touch-capable devices.
+
+- Backup status is shown in words on the card back.
+
+- Widgets follow Increase Contrast.
+
+- Dashboard Switch shows an error when its settings fail to load.
+
+- Keyboard focus is visible on the row being edited and on the selected colour.
+
+- Save and other long actions show that they are working and ignore a second
+  press.
+
+- Reduce Transparency and Increase Contrast now apply to Settings surfaces.
+
+- Dialogs and controls fit on the smallest phones.
+
+- Searching a long app list no longer stutters.
+
+- Screen readers announce how many items match a search.
+
+- An app with the id `settings` no longer blocks every Settings save.
+
+- A folder whose app list is malformed no longer stops the dashboard and
+  Settings from loading.
+
+- Deleting from an editor removes that item, even after a backup restore or an
+  import changed the list.
+
+- A slow save no longer closes an editor opened while it ran.
+
+- Keyboard focus opens a badge's popover again after the dashboard redraws.
+
+- Show the password strength meter again when the password is edited a second
+  time.
 
 ### Security
 
-- Run the container as the unprivileged `node` account by default.
-  With host networking or a Linux kernel older than 4.11, set `LISTEN_PORT` to
-  1024 or higher.
+- Refuse sign-in and password requests larger than 32 KB, so parallel large
+  requests to these routes can no longer exhaust the container's memory.
 
-- Write the config file and its backups readable by their owner only.
+- Refuse a sign-in checked against a password that was changed meanwhile.
+
+- Count failed sign-ins from one IPv6 /64 against a single limit.
+
+- Hide a newly typed password in Settings instead of showing it in the row.
+
+- Never send a stored widget secret to a row whose address changed when two rows
+  share an id.
+
+- Accept only a GitHub login name as the GitHub widget username.
+
+- Use a changed Proxmox secret at once instead of a result fetched with the old
+  one.
+
+- Keep text of a damaged config file out of the log.
+
+- Refuse cloud metadata addresses on every outbound request, even with
+  `ALLOW_PRIVATE_IPS=true`.
+
+- Allow a container name to reach only containers on a shared Docker network
+  when `ALLOW_PRIVATE_IPS` is off.
+
+- Apply the Host IP exception only when the setting holds an IP address.
+
+- Require the setup code from the container log to set the first password.
+
+- Refuse requests that came through a proxy on an unlisted address while no
+  password is set.
+
+- Check one password at a time, so parallel sign-ins at a large
+  `PASSWORD_HASH_MEMORY` no longer exhaust the container's memory.
+
+- Cap sign-in log lines so a flood of refused attempts cannot push earlier
+  entries out of the log.
+
+- Mark the session cookie `Secure` when the page was loaded over https.
+
+- Keep the `Secure` flag on the session cookie when a renewal request does not
+  show the page scheme.
+
+- Run the Compose example with a read-only root filesystem.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
