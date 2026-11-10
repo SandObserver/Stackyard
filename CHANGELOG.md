@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add a VoiceOver page control to the phone dashboard.
 
+- Animate the Settings navigation icons and the Add New type tiles on hover.
+
 ### Changed
 
 - Require at least 15 characters for a new password and refuse common passwords.
