@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=50b04dfb';
+import { renderColorControl } from '/js/admin-color-control.js?v=74173702';
 import { socketProbeAdvice } from '/js/admin-error.js?v=d1f8f6f4';
 import {
   BLOCK,
@@ -9,7 +9,7 @@ import {
   settingsSaveBlocker,
   shouldWritePassword,
   wallpaperFileName,
-} from '/js/admin-logic.js?v=245bc319';
+} from '/js/admin-logic.js?v=c1ed16c7';
 import {
   advancedBase,
   applyGeneralFields,
@@ -17,7 +17,7 @@ import {
   labelsWith,
   planFieldSave,
   serialWrites,
-} from '/js/admin-save-logic.js?v=4b2b7f18';
+} from '/js/admin-save-logic.js?v=81636161';
 import {
   apiGet,
   apiPost,
@@ -34,7 +34,7 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=6d9b0329';
+} from '/js/admin-shared.js?v=691d62f6';
 import { BACKDROP } from '/js/background.js?v=828d3e11';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import {

@@ -1,6 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import {
+import { register } from 'node:module';
+
+register('./js-root-hooks.mjs', import.meta.url);
+
+const {
   cleanId,
   buildAppItem,
   newItemId,
@@ -14,7 +18,8 @@ import {
   restoresSettings,
   revertingSaves,
   serialWrites,
-} from '../js/admin-save-logic.js';
+  removeItem,
+} = await import('../js/admin-save-logic.js');
 
 test('cleanId keeps alphanumerics, collapses the rest, and trims', () => {
   assert.equal(cleanId('My App!'), 'My_App');
@@ -269,6 +274,40 @@ test('adding a new item appends', () => {
 test('upsertItem tolerates a missing list', () => {
   assert.doesNotThrow(() => upsertItem(null, 'a', { id: 'a' }));
   assert.doesNotThrow(() => upsertItem(undefined, null, { id: 'a' }));
+});
+
+test('removeItem removes by id and takes the id out of every folder', () => {
+  const items = [
+    { id: 'f', type: 'folder', children: ['a', 'x'] },
+    { id: 'a', type: 'app' },
+    { id: 'x', type: 'app' },
+  ];
+  assert.equal(removeItem(items, 'x'), true);
+  assert.deepEqual(
+    items.map(i => i.id),
+    ['f', 'a'],
+  );
+  assert.deepEqual(items[0].children, ['a']);
+});
+
+test('removeItem deletes nothing when the list was replaced and the item is gone', () => {
+  const opened = [{ id: 'a' }, { id: 'b' }, { id: 'x' }, { id: 'c' }];
+  const editing = opened[2];
+  const replaced = [{ id: 'b' }, { id: 'c' }, { id: 'nas' }];
+  assert.equal(removeItem(replaced, editing.id), false);
+  assert.deepEqual(
+    replaced.map(i => i.id),
+    ['b', 'c', 'nas'],
+  );
+});
+
+test('removeItem finds the item at its new position', () => {
+  const items = [{ id: 'x' }, { id: 'a' }, { id: 'b' }];
+  assert.equal(removeItem(items, 'x'), true);
+  assert.deepEqual(
+    items.map(i => i.id),
+    ['a', 'b'],
+  );
 });
 
 /* ── an app must not sit in two folders ──────────────────────────────────────
