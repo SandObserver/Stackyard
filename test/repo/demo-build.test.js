@@ -7,6 +7,7 @@ const {
   splitSeries,
   fallbackRoutes,
   headerRules,
+  routePages,
   redirectRules,
   injectScript,
   restampWidgets,
@@ -137,10 +138,23 @@ test('more rules than Cloudflare reads stops the build', () => {
 });
 
 test('each route the image answered serves its folder page', () => {
+  const files = { '/index.html': BASE, '/admin/index.html': WIDGET };
   assert.equal(
-    redirectRules(['/admin/', '/', '/admin']),
+    redirectRules(routePages(files, { '/admin/': WIDGET, '/': BASE, '/admin': WIDGET })),
     '/ /index.html 200\n/admin /admin/index.html 200\n/admin/ /admin/index.html 200\n',
   );
+});
+
+test('a route with other headers than its folder page serves a copy with a rule of its own', () => {
+  const root = { ...BASE, 'cache-control': 'no-cache' };
+  const files = { '/index.html': { ...BASE, 'cache-control': 'no-store' } };
+  const pages = routePages(files, { '/': root });
+  assert.match(pages['/'], /^\/demo-routes\/[0-9a-f]{12}\.html$/);
+  assert.equal(redirectRules(pages), `/ ${pages['/']} 200\n`);
+  const text = headerRules({ ...files, [pages['/']]: root }, { '/': root });
+  const copy = text.split('\n\n').find(r => r.startsWith('/demo-routes/'));
+  assert.match(copy, /! Cache-Control\n {2}Cache-Control: no-cache/);
+  assert.match(text, /^\/\n {2}! Cache-Control\n {2}Cache-Control: no-cache$/m);
 });
 
 test('the replay script loads before anything else in the page', () => {

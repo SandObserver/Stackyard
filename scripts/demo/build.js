@@ -140,9 +140,26 @@ function headerRules(files, routes = {}) {
   return rules.map(([p, lines]) => `${p}\n${lines.map(l => `  ${l}`).join('\n')}\n`).join('\n');
 }
 
-/** @param {string[]} routes */
-function redirectRules(routes) {
-  const lines = [...routes].sort().map(r => `${r} ${r.endsWith('/') ? r : `${r}/`}index.html 200`);
+/* Cloudflare applies the rules of a route and of the file it serves, and
+   joins values that differ. A route with other headers than its folder page
+   must serve its own copy of that page, or the header is sent twice.
+   @param {Record<string, Record<string, string>>} files headers per file path
+   @param {Record<string, Record<string, string>>} routes headers per route
+   @returns {Record<string, string>} the page each route serves */
+function routePages(files, routes) {
+  const pages = {};
+  for (const [route, h] of Object.entries(routes)) {
+    const page = `${route.endsWith('/') ? route : `${route}/`}index.html`;
+    pages[route] = files[page] && !same(files[page], h) ? `/demo-routes/${hash(route)}.html` : page;
+  }
+  return pages;
+}
+
+/** @param {Record<string, string>} pages the page each route serves */
+function redirectRules(pages) {
+  const lines = Object.keys(pages)
+    .sort()
+    .map(r => `${r} ${pages[r]} 200`);
   return `${lines.join('\n')}\n`;
 }
 
@@ -224,11 +241,22 @@ function build(webroot, recording, out) {
   const replayHeaders = { ...recording.headers.files['/index.html'] };
   replayHeaders['cache-control'] = 'public, max-age=31536000, immutable';
   const replayFiles = Object.fromEntries(listFiles(dir, '/demo-replay').map(p => [p, replayHeaders]));
+
+  const { routes } = recording.headers;
+  const pages = routePages(recording.headers.files, routes);
+  const routeFiles = {};
+  for (const [route, page] of Object.entries(pages)) {
+    if (!page.startsWith('/demo-routes/')) continue;
+    const source = `${route.endsWith('/') ? route : `${route}/`}index.html`;
+    fs.mkdirSync(path.join(out, 'demo-routes'), { recursive: true });
+    fs.copyFileSync(path.join(out, source), path.join(out, page));
+    routeFiles[page] = routes[route];
+  }
   fs.writeFileSync(
     path.join(out, '_headers'),
-    headerRules({ ...recording.headers.files, ...replayFiles }, recording.headers.routes),
+    headerRules({ ...recording.headers.files, ...replayFiles, ...routeFiles }, routes),
   );
-  fs.writeFileSync(path.join(out, '_redirects'), redirectRules(Object.keys(recording.headers.routes)));
+  fs.writeFileSync(path.join(out, '_redirects'), redirectRules(pages));
   return { pages: files.filter(p => p.endsWith('.html')).length, fixed: Object.keys(fixed).length, varying };
 }
 
@@ -237,6 +265,7 @@ module.exports = {
   splitSeries,
   fallbackRoutes,
   headerRules,
+  routePages,
   redirectRules,
   injectScript,
   restampWidgets,
