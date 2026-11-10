@@ -6,6 +6,7 @@ import {
   reorderItems,
   topLevelRows,
   shownChildren,
+  folderChildren,
   settleDock,
   isDockBlocked,
   nextActiveIndex,
@@ -111,6 +112,40 @@ test('shownChildren leaves out a docked app and a missing id', () => {
     shownChildren(items, items[0]).map(i => i.id),
     ['c', 'e'],
   );
+});
+
+const BAD_CHILDREN = ['a', {}, 5];
+
+test('a stored folder whose children is not a list has no children', () => {
+  for (const children of BAD_CHILDREN) {
+    const items = [
+      { id: 'f', type: 'folder', label: 'F', children },
+      { id: 'a', type: 'app' },
+      { id: 'd', type: 'app', dock: true },
+    ];
+    assert.deepEqual(folderChildren(items[0]), []);
+    assert.deepEqual(shownChildren(items, items[0]), []);
+    assert.deepEqual(
+      topLevelRows(items, false).map(i => i.id),
+      ['f', 'a'],
+    );
+    assert.doesNotThrow(() => settleDock(items));
+    assert.equal(reorderItems(items, items[1], 1, { folderId: 'f', childIdx: 0 }), false);
+  }
+});
+
+test('the admin code reads folder children only through folderChildren', () => {
+  const dir = new URL('../js/', import.meta.url);
+  const offenders = [];
+  for (const f of fs.readdirSync(dir)) {
+    if (!/^admin.*\.js$/.test(f)) continue;
+    const src = fs.readFileSync(new URL(f, dir), 'utf8');
+    for (const m of src.matchAll(/[\w?.]*children\s*\|\|\s*\[\]|Array\.isArray\([\w?.]*\.children\)/g)) {
+      if (f === 'admin-logic.js' && m[0] === 'Array.isArray(folder?.children)') continue;
+      offenders.push(`${f}: ${m[0]}`);
+    }
+  }
+  assert.deepEqual(offenders, []);
 });
 
 test('a folder arrow steps over a docked child the list does not draw', () => {

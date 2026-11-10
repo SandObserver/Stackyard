@@ -258,11 +258,16 @@ export function groupBounds(field, size) {
   return { min, max };
 }
 
+/** @param {any} folder @returns {string[]} */
+export function folderChildren(folder) {
+  return Array.isArray(folder?.children) ? folder.children : [];
+}
+
 /** The top-level rows of one list group, in order. A docked app is drawn in
     the dock group even when a folder lists it.
     @param {any[]} items @param {boolean} docked @returns {any[]} */
 export function topLevelRows(items, docked) {
-  const inF = new Set(items.filter(i => i.type === 'folder').flatMap(ff => ff.children || []));
+  const inF = new Set(items.filter(i => i.type === 'folder').flatMap(ff => folderChildren(ff)));
   return items.filter(it => {
     const isDocked = it.type === 'app' && !!it.dock;
     if (isDocked !== docked) return false;
@@ -281,7 +286,9 @@ export function isShownChild(items, id) {
 /** The folder's children drawn under it, in order.
     @param {any[]} items @param {any} folder @returns {any[]} */
 export function shownChildren(items, folder) {
-  return (folder?.children || []).filter(id => isShownChild(items, id)).map(id => items.find(i => i.id === id));
+  return folderChildren(folder)
+    .filter(id => isShownChild(items, id))
+    .map(id => items.find(i => i.id === id));
 }
 
 /** Mutates `items` in place. A hidden app leaves the dock, and a docked app
@@ -295,8 +302,8 @@ export function settleDock(items) {
     else docked.add(it.id);
   }
   for (const f of items) {
-    if (f.type === 'folder' && (f.children || []).some(id => docked.has(id))) {
-      f.children = f.children.filter(id => !docked.has(id));
+    if (f.type === 'folder' && folderChildren(f).some(id => docked.has(id))) {
+      f.children = folderChildren(f).filter(id => !docked.has(id));
     }
   }
 }
@@ -306,7 +313,7 @@ export function reorderItems(items, item, dir, { folderId = null, childIdx = nul
   if (folderId != null) {
     const f = items.find(i => i.id === folderId);
     if (!f) return false;
-    const ch = f.children || [];
+    const ch = folderChildren(f);
     let j = childIdx + dir;
     while (j >= 0 && j < ch.length && !isShownChild(items, ch[j])) j += dir;
     if (j < 0 || j >= ch.length) return false;

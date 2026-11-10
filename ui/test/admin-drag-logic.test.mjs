@@ -1,6 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import {
+import { register } from 'node:module';
+
+register('./js-root-hooks.mjs', import.meta.url);
+
+const {
   canJoinFolder,
   canDropInGroup,
   dropTargetKind,
@@ -9,7 +13,7 @@ import {
   folderRowZone,
   listGroup,
   pastLiftSlop,
-} from '../js/admin-drag-logic.js';
+} = await import('../js/admin-drag-logic.js');
 
 /* a, b, w top level; f is a folder holding c. */
 const model = () => [
@@ -336,4 +340,16 @@ test('edge scrolling ramps with depth and stops outside the zones', () => {
   assert.ok(Math.abs(edgeScrollSpeed(70, 0, 800)) < Math.abs(edgeScrollSpeed(10, 0, 800)));
   assert.ok(edgeScrollSpeed(760, 0, 800) > 0);
   assert.equal(edgeScrollSpeed(900, 0, 800), 1.2, 'a finger past the edge stays at full speed');
+});
+
+test('a drop into a folder whose stored children is not a list does not throw', () => {
+  for (const children of ['c', {}, 5]) {
+    const items = model();
+    items[2].children = children;
+    assert.equal(
+      applyDrop(items, { srcId: 'a', srcFolderId: null, targetId: 'f', targetIsFolder: true, indent: false }),
+      true,
+    );
+    assert.deepEqual(folder(items, 'f'), ['a']);
+  }
 });

@@ -11,20 +11,21 @@
    The filter and the collapsed folders are in admin-state.js, because the page
    reads and writes them too. */
 
-import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=b8b58462';
-import { listGroup } from '/js/admin-drag-logic.js?v=7101ca25';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=7731cdd6';
+import { listGroup } from '/js/admin-drag-logic.js?v=127f18c9';
 import {
   filterActive,
+  folderChildren,
   isShownChild,
   itemMatchesFilter,
   reorderItems,
   shownChildren,
   topLevelRows,
-} from '/js/admin-logic.js?v=245bc319';
-import { snapshotItems } from '/js/admin-save-logic.js?v=4b2b7f18';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=6d9b0329';
+} from '/js/admin-logic.js?v=c1ed16c7';
+import { snapshotItems } from '/js/admin-save-logic.js?v=81636161';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=691d62f6';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { sizeLabel } from '/js/admin-widget-form.js?v=4e62a5b3';
+import { sizeLabel } from '/js/admin-widget-form.js?v=fd3dee4c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=ed7c5565';
@@ -451,7 +452,7 @@ function draw(l) {
   top.home.forEach(item => {
     homeGrp.appendChild(mkRow(item, state.items.indexOf(item), { top }));
     if (item.type === 'folder' && !collapsedFolders.has(item.id)) {
-      (Array.isArray(item.children) ? item.children : []).forEach((childId, ci) => {
+      folderChildren(item).forEach((childId, ci) => {
         if (!isShownChild(state.items, childId)) return;
         const childItem = state.items.find(i => i.id === childId);
         homeGrp.appendChild(

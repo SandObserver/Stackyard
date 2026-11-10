@@ -1,4 +1,6 @@
 // @ts-check
+import { folderChildren } from '/js/admin-logic.js?v=c1ed16c7';
+
 /* Keep this module free of the DOM. The DOM reads stay in doSave. */
 
 const BADGE_DEFAULT = 'info';
@@ -168,9 +170,7 @@ export function restoresSettings(file, live) {
 function withoutBadFolderChildren(items) {
   if (!Array.isArray(items)) return items;
   const apps = new Set(items.filter(i => i?.type === 'app').map(i => i.id));
-  return items.map(i =>
-    i?.type === 'folder' && Array.isArray(i.children) ? { ...i, children: i.children.filter(id => apps.has(id)) } : i,
-  );
+  return items.map(i => (i?.type === 'folder' ? { ...i, children: folderChildren(i).filter(id => apps.has(id)) } : i));
 }
 
 /** The config write that restores a backup over `live`. It carries the file's
@@ -279,6 +279,15 @@ export function upsertItem(items, id, item) {
   return { items: list, replaced: at !== -1 };
 }
 
+/** @param {any[]} items @param {string} id @returns {boolean} whether the item was removed */
+export function removeItem(items, id) {
+  const at = items.findIndex(i => i && i.id === id);
+  if (at === -1) return false;
+  for (const f of items) if (f?.type === 'folder') f.children = folderChildren(f).filter(c => c !== id);
+  items.splice(at, 1);
+  return true;
+}
+
 /** Remove `childIds` from every folder except `folderId`. An app belongs to one
     folder, or the dashboard renders it twice.
 
@@ -290,8 +299,7 @@ export function claimFolderChildren(items, folderId, childIds) {
   if (!claimed.size) return list;
   for (const it of list) {
     if (!it || it.type !== 'folder' || it.id === folderId) continue;
-    if (!Array.isArray(it.children)) continue;
-    it.children = it.children.filter(id => !claimed.has(id));
+    it.children = folderChildren(it).filter(id => !claimed.has(id));
   }
   return list;
 }
