@@ -1,6 +1,6 @@
 // @ts-check
 
-import { ICONS, symbol } from '/js/icon-set.js?v=19f0803f';
+import { ICONS, symbol } from '/js/icon-set.js?v=b7e5d7d1';
 
 const IN_OUT = 'cubic-bezier(.77,0,.175,1)';
 const CUBIC = 'cubic-bezier(.65,0,.35,1)';
@@ -9,7 +9,7 @@ const SEG = 'cubic-bezier(.33,0,.2,1)';
 /** @typedef {{ accent: string }} Ctx */
 /** @typedef {Keyframe[] | PropertyIndexedKeyframes | ((ctx: Ctx) => Keyframe[] | PropertyIndexedKeyframes)} Frames */
 /** @typedef {{ morph: string, reverse?: boolean }} Morph */
-/** @typedef {[part: string, frames: Frames | Morph, timing: KeyframeAnimationOptions & { spline?: string }]} Step */
+/** @typedef {[part: string, frames: Frames | Morph, timing: KeyframeAnimationOptions & { spline?: string, trail?: boolean }]} Step */
 /** @typedef {{ origin?: Record<string, [box: string, origin: string]>, go: Step[], back: Step[] }} Motion */
 
 const px = (x, y) => `${x}px ${y}px`;
@@ -127,7 +127,7 @@ export const MOTION = {
           offset: [0, 0.22, 0.5, 0.76, 1],
           easing: 'ease-in-out',
         },
-        { duration: 750, delay: 340 },
+        { duration: 750, delay: 340, trail: true },
       ],
     ],
     back: [['half', { rotate: ['90deg', '0deg'] }, { duration: 420, easing: IN_OUT }]],
@@ -280,8 +280,16 @@ export const MOTION = {
     ],
   },
   nowplaying: {
-    go: [['play', { morph: PAUSE }, { duration: 250, spline: '.23 1 .32 1' }]],
-    back: [['play', { morph: PAUSE, reverse: true }, { duration: 250, spline: '.23 1 .32 1' }]],
+    go: [
+      ['rest', { visibility: ['hidden', 'hidden'] }, { duration: 250 }],
+      ['play', { visibility: ['visible', 'visible'] }, { duration: 250 }],
+      ['play', { morph: PAUSE }, { duration: 250, spline: '.23 1 .32 1' }],
+    ],
+    back: [
+      ['rest', { visibility: ['hidden', 'hidden'] }, { duration: 250 }],
+      ['play', { visibility: ['visible', 'visible'] }, { duration: 250 }],
+      ['play', { morph: PAUSE, reverse: true }, { duration: 250, spline: '.23 1 .32 1' }],
+    ],
   },
   upnext: {
     go: [
@@ -386,8 +394,23 @@ function morph(el, m, ms, spline) {
   return { finished: new Promise(r => setTimeout(r, ms)), cancel: () => a.remove() };
 }
 
-const canPlay = () =>
-  matchMedia('(hover: hover) and (pointer: fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+/** @type {{ hover: MediaQueryList, reduce: MediaQueryList, resets: Map<SVGSVGElement, () => void> } | null} */
+let media = null;
+const env = () => {
+  if (media) return media;
+  const m = {
+    hover: matchMedia('(hover: hover) and (pointer: fine)'),
+    reduce: matchMedia('(prefers-reduced-motion: reduce)'),
+    resets: new Map(),
+  };
+  m.reduce.addEventListener('change', () => {
+    if (!m.reduce.matches) return;
+    for (const [svg, reset] of m.resets) if (svg.isConnected) reset();
+  });
+  media = m;
+  return m;
+};
+const canPlay = () => env().hover.matches && !env().reduce.matches;
 
 /** @param {SVGSVGElement} svg @param {string} id @param {Element} [trigger] */
 export function animateIcon(svg, id, trigger = svg) {
@@ -405,37 +428,66 @@ export function animateIcon(svg, id, trigger = svg) {
   let want = false;
   let at = false;
   let busy = false;
+  let epoch = 0;
   /** @type {{ finished: Promise<unknown>, cancel: () => void }[]} */
-  let held = [];
+  let live = [];
+  const settle = () => {
+    for (const a of live) a.cancel();
+    live = [];
+  };
   const run = async () => {
     if (busy || want === at) return;
-    busy = true;
     const dir = want;
+    if (!canPlay() || (!dir && !live.length)) {
+      settle();
+      at = dir;
+      return;
+    }
+    busy = true;
+    const mine = epoch;
     if (!ctx) {
       const a = svg.querySelector('.sy-a');
       ctx = { accent: a ? getComputedStyle(a).fill : 'currentColor' };
     }
     const c = ctx;
-    const anims = (dir ? m.go : m.back).flatMap(([part, frames, timing]) =>
-      Array.from(svg.querySelectorAll(`[data-part="${part}"]`), el => {
-        const { spline = '', ...t } = timing;
-        if ('morph' in frames) return morph(el, /** @type {Morph} */ (frames), Number(t.duration), spline);
-        const kf = typeof frames === 'function' ? frames(c) : frames;
-        return el.animate(/** @type {Keyframe[]} */ (kf), { ...t, fill: 'forwards' });
-      }),
-    );
-    await Promise.all(anims.map(a => a.finished)).catch(() => {});
-    if (dir) held = anims;
-    else {
-      for (const a of [...held, ...anims]) a.cancel();
-      held = [];
+    /** @type {{ finished: Promise<unknown>, cancel: () => void }[]} */
+    const leg = [];
+    for (const [part, frames, timing] of dir ? m.go : m.back) {
+      const { spline = '', trail = false, ...t } = timing;
+      for (const el of svg.querySelectorAll(`[data-part="${part}"]`)) {
+        const a =
+          'morph' in frames
+            ? morph(el, /** @type {Morph} */ (frames), Number(t.duration), spline)
+            : el.animate(/** @type {Keyframe[]} */ (typeof frames === 'function' ? frames(c) : frames), {
+                ...t,
+                fill: 'forwards',
+              });
+        live.push(a);
+        if (!trail) leg.push(a);
+      }
+    }
+    await Promise.all(leg.map(a => a.finished)).catch(() => {});
+    if (mine !== epoch) return;
+    if (!dir) {
+      await Promise.all(live.map(a => a.finished)).catch(() => {});
+      if (mine !== epoch) return;
+      settle();
     }
     at = dir;
     busy = false;
     run();
   };
+  const reset = () => {
+    epoch++;
+    busy = false;
+    settle();
+    at = want;
+  };
   trigger.addEventListener('pointerenter', e => {
     if (/** @type {PointerEvent} */ (e).pointerType === 'touch' || !canPlay()) return;
+    const { resets } = env();
+    for (const old of resets.keys()) if (!old.isConnected) resets.delete(old);
+    resets.set(svg, reset);
     want = true;
     run();
   });

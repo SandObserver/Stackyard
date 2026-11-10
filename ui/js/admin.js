@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=fbd7d6f7';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=2cbad7a9';
+} from '/js/admin-app-form.js?v=6fa2a9cb';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=df7c5fdb';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=af93ed79';
+} from '/js/admin-list.js?v=cbef9d1f';
 import { resolveAdminSection, settleDock } from '/js/admin-logic.js?v=245bc319';
 import {
   afterImport,
@@ -40,7 +40,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=f23ab87f';
+} from '/js/admin-settings.js?v=c19ad510';
 import {
   announce,
   apiGet,
@@ -65,18 +65,18 @@ import {
   swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=51eeae2e';
+} from '/js/admin-shared.js?v=6d9b0329';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=306c96d8';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=4e62a5b3';
 import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=828d3e11';
-import { recoveryShown } from '/js/config-recovery.js?v=3272c99d';
+import { recoveryShown } from '/js/config-recovery.js?v=49e8d68e';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=abcd4ae4';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=0c57b286';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=ed7c5565';
-import { animateIcon } from '/js/icon-motion.js?v=5e48d73b';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=19f0803f';
+import { animateIcon } from '/js/icon-motion.js?v=4021def9';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=b7e5d7d1';
 import { loadLocalIcons } from '/js/icons.js?v=76c29d43';
 import {
   clearSkipTls,
@@ -91,7 +91,7 @@ import {
 } from '/js/import-foreign.js?v=80477b68';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=b2edb6d8';
+import { createListbox } from '/js/listbox.js?v=7634ef71';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=c4c1c4c4';
 import { passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
@@ -409,16 +409,27 @@ function buildAddNewCard() {
   return grp;
 }
 
+/** @param {Element} card */
+function syncAddNewCard(card) {
+  for (const b of qa('.tile-opt', card)) {
+    const on = /** @type {HTMLElement} */ (b).dataset.ctype === state.ctype;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', String(on));
+  }
+  return card;
+}
+
 /* Prepended after the builder runs, so the builder's reset cannot wipe it. */
 /** @param {string} [focusKind] the type tile that keeps focus */
 function _renderEditBody(focusKind) {
   const body = el('ev-body');
+  const card = focusKind ? body.querySelector(':scope > .add-new-card') : null;
   body.replaceChildren();
   if (state.ctype === 'widget') buildWidgetForm(body, state._evItem);
   else if (state.ctype === 'folder') buildFolderForm(body, state._evItem);
   else if (state.ctype === 'settings') buildSettingsTileForm(body, state._evItem);
   else buildAppForm(body, state._evItem);
-  if (!state._evIsEdit) body.insertBefore(buildAddNewCard(), body.firstChild);
+  if (!state._evIsEdit) body.insertBefore(card ? syncAddNewCard(card) : buildAddNewCard(), body.firstChild);
   setTimeout(() => {
     if (el('dash-edit-view').contains(document.activeElement)) return;
     const tile = focusKind ? qa('.tile-opt', body).find(b => b.dataset.ctype === focusKind) : null;

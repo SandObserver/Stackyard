@@ -72,7 +72,8 @@ function draw(p, st, sharp, sw, clipId) {
   }
   if (p.clip) {
     const [x, y, w, h] = p.clip;
-    return `<clipPath id="${clipId}w"><rect x="${x}" y="${y}" width="${w}" height="${h}"/></clipPath><g clip-path="url(#${clipId}w)">${draw({ ...p, clip: null }, st, sharp, sw, clipId)}</g>`;
+    const caps = (p.clipCaps || []).map(([cx, cy]) => `<circle cx="${cx}" cy="${cy}" r="${sw / 2}"/>`).join('');
+    return `<clipPath id="${clipId}w"><rect x="${x}" y="${y}" width="${w}" height="${h}"/>${caps}</clipPath><g clip-path="url(#${clipId}w)">${draw({ ...p, clip: null }, st, sharp, sw, clipId)}</g>`;
   }
   if (p.k === 'line' || outlined)
     return `${geom(p, sharp, outlined ? sw / 2 : 0)} class="sy-${cls}s" fill="none"${strokeAttrs(sharp, sw)}/>`;
@@ -288,8 +289,8 @@ export const ICONS = {
   nowplaying: {
     ...free(
       frame(4, 4, 16, 16),
-      shape(PLAY, 'accent', { rj: true, only: 'still' }),
-      shape(PLAY_HALVES, 'accent', { rj: true, only: 'motion', part: 'play' }),
+      shape(PLAY, 'accent', { rj: true, part: 'rest' }),
+      shape(PLAY_HALVES, 'accent', { rj: true, only: 'motion', part: 'play', hidden: true }),
     ),
     filled: { gap: 2, shapes: [rect(3, 3, 18, 18, T.R_LG), shape(PLAY, 'accent', { rj: true })] },
   },
@@ -308,7 +309,11 @@ export const ICONS = {
         only: 'motion',
         part: 'trend',
         hidden: true,
-        clip: [2, -10, 15, 44],
+        clip: [3, -10, 14, 44],
+        clipCaps: [
+          [3, 16],
+          [17, 10],
+        ],
       }),
       { ...dot(19, 6, T.NODE, 'accent'), part: 'dot' },
       bar(3, 20, 18, 'ink'),
