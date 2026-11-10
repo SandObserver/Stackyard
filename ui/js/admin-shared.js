@@ -2,11 +2,11 @@
 
 import { errorAdvice } from '/js/admin-error.js?v=d1f8f6f4';
 import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=c1ed16c7';
-import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=9b0a0ed6';
+import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=5e8a2c4c';
 import { formatList, formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=ec60b9bd';
-import { iconSvg } from '/js/icon-set.js?v=b7e5d7d1';
+import { iconSvg } from '/js/icon-set.js?v=4d944cec';
 import { iconChain } from '/js/icons.js?v=76c29d43';
 import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';

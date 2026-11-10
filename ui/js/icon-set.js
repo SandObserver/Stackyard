@@ -361,6 +361,9 @@ export const ICONS = {
   failure: free(face(), line('M9 9l6 6M15 9l-6 6')),
   check: { shapes: [line('M5 13l4 4 10-10')] },
   plus: { shapes: [line('M12 5v14M5 12h14')] },
+  close: { shapes: [line('M6 6l12 12M18 6 6 18')] },
+  link: { shapes: [line('M9 17H7a5 5 0 0 1 0-10h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8')] },
+  menu: { shapes: [bar(4, 7, 16, 'ink'), bar(4, 11, 16, 'ink'), bar(4, 15, 16, 'ink')] },
   warning: {
     ...free(line(TRIANGLE), line('M12 10v4'), detail(11, 16, 2, 2, 1)),
     filled: { shapes: [shape(TRIANGLE, 'ink', { rj: true }), line('M12 10v4', 'cut'), detail(11, 16, 2, 2, 1, 'cut')] },

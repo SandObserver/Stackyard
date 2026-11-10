@@ -15,7 +15,7 @@ import {
   readBadgeUpdate,
 } from '/js/badge-logic.js?v=04a4ece8';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=2352c034';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=9b0a0ed6';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=5e8a2c4c';
 import {
   configChanged,
   desktopCols,
@@ -32,7 +32,7 @@ import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import { observeGlass } from '/js/glass-rim.js?v=3faec233';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { currentLang, initI18n, isSupported, t } from '/js/i18n.js?v=ec60b9bd';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=b7e5d7d1';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=4d944cec';
 import { iconChain, loadLocalIcons } from '/js/icons.js?v=76c29d43';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import {

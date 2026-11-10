@@ -1,4 +1,4 @@
-import { BADGE_DEFAULT, renderColorControl } from '/js/admin-color-control.js?v=29a2c296';
+import { BADGE_DEFAULT, renderColorControl } from '/js/admin-color-control.js?v=35772b1a';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=d1f8f6f4';
 import {
   clearsStoredSecret,
@@ -27,14 +27,14 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=bb375b32';
+} from '/js/admin-shared.js?v=38a1c498';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { MAX_LABELS } from '/js/badge-logic.js?v=04a4ece8';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=ec60b9bd';
-import { iconSvg } from '/js/icon-set.js?v=b7e5d7d1';
+import { iconSvg } from '/js/icon-set.js?v=4d944cec';
 import {
   cdnIconRef,
   iconChain,
@@ -44,7 +44,7 @@ import {
   throughServer,
 } from '/js/icons.js?v=76c29d43';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=5cf876f8';
+import { createListbox } from '/js/listbox.js?v=a49cc891';
 import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
 import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=ff7e1e5f';
 

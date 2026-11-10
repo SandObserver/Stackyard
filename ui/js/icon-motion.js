@@ -1,6 +1,6 @@
 // @ts-check
 
-import { ICONS, symbol } from '/js/icon-set.js?v=b7e5d7d1';
+import { ICONS, symbol } from '/js/icon-set.js?v=4d944cec';
 
 const IN_OUT = 'cubic-bezier(.77,0,.175,1)';
 const CUBIC = 'cubic-bezier(.65,0,.35,1)';
