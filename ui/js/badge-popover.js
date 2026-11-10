@@ -181,6 +181,24 @@ function wireGlobals() {
   ensurePop().addEventListener('toggle', e => {
     if (/** @type {any} */ (e).newState === 'closed' && openFor) closeBadgePopover();
   });
+  /* Resolve the tile at focus time. A badge is wired before it joins its tile. */
+  document.addEventListener('focusin', e => {
+    const badge = badgeIn(e.target);
+    if (badge && /** @type {HTMLElement} */ (e.target).matches(':focus-visible')) open(badge);
+  });
+  document.addEventListener('focusout', e => {
+    if (badgeIn(e.target)) closeBadgePopover();
+  });
+}
+
+/** The wired badge of a focused tile, or null. @param {EventTarget|null} target */
+function badgeIn(target) {
+  if (!(target instanceof HTMLElement)) return null;
+  for (const badge of target.querySelectorAll('.badge')) {
+    if (ROWS.get(/** @type {HTMLElement} */ (badge)) && tileOf(/** @type {HTMLElement} */ (badge)) === target)
+      return /** @type {HTMLElement} */ (badge);
+  }
+  return null;
 }
 
 /** Attach or remove the popover on one badge. Null rows remove it.
@@ -219,12 +237,4 @@ export function wireBadgePopover(badge, rows) {
     if (openFor === badge) closeBadgePopover();
     else open(badge);
   });
-
-  const tile = tileOf(badge);
-  if (tile) {
-    tile.addEventListener('focus', () => {
-      if (tile.matches(':focus-visible')) open(badge);
-    });
-    tile.addEventListener('blur', () => closeBadgePopover());
-  }
 }
