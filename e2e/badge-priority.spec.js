@@ -91,13 +91,14 @@ test('two badges open a list, and it holds the ones the pill did not show', asyn
   await expect(rows.nth(2)).toContainText('backup');
 });
 
-test('one badge opens no list', async ({ page }) => {
+test('one badge draws no second pill, and keyboard focus opens only its own row', async ({ page }) => {
   const badge = await paint(page, { healthy: true, fixed: true });
   await expect(badge).toHaveText('backup');
   await expect(badge).not.toHaveClass(/has-more/);
-  /* Focus opens the list at once. Hover waits for a delay. */
   await badge.evaluate(el => /** @type {HTMLElement} */ (el.closest('a, button, [role="button"]')).focus());
-  await expect(page.locator('#badge-pop')).toBeHidden();
+  await expect(page.locator('#badge-pop')).toBeVisible();
+  await expect(page.locator('#badge-pop .badge-pop-row')).toHaveCount(1);
+  await expect(page.locator('#badge-pop .badge-pop-row')).toContainText('backup');
 });
 
 test('the healthy dot never counts toward the list', async ({ page }) => {

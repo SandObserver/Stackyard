@@ -72,7 +72,7 @@ test('a folder tile uses the shared tap handling and can show its press', () => 
 test('only keyboard focus opens the badge popover', () => {
   assert.match(
     popover,
-    /tile\.addEventListener\('focus', \(\) => \{\s*if \(tile\.matches\(':focus-visible'\)\) open\(badge\);/,
+    /if \(badge && \/\*\* @type \{HTMLElement\} \*\/ \(e\.target\)\.matches\(':focus-visible'\)\) open\(badge\);/,
   );
 });
 
