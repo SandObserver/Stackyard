@@ -103,6 +103,57 @@ test('a failed wallpaper link goes back to the last saved wallpaper, not the one
   await expect(page.locator('#ie-bgurl-v')).toContainText('saved-later.png');
 });
 
+/* Later than the re-check the file choice schedules, or the test passes without the fix. */
+async function slowUpload(page, ms = 500) {
+  await page.route('**/api/wallpaper/upload', async route => {
+    await new Promise(r => setTimeout(r, ms));
+    await route.fulfill({ json: { url: '/icons/wallpaper/uploaded.png' } });
+  });
+}
+
+const PNG = { name: 'photo.png', mimeType: 'image/png', buffer: Buffer.from('png') };
+
+test('an uploaded wallpaper enables Save with no further input', async ({ page, request }) => {
+  await slowUpload(page);
+  await openAppearance(page);
+  await expect(page.locator('#bg-save')).toBeDisabled();
+
+  await page.locator('#bg-upload').setInputFiles(PNG);
+  await expect(page.locator('#ie-bgurl-v')).toContainText('uploaded.png');
+  await expect(page.locator('#bg-save')).toBeEnabled();
+
+  const saved = page.waitForResponse(r => r.url().includes('/api/config') && r.request().method() === 'POST');
+  await page.locator('#bg-save').click();
+  expect((await saved).ok()).toBeTruthy();
+  const cfg = await readConfig(request);
+  expect(cfg.settings.background.url).toBe('/icons/wallpaper/uploaded.png');
+});
+
+test('an upload that lands while Save runs leaves Save on', async ({ page, request }) => {
+  await slowUpload(page, 1500);
+  await page.route('**/api/config', async route => {
+    if (route.request().method() === 'POST') await new Promise(r => setTimeout(r, 3000));
+    await route.continue();
+  });
+  await openAppearance(page);
+  await page.locator('#bg-fit-btn').click();
+  await page.locator('#bg-fit-list li[data-val="fit"]').click();
+  await expect(page.locator('#bg-save')).toBeEnabled();
+
+  await page.locator('#bg-upload').setInputFiles(PNG);
+  const saved = page.waitForResponse(r => r.url().includes('/api/config') && r.request().method() === 'POST');
+  await page.locator('#bg-save').click();
+  expect((await saved).ok()).toBeTruthy();
+  await expect(page.locator('#ie-bgurl-v')).toContainText('uploaded.png');
+  await expect(page.locator('#bg-save')).toBeEnabled();
+  expect((await readConfig(request)).settings.background.url).toBe('/icons/wallpaper/none.png');
+
+  const again = page.waitForResponse(r => r.url().includes('/api/config') && r.request().method() === 'POST');
+  await page.locator('#bg-save').click();
+  expect((await again).ok()).toBeTruthy();
+  expect((await readConfig(request)).settings.background.url).toBe('/icons/wallpaper/uploaded.png');
+});
+
 test.describe('Unsplash key', () => {
   const UNSPLASH = { type: 'unsplash', brightness: 0.62, collection: '' };
 

@@ -51,6 +51,16 @@ test('createDirtyTracker is clean until the value moves, and clean again after r
   tr.reset();
   assert.equal(tr.dirty(), false);
 });
+
+test('createDirtyTracker reset to a given value stays dirty while the live value differs', () => {
+  let v = 'sent';
+  const tr = createDirtyTracker(() => v);
+  v = 'landed later';
+  tr.reset('sent');
+  assert.equal(tr.dirty(), true);
+  v = 'sent';
+  assert.equal(tr.dirty(), false);
+});
 /* The real strength check, so these assert the rule the save actually applies. */
 import { passwordMeter } from '../js/password-policy.js';
 

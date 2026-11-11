@@ -1,5 +1,5 @@
 // @ts-check
-import { folderChildren } from '/js/admin-logic.js?v=c1ed16c7';
+import { folderChildren } from '/js/admin-logic.js?v=4681aa43';
 
 /* Keep this module free of the DOM. The DOM reads stay in doSave. */
 
