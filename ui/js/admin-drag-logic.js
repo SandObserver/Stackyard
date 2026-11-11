@@ -1,4 +1,4 @@
-import { folderChildren } from '/js/admin-logic.js?v=c1ed16c7';
+import { folderChildren } from '/js/admin-logic.js?v=4681aa43';
 
 /* Only apps may live inside a folder. Widgets and folders stay at the top
    level. */

@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=35772b1a';
+import { renderColorControl } from '/js/admin-color-control.js?v=704fa0bb';
 import { socketProbeAdvice } from '/js/admin-error.js?v=d1f8f6f4';
 import {
   BLOCK,
@@ -9,7 +9,7 @@ import {
   settingsSaveBlocker,
   shouldWritePassword,
   wallpaperFileName,
-} from '/js/admin-logic.js?v=c1ed16c7';
+} from '/js/admin-logic.js?v=4681aa43';
 import {
   advancedBase,
   applyGeneralFields,
@@ -17,7 +17,7 @@ import {
   labelsWith,
   planFieldSave,
   serialWrites,
-} from '/js/admin-save-logic.js?v=81636161';
+} from '/js/admin-save-logic.js?v=0bf36ea4';
 import {
   apiGet,
   apiPost,
@@ -34,7 +34,7 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=38a1c498';
+} from '/js/admin-shared.js?v=dc050c9e';
 import { BACKDROP } from '/js/background.js?v=e9980cbc';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import {
@@ -54,9 +54,9 @@ import { el, inp, qa, setUserText } from '/js/utils.js?v=ff7e1e5f';
 let _passwordSet = false;
 let _authEnabled = false;
 
-/** @type {{ sync: () => void, dirty: () => boolean, reset: (force?: boolean) => void } | null} */
+/** @type {{ sync: () => void, dirty: () => boolean, reset: (force?: boolean, value?: string) => void } | null} */
 let _srvTrack = null;
-/** @type {{ sync: () => void, dirty: () => boolean, reset: (force?: boolean) => void } | null} */
+/** @type {{ sync: () => void, dirty: () => boolean, reset: (force?: boolean, value?: string) => void } | null} */
 let _bgTrack = null;
 let _savedWallpaperUrl = '';
 /** @type {{ form: Record<string, unknown>, server: Record<string, unknown> }} */
@@ -99,16 +99,17 @@ const readServerForm = () =>
     _val('sec-en'),
     _val('sec-pw'),
   ]);
-const readWallpaperForm = () =>
-  JSON.stringify([
-    _val('bg-type'),
-    _val('bg-br'),
-    _val('bg-col-inp', 'bg-col'),
-    _val('bg-url-inp', 'bg-url'),
-    _val('bg-fit'),
-    _val('bg-color-val'),
-    _val('bg-apikey-inp'),
-  ]);
+/* Keep the Unsplash key last. saveWallpaper replaces the last value. */
+const wallpaperFormValues = () => [
+  _val('bg-type'),
+  _val('bg-br'),
+  _val('bg-col-inp', 'bg-col'),
+  _val('bg-url-inp', 'bg-url'),
+  _val('bg-fit'),
+  _val('bg-color-val'),
+  _val('bg-apikey-inp'),
+];
+const readWallpaperForm = () => JSON.stringify(wallpaperFormValues());
 
 const readGeneralFields = () => ({
   hostIp: inp('srv-ip')?.value?.trim() || '',
@@ -172,9 +173,9 @@ function trackSave(buttonId, read) {
     dirty: tr.dirty,
     /* Do not re-baseline a touched form. The edit is swallowed and Save never
        lights again.
-       @param {boolean} [force] */
-    reset: (force = true) => {
-      if (force || !touched) tr.reset();
+       @param {boolean} [force] @param {string} [value] the baseline, the live form by default */
+    reset: (force = true, value) => {
+      if (force || !touched) tr.reset(value);
       if (force) touched = false;
       sync();
     },
@@ -586,6 +587,7 @@ function saveSwitch(e, key) {
 }
 async function saveWallpaper() {
   try {
+    const sent = wallpaperFormValues();
     const form = readBackgroundFields();
     const bg = form.background;
     const type = bg.type;
@@ -608,7 +610,8 @@ async function saveWallpaper() {
         showUnsplashKeyState(true);
       }
     }
-    _bgTrack?.reset();
+    /* Not the live form. A wallpaper that lands during the save would never be written. */
+    _bgTrack?.reset(true, JSON.stringify(sent.with(-1, _val('bg-apikey-inp'))));
     confirmSaved(el('bg-save'));
   } catch (e) {
     toast(staleText(e) || t('toast.saveFailed', { err: errorText(e) }), 'err', errorAction(e));

@@ -421,13 +421,13 @@ export function failureIsMissingApiPath(url, advice) {
 /** Compares what `read` returns now with what it returned at the last reset.
 
     @param {() => string} read
-    @returns {{ dirty: () => boolean, reset: () => void }} */
+    @returns {{ dirty: () => boolean, reset: (value?: string) => void }} */
 export function createDirtyTracker(read) {
   let base = read();
   return {
     dirty: () => read() !== base,
-    reset: () => {
-      base = read();
+    reset: (value = read()) => {
+      base = value;
     },
   };
 }
