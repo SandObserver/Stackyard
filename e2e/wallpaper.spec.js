@@ -103,6 +103,28 @@ test('a failed wallpaper link goes back to the last saved wallpaper, not the one
   await expect(page.locator('#ie-bgurl-v')).toContainText('saved-later.png');
 });
 
+test('an uploaded wallpaper enables Save with no further input', async ({ page, request }) => {
+  await page.route('**/api/wallpaper/upload', route =>
+    route.fulfill({ json: { url: '/icons/wallpaper/uploaded.png' } }),
+  );
+  await openAppearance(page);
+  await expect(page.locator('#bg-save')).toBeDisabled();
+
+  await page.locator('#bg-upload').setInputFiles({
+    name: 'photo.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('png'),
+  });
+  await expect(page.locator('#ie-bgurl-v')).toContainText('uploaded.png');
+  await expect(page.locator('#bg-save')).toBeEnabled();
+
+  const saved = page.waitForResponse(r => r.url().includes('/api/config') && r.request().method() === 'POST');
+  await page.locator('#bg-save').click();
+  expect((await saved).ok()).toBeTruthy();
+  const cfg = await readConfig(request);
+  expect(cfg.settings.background.url).toBe('/icons/wallpaper/uploaded.png');
+});
+
 test.describe('Unsplash key', () => {
   const UNSPLASH = { type: 'unsplash', brightness: 0.62, collection: '' };
 

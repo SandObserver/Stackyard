@@ -1025,6 +1025,8 @@ function setWallpaperUrl(url) {
     rv.classList.remove('is-ph');
   }
   showWallpaperFile(url);
+  /* Keep this event. Save re-checks only on an edit, so without it an upload never enables Save. */
+  (urlInp ?? document).dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 function initWallpaperUpload() {
