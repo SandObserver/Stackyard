@@ -87,7 +87,7 @@ test('a new glide on an element replaces the one running, and a stopped one stay
     p => b.push(p),
   );
   run(50, 100);
-  assert.deepEqual(a, [0], 'the first glide still moves');
+  assert.deepEqual(a, [0], 'the replaced glide stopped after its first frame');
   assert.deepEqual(b, [0, 0.5]);
   stopGlide(el);
   run(150);

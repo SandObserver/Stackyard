@@ -1,5 +1,5 @@
 // @ts-check
-import { cssColor, sanitizeCssUrl } from '/js/utils.js?v=06519124';
+import { cssColor, sanitizeCssUrl } from '/js/utils.js?v=ce415079';
 import {
   loadWallpaper,
   saveBootHint,
@@ -78,8 +78,7 @@ export function parseWallpaperUrl(url) {
 /** @type {{ href: string, done: Promise<HTMLImageElement|null> }|null} */
 let lastDecode = null;
 
-/** Decodes before the wallpaper is shown, so the first paint does not stall on it.
-    Reuses the image the boot hint started, and one decode per address.
+/** Reuses the boot hint's image. One decode per address.
     @param {string} url @returns {Promise<HTMLImageElement|null>} */
 export const decoded = url => {
   const href = parseWallpaperUrl(url)?.href;

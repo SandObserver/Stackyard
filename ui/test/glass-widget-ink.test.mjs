@@ -44,8 +44,26 @@ function colour(value) {
   return null;
 }
 
+/** The shared glass inks widget-theme.js sets on a frame, by card tone. */
+function glassInks() {
+  const src = fs.readFileSync(path.join(root, 'js', 'widget-theme.js'), 'utf8');
+  const table = /const GLASS_INK = \{([\s\S]*?)\n {2}\};/.exec(src)?.[1] ?? '';
+  const out = {};
+  for (const [, tone, body] of table.matchAll(/(dark|light): \{([^}]*)\}/g))
+    out[tone] = Object.fromEntries([...body.matchAll(/'(--[\w-]+)': '([^']+)'/g)].map(m => [m[1], m[2]]));
+  assert.ok(out.dark && out.light, 'GLASS_INK moved');
+  return out;
+}
+const INKS = glassInks();
+
 /** Contrast of an ink on the worst case of the glass card of one theme. */
 function onGlass(value, light) {
+  const ref = /^var\((--[\w-]+)\)$/.exec(value.trim());
+  if (ref?.[1].startsWith('--glass-')) {
+    const ink = INKS[light ? 'light' : 'dark'][ref[1]];
+    assert.ok(ink, `${ref[1]} is not a shared glass ink`);
+    return onGlass(ink, light);
+  }
   const c = colour(value);
   if (!c) return Infinity;
   const card = worst(light);
@@ -73,8 +91,9 @@ function inkRules(html) {
       const sel = raw.trim();
       const glass = sel.includes('[data-glass]');
       const light = sel.includes('[data-theme="light"]') && !sel.includes(':not([data-theme="light"])');
+      const themed = sel.includes('data-theme');
       const tail = sel.replace(/^(?:html|:root)(?:\[[^\]]*\]|:not\([^)]*\))*\s*/, '').trim() || ':root';
-      for (const [, prop, value] of decls) out.push({ sel, tail, prop, value: value.trim(), glass, light });
+      for (const [, prop, value] of decls) out.push({ sel, tail, prop, value: value.trim(), glass, light, themed });
     }
   }
   return out;
@@ -99,7 +118,7 @@ test('every ink on a translucent card clears its minimum on glass', () => {
         if (own.some(s => tail.startsWith(s))) continue;
         const pick = filter => rules.filter(x => `${x.tail}|${x.prop}` === key && filter(x)).at(-1);
         const rule =
-          pick(x => x.glass && x.light === light) ??
+          pick(x => x.glass && (!x.themed || x.light === light)) ??
           pick(x => !x.glass && x.light === light) ??
           pick(x => !x.glass && !x.light);
         if (!rule) continue;

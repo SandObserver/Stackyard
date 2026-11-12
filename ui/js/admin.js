@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=c865e007';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=edf1fef3';
+} from '/js/admin-app-form.js?v=d7f40ef4';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=bd8f4f0a';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=97f65d23';
+} from '/js/admin-list.js?v=96a149ce';
 import { folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=4681aa43';
 import {
   afterImport,
@@ -41,7 +41,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=f61cfe3d';
+} from '/js/admin-settings.js?v=129c3e93';
 import {
   announce,
   apiGet,
@@ -66,10 +66,10 @@ import {
   swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=72079c79';
+} from '/js/admin-shared.js?v=ab69bab7';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=f3ff1fe6';
-import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=2facde81';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=4a00c99a';
+import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=d88017b5';
 import { recoveryShown } from '/js/config-recovery.js?v=5e8a2c4c';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
@@ -92,7 +92,7 @@ import {
 } from '/js/import-foreign.js?v=5194a30f';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=99987b20';
+import { createListbox } from '/js/listbox.js?v=48295288';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=c4c1c4c4';
 import { passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
@@ -108,7 +108,7 @@ import {
   watchTransparency,
   writeMode,
   writeReduceTransparency,
-} from '/js/theme.js?v=ba3bfbeb';
+} from '/js/theme.js?v=0bbd81e8';
 import {
   clr,
   el,
@@ -123,7 +123,7 @@ import {
   storeSet,
   tgt,
   within,
-} from '/js/utils.js?v=06519124';
+} from '/js/utils.js?v=ce415079';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
 

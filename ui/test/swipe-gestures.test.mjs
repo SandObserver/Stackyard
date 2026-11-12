@@ -253,7 +253,7 @@ test('while glass is drawn, a pager without the frame clock still settles at the
       page: () => 0,
       total: () => 3,
       turn: () => {},
-      clock: true,
+      scripted: () => true,
     });
     void feed;
     drag([target], 2, 300, 60, 10000);

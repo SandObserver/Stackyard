@@ -17,8 +17,7 @@
     }
     if (typeof hint.lang === 'string' && hint.lang !== 'en') root.classList.add('lang-pending');
   } catch {}
-  /* The dashboard's first requests, sent before its modules load. dashboard.js
-     takes them once, from window.__early. */
+  /* dashboard.js reads window.__early once and clears it. */
   const script = document.currentScript;
   if (script && 'early' in script.dataset) {
     const get = (url, timed) => {

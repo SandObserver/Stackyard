@@ -92,13 +92,14 @@ export function readReduceTransparency(store) {
   }
 }
 
-/** admin-theme.js repeats this before first paint. Keep the two in step. @param {Document} [doc] */
-export function applyTransparency(doc = document) {
+/** admin-theme.js repeats this before first paint. Keep the two in step.
+    @param {Document} [doc] @param {Storage} [store] */
+export function applyTransparency(doc = document, store) {
   let system = false;
   try {
     system = window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
   } catch {}
-  if (system || readReduceTransparency()) doc.documentElement.setAttribute('data-transparency', 'reduce');
+  if (system || readReduceTransparency(store)) doc.documentElement.setAttribute('data-transparency', 'reduce');
   else doc.documentElement.removeAttribute('data-transparency');
 }
 
@@ -108,7 +109,7 @@ export function writeReduceTransparency(on, store) {
     if (on) (store || localStorage).setItem(TRANSPARENCY_KEY, 'reduce');
     else (store || localStorage).removeItem(TRANSPARENCY_KEY);
   } catch {}
-  applyTransparency();
+  applyTransparency(document, store);
 }
 
 export function watchTransparency() {

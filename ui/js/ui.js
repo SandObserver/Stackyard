@@ -17,12 +17,12 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=06519124';
+} from '/js/utils.js?v=ce415079';
 import { t, currentLang } from '/js/i18n.js?v=ec60b9bd';
-import { toneForColor } from '/js/label-contrast.js?v=e046296b';
+import { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
 import { mobileMetrics, gridColumnWidth, gridCellCount, dockFit } from '/js/mobile-metrics.js?v=3b0d6715';
 import { animate, easing, glide, isScripted, requestFrame, stopGlide } from '/js/frame-motion.js?v=1d86154d';
-import { openFolderGlass } from '/js/glass.js?v=dfbd8943';
+import { openFolderGlass } from '/js/glass.js?v=6846b755';
 import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=8b2dad40';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
@@ -239,8 +239,8 @@ export function onTap(node, fn) {
     @param {EventTarget|null} target where the touches land
     @param {HTMLElement} strip
     @param {{ width: () => number, page: () => number, total: () => number,
-      turn: (n: number, ms: number) => void, enabled?: () => boolean, clock?: boolean }} o
-      clock: turn glides the strip on the frame clock while GPU glass is drawn.
+      turn: (n: number, ms: number) => void, enabled?: () => boolean, scripted?: () => boolean }} o
+      scripted: true while turn glides the strip itself, so the pager leaves it no CSS transition.
     @returns {SwipeFeed} */
 export function swipePager(target, strip, o) {
   /** @type {number|string|null} */
@@ -316,7 +316,7 @@ export function swipePager(target, strip, o) {
           dir: pageDir(),
         });
     const ms = settleMs(Math.abs(rest(n) - x), Math.sign(rest(n) - x) * v);
-    if (o.clock && isScripted()) {
+    if (o.scripted?.()) {
       strip.style.transition = '';
       o.turn(n, ms);
       return;

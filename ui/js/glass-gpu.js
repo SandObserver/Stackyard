@@ -101,19 +101,32 @@ void main() {
 /** @param {WebGL2RenderingContext} gl @param {string} vs @param {string} fs */
 function compile(gl, vs, fs) {
   const program = gl.createProgram();
+  /** @type {WebGLShader[]} */
+  const shaders = [];
+  const fail = (/** @type {string} */ why) => {
+    console.warn('[glass] shader failed:', why);
+    for (const sh of shaders) gl.deleteShader(sh);
+    gl.deleteProgram(program);
+    return null;
+  };
   for (const [type, src] of /** @type {[number, string][]} */ ([
     [gl.VERTEX_SHADER, vs],
     [gl.FRAGMENT_SHADER, fs],
   ])) {
     const shader = gl.createShader(type);
-    if (!shader) return null;
+    if (!shader) return fail('no shader object');
+    shaders.push(shader);
     gl.shaderSource(shader, src);
     gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return null;
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return fail(gl.getShaderInfoLog(shader) ?? 'compile');
     gl.attachShader(program, shader);
   }
   gl.linkProgram(program);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return null;
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return fail(gl.getProgramInfoLog(program) ?? 'link');
+  for (const sh of shaders) {
+    gl.detachShader(program, sh);
+    gl.deleteShader(sh);
+  }
   /** @type {Record<string, WebGLUniformLocation|null>} */
   const u = {};
   const n = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
@@ -162,7 +175,8 @@ export function createGlassRenderer(canvas, options = {}) {
 
   /** @type {ReturnType<typeof compile>} */
   let blurProg = null;
-  /** @param {WebGLTexture} src @param {number} w @param {number} h @param {number} sigma */
+  /** Returns a blurred quarter-size copy and deletes src. Without the blur shader it returns src.
+      @param {WebGLTexture} src @param {number} w @param {number} h @param {number} sigma */
   const blurred = (src, w, h, sigma) => {
     blurProg ??= compile(gl, BLUR_VS, BLUR_FS);
     if (!blurProg) return src;

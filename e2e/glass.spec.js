@@ -2,29 +2,32 @@
 const { test, expect } = require('@playwright/test');
 const { seedConfig, dismissSetupPrompt, app } = require('./helpers');
 
-const WALLPAPER = { type: 'url', url: '/icons/wallpaper/none.png', brightness: 1, fit: 'fill' };
+const WALLPAPER = { type: 'url', url: '/demo-wallpaper.jpg', brightness: 1, fit: 'fill' };
 
 test.beforeEach(async ({ request }) => {
   await seedConfig(request, { items: [], settings: { background: { ...WALLPAPER } } });
   await dismissSetupPrompt(request);
 });
 
+/** Whether this browser can draw the GPU glass at all. */
+const hasWebGL2 = page => page.evaluate(() => !!document.createElement('canvas').getContext('webgl2'));
+
 /* A browser without WebGL2 keeps the CSS glass and the CSS page turn. One with
-   it draws the glass and turns pages on the frame clock. Half of each is a
+   it must draw the glass and turn pages on the frame clock. Half of each is a
    page that turns without moving, or glass that trails its element. */
 test('the page turn belongs to whichever draws the glass', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('body.ready')).toHaveCount(1);
+  const gpu = await hasWebGL2(page);
   await expect
     .poll(() =>
-      page.evaluate(() => {
-        const canvas = document.querySelector('canvas.glass-canvas');
-        const live = document.documentElement.hasAttribute('data-glass-live');
-        const turn = getComputedStyle(/** @type {HTMLElement} */ (document.getElementById('pages'))).transitionDuration;
-        return live ? !!canvas && turn === '0s' : turn === '0.28s';
-      }),
+      page.evaluate(() => ({
+        live: document.documentElement.hasAttribute('data-glass-live'),
+        canvas: !!document.querySelector('canvas.glass-canvas'),
+        turn: getComputedStyle(/** @type {HTMLElement} */ (document.getElementById('pages'))).transitionDuration,
+      })),
     )
-    .toBe(true);
+    .toEqual(gpu ? { live: true, canvas: true, turn: '0s' } : { live: false, canvas: false, turn: '0.28s' });
 });
 
 test('Reduce Transparency on this device gives solid surfaces on both pages', async ({ page }) => {
@@ -101,6 +104,9 @@ test('a folder panel keeps its fill until the GPU draws its glass', async ({ pag
   await seedConfig(request, { items: [folder, a], settings: { background: { ...WALLPAPER } } });
   await page.goto('/');
   await expect(page.locator('body.ready')).toHaveCount(1);
+  const gpu = await hasWebGL2(page);
+  /* The folder layer is made when the page is idle. A folder opened before that keeps its CSS fill. */
+  if (gpu) await expect(page.locator('canvas.glass-folder-canvas')).toHaveCount(1);
   await page.getByRole('button', { name: /Media/ }).first().click();
   await expect(page.locator('.folder-overlay')).toBeVisible();
   await expect
@@ -108,11 +114,11 @@ test('a folder panel keeps its fill until the GPU draws its glass', async ({ pag
       page.evaluate(() => {
         const ov = /** @type {HTMLElement} */ (document.querySelector('.folder-overlay'));
         const panel = /** @type {HTMLElement} */ (ov.querySelector('.glass-surface'));
-        const fill = getComputedStyle(panel).backgroundColor;
-        return ov.hasAttribute('data-glass-drawn')
-          ? !!ov.querySelector('canvas.glass-folder-canvas') && fill === 'rgba(0, 0, 0, 0)'
-          : fill !== 'rgba(0, 0, 0, 0)';
+        return {
+          drawn: ov.hasAttribute('data-glass-drawn') && !!ov.querySelector('canvas.glass-folder-canvas'),
+          clear: getComputedStyle(panel).backgroundColor === 'rgba(0, 0, 0, 0)',
+        };
       }),
     )
-    .toBe(true);
+    .toEqual(gpu ? { drawn: true, clear: true } : { drawn: false, clear: false });
 });

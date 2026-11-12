@@ -10,7 +10,7 @@
   let painted = false;
   /** @type {boolean|null} */
   let fixedDark = null;
-  /** @param {string} query */
+  /** @param {string} query @returns {boolean} */
   const media = query => {
     try {
       return window.matchMedia(query).matches;
@@ -18,13 +18,19 @@
       return false;
     }
   };
+  /* Text on a glass card. Each clears 4.5:1 on the card at its worst, over a
+     white or black wallpaper; ink-3 clears 3:1 for icons and dots.
+     ui/test/glass-widget-ink.test.mjs measures them. */
+  const GLASS_INK = {
+    dark: { '--glass-ink-2': '#AEAEB2', '--glass-ink-3': 'rgba(235,235,245,.45)', '--glass-red': '#FF8A84' },
+    light: { '--glass-ink-2': '#48484A', '--glass-ink-3': 'rgba(0,0,0,.45)', '--glass-red': '#B8001A' },
+  };
   function apply() {
     const root = document.documentElement;
     let reduce = false;
     try {
       reduce = window.parent.document.documentElement.getAttribute('data-transparency') === 'reduce';
     } catch {}
-    reduce = reduce || media('(prefers-reduced-transparency: reduce)');
     if (reduce) root.setAttribute('data-transparency', 'reduce');
     else root.removeAttribute('data-transparency');
     try {
@@ -36,13 +42,18 @@
       root.style.colorScheme = dark ? 'dark' : 'light';
       const zoom = frame && frame.getAttribute('data-zoom');
       if (zoom) root.style.zoom = zoom;
-      /* Keep in step with the solid translucent-card rules in dashboard.css. */
-      const glass =
-        !reduce &&
-        Boolean(frame && frame.closest('[data-card="translucent"]')) &&
-        !media('(prefers-contrast: more)') &&
-        !media('(forced-colors: active)');
+      /* The card is glass while its own fill lets the wallpaper through. */
+      const card = frame && frame.closest('.widget, .mob-widget-card');
+      const fill = card
+        ? (window.parent.getComputedStyle(card).backgroundColor.match(/[\d.]+/g) ?? []).map(Number)
+        : [];
+      const glass = fill.length === 4 && fill[3] > 0 && fill[3] < 1 && !media('(forced-colors: active)');
       root.toggleAttribute('data-glass', glass);
+      const inks = GLASS_INK[fill[0] + fill[1] + fill[2] > 382 ? 'light' : 'dark'];
+      for (const [name, value] of Object.entries(inks)) {
+        if (glass) root.style.setProperty(name, value);
+        else root.style.removeProperty(name);
+      }
       if (painted) root.style.backgroundColor = '';
       painted = false;
       /* A page with no background of its own shows the card through it. */

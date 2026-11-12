@@ -133,13 +133,13 @@
   --glass-fill:           var(--glass-fill-dark);
   --glass-blur:           blur(3px) saturate(1.5);
   --glass-shine:          rgb(255 255 255 / .15);
+  --glass-rim-paint:      linear-gradient(to bottom right, var(--glass-shine) 0 36%, transparent 50%, var(--glass-shine) 64% 100%);
+  --glass-rim-mask:       linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
   --glass-control:        rgb(120 120 128 / .28);
   --glass-control-shadow: 0 1px 2px rgb(0 0 0 / .25);
   --glass-bend:           .9;
   --glass-dispersion:     .5;
-  /* --glass-frost is --glass-folder as four numbers from 0 to 1. ui/js/glass.js reads that format. */
   --glass-folder:         rgb(107 107 112 / .5);
-  --glass-frost:          .42 .42 .44 .5;
 }
 
 /* ── Light theme ─────────────────────────────────────────────────────────────
@@ -214,7 +214,6 @@ html[data-theme="light"] {
   --glass-control:        rgb(255 255 255 / .78);
   --glass-control-shadow: 0 1px 4px rgb(0 0 0 / .12);
   --glass-folder:         rgb(245 245 247 / .55);
-  --glass-frost:          .96 .96 .97 .55;
 }
 
 /* ── Type scale ──────────────────────────────────────────────────────────────

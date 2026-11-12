@@ -300,13 +300,18 @@ test('a page turn closes the badge popover', () => {
   assert.match(dashboard, /if \(pg !== was\) closeBadgePopover\(\);/);
 });
 
-test('a widget frame follows the dashboard and the system for reduced transparency', async () => {
+test('a widget frame takes reduced transparency from the dashboard and glass from its card', async () => {
   const { runInNewContext } = await import('node:vm');
   const src = read('js/widget-theme.js');
-  /** @param {{ parentAttr?: string|null, queries?: string[], card?: string }} o */
-  const run = ({ parentAttr = null, queries = [], card = '' } = {}) => {
+  /** @param {{ parentAttr?: string|null, queries?: string[], fill?: string }} o */
+  const run = ({ parentAttr = null, queries = [], fill = 'rgb(28, 28, 30)' } = {}) => {
     const attrs = new Map();
-    const style = { backgroundColor: '' };
+    const props = new Map();
+    const style = {
+      backgroundColor: '',
+      setProperty: (k, v) => props.set(k, v),
+      removeProperty: k => props.delete(k),
+    };
     const frameRoot = {
       style,
       setAttribute: (k, v) => attrs.set(k, v),
@@ -315,13 +320,17 @@ test('a widget frame follows the dashboard and the system for reduced transparen
       toggleAttribute: (k, on) => (on ? attrs.set(k, '') : attrs.delete(k)),
     };
     const parentRoot = { getAttribute: k => (k === 'data-transparency' ? parentAttr : 'dark') };
+    const card = {};
     const frameElement = {
-      closest: sel => (sel === '[data-card="translucent"]' && card === 'translucent' ? {} : null),
+      closest: sel => (sel === '.widget, .mob-widget-card' ? card : null),
       getAttribute: () => null,
     };
     const window = {
       frameElement,
-      parent: { document: { documentElement: parentRoot } },
+      parent: {
+        document: { documentElement: parentRoot },
+        getComputedStyle: el => ({ backgroundColor: el === card ? fill : '' }),
+      },
       matchMedia: q => ({ matches: queries.some(x => q.includes(x)), addEventListener() {} }),
     };
     runInNewContext(src, {
@@ -335,23 +344,26 @@ test('a widget frame follows the dashboard and the system for reduced transparen
       reduce: attrs.get('data-transparency') ?? null,
       glass: attrs.has('data-glass'),
       bg: style.backgroundColor,
+      ink: props.get('--glass-ink-2') ?? null,
     };
   };
-  assert.equal(run({ parentAttr: 'reduce' }).reduce, 'reduce', 'the switch on this device');
-  assert.equal(run({ queries: ['reduced-transparency'] }).reduce, 'reduce', 'the system setting');
+  assert.equal(run({ parentAttr: 'reduce' }).reduce, 'reduce', 'the dashboard attribute');
   assert.equal(run().reduce, null);
 
-  assert.deepEqual(run({ card: 'translucent' }), { reduce: null, glass: true, bg: '' }, 'glass shows the card');
-  assert.deepEqual(run(), { reduce: null, glass: false, bg: '#1C1C1E' }, 'a solid card is painted under the page');
-  for (const o of [
-    { card: 'translucent', parentAttr: 'reduce' },
-    { card: 'translucent', queries: ['prefers-contrast'] },
-    { card: 'translucent', queries: ['forced-colors'] },
-  ]) {
-    const r = run(o);
-    assert.equal(r.glass, false, JSON.stringify(o));
-    assert.equal(r.bg, '#1C1C1E', JSON.stringify(o));
-  }
+  assert.deepEqual(
+    run({ fill: 'rgba(28, 28, 30, 0.85)' }),
+    { reduce: null, glass: true, bg: '', ink: '#AEAEB2' },
+    'a dark glass card shows through the page',
+  );
+  assert.equal(run({ fill: 'rgba(255, 255, 255, 0.85)' }).ink, '#48484A', 'a light glass card takes the dark ink');
+  assert.deepEqual(
+    run(),
+    { reduce: null, glass: false, bg: '#1C1C1E', ink: null },
+    'a solid card is painted under the page',
+  );
+  const forced = run({ fill: 'rgba(28, 28, 30, 0.85)', queries: ['forced-colors'] });
+  assert.equal(forced.glass, false);
+  assert.equal(forced.bg, '#1C1C1E');
 });
 
 test('widget styles key reduced transparency on the attribute the frame copies', () => {

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Git Contributions</title>
-<script src="/js/widget-theme.js?v=30c756d8"></script>
+<script src="/js/widget-theme.js?v=e8cc2393"></script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   html { -webkit-tap-highlight-color: transparent; }
@@ -67,8 +67,7 @@
   /* Keep. A painted page hides the glass, and the solid-card greys fall below
      4.5:1 on glass over a bright or dark wallpaper. */
   html[data-glass], html[data-glass] body { background: transparent; }
-  html[data-glass]:not([data-theme="light"]) .lbl, html[data-glass]:not([data-theme="light"]) .sub { color: #AEAEB2; }
-  html[data-glass][data-theme="light"] .lbl, html[data-glass][data-theme="light"] .sub { color: #48484A; }
+  html[data-glass] .lbl, html[data-glass] .sub { color: var(--glass-ink-2); }
 
   @media (prefers-contrast: more) {
     .lbl, .sub { color: #EBEBF5; }

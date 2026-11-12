@@ -389,7 +389,7 @@
       transform:translateX(-50%);
       /* Keep 24px between centres. Less fails the WCAG 2.5.8 target size. */
       display:flex; gap:16px; z-index:500;
-      background:var(--glass-clear); border:.5px solid transparent;
+      background:var(--dots-fill,var(--glass-clear)); border:.5px solid var(--dots-rim,transparent);
       -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
       border-radius:999px; padding:8px 12px;
       align-items:center;
@@ -399,7 +399,7 @@
        indicator painted white on white and measured 1.00:1. */
     .dot {
       width:8px; height:8px; border-radius:50%;
-      background:transparent; border:1.5px solid var(--dots-ink,rgba(255,255,255,.75));
+      background:transparent; border:1.5px solid var(--dots-ring,var(--dots-ink,rgba(255,255,255,.75)));
       transition:background .2s,border-color .2s,transform .2s,opacity .25s;
       cursor:pointer; flex-shrink:0; box-sizing:border-box;
       padding:0; -webkit-appearance:none; appearance:none;
@@ -415,10 +415,9 @@
        bright, leave what is dark. The tone is sampled from the wallpaper behind
        the bar, by the same pass that inks the icon labels. */
     #dots[data-tone="dark"] {
-      background:rgba(0,0,0,.30); border-color:rgba(255,255,255,.30);
-      --dots-ink:rgba(0,0,0,.85);
+      --dots-fill:rgba(0,0,0,.30); --dots-rim:rgba(255,255,255,.30);
+      --dots-ink:rgba(0,0,0,.85); --dots-ring:rgba(0,0,0,.55);
     }
-    #dots[data-tone="dark"] .dot { border-color:rgba(0,0,0,.55) }
     #dots[hidden] { display:none }
     /* Mirrored by the no-dock reserve in desktopSlots(). */
     body.no-dock:not(.is-mob) #dots { bottom:24px }
@@ -490,11 +489,11 @@
       pointer-events:none;
     }
     #mob-search-pill .msp-icon {
-      font-size:calc(12px * var(--sc,1)); font-weight:600; color:#FFFFFF; line-height:1;
-      font-style:normal; text-shadow:var(--label-shadow);
+      font-size:calc(12px * var(--sc,1)); font-weight:600; color:var(--pill-ink,#FFFFFF); line-height:1;
+      font-style:normal; text-shadow:var(--pill-shadow,var(--label-shadow));
     }
     #mob-search-pill .msp-label {
-      font-size:max(11px, calc(12px * var(--sc,1)));line-height:1; font-weight:600; color:#FFFFFF; text-shadow:var(--label-shadow);
+      font-size:max(11px, calc(12px * var(--sc,1)));line-height:1; font-weight:600; color:var(--pill-ink,#FFFFFF); text-shadow:var(--pill-shadow,var(--label-shadow));
       white-space:nowrap; 
     }
     /* Dots row — shown when paging */
@@ -511,10 +510,10 @@
     /* Pill dots — must match JS _pdotSz/_pdotGap, which size the paging pill */
     #mob-search-pill .msp-dot {
       width:calc(8px * var(--sc,1)); height:calc(8px * var(--sc,1)); border-radius:50%;
-      background:rgba(255,255,255,.35); flex-shrink:0;
+      background:var(--pill-dot,rgba(255,255,255,.35)); flex-shrink:0;
       transition:background .18s,transform .18s;
     }
-    #mob-search-pill .msp-dot.on { background:#FFFFFF; transform:scale(1.2) }
+    #mob-search-pill .msp-dot.on { background:var(--pill-dot-on,#FFFFFF); transform:scale(1.2) }
     /* State transitions */
     #mob-search-pill.paging .msp-search { opacity:0; pointer-events:none }
     #mob-search-pill.paging .msp-dots   { opacity:1; pointer-events:auto }
@@ -545,13 +544,13 @@
       background:var(--glass-clear);
       -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
     }
+    /* Keep in step with GLASS in ui/js/glass.js. */
     .glass-surface::before, #dock::before, #dots::before, #mob-search-pill::before,
     .widget[data-card="translucent"]::before, .mob-widget-card[data-card="translucent"]::before,
     .empty-state-btn::before, .api-error-btn::before {
       content:""; position:absolute; inset:0; z-index:6;
       border-radius:inherit; padding:1px; pointer-events:none;
-      background:linear-gradient(to bottom right, var(--glass-shine) 0 36%, transparent 50%, var(--glass-shine) 64% 100%);
-      mask:linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+      background:var(--glass-rim-paint); mask:var(--glass-rim-mask);
     }
     #mob-search-pill::before { inset:0 var(--pill-inset) }
     :is(.folder-overlay, .folder-overlay-mobile) .glass-surface {
@@ -1243,9 +1242,9 @@ html[data-theme="light"] {
   --glass-card:        rgb(255 255 255 / .85);
   --glass-card-solid:  #FFFFFF;
 }
-#mob-search-pill[data-tone="dark"] :is(.msp-icon, .msp-label) { color:var(--pill-ink-light); text-shadow:none }
-#mob-search-pill[data-tone="dark"] .msp-dot { background:rgba(60,60,67,.3) }
-#mob-search-pill[data-tone="dark"] .msp-dot.on { background:rgba(0,0,0,.8) }
+#mob-search-pill[data-tone="dark"] {
+  --pill-ink:var(--pill-ink-light); --pill-shadow:none; --pill-dot:rgba(60,60,67,.3); --pill-dot-on:rgba(0,0,0,.8);
+}
 html[data-theme="light"] #spot { background:rgba(242,242,247,.9) }
 html[data-theme="light"] body:not(.is-mob) #spot { background:rgba(242,242,247,.5) }
 html[data-theme="light"] body.is-mob #spot {
@@ -1324,17 +1323,15 @@ html[data-transparency="reduce"] :is(.folder-overlay-mobile, .folder-overlay) { 
 html[data-transparency="reduce"][data-theme="light"] :is(.folder-overlay-mobile, .folder-overlay) { background:rgba(255,255,255,.92); }
 html[data-transparency="reduce"] :is(#spot, body:not(.is-mob) #spot) { background:rgba(0,0,0,.82); }
 html[data-transparency="reduce"][data-theme="light"] :is(#spot, body:not(.is-mob) #spot) { background:rgba(242,242,247,.94); }
-/* Keep. The wallpaper tone puts white ink on the light solid fill. */
-:root[data-transparency="reduce"] #mob-search-pill :is(.msp-icon, .msp-label) { color:var(--label-primary); text-shadow:none }
-:root[data-transparency="reduce"] #mob-search-pill .msp-dot { background:rgba(255,255,255,.35) }
-:root[data-transparency="reduce"] #mob-search-pill .msp-dot.on { background:#FFFFFF }
-:root[data-transparency="reduce"][data-theme="light"] #mob-search-pill :is(.msp-icon, .msp-label) { color:var(--pill-ink-light) }
-:root[data-transparency="reduce"][data-theme="light"] #mob-search-pill .msp-dot { background:rgba(60,60,67,.3) }
-:root[data-transparency="reduce"][data-theme="light"] #mob-search-pill .msp-dot.on { background:rgba(0,0,0,.8) }
-:root[data-transparency="reduce"] #dots { background:var(--glass-clear); --dots-ink:initial }
-:root[data-transparency="reduce"] #dots .dot { border-color:var(--dots-ink,rgba(255,255,255,.75)) }
-:root[data-transparency="reduce"][data-theme="light"] #dots { --dots-ink:rgba(0,0,0,.85) }
-:root[data-transparency="reduce"][data-theme="light"] #dots .dot { border-color:rgba(0,0,0,.55) }
+/* Keep. The wallpaper tone would put white ink on the light solid fill. */
+html[data-transparency="reduce"] #mob-search-pill {
+  --pill-ink:var(--label-primary); --pill-shadow:none; --pill-dot:rgba(255,255,255,.35); --pill-dot-on:#FFFFFF;
+}
+html[data-transparency="reduce"][data-theme="light"] #mob-search-pill {
+  --pill-ink:var(--pill-ink-light); --pill-dot:rgba(60,60,67,.3); --pill-dot-on:rgba(0,0,0,.8);
+}
+html[data-transparency="reduce"] #dots { --dots-fill:var(--glass-clear); --dots-rim:transparent; --dots-ink:initial; --dots-ring:initial }
+html[data-transparency="reduce"][data-theme="light"] #dots { --dots-ink:rgba(0,0,0,.85); --dots-ring:rgba(0,0,0,.55) }
 html[data-transparency="reduce"] :is(.widget, .mob-widget-card)[data-card="translucent"] {
   background:var(--glass-card-solid); -webkit-backdrop-filter:none; backdrop-filter:none;
 }

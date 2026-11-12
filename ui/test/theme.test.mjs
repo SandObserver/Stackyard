@@ -146,7 +146,7 @@ test('this device can reduce transparency on its own, and the system can too', a
   };
   let system = false;
   globalThis.window = { matchMedia: () => ({ matches: system }) };
-  globalThis.localStorage = store;
+  globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
   globalThis.document = doc;
   writeReduceTransparency(true, store);
   assert.equal(items.get(TRANSPARENCY_KEY), 'reduce');

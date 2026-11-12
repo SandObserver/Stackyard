@@ -96,10 +96,8 @@ test('the Search pill keeps a readable label on a small phone', () => {
 
 test('the Search pill is toned from the wallpaper in both themes', () => {
   assert.match(labels, /const LABEL_SELECTOR =[^;]*#mob-search-pill/);
-  assert.match(
-    css,
-    /\n#mob-search-pill\[data-tone="dark"\] :is\(\.msp-icon, \.msp-label\) \{ color:var\(--pill-ink-light\)/,
-  );
+  assert.match(css, /\n#mob-search-pill\[data-tone="dark"\] \{\s*--pill-ink:var\(--pill-ink-light\);/);
+  assert.match(css, /#mob-search-pill \.msp-label \{[^}]*color:var\(--pill-ink,#FFFFFF\)/);
   assert.doesNotMatch(
     css,
     /html\[data-theme="light"\] #mob-search-pill \.msp-label/,

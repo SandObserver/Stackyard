@@ -34,7 +34,11 @@ test('the dashboard sends its first three requests from the boot script', () => 
     ['/api/auth/check', '/api/config', '/api/widgets'],
   );
   assert.ok(sent.every(s => s.init.cache === 'no-store'));
-  assert.equal(sent[0].init.signal.ms, 15000);
+  const dashboard = fs.readFileSync(path.join(root, 'js/dashboard.js'), 'utf8');
+  const limit = Number(/const BOOT_TIMEOUT_MS = (\d+);/.exec(dashboard)?.[1]);
+  assert.ok(limit > 0, 'BOOT_TIMEOUT_MS moved');
+  assert.equal(sent[0].init.signal.ms, limit, 'the boot script and the dashboard time out apart');
+  assert.equal(sent[1].init.signal.ms, limit);
   assert.equal(sent[2].init.signal, undefined, 'the widget list has no timeout in boot either');
   assert.deepEqual(Object.keys(early), ['auth', 'config', 'widgets']);
 });

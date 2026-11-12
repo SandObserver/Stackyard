@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Connections — VPN</title>
-<script src="/js/widget-theme.js?v=30c756d8"></script>
+<script src="/js/widget-theme.js?v=e8cc2393"></script>
 <style>
   :root{
     --green:#30D158; --grey:#8E8E93; --red:#FF4245;
@@ -65,8 +65,7 @@
   body.size-small .metrics{display:none}
   html[data-theme="light"] { --fg:#000000; --fg2:rgba(0,0,0,0.6); --fg3:rgba(0,0,0,0.32) }
   /* Keep. The solid-card inks fall below 4.5:1 on glass over a bright or dark wallpaper. */
-  html[data-glass]:not([data-theme="light"]) { --fg2:rgba(235,235,245,.72); --fg3:rgba(235,235,245,.45); --grey:#AEAEB2; --red:#FF8A84 }
-  html[data-glass][data-theme="light"] { --fg3:rgba(0,0,0,.45); --grey:#636366; --red:#B8001A }
+  html[data-glass] { --fg2:var(--glass-ink-2); --fg3:var(--glass-ink-3); --grey:var(--glass-ink-2); --red:var(--glass-red) }
   html[data-theme="light"] .flag { filter:drop-shadow(0 1px 2px rgba(0,0,0,0.122)) }
   @media (prefers-contrast:more){
     :root{--fg2:#EBEBF5}

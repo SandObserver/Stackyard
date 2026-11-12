@@ -524,7 +524,6 @@ for (const light of [false, true]) {
 }
 
 const REDUCE = 'html[data-transparency="reduce"]';
-const REDUCE_INK = ':root[data-transparency="reduce"]';
 
 /** The last value a rule with exactly this selector list gives the property. */
 function declared(selector, prop) {
@@ -543,13 +542,13 @@ for (const light of [false, true]) {
   test(`reduced transparency inks the solid glass for its fill: ${light ? 'light' : 'dark'}`, () => {
     const resolve = resolver({ light, extra: [dashboard] });
     const reduce = light ? `${REDUCE}[data-theme="light"]` : REDUCE;
-    const ink = light ? `${REDUCE_INK}[data-theme="light"]` : REDUCE_INK;
     const colour = value => rgbaOf(resolve, value);
     const fill = name => colour(declared(light && name === '--glass-clear' ? reduce : REDUCE, name));
-    const pill = colour(declared(`${ink} #mob-search-pill :is(.msp-icon, .msp-label)`, 'color'));
+    const pill = colour(declared(`${reduce} #mob-search-pill`, '--pill-ink'));
+    /* Dark: the reduce rule unsets the tone's ring and ink, so the .dot fallback draws it. */
     const dot = light
-      ? colour(declared(`${ink} #dots .dot`, 'border-color'))
-      : colour(/var\(--dots-ink,(.+)\)$/.exec(declared(`${REDUCE_INK} #dots .dot`, 'border-color'))[1]);
+      ? colour(declared(`${reduce} #dots`, '--dots-ring'))
+      : colour(/var\(--dots-ink,(rgba\([^)]*\))\)/.exec(declared('.dot', 'border'))[1]);
     const cases = [
       ['search pill label', pill, fill('--glass-clear'), 4.5],
       ['page dot', dot, fill('--glass-clear'), 3],
@@ -669,14 +668,6 @@ const UNMEASURED_INK = [
   ['.dyn-fold-label (dark)', 'a tile name over the wallpaper; its tone is picked per wallpaper at run time'],
   ['.folder-title-desktop (dark)', 'white with a text shadow over the wallpaper; the shadow is not modelled'],
   ['.dyn-fold-inner-label (dark)', 'white with a text shadow over the wallpaper; the shadow is not modelled'],
-  [
-    '#mob-search-pill .msp-label (dark)',
-    'on clear glass over the wallpaper; its tone is picked per wallpaper at run time',
-  ],
-  [
-    '#mob-search-pill .msp-icon (dark)',
-    'on clear glass over the wallpaper; its tone is picked per wallpaper at run time',
-  ],
   ['textarea::placeholder (dark)', 'one rule with input::placeholder, which is measured'],
   ['textarea::placeholder (light)', 'one rule with input::placeholder, which is measured'],
 ];

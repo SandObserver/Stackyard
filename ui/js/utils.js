@@ -1,5 +1,5 @@
 import { iconChain } from '/js/icons.js?v=76c29d43';
-import { toneForColor } from '/js/label-contrast.js?v=e046296b';
+import { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
 import { t } from '/js/i18n.js?v=ec60b9bd';
 import { pageTheme, tileColor } from '/js/palette.js?v=3fb8ae43';

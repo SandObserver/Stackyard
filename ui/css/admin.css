@@ -189,6 +189,7 @@ button,a,[role="button"],label.tog,.segr-opt{touch-action:manipulation}
 .sec-hdr{display:flex;align-items:center;gap:12px;margin-bottom:18px}
 .sec-title{font-size:var(--fs-large-title);line-height:var(--lh-large-title);letter-spacing:var(--tr-large-title);font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}
 .sec-hdr-actions{display:flex;gap:6px;flex-shrink:0}
+.ev-back::before,.m-back::before,.sec-hdr-actions .btn::before,.mtabbar::before{content:"";position:absolute;inset:0;z-index:6;border-radius:inherit;padding:1px;pointer-events:none;background:var(--glass-rim-paint);mask:var(--glass-rim-mask)}
 .ev-back{display:flex;align-items:center;justify-content:center;gap:3px;position:relative;background:var(--glass-control);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-control-shadow);border:none;border-radius:999px;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;font-family:inherit;cursor:pointer;min-width:44px;min-height:44px;padding-block:0;padding-inline:10px 14px;flex-shrink:0}
 @media (hover:hover) and (pointer:fine){.ev-back:hover{opacity:.8}}
 .ev-back:active{opacity:var(--press-dim)}
@@ -299,22 +300,21 @@ html[data-transparency="reduce"] .row-dd-list{background:var(--bg-outer)}
 /* ── Slider — wider with JS-driven blue fill ── */
 .slider-wrap{display:flex;align-items:center;gap:8px;flex:2;max-width:none}
 .si{color:var(--dm);flex-shrink:0}
-/* --range-fill is the value from 0 to 1. admin-settings.js sets it. */
 .adm-range,.hsb-range{--range-thumb:38px}
 .adm-range{--range-fill:.5;--range-tip:calc(var(--range-thumb) / 2 + (100% - var(--range-thumb)) * var(--range-fill));--range-tip-x:var(--range-tip);flex:1;height:6px;-webkit-appearance:none;appearance:none;background-image:radial-gradient(circle 3px at var(--range-tip-x) 50%, var(--range-cap,var(--ac)) 2.5px, transparent 3px),linear-gradient(var(--slider-dir), var(--ac) var(--range-tip), var(--bd-inner) var(--range-tip));border-radius:3px;cursor:pointer;outline:none;--lens-fill:color-mix(in srgb,var(--ac) 80%,var(--control-knob));--lens-rest:color-mix(in srgb,var(--bd-inner) 80%,var(--control-knob));--lens-lc:var(--lens-fill);--lens-rc:var(--lens-rest)}
 [dir="rtl"] .adm-range{--range-tip-x:calc(100% - var(--range-tip));--lens-lc:var(--lens-rest);--lens-rc:var(--lens-fill)}
 .adm-range::-webkit-slider-thumb,
-.hsb-range::-webkit-slider-thumb{-webkit-appearance:none;box-sizing:border-box;width:var(--range-thumb);height:24px;border-radius:12px;background:var(--control-knob);border:0;box-shadow:var(--shadow-knob);cursor:pointer;transition:background-color .2s var(--ease-reveal),box-shadow .2s var(--ease-reveal)}
+.hsb-range::-webkit-slider-thumb{-webkit-appearance:none;box-sizing:border-box;width:var(--range-thumb);height:24px;border-radius:12px;background:var(--control-knob);border:0;box-shadow:var(--shadow-knob);cursor:pointer;transition:background-color .2s var(--ease-reveal),box-shadow .2s var(--ease-reveal),--lens-l .2s var(--ease-reveal),--lens-r .2s var(--ease-reveal)}
 .adm-range::-moz-range-thumb,
-.hsb-range::-moz-range-thumb{box-sizing:border-box;width:var(--range-thumb);height:24px;border-radius:12px;background:var(--control-knob);border:0;box-shadow:var(--shadow-knob);cursor:pointer;transition:background-color .2s var(--ease-reveal),box-shadow .2s var(--ease-reveal)}
+.hsb-range::-moz-range-thumb{box-sizing:border-box;width:var(--range-thumb);height:24px;border-radius:12px;background:var(--control-knob);border:0;box-shadow:var(--shadow-knob);cursor:pointer;transition:background-color .2s var(--ease-reveal),box-shadow .2s var(--ease-reveal),--lens-l .2s var(--ease-reveal),--lens-r .2s var(--ease-reveal)}
 .adm-range:focus-visible,.hsb-range:focus-visible{outline:2px solid var(--ac);outline-offset:4px}
 @property --lens-l{syntax:'<color>';inherits:false;initial-value:transparent}
 @property --lens-r{syntax:'<color>';inherits:false;initial-value:transparent}
 .adm-range:active{--range-cap:transparent}
 .adm-range:active::-webkit-slider-thumb{--lens-l:var(--lens-lc);--lens-r:var(--lens-rc)}
 .adm-range:active::-moz-range-thumb{--lens-l:var(--lens-lc);--lens-r:var(--lens-rc)}
-.adm-range::-webkit-slider-thumb{transition:background-color .2s var(--ease-reveal),box-shadow .2s var(--ease-reveal),--lens-l .2s var(--ease-reveal),--lens-r .2s var(--ease-reveal);background-image:radial-gradient(circle 9.67px at 100% -6.67px,transparent 9.3px,var(--lens-l) 9.67px),radial-gradient(circle 9.67px at 100% calc(100% + 6.67px),transparent 9.3px,var(--lens-l) 9.67px),radial-gradient(circle 9.67px at 0 -6.67px,transparent 9.3px,var(--lens-r) 9.67px),radial-gradient(circle 9.67px at 0 calc(100% + 6.67px),transparent 9.3px,var(--lens-r) 9.67px);background-size:7px 3px;background-repeat:no-repeat;background-position:left 0 top 6px,left 0 top 15px,right 0 top 6px,right 0 top 15px}
-.adm-range::-moz-range-thumb{transition:background-color .2s var(--ease-reveal),box-shadow .2s var(--ease-reveal),--lens-l .2s var(--ease-reveal),--lens-r .2s var(--ease-reveal);background-image:radial-gradient(circle 9.67px at 100% -6.67px,transparent 9.3px,var(--lens-l) 9.67px),radial-gradient(circle 9.67px at 100% calc(100% + 6.67px),transparent 9.3px,var(--lens-l) 9.67px),radial-gradient(circle 9.67px at 0 -6.67px,transparent 9.3px,var(--lens-r) 9.67px),radial-gradient(circle 9.67px at 0 calc(100% + 6.67px),transparent 9.3px,var(--lens-r) 9.67px);background-size:7px 3px;background-repeat:no-repeat;background-position:left 0 top 6px,left 0 top 15px,right 0 top 6px,right 0 top 15px}
+.adm-range::-webkit-slider-thumb{background-image:radial-gradient(circle 9.67px at 100% -6.67px,transparent 9.3px,var(--lens-l) 9.67px),radial-gradient(circle 9.67px at 100% calc(100% + 6.67px),transparent 9.3px,var(--lens-l) 9.67px),radial-gradient(circle 9.67px at 0 -6.67px,transparent 9.3px,var(--lens-r) 9.67px),radial-gradient(circle 9.67px at 0 calc(100% + 6.67px),transparent 9.3px,var(--lens-r) 9.67px);background-size:7px 3px;background-repeat:no-repeat;background-position:left 0 top 6px,left 0 top 15px,right 0 top 6px,right 0 top 15px}
+.adm-range::-moz-range-thumb{background-image:radial-gradient(circle 9.67px at 100% -6.67px,transparent 9.3px,var(--lens-l) 9.67px),radial-gradient(circle 9.67px at 100% calc(100% + 6.67px),transparent 9.3px,var(--lens-l) 9.67px),radial-gradient(circle 9.67px at 0 -6.67px,transparent 9.3px,var(--lens-r) 9.67px),radial-gradient(circle 9.67px at 0 calc(100% + 6.67px),transparent 9.3px,var(--lens-r) 9.67px);background-size:7px 3px;background-repeat:no-repeat;background-position:left 0 top 6px,left 0 top 15px,right 0 top 6px,right 0 top 15px}
 .adm-range:active::-webkit-slider-thumb,.hsb-range:active::-webkit-slider-thumb{background-color:var(--knob-held-range);box-shadow:var(--shadow-knob-held)}
 .adm-range:active::-moz-range-thumb,.hsb-range:active::-moz-range-thumb{background-color:var(--knob-held-range);box-shadow:var(--shadow-knob-held)}
 @media (forced-colors: active){
@@ -633,7 +633,6 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .sv-btn.busy .sv-lbl{opacity:0;transition-delay:0s;transition-duration:calc(var(--t-reveal) * .6)}
 .sv-btn.busy .sv-busy{opacity:1;transition-delay:calc(var(--t-reveal) * .4)}
 .sm{padding:5px 12px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);min-height:28px}
-.ev-back::before,.m-back::before,.sec-hdr-actions .btn::before,.mtabbar::before{content:"";position:absolute;inset:0;z-index:6;border-radius:inherit;padding:1px;pointer-events:none;background:linear-gradient(to bottom right, var(--glass-shine) 0 36%, transparent 50%, var(--glass-shine) 64% 100%);mask:linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0)}
 .sec-hdr-actions .btn{min-height:36px;padding:7px 16px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);position:relative;background:var(--glass-control);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-control-shadow)}
 .sec-hdr-actions .btn.bp{color:var(--ac)}
 .sec-hdr-actions .btn.bp:disabled{color:var(--dm)}

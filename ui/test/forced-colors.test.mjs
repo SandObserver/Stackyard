@@ -236,11 +236,6 @@ test('no state is drawn by fill alone', () => {
     Object.entries({
       'admin.css .row-dd-list li.kb-active': 'the row also takes focus and shows its focus ring',
       'dashboard.css .setup-reveal[aria-pressed="true"]': 'the password fields show their text',
-      'dashboard.css #mob-search-pill[data-tone="dark"] .msp-dot.on': 'the base rule also scales the active dot',
-      'dashboard.css :root[data-transparency="reduce"] #mob-search-pill .msp-dot.on':
-        'the base rule also scales the active dot',
-      'dashboard.css :root[data-transparency="reduce"][data-theme="light"] #mob-search-pill .msp-dot.on':
-        'the base rule also scales the active dot',
     }),
   );
   const found = fs
@@ -268,13 +263,7 @@ test('no forced-colors rule is overridden by a plain rule', () => {
   const overlaps = (a, b) =>
     a === b || (!separate.test(a) && !separate.test(b) && (a.startsWith(`${b}-`) || b.startsWith(`${a}-`)));
   /* A literal colour. Forced colors replaces it with a system colour. */
-  const allowed = new Set([
-    'dashboard.css: .dot { border } loses to #dots[data-tone="dark"] .dot',
-    'dashboard.css: #dots { background } loses to #dots',
-    'dashboard.css: #dots { background } loses to :root[data-transparency="reduce"] #dots',
-    'dashboard.css: .dot { border } loses to :root[data-transparency="reduce"] #dots .dot',
-    'dashboard.css: .dot { border } loses to :root[data-transparency="reduce"][data-theme="light"] #dots .dot',
-  ]);
+  const allowed = new Set(['dashboard.css: #dots { background } loses to #dots']);
   const split = sel => sel.split(/,(?![^(]*\))/).map(x => x.trim());
   const bad = [];
   for (const [name, css] of [

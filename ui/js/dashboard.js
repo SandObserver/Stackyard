@@ -7,7 +7,7 @@ import {
   rememberBackground,
   resolveBackground,
   parseWallpaperUrl,
-} from '/js/background.js?v=2facde81';
+} from '/js/background.js?v=d88017b5';
 import {
   badgeMinimum,
   badgeSignature,
@@ -32,7 +32,7 @@ import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import { easing, glide, isScripted } from '/js/frame-motion.js?v=1d86154d';
-import { glassWallpaper, startGlass } from '/js/glass.js?v=dfbd8943';
+import { glassWallpaper, startGlass } from '/js/glass.js?v=6846b755';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { currentLang, initI18n, isSupported, t } from '/js/i18n.js?v=ec60b9bd';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=4d944cec';
@@ -44,7 +44,7 @@ import {
   loadSamplingImage,
   sampleImage,
   toneForColor,
-} from '/js/label-contrast.js?v=e046296b';
+} from '/js/label-contrast.js?v=a160c6d1';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
@@ -52,8 +52,8 @@ import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
-import { initSpotlight } from '/js/spotlight.js?v=efc8a411';
-import { applyTheme, prefersDark, readMode, resolveTheme, THEME_KEY, watchTransparency } from '/js/theme.js?v=ba3bfbeb';
+import { initSpotlight } from '/js/spotlight.js?v=a651b2a7';
+import { applyTheme, prefersDark, readMode, resolveTheme, THEME_KEY, watchTransparency } from '/js/theme.js?v=0bbd81e8';
 import {
   buildMobile,
   closeFolders,
@@ -64,7 +64,7 @@ import {
   openFolderMobile,
   resetMobileChrome,
   swipePager,
-} from '/js/ui.js?v=44f38658';
+} from '/js/ui.js?v=d9c46f30';
 import {
   mkWrap as _mkWrap,
   el,
@@ -87,7 +87,7 @@ import {
   teardownWidgets,
   titleWhenTruncated,
   within,
-} from '/js/utils.js?v=06519124';
+} from '/js/utils.js?v=ce415079';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import {
@@ -1018,6 +1018,7 @@ async function boot() {
   let apiFailed = false;
   /** @type {Promise<unknown>|null} */
   let wallpaperShown = null;
+  const showWallpaperOnce = () => (wallpaperShown ??= applyBg());
   try {
     const got = await configReq;
     if (got.e) throw got.e;
@@ -1031,7 +1032,7 @@ async function boot() {
     _rev = c._rev ?? null;
     storeSet(LANG_STORE, await initI18n(S.language || 'en'));
     saveBootHint({ lang: currentLang() });
-    wallpaperShown = applyBg();
+    showWallpaperOnce();
   } catch (e) {
     console.error('[boot]', e);
     apiFailed = true;
@@ -1233,13 +1234,13 @@ async function boot() {
     page: () => pg,
     total: () => strip.children.length,
     turn: (n, ms) => goTo(n, null, true, true, ms),
-    clock: true,
+    scripted: isScripted,
     enabled: () =>
       !el('spot').hasAttribute('open') &&
       !document.querySelector('.folder-overlay[open], .folder-overlay-mobile[open]'),
   });
 
-  wallpaperShown ??= applyBg();
+  showWallpaperOnce();
 
   const rethemeFrames = () => {
     for (const frame of document.querySelectorAll('iframe')) {
