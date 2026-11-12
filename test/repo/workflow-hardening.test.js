@@ -142,6 +142,45 @@ test('the lockfile is committed and CI installs from it', () => {
   assert.deepEqual(loose, [], `Use npm ci so CI installs the lockfile:\n  ${loose.join('\n  ')}`);
 });
 
+test('CI installs without running package scripts', () => {
+  const unsafe = [];
+  for (const [f, src] of all) {
+    for (const line of src.split('\n')) {
+      if (/run:\s*npm ci\b/.test(line) && !/--ignore-scripts\b/.test(line)) unsafe.push(`${f}: ${line.trim()}`);
+    }
+  }
+  assert.deepEqual(unsafe, [], `Add --ignore-scripts:\n  ${unsafe.join('\n  ')}`);
+});
+
+test('every Node setup reads the version from .nvmrc', () => {
+  assert.match(fs.readFileSync(path.join(root, '.nvmrc'), 'utf8'), /^\d+\n$/, '.nvmrc should hold one major version');
+  const off = [];
+  for (const [f, src] of all) {
+    const steps = src.split(/uses:\s*actions\/setup-node@/).slice(1);
+    for (const s of steps) {
+      const block = s.split(/\n\s*- name:/)[0];
+      if (!/node-version-file:\s*\.nvmrc\s*$/m.test(block) || /node-version:/.test(block)) off.push(f);
+    }
+  }
+  assert.ok(
+    all.some(([, src]) => /actions\/setup-node@/.test(src)),
+    'no setup-node step found',
+  );
+  assert.deepEqual(off, [], `Use "node-version-file: .nvmrc":\n  ${off.join('\n  ')}`);
+});
+
+test('dependabot delays version updates, and the base image only briefly', () => {
+  const cfg = fs.readFileSync(path.join(root, '.github', 'dependabot.yml'), 'utf8');
+  const entries = cfg.split(/\n\s*- package-ecosystem:\s*/).slice(1);
+  const days = Object.fromEntries(
+    entries.map(e => [e.split('\n')[0].trim(), Number((/cooldown:\s*\n\s*default-days:\s*(\d+)/.exec(e) || [])[1])]),
+  );
+  assert.equal(days.npm, 7);
+  assert.equal(days['github-actions'], 7);
+  assert.equal(days.docker, 1);
+  assert.match(entries.find(e => e.startsWith('docker')) || '', /interval:\s*daily/);
+});
+
 /* An expression in a run script is pasted into the shell before it runs. A
    value an outsider controls, such as a branch name, then runs as a command. */
 test('no run script holds an expression', () => {
