@@ -236,3 +236,29 @@ test('a second finger in a widget frame springs the strip back', async () => {
     globalThis.document = doc;
   }
 });
+
+test('while glass is drawn, a pager without the frame clock still settles at the swipe speed', async () => {
+  const { setScripted } = await import('../js/frame-motion.js');
+  globalThis.document.documentElement.toggleAttribute = () => {};
+  setScripted(true);
+  try {
+    const target = new EventTarget();
+    const folder = pager(target);
+    drag([target], 1, 300, 60);
+    assert.match(folder.strip.style.transition, /^transform \d+ms var\(--page-ease\)$/);
+
+    const home = mkStrip();
+    const feed = swipePager(target, home, {
+      width: () => WIDTH,
+      page: () => 0,
+      total: () => 3,
+      turn: () => {},
+      scripted: () => true,
+    });
+    void feed;
+    drag([target], 2, 300, 60, 10000);
+    assert.equal(home.style.transition, '');
+  } finally {
+    setScripted(false);
+  }
+});

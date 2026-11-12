@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Disk Health</title>
-<script src="/js/widget-theme.js?v=9bd864aa"></script>
+<script src="/js/widget-theme.js?v=9f9e1b99"></script>
 <style>
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
   html { -webkit-tap-highlight-color: transparent; }
@@ -149,9 +149,7 @@
     .bay,#tip{transition:none !important}
     .bay.assigned:hover,.bay.assigned.touch-active{transform:none}
   }
-  @media (prefers-reduced-transparency: reduce){
-    #tip{-webkit-backdrop-filter:none;backdrop-filter:none}
-  }
+  html[data-transparency="reduce"] #tip{-webkit-backdrop-filter:none;backdrop-filter:none}
   @media (prefers-contrast: more){
     .bay-name,.bay.unread .bay-name,#nums span,#tip .meta{color:#EBEBF5}
   }
@@ -184,7 +182,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, wtCount, formatNumber, formatList, errorState, cssZoom } from '/js/widget-toolbox.js?v=16231059';
+import { poll, fetchData, openUrl, loadStrings, wt, wtCount, formatNumber, formatList, errorState, cssZoom } from '/js/widget-toolbox.js?v=048ad37d';
 await loadStrings();
 document.getElementById('root').setAttribute('aria-label', wt('ui.diskHealth','Disk health'));
 const params    = new URLSearchParams(location.search);

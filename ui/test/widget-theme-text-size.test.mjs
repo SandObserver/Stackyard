@@ -13,6 +13,9 @@ test('a widget frame turns off text enlarging, even when the parent cannot be re
       throw new Error('cross-origin');
     },
   };
-  vm.runInNewContext(src, { window, document: { documentElement: { style } } });
+  vm.runInNewContext(src, {
+    window,
+    document: { documentElement: { style, setAttribute() {}, removeAttribute() {} } },
+  });
   assert.equal(style.webkitTextSizeAdjust, '100%');
 });

@@ -66,6 +66,7 @@ const CSS = `
    its own hidden rule the caption never goes away. */
 .wt-cap[hidden] { display: none; }
 html[data-theme="light"] .wt-cap { color: var(--wt-cap-color, #636366); }
+html[data-glass] .wt-cap { color: var(--wt-cap-color, var(--glass-ink-2)); }
 .wt-cap svg { width: 12px; height: 12px; flex: 0 0 auto; opacity: 0.85; }
 .wt-cap .sy-i { fill: currentColor; }
 .wt-cap .sy-is { stroke: currentColor; }

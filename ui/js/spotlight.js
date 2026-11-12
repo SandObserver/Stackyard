@@ -3,7 +3,7 @@ import { SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=8b2dad40';
 import { t } from '/js/i18n.js?v=ec60b9bd';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
-import { clr, el, initial, inp as inpById, mk, q, qa, setUserText } from '/js/utils.js?v=ff7e1e5f';
+import { clr, el, initial, inp as inpById, mk, q, qa, setUserText } from '/js/utils.js?v=ce415079';
 
 /* Attached to the window so a re-open can undo the previous one. */
 const _w = /** @type {any} */ (window);

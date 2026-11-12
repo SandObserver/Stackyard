@@ -80,3 +80,44 @@ export function watchSystemTheme(currentMode) {
     return () => {};
   }
 }
+
+export const TRANSPARENCY_KEY = 'sy-transparency';
+
+/** @param {Storage} [store] */
+export function readReduceTransparency(store) {
+  try {
+    return (store || localStorage).getItem(TRANSPARENCY_KEY) === 'reduce';
+  } catch {
+    return false;
+  }
+}
+
+/** admin-theme.js repeats this before first paint. Keep the two in step.
+    @param {Document} [doc] @param {Storage} [store] */
+export function applyTransparency(doc = document, store) {
+  let system = false;
+  try {
+    system = window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
+  } catch {}
+  if (system || readReduceTransparency(store)) doc.documentElement.setAttribute('data-transparency', 'reduce');
+  else doc.documentElement.removeAttribute('data-transparency');
+}
+
+/** @param {boolean} on @param {Storage} [store] */
+export function writeReduceTransparency(on, store) {
+  try {
+    if (on) (store || localStorage).setItem(TRANSPARENCY_KEY, 'reduce');
+    else (store || localStorage).removeItem(TRANSPARENCY_KEY);
+  } catch {}
+  applyTransparency(document, store);
+}
+
+export function watchTransparency() {
+  applyTransparency();
+  try {
+    window.matchMedia('(prefers-reduced-transparency: reduce)').addEventListener('change', () => applyTransparency());
+  } catch {}
+  addEventListener('storage', e => {
+    if (e.key === TRANSPARENCY_KEY) applyTransparency();
+  });
+}

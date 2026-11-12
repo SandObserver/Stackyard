@@ -21,7 +21,8 @@ test('a theme change repaints in place and never rebuilds the widgets', () => {
   assert.ok(body.length > 0, 'the theme handler moved');
   assert.doesNotMatch(body, /buildLayout\(|buildDesktop\(|buildMobile\(/);
   assert.match(body, /rethemeTiles\(\)/);
-  assert.match(body, /__applyHostTheme/);
+  assert.match(body, /rethemeFrames\(\)/);
+  assert.match(dashboard, /const rethemeFrames = \(\) => \{[\s\S]{0,200}__applyHostTheme/);
   assert.match(body, /startViewTransition/);
 });
 
@@ -297,4 +298,102 @@ test('folder pages are reachable without touch', () => {
 
 test('a page turn closes the badge popover', () => {
   assert.match(dashboard, /if \(pg !== was\) closeBadgePopover\(\);/);
+});
+
+test('a widget frame takes reduced transparency from the dashboard and glass from its card', async () => {
+  const { runInNewContext } = await import('node:vm');
+  const src = read('js/widget-theme.js');
+  /** @param {{ parentAttr?: string|null, queries?: string[], fill?: string, cardStyle?: string, theme?: string, fixedDark?: boolean }} o */
+  const run = ({
+    parentAttr = null,
+    queries = [],
+    fill = 'rgb(28, 28, 30)',
+    cardStyle = 'translucent',
+    theme = 'dark',
+    fixedDark = false,
+  } = {}) => {
+    const attrs = new Map();
+    const props = new Map();
+    const style = {
+      backgroundColor: '',
+      setProperty: (k, v) => props.set(k, v),
+      removeProperty: k => props.delete(k),
+    };
+    const frameRoot = {
+      style,
+      setAttribute: (k, v) => attrs.set(k, v),
+      removeAttribute: k => attrs.delete(k),
+      getAttribute: k => attrs.get(k) ?? null,
+      toggleAttribute: (k, on) => (on ? attrs.set(k, '') : attrs.delete(k)),
+    };
+    const parentRoot = { getAttribute: k => (k === 'data-transparency' ? parentAttr : theme) };
+    const card = { matches: sel => sel === `[data-card="${cardStyle}"]` };
+    const frameElement = {
+      style: { colorScheme: '' },
+      closest: sel =>
+        sel === '.widget, .mob-widget-card' || (fixedDark && sel === '[data-appearance="dark"]') ? card : null,
+      getAttribute: () => null,
+    };
+    const window = {
+      frameElement,
+      parent: {
+        document: { documentElement: parentRoot },
+        getComputedStyle: el => ({ backgroundColor: el === card ? fill : '' }),
+      },
+      matchMedia: q => ({ matches: queries.some(x => q.includes(x)), addEventListener() {} }),
+    };
+    runInNewContext(src, {
+      window,
+      document: { documentElement: frameRoot },
+      location: { search: '' },
+      URLSearchParams,
+      getComputedStyle: () => ({ backgroundColor: style.backgroundColor || 'rgba(0, 0, 0, 0)' }),
+    });
+    return {
+      reduce: attrs.get('data-transparency') ?? null,
+      glass: attrs.has('data-glass'),
+      bg: style.backgroundColor,
+      ink: props.get('--glass-ink-2') ?? null,
+      scheme: style.colorScheme,
+      frameScheme: frameElement.style.colorScheme,
+    };
+  };
+  assert.equal(run({ parentAttr: 'reduce' }).reduce, 'reduce', 'the dashboard attribute');
+  assert.equal(run().reduce, null);
+
+  const pickState = ({ reduce, glass, bg, ink }) => ({ reduce, glass, bg, ink });
+  assert.deepEqual(
+    pickState(run({ fill: 'rgba(28, 28, 30, 0.85)' })),
+    { reduce: null, glass: true, bg: '', ink: '#AEAEB2' },
+    'a dark glass card shows through the page',
+  );
+  assert.equal(run({ fill: 'rgba(255, 255, 255, 0.85)' }).ink, '#48484A', 'a light glass card takes the dark ink');
+  assert.deepEqual(
+    pickState(run()),
+    { reduce: null, glass: false, bg: '#1C1C1E', ink: null },
+    'a solid card is painted under the page',
+  );
+  assert.deepEqual(
+    pickState(run({ fill: 'rgba(0, 0, 0, 0.62)', cardStyle: 'default' })),
+    { reduce: null, glass: false, bg: '#1C1C1E', ink: null },
+    'a see-through default card under increased contrast keeps the solid page',
+  );
+  const backup = run({ fill: 'rgba(28, 28, 30, 0.85)', theme: 'light', fixedDark: true });
+  assert.equal(backup.scheme, 'dark', 'a dark-appearance widget on the light dashboard');
+  assert.equal(backup.frameScheme, 'dark', 'the frame element must match, or the browser paints it opaque');
+  assert.equal(run({ theme: 'light' }).frameScheme, 'light');
+  const forced = run({ fill: 'rgba(28, 28, 30, 0.85)', queries: ['forced-colors'] });
+  assert.equal(forced.glass, false);
+  assert.equal(forced.bg, '#1C1C1E');
+});
+
+test('widget styles key reduced transparency on the attribute the frame copies', () => {
+  const dir = path.join(root, 'widgets');
+  for (const name of fs.readdirSync(dir)) {
+    for (const file of fs.readdirSync(path.join(dir, name)).filter(f => f.endsWith('.html'))) {
+      const html = fs.readFileSync(path.join(dir, name, file), 'utf8');
+      assert.doesNotMatch(html, /prefers-reduced-transparency/, `${name}/${file}`);
+      if (/data-transparency/.test(html)) assert.match(html, /widget-theme\.js/, `${name}/${file}`);
+    }
+  }
 });

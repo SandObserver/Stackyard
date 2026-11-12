@@ -248,13 +248,14 @@ test('the dashboard needs no direction overrides at all', () => {
   );
 });
 
-/* Only the chevrons, the gradient angle, the reorder arrows' slide and the
-   toggle knob's travel and stretch origin, resting and pressed, none of which
-   a logical property can express. */
+/* Only the chevrons, the gradient angle, the slider's end dot, the reorder
+   arrows' slide and the toggle knob's travel and stretch origin, resting and
+   pressed, none of which a logical property can express. */
 test('admin keeps only the overrides that cannot be logical', () => {
   const allowed = [
     /transform:\s*scaleX\(-1\)/,
     /--slider-dir:\s*270deg/,
+    /--range-tip-x:\s*calc\(100% - var\(--range-tip\)\)/,
     /transform:\s*translateX\(-22px\)/,
     /transform:\s*translateX\(-14px\)/,
     /transform:\s*translateX\(-8px\)/,

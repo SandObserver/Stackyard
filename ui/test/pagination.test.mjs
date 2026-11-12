@@ -175,7 +175,8 @@ test('the strip follows the finger while it is down', () => {
 test('the release settles from the finger, at the finger speed', () => {
   assert.match(pager, /swipeSettle\(\{/);
   assert.match(pager, /settleMs\(/);
-  assert.match(pager, /strip\.style\.transition = `transform \$\{ms\}ms var\(--page-ease\)`;\s*o\.turn\(n\)/);
+  assert.match(pager, /strip\.style\.transition = `transform \$\{ms\}ms var\(--page-ease\)`;\s*o\.turn\(n, ms\)/);
+  assert.match(pager, /if \(o\.scripted\?\.\(\)\) \{\s*strip\.style\.transition = '';\s*o\.turn\(n, ms\);/);
 });
 
 test('only the first finger drags, and a vertical drag is left alone', () => {
@@ -204,6 +205,12 @@ test('an open folder or search keeps the home pager still', () => {
   );
 });
 
+test('only the home pager hands its settle to the frame clock', () => {
+  assert.match(dashboard.slice(dashboard.indexOf('swipePager(document,')).slice(0, 400), /scripted: isScripted,/);
+  const folderCall = ui.slice(ui.indexOf('swipePager(box, strip,'));
+  assert.doesNotMatch(folderCall.slice(0, folderCall.indexOf(');')), /scripted/);
+});
+
 /* An ease-in-out barely moves for the first 100ms, and a keyboard page turn
    reads as stuck. */
 test('a page turns in 280ms on an ease-out curve', () => {
@@ -213,6 +220,18 @@ test('a page turns in 280ms on an ease-out curve', () => {
   assert.match(css, /\.dyn-strip\s+\{[^}]*transition:transform \.28s var\(--page-ease\);/);
 });
 
+/* Each motion has a CSS form and a frame-clock form. Their durations must match. */
+test('the scripted page turn and search pill take the CSS durations', () => {
+  const css = read('css/dashboard.css');
+  const ms = re => Math.round(Number(re.exec(css)?.[1]) * 1000);
+  const turn = Number(/export const PAGE_TURN_MS = (\d+);/.exec(read('js/dashboard-logic.js'))?.[1]);
+  assert.equal(turn, ms(/#pages \{[^}]*transition:transform ([\d.]+)s/));
+  const pill = Number(/const PILL_MS = (\d+);/.exec(read('js/ui.js'))?.[1]);
+  const pillCss = [...css.matchAll(/transition:--pill-inset ([\d.]+)s/g)].map(m => Math.round(Number(m[1]) * 1000));
+  assert.ok(pillCss.length >= 2, 'the pill transitions moved');
+  for (const v of pillCss) assert.equal(pill, v);
+});
+
 /* A strip is laid out in the page's direction, so the next page is on the left
    in one direction and on the right in the other. translateX has no logical
    form. A fixed sign moves page two further off a Persian dashboard instead of
@@ -220,7 +239,7 @@ test('a page turns in 280ms on an ease-out curve', () => {
 test('both page strips move by the direction of the page', () => {
   assert.match(
     dashboard,
-    /translateX\(\$\{-pageDir\(\) \* pg \* 100\}%\)/,
+    /translateX\(\$\{-pageDir\(\) \* n \* 100\}%\)[\s\S]{0,400}const to = -pageDir\(\) \* n \* strip\.offsetWidth;/,
     'the dashboard strip is fixed to one direction',
   );
   assert.match(

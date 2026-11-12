@@ -63,7 +63,7 @@ test('every way of changing page goes through goTo', () => {
   for (const route of [
     /ArrowRight'\) goTo/,
     /ArrowLeft'\)\s+goTo/,
-    /swipePager\(document,[\s\S]{0,300}turn: n => goTo\(n\)/,
+    /swipePager\(document,[\s\S]{0,300}turn: \(n, ms\) => goTo\(n, null, true, true, ms\)/,
   ]) {
     assert.match(dashboard, route, 'a page change that bypasses goTo would be silent');
   }

@@ -44,8 +44,19 @@ test('reduced motion is handled in the shared stylesheet', () => {
   assert.match(tokens, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
+/* Safari does not report the system setting, so each device also has its own
+   switch. The boot script turns either into one attribute. */
 test('reduced transparency is handled in the shared stylesheet', () => {
-  assert.match(tokens, /@media \(prefers-reduced-transparency: reduce\)/);
+  assert.match(
+    tokens,
+    /:where\(html\[data-transparency="reduce"\] \*\) \{ -webkit-backdrop-filter: none !important; backdrop-filter: none !important; \}/,
+  );
+  const boot = read('js/admin-theme.js');
+  assert.match(
+    boot,
+    /reduce = localStorage\.getItem\('sy-transparency'\) === 'reduce';[\s\S]*reduce = reduce \|\| window\.matchMedia\('\(prefers-reduced-transparency: reduce\)'\)\.matches;/,
+  );
+  assert.match(boot, /setAttribute\('data-transparency', 'reduce'\)/);
 });
 
 /* Reduced motion asks for less movement, not for no change. A fade is not
@@ -121,7 +132,7 @@ test('every page ends up honouring all three preferences', () => {
       .join('\n');
     return {
       motion: /@media \(prefers-reduced-motion: reduce\)/.test(sheets),
-      transparency: /@media \(prefers-reduced-transparency: reduce\)/.test(sheets),
+      transparency: /html\[data-transparency="reduce"\]/.test(sheets),
       contrast: /@media \(prefers-contrast: more\)/.test(sheets),
     };
   };
@@ -139,7 +150,7 @@ test('every page ends up honouring all three preferences', () => {
 /* Rules naming dashboard elements would be inert on Admin, so they stay where
    they mean something. */
 test('the shared stylesheet holds no page-specific selectors', () => {
-  const blocks = tokens.slice(tokens.indexOf('@media (prefers-'));
+  const blocks = tokens.slice(tokens.indexOf('@media (prefers-reduced-motion'));
   for (const sel of ['#pages', '.icon:hover', '.dot', '.ilabel', '.widget']) {
     assert.ok(!blocks.includes(sel), `${sel} means nothing outside the dashboard`);
   }
@@ -148,8 +159,8 @@ test('the shared stylesheet holds no page-specific selectors', () => {
 test('the dashboard keeps its own selectors and token overrides', () => {
   const motion = dashboard.slice(dashboard.indexOf('@media (prefers-reduced-motion'));
   assert.match(motion.slice(0, 300), /#pages/);
-  const transparency = dashboard.slice(dashboard.indexOf('@media (prefers-reduced-transparency'));
-  assert.match(transparency.slice(0, 200), /--glass-surface-blur: none/);
+  const transparency = dashboard.slice(dashboard.indexOf('html[data-transparency="reduce"] {'));
+  assert.match(transparency.slice(0, 200), /--glass-clear:rgba\(44,44,46,\.94\)/);
 });
 
 /* The general rules are in one place, so no page can drift from another. */

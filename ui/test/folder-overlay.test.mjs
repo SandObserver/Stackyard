@@ -127,9 +127,13 @@ const motion = ui.slice(ui.indexOf('function folderMotion('), ui.indexOf('let fo
 
 test('a folder grows from the size and place of the tile that opened it', () => {
   assert.match(motion, /const s = from\.width \/ r\.width;/);
-  assert.match(motion, /return `translate\(\$\{dx\}px, \$\{dy\}px\) scale\(\$\{s\}\)`;/);
+  assert.match(
+    motion,
+    /from\.left \+ from\.width \/ 2 - r\.left - \(r\.width \* s\) \/ 2,\s*from\.top \+ from\.height \/ 2 - r\.top - \(r\.height \* s\) \/ 2,\s*s,?\s*\]/,
+  );
+  assert.match(ui, /`translate\(\$\{v\[0\]\}px, \$\{v\[1\]\}px\) scale\(\$\{v\[2\]\}\)`/);
   assert.match(motion, /p\.style\.transformOrigin = '0 0'/);
-  assert.match(motion, /duration: opening \? 300 : 250/);
+  assert.match(motion, /duration: open \? 300 : 250/);
   assert.match(ui, /openFolderDesktop\(item, a\)/);
   assert.match(ui, /openFolderMobile\(item, isz, ir, im, sc, a\)/);
 });
@@ -137,13 +141,14 @@ test('a folder grows from the size and place of the tile that opened it', () => 
 test('reduced motion keeps only the fade', () => {
   assert.match(motion, /prefers-reduced-motion: reduce/);
   assert.match(motion, /!still && tile\?\.isConnected/);
-  assert.match(motion, /if \(!from\?\.width\) return 'none';/);
+  assert.match(motion, /if \(!from\?\.width\) return \[0, 0, 1\];/);
 });
 
 /* The dialog closes at once, so focus goes back to the tile and the dashboard
    stops being inert. Only the picture shrinks away. */
 test('a closing folder takes no input and shrinks from where it is', () => {
-  assert.match(motion, /getComputedStyle\(s\.el\)\[s\.prop\]/, 'an interrupted open would jump');
+  assert.match(motion, /const now = opening\.map\(folderNow\);/, 'an interrupted open would jump');
+  assert.match(ui, /function folderNow\(tr\) \{\s*const cs = getComputedStyle\(tr\.el\);/);
   assert.match(
     css,
     /:is\(\.folder-overlay, \.folder-overlay-mobile\):not\(\[open\]\) \* \{ pointer-events:none !important \}/,
@@ -154,7 +159,7 @@ test('a closing folder takes no input and shrinks from where it is', () => {
     /:is\(\.folder-overlay, \.folder-overlay-mobile\):not\(\[open\]\) \{\s*background:none !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important;/,
     'a fading blur darkens the top edge of the screen',
   );
-  assert.match(motion, /running = steps\s*\.slice\(1\)/, 'only the panel animates the close');
+  assert.match(motion, /stop = playFolder\(\s*parts\.flatMap/, 'only the panel animates the close');
   const dash = read('js/dashboard.js');
   assert.doesNotMatch(
     dash,

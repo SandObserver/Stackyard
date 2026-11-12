@@ -234,22 +234,33 @@ export function sampleImage(img, vw, vh, brightness, fit = 'fill', baseColor = '
   }
 }
 
+/** @type {{ url: string, done: Promise<HTMLImageElement|null> }|null} */
+let lastSampling = null;
+
 /** A second copy of the wallpaper that a canvas may read. Do not request the
     displayed image this way. A host that refuses CORS would fail the wallpaper
     itself.
 
+    One decode per address: the label sampler and the GPU glass share it.
+
     @param {string} url @returns {Promise<HTMLImageElement|null>} */
 export function loadSamplingImage(url) {
-  return new Promise(resolve => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onerror = () => resolve(null);
-    img.src = url;
-    img.decode().then(
-      () => resolve(img),
-      () => resolve(null),
-    );
-  });
+  if (lastSampling?.url === url) return lastSampling.done;
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.src = url;
+  const entry = {
+    url,
+    done: img.decode().then(
+      () => img,
+      () => {
+        if (lastSampling === entry) lastSampling = null;
+        return null;
+      },
+    ),
+  };
+  lastSampling = entry;
+  return entry.done;
 }
 
 /* The page indicator is chrome over the same wallpaper, and it is tinted rather

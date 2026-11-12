@@ -8,7 +8,10 @@ register('./js-root-hooks.mjs', import.meta.url);
 const page = fs.readFileSync(new URL('../widgets/dns/index.html', import.meta.url), 'utf8');
 
 globalThis.location = /** @type {any} */ ({ search: '' });
-globalThis.document = /** @type {any} */ ({ documentElement: { getAttribute: () => 'light' } });
+let onGlass = false;
+globalThis.document = /** @type {any} */ ({
+  documentElement: { getAttribute: () => 'light', hasAttribute: name => name === 'data-glass' && onGlass },
+});
 const { readableInk } = await import('../js/widget-toolbox.js');
 
 const luminance = hex =>
@@ -18,13 +21,60 @@ const luminance = hex =>
     .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
 const onWhite = hex => 1.05 / (luminance(hex) + 0.05);
 
-const segmentColours = [...page.matchAll(/key:'\w+',[^}]*color:'(#[0-9A-Fa-f]{6})'/g)].map(m => m[1]);
+const blockedRed = /const BLOCKED_RED = '(#[0-9A-Fa-f]{6})';/.exec(page)?.[1];
+const segmentColours = [...page.matchAll(/key:'\w+',[^}]*color:(?:'(#[0-9A-Fa-f]{6})'|BLOCKED_RED)/g)].map(
+  m => m[1] ?? blockedRed,
+);
 
 /* The headline is large bold text, so 1.4.3 asks for 3:1. */
 test('every segment headline clears 3:1 on the light card', () => {
   assert.equal(segmentColours.length, 3, 'the segment colours moved');
   for (const c of segmentColours)
     assert.ok(onWhite(readableInk(c, 3)) >= 3, `${c} reads at ${onWhite(readableInk(c, 3)).toFixed(2)}:1`);
+});
+
+test('the resting headline clears 3:1 on the light glass card at its worst', () => {
+  const fn = /function showHeadline\(\)[\s\S]*?\n\}/.exec(page)?.[0] ?? '';
+  const pctEl = { style: { color: '' }, textContent: '' };
+  const rest = () => {
+    new Function(
+      '_segs',
+      '_sel',
+      '_last',
+      'pctEl',
+      'subEl',
+      'readableInk',
+      'rollText',
+      'formatNumber',
+      'wt',
+      'BLOCKED_RED',
+      `${fn}; showHeadline();`,
+    )(
+      [],
+      -1,
+      { pct: 42 },
+      pctEl,
+      {},
+      readableInk,
+      () => {},
+      String,
+      (_k, d) => d,
+      blockedRed,
+    );
+    return pctEl.style.color;
+  };
+  onGlass = true;
+  try {
+    /* An 85% white card over a black wallpaper. */
+    const card = 0.85;
+    const v = card <= 0.04045 ? card / 12.92 : ((card + 0.055) / 1.055) ** 2.4;
+    const ink = rest();
+    const ratio = (v + 0.05) / (luminance(ink) + 0.05);
+    assert.ok(ratio >= 3, `${ink} reads at ${ratio.toFixed(2)}:1`);
+  } finally {
+    onGlass = false;
+  }
+  assert.ok(onWhite(rest()) >= 3, 'the light solid card');
 });
 
 test('the headline takes the readable ink, not the raw segment colour', () => {

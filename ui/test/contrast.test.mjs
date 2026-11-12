@@ -422,6 +422,8 @@ function rgbaOf(resolve, value) {
   if (ref) return rgbaOf(resolve, resolve.raw(ref[1]));
   const m = /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/.exec(v);
   if (m) return [Number(m[1]), Number(m[2]), Number(m[3]), Number(m[4])];
+  const spaced = /^rgba?\(\s*(\d+)\s+(\d+)\s+(\d+)\s*\/\s*([\d.]+)\s*\)$/.exec(v);
+  if (spaced) return [Number(spaced[1]), Number(spaced[2]), Number(spaced[3]), Number(spaced[4])];
   const hex = v.replace(/^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/, '#$1$1$2$2$3$3');
   assert.match(hex, /^#[0-9a-fA-F]{6}$/, `not a colour the gate can read: ${v}`);
   return [1, 3, 5].map(i => parseInt(hex.substr(i, 2), 16)).concat(1);
@@ -487,8 +489,6 @@ const DASHBOARD_TEXT = [
   ['first-run show-password icon', '.setup-reveal', SETUP, 'wallpaper', [false, true], 3],
   ['badge list value', '.badge-pop', ['.badge-pop'], 'wallpaper'],
   ['badge list name', '.badge-pop-name', ['.badge-pop'], 'wallpaper'],
-  ['phone search pill label', '#mob-search-pill .msp-label', ['#mob-search-pill'], 'wallpaper', [true]],
-  ['phone search pill icon', '#mob-search-pill .msp-icon', ['#mob-search-pill'], 'wallpaper', [true], 3],
   /* Light only. The dark title also relies on its text shadow. */
   ['folder title, desktop', '.folder-title-desktop', ['.folder-overlay'], 'wallpaper', [true]],
   ['folder title, phone', '.folder-title-mobile', ['.folder-overlay-mobile'], 'wallpaper', [true]],
@@ -522,6 +522,75 @@ for (const light of [false, true]) {
     assert.deepEqual(failures, [], `Below the WCAG minimum:\n  ${failures.join('\n  ')}`);
   });
 }
+
+const REDUCE = 'html[data-transparency="reduce"]';
+
+/** The last value a rule with exactly this selector list gives the property. */
+function declared(selector, prop) {
+  const re = new RegExp(`(?:^|[;{\\s])${prop}\\s*:\\s*([^;]+)`);
+  let value;
+  for (const rule of rules(dashboard)) {
+    if (rule.media || rule.selectors.join(', ') !== selector) continue;
+    const m = re.exec(rule.body);
+    if (m) value = m[1].trim();
+  }
+  assert.ok(value, `${selector} declares no ${prop}`);
+  return value;
+}
+
+for (const light of [false, true]) {
+  test(`reduced transparency inks the solid glass for its fill: ${light ? 'light' : 'dark'}`, () => {
+    const resolve = resolver({ light, extra: [dashboard] });
+    const reduce = light ? `${REDUCE}[data-theme="light"]` : REDUCE;
+    const colour = value => rgbaOf(resolve, value);
+    const fill = name => colour(declared(light && name === '--glass-clear' ? reduce : REDUCE, name));
+    const pill = colour(declared(`${reduce} #mob-search-pill`, '--pill-ink'));
+    /* Dark: the reduce rule unsets the tone's ring and ink, so the .dot fallback draws it. */
+    const dot = light
+      ? colour(declared(`${reduce} #dots`, '--dots-ring'))
+      : colour(/var\(--dots-ink,(rgba\([^)]*\))\)/.exec(declared('.dot', 'border'))[1]);
+    const cases = [
+      ['search pill label', pill, fill('--glass-clear'), 4.5],
+      ['page dot', dot, fill('--glass-clear'), 3],
+      ['empty dashboard button, light tone', colour(resolve.raw('--label-color')), fill('--glass-fill-dark'), 4.5],
+      ['empty dashboard button, dark tone', colour(resolve.raw('--label-color-dark')), fill('--glass-fill-light'), 4.5],
+    ];
+    const failures = [];
+    for (const [what, inkColour, fillColour, min] of cases) {
+      for (const base of WALLPAPERS) {
+        const surface = layer(fillColour, base);
+        const r = ratio(toHex(layer(inkColour, surface)), toHex(surface));
+        if (r < min) failures.push(`${what} over ${toHex(base)}: ${r.toFixed(2)}, needs ${min}`);
+      }
+    }
+    assert.deepEqual(failures, [], `Below the WCAG minimum:\n  ${failures.join('\n  ')}`);
+  });
+}
+
+test('the empty dashboard button fill follows its tone, not the theme', () => {
+  const cases = [
+    ['light tone over black', '.empty-state-btn', '--label-color', [0, 0, 0]],
+    ['dark tone over white', '.empty-state-btn[data-tone="dark"]', '--label-color-dark', [255, 255, 255]],
+  ];
+  for (const lightTheme of [false, true]) {
+    const resolve = resolver({ light: lightTheme, extra: [dashboard] });
+    const colour = value => rgbaOf(resolve, value);
+    for (const [what, selector, inkName, base] of cases) {
+      const fill = colour(paint(lightTheme, selector, 'background'));
+      const surface = layer(fill, base);
+      const r = ratio(toHex(layer(colour(resolve.raw(inkName)), surface)), toHex(surface));
+      assert.ok(r >= 4.5, `${what}, ${lightTheme ? 'light' : 'dark'} theme: ${r.toFixed(2)}`);
+    }
+  }
+});
+
+test('increased contrast makes the Settings glass controls solid', () => {
+  for (const light of [false, true]) {
+    const resolve = resolver({ raised: true, light });
+    for (const name of ['--glass-bg', '--glass-control', '--glass-fill-dark', '--glass-fill-light'])
+      assert.equal(resolve.raw(name), resolve.raw('--cp'), `${name}, ${light ? 'light' : 'dark'}`);
+  }
+});
 
 test('a stale badge keeps its count at full contrast', () => {
   const stale = rules(dashboard).filter(r => !r.media && r.selectors.includes('.badge.stale'));
@@ -599,8 +668,6 @@ const UNMEASURED_INK = [
   ['.dyn-fold-label (dark)', 'a tile name over the wallpaper; its tone is picked per wallpaper at run time'],
   ['.folder-title-desktop (dark)', 'white with a text shadow over the wallpaper; the shadow is not modelled'],
   ['.dyn-fold-inner-label (dark)', 'white with a text shadow over the wallpaper; the shadow is not modelled'],
-  ['#mob-search-pill .msp-label (dark)', 'white with a text shadow over the wallpaper; the shadow is not modelled'],
-  ['#mob-search-pill .msp-icon (dark)', 'white with a text shadow over the wallpaper; the shadow is not modelled'],
   ['textarea::placeholder (dark)', 'one rule with input::placeholder, which is measured'],
   ['textarea::placeholder (light)', 'one rule with input::placeholder, which is measured'],
 ];
@@ -720,11 +787,16 @@ test('every chip fill Settings declares is measured as a tinted label', () => {
   );
 });
 
-/* The filled button's hover fill would sit under the Reorder button's accent text. */
+/* The filled button's hover fill would sit under the Reorder button's accent text.
+   Every header button is glass with a tinted label, Reorder included. */
 test('the Reorder button keeps its plain text style in Reorder mode', () => {
   const list = fs.readFileSync(path.join(dir, '..', 'js', 'admin-list.js'), 'utf8');
   const body = list.match(/export function setReordering\([^)]*\) \{[\s\S]*?\n\}/)?.[0] ?? '';
   assert.ok(body, 'setReordering not found');
   assert.doesNotMatch(body, /btn-reorder[\s\S]*?toggle\('(?:bp|bg)'/);
-  assert.match(admin, /\.sec-hdr-actions \.btn\.al-reorder\{background:none;/);
+  assert.match(admin, /\.sec-hdr-actions \.btn\.al-reorder\{color:var\(--ac\);/);
+  assert.match(
+    admin,
+    /\.sec-hdr-actions \.btn:is\(\.bp,\.bd-btn\):hover:not\(:disabled\)\{background:var\(--glass-control\)/,
+  );
 });

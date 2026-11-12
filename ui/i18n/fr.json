@@ -94,6 +94,8 @@
     "typeToSearchTip": "Taper une lettre n’importe où sur le tableau de bord ouvre la recherche. Désactivez cette option si la recherche s’ouvre par erreur, par exemple avec le contrôle vocal.",
     "displayMode": "Mode d’affichage",
     "displayModeTip": "Définit l’apparence du tableau de bord et des pages Réglages. Le choix est enregistré dans ce navigateur, s’applique à cet appareil uniquement et prend effet immédiatement.",
+    "reduceTransparency": "Réduire la transparence",
+    "reduceTransparencyTip": "Remplace le verre par des surfaces opaques sur cet appareil. Le choix est enregistré dans ce navigateur et prend effet immédiatement.",
     "displaySystem": "Automatique",
     "displayLight": "Clair",
     "displayDark": "Sombre",

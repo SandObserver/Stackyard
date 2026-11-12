@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Weather</title>
-<script src="/js/widget-theme.js?v=9bd864aa"></script>
+<script src="/js/widget-theme.js?v=9f9e1b99"></script>
 <style>
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
   html{-webkit-tap-highlight-color:transparent}
@@ -53,7 +53,7 @@
   .widget:focus-visible .aq-cap,.widget.peek .aq-cap{opacity:1;visibility:visible}
   .widget.hush .aq-cap{opacity:0;visibility:hidden}
   @media(prefers-reduced-motion:reduce){.aq-cap{transition:none}}
-  @media(prefers-reduced-transparency:reduce){.aq-cap{-webkit-backdrop-filter:none;backdrop-filter:none}}
+  html[data-transparency="reduce"] .aq-cap{-webkit-backdrop-filter:none;backdrop-filter:none}
   .sy-sprite{position:absolute;width:0;height:0;overflow:hidden}
   .sy-icon{flex-shrink:0}
   .sy-i{fill:currentColor}
@@ -78,7 +78,7 @@
   <div class="sr-only" id="sr"></div>
 </div>
 <script type="module">
-import { poll, fetchData, rollText, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, setHtml } from '/js/widget-toolbox.js?v=16231059';
+import { poll, fetchData, rollText, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, setHtml } from '/js/widget-toolbox.js?v=048ad37d';
 import { ensureSprite } from '/js/icon-set.js?v=4d944cec';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('widget.label', 'Weather'));

@@ -122,3 +122,81 @@ test('a widget held dark in the light theme keeps the dark edge light', () => {
   assert.match(block, /--card-edge-hi:rgba\(255,255,255,\.16\)/);
   assert.match(block, /--card-edge-lo:rgba\(255,255,255,\.05\)/);
 });
+
+test('this device can reduce transparency on its own, and the system can too', async () => {
+  const { applyTransparency, readReduceTransparency, writeReduceTransparency, TRANSPARENCY_KEY } = await import(
+    '../js/theme.js'
+  );
+  const items = new Map();
+  const store = {
+    getItem: k => items.get(k) ?? null,
+    setItem: (k, v) => items.set(k, v),
+    removeItem: k => items.delete(k),
+  };
+  let attr = null;
+  const doc = {
+    documentElement: {
+      setAttribute: (_, v) => {
+        attr = v;
+      },
+      removeAttribute: () => {
+        attr = null;
+      },
+    },
+  };
+  let system = false;
+  globalThis.window = { matchMedia: () => ({ matches: system }) };
+  globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
+  globalThis.document = doc;
+  writeReduceTransparency(true, store);
+  assert.equal(items.get(TRANSPARENCY_KEY), 'reduce');
+  assert.ok(readReduceTransparency(store));
+  assert.equal(attr, 'reduce');
+  writeReduceTransparency(false, store);
+  assert.equal(attr, null);
+  system = true;
+  applyTransparency(doc);
+  assert.equal(attr, 'reduce', 'the system setting is ignored');
+});
+
+test('the boot script and the module read the same transparency key', () => {
+  assert.match(preload, /localStorage\.getItem\('sy-transparency'\) === 'reduce'/);
+  assert.match(read('../js/theme.js'), /export const TRANSPARENCY_KEY = 'sy-transparency';/);
+  assert.match(adminHtml, /<input type="checkbox" id="dev-transparency" aria-labelledby="rl-dev-transparency">/);
+});
+
+test('blocked storage does not hide the system reduced-transparency setting', async () => {
+  const { runInNewContext } = await import('node:vm');
+  const attrs = new Map();
+  const context = {
+    document: { documentElement: { setAttribute: (k, v) => attrs.set(k, v) }, querySelector: () => null },
+    window: { matchMedia: q => ({ matches: q.includes('reduced-transparency') }) },
+  };
+  Object.defineProperty(context, 'localStorage', {
+    get() {
+      throw new Error('SecurityError');
+    },
+  });
+  runInNewContext(preload, context);
+  assert.equal(attrs.get('data-transparency'), 'reduce');
+});
+
+test('the transparency watcher applies the setting at once', async () => {
+  const { watchTransparency } = await import('../js/theme.js');
+  let attr = null;
+  globalThis.document = {
+    documentElement: {
+      setAttribute: (_k, v) => {
+        attr = v;
+      },
+      removeAttribute: () => {
+        attr = null;
+      },
+    },
+  };
+  globalThis.window = { matchMedia: () => ({ matches: true, addEventListener() {} }) };
+  globalThis.localStorage = { getItem: () => null };
+  globalThis.addEventListener = () => {};
+  watchTransparency();
+  assert.equal(attr, 'reduce');
+});

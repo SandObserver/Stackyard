@@ -88,3 +88,53 @@ test('applyBackground sets the four properties the stylesheet reads', () => {
     '--bg-size': 'cover',
   });
 });
+
+test('one address is decoded once, and the boot hint image is reused', async () => {
+  const made = [];
+  globalThis.location = { href: 'http://host/' };
+  globalThis.Image = class {
+    constructor() {
+      made.push(this);
+    }
+    decode() {
+      return Promise.resolve();
+    }
+  };
+  const hint = new globalThis.Image();
+  hint.src = 'http://host/wall.jpg';
+  globalThis.window = { __wallpaperHint: hint };
+  const { decoded } = await import(`../js/background.js?fresh=${Date.now()}`);
+  const first = await decoded('/wall.jpg');
+  const again = await decoded('http://host/wall.jpg');
+  assert.equal(first, hint, 'the hint image was downloaded again');
+  assert.equal(again, hint);
+  assert.equal(made.length, 1);
+  const other = await decoded('/other.jpg');
+  assert.notEqual(other, hint);
+  assert.equal(made.length, 2);
+});
+
+test('a failed decode is not kept', async () => {
+  globalThis.location = { href: 'http://host/' };
+  let fail = true;
+  globalThis.Image = class {
+    decode() {
+      return fail ? Promise.reject(new Error('bad')) : Promise.resolve();
+    }
+  };
+  globalThis.window = {};
+  const { decoded } = await import(`../js/background.js?fresh=${Date.now() + 1}`);
+  assert.equal(await decoded('/x.jpg'), null);
+  fail = false;
+  assert.ok(await decoded('/x.jpg'), 'a failed address stays failed');
+});
+
+test('an address the URL parser rejects decodes to nothing instead of throwing', async () => {
+  globalThis.location = { href: 'http://host/' };
+  globalThis.window = {};
+  const { decoded, parseWallpaperUrl } = await import(`../js/background.js?fresh=${Date.now() + 2}`);
+  for (const bad of ['https://exa mple.com/a.jpg', 'http://']) {
+    assert.equal(parseWallpaperUrl(bad), null);
+    assert.equal(await decoded(bad), null);
+  }
+});

@@ -93,6 +93,8 @@
     "typeToSearchTip": "Typing a letter anywhere on the dashboard opens search. Turn this off if search opens by accident, for example with voice control.",
     "displayMode": "Display Mode",
     "displayModeTip": "Sets the appearance of the dashboard and the Settings pages. It is stored in this browser, applies to this device only, and takes effect at once.",
+    "reduceTransparency": "Reduce Transparency",
+    "reduceTransparencyTip": "Replaces the glass with solid surfaces on this device. It is stored in this browser and takes effect at once.",
     "displaySystem": "System Default",
     "displayLight": "Light",
     "displayDark": "Dark",
