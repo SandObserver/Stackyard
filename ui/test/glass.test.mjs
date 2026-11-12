@@ -223,11 +223,18 @@ function harness({ webgl = true, accept = () => true } = {}) {
         maxSize: 4096,
         wallpapers: [],
         draws: [],
+        boxes: [],
+        sizes: [],
         setWallpaper(bitmap) {
           r.wallpapers.push(bitmap);
-          return bitmap ? accept(bitmap) : true;
+          return bitmap ? accept(bitmap, r) : true;
         },
-        resize() {},
+        setBox(box) {
+          r.boxes.push(box);
+        },
+        resize(width, height) {
+          r.sizes.push([width, height]);
+        },
         draw(items) {
           r.draws.push(items);
         },
@@ -248,6 +255,7 @@ function harness({ webgl = true, accept = () => true } = {}) {
   return {
     glass,
     doc,
+    win,
     bitmaps,
     renderers,
     log,
@@ -382,4 +390,48 @@ test('glass elements removed from the page are forgotten even without a wallpape
   el.isConnected = false;
   h.observe([{ type: 'childList', addedNodes: [], removedNodes: [el] }]);
   assert.equal(h.glass.stats().tracked, 0);
+});
+
+test('a resize fits the glass on the next frame and keeps the old picture until the rebuild', async () => {
+  const h = harness();
+  await live(h);
+  const el = Object.assign(new FakeEl(), { glass: true, isConnected: true });
+  h.doc.body.append(el);
+  h.observe([{ type: 'childList', addedNodes: [el], removedNodes: [] }]);
+  const gpu = h.renderers[0];
+  h.doc.documentElement.clientWidth = 300;
+  h.win.innerWidth = 300;
+  h.resize();
+  const drawsBefore = gpu.draws.length;
+  h.tick();
+  assert.deepEqual(gpu.sizes.at(-1), [300, 800], 'the canvas keeps its old size and stretches');
+  assert.deepEqual(gpu.boxes.at(-1), wallpaperBox(1600, 1000, 'cover', 300, 800));
+  assert.ok(gpu.draws.length > drawsBefore && gpu.draws.at(-1).length > 0, 'the cleared canvas is not redrawn');
+  assert.equal(h.bitmaps.length, 1, 'rebuilt while still resizing');
+  assert.equal(h.bitmaps[0].bitmap.closed, false);
+  h.runTimers();
+  await h.flush();
+  assert.equal(h.bitmaps.length, 2);
+  assert.equal(gpu.wallpapers.at(-1), h.bitmaps[0].bitmap, 'the old picture is dropped before the new one is ready');
+});
+
+test('a folder layer that refuses a new wallpaper gives the open folder its CSS fill back', async () => {
+  let refuseFolder = false;
+  const h = harness({ accept: (_bitmap, r) => !(refuseFolder && r === h.renderers[1]) });
+  await live(h);
+  h.runIdle();
+  const ov = Object.assign(new FakeEl(), { isConnected: true });
+  const panel = new FakeEl();
+  ov.append(panel);
+  h.glass.openFolder(ov, panel);
+  assert.equal(ov.hasAttribute('data-glass-drawn'), true);
+  refuseFolder = true;
+  h.glass.setWallpaper(h.img('http://host/b.jpg'), 'cover');
+  await h.flush();
+  h.bitmaps[1].resolve();
+  await h.flush();
+  assert.equal(h.glass.stats().live, true);
+  assert.equal(h.glass.stats().folderLayer, false);
+  assert.equal(ov.hasAttribute('data-glass-drawn'), false, 'the panel stays clear over a dead layer');
+  assert.equal(h.renderers[1].canvas.hidden, true);
 });

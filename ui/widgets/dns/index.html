@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DNS Server</title>
-<script src="/js/widget-theme.js?v=e8cc2393"></script>
+<script src="/js/widget-theme.js?v=9f9e1b99"></script>
 <style>
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
   html { -webkit-tap-highlight-color: transparent; }
@@ -68,7 +68,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, rollText, linkTo, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=9e7674e3';
+import { poll, fetchData, rollText, linkTo, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=048ad37d';
 await loadStrings();
 /* These two are in the markup, so the widget still reads correctly in English
    if the catalog fetch fails. */
@@ -85,6 +85,7 @@ let _provider = 'adguard';
 let _last = null;
 
 const widgetEl = document.getElementById('widget');
+const BLOCKED_RED = '#FF4245';
 const pctEl = document.getElementById('pct');
 const svgEl = document.getElementById('svg');
 const subEl = document.getElementById('sub-label');
@@ -162,7 +163,7 @@ function render(m, ph = false) {
   const segs = [
     { key:'allowed', label:wt('ui.allowed','Allowed'), value:m.allowed, color:'#30D158' },
     { key:'cached',  label:wt('ui.cached','Cached'),   value:m.cached,  color:'#0091FF' },
-    { key:'blocked', label:wt('ui.blocked','Blocked'), value:m.blocked, color:'#FF4245' },
+    { key:'blocked', label:wt('ui.blocked','Blocked'), value:m.blocked, color:BLOCKED_RED },
   ].filter(s => s.value > 0).map(s => (ph ? { ...s, color: 'currentColor' } : s));
 
   _segs = segs;
@@ -223,7 +224,7 @@ function showHeadline() {
     subEl.textContent = s.label;
   } else if (_last) {
     rollText(pctEl, formatNumber(_last.pct / 100, { style: 'percent' }));
-    pctEl.style.color = '';
+    pctEl.style.color = readableInk(BLOCKED_RED, 3);
     subEl.textContent = wt('ui.queriesBlocked', 'Queries Blocked');
   }
 }

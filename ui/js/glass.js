@@ -1,10 +1,10 @@
 // @ts-check
 import { onFrame, requestFrame, setScripted } from '/js/frame-motion.js?v=1d86154d';
-import { createGlassRenderer } from '/js/glass-gpu.js?v=4165398f';
+import { createGlassRenderer } from '/js/glass-gpu.js?v=5787df05';
 import { loadSamplingImage } from '/js/label-contrast.js?v=a160c6d1';
 
-/** @typedef {import('/js/glass-gpu.js?v=4165398f').GlassLook} GlassLook */
-/** @typedef {import('/js/glass-gpu.js?v=4165398f').GlassItem} GlassItem */
+/** @typedef {import('/js/glass-gpu.js?v=5787df05').GlassLook} GlassLook */
+/** @typedef {import('/js/glass-gpu.js?v=5787df05').GlassItem} GlassItem */
 /** @typedef {ReturnType<typeof createGlassRenderer>} Renderer */
 
 /* Keep in step with the rim list in dashboard.css. */
@@ -64,7 +64,7 @@ export function createGlass(env) {
   let forcedColors = null;
   const blocked = () => doc.documentElement.dataset.transparency === 'reduce' || !!forcedColors?.matches;
 
-  /** @type {{ bitmap: ImageBitmap, box: number[] }|null} */
+  /** @type {{ bitmap: ImageBitmap, box: number[], natural: [number, number] }|null} */
   let wallpaper = null;
   /** @type {Layer|null} */
   let base = null;
@@ -81,6 +81,7 @@ export function createGlass(env) {
   let lastSig = '';
   let still = 0;
   let uploads = 0;
+  let resized = false;
   let source = { img: /** @type {HTMLImageElement|null} */ (null), size: 'cover' };
 
   const css = (/** @type {Element} */ el) => win.getComputedStyle(el);
@@ -91,6 +92,15 @@ export function createGlass(env) {
     if (!panel) return;
     panel.ov.removeAttribute(DRAWN);
     panel = null;
+  }
+
+  function loseFolderLayer() {
+    if (!folder) return;
+    folder.gl = null;
+    /* Keep. A restore redraws last over the open folder's CSS fill. */
+    folder.last = null;
+    folder.canvas.hidden = true;
+    dropPanel();
   }
 
   /** @param {string} className @param {boolean} blur @returns {Layer|null} */
@@ -106,11 +116,7 @@ export function createGlass(env) {
       e.preventDefault();
       env.log('GPU context lost', className);
       layer.gl = null;
-      if (layer !== folder) return;
-      /* Keep. A restore redraws layer.last over the open folder's CSS fill. */
-      layer.last = null;
-      canvas.hidden = true;
-      dropPanel();
+      if (layer === folder) loseFolderLayer();
     });
     canvas.addEventListener('webglcontextrestored', () => {
       layer.gl = env.createRenderer(canvas, { blur });
@@ -222,8 +228,19 @@ export function createGlass(env) {
     drawLayer(folder, alpha > 0.001 && rect.width ? [{ rect, radius: panel.radius * s, alpha }] : [], panel.look);
   }
 
+  /* Call only from frame(). Resizing a canvas clears it. */
+  function fitLayers() {
+    resized = false;
+    for (const layer of [base, folder]) if (layer) sizeLayer(layer);
+    if (!wallpaper) return;
+    wallpaper.box = wallpaperBox(...wallpaper.natural, source.size, doc.documentElement.clientWidth, win.innerHeight);
+    for (const layer of [base, folder]) layer?.gl?.setBox(wallpaper.box);
+    lastSig = '';
+  }
+
   function frame() {
     if (!wallpaper) return;
+    if (resized) fitLayers();
     paintFolder();
     if (paintBase()) still = 0;
     else still++;
@@ -279,7 +296,7 @@ export function createGlass(env) {
           bitmap.close();
           return;
         }
-        next = { bitmap, box };
+        next = { bitmap, box, natural: /** @type {[number, number]} */ ([pic.naturalWidth, pic.naturalHeight]) };
       } catch (e) {
         env.log('the glass stays CSS:', e);
       }
@@ -292,7 +309,7 @@ export function createGlass(env) {
       wallpaper = null;
     }
     if (folder?.gl && !folder.gl.setWallpaper(wallpaper?.bitmap ?? null, wallpaper?.box ?? [0, 0, 1, 1], folder.blurPx))
-      folder.gl = null;
+      loseFolderLayer();
     if (!wallpaper) base?.gl?.setWallpaper(null, [0, 0, 1, 1], 0);
     env.setScripted(!!wallpaper);
     lastSig = '';
@@ -342,7 +359,7 @@ export function createGlass(env) {
     if (blurPx !== folder.blurPx) {
       folder.blurPx = blurPx;
       if (!folder.gl.setWallpaper(wallpaper.bitmap, wallpaper.box, blurPx)) {
-        folder.gl = null;
+        loseFolderLayer();
         return;
       }
     }
@@ -393,6 +410,8 @@ export function createGlass(env) {
     /** @type {ReturnType<typeof setTimeout>|undefined} */
     let resizing;
     win.addEventListener('resize', () => {
+      resized = true;
+      wake();
       win.clearTimeout(resizing);
       resizing = win.setTimeout(() => {
         if (source.img) upload();

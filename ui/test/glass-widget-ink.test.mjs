@@ -99,6 +99,16 @@ function inkRules(html) {
   return out;
 }
 
+/** The rule that applies on glass in one theme: the glass step, else the theme rule, else the base rule. */
+function applied(rules, key, light) {
+  const pick = filter => rules.filter(x => `${x.tail}|${x.prop}` === key && filter(x)).at(-1);
+  return (
+    pick(x => x.glass && (!x.themed || x.light === light)) ??
+    pick(x => !x.glass && x.light === light) ??
+    pick(x => !x.glass && !x.light)
+  );
+}
+
 test('every translucent widget view is checked', () => {
   const views = glassViews();
   assert.ok(views.length >= 4, views.join(', '));
@@ -111,16 +121,11 @@ test('every ink on a translucent card clears its minimum on glass', () => {
     const rules = inkRules(fs.readFileSync(path.join(widgets, view), 'utf8'));
     const own = OWN_SURFACE.filter(([w]) => view.startsWith(w)).map(([, s]) => s);
     for (const light of [false, true]) {
-      /* What applies in this theme on glass: the glass step, else the theme rule, else the base rule. */
       const keys = new Set(rules.map(r => `${r.tail}|${r.prop}`));
       for (const key of keys) {
         const [tail, prop] = key.split('|');
         if (own.some(s => tail.startsWith(s))) continue;
-        const pick = filter => rules.filter(x => `${x.tail}|${x.prop}` === key && filter(x)).at(-1);
-        const rule =
-          pick(x => x.glass && (!x.themed || x.light === light)) ??
-          pick(x => !x.glass && x.light === light) ??
-          pick(x => !x.glass && !x.light);
+        const rule = applied(rules, key, light);
         if (!rule) continue;
         const min = prop === '--fg3' || prop === '--grey' ? 3 : 4.5;
         const measured = onGlass(rule.value, light);
@@ -130,4 +135,18 @@ test('every ink on a translucent card clears its minimum on glass', () => {
     }
   }
   assert.deepEqual(failures, [], `Below the minimum on glass:\n  ${failures.join('\n  ')}`);
+});
+
+test('the shared error caption clears 4.5:1 on glass', () => {
+  const src = fs.readFileSync(path.join(root, 'js', 'widget-error.js'), 'utf8');
+  const css = /const CSS = `([\s\S]*?)`;/.exec(src)?.[1];
+  assert.ok(css, 'the caption styles moved');
+  /* A widget may set --wt-cap-color; none of the glass views does. */
+  const rules = inkRules(`<style>${css.replace(/var\(--wt-cap-color,\s*(var\([^)]*\)|[^()]+)\)/g, '$1')}</style>`);
+  for (const light of [false, true]) {
+    const rule = applied(rules, '.wt-cap|color', light);
+    assert.ok(rule, 'the caption colour moved');
+    const measured = onGlass(rule.value, light);
+    assert.ok(measured >= 4.5, `${rule.value} (${light ? 'light' : 'dark'}): ${measured.toFixed(2)}`);
+  }
 });

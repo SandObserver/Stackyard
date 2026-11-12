@@ -40,11 +40,15 @@
       const dark = fixedDark || window.parent.document.documentElement.getAttribute('data-theme') !== 'light';
       root.setAttribute('data-theme', dark ? 'dark' : 'light');
       root.style.colorScheme = dark ? 'dark' : 'light';
+      /* Keep equal to the page's scheme. On a mismatch the browser paints an
+         opaque backdrop behind the page and the card loses its glass. */
+      if (frame) /** @type {HTMLElement} */ (frame).style.colorScheme = root.style.colorScheme;
       const zoom = frame && frame.getAttribute('data-zoom');
       if (zoom) root.style.zoom = zoom;
-      /* The card is glass while its own fill lets the wallpaper through. */
+      /* Only a translucent card is glass. Increased contrast makes every card
+         see-through, and widget text there needs the solid page. */
       const card = frame && frame.closest('.widget, .mob-widget-card');
-      const fill = card
+      const fill = card?.matches('[data-card="translucent"]')
         ? (window.parent.getComputedStyle(card).backgroundColor.match(/[\d.]+/g) ?? []).map(Number)
         : [];
       const glass = fill.length === 4 && fill[3] > 0 && fill[3] < 1 && !media('(forced-colors: active)');

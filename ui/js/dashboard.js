@@ -32,7 +32,7 @@ import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import { easing, glide, isScripted } from '/js/frame-motion.js?v=1d86154d';
-import { glassWallpaper, startGlass } from '/js/glass.js?v=6846b755';
+import { glassWallpaper, startGlass } from '/js/glass.js?v=258316fb';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { currentLang, initI18n, isSupported, t } from '/js/i18n.js?v=ec60b9bd';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=4d944cec';
@@ -64,7 +64,7 @@ import {
   openFolderMobile,
   resetMobileChrome,
   swipePager,
-} from '/js/ui.js?v=d9c46f30';
+} from '/js/ui.js?v=efa574bd';
 import {
   mkWrap as _mkWrap,
   el,

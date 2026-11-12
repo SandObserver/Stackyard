@@ -122,3 +122,35 @@ test('a folder panel keeps its fill until the GPU draws its glass', async ({ pag
     )
     .toEqual(gpu ? { drawn: true, clear: true } : { drawn: false, clear: false });
 });
+
+test('a dark widget on the light dashboard keeps its glass card', async ({ page, request }) => {
+  const backup = {
+    id: 'backup',
+    type: 'widget',
+    widgetType: 'backup',
+    label: 'Backup',
+    widgetSize: 'small',
+    widgetConfig: {},
+  };
+  await seedConfig(request, { items: [backup], settings: { background: { ...WALLPAPER } } });
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.addInitScript(() => localStorage.setItem('sy-theme', 'light'));
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  /* A frame whose scheme differs from its page gets an opaque backdrop. */
+  await expect
+    .poll(async () => {
+      const state = await cardState(page);
+      const outer = await page
+        .locator('.widget[data-card="translucent"] iframe, .mob-widget-card[data-card="translucent"] iframe')
+        .first()
+        .evaluate(el => getComputedStyle(el).colorScheme);
+      const inner = await page
+        .frameLocator('.widget[data-card="translucent"] iframe, .mob-widget-card[data-card="translucent"] iframe')
+        .first()
+        .locator('html')
+        .evaluate(html => getComputedStyle(html).colorScheme);
+      return { glass: state.glass, outer, inner };
+    })
+    .toEqual({ glass: true, outer: 'dark', inner: 'dark' });
+});

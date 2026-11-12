@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Captain Clock</title>
-<script src="/js/widget-theme.js?v=e8cc2393"></script>
+<script src="/js/widget-theme.js?v=9f9e1b99"></script>
 <style>
   @font-face { font-family: "Patrick Hand"; src: url(fonts/patrick-hand.woff2) format("woff2"); font-display: block; }
   @font-face { font-family: Vazirmatn; font-weight: 400; src: url(fonts/vazirmatn-400.woff2) format("woff2"); font-display: block; }
@@ -315,7 +315,7 @@ async function boot() {
     .then(r => (r.ok ? r.json() : null))
     .catch(() => null);
   const [toolbox, lib, dates] = await Promise.all([
-    import('/js/widget-toolbox.js?v=9e7674e3'),
+    import('/js/widget-toolbox.js?v=048ad37d'),
     import('/js/clock-captain.js?v=c571e432'),
     import('/js/clock-date.js?v=de40b876'),
   ]);

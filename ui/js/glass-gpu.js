@@ -234,6 +234,10 @@ export function createGlassRenderer(canvas, options = {}) {
       img = box;
       return true;
     },
+    /** Moves the wallpaper without a new upload. @param {number[]} box wallpaper box in CSS px: x, y, w, h */
+    setBox(box) {
+      img = box;
+    },
     /** @param {number} width @param {number} height CSS px */
     resize(width, height) {
       canvas.width = Math.max(1, Math.round(width));
