@@ -10,7 +10,7 @@ import { nextActiveIndex, singleChoice } from '/js/admin-logic.js?v=4681aa43';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatList } from '/js/format-number.js?v=9dcba1ce';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { qa } from '/js/utils.js?v=ff7e1e5f';
+import { qa } from '/js/utils.js?v=06519124';
 import { iconSvg } from '/js/icon-set.js?v=4d944cec';
 
 const CHEV = iconSvg('chevrons', 22, 'solid', 'dd-chev');

@@ -1,5 +1,5 @@
 // @ts-check
-import { cssColor, sanitizeCssUrl } from '/js/utils.js?v=ff7e1e5f';
+import { cssColor, sanitizeCssUrl } from '/js/utils.js?v=06519124';
 import {
   loadWallpaper,
   saveBootHint,
@@ -66,15 +66,33 @@ async function unsplashPhoto(bg) {
   return photo;
 }
 
-/** @param {string} url @returns {Promise<boolean>} */
-export const decoded = url =>
-  new Promise(resolve => {
-    const img = new Image();
-    img.onload = () => resolve(true);
-    img.onerror = () => resolve(false);
-    img.src = url;
-  });
+/** @type {{ href: string, done: Promise<HTMLImageElement|null> }|null} */
+let lastDecode = null;
 
+/** Decodes before the wallpaper is shown, so the first paint does not stall on it.
+    Reuses the image the boot hint started, and one decode per address.
+    @param {string} url @returns {Promise<HTMLImageElement|null>} */
+export const decoded = url => {
+  const href = new URL(url, location.href).href;
+  if (lastDecode?.href === href) return lastDecode.done;
+  const hint = /** @type {any} */ (window).__wallpaperHint;
+  /** @type {HTMLImageElement} */
+  const img = hint?.src === href ? hint : new Image();
+  if (img !== hint) img.src = href;
+  const entry = {
+    href,
+    done: img.decode().then(
+      () => img,
+      () => {
+        if (img.complete && img.naturalWidth) return img;
+        if (lastDecode === entry) lastDecode = null;
+        return null;
+      },
+    ),
+  };
+  lastDecode = entry;
+  return entry.done;
+};
 const thisScreen = () => ({
   width: screen.width,
   height: screen.height,

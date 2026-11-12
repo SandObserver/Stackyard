@@ -344,17 +344,23 @@
       "/js/mobile-metrics.js?v=*": [
         "./ui/js/mobile-metrics.js"
       ],
-      "/js/glass-rim.js": [
-        "./ui/js/glass-rim.js"
+      "/js/frame-motion.js": [
+        "./ui/js/frame-motion.js"
       ],
-      "/js/glass-rim.js?v=*": [
-        "./ui/js/glass-rim.js"
+      "/js/frame-motion.js?v=*": [
+        "./ui/js/frame-motion.js"
       ],
-      "/js/smooth-corner.js": [
-        "./ui/js/smooth-corner.js"
+      "/js/glass-gpu.js": [
+        "./ui/js/glass-gpu.js"
       ],
-      "/js/smooth-corner.js?v=*": [
-        "./ui/js/smooth-corner.js"
+      "/js/glass-gpu.js?v=*": [
+        "./ui/js/glass-gpu.js"
+      ],
+      "/js/glass.js": [
+        "./ui/js/glass.js"
+      ],
+      "/js/glass.js?v=*": [
+        "./ui/js/glass.js"
       ],
       "/js/palette.js": [
         "./ui/js/palette.js"

@@ -17,17 +17,21 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=ff7e1e5f';
+} from '/js/utils.js?v=06519124';
 import { t, currentLang } from '/js/i18n.js?v=ec60b9bd';
 import { toneForColor } from '/js/label-contrast.js?v=e046296b';
 import { mobileMetrics, gridColumnWidth, gridCellCount, dockFit } from '/js/mobile-metrics.js?v=3b0d6715';
-import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
-import { mkGlassRim, observeGlass } from '/js/glass-rim.js?v=3faec233';
+import { animate, easing, glide, isScripted, requestFrame, stopGlide } from '/js/frame-motion.js?v=1d86154d';
+import { openFolderGlass } from '/js/glass.js?v=295c5213';
 import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=8b2dad40';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 
 const PHONE_W = 393;
+/* Matches the --pill-inset transition in dashboard.css. */
+const PILL_MS = 250;
+const pillEase = easing(EASE_IOS);
+const FADE_EASE = 'cubic-bezier(.23,1,.32,1)';
 
 let _state = null;
 export function initUI(state) {
@@ -145,7 +149,6 @@ export function mkFolder(item) {
   css(box, { '--iw': iw + 'px' });
   const wrap = mk('div');
   wrap.className = 'folder-icon-grid glass-surface';
-  wrap.appendChild(mkGlassRim(iw, iw, smoothRectPath(iw, iw, 16, 0)));
   (item.children || [])
     .slice(0, 9)
     .map(id => items().find(i => i.id === id))
@@ -236,7 +239,7 @@ export function onTap(node, fn) {
     @param {EventTarget|null} target where the touches land
     @param {HTMLElement} strip
     @param {{ width: () => number, page: () => number, total: () => number,
-      turn: (n: number) => void, enabled?: () => boolean }} o
+      turn: (n: number, ms: number) => void, enabled?: () => boolean }} o
     @returns {SwipeFeed} */
 export function swipePager(target, strip, o) {
   /** @type {number|string|null} */
@@ -270,6 +273,7 @@ export function swipePager(target, strip, o) {
         axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
         if (axis === 'y') return;
         clearTimeout(done);
+        stopGlide(strip);
         const m = getComputedStyle(strip).transform;
         from = m === 'none' ? 0 : new DOMMatrixReadOnly(m).m41;
         strip.style.transition = 'none';
@@ -283,7 +287,8 @@ export function swipePager(target, strip, o) {
         hi = Math.max(...ends),
         raw = from + px - x0;
       x = raw > hi ? hi + rubberBand(raw - hi, o.width()) : raw < lo ? lo - rubberBand(lo - raw, o.width()) : raw;
-      strip.style.transform = strip.style.webkitTransform = `translateX(${x}px)`;
+      strip.style.transform = `translateX(${x}px)`;
+      requestFrame();
     },
     up(pid, ts, fling) {
       if (id === null || pid !== id) return;
@@ -310,8 +315,13 @@ export function swipePager(target, strip, o) {
           dir: pageDir(),
         });
     const ms = settleMs(Math.abs(rest(n) - x), Math.sign(rest(n) - x) * v);
+    if (isScripted()) {
+      strip.style.transition = '';
+      o.turn(n, ms);
+      return;
+    }
     strip.style.transition = `transform ${ms}ms var(--page-ease)`;
-    o.turn(n);
+    o.turn(n, ms);
     done = setTimeout(() => {
       strip.style.transition = '';
     }, ms);
@@ -351,51 +361,124 @@ export function swipePager(target, strip, o) {
   return feed;
 }
 
+/** @typedef {{ el: HTMLElement, prop: 'opacity'|'transform', from: number[], to: number[],
+      duration: number, delay: number, easing: string }} FolderTrack */
+
+/** Opacity as [value], a transform as [x, y, scale]. @param {string} prop @param {number[]} v */
+const folderCss = (prop, v) => (prop === 'opacity' ? String(v[0]) : `translate(${v[0]}px, ${v[1]}px) scale(${v[2]})`);
+
+/** Where a track's element is now. @param {FolderTrack} tr */
+function folderNow(tr) {
+  const cs = getComputedStyle(tr.el);
+  if (tr.prop === 'opacity') return [Number(cs.opacity)];
+  const m = cs.transform === 'none' ? new DOMMatrixReadOnly() : new DOMMatrixReadOnly(cs.transform);
+  return [m.e, m.f, m.a];
+}
+
+/** @param {FolderTrack[]} tracks @param {boolean} hold keep the end state
+    @param {() => void} [done] @returns {() => void} stops them */
+function playFolder(tracks, hold, done) {
+  if (!isScripted()) {
+    const runs = tracks.map(tr =>
+      tr.el.animate(
+        { [tr.prop]: [folderCss(tr.prop, tr.from), folderCss(tr.prop, tr.to)] },
+        { duration: tr.duration, delay: tr.delay, easing: tr.easing, fill: hold ? 'both' : 'none' },
+      ),
+    );
+    Promise.all(runs.map(a => a.finished)).then(
+      () => done?.(),
+      () => {},
+    );
+    return () => runs.forEach(a => a.cancel());
+  }
+  const eases = tracks.map(tr => easing(tr.easing));
+  const total = Math.max(...tracks.map(tr => tr.delay + tr.duration));
+  /** @param {number} ms */
+  const apply = ms =>
+    tracks.forEach((tr, i) => {
+      const local = tr.duration ? Math.min(1, Math.max(0, (ms - tr.delay) / tr.duration)) : 1;
+      const k = eases[i](local);
+      tr.el.style.setProperty(
+        tr.prop,
+        folderCss(
+          tr.prop,
+          tr.from.map((a, j) => a + (tr.to[j] - a) * k),
+        ),
+      );
+    });
+  apply(0);
+  const run = animate(
+    total,
+    p => p,
+    p => apply(p * total),
+    () => {
+      if (!hold) for (const tr of tracks) tr.el.style.removeProperty(tr.prop);
+      done?.();
+    },
+  );
+  return run.cancel;
+}
+
 /** @param {HTMLDialogElement} ov @param {HTMLElement[]} parts
-    @param {Element} [tile] @returns {() => void} */
-function folderMotion(ov, parts, tile) {
+    @param {Element|undefined} tile @param {HTMLElement} panel the folder's glass
+    @returns {() => void} */
+function folderMotion(ov, parts, tile, panel) {
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   /** @param {HTMLElement} p */
   const intoTile = p => {
     const from = !still && tile?.isConnected ? tile.getBoundingClientRect() : null;
-    if (!from?.width) return 'none';
+    if (!from?.width) return [0, 0, 1];
     const r = p.getBoundingClientRect();
     const s = from.width / r.width;
-    const dx = from.left + from.width / 2 - r.left - (r.width * s) / 2;
-    const dy = from.top + from.height / 2 - r.top - (r.height * s) / 2;
-    return `translate(${dx}px, ${dy}px) scale(${s})`;
+    return [
+      from.left + from.width / 2 - r.left - (r.width * s) / 2,
+      from.top + from.height / 2 - r.top - (r.height * s) / 2,
+      s,
+    ];
   };
   for (const p of parts) p.style.transformOrigin = '0 0';
-  const steps = [
-    { el: ov, prop: 'opacity', shut: '0', open: '1' },
-    ...parts.map(part => ({ el: part, prop: 'transform', shut: intoTile(part), open: 'none' })),
-  ];
-  /** @param {string} prop @param {boolean} opening */
-  const timing = (prop, opening) =>
+  const shut = parts.map(intoTile);
+  /** @param {string} prop @param {boolean} open */
+  const timing = (prop, open) =>
     still
-      ? { duration: 150, easing: 'ease-out' }
+      ? { duration: 150, delay: 0, easing: 'ease-out' }
       : prop === 'opacity'
-        ? opening
-          ? { duration: 120, easing: 'ease-out' }
-          : { duration: 160, delay: 90, easing: 'ease-out' }
-        : { duration: opening ? 300 : 250, easing: EASE_IOS };
-  let running = steps.map(s => s.el.animate({ [s.prop]: [s.shut, s.open] }, timing(s.prop, true)));
+        ? open
+          ? { duration: 120, delay: 0, easing: FADE_EASE }
+          : { duration: 160, delay: 90, easing: FADE_EASE }
+        : { duration: open ? 300 : 250, delay: 0, easing: EASE_IOS };
+  /** @type {FolderTrack[]} */
+  const opening = [
+    { el: ov, prop: 'opacity', from: [0], to: [1], ...timing('opacity', true) },
+    ...parts.map((part, i) => ({
+      el: part,
+      prop: /** @type {const} */ ('transform'),
+      from: shut[i],
+      to: [0, 0, 1],
+      ...timing('transform', true),
+    })),
+  ];
+  let stop = playFolder(opening, false);
+  openFolderGlass(ov, panel);
   return () => {
     if (!ov.isConnected) return;
     if (ov.contains(document.activeElement)) /** @type {HTMLElement} */ (document.activeElement).blur();
-    const now = steps.map(s => getComputedStyle(s.el)[s.prop]);
-    steps.forEach((s, i) => s.el.style.setProperty(s.prop, now[i]));
-    running.forEach(a => a.cancel());
+    const now = opening.map(folderNow);
+    stop();
     ov.style.opacity = '1';
-    running = steps
-      .slice(1)
-      .flatMap((s, i) => [
-        s.el.animate({ transform: [now[i + 1], s.shut] }, { ...timing('transform', false), fill: 'forwards' }),
-        s.el.animate({ opacity: [now[0], 0] }, { ...timing('opacity', false), fill: 'both' }),
-      ]);
-    running[0].finished.then(
+    stop = playFolder(
+      parts.flatMap((part, i) => [
+        {
+          el: part,
+          prop: /** @type {const} */ ('transform'),
+          from: now[i + 1],
+          to: shut[i],
+          ...timing('transform', false),
+        },
+        { el: part, prop: /** @type {const} */ ('opacity'), from: now[0], to: [0], ...timing('opacity', false) },
+      ]),
+      true,
       () => ov.remove(),
-      () => {},
     );
   };
 }
@@ -431,7 +514,7 @@ export function openFolderDesktop(folder, tile) {
   title.className = 'folder-title-desktop';
   setUserText(title, folder.label || t('type.folder'));
   const box = mk('div');
-  box.className = 'folder-box-desktop';
+  box.className = 'folder-box-desktop glass-surface';
   const iw = showLabel ? 72 : 78,
     isz = showLabel ? 50 : 56;
   const grid = mk('div');
@@ -466,10 +549,8 @@ export function openFolderDesktop(folder, tile) {
   }
   /* Escape and the tile's own toggle arrive here alike, and a badge registered
      to an element that has gone keeps the dashboard repainting it. */
-  let stopGlass = () => {};
   let shrink = () => ov.remove();
   ov.addEventListener('close', () => {
-    stopGlass();
     registeredBadges.forEach(badge => BEL().forEach((_, id) => bunreg(id, badge)));
     shrink();
     if (folderOverlay === ov) folderOverlay = null;
@@ -487,8 +568,7 @@ export function openFolderDesktop(folder, tile) {
      tiles under the scrim were reachable by Tab and by a screen reader. */
   ov.showModal();
   ov.focus();
-  shrink = folderMotion(ov, [outer], tile);
-  stopGlass = observeGlass(box, 28, 0.2);
+  shrink = folderMotion(ov, [outer], tile, box);
 }
 
 function mFolder(item, cw, rh, isz, ir, im, sc) {
@@ -515,7 +595,6 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
   css(box, { '--sz': eff + 'px' });
   box.style.pointerEvents = 'none';
   const wrap = mkFolderGlyph(item, eff);
-  wrap.appendChild(mkGlassRim(eff, eff, smoothRectPath(eff, eff, Math.round(eff * ICON_R), 0)));
   box.appendChild(wrap);
   const fb_ = mk('div');
   fb_.className = 'badge';
@@ -622,9 +701,6 @@ export function openFolderMobile(folder, isz, _ir, _im, sc, tile) {
     '--ph': padH - badgeOvh + 'px',
     '--pb': padVB - badgeOvh + 'px',
   });
-  const boxD = smoothRectPath(boxW, boxH, boxR, 0.2);
-  box.style.clipPath = `path('${boxD}')`;
-  box.appendChild(mkGlassRim(boxW, boxH, boxD));
 
   const clipW = mk('div');
   clipW.className = 'dyn-clip';
@@ -746,7 +822,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc, tile) {
   folderOverlayMob = ov;
   ov.showModal();
   ov.focus();
-  shrink = folderMotion(ov, [titleEl, box], tile);
+  shrink = folderMotion(ov, [titleEl, box], tile, box);
 }
 
 /* Cells per widget size on the 4x6 home grid. */
@@ -998,7 +1074,6 @@ export function buildMobile() {
   dk.hidden = !dock.length;
   dk.style.cssText = `position:fixed;left:50%;bottom:${dockGap}px;transform:translateX(-50%);width:${dockW}px;height:${dockH}px;padding:0 ${dockPad}px;gap:${dockIconGap}px;z-index:400;`;
   dk.replaceChildren();
-  observeGlass(dk, Math.round(38 * sc), 0.6);
   dock.forEach(item => {
     const a =
       item.system === 'settings'
@@ -1052,20 +1127,31 @@ export function buildMobile() {
     clearTimeout(_pillClipTimer);
     if (from === to) return;
     const wide = Math.max(from, to);
-    const inset = w => `inset(0 ${(wide - w) / 2}px round 999px)`;
-    pillNew.style.transition = 'none';
-    pillNew.style.width = wide + 'px';
-    pillNew.style.clipPath = inset(from);
-    pillNew.getBoundingClientRect();
-    pillNew.style.transition = '';
-    pillNew.style.clipPath = inset(to);
-    _pillClipTimer = setTimeout(() => {
+    const inset = w => `${(wide - w) / 2}px`;
+    const settle = () => {
       pillNew.style.transition = 'none';
       pillNew.style.width = to + 'px';
-      pillNew.style.clipPath = '';
+      pillNew.style.setProperty('--pill-inset', '0px');
       pillNew.getBoundingClientRect();
       pillNew.style.transition = '';
-    }, 260);
+    };
+    pillNew.style.transition = 'none';
+    pillNew.style.width = wide + 'px';
+    pillNew.style.setProperty('--pill-inset', inset(from));
+    pillNew.getBoundingClientRect();
+    pillNew.style.transition = '';
+    if (isScripted()) {
+      glide(
+        pillNew,
+        PILL_MS,
+        pillEase,
+        p => pillNew.style.setProperty('--pill-inset', inset(from + (to - from) * p)),
+        settle,
+      );
+      return;
+    }
+    pillNew.style.setProperty('--pill-inset', inset(to));
+    _pillClipTimer = setTimeout(settle, PILL_MS + 10);
   }
   function pillBump(newPg) {
     if (pillNewDots.children.length < 2) return;

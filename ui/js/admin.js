@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=f6868b28';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=98674c49';
+} from '/js/admin-app-form.js?v=c865e007';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=edf1fef3';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=8d8cac06';
+} from '/js/admin-list.js?v=97f65d23';
 import { folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=4681aa43';
 import {
   afterImport,
@@ -41,7 +41,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=f07e21be';
+} from '/js/admin-settings.js?v=a8d4425d';
 import {
   announce,
   apiGet,
@@ -66,10 +66,10 @@ import {
   swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=dc050c9e';
+} from '/js/admin-shared.js?v=72079c79';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=b64d215b';
-import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=e9980cbc';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=f3ff1fe6';
+import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=c5401183';
 import { recoveryShown } from '/js/config-recovery.js?v=5e8a2c4c';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
@@ -92,7 +92,7 @@ import {
 } from '/js/import-foreign.js?v=5194a30f';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=230941ae';
+import { createListbox } from '/js/listbox.js?v=99987b20';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=c4c1c4c4';
 import { passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
@@ -100,11 +100,15 @@ import {
   applyTheme,
   prefersDark,
   readMode,
+  readReduceTransparency,
   resolveTheme,
   THEME_KEY,
+  TRANSPARENCY_KEY,
   watchSystemTheme,
+  watchTransparency,
   writeMode,
-} from '/js/theme.js?v=eeafa4b5';
+  writeReduceTransparency,
+} from '/js/theme.js?v=f73ea91e';
 import {
   clr,
   el,
@@ -119,7 +123,7 @@ import {
   storeSet,
   tgt,
   within,
-} from '/js/utils.js?v=ff7e1e5f';
+} from '/js/utils.js?v=06519124';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
 
@@ -1178,7 +1182,14 @@ function initTheme() {
   hidden.value = writeMode(readMode());
   box.setValue(hidden.value);
   watchSystemTheme(() => hidden.value);
+  const solid = inp('dev-transparency');
+  if (solid) {
+    solid.checked = readReduceTransparency();
+    solid.addEventListener('change', () => writeReduceTransparency(solid.checked));
+  }
+  watchTransparency();
   addEventListener('storage', e => {
+    if (solid && e.key === TRANSPARENCY_KEY) solid.checked = readReduceTransparency();
     if (e.key !== THEME_KEY) return;
     hidden.value = readMode();
     box.setValue(hidden.value);

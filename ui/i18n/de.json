@@ -93,6 +93,8 @@
     "typeToSearchTip": "Wenn du irgendwo im Dashboard einen Buchstaben tippst, öffnet sich die Suche. Schalte das aus, wenn sich die Suche versehentlich öffnet, zum Beispiel bei Sprachsteuerung.",
     "displayMode": "Anzeigemodus",
     "displayModeTip": "Legt das Erscheinungsbild des Dashboards und der Einstellungsseiten fest. Die Auswahl wird in diesem Browser gespeichert, gilt nur für dieses Gerät und wirkt sofort.",
+    "reduceTransparency": "Transparenz reduzieren",
+    "reduceTransparencyTip": "Ersetzt das Glas auf diesem Gerät durch deckende Flächen. Die Auswahl wird in diesem Browser gespeichert und wirkt sofort.",
     "displaySystem": "Systemstandard",
     "displayLight": "Hell",
     "displayDark": "Dunkel",

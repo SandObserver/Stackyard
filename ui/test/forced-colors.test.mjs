@@ -236,8 +236,7 @@ test('no state is drawn by fill alone', () => {
     Object.entries({
       'admin.css .row-dd-list li.kb-active': 'the row also takes focus and shows its focus ring',
       'dashboard.css .setup-reveal[aria-pressed="true"]': 'the password fields show their text',
-      'dashboard.css html:not([data-theme="light"]) #mob-search-pill[data-tone="dark"] .msp-dot.on':
-        'the base rule also scales the active dot',
+      'dashboard.css #mob-search-pill[data-tone="dark"] .msp-dot.on': 'the base rule also scales the active dot',
     }),
   );
   const found = fs

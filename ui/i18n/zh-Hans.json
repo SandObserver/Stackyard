@@ -92,6 +92,8 @@
     "typeToSearchTip": "在仪表板任意位置键入字母即可打开搜索。如果搜索容易误触打开（例如使用语音控制时），请关闭此选项。",
     "displayMode": "显示模式",
     "displayModeTip": "设定仪表板和设置页面的外观。选择保存在此浏览器中，仅适用于此设备，并立即生效。",
+    "reduceTransparency": "降低透明度",
+    "reduceTransparencyTip": "在此设备上以不透明表面取代玻璃效果。选择保存在此浏览器中，并立即生效。",
     "displaySystem": "跟随系统",
     "displayLight": "浅色",
     "displayDark": "深色",

@@ -59,7 +59,7 @@ test('the home pager uses it', () => {
 test('the pager applies it on every page change', () => {
   const goTo = dashboard.slice(dashboard.indexOf('function goTo('));
   const call = goTo.indexOf('syncPageInert(pg)');
-  const move = goTo.indexOf('strip.style.transform');
+  const move = goTo.indexOf('slidePages(strip');
   assert.ok(call > -1, 'goTo moves the strip without updating what is reachable');
   assert.ok(call < move, 'the pages have to be marked before the strip moves');
 });

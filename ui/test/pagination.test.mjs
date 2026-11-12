@@ -175,7 +175,8 @@ test('the strip follows the finger while it is down', () => {
 test('the release settles from the finger, at the finger speed', () => {
   assert.match(pager, /swipeSettle\(\{/);
   assert.match(pager, /settleMs\(/);
-  assert.match(pager, /strip\.style\.transition = `transform \$\{ms\}ms var\(--page-ease\)`;\s*o\.turn\(n\)/);
+  assert.match(pager, /strip\.style\.transition = `transform \$\{ms\}ms var\(--page-ease\)`;\s*o\.turn\(n, ms\)/);
+  assert.match(pager, /if \(isScripted\(\)\) \{\s*strip\.style\.transition = '';\s*o\.turn\(n, ms\);/);
 });
 
 test('only the first finger drags, and a vertical drag is left alone', () => {
@@ -220,7 +221,7 @@ test('a page turns in 280ms on an ease-out curve', () => {
 test('both page strips move by the direction of the page', () => {
   assert.match(
     dashboard,
-    /translateX\(\$\{-pageDir\(\) \* pg \* 100\}%\)/,
+    /translateX\(\$\{-pageDir\(\) \* n \* 100\}%\)[\s\S]{0,400}const to = -pageDir\(\) \* n \* strip\.offsetWidth;/,
     'the dashboard strip is fixed to one direction',
   );
   assert.match(

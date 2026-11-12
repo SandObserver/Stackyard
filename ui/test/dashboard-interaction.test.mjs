@@ -20,7 +20,7 @@ const rule = selector => {
 };
 
 test('a layout build leaves the Search pill alone and marks the restored page', () => {
-  assert.match(dashboard, /function goTo\(n, dotEls, announce = true, bump = true\)/);
+  assert.match(dashboard, /function goTo\(n, dotEls, announce = true, bump = true, ms = PAGE_TURN_MS\)/);
   assert.match(dashboard, /if \(MOB && bump && CB\.mobPillBump\) CB\.mobPillBump\(pg\);/);
   assert.match(
     dashboard,
@@ -78,9 +78,11 @@ test('only keyboard focus opens the badge popover', () => {
 
 test('a folder fades out late on an ease-out curve', () => {
   const motion = ui.slice(ui.indexOf('function folderMotion('), ui.indexOf('let folderOverlay = null;'));
-  assert.match(motion, /\{ duration: 160, delay: 90, easing: 'ease-out' \}/);
+  assert.match(motion, /\{ duration: 160, delay: 90, easing: FADE_EASE \}/);
+  assert.match(ui, /const FADE_EASE = 'cubic-bezier\(\.23,1,\.32,1\)';/);
   assert.doesNotMatch(motion, /cubic-bezier\(\.6,0,1,1\)/);
-  assert.match(motion, /timing\('opacity', false\), fill: 'both'/, 'the panel would be see-through during the delay');
+  assert.match(ui, /fill: hold \? 'both' : 'none'/, 'the panel would be see-through during the delay');
+  assert.match(motion, /\.\.\.timing\('opacity', false\) \},\s*\]\),\s*true,/, 'the close does not hold its frames');
 });
 
 test('the phone folder title cannot leave the top edge', () => {
@@ -92,11 +94,16 @@ test('the Search pill keeps a readable label on a small phone', () => {
   assert.match(ui, /const pillSearchW = Math\.max\(Math\.round\(96 \* sc\), 92\);/);
 });
 
-test('the Search pill is toned from the wallpaper in the dark theme', () => {
+test('the Search pill is toned from the wallpaper in both themes', () => {
   assert.match(labels, /const LABEL_SELECTOR =[^;]*#mob-search-pill/);
   assert.match(
     css,
-    /html:not\(\[data-theme="light"\]\) #mob-search-pill\[data-tone="dark"\] \{[^}]*rgba\(255,255,255,\.72\)/,
+    /\n#mob-search-pill\[data-tone="dark"\] :is\(\.msp-icon, \.msp-label\) \{ color:var\(--pill-ink-light\)/,
+  );
+  assert.doesNotMatch(
+    css,
+    /html\[data-theme="light"\] #mob-search-pill \.msp-label/,
+    'a fixed ink is unreadable on clear glass',
   );
 });
 
@@ -177,9 +184,9 @@ test('the search arrow mirrors in a right-to-left page', () => {
   assert.match(css, /\.sra:dir\(rtl\) \{ transform:scaleX\(-1\) \}/);
 });
 
-test('an opaque translucent card only blurs when it is see-through', () => {
+test('a translucent card is glass, and solid with increased contrast', () => {
   const contrast = css.slice(css.indexOf('@media (prefers-contrast: more)'));
-  assert.doesNotMatch(rule('.widget[data-card="translucent"],'), /backdrop-filter/);
+  assert.match(rule('.widget[data-card="translucent"],'), /background: var\(--glass-fill\)/);
   assert.match(
     contrast,
     /\.mob-widget-card\[data-card="translucent"\] \{\s*background:rgba\(0,0,0,\.62\);\s*-webkit-backdrop-filter:blur\(22px\)/,
@@ -187,14 +194,17 @@ test('an opaque translucent card only blurs when it is see-through', () => {
 });
 
 test('reduced transparency gets solid surfaces after the theme rules', () => {
-  const at = css.lastIndexOf('@media (prefers-reduced-transparency: reduce)');
+  const at = css.lastIndexOf('html[data-transparency="reduce"] {');
   assert.ok(
     at > css.indexOf('html[data-theme="light"] #spot { background:rgba(242,242,247,.9)'),
     'the light theme would win',
   );
   const block = css.slice(at);
-  assert.match(block, /:root \{ --glass-surface-blur: none; --glass-surface-bg:rgba\(44,44,46,\.94\); \}/);
-  assert.match(block, /html\[data-theme="light"\] #mob-search-pill \{ background:rgba\(255,255,255,\.94\); \}/);
+  assert.match(block, /--glass-clear:rgba\(44,44,46,\.94\)/);
+  assert.match(
+    block,
+    /html\[data-transparency="reduce"\]\[data-theme="light"\] \{ --glass-clear:rgba\(242,242,247,\.94\)/,
+  );
 });
 
 test('no blur is stacked on a blurred parent, and the phone search blur is halved', () => {
@@ -202,7 +212,7 @@ test('no blur is stacked on a blurred parent, and the phone search blur is halve
   assert.doesNotMatch(rule('body:not(.is-mob) #sres {'), /backdrop-filter/);
   assert.match(
     css,
-    /:is\(\.folder-overlay, \.folder-overlay-mobile\) \.glass-surface \{ -webkit-backdrop-filter:none; backdrop-filter:none \}/,
+    /:is\(\.folder-overlay, \.folder-overlay-mobile\) \.glass-surface \{\s*background:var\(--glass-folder\);\s*-webkit-backdrop-filter:none; backdrop-filter:none;\s*\}/,
   );
   assert.doesNotMatch(css, /blur\(40px\)/);
 });

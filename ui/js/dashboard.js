@@ -6,7 +6,7 @@ import {
   firstViewWait,
   rememberBackground,
   resolveBackground,
-} from '/js/background.js?v=e9980cbc';
+} from '/js/background.js?v=c5401183';
 import {
   badgeMinimum,
   badgeSignature,
@@ -27,9 +27,11 @@ import {
   wheelPager,
   withKnownSizes,
 } from '/js/dashboard-logic.js?v=8b2dad40';
+import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
-import { observeGlass } from '/js/glass-rim.js?v=3faec233';
+import { easing, glide, isScripted } from '/js/frame-motion.js?v=1d86154d';
+import { glassWallpaper, startGlass } from '/js/glass.js?v=295c5213';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { currentLang, initI18n, isSupported, t } from '/js/i18n.js?v=ec60b9bd';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=4d944cec';
@@ -49,8 +51,8 @@ import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
-import { initSpotlight } from '/js/spotlight.js?v=8f5b3158';
-import { applyTheme, prefersDark, readMode, resolveTheme, THEME_KEY } from '/js/theme.js?v=eeafa4b5';
+import { initSpotlight } from '/js/spotlight.js?v=efc8a411';
+import { applyTheme, prefersDark, readMode, resolveTheme, THEME_KEY, watchTransparency } from '/js/theme.js?v=f73ea91e';
 import {
   buildMobile,
   closeFolders,
@@ -61,7 +63,7 @@ import {
   openFolderMobile,
   resetMobileChrome,
   swipePager,
-} from '/js/ui.js?v=3a8b6601';
+} from '/js/ui.js?v=a359a07f';
 import {
   mkWrap as _mkWrap,
   el,
@@ -84,7 +86,7 @@ import {
   teardownWidgets,
   titleWhenTruncated,
   within,
-} from '/js/utils.js?v=ff7e1e5f';
+} from '/js/utils.js?v=06519124';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import {
@@ -504,7 +506,6 @@ function buildDesktop() {
   dk.replaceChildren();
   dock.forEach(item => dk.appendChild(mkDock(item)));
   dk.hidden = !dock.length;
-  observeGlass(dk, 38, 0.6);
 }
 
 /* Every page is mounted at once, so widgets the user has swiped away from keep
@@ -552,8 +553,34 @@ function syncPageInert(current) {
   if (strip) inertAllBut(strip, current);
 }
 
+const pageEase = easing(EASE_IOS);
+
+/** @param {HTMLElement} strip @param {number} n @param {number} ms */
+function slidePages(strip, n, ms) {
+  const shift = `translateX(${-pageDir() * n * 100}%)`;
+  if (!isScripted()) {
+    strip.style.transform = shift;
+    return;
+  }
+  const m = getComputedStyle(strip).transform;
+  const from = m === 'none' ? 0 : new DOMMatrixReadOnly(m).m41;
+  const to = -pageDir() * n * strip.offsetWidth;
+  glide(
+    strip,
+    ms,
+    pageEase,
+    p => {
+      strip.style.transform = `translateX(${from + (to - from) * p}px)`;
+    },
+    () => {
+      strip.style.transform = shift;
+    },
+  );
+}
+
 let _willChangeTimer = 0;
-function goTo(n, dotEls, announce = true, bump = true) {
+/** @param {number} [ms] how long the move takes */
+function goTo(n, dotEls, announce = true, bump = true, ms = PAGE_TURN_MS) {
   const total = dotEls ? dotEls.length : totalPages;
   const was = pg;
   pg = Math.max(0, Math.min(total - 1, n));
@@ -563,8 +590,7 @@ function goTo(n, dotEls, announce = true, bump = true) {
   storeSet(PAGE_STORE, String(pg));
   const strip = el('pages');
   syncPageInert(pg);
-  const shift = `translateX(${-pageDir() * pg * 100}%)`;
-  strip.style.transform = strip.style.webkitTransform = shift;
+  slidePages(strip, pg, ms);
   strip.style.willChange = 'transform';
   clearTimeout(_willChangeTimer);
   _willChangeTimer = window.setTimeout(() => {
@@ -662,7 +688,8 @@ function retone() {
 let _bgSample = null;
 
 async function sampleWallpaper(url, brightness, fit, call) {
-  const img = await loadSamplingImage(url);
+  const sameOrigin = new URL(url, location.href).origin === location.origin;
+  const img = await (sameOrigin ? decoded(url) : loadSamplingImage(url));
   if (call !== _bgCall) return;
   _bgSample = img ? { img, brightness, fit } : null;
   resampleBg();
@@ -768,6 +795,8 @@ async function applyBg() {
   showPhotoCredit(el('photo-credit'), bg.credit ?? null);
   if (bg.url && bg.url !== _shownWallpaper) await showWallpaper(root, bg, call);
   else applyBackground(root, bg);
+  if (call !== _bgCall) return;
+  glassWallpaper(bg.url ? await decoded(bg.url) : null, bg.size);
   if (call !== _bgCall) return;
   if (bg.url) {
     sampleWallpaper(bg.url, Number(bg.brightness), bg.fit, call);
@@ -944,23 +973,29 @@ async function boot() {
       v => ({ v }),
       e => ({ e }),
     );
-  const configReq = settled(fetch('/api/config', { cache: 'no-store', signal: AbortSignal.timeout(BOOT_TIMEOUT_MS) }));
-  const loadWidgets = () =>
+  const early = /** @type {any} */ (window).__early;
+  /** @type {any} */ (window).__early = null;
+  const configReq = settled(
+    early?.config ?? fetch('/api/config', { cache: 'no-store', signal: AbortSignal.timeout(BOOT_TIMEOUT_MS) }),
+  );
+  /** @param {Promise<Response>} [sent] */
+  const loadWidgets = sent =>
     settled(
-      fetch('/api/widgets', { cache: 'no-store' }).then(r => {
+      (sent ?? fetch('/api/widgets', { cache: 'no-store' })).then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       }),
     );
-  let widgetsReq = loadWidgets();
+  let widgetsReq = loadWidgets(early?.widgets);
   const iconsReq = loadLocalIcons();
 
   let authData = null;
   try {
-    const authCheck = await fetch('/api/auth/check', {
-      cache: 'no-store',
-      signal: AbortSignal.timeout(BOOT_TIMEOUT_MS),
-    });
+    const authCheck = await (early?.auth ??
+      fetch('/api/auth/check', {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(BOOT_TIMEOUT_MS),
+      }));
     if (authCheck.status === 401) {
       window.location.href = '/admin/';
       return;
@@ -980,6 +1015,8 @@ async function boot() {
   }
 
   let apiFailed = false;
+  /** @type {Promise<unknown>|null} */
+  let wallpaperShown = null;
   try {
     const got = await configReq;
     if (got.e) throw got.e;
@@ -993,6 +1030,7 @@ async function boot() {
     _rev = c._rev ?? null;
     storeSet(LANG_STORE, await initI18n(S.language || 'en'));
     saveBootHint({ lang: currentLang() });
+    wallpaperShown = applyBg();
   } catch (e) {
     console.error('[boot]', e);
     apiFailed = true;
@@ -1193,13 +1231,13 @@ async function boot() {
     width: () => innerWidth,
     page: () => pg,
     total: () => strip.children.length,
-    turn: n => goTo(n),
+    turn: (n, ms) => goTo(n, null, true, true, ms),
     enabled: () =>
       !el('spot').hasAttribute('open') &&
       !document.querySelector('.folder-overlay[open], .folder-overlay-mobile[open]'),
   });
 
-  const wallpaperShown = applyBg();
+  wallpaperShown ??= applyBg();
 
   const retheme = () => {
     applyTheme(resolveTheme(readMode(), prefersDark()));
@@ -1424,6 +1462,8 @@ async function boot() {
   liftVeil();
 }
 
+watchTransparency();
+startGlass();
 boot().catch(async e => {
   console.error('[boot]', e);
   const lastLang = storeGet(LANG_STORE);

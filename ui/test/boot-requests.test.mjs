@@ -38,7 +38,7 @@ test('the English and selected catalogs are requested together', async () => {
 test('boot starts the config, widget and icon requests before the sign-in check answers', () => {
   const start = dashboard.indexOf('async function boot()');
   const boot = dashboard.slice(start, dashboard.indexOf('\n}\n', start));
-  const authAwait = boot.indexOf("await fetch('/api/auth/check'");
+  const authAwait = boot.search(/await \(early\?\.auth \?\?\s*fetch\('\/api\/auth\/check'/);
   assert.ok(authAwait !== -1, 'the sign-in check moved');
   const head = boot.slice(0, authAwait);
   for (const started of ["fetch('/api/config'", "fetch('/api/widgets'", 'loadLocalIcons()']) {
@@ -75,7 +75,7 @@ for (const failures of [1, 2]) {
     const shown = [];
     const stop = new Error('reached the first-run prompt');
     const boot = new Function(
-      'fetch, loadLocalIcons, document, initI18n, sanitizeItemLinks, showSetupPrompt, setHtml, html, t, BOOT_TIMEOUT_MS, blockingScreenFor, showBlockingScreen, console, storeGet, storeSet, LANG_STORE, isSupported, liftVeil, saveBootHint, currentLang, showApiDown',
+      'fetch, loadLocalIcons, document, initI18n, sanitizeItemLinks, showSetupPrompt, setHtml, html, t, BOOT_TIMEOUT_MS, blockingScreenFor, showBlockingScreen, console, storeGet, storeSet, LANG_STORE, isSupported, liftVeil, saveBootHint, currentLang, showApiDown, window, applyBg',
       `let items, S, _rev, widgetReg; const withKnownSizes = x => x, WIDGET_COLS = { desktop: {} }; ${src} return boot;`,
     )(
       fetch,
@@ -101,6 +101,8 @@ for (const failures of [1, 2]) {
       () => {},
       () => 'en',
       () => shown.push('api-error-screen'),
+      {},
+      async () => {},
     );
     if (failures === 1) await assert.rejects(boot(), stop);
     else await boot();

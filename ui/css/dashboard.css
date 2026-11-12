@@ -4,10 +4,7 @@
       --glass-border:     rgba(255,255,255,.09);
       --card-edge-hi:     rgba(255,255,255,.16);
       --card-edge-lo:     rgba(255,255,255,.05);
-      --glass-surface-bg:   rgba(51,51,51,.33);
-      --glass-surface-blur: blur(12px) saturate(180%);
-      --glass-rim-light:  rgba(255,255,255,.30);
-      --glass-rim-dark:   rgba(255,255,255,.07);
+      --glass-clear:      transparent;
       --label-color:      rgba(255,255,255,.90);
       --label-shadow:     0 1px 4px rgba(0,0,0,.70);
       /* The tone the labels take on a background measured as light. The shadow
@@ -84,6 +81,7 @@
       transition:transform .28s var(--page-ease);
       touch-action:pan-y pinch-zoom;
     }
+    html[data-glass-live] #pages { transition:none }
     .page {
       flex:0 0 100vw; width:100vw; height:100vh; height:100dvh;
       display:flex;
@@ -197,7 +195,8 @@
     }
     .widget[data-card="translucent"],
     .mob-widget-card[data-card="translucent"] {
-      background: var(--glass-bg);
+      background: var(--glass-fill); border-color: transparent;
+      -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
     }
     /* Shared by an app's link and a folder's button, so it carries the reset a
        button needs to look like the tile beside it. */
@@ -386,11 +385,8 @@
       transform:translateX(-50%);
       /* Keep 24px between centres. Less fails the WCAG 2.5.8 target size. */
       display:flex; gap:16px; z-index:500;
-      /* The tone is sampled after the first paint. Until it lands the bar is a
-         white tint, which over a light wallpaper is invisible, so it carries an
-         edge that reads on either ground. */
-      background:rgba(255,255,255,.14); border:.5px solid rgba(0,0,0,.18);
-      -webkit-backdrop-filter:blur(24px) saturate(160%); backdrop-filter:blur(24px) saturate(160%);
+      background:var(--glass-clear); border:.5px solid transparent;
+      -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
       border-radius:999px; padding:8px 12px;
       align-items:center;
     }
@@ -458,23 +454,27 @@
 
     /* ── Search pill — mobile only ── */
     #mob-search-pill {
+      --pill-inset:0px;
       position:fixed; left:50%; z-index:500;
       transform:translateX(-50%);
       display:none; /* shown by buildMobile */
       align-items:center;
       justify-content:center;
-      background:var(--glass-surface-bg);
-      -webkit-backdrop-filter:var(--glass-surface-blur); backdrop-filter:var(--glass-surface-blur);
+      background:var(--glass-clear);
+      -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
       border-radius:999px;
-      border:0.5px solid rgba(255,255,255,.22);
+      border:0.5px solid transparent;
+      clip-path:inset(0 var(--pill-inset) round 999px);
       cursor:pointer;
       -webkit-tap-highlight-color:transparent;
       -webkit-user-select:none; user-select:none;
       -webkit-touch-callout:none;
       overflow:hidden;
-      transition:clip-path .25s var(--page-ease), scale .16s ease-out;
+      transition:--pill-inset .25s var(--page-ease), scale .16s ease-out;
     }
-    #mob-search-pill:active { scale:.96; transition:clip-path .25s var(--page-ease), scale .1s ease-out }
+    #mob-search-pill:active { scale:.96; transition:--pill-inset .25s var(--page-ease), scale .1s ease-out }
+    html[data-glass-live] #mob-search-pill { transition:scale .16s ease-out }
+    html[data-glass-live] #mob-search-pill:active { transition:scale .1s ease-out }
     /* Search content — shown when idle */
     #mob-search-pill .msp-search {
       display:flex;
@@ -524,6 +524,9 @@
       align-items:center;
       gap:15px; padding:22px;
       isolation:isolate;
+      border-radius:38px;
+      background:var(--glass-clear);
+      -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
     }
     #dock.mdock {
       position:fixed; left:50%;
@@ -532,21 +535,31 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      background:none; border:0; border-radius:0; box-shadow:none;
+      border:0; border-radius:calc(38px * var(--sc,1)); box-shadow:none;
+    }
+    .glass-surface {
+      background:var(--glass-clear);
+      -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+    }
+    .glass-surface::before, #dock::before, #dots::before, #mob-search-pill::before,
+    .widget[data-card="translucent"]::before, .mob-widget-card[data-card="translucent"]::before,
+    .empty-state-btn::before, .api-error-btn::before {
+      content:""; position:absolute; inset:0; z-index:6;
+      border-radius:inherit; padding:1px; pointer-events:none;
+      background:linear-gradient(to bottom right, var(--glass-shine) 0 36%, transparent 50%, var(--glass-shine) 64% 100%);
+      mask:linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    }
+    #mob-search-pill::before { inset:0 var(--pill-inset) }
+    :is(.folder-overlay, .folder-overlay-mobile) .glass-surface {
+      background:var(--glass-folder);
       -webkit-backdrop-filter:none; backdrop-filter:none;
     }
-    .glass-layer { position:absolute; inset:0; z-index:-1; pointer-events:none }
-    .glass-surface {
-      background:var(--glass-surface-bg);
-      -webkit-backdrop-filter:var(--glass-surface-blur); backdrop-filter:var(--glass-surface-blur);
+    html[data-glass-live] :is(.folder-overlay, .folder-overlay-mobile) .glass-surface { background:transparent }
+
+    .glass-canvas, .glass-folder-canvas {
+      position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none;
     }
-    :is(.folder-overlay, .folder-overlay-mobile) .glass-surface { -webkit-backdrop-filter:none; backdrop-filter:none }
-    .glass-rim {
-      position:absolute; inset:0; width:100%; height:100%; z-index:2;
-      pointer-events:none; overflow:visible; fill:none;
-    }
-    .glass-rim-light { stop-color:var(--glass-rim-light) }
-    .glass-rim-dark { stop-color:var(--glass-rim-dark) }
+    html:is(.wall-in, .wall-swap) .glass-canvas { animation:wall-in .4s ease-out }
     .di {
       display:flex;
       align-items:center;
@@ -799,10 +812,15 @@
     :is(.folder-overlay, .folder-overlay-mobile):not([open]) {
       background:none !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important;
     }
+    /* ui/js/glass.js reads these from body. Keep the names. */
+    body { --folder-blur:22px; --folder-dim:.72 }
+    body:not(.is-mob) { --folder-blur:24px; --folder-dim:1 }
+    .folder-overlay, .folder-overlay-mobile {
+      -webkit-backdrop-filter:blur(var(--folder-blur)) brightness(var(--folder-dim));
+      backdrop-filter:blur(var(--folder-blur)) brightness(var(--folder-dim));
+    }
     .folder-overlay-mobile {
       position:fixed; inset:0; z-index:800;
-      -webkit-backdrop-filter:blur(22px) brightness(.72);
-      backdrop-filter:blur(22px) brightness(.72);
       background:rgba(0,0,0,.18);
     }
     .folder-title-mobile {
@@ -834,7 +852,6 @@
       justify-content:center;
       overflow:auto;
       background:rgba(0,0,0,.45);
-      -webkit-backdrop-filter:blur(24px); backdrop-filter:blur(24px);
     }
     .folder-outer {
       display:flex; flex-direction:column; align-items:center;
@@ -959,8 +976,9 @@
 .empty-state-btn {
   margin-block-start: var(--sp-32); padding: 15px var(--sp-32);
   border-radius: 999px; min-height: 52px;
-  background: var(--glass-surface-bg); border: .5px solid rgba(255,255,255,.22);
-  -webkit-backdrop-filter: var(--glass-surface-blur); backdrop-filter: var(--glass-surface-blur);
+  position: relative;
+  background: var(--glass-fill); border: .5px solid transparent;
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
   color: var(--label-color); text-decoration: none; font-weight: 500;
   font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);
 }
@@ -969,7 +987,7 @@
 .empty-state-sub[data-tone="dark"] { color: var(--label-text-dark); text-shadow: var(--label-shadow-dark) }
 .empty-state-hint[data-tone="dark"] { color: var(--label-link-dark) }
 .empty-state-btn[data-tone="dark"] {
-  background: rgba(0,0,0,.06); border-color: rgba(0,0,0,.12); color: var(--label-color-dark);
+  background: var(--glass-fill-light); color: var(--label-color-dark);
 }
 .empty-state-hint {
   margin-block-start: var(--sp-20); color: var(--label-link); text-decoration: none;
@@ -999,9 +1017,9 @@
 .api-error-sub   { font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color: rgba(255,255,255,.6); margin: 0; }
 .api-error-btn   {
   margin-top: 8px; padding: 13px 24px; border-radius: 999px; min-height: 48px;
-  display: inline-flex; align-items: center; justify-content: center; text-decoration: none;
-  background: var(--glass-surface-bg); border: .5px solid rgba(255,255,255,.22);
-  -webkit-backdrop-filter: var(--glass-surface-blur); backdrop-filter: var(--glass-surface-blur); font-weight: 500;
+  display: inline-flex; align-items: center; justify-content: center; text-decoration: none; position: relative;
+  background: var(--glass-fill); border: .5px solid transparent;
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); font-weight: 500;
   color: var(--label-primary); font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); cursor: pointer; font-family: inherit;
 }
 
@@ -1045,7 +1063,7 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
   :root {
     --glass-bg:      rgba(0,0,0,.62);
     --glass-border:  rgba(255,255,255,.30);
-    --glass-surface-bg: rgba(40,40,44,.55);
+    --glass-clear:   rgba(40,40,44,.55);
     --label-color:   var(--label-primary);
     --label-shadow:  0 1px 4px rgba(0,0,0,.95);
   }
@@ -1216,24 +1234,12 @@ html[data-theme="light"] {
   --glass-border:      rgba(0,0,0,.06);
   --card-edge-hi:      rgba(255,255,255,.9);
   --card-edge-lo:      rgba(0,0,0,.05);
-  --glass-surface-bg:  rgba(153,153,153,.33);
-  --glass-surface-blur: blur(24px) saturate(180%);
-  --glass-rim-light:   rgba(255,255,255,1);
-  --glass-rim-dark:    rgba(255,255,255,.4);
   --glass-lift:        0 12px 32px rgba(0,0,0,.14), 0 1px 3px rgba(0,0,0,.08);
   --card-dark:         #FFFFFF;
 }
-html[data-theme="light"] .widget[data-card="translucent"],
-html[data-theme="light"] .mob-widget-card[data-card="translucent"] { background:#FFFFFF }
-html[data-theme="light"] #mob-search-pill { background:rgba(255,255,255,.72); border-color:rgba(0,0,0,.08) }
-html[data-theme="light"] #mob-search-pill .msp-icon,
-html[data-theme="light"] #mob-search-pill .msp-label { color:var(--pill-ink-light); text-shadow:none }
-html[data-theme="light"] #mob-search-pill .msp-dot { background:rgba(60,60,67,.3) }
-html[data-theme="light"] #mob-search-pill .msp-dot.on { background:rgba(0,0,0,.8) }
-html:not([data-theme="light"]) #mob-search-pill[data-tone="dark"] { background:rgba(255,255,255,.72); border-color:rgba(0,0,0,.08) }
-html:not([data-theme="light"]) #mob-search-pill[data-tone="dark"] :is(.msp-icon, .msp-label) { color:var(--pill-ink-light); text-shadow:none }
-html:not([data-theme="light"]) #mob-search-pill[data-tone="dark"] .msp-dot { background:rgba(60,60,67,.3) }
-html:not([data-theme="light"]) #mob-search-pill[data-tone="dark"] .msp-dot.on { background:rgba(0,0,0,.8) }
+#mob-search-pill[data-tone="dark"] :is(.msp-icon, .msp-label) { color:var(--pill-ink-light); text-shadow:none }
+#mob-search-pill[data-tone="dark"] .msp-dot { background:rgba(60,60,67,.3) }
+#mob-search-pill[data-tone="dark"] .msp-dot.on { background:rgba(0,0,0,.8) }
 html[data-theme="light"] #spot { background:rgba(242,242,247,.9) }
 html[data-theme="light"] body:not(.is-mob) #spot { background:rgba(242,242,247,.5) }
 html[data-theme="light"] body.is-mob #spot {
@@ -1266,36 +1272,33 @@ html[data-theme="light"] .badge-pop {
   box-shadow:0 18px 44px rgba(0,0,0,.2),0 0 0 .5px rgba(0,0,0,.06);
 }
 html[data-theme="light"] .badge-pop-name { color:rgba(60,60,67,.8) }
+html[data-theme="light"] body { --folder-dim:1 }
 html[data-theme="light"] .folder-overlay { background:rgba(255,255,255,.55) }
-html[data-theme="light"] .folder-overlay-mobile {
-  background:rgba(255,255,255,.55);
-  -webkit-backdrop-filter:blur(22px); backdrop-filter:blur(22px);
-}
+html[data-theme="light"] .folder-overlay-mobile { background:rgba(255,255,255,.55) }
 html[data-theme="light"] .folder-title-desktop { color:rgba(0,0,0,.88); text-shadow:0 1px 8px rgba(255,255,255,.6) }
 html[data-theme="light"] .folder-title-mobile { text-shadow:none }
 html[data-theme="light"] .folder-box-desktop { box-shadow:0 32px 80px rgba(0,0,0,.2) }
 html[data-theme="light"] .folder-dot { box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.55) }
 html[data-theme="light"] .folder-dot.on { background:rgba(0,0,0,.8); box-shadow:none }
 html[data-theme="light"] .dyn-fold-inner-label { color:rgba(0,0,0,.88); text-shadow:0 0 2px rgba(255,255,255,.55) }
-html[data-theme="light"] .api-error-btn { background:rgba(0,0,0,.06); border-color:rgba(0,0,0,.12) }
 html[data-theme="light"] .api-error-screen { color:rgba(0,0,0,.7) }
 html[data-theme="light"] .api-error-sub { color:rgba(0,0,0,.6) }
 html[data-theme="light"] .folder-overlay .ilabel { color:var(--label-color-dark); text-shadow:var(--label-shadow-dark) }
-html[data-theme="light"] #dock:not(.mdock) { border-radius:38px; box-shadow:var(--glass-lift) }
+html[data-theme="light"] #dock:not(.mdock) { box-shadow:var(--glass-lift) }
 html[data-theme="light"] .folder-icon-grid,
 html[data-theme="light"] .dyn-fold-wrap,
 html[data-theme="light"] .plate-clear { box-shadow:0 4px 14px rgba(0,0,0,.12) }
-html[data-theme="light"] #dock.mdock { border-radius:calc(38px * var(--sc,1)); box-shadow:var(--glass-lift) }
+html[data-theme="light"] #dock.mdock { box-shadow:var(--glass-lift) }
 html[data-theme="light"] .widget[data-appearance="dark"],
 html[data-theme="light"] .mob-widget-card[data-appearance="dark"] {
   --glass-bg:var(--card-fixed-dark); --glass-border:rgba(255,255,255,.09); --card-dark:var(--card-fixed-dark);
+  --glass-fill:var(--glass-fill-dark);
   --card-edge-hi:rgba(255,255,255,.16); --card-edge-lo:rgba(255,255,255,.05);
 }
-html[data-theme="light"] .widget[data-appearance="dark"][data-card="translucent"],
-html[data-theme="light"] .mob-widget-card[data-appearance="dark"][data-card="translucent"] { background:var(--card-fixed-dark) }
 html:not([data-theme="light"]) .widget[data-appearance="light"],
 html:not([data-theme="light"]) .mob-widget-card[data-appearance="light"] {
   --glass-bg:#FFFFFF; --glass-border:rgba(0,0,0,.06); --card-dark:#FFFFFF;
+  --glass-fill:var(--glass-fill-light);
   --card-edge-hi:rgba(255,255,255,.9); --card-edge-lo:rgba(0,0,0,.05);
 }
 @media (prefers-contrast: more) {
@@ -1306,13 +1309,15 @@ html:not([data-theme="light"]) .mob-widget-card[data-appearance="light"] {
 
 /* Keep after the theme rules. Earlier, the light theme overrides win and the
    surfaces stay see-through. */
-@media (prefers-reduced-transparency: reduce) {
-  :root { --glass-surface-blur: none; --glass-surface-bg:rgba(44,44,46,.94); }
-  html[data-theme="light"] { --glass-surface-blur: none; --glass-surface-bg:rgba(242,242,247,.94); }
-  .folder-overlay-mobile, .folder-overlay { background:rgba(0,0,0,.82); }
-  html[data-theme="light"] .folder-overlay-mobile, html[data-theme="light"] .folder-overlay { background:rgba(255,255,255,.92); }
-  #spot, body:not(.is-mob) #spot { background:rgba(0,0,0,.82); }
-  html[data-theme="light"] #spot, html[data-theme="light"] body:not(.is-mob) #spot { background:rgba(242,242,247,.94); }
-  #dots { background:rgba(44,44,46,.94); }
-  html[data-theme="light"] #mob-search-pill { background:rgba(255,255,255,.94); }
+html[data-transparency="reduce"] {
+  --glass-clear:rgba(44,44,46,.94); --glass-folder:rgba(44,44,46,.94);
+  --glass-fill-dark:rgba(44,44,46,.94); --glass-fill-light:rgba(242,242,247,.94);
 }
+html[data-transparency="reduce"][data-theme="light"] { --glass-clear:rgba(242,242,247,.94); --glass-folder:rgba(242,242,247,.94); }
+html[data-transparency="reduce"] :is(.folder-overlay-mobile, .folder-overlay) { background:rgba(0,0,0,.82); }
+html[data-transparency="reduce"][data-theme="light"] :is(.folder-overlay-mobile, .folder-overlay) { background:rgba(255,255,255,.92); }
+html[data-transparency="reduce"] :is(#spot, body:not(.is-mob) #spot) { background:rgba(0,0,0,.82); }
+html[data-transparency="reduce"][data-theme="light"] :is(#spot, body:not(.is-mob) #spot) { background:rgba(242,242,247,.94); }
+
+/* Registered, so a transition can animate it. */
+@property --pill-inset { syntax:'<length>'; inherits:true; initial-value:0px }

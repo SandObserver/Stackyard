@@ -1,8 +1,6 @@
 import { iconChain } from '/js/icons.js?v=76c29d43';
 import { toneForColor } from '/js/label-contrast.js?v=e046296b';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
-import { mkGlassRim } from '/js/glass-rim.js?v=3faec233';
-import { smoothRectPath } from '/js/smooth-corner.js?v=b7dda7e1';
 import { t } from '/js/i18n.js?v=ec60b9bd';
 import { pageTheme, tileColor } from '/js/palette.js?v=3fb8ae43';
 
@@ -204,10 +202,7 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
   const clear = item.color === 'clear' && item.system !== 'settings';
   w.dataset.color = colour;
   w.style.cssText = `--tc:${wrapBg};width:${sz}px;height:${sz}px;border-radius:${r}px;${clear ? '' : `background-color:${wrapBg};`}position:relative;flex-shrink:0;overflow:visible;display:flex;align-items:center;justify-content:center;`;
-  if (clear) {
-    w.classList.add('plate-clear', 'glass-surface');
-    w.appendChild(mkGlassRim(sz, sz, smoothRectPath(sz, sz, r, 0)));
-  }
+  if (clear) w.classList.add('plate-clear', 'glass-surface');
   const rawIcon = item.iconUrl || '';
   if (item.system === 'settings') {
     const si = Math.min(sz, Math.round(isz * 1.22));

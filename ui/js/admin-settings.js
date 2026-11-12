@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=704fa0bb';
+import { renderColorControl } from '/js/admin-color-control.js?v=e48ec7bb';
 import { socketProbeAdvice } from '/js/admin-error.js?v=d1f8f6f4';
 import {
   BLOCK,
@@ -34,8 +34,8 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=dc050c9e';
-import { BACKDROP } from '/js/background.js?v=e9980cbc';
+} from '/js/admin-shared.js?v=72079c79';
+import { BACKDROP } from '/js/background.js?v=c5401183';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import {
   ALLOWED_HOSTS_MAX,
@@ -48,7 +48,7 @@ import { t } from '/js/i18n.js?v=ec60b9bd';
 import { confirmText, promptModal } from '/js/modal.js?v=c4c1c4c4';
 import { contextWords, passwordMeter, passwordMismatch, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
 import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
-import { el, inp, qa, setUserText } from '/js/utils.js?v=ff7e1e5f';
+import { el, inp, qa, setUserText } from '/js/utils.js?v=06519124';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
@@ -285,11 +285,7 @@ export function loadSettings(c) {
     if (!slider) return;
     const min = parseFloat(slider.min) || 0.1,
       max = parseFloat(slider.max) || 1.0;
-    const pct = ((parseFloat(slider.value) - min) / (max - min)) * 100;
-    /* backgroundImage, never the background shorthand. The shorthand resets
-       background-clip, which is what keeps the track thin inside the 44px touch
-       target on a phone. */
-    slider.style.backgroundImage = `linear-gradient(var(--slider-dir), var(--ac) 0%, var(--ac) ${pct}%, var(--bd-inner) ${pct}%, var(--bd-inner) 100%)`;
+    slider.style.setProperty('--range-fill', String((parseFloat(slider.value) - min) / (max - min)));
   }
   const twoPlaces = v => formatNumber(parseFloat(v), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (brEl) {

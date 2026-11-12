@@ -99,8 +99,8 @@
    Label levels below primary do not clear WCAG on this project's cards. Text
    that has to be read on a card uses --sy-a11y-dim.
 
-   Fills are not the dashboard's glass. The glass is white at low alpha over a
-   wallpaper; a fill is grey-tinted and assumes an opaque surface. */
+   Fills are not the glass. The glass is clear over a wallpaper; a fill is
+   grey-tinted and assumes an opaque surface. */
 :root {
   --label-primary:     #FFFFFF;
   --label-secondary:   rgba(235,235,245,.70);
@@ -127,6 +127,19 @@
 
   /* A slider or switch knob. Full white in both themes, so not a label. */
   --control-knob:      #FFFFFF;
+
+  --glass-fill-dark:      rgb(38 38 42 / .6);
+  --glass-fill-light:     rgb(255 255 255 / .62);
+  --glass-fill:           var(--glass-fill-dark);
+  --glass-blur:           blur(3px) saturate(1.5);
+  --glass-shine:          rgb(255 255 255 / .15);
+  --glass-control:        rgb(120 120 128 / .28);
+  --glass-control-shadow: 0 1px 2px rgb(0 0 0 / .25);
+  --glass-bend:           .9;
+  --glass-dispersion:     .5;
+  /* --glass-frost is --glass-folder as four numbers from 0 to 1. ui/js/glass.js reads that format. */
+  --glass-folder:         rgb(107 107 112 / .5);
+  --glass-frost:          .42 .42 .44 .5;
 }
 
 /* ── Light theme ─────────────────────────────────────────────────────────────
@@ -195,6 +208,13 @@ html[data-theme="light"] {
   --bg-elevated-primary:   #FFFFFF;
   --bg-elevated-secondary: var(--sy-gray6);
   --bg-elevated-tertiary:  #FFFFFF;
+
+  --glass-fill:           var(--glass-fill-light);
+  --glass-shine:          rgb(255 255 255 / .3);
+  --glass-control:        rgb(255 255 255 / .78);
+  --glass-control-shadow: 0 1px 4px rgb(0 0 0 / .12);
+  --glass-folder:         rgb(245 245 247 / .55);
+  --glass-frost:          .96 .96 .97 .55;
 }
 
 /* ── Type scale ──────────────────────────────────────────────────────────────
@@ -256,17 +276,16 @@ html[data-theme="light"] {
    never fires for a dropped property, so code waiting on it needs a timeout. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    transition-property: opacity, visibility, color, background-color, border-color, outline-color, fill, stroke, box-shadow !important;
+    transition-property: opacity, visibility, color, background-color, border-color, outline-color, fill, stroke, box-shadow, --ring-start, --ring-end, --lens-l, --lens-r !important;
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
   }
 }
 
-/* Reduced transparency: drop the blur, keep the motion. */
-@media (prefers-reduced-transparency: reduce) {
-  * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
-}
+/* Reduce Transparency: drop the blur, keep the motion. admin-theme.js sets the
+   attribute from the system setting or this device's own switch. */
+:where(html[data-transparency="reduce"] *) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 
 /* Increased contrast: raise the hues and every role follows. Both selectors are
    needed. The light theme sets the palette at a higher specificity, so a :root

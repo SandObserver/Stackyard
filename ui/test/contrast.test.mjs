@@ -487,8 +487,6 @@ const DASHBOARD_TEXT = [
   ['first-run show-password icon', '.setup-reveal', SETUP, 'wallpaper', [false, true], 3],
   ['badge list value', '.badge-pop', ['.badge-pop'], 'wallpaper'],
   ['badge list name', '.badge-pop-name', ['.badge-pop'], 'wallpaper'],
-  ['phone search pill label', '#mob-search-pill .msp-label', ['#mob-search-pill'], 'wallpaper', [true]],
-  ['phone search pill icon', '#mob-search-pill .msp-icon', ['#mob-search-pill'], 'wallpaper', [true], 3],
   /* Light only. The dark title also relies on its text shadow. */
   ['folder title, desktop', '.folder-title-desktop', ['.folder-overlay'], 'wallpaper', [true]],
   ['folder title, phone', '.folder-title-mobile', ['.folder-overlay-mobile'], 'wallpaper', [true]],
@@ -599,8 +597,14 @@ const UNMEASURED_INK = [
   ['.dyn-fold-label (dark)', 'a tile name over the wallpaper; its tone is picked per wallpaper at run time'],
   ['.folder-title-desktop (dark)', 'white with a text shadow over the wallpaper; the shadow is not modelled'],
   ['.dyn-fold-inner-label (dark)', 'white with a text shadow over the wallpaper; the shadow is not modelled'],
-  ['#mob-search-pill .msp-label (dark)', 'white with a text shadow over the wallpaper; the shadow is not modelled'],
-  ['#mob-search-pill .msp-icon (dark)', 'white with a text shadow over the wallpaper; the shadow is not modelled'],
+  [
+    '#mob-search-pill .msp-label (dark)',
+    'on clear glass over the wallpaper; its tone is picked per wallpaper at run time',
+  ],
+  [
+    '#mob-search-pill .msp-icon (dark)',
+    'on clear glass over the wallpaper; its tone is picked per wallpaper at run time',
+  ],
   ['textarea::placeholder (dark)', 'one rule with input::placeholder, which is measured'],
   ['textarea::placeholder (light)', 'one rule with input::placeholder, which is measured'],
 ];
@@ -720,11 +724,16 @@ test('every chip fill Settings declares is measured as a tinted label', () => {
   );
 });
 
-/* The filled button's hover fill would sit under the Reorder button's accent text. */
+/* The filled button's hover fill would sit under the Reorder button's accent text.
+   Every header button is glass with a tinted label, Reorder included. */
 test('the Reorder button keeps its plain text style in Reorder mode', () => {
   const list = fs.readFileSync(path.join(dir, '..', 'js', 'admin-list.js'), 'utf8');
   const body = list.match(/export function setReordering\([^)]*\) \{[\s\S]*?\n\}/)?.[0] ?? '';
   assert.ok(body, 'setReordering not found');
   assert.doesNotMatch(body, /btn-reorder[\s\S]*?toggle\('(?:bp|bg)'/);
-  assert.match(admin, /\.sec-hdr-actions \.btn\.al-reorder\{background:none;/);
+  assert.match(admin, /\.sec-hdr-actions \.btn\.al-reorder\{color:var\(--ac\);/);
+  assert.match(
+    admin,
+    /\.sec-hdr-actions \.btn:is\(\.bp,\.bd-btn\):hover:not\(:disabled\)\{background:var\(--glass-control\)/,
+  );
 });

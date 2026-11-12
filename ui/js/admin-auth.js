@@ -1,8 +1,8 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=dc050c9e';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=72079c79';
 import { initI18n, t } from '/js/i18n.js?v=ec60b9bd';
 import { loginErrorAdvice } from '/js/admin-error.js?v=d1f8f6f4';
 import { passwordMeter, contextWords, meterColor } from '/js/password-policy.js?v=0c0fd0af';
-import { el, inp as inpById, qa } from '/js/utils.js?v=ff7e1e5f';
+import { el, inp as inpById, qa } from '/js/utils.js?v=06519124';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=5e8a2c4c';
 import { fillUsernames } from '/js/password-reveal.js?v=37f218b4';
 

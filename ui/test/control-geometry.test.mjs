@@ -85,11 +85,12 @@ test('both sliders run a 6 track', () => {
 /* One visual control, so the handle is declared once, size included. */
 test('every slider shares one handle rule', () => {
   const bare = admin.replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.match(bare, /\.adm-range,\.hsb-range\{--range-thumb:38px\}/);
   for (const kind of ['::-webkit-slider-thumb', '::-moz-range-thumb']) {
     const shared = new RegExp(`\\.adm-range${kind},\\s*\\.hsb-range${kind}\\{([^}]*)\\}`);
     const m = shared.exec(bare);
     assert.ok(m, `the two sliders do not share their ${kind} rule`);
-    assert.match(m[1], /width:38px/);
+    assert.match(m[1], /width:var\(--range-thumb\)/);
     assert.match(m[1], /height:24px/);
     assert.match(m[1], /border-radius:12px/, "the kit's capsule knob");
   }
