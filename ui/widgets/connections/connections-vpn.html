@@ -28,7 +28,7 @@
   .state{flex:none;font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px;white-space:nowrap;}
   .state .dot{width:7px;height:7px;border-radius:50%;background:var(--grey);}
   .state.on{color:var(--accentink,var(--accent))} .state.on .dot{background:var(--accent);box-shadow:0 0 7px var(--accentglow)}
-  .state.off{color:var(--fg3)} .state.off .dot{background:var(--fg3)}
+  .state.off{color:var(--fg2)} .state.off .dot{background:var(--fg3)}
   .state.err{color:var(--red)} .state.err .dot{background:var(--red)}
 
   .hero{display:flex;align-items:baseline;gap:9px;min-width:0;margin-bottom:12px;flex-wrap:wrap;}
@@ -63,7 +63,7 @@
   body.size-small .flag{display:inline;font-size:15px;vertical-align:-1px;margin-inline-end:5px;}
   body.size-small .place{font-size:15px;line-height:1.18;letter-spacing:-.02em;}
   body.size-small .metrics{display:none}
-  html[data-theme="light"] { --fg:#000000; --fg2:rgba(0,0,0,0.6); --fg3:rgba(0,0,0,0.32) }
+  html[data-theme="light"] { --fg:#000000; --fg2:rgba(0,0,0,0.6); --fg3:rgba(0,0,0,0.32); --red:#D70015 }
   /* Keep. The solid-card inks fall below 4.5:1 on glass over a bright or dark wallpaper. */
   html[data-glass] { --fg2:var(--glass-ink-2); --fg3:var(--glass-ink-3); --grey:var(--glass-ink-2); --red:var(--glass-red) }
   html[data-theme="light"] .flag { filter:drop-shadow(0 1px 2px rgba(0,0,0,0.122)) }

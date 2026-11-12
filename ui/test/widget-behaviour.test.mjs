@@ -151,6 +151,34 @@ test('frosted widget surfaces drop their blur for reduced transparency', () => {
   }
 });
 
+test('the Connections VPN state words clear 4.5:1 on the solid card', () => {
+  const src = read('connections/connections-vpn.html');
+  const lin = v => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+  const lum = c => 0.2126 * lin(c[0] / 255) + 0.7152 * lin(c[1] / 255) + 0.0722 * lin(c[2] / 255);
+  const rgba = v => {
+    const hex = /^#([0-9a-f]{6})$/i.exec(v);
+    if (hex) return [0, 2, 4].map(i => parseInt(hex[1].slice(i, i + 2), 16)).concat(1);
+    const m = /^rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)$/.exec(v.replace(/\s/g, ''));
+    return [Number(m[1]), Number(m[2]), Number(m[3]), m[4] === undefined ? 1 : Number(m[4])];
+  };
+  const vars = rule => Object.fromEntries([...rule.matchAll(/(--[\w-]+):\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
+  const dark = vars(/:root\{([^}]*)\}/.exec(src)[1]);
+  const light = { ...dark, ...vars(/html\[data-theme="light"\] \{([^}]*)\}/.exec(src)[1]) };
+  assert.match(src, /\.state\.off\{color:var\(--fg2\)\}/, 'Off reads in the secondary grey');
+  assert.match(src, /\.state\.err\{color:var\(--red\)\}/);
+  for (const [theme, set, card] of [
+    ['dark', dark, [28, 28, 30]],
+    ['light', light, [255, 255, 255]],
+  ]) {
+    for (const name of ['--fg2', '--red']) {
+      const c = rgba(set[name]);
+      const ink = c.slice(0, 3).map((v, i) => v * c[3] + card[i] * (1 - c[3]));
+      const r = (Math.max(lum(ink), lum(card)) + 0.05) / (Math.min(lum(ink), lum(card)) + 0.05);
+      assert.ok(r >= 4.5, `${name} in ${theme}: ${r.toFixed(2)}`);
+    }
+  }
+});
+
 test('Books repaints on resize and only the pointer writes the live region', () => {
   const src = read('books/index.html');
   assert.match(src, /addEventListener\('resize',\(\)=>\{ if\(shownData\) paintShelves\(shownData\); \}\)/);
