@@ -5,6 +5,10 @@
       --card-edge-hi:     rgba(255,255,255,.16);
       --card-edge-lo:     rgba(255,255,255,.05);
       --glass-clear:      transparent;
+      /* The widget toolbox inks text for the worst case of this fill. Keep in
+         step with GLASS_CARD_ALPHA in ui/js/widget-toolbox.js. */
+      --glass-card:       rgb(28 28 30 / .85);
+      --glass-card-solid: #1C1C1E;
       --label-color:      rgba(255,255,255,.90);
       --label-shadow:     0 1px 4px rgba(0,0,0,.70);
       /* The tone the labels take on a background measured as light. The shadow
@@ -195,7 +199,7 @@
     }
     .widget[data-card="translucent"],
     .mob-widget-card[data-card="translucent"] {
-      background: var(--glass-fill); border-color: transparent;
+      background: var(--glass-card); border-color: transparent;
       -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
     }
     /* Shared by an app's link and a folder's button, so it carries the reset a
@@ -554,7 +558,7 @@
       background:var(--glass-folder);
       -webkit-backdrop-filter:none; backdrop-filter:none;
     }
-    html[data-glass-live] :is(.folder-overlay, .folder-overlay-mobile) .glass-surface { background:transparent }
+    :is(.folder-overlay, .folder-overlay-mobile)[data-glass-drawn] .glass-surface { background:transparent }
 
     .glass-canvas, .glass-folder-canvas {
       position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none;
@@ -977,7 +981,7 @@
   margin-block-start: var(--sp-32); padding: 15px var(--sp-32);
   border-radius: 999px; min-height: 52px;
   position: relative;
-  background: var(--glass-fill); border: .5px solid transparent;
+  background: var(--glass-fill-dark); border: .5px solid transparent;
   -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
   color: var(--label-color); text-decoration: none; font-weight: 500;
   font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);
@@ -1080,8 +1084,8 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
   .widget, .mob-widget-card { border-color:rgba(255,255,255,.35); }
   /* A translucent card cannot honour a contrast request and stay translucent. */
   .widget[data-card="translucent"], .mob-widget-card[data-card="translucent"] {
-    background:rgba(0,0,0,.62);
-    -webkit-backdrop-filter:blur(22px) saturate(140%); backdrop-filter:blur(22px) saturate(140%);
+    background:var(--glass-card-solid);
+    -webkit-backdrop-filter:none; backdrop-filter:none;
   }
   .widget[data-card="light"], .mob-widget-card[data-card="light"] { border-color:rgba(0,0,0,.45); }
   .dot { border-width:2px; }
@@ -1236,6 +1240,8 @@ html[data-theme="light"] {
   --card-edge-lo:      rgba(0,0,0,.05);
   --glass-lift:        0 12px 32px rgba(0,0,0,.14), 0 1px 3px rgba(0,0,0,.08);
   --card-dark:         #FFFFFF;
+  --glass-card:        rgb(255 255 255 / .85);
+  --glass-card-solid:  #FFFFFF;
 }
 #mob-search-pill[data-tone="dark"] :is(.msp-icon, .msp-label) { color:var(--pill-ink-light); text-shadow:none }
 #mob-search-pill[data-tone="dark"] .msp-dot { background:rgba(60,60,67,.3) }
@@ -1292,13 +1298,13 @@ html[data-theme="light"] #dock.mdock { box-shadow:var(--glass-lift) }
 html[data-theme="light"] .widget[data-appearance="dark"],
 html[data-theme="light"] .mob-widget-card[data-appearance="dark"] {
   --glass-bg:var(--card-fixed-dark); --glass-border:rgba(255,255,255,.09); --card-dark:var(--card-fixed-dark);
-  --glass-fill:var(--glass-fill-dark);
+  --glass-card:rgb(28 28 30 / .85); --glass-card-solid:#1C1C1E;
   --card-edge-hi:rgba(255,255,255,.16); --card-edge-lo:rgba(255,255,255,.05);
 }
 html:not([data-theme="light"]) .widget[data-appearance="light"],
 html:not([data-theme="light"]) .mob-widget-card[data-appearance="light"] {
   --glass-bg:#FFFFFF; --glass-border:rgba(0,0,0,.06); --card-dark:#FFFFFF;
-  --glass-fill:var(--glass-fill-light);
+  --glass-card:rgb(255 255 255 / .85); --glass-card-solid:#FFFFFF;
   --card-edge-hi:rgba(255,255,255,.9); --card-edge-lo:rgba(0,0,0,.05);
 }
 @media (prefers-contrast: more) {
@@ -1318,6 +1324,20 @@ html[data-transparency="reduce"] :is(.folder-overlay-mobile, .folder-overlay) { 
 html[data-transparency="reduce"][data-theme="light"] :is(.folder-overlay-mobile, .folder-overlay) { background:rgba(255,255,255,.92); }
 html[data-transparency="reduce"] :is(#spot, body:not(.is-mob) #spot) { background:rgba(0,0,0,.82); }
 html[data-transparency="reduce"][data-theme="light"] :is(#spot, body:not(.is-mob) #spot) { background:rgba(242,242,247,.94); }
+/* Keep. The wallpaper tone puts white ink on the light solid fill. */
+:root[data-transparency="reduce"] #mob-search-pill :is(.msp-icon, .msp-label) { color:var(--label-primary); text-shadow:none }
+:root[data-transparency="reduce"] #mob-search-pill .msp-dot { background:rgba(255,255,255,.35) }
+:root[data-transparency="reduce"] #mob-search-pill .msp-dot.on { background:#FFFFFF }
+:root[data-transparency="reduce"][data-theme="light"] #mob-search-pill :is(.msp-icon, .msp-label) { color:var(--pill-ink-light) }
+:root[data-transparency="reduce"][data-theme="light"] #mob-search-pill .msp-dot { background:rgba(60,60,67,.3) }
+:root[data-transparency="reduce"][data-theme="light"] #mob-search-pill .msp-dot.on { background:rgba(0,0,0,.8) }
+:root[data-transparency="reduce"] #dots { background:var(--glass-clear); --dots-ink:initial }
+:root[data-transparency="reduce"] #dots .dot { border-color:var(--dots-ink,rgba(255,255,255,.75)) }
+:root[data-transparency="reduce"][data-theme="light"] #dots { --dots-ink:rgba(0,0,0,.85) }
+:root[data-transparency="reduce"][data-theme="light"] #dots .dot { border-color:rgba(0,0,0,.55) }
+html[data-transparency="reduce"] :is(.widget, .mob-widget-card)[data-card="translucent"] {
+  background:var(--glass-card-solid); -webkit-backdrop-filter:none; backdrop-filter:none;
+}
 
 /* Registered, so a transition can animate it. */
 @property --pill-inset { syntax:'<length>'; inherits:true; initial-value:0px }

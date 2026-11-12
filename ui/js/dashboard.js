@@ -6,7 +6,8 @@ import {
   firstViewWait,
   rememberBackground,
   resolveBackground,
-} from '/js/background.js?v=c5401183';
+  parseWallpaperUrl,
+} from '/js/background.js?v=2facde81';
 import {
   badgeMinimum,
   badgeSignature,
@@ -31,7 +32,7 @@ import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import { easing, glide, isScripted } from '/js/frame-motion.js?v=1d86154d';
-import { glassWallpaper, startGlass } from '/js/glass.js?v=295c5213';
+import { glassWallpaper, startGlass } from '/js/glass.js?v=dfbd8943';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { currentLang, initI18n, isSupported, t } from '/js/i18n.js?v=ec60b9bd';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=4d944cec';
@@ -52,7 +53,7 @@ import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/p
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
 import { initSpotlight } from '/js/spotlight.js?v=efc8a411';
-import { applyTheme, prefersDark, readMode, resolveTheme, THEME_KEY, watchTransparency } from '/js/theme.js?v=f73ea91e';
+import { applyTheme, prefersDark, readMode, resolveTheme, THEME_KEY, watchTransparency } from '/js/theme.js?v=ba3bfbeb';
 import {
   buildMobile,
   closeFolders,
@@ -63,7 +64,7 @@ import {
   openFolderMobile,
   resetMobileChrome,
   swipePager,
-} from '/js/ui.js?v=a359a07f';
+} from '/js/ui.js?v=44f38658';
 import {
   mkWrap as _mkWrap,
   el,
@@ -688,7 +689,7 @@ function retone() {
 let _bgSample = null;
 
 async function sampleWallpaper(url, brightness, fit, call) {
-  const sameOrigin = new URL(url, location.href).origin === location.origin;
+  const sameOrigin = parseWallpaperUrl(url)?.origin === location.origin;
   const img = await (sameOrigin ? decoded(url) : loadSamplingImage(url));
   if (call !== _bgCall) return;
   _bgSample = img ? { img, brightness, fit } : null;
@@ -1232,6 +1233,7 @@ async function boot() {
     page: () => pg,
     total: () => strip.children.length,
     turn: (n, ms) => goTo(n, null, true, true, ms),
+    clock: true,
     enabled: () =>
       !el('spot').hasAttribute('open') &&
       !document.querySelector('.folder-overlay[open], .folder-overlay-mobile[open]'),
@@ -1239,9 +1241,7 @@ async function boot() {
 
   wallpaperShown ??= applyBg();
 
-  const retheme = () => {
-    applyTheme(resolveTheme(readMode(), prefersDark()));
-    rethemeTiles();
+  const rethemeFrames = () => {
     for (const frame of document.querySelectorAll('iframe')) {
       try {
         /** @type {any} */ (frame.contentWindow)?.__applyHostTheme?.();
@@ -1249,6 +1249,12 @@ async function boot() {
         /* A cross-origin page keeps its own theme. */
       }
     }
+  };
+  new MutationObserver(rethemeFrames).observe(document.documentElement, { attributeFilter: ['data-transparency'] });
+  const retheme = () => {
+    applyTheme(resolveTheme(readMode(), prefersDark()));
+    rethemeTiles();
+    rethemeFrames();
     refreshBadges();
     applyBg();
   };

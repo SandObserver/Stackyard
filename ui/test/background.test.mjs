@@ -128,3 +128,13 @@ test('a failed decode is not kept', async () => {
   fail = false;
   assert.ok(await decoded('/x.jpg'), 'a failed address stays failed');
 });
+
+test('an address the URL parser rejects decodes to nothing instead of throwing', async () => {
+  globalThis.location = { href: 'http://host/' };
+  globalThis.window = {};
+  const { decoded, parseWallpaperUrl } = await import(`../js/background.js?fresh=${Date.now() + 2}`);
+  for (const bad of ['https://exa mple.com/a.jpg', 'http://']) {
+    assert.equal(parseWallpaperUrl(bad), null);
+    assert.equal(await decoded(bad), null);
+  }
+});

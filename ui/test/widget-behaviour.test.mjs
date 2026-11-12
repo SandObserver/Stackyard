@@ -144,9 +144,10 @@ test('frosted widget surfaces drop their blur for reduced transparency', () => {
     ['connections/connections-map.html', '#tt'],
   ]) {
     const src = read(f);
-    const block = src.match(/@media ?\(prefers-reduced-transparency: ?reduce\) ?\{([\s\S]*?)\n?\s*\}\s*\}?/);
-    assert.ok(block, `${f} answers reduced transparency`);
-    assert.ok(block[1].includes(sel), `${f} removes the blur on ${sel}`);
+    const rule = src.match(/html\[data-transparency="reduce"\] ([^{]+)\{([^}]*)\}/);
+    assert.ok(rule, `${f} answers reduced transparency`);
+    assert.equal(rule[1].trim(), sel, `${f} removes the blur on ${sel}`);
+    assert.match(rule[2], /backdrop-filter:none/, f);
   }
 });
 

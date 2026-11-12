@@ -422,6 +422,8 @@ function rgbaOf(resolve, value) {
   if (ref) return rgbaOf(resolve, resolve.raw(ref[1]));
   const m = /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/.exec(v);
   if (m) return [Number(m[1]), Number(m[2]), Number(m[3]), Number(m[4])];
+  const spaced = /^rgba?\(\s*(\d+)\s+(\d+)\s+(\d+)\s*\/\s*([\d.]+)\s*\)$/.exec(v);
+  if (spaced) return [Number(spaced[1]), Number(spaced[2]), Number(spaced[3]), Number(spaced[4])];
   const hex = v.replace(/^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/, '#$1$1$2$2$3$3');
   assert.match(hex, /^#[0-9a-fA-F]{6}$/, `not a colour the gate can read: ${v}`);
   return [1, 3, 5].map(i => parseInt(hex.substr(i, 2), 16)).concat(1);
@@ -520,6 +522,76 @@ for (const light of [false, true]) {
     assert.deepEqual(failures, [], `Below the WCAG minimum:\n  ${failures.join('\n  ')}`);
   });
 }
+
+const REDUCE = 'html[data-transparency="reduce"]';
+const REDUCE_INK = ':root[data-transparency="reduce"]';
+
+/** The last value a rule with exactly this selector list gives the property. */
+function declared(selector, prop) {
+  const re = new RegExp(`(?:^|[;{\\s])${prop}\\s*:\\s*([^;]+)`);
+  let value;
+  for (const rule of rules(dashboard)) {
+    if (rule.media || rule.selectors.join(', ') !== selector) continue;
+    const m = re.exec(rule.body);
+    if (m) value = m[1].trim();
+  }
+  assert.ok(value, `${selector} declares no ${prop}`);
+  return value;
+}
+
+for (const light of [false, true]) {
+  test(`reduced transparency inks the solid glass for its fill: ${light ? 'light' : 'dark'}`, () => {
+    const resolve = resolver({ light, extra: [dashboard] });
+    const reduce = light ? `${REDUCE}[data-theme="light"]` : REDUCE;
+    const ink = light ? `${REDUCE_INK}[data-theme="light"]` : REDUCE_INK;
+    const colour = value => rgbaOf(resolve, value);
+    const fill = name => colour(declared(light && name === '--glass-clear' ? reduce : REDUCE, name));
+    const pill = colour(declared(`${ink} #mob-search-pill :is(.msp-icon, .msp-label)`, 'color'));
+    const dot = light
+      ? colour(declared(`${ink} #dots .dot`, 'border-color'))
+      : colour(/var\(--dots-ink,(.+)\)$/.exec(declared(`${REDUCE_INK} #dots .dot`, 'border-color'))[1]);
+    const cases = [
+      ['search pill label', pill, fill('--glass-clear'), 4.5],
+      ['page dot', dot, fill('--glass-clear'), 3],
+      ['empty dashboard button, light tone', colour(resolve.raw('--label-color')), fill('--glass-fill-dark'), 4.5],
+      ['empty dashboard button, dark tone', colour(resolve.raw('--label-color-dark')), fill('--glass-fill-light'), 4.5],
+    ];
+    const failures = [];
+    for (const [what, inkColour, fillColour, min] of cases) {
+      for (const base of WALLPAPERS) {
+        const surface = layer(fillColour, base);
+        const r = ratio(toHex(layer(inkColour, surface)), toHex(surface));
+        if (r < min) failures.push(`${what} over ${toHex(base)}: ${r.toFixed(2)}, needs ${min}`);
+      }
+    }
+    assert.deepEqual(failures, [], `Below the WCAG minimum:\n  ${failures.join('\n  ')}`);
+  });
+}
+
+test('the empty dashboard button fill follows its tone, not the theme', () => {
+  const cases = [
+    ['light tone over black', '.empty-state-btn', '--label-color', [0, 0, 0]],
+    ['dark tone over white', '.empty-state-btn[data-tone="dark"]', '--label-color-dark', [255, 255, 255]],
+  ];
+  for (const lightTheme of [false, true]) {
+    const resolve = resolver({ light: lightTheme, extra: [dashboard] });
+    const colour = value => rgbaOf(resolve, value);
+    for (const [what, selector, inkName, base] of cases) {
+      const fill = colour(paint(lightTheme, selector, 'background'));
+      const surface = layer(fill, base);
+      const r = ratio(toHex(layer(colour(resolve.raw(inkName)), surface)), toHex(surface));
+      assert.ok(r >= 4.5, `${what}, ${lightTheme ? 'light' : 'dark'} theme: ${r.toFixed(2)}`);
+    }
+  }
+});
+
+test('increased contrast makes the Settings glass controls solid', () => {
+  for (const light of [false, true]) {
+    const resolve = resolver({ raised: true, light });
+    for (const name of ['--glass-bg', '--glass-control', '--glass-fill-dark', '--glass-fill-light'])
+      assert.equal(resolve.raw(name), resolve.raw('--cp'), `${name}, ${light ? 'light' : 'dark'}`);
+  }
+});
 
 test('a stale badge keeps its count at full contrast', () => {
   const stale = rules(dashboard).filter(r => !r.media && r.selectors.includes('.badge.stale'));

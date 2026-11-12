@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Connections — Map</title>
-<script src="/js/widget-theme.js?v=9bd864aa"></script>
+<script src="/js/widget-theme.js?v=30c756d8"></script>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   html{-webkit-tap-highlight-color:transparent}
@@ -35,7 +35,7 @@
   #map-link{position:absolute;inset:0;pointer-events:none;border-radius:inherit}
   #map-link:focus-visible{outline:2px solid #0091FF;outline-offset:-3px}
   #tt{-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%)}
-  @media (prefers-reduced-transparency:reduce){#tt{-webkit-backdrop-filter:none;backdrop-filter:none}}
+  html[data-transparency="reduce"] #tt{-webkit-backdrop-filter:none;backdrop-filter:none}
 </style>
 </head>
 <body>
@@ -185,7 +185,7 @@ window.__MAP=(function(D){
 })(window.__DOTS);
 </script>
 <script type="module">
-import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen } from '/js/widget-toolbox.js?v=16231059';
+import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen } from '/js/widget-toolbox.js?v=9e7674e3';
 await loadStrings();
 document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World map of connections'));
 (function(){

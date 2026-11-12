@@ -186,10 +186,10 @@ test('the search arrow mirrors in a right-to-left page', () => {
 
 test('a translucent card is glass, and solid with increased contrast', () => {
   const contrast = css.slice(css.indexOf('@media (prefers-contrast: more)'));
-  assert.match(rule('.widget[data-card="translucent"],'), /background: var\(--glass-fill\)/);
+  assert.match(rule('.widget[data-card="translucent"],'), /background: var\(--glass-card\)/);
   assert.match(
     contrast,
-    /\.mob-widget-card\[data-card="translucent"\] \{\s*background:rgba\(0,0,0,\.62\);\s*-webkit-backdrop-filter:blur\(22px\)/,
+    /\.mob-widget-card\[data-card="translucent"\] \{\s*background:var\(--glass-card-solid\);\s*-webkit-backdrop-filter:none; backdrop-filter:none;/,
   );
 });
 

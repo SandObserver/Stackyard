@@ -35,7 +35,7 @@ import {
   toast,
   wireInlineEdit,
 } from '/js/admin-shared.js?v=72079c79';
-import { BACKDROP } from '/js/background.js?v=c5401183';
+import { BACKDROP } from '/js/background.js?v=2facde81';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import {
   ALLOWED_HOSTS_MAX,

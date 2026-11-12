@@ -66,6 +66,15 @@ async function unsplashPhoto(bg) {
   return photo;
 }
 
+/** @param {string} url @returns {URL|null} */
+export function parseWallpaperUrl(url) {
+  try {
+    return new URL(url, location.href);
+  } catch {
+    return null;
+  }
+}
+
 /** @type {{ href: string, done: Promise<HTMLImageElement|null> }|null} */
 let lastDecode = null;
 
@@ -73,7 +82,8 @@ let lastDecode = null;
     Reuses the image the boot hint started, and one decode per address.
     @param {string} url @returns {Promise<HTMLImageElement|null>} */
 export const decoded = url => {
-  const href = new URL(url, location.href).href;
+  const href = parseWallpaperUrl(url)?.href;
+  if (!href) return Promise.resolve(null);
   if (lastDecode?.href === href) return lastDecode.done;
   const hint = /** @type {any} */ (window).__wallpaperHint;
   /** @type {HTMLImageElement} */

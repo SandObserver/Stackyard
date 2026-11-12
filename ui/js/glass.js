@@ -1,9 +1,9 @@
 // @ts-check
 import { onFrame, requestFrame, setScripted } from '/js/frame-motion.js?v=1d86154d';
-import { createGlassRenderer } from '/js/glass-gpu.js?v=6a5159af';
+import { createGlassRenderer } from '/js/glass-gpu.js?v=c03a2e48';
 
-/** @typedef {import('/js/glass-gpu.js?v=6a5159af').GlassLook} GlassLook */
-/** @typedef {import('/js/glass-gpu.js?v=6a5159af').GlassItem} GlassItem */
+/** @typedef {import('/js/glass-gpu.js?v=c03a2e48').GlassLook} GlassLook */
+/** @typedef {import('/js/glass-gpu.js?v=c03a2e48').GlassItem} GlassItem */
 
 /* Keep in step with the clear glass list in dashboard.css. */
 const GLASS =
@@ -32,6 +32,8 @@ const shapes = new WeakMap();
 let look = { bend: 0, dispersion: 0, brightness: 1, tint: [0, 0, 0, 0], frost: [0, 0, 0, 0] };
 /** @type {{ el: HTMLElement, ov: HTMLElement, look: GlassLook, radius: number, s0: number }|null} */
 let panel = null;
+/* The folder panel drops its CSS fill only while this is set. */
+const DRAWN = 'data-glass-drawn';
 let lastSig = '';
 let still = 0;
 let source = { img: /** @type {HTMLImageElement|null} */ (null), size: 'cover' };
@@ -48,11 +50,20 @@ function makeLayer(className, blur) {
   canvas.addEventListener('webglcontextlost', e => {
     e.preventDefault();
     layer.gl = null;
+    if (layer !== folder) return;
+    /* Keep. A restore redraws layer.last over the open folder's CSS fill. */
+    layer.last = null;
+    canvas.hidden = true;
+    if (panel) {
+      panel.ov.removeAttribute(DRAWN);
+      panel = null;
+    }
   });
   canvas.addEventListener('webglcontextrestored', () => {
     layer.gl = createGlassRenderer(canvas, { blur });
     layer.gl?.resize(...layer.size);
-    layer.gl?.setWallpaper(wallpaper?.bitmap ?? null, wallpaper?.box ?? [0, 0, 1, 1], layer.blurPx);
+    const ok = layer.gl?.setWallpaper(wallpaper?.bitmap ?? null, wallpaper?.box ?? [0, 0, 1, 1], layer.blurPx);
+    if (!ok) layer.gl = null;
     if (layer.last) layer.gl?.draw(layer.last.items, layer.last.look);
   });
   return layer;
@@ -155,6 +166,7 @@ function paintFolder() {
   if (!folder || !panel) return;
   if (!panel.el.isConnected) {
     drawLayer(folder, [], panel.look);
+    panel.ov.removeAttribute(DRAWN);
     panel = null;
     return;
   }
@@ -187,6 +199,10 @@ function scan(root) {
   if (found.length) wake();
 }
 
+function forgetRemoved() {
+  for (const el of tracked) if (!el.isConnected) tracked.delete(el);
+}
+
 /** @param {number} w @param {number} h @param {string} size */
 export function wallpaperBox(w, h, size) {
   const vw = document.documentElement.clientWidth;
@@ -206,6 +222,15 @@ async function readable(img) {
   return copy;
 }
 
+/** The bitmap size for a picture shown at coverWidth CSS px: never larger than
+    the picture, never larger than the GPU accepts.
+    @param {number} w @param {number} h @param {number} coverWidth @param {number} limit
+    @returns {[number, number]} */
+export function bitmapSize(w, h, coverWidth, limit) {
+  const scale = Math.min(1, coverWidth / w, limit / w, limit / h);
+  return [Math.max(1, Math.min(limit, Math.round(w * scale))), Math.max(1, Math.min(limit, Math.round(h * scale)))];
+}
+
 let uploads = 0;
 async function upload() {
   const call = ++uploads;
@@ -213,17 +238,13 @@ async function upload() {
   sizeLayer(/** @type {Layer} */ (base));
   if (folder) sizeLayer(folder);
   let next = null;
-  if (img && !blocked()) {
+  if (img && !blocked() && base?.gl) {
     try {
       const pic = await readable(img);
       if (call !== uploads) return;
       const box = wallpaperBox(pic.naturalWidth, pic.naturalHeight, source.size);
-      const scale = Math.min(1, box[2] / pic.naturalWidth);
-      const bitmap = await createImageBitmap(pic, {
-        resizeWidth: Math.max(1, Math.round(pic.naturalWidth * scale)),
-        resizeHeight: Math.max(1, Math.round(pic.naturalHeight * scale)),
-        resizeQuality: 'high',
-      });
+      const [resizeWidth, resizeHeight] = bitmapSize(pic.naturalWidth, pic.naturalHeight, box[2], base.gl.maxSize);
+      const bitmap = await createImageBitmap(pic, { resizeWidth, resizeHeight, resizeQuality: 'high' });
       if (call !== uploads) {
         bitmap.close();
         return;
@@ -235,14 +256,23 @@ async function upload() {
   }
   wallpaper?.bitmap.close();
   wallpaper = next;
-  for (const layer of [base, folder])
-    layer?.gl?.setWallpaper(wallpaper?.bitmap ?? null, wallpaper?.box ?? [0, 0, 1, 1], layer.blurPx);
+  if (wallpaper && !base?.gl?.setWallpaper(wallpaper.bitmap, wallpaper.box, base.blurPx)) {
+    wallpaper.bitmap.close();
+    wallpaper = null;
+  }
+  if (folder?.gl && !folder.gl.setWallpaper(wallpaper?.bitmap ?? null, wallpaper?.box ?? [0, 0, 1, 1], folder.blurPx))
+    folder.gl = null;
+  if (!wallpaper) base?.gl?.setWallpaper(null, [0, 0, 1, 1], 0);
   setScripted(!!wallpaper);
   lastSig = '';
   if (wallpaper) {
     prepareFolder();
     wake();
     return;
+  }
+  if (panel) {
+    panel.ov.removeAttribute(DRAWN);
+    panel = null;
   }
   for (const layer of [base, folder]) if (layer) drawLayer(layer, [], look);
 }
@@ -256,7 +286,7 @@ function prepareFolder() {
     if (!folder) return;
     folder.blurPx = num(document.body, '--folder-blur') * 0.4;
     sizeLayer(folder);
-    folder.gl?.setWallpaper(wallpaper.bitmap, wallpaper.box, folder.blurPx);
+    if (!folder.gl?.setWallpaper(wallpaper.bitmap, wallpaper.box, folder.blurPx)) folder.gl = null;
     document.body.append(folder.canvas);
   });
 }
@@ -279,13 +309,17 @@ export function glassWallpaper(img, size) {
 /** Call after the open animation has set its first frame.
     @param {HTMLElement} ov @param {HTMLElement} el */
 export function openFolderGlass(ov, el) {
-  if (!folder || !wallpaper) return;
+  if (!folder?.gl || !wallpaper) return;
   const blurPx = num(ov, '--folder-blur') * 0.4;
   if (blurPx !== folder.blurPx) {
     folder.blurPx = blurPx;
-    folder.gl?.setWallpaper(wallpaper.bitmap, wallpaper.box, blurPx);
+    if (!folder.gl.setWallpaper(wallpaper.bitmap, wallpaper.box, blurPx)) {
+      folder.gl = null;
+      return;
+    }
   }
   ov.prepend(folder.canvas);
+  ov.setAttribute(DRAWN, '');
   const r = el.getBoundingClientRect();
   panel = {
     el,
@@ -306,13 +340,16 @@ export function startGlass() {
   onFrame(frame);
   scan(document);
   new MutationObserver(records => {
+    let removed = false;
     for (const r of records) {
       if (r.type === 'childList') {
         for (const node of r.addedNodes) if (node instanceof Element) scan(node);
+        removed ||= r.removedNodes.length > 0;
       } else if (r.attributeName === 'class' || r.attributeName === 'data-card') {
         scan(/** @type {Element} */ (r.target));
       }
     }
+    if (removed) forgetRemoved();
     wake();
   }).observe(document.body, {
     childList: true,

@@ -144,6 +144,8 @@ export function createGlassRenderer(canvas, options = {}) {
   /** @type {WebGLTexture|null} */
   let tex = null;
   let img = [0, 0, 1, 1];
+  /** @type {number} */
+  const maxSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
 
   /** @param {number} w @param {number} h @param {TexImageSource|null} src */
   const texture = (w, h, src) => {
@@ -197,15 +199,26 @@ export function createGlassRenderer(canvas, options = {}) {
   };
 
   return {
-    /** @param {ImageBitmap|null} bitmap @param {number[]} box wallpaper box in CSS px: x, y, w, h @param {number} blurPx */
+    maxSize,
+    /** Returns false when the GPU refused the picture. Sampling it would paint black.
+        @param {ImageBitmap|null} bitmap @param {number[]} box wallpaper box in CSS px: x, y, w, h @param {number} blurPx
+        @returns {boolean} */
     setWallpaper(bitmap, box, blurPx) {
       if (tex) gl.deleteTexture(tex);
       tex = null;
-      if (!bitmap) return;
+      if (!bitmap) return true;
+      if (bitmap.width > maxSize || bitmap.height > maxSize) return false;
+      gl.getError();
       tex = texture(0, 0, bitmap);
+      if (gl.getError() !== gl.NO_ERROR) {
+        gl.deleteTexture(tex);
+        tex = null;
+        return false;
+      }
       if (options.blur && blurPx > 0 && tex)
         tex = blurred(tex, bitmap.width, bitmap.height, (blurPx * bitmap.width) / box[2]);
       img = box;
+      return true;
     },
     /** @param {number} width @param {number} height CSS px */
     resize(width, height) {

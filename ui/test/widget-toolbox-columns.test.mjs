@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { register } from 'node:module';
+import fs from 'node:fs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 globalThis.location = { search: '?id=test' };
@@ -9,8 +10,9 @@ globalThis.window = { matchMedia: () => ({ matches: false }) };
 /* Enough of a DOM for elements that carry styles, a class and children, and a
    root whose theme a test can set. */
 let hostTheme = 'dark';
+let onGlass = false;
 globalThis.document = {
-  documentElement: { getAttribute: () => hostTheme },
+  documentElement: { getAttribute: () => hostTheme, hasAttribute: name => name === 'data-glass' && onGlass },
   getElementById: () => ({}),
   createElement: () => ({
     style: { cssText: '', setProperty() {} },
@@ -26,7 +28,7 @@ globalThis.document = {
   }),
 };
 
-const { columns, barFill, contrastInk, cardContrast } = await import('../js/widget-toolbox.js');
+const { columns, barFill, contrastInk, cardContrast, readableInk } = await import('../js/widget-toolbox.js');
 
 const heights = c => c.el.children.map(col => col.children[0].style.height);
 
@@ -139,4 +141,53 @@ test('cardContrast measures against the card of the current theme', () => {
   hostTheme = 'dark';
   assert.equal(cardContrast('rgb(28,28,30)'), 1);
   assert.ok(Number.isNaN(cardContrast('url(x)')));
+});
+
+/* The worst case of a glass card: 85% of the card over a white or black wallpaper. */
+const worstGlass = light => {
+  const c = light ? [255, 255, 255] : [28, 28, 30];
+  const behind = light ? 0 : 255;
+  return `#${c
+    .map(v =>
+      Math.round(v * 0.85 + behind * 0.15)
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
+};
+
+test('on a glass card, ink is measured against the card at its worst', () => {
+  onGlass = true;
+  try {
+    for (const light of [false, true]) {
+      hostTheme = light ? 'light' : 'dark';
+      for (const c of ['#8E8E93', '#6C6C70', '#FF4245', '#30D158', '#0091FF']) {
+        const ink = contrastInk(c, 4.5);
+        assert.ok(ratio(ink, worstGlass(light)) >= 4.5, `${c} on ${hostTheme} glass: ${ink}`);
+        assert.ok(ratio(readableInk(c, 4.5), worstGlass(light)) >= 4.5, `${c} through readableInk`);
+      }
+    }
+    hostTheme = 'dark';
+    assert.ok(cardContrast('#8E8E93') < 4.5, 'the glass card is lighter than the solid one');
+  } finally {
+    onGlass = false;
+  }
+});
+
+test('on a solid dark card, readableInk leaves the colour as it is', () => {
+  hostTheme = 'dark';
+  assert.equal(readableInk('#FF4245'), '#FF4245');
+});
+
+test('the toolbox and the stylesheet agree on the glass card fill', () => {
+  const toolbox = fs.readFileSync(new URL('../js/widget-toolbox.js', import.meta.url), 'utf8');
+  const css = fs.readFileSync(new URL('../css/dashboard.css', import.meta.url), 'utf8');
+  const alpha = /const GLASS_CARD_ALPHA = ([\d.]+);/.exec(toolbox)?.[1];
+  assert.ok(alpha, 'GLASS_CARD_ALPHA moved');
+  const fills = [...css.matchAll(/--glass-card:\s*rgb\((\d+) (\d+) (\d+) \/ ([\d.]+)\)/g)];
+  assert.ok(fills.length >= 4, 'the dark, light and both appearance fills');
+  for (const [, r, g, b, a] of fills) {
+    assert.equal(Number(a), Number(alpha));
+    assert.ok(`${r} ${g} ${b}` === '28 28 30' || `${r} ${g} ${b}` === '255 255 255', `${r} ${g} ${b}`);
+  }
 });

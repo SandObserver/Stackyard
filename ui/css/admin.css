@@ -983,6 +983,9 @@ html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadlin
     --tx:var(--label-primary);
     --glass-bg:var(--cp);
     --glass-rim:var(--bd);
+    --glass-control:var(--cp);
+    --glass-fill-dark:var(--cp);
+    --glass-fill-light:var(--cp);
     --btn-fill:rgba(120,120,128,.4);
     --track-off:rgba(255,255,255,.45);
     --row-sep:var(--sy-gray2);
@@ -995,10 +998,17 @@ html.is-mobile .rord{width:28px;align-self:stretch;font-size:var(--fs-subheadlin
     --tx:var(--label-primary);
     --glass-bg:var(--cp);
     --glass-rim:var(--bd);
+    --glass-control:var(--cp);
+    --glass-fill-dark:var(--cp);
+    --glass-fill-light:var(--cp);
     --btn-fill:rgba(120,120,128,.28);
     --track-off:rgba(120,120,128,.6);
     --row-sep:var(--sy-gray3);
   }
+  .ev-back, html.is-mobile .m-back, .sec-hdr-actions .btn {
+    box-shadow:inset 0 0 0 .5px var(--glass-rim), var(--glass-control-shadow);
+  }
+  html.is-mobile body.authed .mtabbar { border-color:var(--glass-rim) }
   /* The custom controls draw their own focus ring, so each is named here. A
      generic rule misses them. */
   a:focus-visible, button:focus-visible, input:focus-visible,

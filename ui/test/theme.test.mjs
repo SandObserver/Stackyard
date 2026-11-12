@@ -164,3 +164,39 @@ test('the boot script and the module read the same transparency key', () => {
   assert.match(read('../js/theme.js'), /export const TRANSPARENCY_KEY = 'sy-transparency';/);
   assert.match(adminHtml, /<input type="checkbox" id="dev-transparency" aria-labelledby="rl-dev-transparency">/);
 });
+
+test('blocked storage does not hide the system reduced-transparency setting', async () => {
+  const { runInNewContext } = await import('node:vm');
+  const attrs = new Map();
+  const context = {
+    document: { documentElement: { setAttribute: (k, v) => attrs.set(k, v) }, querySelector: () => null },
+    window: { matchMedia: q => ({ matches: q.includes('reduced-transparency') }) },
+  };
+  Object.defineProperty(context, 'localStorage', {
+    get() {
+      throw new Error('SecurityError');
+    },
+  });
+  runInNewContext(preload, context);
+  assert.equal(attrs.get('data-transparency'), 'reduce');
+});
+
+test('the transparency watcher applies the setting at once', async () => {
+  const { watchTransparency } = await import('../js/theme.js');
+  let attr = null;
+  globalThis.document = {
+    documentElement: {
+      setAttribute: (_k, v) => {
+        attr = v;
+      },
+      removeAttribute: () => {
+        attr = null;
+      },
+    },
+  };
+  globalThis.window = { matchMedia: () => ({ matches: true, addEventListener() {} }) };
+  globalThis.localStorage = { getItem: () => null };
+  globalThis.addEventListener = () => {};
+  watchTransparency();
+  assert.equal(attr, 'reduce');
+});

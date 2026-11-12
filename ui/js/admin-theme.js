@@ -14,11 +14,13 @@
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', theme === 'light' ? '#FFFFFF' : '#0d1117');
   } catch {}
+  /* Keep two try blocks. Blocked storage throws and would skip the system setting. */
+  let reduce = false;
   try {
-    if (
-      localStorage.getItem('sy-transparency') === 'reduce' ||
-      window.matchMedia('(prefers-reduced-transparency: reduce)').matches
-    )
-      document.documentElement.setAttribute('data-transparency', 'reduce');
+    reduce = localStorage.getItem('sy-transparency') === 'reduce';
   } catch {}
+  try {
+    reduce = reduce || window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
+  } catch {}
+  if (reduce) document.documentElement.setAttribute('data-transparency', 'reduce');
 })();

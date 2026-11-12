@@ -63,6 +63,75 @@ test('a lost GPU context is rebuilt with its last picture', () => {
 test('reduce transparency and forced colours leave the glass to CSS', () => {
   const js = read('js/glass.js');
   assert.match(js, /dataset\.transparency === 'reduce' \|\| !!forcedColors\?\.matches/);
-  assert.match(js, /if \(img && !blocked\(\)\)/);
+  assert.match(js, /if \(img && !blocked\(\) && base\?\.gl\)/);
   assert.match(js, /attributeFilter: \['data-transparency'\]/);
+});
+
+test('the wallpaper bitmap never exceeds the GPU texture limit', async () => {
+  const { bitmapSize } = await import('../js/glass.js');
+  assert.deepEqual(bitmapSize(6000, 1000, 5064, 4096), [4096, 683]);
+  assert.deepEqual(bitmapSize(6000, 8000, 3840, 4096), [3072, 4096]);
+  assert.deepEqual(bitmapSize(1000, 800, 1600, 4096), [1000, 800], 'a small picture is not enlarged');
+  assert.deepEqual(bitmapSize(3000, 2000, 1500, 4096), [1500, 1000], 'a large picture shrinks to its shown width');
+});
+
+/** A WebGL2 stand-in: every call succeeds, and texImage2D reports the error given. */
+function fakeGl(uploadError = 0) {
+  let pending = 0;
+  const constants = { NO_ERROR: 0, INVALID_VALUE: 0x501, MAX_TEXTURE_SIZE: 0xd33 };
+  return new Proxy(constants, {
+    get(target, key) {
+      if (key in target) return target[key];
+      if (key === 'getParameter') return () => 4096;
+      if (key === 'getError') return () => [pending, (pending = 0)][0];
+      if (key === 'texImage2D') return () => (pending = uploadError);
+      if (key === 'getProgramParameter') return (_p, what) => (what === undefined ? 0 : true);
+      if (key === 'getShaderParameter') return () => true;
+      if (key === 'getActiveUniform') return () => null;
+      return () => ({});
+    },
+  });
+}
+
+test('the renderer refuses a picture the GPU cannot take, so the glass stays CSS', async () => {
+  const { createGlassRenderer } = await import('../js/glass-gpu.js');
+  const canvas = gl => /** @type {any} */ ({ getContext: () => gl });
+  const ok = createGlassRenderer(canvas(fakeGl()));
+  assert.ok(ok);
+  assert.equal(ok.maxSize, 4096);
+  assert.equal(ok.setWallpaper(/** @type {any} */ ({ width: 4096, height: 683 }), [0, 0, 1, 1], 0), true);
+  assert.equal(ok.setWallpaper(/** @type {any} */ ({ width: 5064, height: 844 }), [0, 0, 1, 1], 0), false);
+  assert.equal(ok.setWallpaper(null, [0, 0, 1, 1], 0), true);
+  const refused = createGlassRenderer(canvas(fakeGl(0x501)));
+  assert.equal(refused?.setWallpaper(/** @type {any} */ ({ width: 100, height: 100 }), [0, 0, 1, 1], 0), false);
+});
+
+test('a folder panel drops its CSS fill only while its glass is drawn', () => {
+  const css = read('css/dashboard.css');
+  const js = read('js/glass.js');
+  assert.match(
+    css,
+    /:is\(\.folder-overlay, \.folder-overlay-mobile\)\[data-glass-drawn\] \.glass-surface \{ background:transparent \}/,
+  );
+  assert.doesNotMatch(css, /html\[data-glass-live\] :is\(\.folder-overlay/);
+  assert.match(js, /ov\.setAttribute\(DRAWN, ''\)/);
+  assert.match(
+    js,
+    /'webglcontextlost'[\s\S]{0,400}layer\.last = null;\s*canvas\.hidden = true;\s*if \(panel\) \{\s*panel\.ov\.removeAttribute\(DRAWN\);/,
+  );
+  assert.match(js, /if \(!folder\?\.gl \|\| !wallpaper\) return;/);
+  assert.doesNotMatch(js, /\bwaiting\b/, 'an open folder never swaps its fill for the glass mid-view');
+});
+
+test('glass elements removed from the page are forgotten without a wallpaper', () => {
+  const js = read('js/glass.js');
+  assert.match(js, /removed \|\|= r\.removedNodes\.length > 0;/);
+  assert.match(js, /if \(removed\) forgetRemoved\(\);/);
+});
+
+test('a translucent card turns solid under reduced transparency', () => {
+  assert.match(
+    read('css/dashboard.css'),
+    /html\[data-transparency="reduce"\] :is\(\.widget, \.mob-widget-card\)\[data-card="translucent"\] \{\s*background:var\(--glass-card-solid\); -webkit-backdrop-filter:none; backdrop-filter:none;/,
+  );
 });

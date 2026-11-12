@@ -21,7 +21,8 @@ test('a theme change repaints in place and never rebuilds the widgets', () => {
   assert.ok(body.length > 0, 'the theme handler moved');
   assert.doesNotMatch(body, /buildLayout\(|buildDesktop\(|buildMobile\(/);
   assert.match(body, /rethemeTiles\(\)/);
-  assert.match(body, /__applyHostTheme/);
+  assert.match(body, /rethemeFrames\(\)/);
+  assert.match(dashboard, /const rethemeFrames = \(\) => \{[\s\S]{0,200}__applyHostTheme/);
   assert.match(body, /startViewTransition/);
 });
 
@@ -297,4 +298,69 @@ test('folder pages are reachable without touch', () => {
 
 test('a page turn closes the badge popover', () => {
   assert.match(dashboard, /if \(pg !== was\) closeBadgePopover\(\);/);
+});
+
+test('a widget frame follows the dashboard and the system for reduced transparency', async () => {
+  const { runInNewContext } = await import('node:vm');
+  const src = read('js/widget-theme.js');
+  /** @param {{ parentAttr?: string|null, queries?: string[], card?: string }} o */
+  const run = ({ parentAttr = null, queries = [], card = '' } = {}) => {
+    const attrs = new Map();
+    const style = { backgroundColor: '' };
+    const frameRoot = {
+      style,
+      setAttribute: (k, v) => attrs.set(k, v),
+      removeAttribute: k => attrs.delete(k),
+      getAttribute: k => attrs.get(k) ?? null,
+      toggleAttribute: (k, on) => (on ? attrs.set(k, '') : attrs.delete(k)),
+    };
+    const parentRoot = { getAttribute: k => (k === 'data-transparency' ? parentAttr : 'dark') };
+    const frameElement = {
+      closest: sel => (sel === '[data-card="translucent"]' && card === 'translucent' ? {} : null),
+      getAttribute: () => null,
+    };
+    const window = {
+      frameElement,
+      parent: { document: { documentElement: parentRoot } },
+      matchMedia: q => ({ matches: queries.some(x => q.includes(x)), addEventListener() {} }),
+    };
+    runInNewContext(src, {
+      window,
+      document: { documentElement: frameRoot },
+      location: { search: '' },
+      URLSearchParams,
+      getComputedStyle: () => ({ backgroundColor: style.backgroundColor || 'rgba(0, 0, 0, 0)' }),
+    });
+    return {
+      reduce: attrs.get('data-transparency') ?? null,
+      glass: attrs.has('data-glass'),
+      bg: style.backgroundColor,
+    };
+  };
+  assert.equal(run({ parentAttr: 'reduce' }).reduce, 'reduce', 'the switch on this device');
+  assert.equal(run({ queries: ['reduced-transparency'] }).reduce, 'reduce', 'the system setting');
+  assert.equal(run().reduce, null);
+
+  assert.deepEqual(run({ card: 'translucent' }), { reduce: null, glass: true, bg: '' }, 'glass shows the card');
+  assert.deepEqual(run(), { reduce: null, glass: false, bg: '#1C1C1E' }, 'a solid card is painted under the page');
+  for (const o of [
+    { card: 'translucent', parentAttr: 'reduce' },
+    { card: 'translucent', queries: ['prefers-contrast'] },
+    { card: 'translucent', queries: ['forced-colors'] },
+  ]) {
+    const r = run(o);
+    assert.equal(r.glass, false, JSON.stringify(o));
+    assert.equal(r.bg, '#1C1C1E', JSON.stringify(o));
+  }
+});
+
+test('widget styles key reduced transparency on the attribute the frame copies', () => {
+  const dir = path.join(root, 'widgets');
+  for (const name of fs.readdirSync(dir)) {
+    for (const file of fs.readdirSync(path.join(dir, name)).filter(f => f.endsWith('.html'))) {
+      const html = fs.readFileSync(path.join(dir, name, file), 'utf8');
+      assert.doesNotMatch(html, /prefers-reduced-transparency/, `${name}/${file}`);
+      if (/data-transparency/.test(html)) assert.match(html, /widget-theme\.js/, `${name}/${file}`);
+    }
+  }
 });

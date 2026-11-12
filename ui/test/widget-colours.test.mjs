@@ -54,6 +54,10 @@ const BESPOKE = new Map(
     '#39D353': 'GitHub contribution scale, step 4',
     '#E5A00D': 'Plex brand',
     '#6C6C70': 'Books secondary text on white, 5.1:1',
+    /* A glass card at its worst: 85% of the card over a white or black wallpaper. */
+    '#AEAEB2': 'secondary text on a dark glass card, 4.8:1 at its worst',
+    '#FF8A84': 'error text on a dark glass card, 4.7:1 at its worst',
+    '#B8001A': 'error text on a light glass card, 4.9:1 at its worst',
     '#E5E5EA': 'Analog clock dial in the dark theme',
     '#007CA6': 'Jellyfin brand',
     '#4CAF50': 'Emby brand',

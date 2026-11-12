@@ -112,6 +112,7 @@ export function writeReduceTransparency(on, store) {
 }
 
 export function watchTransparency() {
+  applyTransparency();
   try {
     window.matchMedia('(prefers-reduced-transparency: reduce)').addEventListener('change', () => applyTransparency());
   } catch {}

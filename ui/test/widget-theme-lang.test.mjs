@@ -6,7 +6,7 @@ import { test } from 'node:test';
 const src = fs.readFileSync(new URL('../js/widget-theme.js', import.meta.url), 'utf8');
 
 function run(search) {
-  const root = { lang: 'en', style: {} };
+  const root = { lang: 'en', style: {}, setAttribute() {}, removeAttribute() {} };
   vm.runInNewContext(src, {
     window: {},
     location: { search },

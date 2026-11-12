@@ -24,14 +24,13 @@ const _lin = v => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
 /** @param {number[]} c */
 const _lum = c => 0.2126 * _lin(c[0] / 255) + 0.7152 * _lin(c[1] / 255) + 0.0722 * _lin(c[2] / 255);
 
-/** Darkens a colour only as far as 4.5:1 on white needs. Returns it unchanged on the dark theme.
+/** Moves a colour only as far as min:1 on the card needs: darker on the light
+    card, lighter on a dark glass card. Returns it unchanged on a solid dark card.
     @param {string} hex #rrggbb @param {number} [min] */
 export function readableInk(hex, min = 4.5) {
   const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
-  if (!m || _hostTheme() !== 'light') return hex;
-  let rgb = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16));
-  for (let k = 0; k < 40 && 1.05 / (_lum(rgb) + 0.05) < min; k++) rgb = rgb.map(v => v * 0.95);
-  return '#' + rgb.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+  if (!m || (_hostTheme() !== 'light' && !_onGlass())) return hex;
+  return contrastInk(`#${m[1]}`, min);
 }
 
 /** @param {unknown} value @returns {number[] | null} */
@@ -45,7 +44,18 @@ function _rgbOf(value) {
   return m ? m.slice(1, 4).map(v => Math.min(255, Number(v))) : null;
 }
 
-const _cardLum = () => (_hostTheme() === 'light' ? 1 : _lum([28, 28, 30]));
+/* widget-theme.js sets data-glass when the card shows the wallpaper. Keep in
+   step with --glass-card in ui/css/dashboard.css. */
+const GLASS_CARD_ALPHA = 0.85;
+const _onGlass = () => document.documentElement.hasAttribute('data-glass');
+
+const _cardLum = () => {
+  const light = _hostTheme() === 'light';
+  const card = light ? [255, 255, 255] : [28, 28, 30];
+  if (!_onGlass()) return _lum(card);
+  const behind = light ? 0 : 255;
+  return _lum(card.map(c => c * GLASS_CARD_ALPHA + behind * (1 - GLASS_CARD_ALPHA)));
+};
 
 /** Contrast of a colour against the card, as a ratio. NaN when it cannot be read.
     @param {string} colour @returns {number} */

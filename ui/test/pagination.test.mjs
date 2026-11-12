@@ -176,7 +176,7 @@ test('the release settles from the finger, at the finger speed', () => {
   assert.match(pager, /swipeSettle\(\{/);
   assert.match(pager, /settleMs\(/);
   assert.match(pager, /strip\.style\.transition = `transform \$\{ms\}ms var\(--page-ease\)`;\s*o\.turn\(n, ms\)/);
-  assert.match(pager, /if \(isScripted\(\)\) \{\s*strip\.style\.transition = '';\s*o\.turn\(n, ms\);/);
+  assert.match(pager, /if \(o\.clock && isScripted\(\)\) \{\s*strip\.style\.transition = '';\s*o\.turn\(n, ms\);/);
 });
 
 test('only the first finger drags, and a vertical drag is left alone', () => {
@@ -203,6 +203,12 @@ test('an open folder or search keeps the home pager still', () => {
     call.slice(0, 400),
     /enabled: \(\) =>[\s\S]*spot[\s\S]*folder-overlay\[open\], \.folder-overlay-mobile\[open\]/,
   );
+});
+
+test('only the home pager hands its settle to the frame clock', () => {
+  assert.match(dashboard.slice(dashboard.indexOf('swipePager(document,')).slice(0, 400), /clock: true,/);
+  const folderCall = ui.slice(ui.indexOf('swipePager(box, strip,'));
+  assert.doesNotMatch(folderCall.slice(0, folderCall.indexOf(');')), /clock/);
 });
 
 /* An ease-in-out barely moves for the first 100ms, and a keyboard page turn

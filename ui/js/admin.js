@@ -41,7 +41,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=a8d4425d';
+} from '/js/admin-settings.js?v=f61cfe3d';
 import {
   announce,
   apiGet,
@@ -69,7 +69,7 @@ import {
 } from '/js/admin-shared.js?v=72079c79';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
 import { buildWidgetForm } from '/js/admin-widget-form.js?v=f3ff1fe6';
-import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=c5401183';
+import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=2facde81';
 import { recoveryShown } from '/js/config-recovery.js?v=5e8a2c4c';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
@@ -108,7 +108,7 @@ import {
   watchTransparency,
   writeMode,
   writeReduceTransparency,
-} from '/js/theme.js?v=f73ea91e';
+} from '/js/theme.js?v=ba3bfbeb';
 import {
   clr,
   el,

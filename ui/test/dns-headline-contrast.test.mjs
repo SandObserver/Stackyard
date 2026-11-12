@@ -8,7 +8,9 @@ register('./js-root-hooks.mjs', import.meta.url);
 const page = fs.readFileSync(new URL('../widgets/dns/index.html', import.meta.url), 'utf8');
 
 globalThis.location = /** @type {any} */ ({ search: '' });
-globalThis.document = /** @type {any} */ ({ documentElement: { getAttribute: () => 'light' } });
+globalThis.document = /** @type {any} */ ({
+  documentElement: { getAttribute: () => 'light', hasAttribute: () => false },
+});
 const { readableInk } = await import('../js/widget-toolbox.js');
 
 const luminance = hex =>

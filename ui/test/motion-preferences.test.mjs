@@ -54,7 +54,7 @@ test('reduced transparency is handled in the shared stylesheet', () => {
   const boot = read('js/admin-theme.js');
   assert.match(
     boot,
-    /localStorage\.getItem\('sy-transparency'\) === 'reduce' \|\|\s*window\.matchMedia\('\(prefers-reduced-transparency: reduce\)'\)\.matches/,
+    /reduce = localStorage\.getItem\('sy-transparency'\) === 'reduce';[\s\S]*reduce = reduce \|\| window\.matchMedia\('\(prefers-reduced-transparency: reduce\)'\)\.matches;/,
   );
   assert.match(boot, /setAttribute\('data-transparency', 'reduce'\)/);
 });
