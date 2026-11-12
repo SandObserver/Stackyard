@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Make the Connections VPN Off state and its light-theme error text readable.
 
+### Security
+
+- Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
+
 ## [1.22.0] - 2026-11-10
 
 ### Added
