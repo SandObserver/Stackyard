@@ -7,10 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add a Reduce Transparency switch for this device under Appearance.
+
+### Changed
+
+- Restyle the dock, folders, search pill, page dots and Settings header buttons
+  as clear glass with a lit rim.
+
+- Draw the glass with refraction at its edges where the browser supports WebGL2.
+
+- Show held switch and brightness knobs as clear glass lenses.
+
+- Show translucent widget cards as glass over the wallpaper.
+
 ### Fixed
 
 - Enable Save after uploading a wallpaper or fetching an Image URL, including
   when it finishes during a save.
+
+- Make the Connections VPN Off state and its light-theme error text readable.
 
 ## [1.22.0] - 2026-11-10
 
