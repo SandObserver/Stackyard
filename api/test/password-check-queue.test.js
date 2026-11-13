@@ -126,14 +126,18 @@ test('a full queue answers busy at once, and the refused sign-in costs no guess'
   const gate = holdScrypt();
   const waiting = Array.from({ length: 17 }, () => login('wrong password here', freshIp()));
   const ip = freshIp();
+  let clock;
   try {
     await until(hashQueueFull, 'a full queue');
     const busy = await login('wrong password here', ip);
     assert.equal(busy.status, 503);
     assert.equal(busy.body.code, 'blocked.busy');
+    const now = Date.now();
+    clock = mock.method(Date, 'now', () => now);
   } finally {
     await gate.releaseUntil(waiting);
     gate.restore();
+    clock?.mock.restore();
   }
   const statuses = (await Promise.all(waiting)).map(r => r.status);
   assert.deepEqual(
