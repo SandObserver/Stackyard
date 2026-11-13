@@ -334,7 +334,7 @@ test('the layout reads its cell count from the measured box', () => {
 /* A wide window must not stretch the dock into an empty bar. */
 test('the dock keeps phone width whatever it holds', () => {
   const ui = read('js/ui.js');
-  assert.match(ui, /const dockW = Math\.min\(maxDockW, Math\.round\(\(PHONE_W - 18\) \* sc \* fit\)\)/);
+  assert.match(ui, /const dockW = Math\.min\(maxDockW, Math\.round\(\(BASE_VW - 18\) \* sc \* fit\)\)/);
   assert.doesNotMatch(ui, /dockContentW/, 'the dock is sized to its icons again');
 });
 
@@ -478,4 +478,11 @@ test('sideways, the rows follow the tallest widget present', () => {
 
 test('upright phones keep room for the tallest footprint whatever is present', () => {
   assert.equal(gridCellCount({ gridW: 357, gridH: 513, sc: 1, vw: 393, labels: false, tallest: 2 }).rows, 6);
+});
+
+test('the phone reference widths are declared once', () => {
+  for (const file of ['js/ui.js', 'js/spotlight.js']) {
+    assert.doesNotMatch(read(file), /\b(393|430)\b/, `${file} has its own copy`);
+  }
+  assert.match(read('js/ui.js'), /BASE_VW,[\s\S]{0,120}WIDEST_PHONE,\s*\} from '\/js\/mobile-metrics\.js/);
 });

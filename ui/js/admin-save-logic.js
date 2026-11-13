@@ -279,6 +279,17 @@ export function upsertItem(items, id, item) {
   return { items: list, replaced: at !== -1 };
 }
 
+/** Put an edited item into the list. A folder takes its apps out of every other
+    folder. `before` is the list as it was before any of that, for the undo.
+
+    @param {any[]} items @param {string|null} id @param {any} item
+    @returns {{ before: any[], replaced: boolean }} */
+export function applyEdit(items, id, item) {
+  const before = snapshotItems(items);
+  if (item?.type === 'folder') claimFolderChildren(items, item.id, item.children);
+  return { before, replaced: upsertItem(items, id, item).replaced };
+}
+
 /** @param {any[]} items @param {string} id @returns {boolean} whether the item was removed */
 export function removeItem(items, id) {
   const at = items.findIndex(i => i && i.id === id);

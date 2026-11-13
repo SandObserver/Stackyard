@@ -109,7 +109,7 @@ test('both boot fetches give up rather than hang', () => {
 });
 
 test('the timeout is long enough not to fire on a slow start', () => {
-  const ms = Number(read('js/dashboard.js').match(/const BOOT_TIMEOUT_MS = (\d+)/)[1]);
+  const ms = Number(read('js/boot-hints.js').match(/const timeoutMs = (\d+)/)[1]);
   assert.ok(ms >= 10000, `${ms}ms would abort a healthy but slow first response`);
   assert.ok(ms <= 30000, `${ms}ms is long enough to read as a hang`);
 });
@@ -128,6 +128,12 @@ test('the screen speaks the language of the last good boot', () => {
 
 test('the screen is an alert with a heading', () => {
   const screen = screenBuilder();
-  assert.match(screen, /setAttribute\('role', 'alert'\)/);
+  const dashboard = read('js/dashboard.js');
+  const shared = dashboard.slice(
+    dashboard.indexOf('function showErrorScreen('),
+    dashboard.indexOf('function showApiDown()'),
+  );
+  assert.match(screen, /showErrorScreen\(/);
+  assert.match(shared, /setAttribute\('role', 'alert'\)/);
   assert.match(screen, /<h2 class="api-error-title">/);
 });

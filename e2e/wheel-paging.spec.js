@@ -66,14 +66,14 @@ test('a sideways swipe over an open folder leaves the page alone in the phone la
   await page.setViewportSize({ width: 700, height: 844 });
   await page.goto('/');
   await page.locator('body.is-mob').waitFor({ state: 'attached' });
-  await page.locator('#dots .dot').nth(1).waitFor({ state: 'attached' });
+  await page.locator('.msp-dot').nth(1).waitFor({ state: 'attached' });
   await page.getByRole('button', { name: 'Box folder' }).click();
   const overlay = page.locator('.folder-overlay-mobile');
   await overlay.waitFor({ state: 'visible' });
   const box = await overlay.boundingBox();
   await page.mouse.move((box?.x ?? 0) + (box?.width ?? 0) / 2, (box?.y ?? 0) + (box?.height ?? 0) / 2);
   await swipe(page, 20);
-  expect(await current(page)).toBe(0);
+  expect(await page.locator('.msp-dot').evaluateAll(ds => ds.findIndex(x => x.classList.contains('on')))).toBe(0);
 });
 
 test('a swipe held up by a busy page still turns one page', async ({ page, request, browserName }) => {

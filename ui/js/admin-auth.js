@@ -1,8 +1,8 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=3896c288';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=615e0826';
 import { initI18n, t } from '/js/i18n.js?v=ec60b9bd';
 import { loginErrorAdvice } from '/js/admin-error.js?v=05a2520c';
 import { passwordMeter, contextWords, meterColor } from '/js/password-policy.js?v=0c0fd0af';
-import { el, inp as inpById, qa } from '/js/utils.js?v=ce415079';
+import { el, inp as inpById, qa } from '/js/utils.js?v=c35700d1';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=1d29620e';
 import { fillUsernames } from '/js/password-reveal.js?v=37f218b4';
 
@@ -64,6 +64,7 @@ function showLoginScreen(onLogin) {
     try {
       await apiPost('/api/auth/login', { password: pw?.value || '' });
       signedIn = true;
+      if (pw) pw.value = '';
       s?.close();
       if (focusBefore?.isConnected && focusBefore !== document.body) focusBefore.focus();
       focusBefore = null;

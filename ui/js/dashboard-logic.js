@@ -49,9 +49,6 @@ function fingerprint(c) {
   return JSON.stringify(c?.items?.map(i => `${i?.id}|${i?.label}|${i?.href}`)) + JSON.stringify(c?.settings);
 }
 
-/** The page index to open on, clamped to the pages that exist.
-
-    @param {string|null} stored @param {number} totalPages @returns {number} */
 /* Desktop tiles keep one size. A narrower window gets fewer columns. */
 export const DESKTOP_COL = { width: 152.67, gap: 25, min: 4, max: 6 };
 
@@ -118,11 +115,19 @@ export function desktopPages(tiles, span, cols, rows) {
   return pages;
 }
 
+/** @param {number} n @param {number} totalPages @returns {number} */
+export function clampPage(n, totalPages) {
+  return Math.max(0, Math.min(totalPages - 1, n));
+}
+
+/** The page index to open on, clamped to the pages that exist.
+
+    @param {string|null} stored @param {number} totalPages @returns {number} */
 export function restorePage(stored, totalPages) {
   const n = Number(stored);
   if (stored == null || stored === '' || !Number.isInteger(n) || n < 0) return 0;
   if (!Number.isInteger(totalPages) || totalPages < 1) return 0;
-  return Math.min(n, totalPages - 1);
+  return clampPage(n, totalPages);
 }
 
 /** Where to send the browser once first-run setup is finished.
