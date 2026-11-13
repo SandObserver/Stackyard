@@ -79,20 +79,6 @@ export function recoverySteps({ reason, file, backup }) {
   return steps;
 }
 
-/** The message for a refused setup attempt.
-    @param {unknown} body @returns {string} an i18n key */
-export function setupCodeErrorKey(body) {
-  const code = body && typeof body === 'object' ? /** @type {Record<string, any>} */ (body).code : undefined;
-  if (code === 'invalid.setup-code') return 'hostBlock.codeWrong';
-  if (code === 'invalid.password-short') return 'hostBlock.tooShort';
-  if (code === 'invalid.password-long') return 'hostBlock.tooLong';
-  if (code === 'invalid.password-common') return 'pwStrength.common';
-  if (code === 'internal.disk-full') return 'adminError.diskFull';
-  if (code === 'internal.config-not-writable') return 'adminError.configNotWritable';
-  if (code === 'internal.config-file-mounted') return 'adminError.configFileMounted';
-  return 'setup.failed';
-}
-
 /** The first browser language Stackyard ships, else English. The saved
     language is in the file that cannot be read.
     @param {readonly string[]} preferred @param {readonly string[]} supported
