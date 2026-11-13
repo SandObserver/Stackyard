@@ -82,6 +82,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An app with a health check address from an older release now shows its health
   badge and Health pill.
 
+- The digital and Captain clocks turn the minute on time instead of up to a
+  second late.
+
+- The analog clock, Connections map, Now Playing and Captain clock stop moving
+  as soon as Reduce Motion is turned on.
+
+- A dashboard or name containing a dollar sign shows correctly in widget labels.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
