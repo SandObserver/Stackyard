@@ -29,6 +29,6 @@ jobs:
       # The checks live in a composite action so the release build runs exactly
       # the same set and the two cannot drift. See .github/actions/checks.
       - name: Run project checks
-        uses: ./.github/actions/checks
+        uses: $/.github/actions/checks
         with:
           mode: test

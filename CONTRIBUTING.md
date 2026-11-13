@@ -77,6 +77,9 @@ before merge.
 Trivy also scans the image built above. A HIGH or CRITICAL finding with a fix
 available fails the run. The threshold is in [SECURITY.md](SECURITY.md).
 
+zizmor audits `.github/` for workflow security problems. Any finding fails the
+run. Run it locally with `zizmor .github`.
+
 - **`changelog-check.js`** verifies the structure of `CHANGELOG.md`: the Keep a
   Changelog header, the six section names, a real date on every released
   version, descending versions, and a compare link per version. Structure fails

@@ -19,6 +19,8 @@ jobs:
         with:
           client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
 
       # Branch from the default branch, not the tag the release points at: a
       # tag checkout is detached and the push would go nowhere.
@@ -32,6 +34,7 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
+          package-manager-cache: false
 
       # Reads the newest dated section, never [Unreleased]. See scripts/ca-changes.js.
       - name: Write the newest release notes into the template

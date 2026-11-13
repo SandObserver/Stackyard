@@ -141,7 +141,7 @@ test('the checks run in their own read-only job before anything is published', (
   const checks = workflow.jobs.checks;
   assert.ok(checks, 'the release has no checks job');
   assert.deepEqual(checks.permissions, { contents: 'read' });
-  const step = checks.steps.find(s => s.uses === './.github/actions/checks');
+  const step = checks.steps.find(s => s.uses === '$/.github/actions/checks');
   assert.equal(step?.with?.mode, 'release');
   assert.ok([].concat(job.needs).includes('checks'), 'publishing must wait for the checks');
 });
@@ -149,13 +149,16 @@ test('the checks run in their own read-only job before anything is published', (
 test('the publishing job runs no dev tooling', () => {
   assert.equal(indexOf('Run project checks'), -1);
   for (const s of steps) {
-    assert.ok(!String(s.uses || '').startsWith('./'), `${s.name}: a local action can install dev dependencies`);
+    assert.ok(!/^(\.|\$)\//.test(String(s.uses || '')), `${s.name}: a local action can install dev dependencies`);
     assert.doesNotMatch(
       String(s.run || ''),
       /\b(npm|npx|yarn|pnpm|corepack)\b|node_modules/,
       `${s.name} runs a package manager`,
     );
-    if (/actions\/setup-node@/.test(s.uses || '')) assert.equal(s.with?.cache, undefined, `${s.name} restores a cache`);
+    if (/actions\/setup-node@/.test(s.uses || '')) {
+      assert.equal(s.with?.cache, undefined, `${s.name} restores a cache`);
+      assert.equal(s.with?.['package-manager-cache'], false, `${s.name} can restore a package cache`);
+    }
   }
 });
 
@@ -172,7 +175,7 @@ test('the QEMU and BuildKit images are pinned by digest', () => {
 test('the release waits for the end-to-end suite', () => {
   assert.equal(
     workflow.jobs.e2e?.uses,
-    './.github/workflows/e2e.yml',
+    '$/.github/workflows/e2e.yml',
     'the release should call the same e2e workflow, not a copy of it',
   );
   assert.ok([].concat(job.needs || []).includes('e2e'), 'publishing must depend on the browser tests');

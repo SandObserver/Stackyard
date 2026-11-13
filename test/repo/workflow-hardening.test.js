@@ -57,6 +57,7 @@ test('no workflow grants a write scope it does not need', () => {
   const bad = [];
   for (const [f, src] of workflows) {
     for (const m of src.matchAll(/^\s*([\w-]+): write$/gm)) {
+      if (m[1].startsWith('permission-')) continue;
       const scope = `${m[1]}: write`;
       if (!(allowed[f] || []).includes(scope)) bad.push(`${f}: ${scope}`);
     }
@@ -70,7 +71,7 @@ test('every third-party action is pinned to a commit', () => {
   for (const [f, src] of all) {
     for (const m of src.matchAll(/uses:\s*(\S+)/g)) {
       const ref = m[1];
-      if (ref.startsWith('./')) continue; /* our own composite action */
+      if (ref.startsWith('./') || ref.startsWith('$/')) continue; /* our own composite action */
       const at = ref.lastIndexOf('@');
       const rev = at === -1 ? '' : ref.slice(at + 1);
       if (!/^[0-9a-f]{40}$/.test(rev)) unpinned.push(`${f}: ${ref}`);
@@ -150,6 +151,25 @@ test('CI installs without running package scripts', () => {
     }
   }
   assert.deepEqual(unsafe, [], `Add --ignore-scripts:\n  ${unsafe.join('\n  ')}`);
+});
+
+test('every app token asks only for the permissions it names', () => {
+  const blanket = [];
+  let seen = 0;
+  for (const [f, src] of all) {
+    for (const s of src.split(/uses:\s*actions\/create-github-app-token@/).slice(1)) {
+      seen++;
+      if (!/^\s+permission-[a-z-]+:\s*(read|write)\s*$/m.test(s.split(/\n\s*- name:/)[0])) blanket.push(f);
+    }
+  }
+  assert.ok(seen > 0, 'no app token step found');
+  assert.deepEqual(blanket, [], `Add permission-<name> inputs:\n  ${blanket.join('\n  ')}`);
+});
+
+test('the checks audit the workflows with zizmor', () => {
+  const checks = compositeActions().find(([name]) => name === 'actions/checks')?.[1] || '';
+  assert.match(checks, /uses:\s*zizmorcore\/zizmor-action@[0-9a-f]{40}/);
+  assert.match(checks, /advanced-security:\s*false/);
 });
 
 test('every Node setup reads the version from .nvmrc', () => {
