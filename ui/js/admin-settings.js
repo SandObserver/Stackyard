@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=cf06489e';
+import { renderColorControl } from '/js/admin-color-control.js?v=f25c46ca';
 import { socketProbeAdvice } from '/js/admin-error.js?v=d1f8f6f4';
 import {
   BLOCK,
@@ -17,7 +17,7 @@ import {
   labelsWith,
   planFieldSave,
   serialWrites,
-} from '/js/admin-save-logic.js?v=0bf36ea4';
+} from '/js/admin-save-logic.js?v=11402de7';
 import {
   apiGet,
   apiPost,
