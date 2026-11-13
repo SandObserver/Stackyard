@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=77e8703f';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=9335fa18';
+} from '/js/admin-app-form.js?v=586aa138';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=61856a41';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,12 +15,12 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=f989b27b';
+} from '/js/admin-list.js?v=cefa2db8';
 import { folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=4681aa43';
 import {
   afterImport,
+  applyEdit,
   buildAppItem,
-  claimFolderChildren,
   importCounts,
   keptWidget,
   newItemId,
@@ -30,8 +30,7 @@ import {
   revertingSaves,
   serialWrites,
   snapshotItems,
-  upsertItem,
-} from '/js/admin-save-logic.js?v=0bf36ea4';
+} from '/js/admin-save-logic.js?v=11402de7';
 import {
   applyHealthChecks,
   loadSettings,
@@ -41,7 +40,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=f0fb344f';
+} from '/js/admin-settings.js?v=a739d705';
 import {
   announce,
   apiGet,
@@ -68,7 +67,7 @@ import {
   withheldText,
 } from '/js/admin-shared.js?v=9a0ecd6b';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=a296781c';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=3e136627';
 import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=43e4168b';
 import { recoveryShown } from '/js/config-recovery.js?v=5e8a2c4c';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
@@ -89,7 +88,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=5194a30f';
+} from '/js/import-foreign.js?v=43ad9fdb';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
 import { createListbox } from '/js/listbox.js?v=92b8dae9';
@@ -442,8 +441,13 @@ function _renderEditBody(focusKind) {
   }, 50);
 }
 
-function openModal(idx) {
-  const editing = idx != null ? state.items[idx] : null;
+/** @param {string|null} id */
+function openModal(id) {
+  const editing = id != null ? state.items.find(i => i?.id === id) : null;
+  if (id != null && !editing) {
+    toast(t('toast.dashboardChangedElsewhere'), 'err');
+    return;
+  }
   state.eid = editing?.id ?? null;
   const item = editing ? structuredClone(editing) : null;
   state.ctype = item?.system === 'settings' ? 'settings' : item?.type || 'app';
@@ -491,7 +495,7 @@ function openModal(idx) {
     };
   }
 
-  const isEdit = idx != null;
+  const isEdit = id != null;
   const evTitle = el('ev-title');
   if (isEdit) setUserText(evTitle, t('common.editNamed', { name: isolate(item.label || item.id) }));
   else {
@@ -694,9 +698,7 @@ async function doSave(orig) {
         showFieldError(el('ie-fname'), t('toast.nameRequired'));
         return;
       }
-      /* An app belongs to one folder, or the dashboard renders it twice. */
       const children = state._folderApps?.getValue() || [];
-      claimFolderChildren(state.items, orig?.id, children);
       item = {
         id:
           orig?.id ||
@@ -749,8 +751,7 @@ async function doSave(orig) {
       item = res.item;
     }
     /* By id, never by position. */
-    const before = snapshotItems(state.items);
-    const { replaced } = upsertItem(state.items, state.eid, item);
+    const { before, replaced } = applyEdit(state.items, state.eid, item);
     const session = state._evSession;
     /* The editor stays open on a failed write, with the form intact. */
     if (!(await saveOrRevert(before))) return;

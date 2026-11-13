@@ -64,6 +64,7 @@ function showLoginScreen(onLogin) {
     try {
       await apiPost('/api/auth/login', { password: pw?.value || '' });
       signedIn = true;
+      if (pw) pw.value = '';
       s?.close();
       if (focusBefore?.isConnected && focusBefore !== document.body) focusBefore.focus();
       focusBefore = null;

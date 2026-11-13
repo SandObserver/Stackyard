@@ -1,8 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mount, placement } from './connections-map-mount.mjs';
+import * as M from '../widgets/connections/world-map.js';
+import { mount } from './connections-map-mount.mjs';
 
-const { D, M } = placement();
+const D = M.WORLD;
 const toGrid = (lon, lat) => [
   ((lon + 180) / 360) * D.cols - 0.5,
   ((D.maxLat - lat) / (D.maxLat - D.minLat)) * D.rows - 0.5,
@@ -228,17 +229,20 @@ test('islands by the date line stay in the Pacific', () => {
    today; scanning all land for every placement is 414,537. */
 test('placing many countries stays fast', () => {
   let checks = 0;
-  const counting = Object.create(Math);
-  counting.hypot = (...a) => (checks++, Math.hypot(...a));
-  const map = placement(counting).M;
-  const codes = Object.keys(D.areas).filter(cc => /^[A-Z]{2}$/.test(cc));
-  const taken = new Set();
-  for (let s = 0; s < 12; s++) {
-    const regions = {};
-    codes.slice(0, 220).forEach((cc, i) => {
-      regions[cc] = 1 + ((i * 37 + s) % 500);
-    });
-    for (const a of map.allocate(regions)) map.place(a.cc, a.n, taken);
+  const hypot = Math.hypot;
+  Math.hypot = (...a) => (checks++, hypot(...a));
+  try {
+    const codes = Object.keys(D.areas).filter(cc => /^[A-Z]{2}$/.test(cc));
+    const taken = new Set();
+    for (let s = 0; s < 12; s++) {
+      const regions = {};
+      codes.slice(0, 220).forEach((cc, i) => {
+        regions[cc] = 1 + ((i * 37 + s) % 500);
+      });
+      for (const a of M.allocate(regions)) M.place(a.cc, a.n, taken);
+    }
+  } finally {
+    Math.hypot = hypot;
   }
   assert.ok(checks < 200_000, `12 services in 220 countries took ${checks} distance checks`);
 });

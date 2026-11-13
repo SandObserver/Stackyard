@@ -1,4 +1,4 @@
-import { BADGE_DEFAULT, renderColorControl } from '/js/admin-color-control.js?v=d2697ae0';
+import { BADGE_DEFAULT, renderColorControl } from '/js/admin-color-control.js?v=11171e98';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=d1f8f6f4';
 import {
   clearsStoredSecret,
