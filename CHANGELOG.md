@@ -76,6 +76,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every password screen gives the same message when the server refuses a new
   password as too short or too long.
 
+- Turning off Authentication on an app's Live Activity now removes the stored
+  sign-in, query parameters and headers on save, and Fetch sends none of them.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
