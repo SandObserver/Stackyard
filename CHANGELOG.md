@@ -79,6 +79,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Turning off Authentication on an app's Live Activity now removes the stored
   sign-in, query parameters and headers on save, and Fetch sends none of them.
 
+- An app with a health check address from an older release now shows its health
+  badge and Health pill.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
