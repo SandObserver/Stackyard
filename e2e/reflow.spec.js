@@ -39,8 +39,16 @@ test('the empty dashboard welcome scrolls when it does not fit', async ({ page, 
   await expect
     .poll(() => page.evaluate(() => document.querySelector('.empty-state')?.scrollTop ?? 0))
     .toBeGreaterThan(0);
-  const hint = await box(page.locator('.empty-state-hint'));
-  expect(hint.y + hint.height, 'the import link scrolls into view').toBeLessThanOrEqual(121);
+  const hint = page.locator('.empty-state-hint');
+  await expect
+    .poll(
+      async () => {
+        const b = await box(hint);
+        return b.y + b.height;
+      },
+      { message: 'the import link scrolls into view' },
+    )
+    .toBeLessThanOrEqual(121);
 });
 
 test.describe('on a touch screen', () => {
