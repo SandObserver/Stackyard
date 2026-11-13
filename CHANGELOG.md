@@ -90,6 +90,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A dashboard or name containing a dollar sign shows correctly in widget labels.
 
+- System Summary, Downloads and Disk Health show sizes and transfer rates in the
+  same decimal units, with unit names in the reader's language.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
