@@ -19,6 +19,7 @@ const {
   revertingSaves,
   serialWrites,
   removeItem,
+  applyEdit,
 } = await import('../js/admin-save-logic.js');
 
 test('cleanId keeps alphanumerics, collapses the rest, and trims', () => {
@@ -802,4 +803,42 @@ test('restoreBody drops folder children that are not apps', () => {
     { id: 'f', type: 'folder', children: ['a', 'w', 'gone'] },
   ];
   assert.deepEqual(restoreBody({ items }, {}).items[2].children, ['a']);
+});
+
+test('a folder save keeps the list from before it took apps from other folders', () => {
+  const items = [
+    { id: 'fa', type: 'folder', label: 'A', children: ['app1', 'app2'] },
+    { id: 'fb', type: 'folder', label: 'B', children: [] },
+    { id: 'app1', type: 'app' },
+  ];
+  const original = structuredClone(items);
+  const { before, replaced } = applyEdit(items, 'fb', { id: 'fb', type: 'folder', label: 'B', children: ['app1'] });
+  assert.equal(replaced, true);
+  assert.deepEqual(items[0].children, ['app2'], 'folder A gives the app up');
+  assert.deepEqual(items[1].children, ['app1']);
+  assert.deepEqual(before, original, 'undo would leave folder A without the app');
+});
+
+test('a new folder takes its apps from the others and is added at the end', () => {
+  const items = [{ id: 'fa', type: 'folder', children: ['app1'] }];
+  const { before, replaced } = applyEdit(items, null, { id: 'fn', type: 'folder', children: ['app1'] });
+  assert.equal(replaced, false);
+  assert.deepEqual(
+    items.map(i => [i.id, i.children]),
+    [
+      ['fa', []],
+      ['fn', ['app1']],
+    ],
+  );
+  assert.deepEqual(before, [{ id: 'fa', type: 'folder', children: ['app1'] }]);
+});
+
+test('an app save leaves every folder alone', () => {
+  const items = [
+    { id: 'fa', type: 'folder', children: ['app1'] },
+    { id: 'app1', type: 'app', label: 'x' },
+  ];
+  applyEdit(items, 'app1', { id: 'app1', type: 'app', label: 'y', children: ['app1'] });
+  assert.deepEqual(items[0].children, ['app1']);
+  assert.equal(items[1].label, 'y');
 });

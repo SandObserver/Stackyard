@@ -34,10 +34,11 @@ export function readableInk(hex, min = 4.5) {
   return contrastInk(`#${m[1]}`, min);
 }
 
-/** @param {unknown} value @returns {number[] | null} */
-function _rgbOf(value) {
+/** Reads #rgb, #rrggbb, #rrggbbaa (alpha ignored) or rgb() as [r, g, b]. Null for anything else.
+    @param {unknown} value @returns {number[] | null} */
+export function rgbOf(value) {
   const s = String(value ?? '').trim();
-  let m = /^#([0-9a-f]{6})$/i.exec(s);
+  let m = /^#([0-9a-f]{6})(?:[0-9a-f]{2})?$/i.exec(s);
   if (m) return [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16));
   m = /^#([0-9a-f]{3})$/i.exec(s);
   if (m) return [...m[1]].map(c => parseInt(c + c, 16));
@@ -61,7 +62,7 @@ const _cardLum = () => {
 /** Contrast of a colour against the card, as a ratio. NaN when it cannot be read.
     @param {string} colour @returns {number} */
 export function cardContrast(colour) {
-  const rgb = _rgbOf(colour);
+  const rgb = rgbOf(colour);
   if (!rgb) return NaN;
   const a = _lum(rgb) + 0.05;
   const b = _cardLum() + 0.05;
@@ -73,7 +74,7 @@ export function cardContrast(colour) {
     the colour the user picked.
     @param {string} colour hex or rgb() @param {number} [min] @returns {string} #rrggbb, or the input when unreadable */
 export function contrastInk(colour, min = 4.5) {
-  let rgb = _rgbOf(colour);
+  let rgb = rgbOf(colour);
   if (!rgb) return colour;
   const light = _hostTheme() === 'light';
   const card = _cardLum() + 0.05;
