@@ -28,6 +28,7 @@ import {
   toast,
   wireInlineEdit,
 } from '/js/admin-shared.js?v=615e0826';
+import { activityAuth, activityHasAuth } from '/js/admin-save-logic.js?v=b34c833a';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { MAX_LABELS } from '/js/badge-logic.js?v=04a4ece8';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
@@ -149,7 +150,7 @@ export function buildAppForm(body, item) {
   const hcType = hc.proxmoxGuest ? 'pve' : hc.pingUrl ? 'ping' : 'con';
   const skipTls = !!item?.skipTlsVerify;
   const login = act.login?.username ? act.login : null;
-  const hasAuth = !!(act.params?.length || act.headers?.length || login);
+  const hasAuth = activityHasAuth(act);
 
   const ier = _ieRow;
   /* Split the string around its placeholder. Word order differs per language. */
@@ -217,7 +218,7 @@ export function buildAppForm(body, item) {
         ${ier('ie-burl', t('app.apiUrl'), 'f-burl', act.url, t('app.apiUrlPh'), 'url')}
         <div class="row"><span class="rl"></span><span id="bst" class="row-status" role="status"></span><button type="button" class="row-btn" id="bfetch">${t('app.fetch')}</button></div>
         <div id="auth-row-wrap">
-          <div class="row"><span class="rl">${t('app.authentication')}</span>${tog('auth-en', !!(act.params || act.headers || login), t('app.authentication'))}</div>
+          <div class="row"><span class="rl">${t('app.authentication')}</span>${tog('auth-en', hasAuth, t('app.authentication'))}</div>
           <div id="auth-sub" class="reveal${hasAuth ? ' open' : ''}"><div class="reveal-in">
             <div class="row kv-hdr"><span class="rl">${t('app.signIn')}</span></div>
             ${ier('ie-buser', t('app.username'), 'f-buser', login?.username, t('common.notSet'))}
@@ -1111,13 +1112,6 @@ function kvRowEl(host, rows, row, ph) {
   return rowEl;
 }
 
-/** @returns {{ username: string, password?: string }|undefined} */
-function badgeLogin() {
-  const username = inpById('f-buser')?.value?.trim() || '';
-  const password = inpById('f-bpass')?.value || '';
-  return username ? { username, password: password || undefined } : undefined;
-}
-
 /** @returns {boolean} whether the warning is shown */
 function warnUrlLogin() {
   const st = el('bst');
@@ -1141,14 +1135,18 @@ async function fetchBadge() {
   const btn = inpById('bfetch');
   if (btn) btn.disabled = true;
   try {
-    const params = serializeKvRows(state._bpar);
-    const headers = serializeKvRows(state._bhdr);
+    const { params, headers, login } = activityAuth({
+      authEn: inpById('auth-en')?.checked || false,
+      actParams: serializeKvRows(state._bpar),
+      actHeaders: serializeKvRows(state._bhdr),
+      actLogin: { username: inpById('f-buser')?.value?.trim() || '', password: inpById('f-bpass')?.value || '' },
+    });
     const skipTls = inpById('f-skip-tls')?.checked || false;
     const r = await apiPost('/api/badge-proxy', {
       url,
       params,
       headers,
-      login: badgeLogin(),
+      login,
       skipTls,
       itemId: state.eid ?? undefined,
     });

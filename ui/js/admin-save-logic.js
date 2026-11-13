@@ -337,6 +337,25 @@ export function buildActivityLabel(path, style) {
   };
 }
 
+/** @param {any} act a stored activity block @returns {boolean} */
+export function activityHasAuth(act) {
+  return !!(act?.params?.length || act?.headers?.length || act?.login?.username);
+}
+
+/* Send nothing with the switch off. The server keeps a stored secret for every
+   row or login it receives. */
+/** @param {{ authEn?: boolean, actParams?: any[], actHeaders?: any[], actLogin?: { username?: string, password?: string } }} v */
+export function activityAuth(v) {
+  if (!v.authEn) return { params: undefined, headers: undefined, login: undefined };
+  return {
+    params: v.actParams?.length ? v.actParams : undefined,
+    headers: v.actHeaders?.length ? v.actHeaders : undefined,
+    login: v.actLogin?.username
+      ? { username: v.actLogin.username, password: v.actLogin.password || undefined }
+      : undefined,
+  };
+}
+
 /** @param {any} v @param {any} [orig] @param {Iterable<string>} [takenIds] */
 export function buildAppItem(v, orig, takenIds = []) {
   /* A key, not a sentence. This module stays free of imports. */
@@ -387,11 +406,7 @@ export function buildAppItem(v, orig, takenIds = []) {
         activity: {
           enabled: v.actEn && !!v.actUrl,
           url: v.actUrl,
-          params: v.actParams?.length ? v.actParams : undefined,
-          headers: v.actHeaders?.length ? v.actHeaders : undefined,
-          login: v.actLogin?.username
-            ? { username: v.actLogin.username, password: v.actLogin.password || undefined }
-            : undefined,
+          ...activityAuth(v),
           extract: spaths.length === 1 ? spaths[0] : spaths.length > 1 ? spaths.map(p => ({ path: p })) : undefined,
           labels: combine ? undefined : labels,
           combine: combine || undefined,
