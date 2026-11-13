@@ -177,7 +177,7 @@ function scalar(raw, line, ctx) {
   return plain(cut === -1 ? s : s.slice(0, cut).trim());
 }
 
-/** @typedef {{ indent: number, text: string, line: number, block?: string, bad?: string }} Line */
+/** @typedef {{ indent: number, text: string, line: number, block?: string }} Line */
 
 const BLOCK_RE = /^(.*?):\s*([|>])([-+]?)(\d*)\s*$/;
 
@@ -264,8 +264,7 @@ function scan(text) {
   return out;
 }
 
-/** @typedef {{ tolerant: boolean, errors: Array<{ line: number, reason: string }>,
-                anchors: Map<string, any>, merged: number }} Ctx */
+/** @typedef {{ errors: Array<{ line: number, reason: string }>, anchors: Map<string, any>, merged: number }} Ctx */
 
 /** Parse a block starting at `pos` whose lines are indented at least `indent`.
     @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent @param {Ctx} ctx */
@@ -311,7 +310,7 @@ function merge(map, value, line, ctx) {
     @param {Line[]} lines @param {{ pos: number }} cur @param {number} start
     @param {number} indent @param {Ctx} ctx @param {unknown} err */
 function recover(lines, cur, start, indent, ctx, err) {
-  if (!ctx.tolerant || !(err instanceof YamlLiteError)) throw err;
+  if (!(err instanceof YamlLiteError)) throw err;
   ctx.errors.push({ line: err.line, reason: err.reason });
   cur.pos = start + 1;
   while (cur.pos < lines.length && lines[cur.pos].indent > indent) cur.pos++;
@@ -343,7 +342,6 @@ function sequence(lines, cur, indent, ctx) {
     @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent @param {Ctx} ctx */
 function sequenceEntry(lines, cur, indent, ctx) {
   const l = lines[cur.pos];
-  if (l.bad) throw new YamlLiteError(l.bad, l.line);
   const after = l.text.slice(1);
   const rest = after.trim();
   cur.pos++;
@@ -374,7 +372,7 @@ function sequenceEntry(lines, cur, indent, ctx) {
     while (cur.pos < lines.length && lines[cur.pos].indent === inner) {
       const nl = lines[cur.pos];
       if (nl.text.startsWith('- ') || nl.text === '-') break;
-      if (!mappingEntry(map, lines, cur, inner, ctx)) break;
+      mappingEntry(map, lines, cur, inner, ctx);
     }
     return map;
   }
@@ -424,15 +422,14 @@ function assign(map, m, line, lines, cur, indent, ctx, own) {
   set(block(lines, cur, next.indent, ctx));
 }
 
-/** Read one "key: value" line into `map`. Returns false when the line does not
-    start a key, which ends the mapping.
+/** Read one "key: value" line into `map`. A line that does not start a key is
+    dropped and reported.
     @param {any} map @param {Line[]} lines @param {{ pos: number }} cur
     @param {number} indent @param {Ctx} ctx */
 function mappingEntry(map, lines, cur, indent, ctx) {
   const l = lines[cur.pos];
   const start = cur.pos;
   try {
-    if (l.bad) throw new YamlLiteError(l.bad, l.line);
     refuseAnchor(l.text, l.line);
     const m = KEY_RE.exec(l.text);
     if (!m) throw new YamlLiteError('expected "key: value"', l.line);
@@ -441,7 +438,6 @@ function mappingEntry(map, lines, cur, indent, ctx) {
   } catch (err) {
     recover(lines, cur, start, indent, ctx, err);
   }
-  return true;
 }
 
 /** @param {Line[]} lines @param {{ pos: number }} cur @param {number} indent @param {Ctx} ctx */
@@ -459,15 +455,24 @@ function mapping(lines, cur, indent, ctx) {
          Only valid as the whole value of the key above, which assign handles. */
       break;
     }
-    if (!mappingEntry(map, lines, cur, indent, ctx)) break;
+    mappingEntry(map, lines, cur, indent, ctx);
   }
   return map;
 }
 
-/** @param {string} text @param {boolean} tolerant */
-function run(text, tolerant) {
+/** Parse a YAML subset document, dropping what cannot be read instead of
+    refusing the file. Each dropped node is reported, so the caller can tell
+    someone what is missing rather than losing it silently.
+
+    Objects come back with a null prototype: the keys are attacker-influenced
+    names from someone else's config, and a key called "constructor" or
+    "__proto__" must answer as data rather than as an inherited member.
+
+    @param {string} text @returns {{ doc: any, errors: Array<{ line: number, reason: string }> }}
+    @throws {YamlLiteError} when the whole file cannot be scanned */
+export function parseYamlTolerant(text) {
   /** @type {Ctx} */
-  const ctx = { tolerant, errors: [], anchors: new Map(), merged: 0 };
+  const ctx = { errors: [], anchors: new Map(), merged: 0 };
   const lines = scan(String(text == null ? '' : text));
   if (!lines.length) return { doc: null, errors: ctx.errors };
   if (lines[0].indent !== 0) throw new YamlLiteError('unexpected indentation', lines[0].line);
@@ -475,26 +480,4 @@ function run(text, tolerant) {
   const doc = block(lines, cur, 0, ctx);
   if (cur.pos < lines.length) throw new YamlLiteError('unexpected indentation', lines[cur.pos].line);
   return { doc, errors: ctx.errors };
-}
-
-/** Parse a YAML subset document.
-
-    Objects come back with a null prototype: the keys are attacker-influenced
-    names from someone else's config, and a key called "constructor" or
-    "__proto__" must answer as data rather than as an inherited member.
-
-    @param {string} text @returns {any}
-    @throws {YamlLiteError} on anything outside the subset */
-export function parseYaml(text) {
-  return run(text, false).doc;
-}
-
-/** Parse a document, dropping what cannot be read instead of refusing the file.
-    Each dropped node is reported, so the caller can tell someone what is
-    missing rather than losing it silently.
-
-    @param {string} text @returns {{ doc: any, errors: Array<{ line: number, reason: string }> }}
-    @throws {YamlLiteError} when the whole file cannot be scanned */
-export function parseYamlTolerant(text) {
-  return run(text, true);
 }

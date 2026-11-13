@@ -17,10 +17,10 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=ce415079';
-import { t, currentLang } from '/js/i18n.js?v=ec60b9bd';
+} from '/js/utils.js?v=8562a7d4';
+import { t, currentLang } from '/js/i18n.js?v=98712bec';
 import { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
-import { mobileMetrics, gridColumnWidth, gridCellCount, dockFit } from '/js/mobile-metrics.js?v=3b0d6715';
+import { mobileMetrics, gridColumnWidth, gridCellCount, dockFit } from '/js/mobile-metrics.js?v=5ab4430b';
 import { animate, easing, glide, isScripted, requestFrame, stopGlide } from '/js/frame-motion.js?v=1d86154d';
 import { openFolderGlass } from '/js/glass.js?v=258316fb';
 import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=8b2dad40';

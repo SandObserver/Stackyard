@@ -11,8 +11,8 @@
    The filter and the collapsed folders are in admin-state.js, because the page
    reads and writes them too. */
 
-import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=a2deb8b6';
-import { listGroup } from '/js/admin-drag-logic.js?v=f7c8d59a';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=f0e7a47d';
+import { listGroup } from '/js/admin-drag-logic.js?v=4824d269';
 import {
   filterActive,
   folderChildren,
@@ -21,21 +21,21 @@ import {
   reorderItems,
   shownChildren,
   topLevelRows,
-} from '/js/admin-logic.js?v=4681aa43';
-import { snapshotItems } from '/js/admin-save-logic.js?v=0bf36ea4';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=ab69bab7';
+} from '/js/admin-logic.js?v=06da6a19';
+import { snapshotItems } from '/js/admin-save-logic.js?v=75436b3a';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=599f0922';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { sizeLabel } from '/js/admin-widget-form.js?v=4a00c99a';
+import { sizeLabel } from '/js/admin-widget-form.js?v=6218c623';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=ec60b9bd';
-import { iconSvg } from '/js/icon-set.js?v=4d944cec';
+import { t } from '/js/i18n.js?v=98712bec';
+import { iconSvg } from '/js/icon-set.js?v=361e54a5';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
-import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=ce415079';
-import { widgetGlyph } from '/js/widget-glyphs.js?v=fe814bbe';
+import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=8562a7d4';
+import { widgetGlyph } from '/js/widget-glyphs.js?v=aef2eec0';
 
 /** @type {{ openModal: (idx: number|null) => void,
              openFolderPicker: (folderId: string) => void,
@@ -124,7 +124,7 @@ export function isReordering() {
 export function setReordering(on) {
   if (_reordering === on) return;
   _reordering = on;
-  if (on && (filter.q || filter.type !== 'all')) {
+  if (on && filterActive(filter)) {
     filter.q = '';
     filter.type = 'all';
     syncFilterUI();
@@ -174,14 +174,10 @@ function turnFrom(chevron, from) {
   chevron.style.transform = to;
 }
 
-export function mkRow(
-  item,
-  idx,
-  { indent = false, childIdx = null, folderId = null, top = { dock: [], home: [] } } = {},
-) {
+function mkRow(item, idx, { indent = false, childIdx = null, folderId = null, top = { dock: [], home: [] } } = {}) {
   const row = document.createElement('div');
   row.className = 'row drow';
-  const _filtering = !!(filter.q || filter.type !== 'all');
+  const _filtering = filterActive(filter);
   row.draggable = !_filtering;
   row.dataset.itemId = item.id;
   row.dataset.group = indent ? 'home' : listGroup(item);
@@ -416,7 +412,7 @@ function draw(l) {
     if (state.items.length >= 6) bar.classList.remove('d-none');
     else {
       bar.classList.add('d-none');
-      if (filter.q || filter.type !== 'all') {
+      if (filterActive(filter)) {
         filter.q = '';
         filter.type = 'all';
         syncFilterUI();

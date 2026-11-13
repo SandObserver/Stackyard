@@ -288,7 +288,7 @@ test('a manifest may pin a dark appearance and nothing else', () => {
 });
 
 /* ── P5-9: showIf was never validated ────────────────────────────────────────
-   Every way it can be wrong fails silently. visibleFieldKeys resolves a
+   Every way it can be wrong fails silently. visibleFieldFlags resolves a
    condition against its sibling set, so a showIf naming nothing reads undefined,
    never matches, and hides the field for good, which reads as a missing feature
    rather than a typo. A showIf that is not an object also satisfies the

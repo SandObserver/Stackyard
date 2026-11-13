@@ -18,7 +18,7 @@ import { register } from 'node:module';
 register('./js-root-hooks.mjs', import.meta.url);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const { visibleFieldKeys, visibleFieldFlags } = await import('../js/admin-logic.js');
+const { visibleFieldFlags } = await import('../js/admin-logic.js');
 
 const widgets = fs
   .readdirSync(path.join(root, 'widgets'), { withFileTypes: true })
@@ -70,8 +70,8 @@ test('a freshly opened form shows something in every card', () => {
     for (const card of cards(manifest)) {
       if (!card.fields.length) continue;
       /* No value entered anywhere, the state on first open. */
-      const shown = visibleFieldKeys(card.fields, () => undefined);
-      if (shown.size === 0) blank.push(`${name}: ${card.where}`);
+      const shown = visibleFieldFlags(card.fields, () => undefined);
+      if (!shown.includes(true)) blank.push(`${name}: ${card.where}`);
     }
   }
   assert.deepEqual(blank, [], `these cards open empty:\n${blank.join('\n')}`);
@@ -109,7 +109,7 @@ test('the check catches a card where everything is conditional', () => {
   };
   const card = cards(bad)[0];
   assert.ok(!card.fields.some(f => !f.showIf), 'this card has no unconditional field');
-  assert.equal(visibleFieldKeys(card.fields, () => undefined).size, 0, 'and opens empty');
+  assert.ok(!visibleFieldFlags(card.fields, () => undefined).includes(true), 'and opens empty');
 });
 
 test('the check accepts a card with a selector', () => {
@@ -121,7 +121,7 @@ test('the check accepts a card with a selector', () => {
   };
   const card = cards(good)[0];
   assert.ok(card.fields.some(f => !f.showIf));
-  assert.ok(visibleFieldKeys(card.fields, () => undefined).size > 0);
+  assert.ok(visibleFieldFlags(card.fields, () => undefined).includes(true));
 });
 
 /* ── the form does hide individual fields ─────────────────────────────────── */
@@ -132,9 +132,10 @@ test('a field is hidden when its condition is not met', () => {
     { key: 'provider', type: 'select' },
     { key: 'dupUrl', type: 'text', showIf: { field: 'provider', equals: 'duplicati' } },
   ];
-  const shown = visibleFieldKeys(fields, k => (k === 'provider' ? 'kopia' : undefined));
-  assert.ok(shown.has('provider'));
-  assert.ok(!shown.has('dupUrl'));
+  assert.deepEqual(
+    visibleFieldFlags(fields, k => (k === 'provider' ? 'kopia' : undefined)),
+    [true, false],
+  );
 });
 
 test('the form applies that to the rendered rows', () => {

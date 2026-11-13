@@ -5,7 +5,7 @@
    Never draw a response's error message. It names hosts, ports and status
    codes, and it is not translated. */
 
-import { ICONS, symbol } from '/js/icon-set.js?v=4d944cec';
+import { ICONS, symbol } from '/js/icon-set.js?v=361e54a5';
 
 /* kind -> [glyph, catalog key, English] */
 const COPY = {
@@ -50,8 +50,6 @@ export function errorCopy(kind) {
   const [, key, text] = COPY[kind] || COPY[FALLBACK];
   return { key, text };
 }
-
-export const ERROR_KINDS = Object.freeze(Object.keys(COPY));
 
 const STYLE_ID = 'wt-error-css';
 const CSS = `

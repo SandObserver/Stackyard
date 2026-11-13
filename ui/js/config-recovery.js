@@ -1,11 +1,11 @@
 // @ts-check
 import { esc, html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=ec60b9bd';
+import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=98712bec';
 import { sanitizeI18nMarkup } from '/js/i18n-markup.js?v=8c90e1dd';
 import { fillNames, pickLanguage, screenFor, setupCodeErrorKey } from '/js/config-recovery-logic.js?v=d3529225';
 import { contextWords, passwordMismatch, passwordProblem, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=4d944cec';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=361e54a5';
 
 let _shown = false;
 export const recoveryShown = () => _shown;

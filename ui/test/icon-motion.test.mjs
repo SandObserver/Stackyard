@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
-const { ICONS, STYLES, WEIGHTS, symbol } = await import('../js/icon-set.js');
+const { ICONS, STYLES, symbol } = await import('../js/icon-set.js');
 const { MOTION } = await import('../js/icon-motion.js');
+
+const WEIGHTS = { light: 1.5, regular: 2, bold: 2.5 };
 
 const moving = id => symbol(id, ICONS[id], 'solid', false, 2, { motion: true });
 const stepParts = m => [...m.go, ...m.back].map(([part]) => part);

@@ -14,7 +14,6 @@ import {
   isPlainField,
   sameIconName,
   groupBounds,
-  visibleFieldKeys,
   carriesTypedValues,
   visibleFieldFlags,
   collectFieldValues,
@@ -298,7 +297,7 @@ test('groupBounds ignores countBySize for a size it does not name', () => {
   assert.deepEqual(groupBounds({ min: 1, max: 4, countBySize: { small: 1 } }, 'large'), { min: 1, max: 4 });
 });
 
-test('visibleFieldKeys hides a field whose controlling field is hidden', () => {
+test('visibleFieldFlags hides a field whose controlling field is hidden', () => {
   /* network toggle off: mode is hidden, so provider and url (keyed on mode)
      must also be hidden even though mode still holds its default. */
   const fields = [
@@ -308,22 +307,26 @@ test('visibleFieldKeys hides a field whose controlling field is hidden', () => {
     { key: 'url', showIf: { field: 'mode', equals: 'speed' } },
   ];
   const vals = { enabled: false, mode: 'speed', provider: 'myspeed', url: 'x' };
-  const shown = visibleFieldKeys(fields, k => vals[k]);
-  assert.deepEqual([...shown], ['enabled']);
+  assert.deepEqual(
+    visibleFieldFlags(fields, k => vals[k]),
+    [true, false, false, false],
+  );
 });
 
-test('visibleFieldKeys shows the chain once the toggle is on', () => {
+test('visibleFieldFlags shows the chain once the toggle is on', () => {
   const fields = [
     { key: 'enabled' },
     { key: 'mode', showIf: { field: 'enabled', equals: true } },
     { key: 'provider', showIf: { field: 'mode', equals: 'speed' } },
   ];
   const vals = { enabled: true, mode: 'speed', provider: 'myspeed' };
-  const shown = visibleFieldKeys(fields, k => vals[k]);
-  assert.deepEqual([...shown].sort(), ['enabled', 'mode', 'provider']);
+  assert.deepEqual(
+    visibleFieldFlags(fields, k => vals[k]),
+    [true, true, true],
+  );
 });
 
-test('visibleFieldKeys does not leak a field across a hidden branch default', () => {
+test('visibleFieldFlags does not leak a field across a hidden branch default', () => {
   /* provider holds a default but is itself hidden, so the field keyed on it
      must stay hidden too. */
   const fields = [
@@ -332,8 +335,10 @@ test('visibleFieldKeys does not leak a field across a hidden branch default', ()
     { key: 'scrutinyUrl', showIf: { field: 'provider', equals: 'scrutiny' } },
   ];
   const vals = { source: 'system', provider: 'scrutiny', scrutinyUrl: '' };
-  const shown = visibleFieldKeys(fields, k => vals[k]);
-  assert.deepEqual([...shown], ['source']);
+  assert.deepEqual(
+    visibleFieldFlags(fields, k => vals[k]),
+    [true, false, false],
+  );
 });
 
 /* Two tiles of one widget type open the same form. Values must be carried per
@@ -369,21 +374,30 @@ test('only the visible copy of a repeated key is saved', () => {
   assert.deepEqual(saved.slots, [{ type: 'temp', sensor: 'Core 0' }]);
 });
 
-test('visibleFieldKeys evaluates a condition on a field outside the sibling set directly', () => {
+test('visibleFieldFlags evaluates a condition on a field outside the sibling set directly', () => {
   /* dep is not among the siblings (e.g. a parent-level key): fall back to the
      raw condition rather than treating it as hidden. */
   const fields = [{ key: 'a', showIf: { field: 'outside', equals: 'yes' } }];
-  assert.deepEqual([...visibleFieldKeys(fields, () => 'yes')], ['a']);
-  assert.deepEqual([...visibleFieldKeys(fields, () => 'no')], []);
+  assert.deepEqual(
+    visibleFieldFlags(fields, () => 'yes'),
+    [true],
+  );
+  assert.deepEqual(
+    visibleFieldFlags(fields, () => 'no'),
+    [false],
+  );
 });
 
-test('visibleFieldKeys shows unconditional fields and tolerates a cycle', () => {
-  assert.deepEqual([...visibleFieldKeys([{ key: 'x' }, { key: 'y' }], () => undefined)], ['x', 'y']);
+test('visibleFieldFlags shows unconditional fields and tolerates a cycle', () => {
+  assert.deepEqual(
+    visibleFieldFlags([{ key: 'x' }, { key: 'y' }], () => undefined),
+    [true, true],
+  );
   const cyc = [
     { key: 'a', showIf: { field: 'b', equals: 1 } },
     { key: 'b', showIf: { field: 'a', equals: 1 } },
   ];
-  assert.doesNotThrow(() => visibleFieldKeys(cyc, () => 1));
+  assert.doesNotThrow(() => visibleFieldFlags(cyc, () => 1));
 });
 
 /* ── clearsStoredSecret (P11-1) ───────────────────────────────────────────── */

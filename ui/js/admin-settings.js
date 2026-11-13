@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=cf06489e';
+import { renderColorControl } from '/js/admin-color-control.js?v=8e1f8711';
 import { socketProbeAdvice } from '/js/admin-error.js?v=d1f8f6f4';
 import {
   BLOCK,
@@ -9,7 +9,7 @@ import {
   settingsSaveBlocker,
   shouldWritePassword,
   wallpaperFileName,
-} from '/js/admin-logic.js?v=4681aa43';
+} from '/js/admin-logic.js?v=06da6a19';
 import {
   advancedBase,
   applyGeneralFields,
@@ -17,7 +17,7 @@ import {
   labelsWith,
   planFieldSave,
   serialWrites,
-} from '/js/admin-save-logic.js?v=0bf36ea4';
+} from '/js/admin-save-logic.js?v=75436b3a';
 import {
   apiGet,
   apiPost,
@@ -34,8 +34,8 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=ab69bab7';
-import { BACKDROP } from '/js/background.js?v=d88017b5';
+} from '/js/admin-shared.js?v=599f0922';
+import { BACKDROP } from '/js/background.js?v=4576541d';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import {
   ALLOWED_HOSTS_MAX,
@@ -44,11 +44,11 @@ import {
   isLocalAddress,
   parseHostList,
 } from '/js/host-names.js?v=98bf44d7';
-import { t } from '/js/i18n.js?v=ec60b9bd';
+import { t } from '/js/i18n.js?v=98712bec';
 import { confirmText, promptModal } from '/js/modal.js?v=c4c1c4c4';
 import { contextWords, passwordMeter, passwordMismatch, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
 import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
-import { el, inp, qa, setUserText } from '/js/utils.js?v=ce415079';
+import { el, inp, qa, setUserText } from '/js/utils.js?v=8562a7d4';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
@@ -103,8 +103,8 @@ const readServerForm = () =>
 const wallpaperFormValues = () => [
   _val('bg-type'),
   _val('bg-br'),
-  _val('bg-col-inp', 'bg-col'),
-  _val('bg-url-inp', 'bg-url'),
+  _val('bg-col-inp'),
+  _val('bg-url-inp'),
   _val('bg-fit'),
   _val('bg-color-val'),
   _val('bg-apikey-inp'),
@@ -129,9 +129,9 @@ function readBackgroundFields() {
   const type = inp('bg-type')?.value || 'unsplash';
   const background = { type, brightness: parseFloat(inp('bg-br')?.value || '0.62') };
   if (type === 'unsplash') {
-    background.collection = (inp('bg-col-inp') || inp('bg-col'))?.value?.trim() || '';
+    background.collection = inp('bg-col-inp')?.value?.trim() || '';
   } else if (type === 'url') {
-    background.url = (inp('bg-url-inp') || inp('bg-url'))?.value?.trim() || '';
+    background.url = inp('bg-url-inp')?.value?.trim() || '';
     background.fit = inp('bg-fit')?.value === 'fit' ? 'fit' : 'fill';
   } else if (type === 'color') {
     background.color = inp('bg-color-val')?.value?.trim() || '';
@@ -275,10 +275,6 @@ export function loadSettings(c) {
   apiGet('/api/settings/unsplash-key')
     .then(d => showUnsplashKeyState(!!d.configured))
     .catch(() => {});
-  const colEl = inp('bg-col');
-  if (colEl) colEl.value = bg.collection || '';
-  const urlEl = inp('bg-url');
-  if (urlEl) urlEl.value = bg.url || '';
   const brEl = inp('bg-br');
   const brVal = el('bg-br-val');
   function updateSliderFill(slider) {

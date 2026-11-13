@@ -1,12 +1,8 @@
 // @ts-check
-import { folderChildren } from '/js/admin-logic.js?v=4681aa43';
+import { folderChildren } from '/js/admin-logic.js?v=06da6a19';
+import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=7112fd10';
 
 /* Keep this module free of the DOM. The DOM reads stay in doSave. */
-
-const BADGE_DEFAULT = 'info';
-
-/* Keep in step with MAX_LABELS in badge-logic.js. */
-const MAX_LABELS = 5;
 
 export function cleanId(label, fallback = 'item') {
   return (
@@ -315,7 +311,7 @@ export function keptWidget(orig, label, size) {
 
     @param {string} path @param {any} [style]
     @returns {{ path: string, name?: string, unit?: string, color?: string, min?: number }} */
-export function buildActivityLabel(path, style) {
+function buildActivityLabel(path, style) {
   const min = Math.floor(Number(style?.min));
   return {
     path,

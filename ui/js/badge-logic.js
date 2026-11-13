@@ -76,6 +76,8 @@ export const NAMED = { blue: '#1e6ef4', green: '#008932', yellow: '#ffcc00', red
 
 export const LABEL_DEFAULT_COLOR = '#1e6ef4';
 
+export const BADGE_DEFAULT = 'info';
+
 /* A badge list longer than this covers the tile it belongs to. */
 export const MAX_LABELS = 5;
 
@@ -206,7 +208,7 @@ export function firingLabels(labels, values, palette) {
       name: String(l.name || l.unit || l.path),
       value: v,
       unit: String(l.unit || ''),
-      color: cssUsableColor(l.color, palette) || cssUsableColor('info', palette) || LABEL_DEFAULT_COLOR,
+      color: cssUsableColor(l.color, palette) || cssUsableColor(BADGE_DEFAULT, palette) || LABEL_DEFAULT_COLOR,
     });
   }
   return out;

@@ -20,13 +20,19 @@ import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
-const { parseYaml } = await import('/js/yaml-lite.js');
+const { parseYamlTolerant } = await import('/js/yaml-lite.js');
 const { detectSource, convert, SKIP, NOTE } = await import('/js/import-foreign.js');
+
+const parseClean = text => {
+  const { doc, errors } = parseYamlTolerant(text);
+  assert.deepEqual(errors, []);
+  return doc;
+};
 
 const DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures');
 const read = f => fs.readFileSync(path.join(DIR, f), 'utf8');
 const load = f => {
-  const doc = parseYaml(read(f));
+  const doc = parseClean(read(f));
   const kind = detectSource(doc);
   return { kind, ...convert(kind, doc, []) };
 };
