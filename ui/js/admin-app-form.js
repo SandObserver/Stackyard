@@ -1,5 +1,5 @@
-import { BADGE_DEFAULT, renderColorControl } from '/js/admin-color-control.js?v=cf06489e';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=d1f8f6f4';
+import { BADGE_DEFAULT, renderColorControl } from '/js/admin-color-control.js?v=5c4450a2';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=05a2520c';
 import {
   clearsStoredSecret,
   failureIsMissingApiPath,
@@ -27,7 +27,7 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=ab69bab7';
+} from '/js/admin-shared.js?v=3896c288';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { MAX_LABELS } from '/js/badge-logic.js?v=04a4ece8';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';

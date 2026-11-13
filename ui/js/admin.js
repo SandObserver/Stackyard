@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=d7f40ef4';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=bd8f4f0a';
+} from '/js/admin-app-form.js?v=1788bf67';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=9bcd4745';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=96a149ce';
+} from '/js/admin-list.js?v=7540d3ab';
 import { folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=4681aa43';
 import {
   afterImport,
@@ -41,7 +41,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=129c3e93';
+} from '/js/admin-settings.js?v=7f834cbe';
 import {
   announce,
   apiGet,
@@ -66,11 +66,11 @@ import {
   swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=ab69bab7';
+} from '/js/admin-shared.js?v=3896c288';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=4a00c99a';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=b6798bf7';
 import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=d88017b5';
-import { recoveryShown } from '/js/config-recovery.js?v=5e8a2c4c';
+import { recoveryShown } from '/js/config-recovery.js?v=1d29620e';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=0c57b286';
@@ -1389,7 +1389,7 @@ el('btn-imp-docker').onclick = rowBusy(/** @type {HTMLButtonElement} */ (el('btn
     }
     await reviewImport(out.items, out.skipped, out.notes, 'toast.importDockerNothing');
   } catch (err) {
-    toast(t('toast.importFailed', { err: errorText(err) }), 'err');
+    toast(t('toast.importFailed', { err: errorText(err) }), 'err', errorAction(err));
   }
 });
 

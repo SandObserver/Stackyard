@@ -1,4 +1,4 @@
-import { setupErrorKey } from '/js/admin-error.js?v=d1f8f6f4';
+import { setupErrorKey } from '/js/admin-error.js?v=05a2520c';
 import {
   applyBackground,
   BACKDROP,
@@ -16,7 +16,7 @@ import {
   readBadgeUpdate,
 } from '/js/badge-logic.js?v=04a4ece8';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=2352c034';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=5e8a2c4c';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=1d29620e';
 import {
   configChanged,
   desktopCols,
