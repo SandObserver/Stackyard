@@ -1,0 +1,6 @@
+{
+  "all": true,
+  "allowExternal": true,
+  "src": ["src", "test-support", "../ui/widgets"],
+  "include": ["**/api/src/**/*.js", "**/api/test-support/**/*.js", "**/ui/widgets/*/data.js"]
+}
