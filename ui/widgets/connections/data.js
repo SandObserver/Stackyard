@@ -103,6 +103,7 @@ function errorText(e) {
 }
 
 function errorKindOf(e) {
+  if (e && e.name === 'WidgetError') return e.kind;
   if (e && e.name === 'SsrfBlockedError') return 'blocked';
   const code = e && e.code;
   if (TIMEOUT_CODES.has(code)) return 'timeout';

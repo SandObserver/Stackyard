@@ -112,3 +112,20 @@ test('umami with no credentials at all asks for one instead of posting an empty 
   const svc = r.services.find(s => s.type === 'umami');
   assert.match(svc.error, /API key/);
 });
+
+test('a map service whose key is rejected reads as a rejected key', async () => {
+  const r = await dataFn(
+    ctxFor({ type: 'plausible', url: 'https://plausible.local', siteId: 's', apiKey: 'bad' }, async () => ({
+      status: 401,
+      data: null,
+    })),
+  );
+  assert.equal(r.services.find(s => s.type === 'plausible').errorKind, 'auth');
+});
+
+test('a map service whose URL is only spaces reads as not set up', async () => {
+  const r = await dataFn(
+    ctxFor({ type: 'plausible', url: '   ', siteId: 's' }, async () => ({ status: 200, data: {} })),
+  );
+  assert.equal(r.services.find(s => s.type === 'plausible').errorKind, 'invalid');
+});
