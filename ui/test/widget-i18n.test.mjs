@@ -366,3 +366,16 @@ test('no widget or interface module picks a plural or joins translated words in 
   }
   assert.deepEqual(offenders, []);
 });
+
+/* A String.replace replacement string reads $$, $& and $' as patterns, so a
+   dashboard named "Savings $$" would lose a dollar sign. */
+test('widget pages fill placeholders through wt, not String.replace', () => {
+  const pages = fs.readdirSync(path.join(root, 'widgets'), { recursive: true }).filter(f => /\.(html|js)$/.test(f));
+  assert.ok(pages.length > 20);
+  for (const page of pages)
+    assert.doesNotMatch(
+      read(`widgets/${page}`),
+      /\.replace\(\s*['"`]\{\w+\}['"`]/,
+      `${page} fills a placeholder by hand`,
+    );
+});

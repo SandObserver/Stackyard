@@ -138,7 +138,6 @@ export async function mount({ theme = 'dark', onScreen = true } = {}) {
       documentElement: { lang: 'en' },
     },
     location: { search: '?id=map' },
-    matchMedia: () => ({ matches: false }),
     requestAnimationFrame: fn => {
       frames.set(nextFrame, fn);
       return nextFrame++;
@@ -169,12 +168,13 @@ export async function mount({ theme = 'dark', onScreen = true } = {}) {
     colorOrFallback: c => c,
     rgbOf,
     loadStrings: async () => {},
-    wt: (_, text) => text,
+    wt: (_, fallback, vars = {}) => fallback.replace(/\{(\w+)\}/g, (m, k) => (vars[k] == null ? m : String(vars[k]))),
     errorState: () => ({ ok() {}, empty() {}, fail() {} }),
     theme: () => theme,
     formatNumber: n => String(n),
     formatList: items => items.join(', '),
     cssZoom: () => 1,
+    reducedMotion: () => false,
     whileOnScreen: (_, fn) => {
       screenChanged = fn;
       fn(onScreen);

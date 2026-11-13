@@ -125,12 +125,10 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, fetchData, openUrl, linkTo, twoTap, toneForColor, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom, whileOnScreen } from '/js/widget-toolbox.js?v=467fc402';
+import { poll, fetchData, getConfig, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom, whileOnScreen, twoTap, toneForColor } from '/js/widget-toolbox.js?v=9ff36fbd';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
-const id   = new URLSearchParams(location.search).get('id')   || '';
 const size = new URLSearchParams(location.search).get('size') || 'small';
-const API  = '/api';
 
 const NAMED = { green:'#30D158', yellow:'#FFD600', red:'#FF4245', blue:'#0091FF' };
 
@@ -381,10 +379,7 @@ function assignHaikus(slots) {
 }
 
 async function boot() {
-  try {
-    const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
-    if(r.ok) _cfg=(await r.json()).widgetConfig||{};
-  } catch {}
+  _cfg=(await getConfig().catch(()=>null))?.widgetConfig||{};
   const rawSlots = Array.isArray(_cfg.slots) ? _cfg.slots : [];
   const count = size==='small' ? 1 : 3;
   _jobSlots = Array.from({length: count}, (_,i) => rawSlots[i]?.jobId || null);
@@ -601,7 +596,6 @@ function applyCard(idx, job) {
   const back  = document.getElementById(`back-${idx}`);
   const front = document.getElementById(`front-${idx}`);
   const bname = document.getElementById(`back-name-${idx}`);
-  const bmeta = document.getElementById(`back-meta-${idx}`);
   const fname = document.getElementById(`front-name-${idx}`);
   if(!back||!front) return;
 

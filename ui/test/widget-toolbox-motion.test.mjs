@@ -40,7 +40,7 @@ function setMotionPreference(reduce) {
 }
 
 stubDom();
-const { barFill, setBar } = await import('../js/widget-toolbox.js');
+const { barFill, reducedMotion, setBar } = await import('../js/widget-toolbox.js');
 
 const fillOf = track => track.children[0];
 
@@ -92,4 +92,39 @@ test('the bar moves by transform, never by its width', () => {
   assert.equal(fillOf(bar).style['--tb-pct'], '100%');
   setBar(bar, null);
   assert.equal(fillOf(bar).style['--tb-pct'], '0%');
+});
+
+/** A media query whose answer the test changes, as the system setting would. */
+function liveMotionPreference(reduce) {
+  const listeners = [];
+  const query = {
+    matches: reduce,
+    addEventListener: (type, fn) => type === 'change' && listeners.push(fn),
+  };
+  globalThis.window = { matchMedia: () => query };
+  return next => {
+    query.matches = next;
+    for (const fn of listeners) fn({ matches: next });
+  };
+}
+
+test('reducedMotion reports the preference and each change to it', () => {
+  const flip = liveMotionPreference(false);
+  const seen = [];
+  assert.equal(
+    reducedMotion(v => seen.push(v)),
+    false,
+  );
+  flip(true);
+  assert.equal(reducedMotion(), true);
+  flip(false);
+  assert.deepEqual(seen, [true, false]);
+});
+
+test('reducedMotion without matchMedia answers no and never calls back', () => {
+  setMotionPreference(null);
+  assert.equal(
+    reducedMotion(() => assert.fail('called back')),
+    false,
+  );
 });

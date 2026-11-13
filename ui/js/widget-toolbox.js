@@ -376,14 +376,19 @@ export function sparkline(values, opts = {}) {
   return svg;
 }
 
-/* A widget page loads no shared stylesheet, so a reduced-motion rule cannot
-   reach a style set here. Ask for the preference instead. */
-function reducedMotion() {
+/** Whether the reader asks for reduced motion, read at each call. A widget
+    page loads no shared stylesheet, so a style set from script asks here.
+    `onChange` runs with the new answer each time the setting changes.
+    @param {(reduce: boolean) => void} [onChange] @returns {boolean} */
+export function reducedMotion(onChange) {
+  let query;
   try {
-    return !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    query = window.matchMedia?.('(prefers-reduced-motion: reduce)');
   } catch {
     return false;
   }
+  if (onChange) query?.addEventListener?.('change', e => onChange(!!e.matches));
+  return !!query?.matches;
 }
 
 const _fitted = new Map();
@@ -731,6 +736,16 @@ export function wtCount(key, count, fallback, vars) {
   const own = _own && (_own[`${key}_${category}`] || _own[`${key}_other`]);
   const en = new Intl.PluralRules('en').select(count) === 'one' ? fallback.one : fallback.other;
   return _fill(typeof own === 'string' && own ? own : en, { ...vars, count: formatNumber(count) });
+}
+
+/** The 12- or 24-hour clock the reader's own locale uses.
+    @param {string} [locale] @returns {string|undefined} */
+export function readerHourCycle(locale) {
+  try {
+    return new Intl.DateTimeFormat(locale || 'en', { hour: 'numeric' }).resolvedOptions().hourCycle;
+  } catch {
+    return undefined;
+  }
 }
 
 /** @param {number} ts @returns {string} */

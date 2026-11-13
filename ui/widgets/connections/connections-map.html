@@ -44,7 +44,7 @@
 <div id="key" dir="ltr" hidden></div>
 <p class="sr-only" id="sr"></p>
 <script type="module">
-import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, rgbOf, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen } from '/js/widget-toolbox.js?v=467fc402';
+import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, rgbOf, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen, reducedMotion } from '/js/widget-toolbox.js?v=9ff36fbd';
 import * as M from './world-map.js';
 await loadStrings();
 document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World map of connections'));
@@ -53,7 +53,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
   const D=M.WORLD;
   const params=new URLSearchParams(location.search);
   const id=params.get('id')||'';
-  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let reduce=reducedMotion(v=>{reduce=v;kick();});
   const cv=document.getElementById('c'), ctx=cv.getContext('2d');
   const keyEl=document.getElementById('key'), srEl=document.getElementById('sr');
   const TAU=6.28318530718;
@@ -112,7 +112,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
       }
       const top=shares.slice().sort((x,y)=>y.users-x.users);
       const said=top.slice(0,10).map(a=>fmtName(a.cc)+' '+formatNumber(a.users));
-      if(top.length>10)said.push(wt('ui.more','+{n} more').replace('{n}',formatNumber(top.length-10)));
+      if(top.length>10)said.push(wt('ui.more','+{n} more',{n:formatNumber(top.length-10)}));
       s.chip.spoken=formatList(said,'plain');
     }
     srEl.textContent=legend.map(l=>l.spoken?l.name+': '+l.spoken:l.name).join('. ');
@@ -165,7 +165,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
       const more=document.createElement('span');
       more.className='k more';
       const text=document.createElement('bdi');
-      text.textContent=wt('ui.more','+{n} more').replace('{n}',formatNumber(legend.length-2));
+      text.textContent=wt('ui.more','+{n} more',{n:formatNumber(legend.length-2)});
       more.title=formatList(legend.slice(2).map(l=>l.name),'plain');
       more.append(text);
       keyEl.append(more);

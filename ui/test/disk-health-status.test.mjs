@@ -95,7 +95,7 @@ const fmtFn = src.match(/function fmtCap\(c\)\{.*\}/);
 const freeFn = src.match(/function freeText\(d\) \{[\s\S]*?\n\}/);
 assert.ok(fmtFn && freeFn, 'fmtCap and freeText are defined in the widget');
 const freeText = new Function('wt', 'formatNumber', `${fmtFn[0]}; ${freeFn[0]}; return freeText;`)(
-  (_k, fallback) => fallback,
+  (_k, fallback, vars = {}) => fallback.replace(/\{(\w+)\}/g, (m, k) => (vars[k] == null ? m : String(vars[k]))),
   n => String(n),
 );
 

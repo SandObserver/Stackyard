@@ -76,7 +76,7 @@
 <body>
 <div class="wrap" id="wrap" role="img" aria-label="VPN status"></div>
 <script type="module">
-import { readableInk, rgbOf, poll, fetchData, linkTo, esc, loadStrings, wt, wtCount, formatNumber, errorLine, placeholder, whileOnScreen } from '/js/widget-toolbox.js?v=467fc402';
+import { readableInk, rgbOf, poll, fetchData, linkTo, esc, loadStrings, wt, wtCount, formatNumber, errorLine, placeholder, whileOnScreen } from '/js/widget-toolbox.js?v=9ff36fbd';
 import { cellsOf, toGrid } from './world-map.js';
 await loadStrings();
 document.getElementById('wrap').setAttribute('aria-label', wt('ui.vpnStatus', 'VPN status'));
@@ -91,7 +91,6 @@ document.getElementById('wrap').setAttribute('aria-label', wt('ui.vpnStatus', 'V
   const GLOW_CYCLE_MS=4084;
 
   const rgba=(c,a)=>'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')';
-  const flagOf=cc=>(cc&&cc.length===2)?cc.toUpperCase().replace(/./g,c=>String.fromCodePoint(127397+c.charCodeAt(0))):'';
   const trimOrg=o=>o?String(o).replace(/^AS\d+\s+/i,'').trim():'';
 
   const I_GLOBE='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.4"/><path d="M3.6 12h16.8M12 3.6c2.4 2.3 2.4 14.5 0 16.8M12 3.6c-2.4 2.3-2.4 14.5 0 16.8"/></svg>';
@@ -178,7 +177,6 @@ document.getElementById('wrap').setAttribute('aria-label', wt('ui.vpnStatus', 'V
 
     const name=(d.name&&d.name.trim())||(svc==='netbird'?wt('ui.mesh','Mesh'):'VPN');
     const cc=(d.countryCode||'').toUpperCase();
-    const flag=flagOf(cc);
     let place;
     if(svc==='netbird'){
       place=isErr?errLine:d.peersConnected!=null?(d.peersTotal

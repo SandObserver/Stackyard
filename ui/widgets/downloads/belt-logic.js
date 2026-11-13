@@ -40,16 +40,6 @@ export function startOfDay(now) {
   return d.getTime();
 }
 
-/** The 12- or 24-hour clock the reader's own locale uses.
-    @param {string} [locale] @returns {string|undefined} */
-export function readerHourCycle(locale) {
-  try {
-    return new Intl.DateTimeFormat(locale || 'en', { hour: 'numeric' }).resolvedOptions().hourCycle;
-  } catch {
-    return undefined;
-  }
-}
-
 /** A finish time in the interface language, without its day period. `half` is
     'am' or 'pm' when the clock has one, so the caller names it from its catalog.
     @param {number} ms @param {number} now @param {string} lang @param {string|undefined} hourCycle
