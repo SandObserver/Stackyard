@@ -65,15 +65,18 @@ test('the dashboard listens for widget-active, and checks the origin', () => {
   }
 });
 
+/* Widget pages and the toolbox they share, which holds the two-tap reveal. */
+const scripts = [...pages, 'js/widget-toolbox.js'];
+
 test('a widget that posts, posts widget-active to its own origin', () => {
-  const senders = pages.filter(p => /postMessage\(/.test(read(p)));
+  const senders = scripts.filter(p => /postMessage\(/.test(read(p)));
   assert.ok(senders.length > 0, 'no widget posts to the parent any more');
   for (const p of senders) {
     const src = read(p);
     assert.doesNotMatch(src, /postMessage\([^)]*,\s*['"]\*['"]\s*\)/, `${p} posts to '*'`);
     assert.match(
       src,
-      /postMessage\(\{ type:'widget-active' \}, window\.location\.origin\)/,
+      /postMessage\(\{ ?type: ?'widget-active' ?\}, window\.location\.origin\)/,
       `${p} posts something other than widget-active to its own origin`,
     );
   }
@@ -86,10 +89,10 @@ test('the dashboard resets a widget by calling its __clearActive', () => {
 });
 
 test('a widget that can go active exposes __clearActive', () => {
-  for (const p of pages) {
+  for (const p of scripts) {
     const src = read(p);
-    if (!/postMessage\(\{ type:'widget-active' \}/.test(src)) continue;
-    assert.match(src, /window\.__clearActive\s*=/, `${p} announces itself active but cannot be reset`);
+    if (!/postMessage\(\{ ?type: ?'widget-active' ?\}/.test(src)) continue;
+    assert.match(src, /window\)?\.__clearActive\s*=/, `${p} announces itself active but cannot be reset`);
   }
 });
 

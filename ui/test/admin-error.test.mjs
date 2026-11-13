@@ -19,6 +19,7 @@ import {
   socketProbeAdvice,
   loginErrorAdvice,
   optionsErrorAdvice,
+  passwordRefusalKey,
   readError,
   setupErrorKey,
   KIND,
@@ -232,6 +233,50 @@ test('a refused first-run password maps to a translated sentence', () => {
   assert.equal(setupErrorKey({ kind: 'invalid', code: 'invalid.setup-code' }), 'hostBlock.codeWrong');
   assert.equal(setupErrorKey(new TypeError('Failed to fetch')), 'setup.failed');
   assert.equal(typeof lookup('setup.failed'), 'string');
+});
+
+/* The recovery screen passes the reply body, not an error. */
+test('a refused setup on the recovery screen names the same fix', () => {
+  assert.equal(setupErrorKey({ code: 'invalid.setup-code' }), 'hostBlock.codeWrong');
+  assert.equal(setupErrorKey({ code: 'invalid.password-short' }), 'hostBlock.tooShort');
+  assert.equal(setupErrorKey({ code: 'invalid.password-long' }), 'hostBlock.tooLong');
+  assert.equal(setupErrorKey({ code: 'invalid.password-common' }), 'pwStrength.common');
+  assert.equal(setupErrorKey({ code: 'internal.config-file-mounted' }), 'adminError.configFileMounted');
+  assert.equal(setupErrorKey({ code: 'invalid' }), 'setup.failed');
+  assert.equal(setupErrorKey(null), 'setup.failed');
+});
+
+test('every password screen reads a refused password from one table', () => {
+  const refusals = {
+    'invalid.setup-code': 'hostBlock.codeWrong',
+    'invalid.current-password': 'toast.currentPasswordWrong',
+    'invalid.password-changed': 'toast.passwordChangedElsewhere',
+    'invalid.password-short': 'hostBlock.tooShort',
+    'invalid.password-long': 'hostBlock.tooLong',
+    'invalid.password-common': 'pwStrength.common',
+  };
+  for (const [code, key] of Object.entries(refusals)) {
+    assert.equal(passwordRefusalKey({ kind: 'invalid', code }), key, code);
+    assert.equal(setupErrorKey({ kind: 'invalid', code }), key, code);
+    assert.equal(typeof lookup(key), 'string', key);
+  }
+  for (const code of ['invalid.other', 'internal.disk-full', 'constructor', '__proto__'])
+    assert.equal(passwordRefusalKey({ code }), '', code);
+  assert.equal(passwordRefusalKey(null), '');
+
+  const read = file => fs.readFileSync(new URL(`../js/${file}`, import.meta.url), 'utf8');
+  assert.match(read('config-recovery.js'), /setupErrorKey\(/);
+  assert.match(read('dashboard.js'), /setupErrorKey\(/);
+  assert.match(read('admin-settings.js'), /passwordRefusalKey\(failure\)/);
+  for (const file of ['config-recovery.js', 'config-recovery-logic.js', 'dashboard.js', 'admin-settings.js']) {
+    const src = read(file);
+    assert.doesNotMatch(src, /'invalid\.(setup-code|password-[a-z]+|current-password)'\s*:/, file);
+    assert.doesNotMatch(
+      src,
+      /t\('(hostBlock\.(codeWrong|tooShort|tooLong)|toast\.(currentPasswordWrong|passwordChangedElsewhere)|pwStrength\.common)'\)/,
+      file,
+    );
+  }
 });
 
 test('a badge answer too large to read maps to its own sentence', () => {

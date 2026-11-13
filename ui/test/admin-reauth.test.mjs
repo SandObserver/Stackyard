@@ -134,3 +134,56 @@ test('a request that succeeds never asks anyone to sign in', async () => {
   assert.equal(signIns, 0);
   assert.equal(calls.length, 1);
 });
+
+test('a widget option Fetch after the session expired signs in and fetches again', async () => {
+  const { fetchFieldOptions } = await import('../js/widget-config-form.js');
+  const calls = [];
+  const plan = [401, 200];
+  globalThis.fetch = async (url, opts) => {
+    calls.push({ url, method: opts?.method || 'GET', body: opts?.body });
+    const status = plan.shift();
+    return {
+      ok: status < 400,
+      status,
+      json: async () => {
+        if (status >= 400) throw new Error('not json');
+        return { options: [{ value: 'sda', label: 'sda' }] };
+      },
+    };
+  };
+  let signIns = 0;
+  setReauthHandler(async () => {
+    signIns++;
+    return true;
+  });
+
+  const got = await fetchFieldOptions(
+    { optionsFrom: 'devices' },
+    { widgetId: 'w-disks', widgetType: 'disk-health', getDraft: () => ({ url: 'http://nas' }) },
+  );
+
+  assert.equal(signIns, 1, 'the expired session raises the sign-in box');
+  assert.deepEqual(
+    calls.map(c => [c.method, c.url]),
+    [
+      ['POST', '/api/widget-options/w-disks'],
+      ['POST', '/api/widget-options/w-disks'],
+    ],
+  );
+  assert.equal(calls[1].body, calls[0].body, 'the retry sends the same draft');
+  assert.deepEqual(got, { options: [{ value: 'sda', label: 'sda' }], truncated: false });
+});
+
+test('a widget option Fetch refused for good keeps the structured error', async () => {
+  const { fetchFieldOptions } = await import('../js/widget-config-form.js');
+  globalThis.fetch = async () => ({
+    ok: false,
+    status: 502,
+    json: async () => ({ error: 'English prose', kind: 'network', code: 'network.refused', detail: { port: 80 } }),
+  });
+  const e = await fetchFieldOptions({ optionsFrom: 'devices' }, {}).catch(x => x);
+  assert.equal(e.status, 502);
+  assert.equal(e.kind, 'network');
+  assert.equal(e.code, 'network.refused');
+  assert.deepEqual(e.detail, { port: 80 });
+});

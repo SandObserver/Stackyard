@@ -24,21 +24,19 @@ function boot(dataset) {
     Image: class {},
   };
   vm.runInNewContext(src, context);
-  return { sent, early: window.__early };
+  return { sent, early: window.__early, timeoutMs: window.__bootTimeoutMs };
 }
 
 test('the dashboard sends its first three requests from the boot script', () => {
-  const { sent, early } = boot({ early: '' });
+  const { sent, early, timeoutMs } = boot({ early: '' });
   assert.deepEqual(
     sent.map(s => s.url),
     ['/api/auth/check', '/api/config', '/api/widgets'],
   );
   assert.ok(sent.every(s => s.init.cache === 'no-store'));
-  const dashboard = fs.readFileSync(path.join(root, 'js/dashboard.js'), 'utf8');
-  const limit = Number(/const BOOT_TIMEOUT_MS = (\d+);/.exec(dashboard)?.[1]);
-  assert.ok(limit > 0, 'BOOT_TIMEOUT_MS moved');
-  assert.equal(sent[0].init.signal.ms, limit, 'the boot script and the dashboard time out apart');
-  assert.equal(sent[1].init.signal.ms, limit);
+  assert.ok(timeoutMs > 0);
+  assert.equal(sent[0].init.signal.ms, timeoutMs);
+  assert.equal(sent[1].init.signal.ms, timeoutMs);
   assert.equal(sent[2].init.signal, undefined, 'the widget list has no timeout in boot either');
   assert.deepEqual(Object.keys(early), ['auth', 'config', 'widgets']);
 });
@@ -59,4 +57,10 @@ test('dashboard.js takes the early requests once, and falls back to its own', ()
   );
   assert.match(js, /early\?\.config \?\? fetch\('\/api\/config'/);
   assert.match(js, /loadWidgets\(early\?\.widgets\)/);
+});
+
+test("the dashboard times out its boot requests with the boot script's value", () => {
+  const js = fs.readFileSync(path.join(root, 'js/dashboard.js'), 'utf8');
+  assert.match(js, /const BOOT_TIMEOUT_MS = \/\*\* @type \{any\} \*\/ \(window\)\.__bootTimeoutMs;/);
+  assert.doesNotMatch(js, /AbortSignal\.timeout\(\d/, 'a second literal timeout');
 });
