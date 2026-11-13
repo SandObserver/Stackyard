@@ -17,8 +17,8 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=c35700d1';
-import { t, currentLang } from '/js/i18n.js?v=ec60b9bd';
+} from '/js/utils.js?v=9647ab80';
+import { t, currentLang } from '/js/i18n.js?v=e11cab88';
 import { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
 import {
   BASE_VW,
@@ -31,7 +31,7 @@ import {
 import { animate, easing, glide, isScripted, requestFrame, stopGlide } from '/js/frame-motion.js?v=1d86154d';
 import { openFolderGlass } from '/js/glass.js?v=258316fb';
 import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=b4828b62';
-import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
+import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 
 /* Matches the --pill-inset transition in dashboard.css. */

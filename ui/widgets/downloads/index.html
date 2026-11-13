@@ -109,8 +109,8 @@
 </div>
 <script type="module">
 import {
-  poll, getConfig, loadStrings, wt, wtCount, formatNumber, formatList, localiseDigits, linkTo, errorState, readingTime, fitText, placeholder, readerHourCycle,
-} from '/js/widget-toolbox.js?v=9ff36fbd';
+  poll, getConfig, loadStrings, wt, wtCount, formatNumber, formatList, localiseDigits, formatByteRate, linkTo, errorState, readingTime, fitText, placeholder, readerHourCycle,
+} from '/js/widget-toolbox.js?v=7f16d266';
 import { ensureSprite } from '/js/icon-set.js?v=4d944cec';
 import { variations, finishedToday, hoursMinutes, leftover, lidOpen, finishParts } from './belt-logic.js';
 
@@ -190,10 +190,7 @@ function duration(seconds, unitDisplay) {
   if (!h) return part(m, 'minute');
   return m ? `${part(h, 'hour')} ${part(m, 'minute')}` : part(h, 'hour');
 }
-function speed(bps) {
-  const mb = bps / 1e6;
-  return mb >= 1 ? unit(mb, 'megabyte-per-second', 1) : unit(bps / 1e3, 'kilobyte-per-second');
-}
+const speed = bps => iso(formatByteRate(bps, { min: 'kilobyte' }));
 const percent = p => iso(formatNumber(p, { style: 'percent', maximumFractionDigits: 0 }));
 const LANG = new URLSearchParams(location.search).get('lang') || 'en';
 const HOUR_CYCLE = readerHourCycle(navigator.language);

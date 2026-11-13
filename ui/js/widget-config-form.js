@@ -1,11 +1,11 @@
 /* Renders a widget's declared `fields` into a config form and reads the values
    back. Each builder returns { el, get, control, liveValue }. */
 
-import { t } from '/js/i18n.js?v=ec60b9bd';
+import { t } from '/js/i18n.js?v=e11cab88';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { apiPost, fadeIn, PE_SVG, reveal, wireInlineEdit } from '/js/admin-shared.js?v=615e0826';
-import { createListbox } from '/js/listbox.js?v=92b8dae9';
-import { renderColorControl } from '/js/admin-color-control.js?v=2c0de672';
+import { apiPost, fadeIn, PE_SVG, reveal, wireInlineEdit } from '/js/admin-shared.js?v=cea59c52';
+import { createListbox } from '/js/listbox.js?v=82de2478';
+import { renderColorControl } from '/js/admin-color-control.js?v=831c9a7b';
 import {
   seedCarried,
   applyOptionSet,
@@ -16,8 +16,8 @@ import {
   isPlainField,
 } from '/js/admin-logic.js?v=4681aa43';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=05a2520c';
-import { qi } from '/js/utils.js?v=c35700d1';
-import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
+import { qi } from '/js/utils.js?v=9647ab80';
+import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import { SAVED_ROW } from '/js/saved-row.js?v=44039df6';
 import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
 

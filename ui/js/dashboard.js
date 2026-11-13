@@ -7,7 +7,7 @@ import {
   rememberBackground,
   resolveBackground,
   parseWallpaperUrl,
-} from '/js/background.js?v=43e4168b';
+} from '/js/background.js?v=faa16955';
 import {
   badgeMinimum,
   badgeSignature,
@@ -15,8 +15,8 @@ import {
   folderLabelName,
   readBadgeUpdate,
 } from '/js/badge-logic.js?v=04a4ece8';
-import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=2352c034';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=1d29620e';
+import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=2338cc3f';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=9cc50f91';
 import {
   clampPage,
   configChanged,
@@ -31,11 +31,11 @@ import {
 } from '/js/dashboard-logic.js?v=b4828b62';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
-import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
+import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import { easing, glide, isScripted } from '/js/frame-motion.js?v=1d86154d';
 import { glassWallpaper, startGlass } from '/js/glass.js?v=258316fb';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { currentLang, initI18n, isSupported, t } from '/js/i18n.js?v=ec60b9bd';
+import { currentLang, initI18n, isSupported, t } from '/js/i18n.js?v=e11cab88';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=4d944cec';
 import { iconChain, loadLocalIcons } from '/js/icons.js?v=76c29d43';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
@@ -53,7 +53,7 @@ import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
-import { initSpotlight } from '/js/spotlight.js?v=afb67965';
+import { initSpotlight } from '/js/spotlight.js?v=21b6b6aa';
 import { applyTheme, prefersDark, readMode, resolveTheme, THEME_KEY, watchTransparency } from '/js/theme.js?v=0bbd81e8';
 import {
   buildMobile,
@@ -65,7 +65,7 @@ import {
   openFolderMobile,
   resetMobileChrome,
   swipePager,
-} from '/js/ui.js?v=9d8f3eba';
+} from '/js/ui.js?v=2904b79b';
 import {
   mkWrap as _mkWrap,
   el,
@@ -88,7 +88,7 @@ import {
   teardownWidgets,
   titleWhenTruncated,
   within,
-} from '/js/utils.js?v=c35700d1';
+} from '/js/utils.js?v=9647ab80';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import {
