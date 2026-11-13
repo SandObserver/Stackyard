@@ -125,7 +125,7 @@ test('the check is wired into CI', () => {
 test('the workflows call the shared checks rather than listing their own', () => {
   for (const name of ['test.yml', 'release.yml']) {
     const workflow = fs.readFileSync(path.resolve(root, `../.github/workflows/${name}`), 'utf8');
-    assert.match(workflow, /uses: \.\/\.github\/actions\/checks/, `${name} bypasses the shared checks`);
+    assert.match(workflow, /uses: \$\/\.github\/actions\/checks/, `${name} bypasses the shared checks`);
   }
 });
 

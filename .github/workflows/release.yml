@@ -14,7 +14,7 @@ permissions:
 jobs:
   # A tag must not publish an image the browser tests reject.
   e2e:
-    uses: ./.github/workflows/e2e.yml
+    uses: $/.github/workflows/e2e.yml
 
   # Keep this out of build-and-push. Dev dependencies run here, and must never
   # hold the publishing or signing tokens. On failure the tag stays with nothing
@@ -31,7 +31,7 @@ jobs:
           persist-credentials: false
 
       - name: Run project checks
-        uses: ./.github/actions/checks
+        uses: $/.github/actions/checks
         with:
           mode: release
 
@@ -59,6 +59,7 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
+          package-manager-cache: false
 
       # Both images run in this job. Pin by digest; a tag can be moved.
       - name: Set up QEMU
@@ -332,6 +333,7 @@ jobs:
         with:
           client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -342,6 +344,7 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
+          package-manager-cache: false
 
       - name: Classify the tag
         id: tag
@@ -409,7 +412,7 @@ jobs:
       cancel-in-progress: false
     permissions:
       contents: read
-    uses: ./.github/workflows/demo.yml
+    uses: $/.github/workflows/demo.yml
     with:
       digest: ${{ needs.build-and-push.outputs.digest }}
       version: ${{ needs.build-and-push.outputs.version }}
