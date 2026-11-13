@@ -44,6 +44,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The sign-in password field is empty when the sign-in box appears again after a
   session expires.
 
+- The Connections VPN view now draws the map for every country the Map view
+  shows, including Switzerland, Singapore, Hong Kong, Taiwan, Austria and
+  Belgium.
+
+- A Connections VPN colour with an alpha value or in short form now shows as
+  picked.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
