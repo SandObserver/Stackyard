@@ -83,3 +83,18 @@ test('a blocked address is not named in the reply', async () => {
   assert.equal(r.error, 'The request was blocked.');
   assert.doesNotMatch(JSON.stringify(r), /10\.0\.0\.5|gluetun\.lan/);
 });
+
+test('a NetBird token the management API rejects reads as a rejected key', async () => {
+  const ctx = {
+    ...ctxFor({ service: 'netbird', url: 'http://10.0.0.6', token: 'expired' }),
+    fetchJSON: async () => ({ status: 401, data: null }),
+  };
+  const r = await dataFn(ctx);
+  assert.equal(r.errorKind, 'auth');
+  assert.equal(r.connected, false);
+});
+
+test('a VPN card with no URL reads as not set up', async () => {
+  const r = await dataFn(ctxFor({ service: 'netbird', url: '' }));
+  assert.equal(r.errorKind, 'invalid');
+});
