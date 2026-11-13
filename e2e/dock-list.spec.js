@@ -46,7 +46,7 @@ test('dragging an app onto a dock row docks it at that place', async ({ page, re
   const saved = waitForSave(page);
   await dragRow(rowByName(page, 'Alpha'), rowByName(page, 'Eff'), 'above');
   expect((await saved).status()).toBe(200);
-  expect(await groupNames(page, 'dock')).toEqual(['Dee', 'Alpha', 'Eff']);
+  await expect.poll(() => groupNames(page, 'dock')).toEqual(['Dee', 'Alpha', 'Eff']);
   expect(await savedDock(request)).toEqual(['dee', 'alpha', 'eff']);
 });
 
@@ -56,7 +56,7 @@ test('dragging a docked app onto a home row undocks it', async ({ page, request 
   const saved = waitForSave(page);
   await dragRow(rowByName(page, 'Dee'), rowByName(page, 'Bravo'), 'above');
   expect((await saved).status()).toBe(200);
-  expect(await groupNames(page, 'home')).toEqual(['Alpha', 'Dee', 'Bravo', 'Settings']);
+  await expect.poll(() => groupNames(page, 'home')).toEqual(['Alpha', 'Dee', 'Bravo', 'Settings']);
   expect(await savedDock(request)).toEqual([]);
   await expect(page.locator('#al .al-dock-empty')).toBeVisible();
 });
