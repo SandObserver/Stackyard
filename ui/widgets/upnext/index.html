@@ -73,7 +73,7 @@
   <div class="wt-cap note" id="note" hidden></div>
 </div>
 <script type="module">
-  import { poll, linkTo, loadStrings, wt, errorState, errorLine, placeholder, localiseDigits, cssZoom } from '/js/widget-toolbox.js?v=048ad37d';
+  import { poll, linkTo, loadStrings, wt, errorState, errorLine, placeholder, localiseDigits, cssZoom, readerHourCycle } from '/js/widget-toolbox.js?v=d2ef8e1e';
   import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
   import { visibleItems, dayOffset, kindClass } from './upnext-logic.js';
 
@@ -92,7 +92,7 @@
   initFluidHover(document, [{ container: '#rows', item: '.row.clickable', zoom: cssZoom }]);
 
   const lang = params.get('lang') || 'en';
-  const hourCycle = (() => { try { return new Intl.DateTimeFormat(navigator.language || 'en', { hour: 'numeric' }).resolvedOptions().hourCycle; } catch { return undefined; } })();
+  const hourCycle = readerHourCycle(navigator.language);
   const fmt = (o) => { try { return new Intl.DateTimeFormat(lang, o); } catch { return new Intl.DateTimeFormat('en', o); } };
   const WEEKDAY = fmt({ weekday: 'short' });
   const SHORT_DATE = fmt({ day: 'numeric', month: 'short' });

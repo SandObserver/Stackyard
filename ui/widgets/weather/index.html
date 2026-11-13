@@ -78,13 +78,10 @@
   <div class="sr-only" id="sr"></div>
 </div>
 <script type="module">
-import { poll, fetchData, rollText, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, setHtml } from '/js/widget-toolbox.js?v=048ad37d';
+import { poll, fetchData, getConfig, reducedMotion, rollText, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, setHtml } from '/js/widget-toolbox.js?v=d2ef8e1e';
 import { ensureSprite } from '/js/icon-set.js?v=4d944cec';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('widget.label', 'Weather'));
-const API='/api';
-const params=new URLSearchParams(location.search);
-const id=params.get('id')||'';
 const TICK_MS=600000;
 
 const widgetEl=document.getElementById('widget');
@@ -371,7 +368,6 @@ function describe() {
 }
 setInterval(() => { if (document.hidden) return; describe(); }, 60000);
 
-const still=matchMedia('(prefers-reduced-motion: reduce)');
 const bounce=(t,period)=>{const x=(t/period)%2;return x<1?x:2-x;};
 /* An HTML box the size of the icon needs %, an svg part needs px, for one unit of the artwork. */
 const drift=(e,units)=>{e.style.transform=`translateX(${units.toFixed(2)}${e.tagName==='DIV'?'%':'px'})`;};
@@ -385,11 +381,11 @@ function ambient(){
 function runAmbient(){
   clearInterval(ambientTimer);
   ambientTimer=0;
-  if(still.matches){for(const e of icoEl.querySelectorAll('.wx-front,.wx-back,.wx-mist'))e.removeAttribute('style');return;}
+  if(reducedMotion()){for(const e of icoEl.querySelectorAll('.wx-front,.wx-back,.wx-mist'))e.removeAttribute('style');return;}
   if(onScreen){ambient();ambientTimer=setInterval(ambient,500);}
 }
 whileOnScreen(icoEl,v=>{onScreen=v;icoEl.classList.toggle('off',!v);runAmbient();});
-still.addEventListener('change',runAmbient);
+reducedMotion(runAmbient);
 icoEl.addEventListener('animationiteration',e=>{
   const p=e.target.parentNode;
   if(!p.classList.contains('wx-pos'))return;
@@ -415,8 +411,7 @@ const state=errorState({root:widgetEl,content:[icoEl,condEl,tempEl,aqEl],caption
 
 const wfetch=()=>fetchData('weather');
 async function boot(){
-  let cfg=null;
-  try{const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);if(r.ok)cfg=await r.json();}catch(e){}
+  const cfg=await getConfig().catch(()=>null);
   const href=cfg&&cfg.widgetConfig&&cfg.widgetConfig.href;
   linked=linkTo(widgetEl,href);
   /* poll keeps the last reading through a transient failure. onError runs when

@@ -1,7 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { clockDateFormatter, clockDateParts, clockDateWithYear, zoneTime } from '../js/clock-date.js';
+import {
+  clockDateFormatter,
+  clockDateParts,
+  clockDateWithYear,
+  clockSettings,
+  msToNextMinute,
+  twoDigits,
+  zoneOk,
+  zoneTime,
+} from '../js/clock-date.js';
 
 const at = s => new Date(`${s}T12:00:00`);
 
@@ -114,4 +123,36 @@ test("the dates follow the clock's zone, not the browser's", () => {
   assert.equal(clockDateWithYear('en', 'Asia/Tokyo')(d), 'October 27, 2026');
   assert.equal(clockDateFormatter('en', 'short', 'Asia/Tokyo')(d), 'Tue, Oct 27');
   assert.equal(clockDateParts('fa', 'long', true, 'Asia/Tokyo')(d).date, '۵ آبان ۲۵۸۵');
+});
+
+test('the next minute counts the milliseconds already gone', () => {
+  assert.equal(msToNextMinute(new Date(Date.UTC(2026, 10, 13, 10, 15, 42, 750))), 17250);
+  assert.equal(msToNextMinute(new Date(Date.UTC(2026, 10, 13, 10, 15, 59, 999))), 1);
+  assert.equal(msToNextMinute(new Date(Date.UTC(2026, 10, 13, 10, 16, 0, 0))), 60000);
+});
+
+test('an unknown zone is caught before any formatter runs', () => {
+  assert.equal(zoneOk(''), true);
+  assert.equal(zoneOk('Europe/Berlin'), true);
+  assert.equal(zoneOk('Berlin'), false);
+});
+
+test('clock figures keep two digits in the language digits', () => {
+  assert.equal(twoDigits('en')(7), '07');
+  assert.equal(twoDigits('fa')(7), '۰۷');
+  assert.equal(twoDigits('not a tag!')(7), '07');
+});
+
+test('clock settings fall back to the defaults when the config cannot be read', async () => {
+  assert.deepEqual(
+    await clockSettings(async () => ({ widgetConfig: { clockTimezone: 'Asia/Tokyo', clockShowDate: false } })),
+    {
+      timeZone: 'Asia/Tokyo',
+      showDate: false,
+    },
+  );
+  assert.deepEqual(await clockSettings(() => Promise.reject(new Error('config HTTP 500'))), {
+    timeZone: '',
+    showDate: true,
+  });
 });

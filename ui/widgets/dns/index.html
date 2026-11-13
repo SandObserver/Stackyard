@@ -68,20 +68,15 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, rollText, linkTo, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=048ad37d';
+import { poll, fetchData, getConfig, rollText, linkTo, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=d2ef8e1e';
 await loadStrings();
 /* These two are in the markup, so the widget still reads correctly in English
    if the catalog fetch fails. */
 document.getElementById('sub-label').textContent = wt('ui.queriesBlocked', 'Queries Blocked');
 document.getElementById('widget').setAttribute('aria-label', wt('ui.aria', 'DNS filtering'));
 const TICK_MS = 30000;
-const params = new URLSearchParams(location.search);
-const id   = params.get('id')   || '';
-const API  = '/api';
-const NS   = 'http://www.w3.org/2000/svg';
 
 let _href = '';
-let _provider = 'adguard';
 let _last = null;
 
 const widgetEl = document.getElementById('widget');
@@ -105,13 +100,8 @@ async function boot() {
   pctEl.replaceChildren(placeholder(64, 26, 6));
   flowEl.classList.add('ph');
   render({ allowed: 6, cached: 3, blocked: 2 }, true);
-  let cfg = null;
-  try {
-    const r = await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
-    if (r.ok) cfg = await r.json();
-  } catch {}
+  const cfg = await getConfig().catch(() => null);
   _href = cfg?.widgetConfig?.dnsHref || '';
-  _provider = cfg?.widgetConfig?.provider || 'adguard';
   const link = d => {
     if (linkTo(widgetEl, d?.link || _href)) widgetEl.setAttribute('aria-describedby', 'sr');
     else widgetEl.removeAttribute('aria-describedby');
@@ -142,9 +132,9 @@ function apply(d) {
   render(model);
   showHeadline();
 
-  srEl.textContent = wt('ui.summary', '{pct}% of {total} queries blocked. Allowed {allowed}, cached {cached}, blocked {blocked}.')
-    .replace('{pct}', formatNumber(pct)).replace('{total}', fmt(total))
-    .replace('{allowed}', fmt(allowed)).replace('{cached}', fmt(cached)).replace('{blocked}', fmt(blocked));
+  srEl.textContent = wt('ui.summary', '{pct}% of {total} queries blocked. Allowed {allowed}, cached {cached}, blocked {blocked}.', {
+    pct: formatNumber(pct), total: fmt(total), allowed: fmt(allowed), cached: fmt(cached), blocked: fmt(blocked),
+  });
 }
 
 function constLink(x0,c0,x1,c1,t) {

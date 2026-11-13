@@ -106,12 +106,10 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-  import { poll, linkTo, loadStrings, wt, formatNumber, errorState, placeholder } from '/js/widget-toolbox.js?v=048ad37d';
+  import { poll, getConfig, linkTo, loadStrings, wt, formatNumber, errorState, placeholder } from '/js/widget-toolbox.js?v=d2ef8e1e';
   await loadStrings();
   document.getElementById('card').setAttribute('aria-label', wt('widget.label', 'Books'));
-  const API='/api';
   const params=new URLSearchParams(location.search);
-  const id=params.get('id')||'';
   const SIZES={small:{shelves:1,show:8},medium:{shelves:1,show:16},large:{shelves:3,show:16}};
   const size=Object.hasOwn(SIZES,params.get('size'))?params.get('size'):'small';
   const {shelves:SHELVES,show:SHOW}=SIZES[size];
@@ -148,7 +146,7 @@
   function inProgress(b){ return !b.finished && b.progress!=null && b.progress>0 && b.progress<1; }
   function progressText(b){
     if(b.finished) return [wt('ui.finished','Finished'),'done'];
-    if(b.progress!=null) return [wt('ui.percentRead','{pct}% read').replace('{pct}',formatNumber(Math.round(b.progress*100))),'reading'];
+    if(b.progress!=null) return [wt('ui.percentRead','{pct}% read',{pct:formatNumber(Math.round(b.progress*100))}),'reading'];
     return [wt('ui.unread','Unread'),'none'];
   }
   function describe(b){
@@ -236,10 +234,8 @@
 
   async function boot(){
     paintPlaceholders();
-    try{
-      const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
-      if(r.ok){ const c=await r.json(); href=(c&&c.widgetConfig&&c.widgetConfig.href)||''; }
-    }catch(e){}
+    const c=await getConfig().catch(()=>null);
+    href=c?.widgetConfig?.href||'';
     const link=document.getElementById('bk-link');
     const setLink=d=>{ if(linkTo(link,(d&&d.link)||href)) link.setAttribute('aria-label', wt('widget.label','Books')); };
     setLink(null);
