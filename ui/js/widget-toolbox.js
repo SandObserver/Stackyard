@@ -8,6 +8,7 @@ import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-erro
 import { formatNumber, numberSymbols, setNumberLanguage } from '/js/format-number.js?v=9dcba1ce';
 
 export { esc, html, setHtml };
+export { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
 
 /* Escaping cannot make a CSS value safe. `red; background-image: url(...)`
    survives esc() and still parses as a second declaration. Assign the result
@@ -198,6 +199,80 @@ export function linkTo(el, href) {
     el.removeAttribute('tabindex');
   }
   return on;
+}
+
+const TAP_SLOP = 8;
+/** @type {Map<Element, () => void>} */
+const _taps = new Map();
+/** @type {Element | null} */
+let _tapActive = null;
+let _tapTimer = 0;
+
+function _tapClear() {
+  clearTimeout(_tapTimer);
+  _tapActive = null;
+  for (const conceal of _taps.values()) conceal();
+}
+
+/** On touch, a first tap reveals `el` and a second tap opens it. A finger that
+    moves more than 8px is a swipe and does nothing. A reveal tells the
+    dashboard, which conceals every element given here through
+    window.__clearActive when another widget is tapped. A tap outside them all
+    conceals them too, and so does `timeout` ms without a second tap.
+    @param {Element} el
+    @param {{ reveal: () => void, conceal: () => void, open: () => void, canReveal?: () => boolean, timeout?: number }} opts */
+export function twoTap(el, { reveal, conceal, open, canReveal = () => true, timeout = 0 }) {
+  if (!_taps.size) {
+    document.addEventListener(
+      'touchend',
+      e => {
+        const target = /** @type {Node} */ (e.target);
+        if (![..._taps.keys()].some(t => t.contains(target))) _tapClear();
+      },
+      { passive: true },
+    );
+    /** @type {any} */ (window).__clearActive = _tapClear;
+  }
+  _taps.set(el, conceal);
+  let x = 0,
+    y = 0,
+    moved = false;
+  el.addEventListener(
+    'touchstart',
+    e => {
+      const t = /** @type {TouchEvent} */ (e).touches[0];
+      if (!t) return;
+      x = t.clientX;
+      y = t.clientY;
+      moved = false;
+    },
+    { passive: true },
+  );
+  el.addEventListener(
+    'touchmove',
+    e => {
+      const t = /** @type {TouchEvent} */ (e).touches[0];
+      if (t && (Math.abs(t.clientX - x) > TAP_SLOP || Math.abs(t.clientY - y) > TAP_SLOP)) moved = true;
+    },
+    { passive: true },
+  );
+  el.addEventListener('touchend', e => {
+    if (moved) return;
+    e.preventDefault();
+    if (!canReveal()) return;
+    if (_tapActive === el) {
+      _tapClear();
+      open();
+      return;
+    }
+    _tapClear();
+    _tapActive = el;
+    reveal();
+    if (timeout) _tapTimer = setTimeout(_tapClear, timeout);
+    try {
+      parent.postMessage({ type: 'widget-active' }, window.location.origin);
+    } catch {}
+  });
 }
 
 export async function getConfig() {

@@ -106,7 +106,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-  import { poll, linkTo, loadStrings, wt, formatNumber, errorState, placeholder } from '/js/widget-toolbox.js?v=048ad37d';
+  import { poll, linkTo, toneForColor, loadStrings, wt, formatNumber, errorState, placeholder } from '/js/widget-toolbox.js?v=459bb769';
   await loadStrings();
   document.getElementById('card').setAttribute('aria-label', wt('widget.label', 'Books'));
   const API='/api';
@@ -143,8 +143,7 @@
   let resting=null, reading=null;
 
   function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
-  function lum(hex){const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m)return 0.3;const n=parseInt(m[1],16);
-    const r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255;return 0.2126*r+0.7152*g+0.0722*b;}
+  function spineInk(color){ return toneForColor(color)==='dark'?'#000':'#fff'; }
   function inProgress(b){ return !b.finished && b.progress!=null && b.progress>0 && b.progress<1; }
   function progressText(b){
     if(b.finished) return [wt('ui.finished','Finished'),'done'];
@@ -192,7 +191,7 @@
       const el=document.createElement('li');
       el.className='bk'+(b===reading?' current':'')+(b.finished?' done':'')+(sparse&&i===shown.length-1?' lean':'');
       el.style.width=b._w+'px'; el.style.height=b._h+'%'; el.style.backgroundColor=b._color;
-      el.style.color=lum(b._color)>0.55?'rgba(0,0,0,.8)':'rgba(250,246,238,.92)';
+      el.style.color=spineInk(b._color);
       if(b===reading){ const rb=document.createElement('span'); rb.className='ribbon'; el.appendChild(rb); }
       const sp=document.createElement('span'); sp.className='spine'; sp.textContent=b.title||''; el.appendChild(sp);
       if(b.finished){ const f=document.createElement('span'); f.className='fin'; el.appendChild(f); }
