@@ -86,7 +86,7 @@
 <div class="cap" id="cap"></div>
 <script type="module">
 import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, fitText, cssZoom } from '/js/widget-toolbox.js?v=7f16d266';
-import { slotWeeks } from '/js/contribution-calendar.js?v=c88b8def';
+import { slotWeeks, isoDay } from '/js/contribution-calendar.js?v=8ea71e8f';
 await loadStrings();
 
 const TICK_MS = 300000;
@@ -142,14 +142,11 @@ function dayName(iso) {
   }
 }
 
-const now = new Date();
-const TODAY = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-
-function weekColumn(week, level) {
+function weekColumn(week, level, today) {
   const col = el('div', 'week');
   const slots = Array(7).fill(null);
   for (const d of Array.isArray(week?.contributionDays) ? week.contributionDays : []) {
-    if (!d || typeof d !== 'object' || String(d.date) > TODAY) continue;
+    if (!d || typeof d !== 'object' || String(d.date) > today) continue;
     const wd = new Date(String(d.date) + 'T00:00:00Z').getUTCDay();
     if (wd >= 0 && wd < 7) slots[wd] = d;
   }
@@ -167,7 +164,7 @@ function weekColumn(week, level) {
   return col;
 }
 
-function drawGrid(weeks) {
+function drawGrid(weeks, today) {
   const { cols, bands } = GRID;
   const level = levelsOf(weeks);
   const shown = weeks.slice(-cols * bands);
@@ -175,7 +172,7 @@ function drawGrid(weeks) {
   plot.replaceChildren();
   for (let b = 0; b < bands; b++) {
     const band = el('div', 'band');
-    for (const week of shown.slice(b * cols, (b + 1) * cols)) band.append(weekColumn(week, level));
+    for (const week of shown.slice(b * cols, (b + 1) * cols)) band.append(weekColumn(week, level, today));
     plot.append(band);
   }
 }
@@ -222,12 +219,13 @@ window.addEventListener('blur', endHover);
 document.addEventListener('visibilitychange', endHover);
 
 function render(data) {
-  const cal = Array.isArray(data.slots) ? slotWeeks(data.slots) : data;
+  const now = new Date();
+  const cal = Array.isArray(data.slots) ? slotWeeks(data.slots, now) : data;
   const weeks = Array.isArray(cal.weeks) ? cal.weeks : [];
   const total = formatNumber(Math.max(0, Number(cal.totalContributions) || 0));
   endHover();
   linkTo(linkEl, data.profileUrl);
-  if (GRID.cols) drawGrid(weeks);
+  if (GRID.cols) drawGrid(weeks, isoDay(now));
   num.textContent = total;
   fitText(num);
   sub.textContent = wt('ui.lastYear', 'Past 12 months');
@@ -241,7 +239,7 @@ function boot() {
   linkEl.setAttribute('role', 'img');
   if (MOBILE) head.setAttribute('aria-hidden', 'true');
   name(wt('view.contributions.label', 'Contributions'));
-  if (GRID.cols) drawGrid([]);
+  if (GRID.cols) drawGrid([], isoDay(new Date()));
   poll({
     fetch: () => fetchData('data'),
     interval: TICK_MS,
