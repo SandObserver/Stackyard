@@ -63,6 +63,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - After the Backup widget recovers from an error, empty slots no longer announce
   the old error or show a dash.
 
+- On a phone, the page dots, arrow keys and screen-reader page control no longer
+  land on an empty page after the number of home pages drops.
+
+- A folder opened from Search on a phone shows its icons at the same size as
+  when opened from its tile.
+
+- Icons inside a desktop folder have the same rounded corners as on the home
+  grid.
+
+- A layout that fails to build shows one error screen instead of stacking a new
+  one on each rotation or resize.
+
 - The Fetch button in a widget's settings asks you to sign in again when the
   session has expired, instead of showing an error.
 
