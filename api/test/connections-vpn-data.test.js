@@ -97,4 +97,61 @@ test('a NetBird token the management API rejects reads as a rejected key', async
 test('a VPN card with no URL reads as not set up', async () => {
   const r = await dataFn(ctxFor({ service: 'netbird', url: '' }));
   assert.equal(r.errorKind, 'invalid');
+
+/* Peer fields follow NetBird's management API Peer schema. */
+function netbird(peers, status = 200) {
+  const calls = [];
+  const ctx = {
+    ...ctxFor({ service: 'netbird', url: 'http://10.0.0.6', token: 'nb-token' }),
+    fetchJSON: async (url, opts) => {
+      calls.push({ url, auth: opts?.headers?.Authorization });
+      return { status, data: peers };
+    },
+  };
+  return { ctx, calls };
+}
+
+test('NetBird counts connected peers and shows the most recently seen one that has a place', async () => {
+  const { ctx, calls } = netbird([
+    {
+      name: 'old',
+      hostname: 'old-host',
+      connected: true,
+      last_seen: '2026-11-01T10:00:00Z',
+      city_name: 'Oslo',
+      country_code: 'no',
+    },
+    { name: 'new-no-place', hostname: 'laptop', connected: true, last_seen: '2026-11-12T10:00:00Z' },
+    {
+      name: 'new',
+      hostname: 'desk',
+      connected: true,
+      last_seen: '2026-11-10T10:00:00Z',
+      city_name: 'Berlin',
+      country_code: 'de',
+    },
+    {
+      name: 'off',
+      hostname: 'off-host',
+      connected: false,
+      last_seen: '2026-11-12T11:00:00Z',
+      city_name: 'Rome',
+      country_code: 'IT',
+    },
+  ]);
+  const r = await dataFn(ctx);
+  assert.equal(calls[0].url, 'http://10.0.0.6/api/peers');
+  assert.equal(calls[0].auth, 'Token nb-token');
+  assert.equal(r.peersTotal, 4);
+  assert.equal(r.peersConnected, 3);
+  assert.equal(r.connected, true);
+  assert.deepEqual([r.city, r.countryCode, r.hostname], ['Berlin', 'DE', 'desk']);
+});
+
+test('NetBird with no connected peer reads as disconnected', async () => {
+  const { ctx } = netbird([{ name: 'off', connected: false }]);
+  const r = await dataFn(ctx);
+  assert.equal(r.connected, false);
+  assert.equal(r.peersConnected, 0);
+  assert.equal(r.hostname, undefined);
 });
