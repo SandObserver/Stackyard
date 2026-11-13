@@ -70,6 +70,8 @@ function configure(item, socketProxyUrl = socketBase) {
   });
 }
 
+const checks = hc => ({ monitoring: { healthcheck: { enabled: true, ...hc } } });
+
 test('an item with only a container reports its state', async () => {
   containers = [{ Names: ['/myapp'], State: 'exited', Status: 'Exited (1) 2 hours ago' }];
   configure({ container: 'myapp' });
@@ -82,7 +84,7 @@ test('an item with only a container reports its state', async () => {
 test('an item with only a ping reports its result', async () => {
   containers = [];
   targetStatus = 503;
-  configure({ ping: `${targetBase}/` });
+  configure(checks({ pingUrl: `${targetBase}/` }));
   const r = (await health()).a1;
   assert.equal(r.unhealthy, true);
   assert.equal(r.pingStatus, 503);
@@ -91,7 +93,7 @@ test('an item with only a ping reports its result', async () => {
 test('an item with both checks keeps the detail from each', async () => {
   containers = [{ Names: ['/myapp'], State: 'exited', Status: 'Exited (1) 2 hours ago' }];
   targetStatus = 503;
-  configure({ container: 'myapp', ping: `${targetBase}/` });
+  configure(checks({ container: 'myapp', pingUrl: `${targetBase}/` }));
 
   const r = (await health()).a1;
   assert.equal(r.unhealthy, true);
@@ -103,7 +105,7 @@ test('an item with both checks keeps the detail from each', async () => {
 test('a healthy container and a good ping report healthy', async () => {
   containers = [{ Names: ['/myapp'], State: 'running', Status: 'Up 3 days' }];
   targetStatus = 200;
-  configure({ container: 'myapp', ping: `${targetBase}/` });
+  configure(checks({ container: 'myapp', pingUrl: `${targetBase}/` }));
 
   const r = (await health()).a1;
   assert.equal(r.unhealthy, false);
@@ -115,14 +117,14 @@ test('a healthy container and a good ping report healthy', async () => {
 test('a failing ping still marks a running container unhealthy', async () => {
   containers = [{ Names: ['/myapp'], State: 'running', Status: 'Up 3 days' }];
   targetStatus = 500;
-  configure({ container: 'myapp', ping: `${targetBase}/` });
+  configure(checks({ container: 'myapp', pingUrl: `${targetBase}/` }));
   assert.equal((await health()).a1.unhealthy, true);
 });
 
 test('a stopped container still marks the item unhealthy when the ping succeeds', async () => {
   containers = [{ Names: ['/myapp'], State: 'exited', Status: 'Exited (1)' }];
   targetStatus = 200;
-  configure({ container: 'myapp', ping: `${targetBase}/` });
+  configure(checks({ container: 'myapp', pingUrl: `${targetBase}/` }));
   assert.equal((await health()).a1.unhealthy, true);
 });
 
@@ -168,7 +170,7 @@ test('a container check is skipped while no socket proxy is configured', async (
 test('a ping check still runs while no socket proxy is configured', async () => {
   containers = [];
   targetStatus = 200;
-  configure({ container: 'myapp', ping: `${targetBase}/` }, '');
+  configure(checks({ container: 'myapp', pingUrl: `${targetBase}/` }), '');
   const r = (await health()).a1;
   assert.equal(r.unhealthy, false);
   assert.equal(r.pingStatus, 200);
@@ -181,7 +183,7 @@ test('a stalled socket proxy delays the health reply by at most the batch timeou
   const stalledBase = await listen(stalled);
   t.after(() => close(stalled));
   targetStatus = 200;
-  configure({ container: 'myapp', ping: `${targetBase}/` }, stalledBase);
+  configure(checks({ container: 'myapp', pingUrl: `${targetBase}/` }), stalledBase);
 
   const t0 = Date.now();
   const r = (await health()).a1;
