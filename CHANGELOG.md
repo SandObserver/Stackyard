@@ -63,6 +63,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - After the Backup widget recovers from an error, empty slots no longer announce
   the old error or show a dash.
 
+- The Fetch button in a widget's settings asks you to sign in again when the
+  session has expired, instead of showing an error.
+
+- A select field's Fetch button shows the widget's own button label.
+
+- The pencil on widget setting rows follows the chosen icon style.
+
+- A failed Docker label import offers Open General when no Docker socket address
+  is set.
+
+- Every password screen gives the same message when the server refuses a new
+  password as too short or too long.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
