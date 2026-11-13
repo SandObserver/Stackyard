@@ -30,7 +30,9 @@ test('Settings asks for its start-up data together', async ({ page }) => {
     await route.continue();
   });
   await page.goto('/admin/');
-  await page.locator('body.authed').waitFor({ state: 'attached' });
+  await expect(page.locator('body'), 'Settings waited for its config before asking for icons').toHaveClass(
+    /\bauthed\b/,
+  );
 });
 
 async function restore(page) {

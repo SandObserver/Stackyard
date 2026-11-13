@@ -14,14 +14,18 @@ const README = fs.readFileSync(path.join(__dirname, '..', '..', 'README.md'), 'u
 
 test('every link target is absolute', () => {
   const out = toDockerHubDescription(README);
-  for (const [, target] of out.matchAll(/\]\(([^)\s]+)\)/g)) {
+  const links = [...out.matchAll(/\]\(([^)\s]+)\)/g)];
+  assert.ok(links.length > 0, 'the description has no links to check');
+  for (const [, target] of links) {
     assert.ok(/^https:\/\//.test(target), `relative link would 404 on Docker Hub: ${target}`);
   }
 });
 
 test('images are raw URLs, so they render rather than link to a page', () => {
   const out = toDockerHubDescription(README);
-  for (const [, target] of out.matchAll(/!\[[^\]]*\]\(([^)\s]+)\)/g)) {
+  const images = [...out.matchAll(/!\[[^\]]*\]\(([^)\s]+)\)/g)];
+  assert.ok(images.length > 0, 'the description has no images to check');
+  for (const [, target] of images) {
     assert.ok(
       target.startsWith('https://raw.githubusercontent.com/') || target.startsWith('https://img.shields.io/'),
       `image would not render on Docker Hub: ${target}`,
