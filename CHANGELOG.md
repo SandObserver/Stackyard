@@ -32,6 +32,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show "Key rejected" or "Not set up yet" on the Connections widget instead of
   "Service error".
 
+- A colour code typed in a colour field, or a preset colour picked, is now saved
+  exactly instead of as a slightly different shade.
+
+- A failed folder save no longer leaves an app missing from the folder it was
+  in.
+
+- After a drag with the mouse, the item list redraws at once, and clicking a row
+  always opens that item.
+
+- The sign-in password field is empty when the sign-in box appears again after a
+  session expires.
+
+- The Connections VPN view now draws the map for every country the Map view
+  shows, including Switzerland, Singapore, Hong Kong, Taiwan, Austria and
+  Belgium.
+
+- A Connections VPN colour with an alpha value or in short form now shows as
+  picked.
+
+- Book spine titles stay readable on every cover colour from the reading
+  service.
+
+- Swiping between pages on a Backup card no longer flips the card or opens the
+  backup service.
+
+- Tapping a Backup card closes revealed cards in other widgets, as Disk Health
+  does.
+
+- After the Backup widget recovers from an error, empty slots no longer announce
+  the old error or show a dash.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.

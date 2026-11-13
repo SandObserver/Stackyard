@@ -104,7 +104,6 @@ const BESPOKE = new Map(
     '#787880': 'books, progress track',
     '#808080': 'nowplaying, arrow hover fill',
     '#96969E': 'connections VPN, idle dots',
-    '#FAF6EE': 'books, title ink on a dark spine',
     '#E8E8EA': 'widget template, text in the dark theme',
     '#0088FF': 'downloads, system blue on the light card (--sy-blue, light)',
     '#B25000': 'downloads, stalled amber on white, 5.2:1 (--sy-yellow-hi, light)',

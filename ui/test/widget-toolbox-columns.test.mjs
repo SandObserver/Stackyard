@@ -28,7 +28,7 @@ globalThis.document = {
   }),
 };
 
-const { columns, barFill, contrastInk, cardContrast, readableInk } = await import('../js/widget-toolbox.js');
+const { columns, barFill, contrastInk, cardContrast, readableInk, rgbOf } = await import('../js/widget-toolbox.js');
 
 const heights = c => c.el.children.map(col => col.children[0].style.height);
 
@@ -132,6 +132,18 @@ test('rgb() and short hex get the same check as six-digit hex', () => {
 
 test('a value that is not a colour comes back unchanged', () => {
   for (const v of ['red', 'rgb(1,2)', '#abcd', '', undefined]) assert.equal(contrastInk(v), v);
+});
+
+test('rgbOf reads short, full and eight-digit hex and rgb()', () => {
+  assert.deepEqual(rgbOf('#0af'), [0, 170, 255]);
+  assert.deepEqual(rgbOf('#30D158'), [48, 209, 88]);
+  assert.deepEqual(rgbOf('#30d15880'), [48, 209, 88], 'the alpha byte is not read as blue');
+  assert.deepEqual(rgbOf(' rgb(1, 2, 300) '), [1, 2, 255]);
+});
+
+test('rgbOf returns null for anything it cannot read', () => {
+  for (const v of ['blue', '#abcd', '#30d1588', 'rgb(1,2)', '', null, undefined])
+    assert.equal(rgbOf(v), null, String(v));
 });
 
 test('cardContrast measures against the card of the current theme', () => {
