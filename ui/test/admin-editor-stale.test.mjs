@@ -42,3 +42,9 @@ test('a delete that lands after the editor changed leaves the new editor open', 
 test('opening an editor starts a new session', () => {
   assert.match(fn('function openModal('), /state\._evSession \+= 1;/);
 });
+
+test('a folder save takes the undo copy before it changes any other folder', () => {
+  const save = fn('async function doSave(');
+  assert.match(save, /const \{ before, replaced \} = applyEdit\(state\.items, state\.eid, item\);/);
+  assert.equal(admin.includes('claimFolderChildren'), false, 'doSave changes folders before the undo copy');
+});

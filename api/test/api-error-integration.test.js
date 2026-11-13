@@ -14,7 +14,7 @@ const http = require('node:http');
 
 require('../src/routes');
 const { dispatch } = require('../src/router');
-const { saveConfig } = require('../src/config');
+const { saveConfig, loadConfig } = require('../src/config');
 const { hashPassword, makeToken } = require('../src/auth');
 const { KIND } = require('../src/api-error');
 const log = require('../src/log');
@@ -141,6 +141,46 @@ test('badge-proxy reports an upstream 401 as a failure, not a bare success', asy
   assert.equal(r.status, 502);
   assert.equal(r.body.kind, KIND.UPSTREAM);
   assert.equal(r.body.detail.status, 401);
+});
+
+function withStoredLogin(fn) {
+  const saved = loadConfig();
+  saveConfig({
+    ...saved,
+    items: [
+      {
+        id: 'auth-app',
+        type: 'app',
+        monitoring: {
+          activity: { enabled: true, url: `${upstreamBase}/api`, login: { username: 'monitor', password: 'STORED' } },
+        },
+      },
+    ],
+  });
+  return fn().finally(() => saveConfig(saved));
+}
+
+test('badge-proxy reports a 401 as needing sign-in when the request asks for no stored secret', async () => {
+  upstreamStatus = 401;
+  upstreamBody = '{}';
+  await withStoredLogin(async () => {
+    const r = await post('/api/badge-proxy', { url: `${upstreamBase}/api`, itemId: 'auth-app' });
+    assert.equal(r.body.kind, KIND.UPSTREAM);
+    assert.equal(r.body.detail.status, 401);
+  });
+});
+
+test('badge-proxy still asks to retype a stored secret it held back', async () => {
+  upstreamStatus = 401;
+  upstreamBody = '{}';
+  await withStoredLogin(async () => {
+    const r = await post('/api/badge-proxy', {
+      url: `${upstreamBase}/other`,
+      itemId: 'auth-app',
+      login: { username: 'monitor' },
+    });
+    assert.equal(r.body.code, 'invalid.retype');
+  });
 });
 
 test('badge-proxy does not leak the upstream response body into detail', async () => {

@@ -11,7 +11,7 @@
    The filter and the collapsed folders are in admin-state.js, because the page
    reads and writes them too. */
 
-import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=f0e7a47d';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=d8b662b6';
 import { listGroup } from '/js/admin-drag-logic.js?v=4824d269';
 import {
   filterActive,
@@ -22,22 +22,22 @@ import {
   shownChildren,
   topLevelRows,
 } from '/js/admin-logic.js?v=06da6a19';
-import { snapshotItems } from '/js/admin-save-logic.js?v=75436b3a';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=599f0922';
+import { snapshotItems } from '/js/admin-save-logic.js?v=6ebda0e2';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=42a61f1c';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { sizeLabel } from '/js/admin-widget-form.js?v=6218c623';
-import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
+import { sizeLabel } from '/js/admin-widget-form.js?v=5fae4625';
+import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=98712bec';
+import { t } from '/js/i18n.js?v=721852aa';
 import { iconSvg } from '/js/icon-set.js?v=361e54a5';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
-import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=8562a7d4';
+import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=d49cd680';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=aef2eec0';
 
-/** @type {{ openModal: (idx: number|null) => void,
+/** @type {{ openModal: (id: string|null) => void,
              openFolderPicker: (folderId: string) => void,
              save: (before: unknown, done?: string|false) => Promise<boolean>|boolean }} */
 let _page = {
@@ -174,7 +174,7 @@ function turnFrom(chevron, from) {
   chevron.style.transform = to;
 }
 
-function mkRow(item, idx, { indent = false, childIdx = null, folderId = null, top = { dock: [], home: [] } } = {}) {
+function mkRow(item, { indent = false, childIdx = null, folderId = null, top = { dock: [], home: [] } } = {}) {
   const row = document.createElement('div');
   row.className = 'row drow';
   const _filtering = filterActive(filter);
@@ -313,7 +313,7 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null, to
   ed.dataset.act = 'edit';
   ed.setAttribute('aria-label', t('common.editNamed', { name }));
   setHtml(ed, raw(CHEVRON));
-  ed.onclick = () => _page.openModal(idx);
+  ed.onclick = () => _page.openModal(item.id);
   if (!_filtering) {
     const mv = document.createElement('span');
     mv.className = 'rmove';
@@ -335,7 +335,7 @@ function mkRow(item, idx, { indent = false, childIdx = null, folderId = null, to
   row.addEventListener('click', e => {
     if (_reordering) return;
     if (/** @type {HTMLElement} */ (e.target).closest('button, a, input')) return;
-    _page.openModal(idx);
+    _page.openModal(item.id);
   });
   row.append(handle, ico, inf, pb, ac);
   wireRowDrag(row, handle, { item, indent, folderId, childIdx });
@@ -432,7 +432,7 @@ function draw(l) {
   }
   const docked = top.dock;
   const dockGrp = listSection(l, 'dock', t('home.dock'), `${formatNumber(docked.length)}/${formatNumber(DOCK_MAX)}`);
-  docked.forEach(item => dockGrp.appendChild(mkRow(item, state.items.indexOf(item), { top })));
+  docked.forEach(item => dockGrp.appendChild(mkRow(item, { top })));
   if (!docked.length) {
     const zone = document.createElement('div');
     zone.className = 'row al-dock-empty';
@@ -446,14 +446,12 @@ function draw(l) {
   l.appendChild(tip);
   const homeGrp = listSection(l, 'home', t('home.homeScreen'));
   top.home.forEach(item => {
-    homeGrp.appendChild(mkRow(item, state.items.indexOf(item), { top }));
+    homeGrp.appendChild(mkRow(item, { top }));
     if (item.type === 'folder' && !collapsedFolders.has(item.id)) {
       folderChildren(item).forEach((childId, ci) => {
         if (!isShownChild(state.items, childId)) return;
         const childItem = state.items.find(i => i.id === childId);
-        homeGrp.appendChild(
-          mkRow(childItem, state.items.indexOf(childItem), { indent: true, childIdx: ci, folderId: item.id, top }),
-        );
+        homeGrp.appendChild(mkRow(childItem, { indent: true, childIdx: ci, folderId: item.id, top }));
       });
       const addRow = document.createElement('button');
       addRow.type = 'button';
@@ -486,7 +484,7 @@ function drawFiltered(l, top) {
   const g = document.createElement('div');
   g.className = 'grp';
   g.dataset.flat = '1';
-  state.items.forEach((item, i) => g.appendChild(mkRow(item, i, { top })));
+  state.items.forEach(item => g.appendChild(mkRow(item, { top })));
   const empty = document.createElement('div');
   empty.className = 'empty d-none';
   empty.dataset.flat = '1';

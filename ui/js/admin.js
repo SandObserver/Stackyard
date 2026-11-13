@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=a02dee08';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=8d73d110';
+} from '/js/admin-app-form.js?v=56dee4bc';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=76f9343b';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,12 +15,12 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=e5f6e669';
+} from '/js/admin-list.js?v=34d450e1';
 import { filterActive, folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=06da6a19';
 import {
   afterImport,
+  applyEdit,
   buildAppItem,
-  claimFolderChildren,
   importCounts,
   keptWidget,
   newItemId,
@@ -30,8 +30,7 @@ import {
   revertingSaves,
   serialWrites,
   snapshotItems,
-  upsertItem,
-} from '/js/admin-save-logic.js?v=75436b3a';
+} from '/js/admin-save-logic.js?v=6ebda0e2';
 import {
   applyHealthChecks,
   loadSettings,
@@ -41,7 +40,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=7a952249';
+} from '/js/admin-settings.js?v=a181a45f';
 import {
   announce,
   apiGet,
@@ -66,17 +65,17 @@ import {
   swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=599f0922';
+} from '/js/admin-shared.js?v=42a61f1c';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=6218c623';
-import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=4576541d';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=5fae4625';
+import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=11aa9737';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
-import { recoveryShown } from '/js/config-recovery.js?v=3c9b5832';
+import { recoveryShown } from '/js/config-recovery.js?v=985c64ad';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
-import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
+import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=0c57b286';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=98712bec';
+import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=721852aa';
 import { animateIcon } from '/js/icon-motion.js?v=0b4fc669';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=361e54a5';
 import { loadLocalIcons } from '/js/icons.js?v=76c29d43';
@@ -90,10 +89,10 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=9a3c00e2';
+} from '/js/import-foreign.js?v=46304742';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=a9773cd1';
+import { createListbox } from '/js/listbox.js?v=794fe194';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=c4c1c4c4';
 import { passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
@@ -124,7 +123,7 @@ import {
   storeSet,
   tgt,
   within,
-} from '/js/utils.js?v=8562a7d4';
+} from '/js/utils.js?v=d49cd680';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=39538b71';
 
@@ -443,8 +442,13 @@ function _renderEditBody(focusKind) {
   }, 50);
 }
 
-function openModal(idx) {
-  const editing = idx != null ? state.items[idx] : null;
+/** @param {string|null} id */
+function openModal(id) {
+  const editing = id != null ? state.items.find(i => i?.id === id) : null;
+  if (id != null && !editing) {
+    toast(t('toast.dashboardChangedElsewhere'), 'err');
+    return;
+  }
   state.eid = editing?.id ?? null;
   const item = editing ? structuredClone(editing) : null;
   state.ctype = item?.system === 'settings' ? 'settings' : item?.type || 'app';
@@ -492,7 +496,7 @@ function openModal(idx) {
     };
   }
 
-  const isEdit = idx != null;
+  const isEdit = id != null;
   const evTitle = el('ev-title');
   if (isEdit) setUserText(evTitle, t('common.editNamed', { name: isolate(item.label || item.id) }));
   else {
@@ -695,9 +699,7 @@ async function doSave(orig) {
         showFieldError(el('ie-fname'), t('toast.nameRequired'));
         return;
       }
-      /* An app belongs to one folder, or the dashboard renders it twice. */
       const children = state._folderApps?.getValue() || [];
-      claimFolderChildren(state.items, orig?.id, children);
       item = {
         id:
           orig?.id ||
@@ -725,6 +727,7 @@ async function doSave(orig) {
         actEn: inp('act-en')?.checked,
         actUrl: inp('f-burl')?.value?.trim() || '',
         actInt: Math.min(3600, Math.max(10, parseInt(inp('f-bint')?.value || '30', 10))),
+        authEn: inp('auth-en')?.checked || false,
         actParams: serializeKvRows(state._bpar),
         actHeaders: serializeKvRows(state._bhdr),
         actLogin: { username: inp('f-buser')?.value?.trim() || '', password: inp('f-bpass')?.value || '' },
@@ -750,8 +753,7 @@ async function doSave(orig) {
       item = res.item;
     }
     /* By id, never by position. */
-    const before = snapshotItems(state.items);
-    const { replaced } = upsertItem(state.items, state.eid, item);
+    const { before, replaced } = applyEdit(state.items, state.eid, item);
     const session = state._evSession;
     /* The editor stays open on a failed write, with the form intact. */
     if (!(await saveOrRevert(before))) return;
@@ -1373,7 +1375,7 @@ el('btn-imp-docker').onclick = rowBusy(/** @type {HTMLButtonElement} */ (el('btn
     }
     await reviewImport(out.items, out.skipped, out.notes, 'toast.importDockerNothing');
   } catch (err) {
-    toast(t('toast.importFailed', { err: errorText(err) }), 'err');
+    toast(t('toast.importFailed', { err: errorText(err) }), 'err', errorAction(err));
   }
 });
 

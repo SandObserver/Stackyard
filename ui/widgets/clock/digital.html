@@ -41,25 +41,16 @@
   <div class="date-line" id="date-line" aria-hidden="true"></div>
 </div>
 <script>
-const id  = new URLSearchParams(location.search).get('id') || '';
-const API = '/api';
-
 let _timezone = '';
 let _showDate = true;
 let _tickId   = null;
 
 const _lang = new URLSearchParams(location.search).get('lang') || 'en';
-let _dateLong = null, _dateShort = null, _zoneTime = null;
+let _dateLong = null, _dateShort = null, _zoneTime = null, _two = null, _nextMinute = null;
 function _a11yLabel(now, t){
   const hh=String(t.hours).padStart(2,'0'), mm=String(t.minutes).padStart(2,'0');
   return `${hh}:${mm}, ${_dateLong(now)}`;
 }
-
-const _two = (() => {
-  const opts = { minimumIntegerDigits: 2, useGrouping: false };
-  try { return new Intl.NumberFormat(_lang, opts); }
-  catch { return new Intl.NumberFormat('en', opts); }
-})();
 
 function layout() {
   const [hy, my] = _showDate ? [82, 116] : [88, 124];
@@ -77,25 +68,10 @@ function fitDate(el) {
   }
 }
 
-/* An unknown zone makes every zone formatter throw, so the clock never
-   draws. */
-function zoneOk(z) {
-  try { new Intl.DateTimeFormat('en-US', { timeZone: z || undefined }); return true; }
-  catch { return false; }
-}
-async function showZoneError() {
-  const w = document.getElementById('widget');
-  const { errorState, loadStrings, wt } = await import('/js/widget-toolbox.js?v=6417415d');
-  await loadStrings();
-  const line = wt('ui.unknownZone', 'Unknown timezone');
-  errorState({ root: w, place: 'center' }).empty(line);
-  w.setAttribute('aria-label', line);
-}
-
 function tick() {
   const now = new Date(), t = _zoneTime(now);
   document.getElementById('widget').setAttribute('aria-label', _a11yLabel(now, t));
-  const hh = _two.format(t.hours), mm = _two.format(t.minutes);
+  const hh = _two(t.hours), mm = _two(t.minutes);
   for (const k of ['hh', 'hh-over']) document.getElementById(k).textContent = hh;
   for (const k of ['mm', 'mm-clip']) document.getElementById(k).textContent = mm;
   if (_showDate) {
@@ -104,22 +80,24 @@ function tick() {
     fitDate(dl);
   }
   if (_tickId) clearTimeout(_tickId);
-  _tickId = setTimeout(tick, (60 - t.seconds) * 1000);
+  _tickId = setTimeout(tick, _nextMinute(now));
 }
 
 async function boot() {
-  try {
-    const r = await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
-    if (r.ok) { const d = await r.json(); const wc = d.widgetConfig||{};
-      _timezone = wc.clockTimezone || '';
-      _showDate = wc.clockShowDate !== false;
-    }
-  } catch {}
-  if (!zoneOk(_timezone)) return showZoneError();
-  const { clockDateFormatter, zoneTime } = await import('/js/clock-date.js?v=de40b876');
+  const [toolbox, dates] = await Promise.all([
+    import('/js/widget-toolbox.js?v=8415820b'),
+    import('/js/clock-date.js?v=91a77e74'),
+  ]);
+  const settings = await dates.clockSettings(toolbox.getConfig);
+  _timezone = settings.timeZone;
+  _showDate = settings.showDate;
+  if (!dates.zoneOk(_timezone)) return dates.showUnknownZone(toolbox, document.getElementById('widget'));
+  const { clockDateFormatter, zoneTime } = dates;
   _zoneTime = zoneTime(_timezone);
   _dateLong = clockDateFormatter(_lang, 'long', _timezone);
   _dateShort = clockDateFormatter(_lang, 'short', _timezone);
+  _two = dates.twoDigits(_lang);
+  _nextMinute = dates.msToNextMinute;
   layout();
   tick();
 }

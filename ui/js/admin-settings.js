@@ -1,5 +1,5 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=8e1f8711';
-import { socketProbeAdvice } from '/js/admin-error.js?v=d1f8f6f4';
+import { renderColorControl } from '/js/admin-color-control.js?v=6553f987';
+import { passwordRefusalKey, socketProbeAdvice } from '/js/admin-error.js?v=05a2520c';
 import {
   BLOCK,
   clearsStoredPassword,
@@ -17,7 +17,7 @@ import {
   labelsWith,
   planFieldSave,
   serialWrites,
-} from '/js/admin-save-logic.js?v=75436b3a';
+} from '/js/admin-save-logic.js?v=6ebda0e2';
 import {
   apiGet,
   apiPost,
@@ -34,9 +34,9 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=599f0922';
-import { BACKDROP } from '/js/background.js?v=4576541d';
-import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
+} from '/js/admin-shared.js?v=42a61f1c';
+import { BACKDROP } from '/js/background.js?v=11aa9737';
+import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import {
   ALLOWED_HOSTS_MAX,
   firstBadHost,
@@ -44,11 +44,11 @@ import {
   isLocalAddress,
   parseHostList,
 } from '/js/host-names.js?v=98bf44d7';
-import { t } from '/js/i18n.js?v=98712bec';
+import { t } from '/js/i18n.js?v=721852aa';
 import { confirmText, promptModal } from '/js/modal.js?v=c4c1c4c4';
-import { contextWords, passwordMeter, passwordMismatch, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
+import { contextWords, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
-import { el, inp, qa, setUserText } from '/js/utils.js?v=8562a7d4';
+import { el, inp, qa, setUserText } from '/js/utils.js?v=d49cd680';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
@@ -609,14 +609,6 @@ async function saveWallpaper() {
     toast(staleText(e) || t('toast.saveFailed', { err: errorText(e) }), 'err', errorAction(e));
   }
 }
-const PASSWORD_ERROR_KEYS = Object.freeze({
-  'invalid.current-password': 'toast.currentPasswordWrong',
-  'invalid.password-changed': 'toast.passwordChangedElsewhere',
-  'invalid.password-short': REFUSAL_KEYS.short,
-  'invalid.password-long': REFUSAL_KEYS.long,
-  'invalid.password-common': REFUSAL_KEYS.common,
-  'invalid.setup-code': 'hostBlock.codeWrong',
-});
 /** @param {unknown} e @returns {string} the message for a section changed elsewhere, or '' */
 function staleText(e) {
   const err = /** @type {any} */ (e);
@@ -721,7 +713,7 @@ async function saveServer() {
         } catch (e) {
           const code = /** @type {any} */ (e).code;
           if (code === 'blocked.rate-limit') return errorText(e);
-          if (RETRY_IN_DIALOG.has(code)) return t(PASSWORD_ERROR_KEYS[code]);
+          if (RETRY_IN_DIALOG.has(code)) return t(passwordRefusalKey(e));
           failure = e;
         }
         return null;
@@ -742,7 +734,7 @@ async function saveServer() {
         try {
           done = await write(undefined, code);
         } catch (e) {
-          if (/** @type {any} */ (e).code === 'invalid.setup-code') return t('hostBlock.codeWrong');
+          if (/** @type {any} */ (e).code === 'invalid.setup-code') return t(passwordRefusalKey(e));
           failure = e;
         }
         return null;
@@ -758,7 +750,7 @@ async function saveServer() {
   }
 
   if (failure || !done) {
-    const key = PASSWORD_ERROR_KEYS[/** @type {any} */ (failure)?.code];
+    const key = passwordRefusalKey(failure);
     if (/** @type {any} */ (failure)?.protectionOff)
       toast(
         t('toast.protectionOffOthersNot', { err: staleText(failure) || errorText(failure) }),

@@ -65,14 +65,24 @@ function element() {
 async function boot(
   file,
   clockTimezone,
-  { resizeDuringLoad = false, search = '?id=c1', config = {}, reduceMotion = true, frames = 0 } = {},
+  {
+    resizeDuringLoad = false,
+    search = '?id=c1',
+    config = {},
+    reduceMotion = true,
+    frames = 0,
+    reduceLater = false,
+  } = {},
 ) {
   const els = new Map();
   const byId = id => els.get(id) || els.set(id, element()).get(id);
   const timers = [];
+  const delays = [];
   const painted = [];
   const resizers = [];
   const rafs = [];
+  const motion = { reduce: reduceMotion };
+  const motionListeners = [];
   const globals = {
     location: { search },
     window: {},
@@ -85,18 +95,36 @@ async function boot(
       hidden: false,
     },
     addEventListener: (type, fn) => type === 'resize' && resizers.push(fn),
-    matchMedia: () => ({ matches: reduceMotion }),
     fetch: async () => {
       if (resizeDuringLoad) for (const fn of resizers) fn();
       return { ok: true, json: async () => ({ widgetConfig: { clockTimezone, ...config } }) };
     },
-    setTimeout: fn => timers.push(fn),
-    clearTimeout() {},
-    requestAnimationFrame: fn => rafs.push(fn),
-    cancelAnimationFrame() {},
+    setTimeout: (fn, ms) => {
+      timers.push(fn);
+      delays.push(ms);
+      return fn;
+    },
+    clearTimeout: fn => {
+      const at = timers.indexOf(fn);
+      if (at >= 0) timers.splice(at, 1);
+    },
+    requestAnimationFrame: fn => {
+      rafs.push(fn);
+      return fn;
+    },
+    cancelAnimationFrame: fn => {
+      const at = rafs.indexOf(fn);
+      if (at >= 0) rafs.splice(at, 1);
+    },
     __clockDate: () => import('../js/clock-date.js'),
     __captain: () => import('../js/clock-captain.js'),
     __toolbox: async () => ({
+      getConfig: async () => (await fetch()).json(),
+      reducedMotion: onChange => {
+        if (onChange) motionListeners.push(onChange);
+        return motion.reduce;
+      },
+      theme: () => 'dark',
       loadStrings: async () => {},
       wt: (_k, fallback, vars = {}) => fallback.replace(/\{(\w+)\}/g, (_m, k) => vars[k]),
       errorState: () => ({ empty: text => painted.push(text) }),
@@ -115,6 +143,10 @@ async function boot(
       if (rafs.length) break;
       for (const fn of timers.splice(0)) fn();
     }
+    if (reduceLater) {
+      motion.reduce = true;
+      for (const fn of motionListeners) fn(true);
+    }
   } finally {
     for (const k of Object.keys(globals)) {
       if (saved[k]) Object.defineProperty(globalThis, k, saved[k]);
@@ -124,6 +156,7 @@ async function boot(
   return {
     painted,
     timers,
+    delays,
     rafs,
     byId,
     label: byId('widget').attrs['aria-label'],
@@ -190,3 +223,18 @@ test('captain.html: with the date off the panel reads without it', async () => {
   const r = await boot('captain.html', 'Europe/Berlin', { config: { clockShowDate: false } });
   assert.match(r.label, /^Captain, it’s [A-Z][a-z]+day! \d\d:\d\d$/);
 });
+
+test('analog.html: turning Reduce Motion on stops the sweep without a reload', async () => {
+  const r = await boot('analog.html', 'Europe/Berlin', { reduceMotion: false, reduceLater: true });
+  assert.equal(r.rafs.length, 0, 'no sweep frame is left');
+  assert.equal(r.timers.length, 1, 'one step timer runs');
+  assert.ok(r.delays.at(-1) <= 1000, 'the hand steps once a second');
+});
+
+for (const file of ['digital.html', 'captain.html']) {
+  test(`${file}: the next tick lands on the minute, milliseconds included`, async t => {
+    t.mock.timers.enable({ apis: ['Date'], now: Date.UTC(2026, 10, 13, 10, 15, 42, 750) });
+    const r = await boot(file, 'Europe/Berlin');
+    assert.equal(r.delays[0], 17250);
+  });
+}

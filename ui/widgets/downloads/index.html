@@ -109,10 +109,10 @@
 </div>
 <script type="module">
 import {
-  poll, getConfig, loadStrings, wt, wtCount, formatNumber, formatList, localiseDigits, linkTo, errorState, readingTime, fitText, placeholder,
-} from '/js/widget-toolbox.js?v=6417415d';
+  poll, getConfig, loadStrings, wt, wtCount, formatNumber, formatList, localiseDigits, formatByteRate, linkTo, errorState, readingTime, fitText, placeholder, readerHourCycle,
+} from '/js/widget-toolbox.js?v=8415820b';
 import { ensureSprite } from '/js/icon-set.js?v=361e54a5';
-import { variations, finishedToday, hoursMinutes, leftover, lidOpen, finishParts, readerHourCycle } from './belt-logic.js';
+import { variations, finishedToday, hoursMinutes, leftover, lidOpen, finishParts } from './belt-logic.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const TONES = [
@@ -190,13 +190,7 @@ function duration(seconds, unitDisplay) {
   if (!h) return part(m, 'minute');
   return m ? `${part(h, 'hour')} ${part(m, 'minute')}` : part(h, 'hour');
 }
-function speed(bps) {
-  const mb = bps / 1e6;
-  return mb >= 1 ? unit(mb, 'megabyte-per-second', 1) : unit(bps / 1e3, 'kilobyte-per-second');
-}
-function size(bytes) {
-  return bytes >= 1e9 ? unit(bytes / 1e9, 'gigabyte', 1) : unit(bytes / 1e6, 'megabyte');
-}
+const speed = bps => iso(formatByteRate(bps, { min: 'kilobyte' }));
 const percent = p => iso(formatNumber(p, { style: 'percent', maximumFractionDigits: 0 }));
 const LANG = new URLSearchParams(location.search).get('lang') || 'en';
 const HOUR_CYCLE = readerHourCycle(navigator.language);
@@ -222,7 +216,7 @@ const REASON = {
 const reasonText = r => (REASON[r] || REASON.error)();
 
 /** The detail line under a name, and its spoken form. */
-function detail(it, medium) {
+function detail(it) {
   if (it.state !== 'run') return { text: `${percent(it.progress)} · `, problem: reasonText(it.reason), cls: it.state };
   const parts = it.eta != null ? [percent(it.progress), duration(it.eta, 'narrow')] : [percent(it.progress)];
   return { text: parts.join(' · '), problem: '', cls: '' };
@@ -361,7 +355,7 @@ function makeBox(it, v, x) {
   Object.assign(lab.style, { left: '7px', right: '7px', top: th + 6 + 'px' });
   const nm = el('span', { class: 'nm', dir: 'auto' });
   for (const part of it.name.split(/(?<=[-._])/)) nm.append(part, el('wbr'));
-  const dt = detail(it, medium);
+  const dt = detail(it);
   const dtEl = el('span', { class: 'dt' }, dt.text);
   if (dt.problem) dtEl.append(el('span', { class: dt.cls }, dt.problem));
   lab.append(nm, dtEl);
@@ -519,7 +513,7 @@ function render(data) {
       p.fill.style.transform = tapeShift(it.progress);
       p.lid.style.clipPath = lidClip(p.bw * it.progress, p.off);
       setFlap(p.flap, p.roomy && lidOpen(p.v, it));
-      const dt = detail(it, medium);
+      const dt = detail(it);
       const dtEl = p.lab.querySelector('.dt');
       dtEl.textContent = dt.text;
       if (dt.problem) dtEl.append(el('span', { class: dt.cls }, dt.problem));

@@ -1,7 +1,7 @@
 import { iconChain } from '/js/icons.js?v=76c29d43';
 import { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
-import { t } from '/js/i18n.js?v=98712bec';
+import { t } from '/js/i18n.js?v=721852aa';
 import { pageTheme, tileColor } from '/js/palette.js?v=3fb8ae43';
 
 export const mk = (tag, a = {}) => {
@@ -258,7 +258,6 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
    services forever. */
 const _mounts = new Set();
 
-/** Stop everything the mounted widgets started. */
 /** @param {ParentNode} [root] */
 export function rethemeTiles(root = document) {
   const light = pageTheme() === 'light';

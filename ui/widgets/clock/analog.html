@@ -32,8 +32,6 @@
   <svg class="face" id="face" aria-hidden="true"></svg>
 </div>
 <script>
-const id  = new URLSearchParams(location.search).get('id') || '';
-const API = '/api';
 const NS  = 'http://www.w3.org/2000/svg';
 
 const _lang = new URLSearchParams(location.search).get('lang') || 'en';
@@ -43,7 +41,7 @@ function _a11yLabel(now){
   return `${hh}:${mm}, ${_dateLong(now.date)}`;
 }
 
-const _reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let _reduceMotion = false, _theme = null;
 
 /* Every fill below is a finished colour, not a colour to blend. Browsers
    disagree on the colour space they blend in, so the overlaps are drawn as
@@ -70,22 +68,6 @@ let _groups=null, _dateTexts=[], _dateShown='', _rafId=null, _running=false, _vb
 function _now(){
   const date = new Date();
   return { date, ..._zoneTime(date), ms: date.getMilliseconds() };
-}
-
-/* An unknown zone makes every zone formatter throw, so the clock never
-   draws. */
-function zoneOk(z){
-  try{ new Intl.DateTimeFormat('en-US', { timeZone: z || undefined }); return true; }
-  catch{ return false; }
-}
-async function showZoneError(){
-  const w=document.getElementById('widget');
-  w.className='widget mode-'+_mode;
-  const { errorState, loadStrings, wt } = await import('/js/widget-toolbox.js?v=6417415d');
-  await loadStrings();
-  const line=wt('ui.unknownZone','Unknown timezone');
-  errorState({ root: w, place: 'center' }).empty(line);
-  w.setAttribute('aria-label', line);
 }
 
 function el(tag, attrs){
@@ -289,22 +271,31 @@ addEventListener('resize', ()=>{
   _rzId=setTimeout(()=>{ if(_zoneBad || !_dateShort) return; const run=_running; stop(); buildShell(); render(!_reduceMotion); if(run) start(); }, 150);
 });
 
-function hostTheme(){ return document.documentElement.getAttribute('data-theme')==='light'?'light':'dark'; }
 if(typeof MutationObserver==='function') new MutationObserver(()=>{
-  if(_zoneBad || !_dateShort || _mode===hostTheme()) return;
-  _mode=hostTheme(); const run=_running; stop(); buildShell(); render(false); if(run) start();
+  if(_zoneBad || !_dateShort || _mode===_theme()) return;
+  _mode=_theme(); const run=_running; stop(); buildShell(); render(false); if(run) start();
 }).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 async function boot(){
-  _mode=hostTheme();
-  try{
-    const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
-    if(r.ok){ const d=await r.json(); const wc=d.widgetConfig||{};
-      _timezone=wc.clockTimezone||'';
-      _showDate=wc.clockShowDate!==false;
-    }
-  }catch{}
-  if(!zoneOk(_timezone)){ _zoneBad=true; return showZoneError(); }
-  const { clockDateFormatter, clockDateParts, zoneTime } = await import('/js/clock-date.js?v=de40b876');
+  const [toolbox, dates] = await Promise.all([
+    import('/js/widget-toolbox.js?v=8415820b'),
+    import('/js/clock-date.js?v=91a77e74'),
+  ]);
+  _theme=toolbox.theme;
+  _mode=_theme();
+  const settings=await dates.clockSettings(toolbox.getConfig);
+  _timezone=settings.timeZone;
+  _showDate=settings.showDate;
+  const w=document.getElementById('widget');
+  if(!dates.zoneOk(_timezone)){
+    _zoneBad=true;
+    w.className='widget mode-'+_mode;
+    return dates.showUnknownZone(toolbox, w);
+  }
+  _reduceMotion=toolbox.reducedMotion(v=>{
+    _reduceMotion=v;
+    if(_running){ stop(); start(); }
+  });
+  const { clockDateFormatter, clockDateParts, zoneTime } = dates;
   _zoneTime = zoneTime(_timezone);
   _dateLong = clockDateFormatter(_lang, 'long', _timezone);
   _dateShort = clockDateParts(_lang, 'short', false, _timezone);

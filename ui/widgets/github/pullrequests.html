@@ -62,12 +62,11 @@
 <div class="widget" id="widget" role="group" aria-label="Pull requests"></div>
 <div class="cap" id="cap"></div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, errorState, formatNumber, fitText, placeholder, formatList } from '/js/widget-toolbox.js?v=6417415d';
+import { poll, fetchData, getConfig, linkTo, loadStrings, wt, errorState, formatNumber, fitText, placeholder, formatList } from '/js/widget-toolbox.js?v=8415820b';
 await loadStrings();
 
 const TICK_MS = 60000;
 const params = new URLSearchParams(location.search);
-const id = params.get('id') || '';
 const MOBILE = params.get('mobile') === '1';
 const size = ['small', 'medium', 'large'].includes(params.get('size')) ? params.get('size') : 'medium';
 const ROWS = { small: 0, medium: 3, large: 4 }[size];
@@ -157,14 +156,9 @@ function render(data) {
 }
 
 async function boot() {
-  try {
-    const r = await fetch(`/api/widget-config/${encodeURIComponent(id)}`);
-    if (r.ok) {
-      const wc = (await r.json())?.widgetConfig || {};
-      user = String(wc.githubUser || '');
-      gitlab = wc.githubService === 'gitlab';
-    }
-  } catch {}
+  const wc = (await getConfig().catch(() => null))?.widgetConfig || {};
+  user = String(wc.githubUser || '');
+  gitlab = wc.githubService === 'gitlab';
   if (gitlab) noun = wt('ui.mergeRequests', 'Merge requests');
   lbl.textContent = noun;
   w.setAttribute('aria-label', noun);

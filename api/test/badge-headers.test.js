@@ -9,6 +9,7 @@ const {
   migrateItemBadgeHeaders,
   droppedRowCount,
   firstMalformedRow,
+  wantsStoredSecret,
 } = require('../src/badge-headers');
 const { plain } = require('../test-support/plain');
 
@@ -341,4 +342,16 @@ test('20,000 secret rows that share a key refill in well under a second', () => 
   const ms = performance.now() - start;
   assert.ok(ms < 500, `took ${Math.round(ms)} ms`);
   assert.equal(next.monitoring.activity.headers[19_999].value, 'v19999');
+});
+
+test('a block asks for a stored secret only through a blank secret row or a login without a password', () => {
+  assert.equal(wantsStoredSecret(undefined), false);
+  assert.equal(wantsStoredSecret({}), false);
+  assert.equal(wantsStoredSecret({ params: [{ key: 'k', value: '', secret: false }] }), false);
+  assert.equal(wantsStoredSecret({ headers: [{ key: 'k', value: 'typed', secret: true }] }), false);
+  assert.equal(wantsStoredSecret({ login: { username: 'monitor', password: 'typed' } }), false);
+  assert.equal(wantsStoredSecret({ login: { username: '' } }), false);
+  assert.equal(wantsStoredSecret({ headers: [{ key: 'k', secret: true, valueSet: true }] }), true);
+  assert.equal(wantsStoredSecret({ params: [{ key: 'k', value: '', secret: true }] }), true);
+  assert.equal(wantsStoredSecret({ login: { username: 'monitor', passwordSet: true } }), true);
 });

@@ -30,11 +30,11 @@ const overlay = ui.slice(ui.indexOf('export function openFolderMobile('), ui.ind
 assert.ok(overlay.length > 0, 'openFolderMobile was renamed or moved');
 
 test('a wide window centres a phone-size folder instead of enlarging it', () => {
-  assert.match(overlay, /const ptScale = Math\.min\(vw, FOLDER_MAX_VW\) \/ 393;/);
-  assert.match(overlay, /boxW = Math\.min\(vw, FOLDER_MAX_VW\) - margin \* 2/);
+  assert.match(overlay, /const ptScale = Math\.min\(vw, WIDEST_PHONE\) \/ BASE_VW;/);
+  assert.match(overlay, /boxW = Math\.min\(vw, WIDEST_PHONE\) - margin \* 2/);
   assert.match(overlay, /boxLeft = Math\.round\(\(vw - boxW\) \/ 2\)/);
   assert.match(overlay, /'--left': boxLeft \+ 'px'/);
-  assert.match(ui, /export const FOLDER_MAX_VW = 430;/);
+  assert.match(read('js/mobile-metrics.js'), /export const WIDEST_PHONE = 430;/);
 });
 
 test('a pointer click on the scrim closes the folder', () => {
@@ -42,11 +42,7 @@ test('a pointer click on the scrim closes the folder', () => {
 });
 
 test('the page is inset by the badge overhang', () => {
-  assert.match(
-    overlay,
-    /badgeOvh = Math\.min\(Math\.ceil\(11 \* \(sc \|\| 1\)\)/,
-    'the inset must follow the badge scale',
-  );
+  assert.match(overlay, /badgeOvh = Math\.min\(Math\.ceil\(11 \* sc\)/, 'the inset must follow the badge scale');
   assert.match(overlay, /pageW = gridInnerW \+ badgeOvh \* 2/);
   assert.match(overlay, /pageH = gridH \+ badgeOvh \* 2/);
 });
@@ -58,7 +54,7 @@ test('the inset comes out of the box padding, so the icons keep their place', ()
 });
 
 test('the inset never exceeds the padding it is taken from', () => {
-  assert.match(overlay, /Math\.min\(Math\.ceil\(11 \* \(sc \|\| 1\)\), padH, padVT, padVB\)/);
+  assert.match(overlay, /Math\.min\(Math\.ceil\(11 \* sc\), padH, padVT, padVB\)/);
 });
 
 test('the icon grid itself is unchanged', () => {
@@ -135,7 +131,7 @@ test('a folder grows from the size and place of the tile that opened it', () => 
   assert.match(motion, /p\.style\.transformOrigin = '0 0'/);
   assert.match(motion, /duration: open \? 300 : 250/);
   assert.match(ui, /openFolderDesktop\(item, a\)/);
-  assert.match(ui, /openFolderMobile\(item, isz, ir, im, sc, a\)/);
+  assert.match(ui, /openFolderMobile\(item, a\)/);
 });
 
 test('reduced motion keeps only the fade', () => {
@@ -278,4 +274,22 @@ test('closing folders for a rebuild removes the folder at once, with no shrink',
   const again = doc.body.children.find(c => c.tag === 'dialog');
   assert.ok(again?.open, 'the next folder press closed a folder that was already gone');
   closeFolders();
+});
+
+test('search opens a phone folder with the same sizes as its tile', () => {
+  assert.match(ui, /export function openFolderMobile\(folder, tile\) \{/);
+  assert.match(
+    ui,
+    /const isz = Math\.round\(Math\.min\(cw \* 0\.9, rh \* 0\.8, maxIsz\)\);\s*phoneGrid = \{ isz, sc \};/,
+  );
+  assert.match(overlay, /const \{ isz, sc \} = phoneGrid;/);
+  const spotlight = read('js/spotlight.js');
+  assert.match(spotlight, /if \(MOB\(\)\) openFolderMobile\(app\);/);
+  assert.doesNotMatch(spotlight, /\b(393|430)\b/, 'search sizes the folder itself again');
+});
+
+test('an icon in a desktop folder has the same corner as on the home grid', () => {
+  const desktop = ui.slice(ui.indexOf('export function openFolderDesktop('), ui.indexOf('function mFolder('));
+  assert.match(desktop, /mkWrap\(child, iw, Math\.round\(iw \* ICON_R\), isz, 'iwrap'\)/);
+  assert.match(read('js/dashboard.js'), /mkWrap\(item, iw, Math\.round\(iw \* ICON_R\), isz, 'iwrap'\)/);
 });

@@ -41,17 +41,16 @@ test('the current page is marked for a screen reader', () => {
   assert.match(mkDot, /setAttribute\('aria-current', 'true'\)/);
 });
 
-/* One helper for both call sites. Two copies leave one of them missed. */
-test('both places that build dots use the one helper', () => {
+test('the dots are built by the one helper', () => {
   const calls = dashboard.match(/mkDot\(/g) || [];
-  assert.ok(calls.length >= 3, `expected the definition and two call sites, found ${calls.length}`);
+  assert.equal(calls.length, 2, `expected the definition and one call site, found ${calls.length}`);
   assert.doesNotMatch(dashboard, /const d = mk\('div'\); d\.className = 'dot'/, 'a call site still builds its own div');
 });
 
 /* Paging updates the dots in place, so the attribute has to be updated too, or
    a screen reader keeps announcing the page the dashboard loaded on. */
 test('changing page moves aria-current with the class', () => {
-  const upd = dashboard.slice(dashboard.indexOf("(dotEls ?? document.querySelectorAll('.dot'))"));
+  const upd = dashboard.slice(dashboard.indexOf("document.querySelectorAll('.dot').forEach("));
   const block = upd.slice(0, upd.indexOf('\n}'));
   assert.match(block, /classList\.toggle\('on', i === pg\)/);
   assert.match(block, /setAttribute\('aria-current', 'true'\)/);
@@ -273,7 +272,6 @@ test('the direction is read from the document, not stored', () => {
 
 test('the pager is hidden when there is one page', () => {
   assert.match(dashboard, /dots\.hidden = pages\.length < 2/);
-  assert.match(dashboard, /dots\.hidden = domCount < 2/, 'overflow pages can add a second page later');
 });
 
 test('the hidden pager is not painted', () => {

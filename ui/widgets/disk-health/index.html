@@ -182,7 +182,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, wtCount, formatNumber, formatList, errorState, cssZoom } from '/js/widget-toolbox.js?v=6417415d';
+import { poll, fetchData, openUrl, loadStrings, wt, wtCount, formatNumber, formatList, formatBytes, errorState, cssZoom, twoTap } from '/js/widget-toolbox.js?v=8415820b';
 await loadStrings();
 document.getElementById('root').setAttribute('aria-label', wt('ui.diskHealth','Disk health'));
 const params    = new URLSearchParams(location.search);
@@ -212,13 +212,14 @@ function statusText(s, hasSmart) {
   if (!hasSmart) return wt('ui.noSmart','No SMART data');
   return s === 0 ? wt('ui.healthy','Healthy') : wt('ui.failed','Failed');
 }
-/* TB and GB are symbols, not words: only the figure is localised. */
-function fmtCap(c){ if(!c||c<=0) return ''; if(c>=1e12){const t=c/1e12; return formatNumber(t>=10?Math.round(t):Number(t.toFixed(1)))+' TB';} return formatNumber(Math.round(c/1e9))+' GB'; }
+const CAP = { min: 'gigabyte', max: 'terabyte', digits: (v, u) => (u === 'terabyte' && v < 10 ? 1 : 0) };
+function fmtCap(c){ return Number(c) > 0 ? formatBytes(Number(c), CAP) : ''; }
 function freeText(d) {
   if (d.free == null) return '';
-  return wt('ui.freeOf', '{free} / {size} free')
-    .replace('{free}', fmtCap(d.free) || formatNumber(0) + ' GB')
-    .replace('{size}', fmtCap(d.fsTotal));
+  return wt('ui.freeOf', '{free} / {size} free', {
+    free: formatBytes(Math.max(0, Number(d.free) || 0), CAP),
+    size: fmtCap(d.fsTotal),
+  });
 }
 function shortName(d) {
   const n = (d.device_name || '').replace(/^\/dev\//, '');
@@ -236,7 +237,6 @@ let bayData   = new Array(BAY_COUNT).fill(null);
 let _href     = '';
 let _provider = 'scrutiny';
 let bayEls    = [];
-let activeBay = -1;
 
 const tipEl   = document.getElementById('tip');
 const tipLed  = document.getElementById('tip-led');
@@ -249,7 +249,7 @@ function showTip(i) {
   if (!d) return;
   if (unread(d)) {
     tipLed.className = 'unread';
-    tipName.textContent = fullName(d) || wt('ui.bay', 'Bay {n}').replace('{n}', formatNumber(i + 1));
+    tipName.textContent = fullName(d) || wt('ui.bay', 'Bay {n}', { n: formatNumber(i + 1) });
     tipMeta.textContent = wt('ui.notReporting', 'Not reporting');
     tipFree.hidden = true;
     rootEl.classList.add('tip-active');
@@ -324,7 +324,7 @@ function update() {
       nm.textContent = shortName(d);
       bay.setAttribute('role', 'img'); bay.removeAttribute('tabindex');
       bay.setAttribute('aria-label',
-        `${wt('ui.bay','Bay {n}').replace('{n}', formatNumber(i + 1))}: ${wt('ui.notReporting','Not reporting')}`);
+        `${wt('ui.bay','Bay {n}', { n: formatNumber(i + 1) })}: ${wt('ui.notReporting','Not reporting')}`);
     } else if (d) {
       bay.classList.add('assigned'); bay.classList.remove('empty', 'unread');
       const lc = ledClass(d.device_status ?? 0, d.hasSmart ?? false);
@@ -333,13 +333,13 @@ function update() {
       const cap = fmtCap(d.capacity);
       const st  = statusText(d.device_status ?? 0, d.hasSmart ?? false);
       bay.setAttribute('role','button'); bay.setAttribute('tabindex','0');
-      bay.setAttribute('aria-label', `${wt('ui.bay','Bay {n}').replace('{n}', formatNumber(i + 1))}: ${shortName(d)}${d.free != null ? ', '+freeText(d) : cap ? ', '+cap : ''}${st ? ', '+st : ''}`);
+      bay.setAttribute('aria-label', `${wt('ui.bay','Bay {n}', { n: formatNumber(i + 1) })}: ${shortName(d)}${d.free != null ? ', '+freeText(d) : cap ? ', '+cap : ''}${st ? ', '+st : ''}`);
     } else {
       bay.classList.add('empty'); bay.classList.remove('assigned', 'unread');
       led.className = 'led';
       nm.textContent = '';
       bay.setAttribute('role','img'); bay.removeAttribute('tabindex');
-      bay.setAttribute('aria-label', wt('ui.bayEmpty','Bay {n}: empty').replace('{n}', formatNumber(i + 1)));
+      bay.setAttribute('aria-label', wt('ui.bayEmpty','Bay {n}: empty', { n: formatNumber(i + 1) }));
     }
   }
   updateAlert();
@@ -371,34 +371,13 @@ function addEvents(bay, i) {
   bay.addEventListener('keydown', e => { if ((e.key==='Enter'||e.key===' ') && bayData[i]) { e.preventDefault(); openBay(i); } });
   bay.addEventListener('focus', () => { if (bayData[i]) showTip(i); });
   bay.addEventListener('blur',  () => hideTip());
-  let bsx=0, bsy=0, bmoved=false;
-  bay.addEventListener('touchstart', e => { const t=e.touches[0]; if(t){ bsx=t.clientX; bsy=t.clientY; bmoved=false; } }, { passive:true });
-  bay.addEventListener('touchmove',  e => { const t=e.touches[0]; if(t && (Math.abs(t.clientX-bsx)>8 || Math.abs(t.clientY-bsy)>8)) bmoved=true; }, { passive:true });
-  bay.addEventListener('touchend', e => {
-    if (bmoved) return;
-    e.preventDefault();
-    if (!bayData[i]) return;
-    if (i === activeBay) {
-      bay.classList.remove('touch-active'); activeBay = -1; hideTip();
-      openBay(i);
-    } else {
-      bayEls.forEach((b,j) => { if (j!==i) b.classList.remove('touch-active'); });
-      bay.classList.add('touch-active'); activeBay = i; showTip(i);
-      /* Addressed to our own origin, not '*': the parent is always the dashboard. */
-      try { parent.postMessage({ type:'widget-active' }, window.location.origin); } catch (_) {}
-    }
+  twoTap(bay, {
+    canReveal: () => !!bayData[i],
+    reveal: () => { bay.classList.add('touch-active'); showTip(i); },
+    conceal: () => { bay.classList.remove('touch-active'); hideTip(); },
+    open: () => openBay(i),
   });
 }
-
-document.addEventListener('touchend', e => {
-  if (!e.target.closest('.bay')) {
-    bayEls.forEach(b => b.classList.remove('touch-active'));
-    activeBay = -1; hideTip();
-  }
-}, { passive:true });
-
-/* The dashboard calls this directly when a tap lands outside this widget. */
-window.__clearActive = () => { bayEls.forEach(b => b.classList.remove('touch-active')); activeBay = -1; hideTip(); };
 
 function applyBays(d) {
   _href   = d.href || '';

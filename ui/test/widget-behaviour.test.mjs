@@ -33,28 +33,54 @@ function liftAddEvents() {
   assert.ok(fn, 'addEvents is defined in the widget');
   const seen = { shown: 0, hidden: 0, opened: 0 };
   const listeners = new Map();
-  const bay = { addEventListener: (t, f) => listeners.set(t, f) };
-  new Function(
-    'bay',
-    'bayData',
-    'showTip',
-    'hideTip',
-    'openBay',
-    'bayEls',
-    'window',
-    `let activeBay=-1;${fn[0]};addEvents(bay,0);`,
-  )(
+  const classes = new Set();
+  const bay = {
+    addEventListener: (t, f) => listeners.set(t, f),
+    classList: { add: c => classes.add(c), remove: c => classes.delete(c) },
+  };
+  const bayData = [{}];
+  let touch = null;
+  new Function('bay', 'bayData', 'showTip', 'hideTip', 'openBay', 'twoTap', `${fn[0]};addEvents(bay,0);`)(
     bay,
-    [{}],
+    bayData,
     () => seen.shown++,
     () => seen.hidden++,
     () => seen.opened++,
-    [bay],
-    { ontouchstart: null },
+    (el, opts) => {
+      assert.equal(el, bay);
+      touch = opts;
+    },
   );
   const fire = (type, pointerType) => listeners.get(type)({ pointerType });
-  return { seen, fire };
+  return { seen, fire, touch, classes, bayData, listeners };
 }
+
+test('Disk Health hands a finger to the shared two-tap reveal', () => {
+  const { seen, touch, classes, bayData, listeners } = liftAddEvents();
+  assert.ok(touch, 'addEvents does not use twoTap');
+  assert.deepEqual(
+    ['touchstart', 'touchmove', 'touchend'].filter(t => listeners.has(t)),
+    [],
+  );
+  touch.reveal();
+  assert.ok(classes.has('touch-active'));
+  assert.equal(seen.shown, 1);
+  touch.conceal();
+  assert.ok(!classes.has('touch-active'));
+  assert.equal(seen.hidden, 1);
+  touch.open();
+  assert.equal(seen.opened, 1);
+  assert.equal(touch.canReveal(), true);
+  bayData[0] = null;
+  assert.equal(touch.canReveal(), false, 'an empty bay reveals on a tap');
+  assert.equal(touch.timeout, undefined, 'a revealed bay closes on its own');
+});
+
+test('Disk Health keeps no touch tracking or reset hook of its own', () => {
+  const src = read('disk-health/index.html');
+  assert.doesNotMatch(src, /addEventListener\('touch(start|move|end)'/);
+  assert.doesNotMatch(src, /__clearActive|postMessage/);
+});
 
 test('Disk Health reads the input in use, not whether the device has touch', () => {
   const { seen, fire } = liftAddEvents();
