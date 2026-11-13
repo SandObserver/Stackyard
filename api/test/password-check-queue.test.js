@@ -1,5 +1,6 @@
 const path = require('node:path');
 const { tmpDir } = require('../test-support/tmp');
+require('../test-support/cheap-scrypt').useCheapScrypt();
 process.env.CONFIG_PATH = path.join(tmpDir('password-check-queue'), 'apps.json');
 
 const { test, before, after, beforeEach, mock } = require('node:test');

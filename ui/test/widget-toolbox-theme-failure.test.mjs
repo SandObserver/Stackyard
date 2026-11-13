@@ -69,6 +69,14 @@ globalThis.document = doc;
 const { poll } = await import('../js/widget-toolbox.js');
 
 const tick = ms => new Promise(r => setTimeout(r, ms));
+
+async function until(check, what) {
+  const end = Date.now() + 5000;
+  while (!check()) {
+    if (Date.now() > end) throw new Error(`timed out waiting for ${what}`);
+    await tick(5);
+  }
+}
 const changeTheme = () => themeObservers.forEach(fn => fn());
 
 function failingAfterFirst() {
@@ -80,7 +88,7 @@ function failingAfterFirst() {
   };
 }
 
-test('a theme change keeps the shared failure caption on a stale widget', async () => {
+test('a theme change keeps the shared failure caption on a stale widget', async t => {
   const root = node(doc);
   const content = node(doc);
   root.appendChild(content);
@@ -92,8 +100,10 @@ test('a theme change keeps the shared failure caption on a stale widget', async 
     fetch: failingAfterFirst(),
     render: () => content.classList.clear(),
   });
-  await tick(40);
-  const cap = root.children.find(c => c.classList.contains('wt-cap'));
+  t.after(() => p.stop());
+  const capOf = () => root.children.find(c => c.classList.contains('wt-cap'));
+  await until(() => capOf()?.hidden === false && content.classList.contains('wt-inert'), 'the failure caption');
+  const cap = capOf();
   assert.ok(cap, 'no caption was drawn');
   assert.equal(cap.hidden, false, 'the failure is not shown before the theme change');
   assert.ok(content.classList.contains('wt-inert'));
@@ -107,7 +117,7 @@ test('a theme change keeps the shared failure caption on a stale widget', async 
   assert.ok(content.classList.contains('wt-inert'), 'the stale reading shows as current');
 });
 
-test('a theme change hands a widget its own failure again', async () => {
+test('a theme change hands a widget its own failure again', async t => {
   const errors = [];
   let shown = 'none';
   const p = poll({
@@ -122,7 +132,8 @@ test('a theme change hands a widget its own failure again', async () => {
       if (info.stale) shown = 'failure';
     },
   });
-  await tick(40);
+  t.after(() => p.stop());
+  await until(() => errors.at(-1)?.stale === true, 'a stale failure');
   const last = errors.at(-1);
   assert.equal(last.stale, true, 'the poll never went stale');
   assert.equal(shown, 'failure');
@@ -132,7 +143,7 @@ test('a theme change hands a widget its own failure again', async () => {
   assert.equal(errors.at(-1), last, 'the widget was not given the same failure again');
 });
 
-test('a theme change on a healthy widget only redraws', async () => {
+test('a theme change on a healthy widget only redraws', async t => {
   const errors = [];
   let paints = 0;
   const p = poll({
@@ -141,7 +152,8 @@ test('a theme change on a healthy widget only redraws', async () => {
     render: () => paints++,
     onError: info => errors.push(info),
   });
-  await tick(10);
+  t.after(() => p.stop());
+  await until(() => paints === 1, 'the first paint');
   changeTheme();
   p.stop();
   assert.equal(paints, 2);
