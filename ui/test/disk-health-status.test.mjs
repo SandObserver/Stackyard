@@ -104,7 +104,10 @@ const { fmtCap, freeText } = new Function(
   'wt',
   'formatBytes',
   `${capFn[0]} ${fmtFn[0]}; ${freeFn[0]}; return { fmtCap, freeText };`,
-)((_k, fallback) => fallback, formatBytes);
+)(
+  (_k, fallback, vars = {}) => fallback.replace(/\{(\w+)\}/g, (m, k) => (vars[k] == null ? m : String(vars[k]))),
+  formatBytes,
+);
 
 test('free space is measured against the filesystem size, not the drive size', () => {
   assert.equal(freeText({ capacity: 4e12, free: 20e9, fsTotal: 100e9 }), '20 GB / 100 GB free');

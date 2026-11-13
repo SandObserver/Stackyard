@@ -301,11 +301,11 @@ on('GET', '/api/health', async (req, res) => {
   const result = Object.create(null);
   await Promise.allSettled(
     cfg.items
-      .filter(i => i.type === 'app' && (i.container || i.ping || i.monitoring?.healthcheck?.enabled))
+      .filter(i => i.type === 'app' && (i.container || i.monitoring?.healthcheck?.enabled))
       .map(async item => {
         const mon = item.monitoring?.healthcheck || {};
         const cName = socketUrl ? mon.container || item.container || '' : '';
-        const ping = mon.pingUrl || item.ping || '';
+        const ping = mon.pingUrl || '';
         const vmid = guestOf(item);
         /* Build the entry up rather than replace it. An item can have both a
            container and a ping, and the tile needs the detail from each. */

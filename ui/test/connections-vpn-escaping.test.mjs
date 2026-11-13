@@ -1,21 +1,32 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { register } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc } from '../js/html.js';
+import * as worldMap from '../widgets/connections/world-map.js';
+
+register('./js-root-hooks.mjs', import.meta.url);
+globalThis.location ??= { search: '' };
+const { rgbOf } = await import('../js/widget-toolbox.js');
+const world = { ...worldMap };
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const source = fs.readFileSync(path.join(root, 'widgets/connections/connections-vpn.html'), 'utf8');
+const read = f => fs.readFileSync(path.join(root, 'widgets/connections', f), 'utf8');
+const source = read('connections-vpn.html');
 const scripts = [...source.matchAll(/<script(?: type="module")?>([\s\S]*?)<\/script>/gi)].map(m => m[1]);
-const dataScript = scripts.find(s => s.includes('window.__DOTS='));
 const moduleScript = scripts.find(s => /^import /m.test(s));
-const importLine = /^import \{([^}]+)\} from '[^']+';$/m;
-const toolboxNames = moduleScript
-  .match(importLine)[1]
-  .split(',')
-  .map(s => s.trim());
-const body = moduleScript.replace(importLine, '');
+const importLine = /^import \{([^}]+)\} from '\/js\/widget-toolbox\.js[^']*';$/m;
+const worldLine = /^import \{([^}]+)\} from '\.\/world-map\.js';$/m;
+const names = line =>
+  moduleScript
+    .match(line)[1]
+    .split(',')
+    .map(s => s.trim());
+const toolboxNames = names(importLine);
+const worldNames = names(worldLine);
+const body = moduleScript.replace(importLine, '').replace(worldLine, '');
 
 function node() {
   const n = {
@@ -24,7 +35,13 @@ function node() {
     className: '',
     attrs: {},
     children: [],
-    style: { setProperty() {} },
+    props: {},
+    arcs: 0,
+    style: {
+      setProperty(k, v) {
+        n.props[k] = v;
+      },
+    },
     classList: { add() {}, remove() {}, toggle() {}, contains: () => false },
     setAttribute(k, v) {
       n.attrs[k] = v;
@@ -39,7 +56,7 @@ function node() {
     replaceChildren(...c) {
       n.children = c;
     },
-    getContext: () => new Proxy({}, { get: () => () => {} }),
+    getContext: () => new Proxy({}, { get: (_, k) => (k === 'arc' ? () => n.arcs++ : () => {}) }),
     getBoundingClientRect: () => ({ width: 300, height: 150 }),
   };
   return n;
@@ -47,20 +64,25 @@ function node() {
 
 async function mountVpn() {
   const els = {};
+  const created = [];
+  const frames = [];
   const document = {
     getElementById: id => {
       els[id] ??= node();
       return els[id];
     },
-    createElement: () => node(),
+    createElement: () => {
+      const n = node();
+      created.push(n);
+      return n;
+    },
     body: node(),
     documentElement: node(),
   };
-  const window = {};
-  new Function('window', dataScript)(window);
   let pollOpts;
   const toolbox = {
     readableInk: () => '#000000',
+    rgbOf,
     poll: opts => {
       pollOpts = opts;
       return { stop() {} };
@@ -78,25 +100,33 @@ async function mountVpn() {
   };
   const AsyncFunction = (async () => {}).constructor;
   const run = new AsyncFunction(
-    'window',
     'document',
     'location',
     'requestAnimationFrame',
     'cancelAnimationFrame',
     'addEventListener',
+    ...worldNames,
     ...toolboxNames,
     body,
   );
   await run(
-    window,
     document,
     { search: '?id=test' },
-    () => 0,
+    fn => frames.push(fn),
     () => {},
     () => {},
+    ...worldNames.map(n => world[n]),
     ...toolboxNames.map(n => toolbox[n]),
   );
-  return { render: d => pollOpts.render(d), wrap: els.wrap };
+  return {
+    render: d => pollOpts.render(d),
+    wrap: els.wrap,
+    accent: () => document.documentElement.props['--accent'],
+    dotsDrawn: () => {
+      for (const fn of frames.splice(0)) fn();
+      return created.reduce((sum, c) => sum + c.arcs, 0);
+    },
+  };
 }
 
 const HOSTILE = '<img src=x onerror=alert(1)>';
@@ -126,4 +156,37 @@ test('an upstream error message is never drawn', async () => {
   render({ error: HOSTILE, errorKind: 'network', connected: false });
   assert.ok(!wrap.innerHTML.includes('img'), 'the error text reached the card');
   assert.ok(wrap.innerHTML.includes('Unavailable'));
+});
+
+test('the VPN view draws every country the Map view knows', async () => {
+  for (const cc of ['CH', 'SG', 'HK', 'TW', 'US']) {
+    const vpn = await mountVpn();
+    vpn.render({ connected: true, countryCode: cc.toLowerCase() });
+    assert.ok(vpn.dotsDrawn() > 0, `${cc} drew no map`);
+  }
+  const vpn = await mountVpn();
+  vpn.render({ connected: true, countryCode: 'ZZ' });
+  assert.equal(vpn.dotsDrawn(), 0, 'a code not on the map drew dots');
+});
+
+test('both Connections views read the one shared world map', () => {
+  for (const f of ['connections-map.html', 'connections-vpn.html']) {
+    const page = read(f);
+    assert.match(page, /^import .* from '\.\/world-map\.js';$/m, `${f} does not load the shared map`);
+    assert.doesNotMatch(page, /"dots":\[|__DOTS/, `${f} carries its own copy of the map`);
+  }
+});
+
+test('the VPN accent reads every colour form the toolbox reads', async () => {
+  for (const [color, on, want] of [
+    ['#30D15880', true, 'rgba(48,209,88,1)'],
+    ['#0a84ff', true, 'rgba(10,132,255,1)'],
+    ['#f00', true, 'rgba(255,0,0,1)'],
+    ['blue', true, 'rgba(48,209,88,1)'],
+    ['blue', false, 'rgba(142,142,147,1)'],
+  ]) {
+    const vpn = await mountVpn();
+    vpn.render({ connected: on, color });
+    assert.equal(vpn.accent(), want, color);
+  }
 });

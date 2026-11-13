@@ -17,17 +17,23 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=9f3fe729';
+} from '/js/utils.js?v=9647ab80';
 import { t, currentLang } from '/js/i18n.js?v=e11cab88';
 import { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
-import { mobileMetrics, gridColumnWidth, gridCellCount, dockFit } from '/js/mobile-metrics.js?v=3b0d6715';
+import {
+  BASE_VW,
+  mobileMetrics,
+  gridColumnWidth,
+  gridCellCount,
+  dockFit,
+  WIDEST_PHONE,
+} from '/js/mobile-metrics.js?v=1e189832';
 import { animate, easing, glide, isScripted, requestFrame, stopGlide } from '/js/frame-motion.js?v=1d86154d';
 import { openFolderGlass } from '/js/glass.js?v=258316fb';
-import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=8b2dad40';
+import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=b4828b62';
 import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 
-const PHONE_W = 393;
 /* Matches the --pill-inset transition in dashboard.css. */
 const PILL_MS = 250;
 const pillEase = easing(EASE_IOS);
@@ -45,7 +51,6 @@ const bunreg = (...a) => _state.bunreg(...a);
 const bupd = (...a) => _state.bupd(...a);
 const BEL = () => _state.BEL;
 const CB = () => _state.CB;
-const st = () => _state;
 const widgetReg = () => _state?.widgetReg || Object.create(null);
 const mkWrap = (item, sz, r, isz, cls) => _mkWrap(item, sz, r, isz, cls, breg);
 
@@ -61,6 +66,7 @@ function clearMobWidgets(exceptWin) {
     } catch {}
   });
 }
+const clearOnTouch = () => clearMobWidgets();
 /* A module-level guard, so a second import does not bind the listener twice. */
 const _win = /** @type {any} */ (window);
 if (!_win.__wActiveMsgBound) {
@@ -531,7 +537,7 @@ export function openFolderDesktop(folder, tile) {
     a.onclick = () => {
       closeDesk();
     };
-    a.appendChild(mkWrap(child, iw, 16, isz, 'iwrap'));
+    a.appendChild(mkWrap(child, iw, Math.round(iw * ICON_R), isz, 'iwrap'));
     if (showLabel) {
       const l = mk('div');
       l.className = 'ilabel';
@@ -572,7 +578,7 @@ export function openFolderDesktop(folder, tile) {
   shrink = folderMotion(ov, [outer], tile, box);
 }
 
-function mFolder(item, cw, rh, isz, ir, im, sc) {
+function mFolder(item, cw, rh, isz, sc) {
   const showLabel = S().showLabels?.ios === true;
   const eff = showLabel ? Math.round(isz * 0.85) : isz;
   const a = document.createElement('button');
@@ -588,7 +594,7 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
     setTimeout(() => {
       _opening = false;
     }, 500);
-    openFolderMobile(item, isz, ir, im, sc, a);
+    openFolderMobile(item, a);
   }
   onTap(a, _openFolder);
   const box = mk('div');
@@ -613,11 +619,12 @@ function mFolder(item, cw, rh, isz, ir, im, sc) {
 }
 
 let folderOverlayMob = null;
-/* The widest phone viewport. Matches the cap in mobile-metrics.js. */
-export const FOLDER_MAX_VW = 430;
-/** @param {any} folder @param {number} isz @param {number} _ir @param {number} _im
-    @param {number} sc @param {Element} [tile] */
-export function openFolderMobile(folder, isz, _ir, _im, sc, tile) {
+/** @type {{ isz: number, sc: number }|null} */
+let phoneGrid = null;
+/** @param {any} folder @param {Element} [tile] */
+export function openFolderMobile(folder, tile) {
+  if (!phoneGrid) return;
+  const { isz, sc } = phoneGrid;
   if (folderOverlayMob) {
     folderOverlayMob.remove();
     folderOverlayMob = null;
@@ -648,9 +655,9 @@ export function openFolderMobile(folder, isz, _ir, _im, sc, tile) {
 
   /* Phone size on every window. A wider window centres the folder instead of
      enlarging it. */
-  const ptScale = Math.min(vw, FOLDER_MAX_VW) / 393;
+  const ptScale = Math.min(vw, WIDEST_PHONE) / BASE_VW;
   const margin = Math.round(34 * ptScale),
-    boxW = Math.min(vw, FOLDER_MAX_VW) - margin * 2,
+    boxW = Math.min(vw, WIDEST_PHONE) - margin * 2,
     boxLeft = Math.round((vw - boxW) / 2);
   const padH = Math.round(20 * ptScale),
     padVT = Math.round(24 * ptScale),
@@ -664,7 +671,7 @@ export function openFolderMobile(folder, isz, _ir, _im, sc, tile) {
     gridH = folderIconW * 3 + gap * 2;
   /* A badge sits 11px outside its icon corner. Without this inset the outer
      icons' badges cross into the next page and the viewport shows them. */
-  const badgeOvh = Math.min(Math.ceil(11 * (sc || 1)), padH, padVT, padVB);
+  const badgeOvh = Math.min(Math.ceil(11 * sc), padH, padVT, padVB);
   const pageW = gridInnerW + badgeOvh * 2,
     pageH = gridH + badgeOvh * 2;
   const dotSz = Math.round(7 * ptScale);
@@ -834,7 +841,7 @@ export function buildMobile() {
   /* The previous widgets' observers and timers outlive their DOM. Stop them
      before it is replaced. */
   teardownWidgets();
-  st().BEL.clear();
+  BEL().clear();
   const vw = innerWidth,
     vh = innerHeight;
   const dock = items()
@@ -919,8 +926,7 @@ export function buildMobile() {
   css(document.body, { '--mgw': Math.round(gridW) + 'px' });
   const maxIsz = Math.round(74 * sc);
   const isz = Math.round(Math.min(cw * 0.9, rh * 0.8, maxIsz));
-  const ir = Math.round(isz * ICON_R),
-    im = Math.round(isz * 0.64);
+  phoneGrid = { isz, sc };
   const showLabel = S().showLabels?.ios === true;
   /* The reference draws a 66 icon and a 28 widget corner, so a widget's corner
      is 0.424 of the icon it sits beside. */
@@ -1034,7 +1040,7 @@ export function buildMobile() {
   }
 
   function makeIconEl(item) {
-    return item.type === 'folder' ? mFolder(item, cw, rh2, isz, ir, im, sc) : mIcon(item);
+    return item.type === 'folder' ? mFolder(item, cw, rh2, isz, sc) : mIcon(item);
   }
 
   pages.forEach((placements, i) => {
@@ -1068,7 +1074,7 @@ export function buildMobile() {
   const fit = dockFit({ iconSz: dockIconSz, sc });
   const dockPad = Math.round(14 * sc * fit);
   const dockH = Math.round(dh * fit);
-  const dockW = Math.min(maxDockW, Math.round((PHONE_W - 18) * sc * fit));
+  const dockW = Math.min(maxDockW, Math.round((BASE_VW - 18) * sc * fit));
   const spare = dockW - dockPad * 2 - dock.length * dockIconSz;
   const maxIconGap = Math.round(22 * sc);
   const dockIconGap = dock.length > 1 ? Math.max(0, Math.min(maxIconGap, Math.floor(spare / (dock.length - 1)))) : 0;
@@ -1166,14 +1172,9 @@ export function buildMobile() {
     Array.from(pillNewDots.children).forEach((d, i) => d.classList.toggle('on', i === newPg));
   };
 
-  const { _mobTsCleanup, _mobTeCleanup } = st();
-  if (_mobTsCleanup) document.removeEventListener('touchstart', _mobTsCleanup);
-  if (_mobTeCleanup) document.removeEventListener('touchend', _mobTeCleanup);
-  st()._mobTsCleanup = null;
-  st()._mobTeCleanup = () => {
-    clearMobWidgets(); /* tap on the home background dismisses any active sled */
-  };
-  document.addEventListener('touchend', st()._mobTeCleanup, { passive: true });
+  document.removeEventListener('touchend', clearOnTouch);
+  document.addEventListener('touchend', clearOnTouch, { passive: true });
+  return pages.length;
 }
 
 /* The desktop build shares the dock and pill elements with buildMobile, which
@@ -1187,9 +1188,5 @@ export function resetMobileChrome() {
   pill.classList.remove('paging');
   CB().mobPillBump = null;
   CB().mobPillSync = null;
-  const { _mobTsCleanup, _mobTeCleanup } = st();
-  if (_mobTsCleanup) document.removeEventListener('touchstart', _mobTsCleanup);
-  if (_mobTeCleanup) document.removeEventListener('touchend', _mobTeCleanup);
-  st()._mobTsCleanup = null;
-  st()._mobTeCleanup = null;
+  document.removeEventListener('touchend', clearOnTouch);
 }

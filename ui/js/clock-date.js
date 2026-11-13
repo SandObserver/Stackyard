@@ -85,3 +85,51 @@ export function zoneTime(timeZone = '') {
     return { hours: part.hour % 24, minutes: part.minute, seconds: part.second };
   };
 }
+
+/** False for a zone this browser does not know. Every zone formatter throws on
+    one, so a clock must check before it draws. A blank zone is the browser's.
+    @param {string} [timeZone] @returns {boolean} */
+export function zoneOk(timeZone = '') {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: timeZone || undefined }).resolvedOptions();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** @param {Date} [date] @returns {number} */
+export function msToNextMinute(date = new Date()) {
+  return 60000 - (((date.getTime() % 60000) + 60000) % 60000);
+}
+
+/** @param {string} lang @returns {(n: number) => string} */
+export function twoDigits(lang) {
+  const opts = { minimumIntegerDigits: 2, useGrouping: false };
+  let f;
+  try {
+    f = new Intl.NumberFormat(lang, opts);
+  } catch {
+    f = new Intl.NumberFormat('en', opts);
+  }
+  return n => f.format(n);
+}
+
+/** The zone and date setting from the widget config. A failed read gives the
+    defaults.
+    @param {() => Promise<any>} getConfig @returns {Promise<{ timeZone: string, showDate: boolean }>} */
+export async function clockSettings(getConfig) {
+  const reply = await getConfig().catch(() => null);
+  const wc = reply?.widgetConfig || {};
+  return { timeZone: wc.clockTimezone || '', showDate: wc.clockShowDate !== false };
+}
+
+/** @param {{ loadStrings(): Promise<void>, wt(key: string, fallback: string): string,
+      errorState(opts: object): { empty(text: string): void } }} toolbox
+    @param {HTMLElement} root */
+export async function showUnknownZone(toolbox, root) {
+  await toolbox.loadStrings();
+  const line = toolbox.wt('ui.unknownZone', 'Unknown timezone');
+  toolbox.errorState({ root, place: 'center' }).empty(line);
+  root.setAttribute('aria-label', line);
+}

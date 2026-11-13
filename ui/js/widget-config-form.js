@@ -3,9 +3,9 @@
 
 import { t } from '/js/i18n.js?v=e11cab88';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { fadeIn, reveal, wireInlineEdit } from '/js/admin-shared.js?v=b58b9268';
-import { createListbox } from '/js/listbox.js?v=8c8bcb26';
-import { renderColorControl } from '/js/admin-color-control.js?v=93cf0a82';
+import { apiPost, fadeIn, PE_SVG, reveal, wireInlineEdit } from '/js/admin-shared.js?v=cea59c52';
+import { createListbox } from '/js/listbox.js?v=82de2478';
+import { renderColorControl } from '/js/admin-color-control.js?v=831c9a7b';
 import {
   seedCarried,
   applyOptionSet,
@@ -15,14 +15,11 @@ import {
   visibleFieldFlags,
   isPlainField,
 } from '/js/admin-logic.js?v=4681aa43';
-import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=d1f8f6f4';
-import { qi } from '/js/utils.js?v=9f3fe729';
+import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=05a2520c';
+import { qi } from '/js/utils.js?v=9647ab80';
 import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import { SAVED_ROW } from '/js/saved-row.js?v=44039df6';
 import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
-
-const PE =
-  '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a1.85 1.85 0 0 1 2.6 2.6l-9.1 9.1-3.4 1 1-3.4z"/></svg>';
 
 /* A counter, not randomness. Six base-36 characters collide plausibly over a
    long session, and an id that changes per run cannot be asserted on. */
@@ -43,7 +40,7 @@ function _ieRow(field, value, inputType) {
   row.id = uniqueId('wcf-ie');
   setHtml(
     row,
-    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv${has ? '' : ' is-ph'}">${has ? value : ph}</span><input class="row-inp d-none" type="${inputType}" autocomplete="off" value="${has ? value : field.default != null ? field.default : ''}"><button class="pe" type="button" aria-label="${t('common.editNamed', { name: field.label })}">${raw(PE)}</button>`,
+    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv${has ? '' : ' is-ph'}">${has ? value : ph}</span><input class="row-inp d-none" type="${inputType}" autocomplete="off" value="${has ? value : field.default != null ? field.default : ''}"><button class="pe" type="button" aria-label="${t('common.editNamed', { name: field.label })}">${raw(PE_SVG)}</button>`,
   );
   const inp = qi('.row-inp', row);
   wireInlineEdit(row, inp, {
@@ -82,7 +79,7 @@ function _secret(field, isSet) {
   const display = isSet ? t('common.configured') : t('common.notSet');
   setHtml(
     row,
-    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv is-ph">${display}</span><input class="row-inp d-none" type="password" autocomplete="new-password"><button class="pe" type="button" aria-label="${t('common.editNamed', { name: field.label })}">${raw(PE)}</button>`,
+    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv is-ph">${display}</span><input class="row-inp d-none" type="password" autocomplete="new-password"><button class="pe" type="button" aria-label="${t('common.editNamed', { name: field.label })}">${raw(PE_SVG)}</button>`,
   );
   const inp = qi('.row-inp', row);
   wireInlineEdit(row, inp, {
@@ -134,40 +131,62 @@ function _toggle(field, value) {
   return { el: row, get, control: input, liveValue: () => input.checked };
 }
 
-async function _fetchOptions(field, ctx) {
+/** @returns {Promise<{ options: any[], truncated: boolean }>} */
+export async function fetchFieldOptions(field, ctx) {
   const cfg = ctx && ctx.getDraft ? ctx.getDraft() : {};
   const wid = (ctx && ctx.widgetId) || '__preview__';
-  const r = await fetch(`/api/widget-options/${encodeURIComponent(wid)}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      widgetType: ctx && ctx.widgetType,
-      endpoint: field.optionsFrom,
-      widgetConfig: cfg,
-      row: (ctx && ctx.row) || undefined,
-    }),
+  const d = await apiPost(`/api/widget-options/${encodeURIComponent(wid)}`, {
+    widgetType: ctx && ctx.widgetType,
+    endpoint: field.optionsFrom,
+    widgetConfig: cfg,
+    row: (ctx && ctx.row) || undefined,
   });
-  const d = await r.json().catch(() => ({}));
-  if (!r.ok || d.error) {
-    /* Carry the structured fields so the caller branches on `kind`, never on
-       the message. */
-    const err =
-      /** @type {Error & { status?: number, kind?: string, code?: string, detail?: Record<string, unknown> }} */ (
-        new Error(d.error || 'HTTP ' + r.status)
-      );
-    err.status = r.status;
-    if (typeof d.kind === 'string') err.kind = d.kind;
-    if (typeof d.code === 'string') err.code = d.code;
-    if (d.detail && typeof d.detail === 'object') err.detail = d.detail;
-    throw err;
-  }
-  return { options: Array.isArray(d.options) ? d.options : [], truncated: d.truncated === true };
+  return { options: Array.isArray(d?.options) ? d.options : [], truncated: d?.truncated === true };
 }
 
 /** @param {{ options: any[], truncated: boolean }} got */
 function _loadedText(got) {
   if (!got.options.length) return t('widgetCfg.noOptions');
   return t(got.truncated ? 'widgetCfg.loadedSome' : 'widgetCfg.loaded', { count: got.options.length });
+}
+
+/** @param {(options: any[]) => void} apply */
+function _fetchRow(field, ctx, apply) {
+  const fr = document.createElement('div');
+  fr.className = 'row';
+  const status = document.createElement('span');
+  status.className = 'row-status';
+  status.setAttribute('role', 'status');
+  status.textContent = field.hint || '';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'row-btn';
+  btn.textContent = field.fetchLabel || t('widgetCfg.fetch');
+  setHtml(fr, html`<span class="rl"></span>`);
+  fr.appendChild(status);
+  fr.appendChild(btn);
+  if (!field.optionsFrom) {
+    btn.style.display = 'none';
+    return fr;
+  }
+  btn.addEventListener('click', async () => {
+    status.textContent = t('widgetCfg.fetching');
+    status.className = 'row-status';
+    btn.disabled = true;
+    try {
+      const got = await fetchFieldOptions(field, ctx);
+      apply(got.options);
+      status.textContent = _loadedText(got);
+      status.className = 'row-status ' + (got.truncated ? 'warn' : 'ok');
+    } catch (e) {
+      const advice = optionsErrorAdvice(e);
+      status.textContent = t(advice.key, advice.vars);
+      status.className = 'row-status ' + (advice.tone === TONE.WARN ? 'warn' : 'err');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  return fr;
 }
 
 function _picklist(field, value, ctx, size) {
@@ -193,20 +212,12 @@ function _picklist(field, value, ctx, size) {
   card.className = 'grp';
   wrap.appendChild(card);
 
-  const fr = document.createElement('div');
-  fr.className = 'row';
-  const status = document.createElement('span');
-  status.className = 'row-status';
-  status.setAttribute('role', 'status');
-  status.textContent = field.hint || '';
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'row-btn';
-  btn.textContent = field.fetchLabel || t('widgetCfg.fetch');
-  setHtml(fr, html`<span class="rl"></span>`);
-  fr.appendChild(status);
-  fr.appendChild(btn);
-  card.appendChild(fr);
+  card.appendChild(
+    _fetchRow(field, ctx, options => {
+      opts = options;
+      paint();
+    }),
+  );
 
   let opts = Array.isArray(field.options) ? field.options.slice() : [];
   const sels = [];
@@ -230,29 +241,6 @@ function _picklist(field, value, ctx, size) {
 
   function paint() {
     sels.forEach(lb => lb.setOptions(shown(lb.getValue() || ''), lb.getValue() || ''));
-  }
-
-  if (field.optionsFrom) {
-    btn.addEventListener('click', async () => {
-      status.textContent = t('widgetCfg.fetching');
-      status.className = 'row-status';
-      btn.disabled = true;
-      try {
-        const got = await _fetchOptions(field, ctx);
-        opts = got.options;
-        paint();
-        status.textContent = _loadedText(got);
-        status.className = 'row-status ' + (got.truncated ? 'warn' : 'ok');
-      } catch (e) {
-        const advice = optionsErrorAdvice(e);
-        status.textContent = t(advice.key, advice.vars);
-        status.className = 'row-status ' + (advice.tone === TONE.WARN ? 'warn' : 'err');
-      } finally {
-        btn.disabled = false;
-      }
-    });
-  } else {
-    btn.style.display = 'none';
   }
 
   const get = () => [field.key, sels.map(lb => lb.getValue() || null)];
@@ -310,42 +298,16 @@ function _select(field, value, ctx, config = {}) {
   }
 
   if (field.optionsFrom) {
-    const fr = document.createElement('div');
-    fr.className = 'row';
-    const status = document.createElement('span');
-    status.className = 'row-status';
-    status.setAttribute('role', 'status');
-    status.textContent = field.hint || '';
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'row-btn';
-    btn.textContent = t('widgetCfg.fetch');
-    setHtml(fr, html`<span class="rl"></span>`);
-    fr.appendChild(status);
-    fr.appendChild(btn);
-    wrap.appendChild(fr);
-    btn.addEventListener('click', async () => {
-      status.textContent = t('widgetCfg.fetching');
-      status.className = 'row-status';
-      btn.disabled = true;
-      try {
-        const got = await _fetchOptions(field, ctx);
+    wrap.appendChild(
+      _fetchRow(field, ctx, options => {
         const before = chosen;
-        opts = got.options;
+        opts = options;
         chosen = lb.getValue() || chosen;
         paint();
         syncCarried();
         if (chosen !== before) row.dispatchEvent(new Event('change', { bubbles: true }));
-        status.textContent = _loadedText(got);
-        status.className = 'row-status ' + (got.truncated ? 'warn' : 'ok');
-      } catch (e) {
-        const advice = optionsErrorAdvice(e);
-        status.textContent = t(advice.key, advice.vars);
-        status.className = 'row-status ' + (advice.tone === TONE.WARN ? 'warn' : 'err');
-      } finally {
-        btn.disabled = false;
-      }
-    });
+      }),
+    );
   } else if (field.hint) {
     const h = document.createElement('p');
     h.className = 'grp-tip in-card';

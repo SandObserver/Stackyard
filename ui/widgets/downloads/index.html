@@ -109,10 +109,10 @@
 </div>
 <script type="module">
 import {
-  poll, getConfig, loadStrings, wt, wtCount, formatNumber, formatList, localiseDigits, formatByteRate, linkTo, errorState, readingTime, fitText, placeholder,
-} from '/js/widget-toolbox.js?v=8ff63ee6';
+  poll, getConfig, loadStrings, wt, wtCount, formatNumber, formatList, localiseDigits, formatByteRate, linkTo, errorState, readingTime, fitText, placeholder, readerHourCycle,
+} from '/js/widget-toolbox.js?v=7f16d266';
 import { ensureSprite } from '/js/icon-set.js?v=4d944cec';
-import { variations, finishedToday, hoursMinutes, leftover, lidOpen, finishParts, readerHourCycle } from './belt-logic.js';
+import { variations, finishedToday, hoursMinutes, leftover, lidOpen, finishParts } from './belt-logic.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const TONES = [
@@ -216,7 +216,7 @@ const REASON = {
 const reasonText = r => (REASON[r] || REASON.error)();
 
 /** The detail line under a name, and its spoken form. */
-function detail(it, medium) {
+function detail(it) {
   if (it.state !== 'run') return { text: `${percent(it.progress)} · `, problem: reasonText(it.reason), cls: it.state };
   const parts = it.eta != null ? [percent(it.progress), duration(it.eta, 'narrow')] : [percent(it.progress)];
   return { text: parts.join(' · '), problem: '', cls: '' };
@@ -355,7 +355,7 @@ function makeBox(it, v, x) {
   Object.assign(lab.style, { left: '7px', right: '7px', top: th + 6 + 'px' });
   const nm = el('span', { class: 'nm', dir: 'auto' });
   for (const part of it.name.split(/(?<=[-._])/)) nm.append(part, el('wbr'));
-  const dt = detail(it, medium);
+  const dt = detail(it);
   const dtEl = el('span', { class: 'dt' }, dt.text);
   if (dt.problem) dtEl.append(el('span', { class: dt.cls }, dt.problem));
   lab.append(nm, dtEl);
@@ -513,7 +513,7 @@ function render(data) {
       p.fill.style.transform = tapeShift(it.progress);
       p.lid.style.clipPath = lidClip(p.bw * it.progress, p.off);
       setFlap(p.flap, p.roomy && lidOpen(p.v, it));
-      const dt = detail(it, medium);
+      const dt = detail(it);
       const dtEl = p.lab.querySelector('.dt');
       dtEl.textContent = dt.text;
       if (dt.problem) dtEl.append(el('span', { class: dt.cls }, dt.problem));

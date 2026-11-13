@@ -1,9 +1,9 @@
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
-import { SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=8b2dad40';
+import { SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=b4828b62';
 import { t } from '/js/i18n.js?v=e11cab88';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
-import { clr, el, initial, inp as inpById, mk, q, qa, setUserText } from '/js/utils.js?v=9f3fe729';
+import { clr, el, initial, inp as inpById, mk, q, qa, setUserText } from '/js/utils.js?v=9647ab80';
 
 /* Attached to the window so a re-open can undo the previous one. */
 const _w = /** @type {any} */ (window);
@@ -88,10 +88,8 @@ export function initSpotlight({
       const doOpen = viaTouch => {
         close();
         if (isFolder) {
-          if (MOB()) {
-            const s = Math.min(innerWidth, 430) / 393;
-            openFolderMobile(app, Math.round(60 * s), Math.round(14 * s), Math.round(38 * s), s);
-          } else openFolderDesktop(app);
+          if (MOB()) openFolderMobile(app);
+          else openFolderDesktop(app);
         } else if (app.system === 'settings' && app.href) {
           window.location.href = app.href;
         } else if (viaTouch && app.href) {

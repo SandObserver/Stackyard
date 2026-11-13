@@ -125,24 +125,16 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, fetchData, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom, whileOnScreen } from '/js/widget-toolbox.js?v=8ff63ee6';
+import { poll, fetchData, getConfig, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom, whileOnScreen, twoTap, toneForColor } from '/js/widget-toolbox.js?v=7f16d266';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
-const id   = new URLSearchParams(location.search).get('id')   || '';
 const size = new URLSearchParams(location.search).get('size') || 'small';
-const API  = '/api';
 
 const NAMED = { green:'#30D158', yellow:'#FFD600', red:'#FF4245', blue:'#0091FF' };
 
-function needsDark(hex) {
-  try {
-    const h=hex.replace(/^#/,''); if(h.length!==6) return false;
-    const [r,g,b]=[0,2,4].map(i=>{const v=parseInt(h.slice(i,i+2),16)/255;
-      return v<=0.04045?v/12.92:Math.pow((v+0.055)/1.055,2.4);});
-    const L=0.2126*r+0.7152*g+0.0722*b;
-    return (L+0.05)/0.0617>1.05/(L+0.05);
-  } catch { return false; }
-}
+const IDLE_TINT = 'rgba(100,100,110,0.28)', EMPTY_TINT = 'rgba(100,100,110,0.14)';
+
+const statusInk = color => (color && toneForColor(color) === 'dark' ? '#1c1c1e' : '#fff');
 
 function statusColor(s) {
   if(s==='healthy') return NAMED.green;
@@ -387,10 +379,7 @@ function assignHaikus(slots) {
 }
 
 async function boot() {
-  try {
-    const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
-    if(r.ok) _cfg=(await r.json()).widgetConfig||{};
-  } catch {}
+  _cfg=(await getConfig().catch(()=>null))?.widgetConfig||{};
   const rawSlots = Array.isArray(_cfg.slots) ? _cfg.slots : [];
   const count = size==='small' ? 1 : 3;
   _jobSlots = Array.from({length: count}, (_,i) => rawSlots[i]?.jobId || null);
@@ -501,31 +490,12 @@ function buildShell() {
     if (isActive) {
       linkTo(wrap, cardLink(idx));
       if (isTouch) {
-        let _revealTimer = null;
-        wrap.addEventListener('touchend', (e) => {
-          const href = cardLink(idx);
-          e.preventDefault();
-          const isRevealed = wrap.classList.contains('touch-revealed');
-          /* Reset all cards and clear any pending timers */
-          clearTimeout(_revealTimer);
-          document.querySelectorAll('.card-wrap.touch-revealed').forEach(el => {
-            el.classList.remove('touch-revealed');
-            const f = el.querySelector('.card-front');
-            if (f) f.style.opacity = '';
-          });
-          if (isRevealed) {
-            if (href) openUrl(href);
-          } else {
-            wrap.classList.add('touch-revealed');
-            const front = wrap.querySelector('.card-front');
-            if (front) front.style.opacity = '0';
-            /* Auto-reset after 3 seconds if no second tap */
-            _revealTimer = setTimeout(() => {
-              wrap.classList.remove('touch-revealed');
-              if (front) front.style.opacity = '';
-            }, 3000);
-          }
-        });
+        const flip = on => {
+          wrap.classList.toggle('touch-revealed', on);
+          const front = wrap.querySelector('.card-front');
+          if (front) front.style.opacity = on ? '0' : '';
+        };
+        twoTap(wrap, { reveal: () => flip(true), conceal: () => flip(false), open: () => openUrl(cardLink(idx)), timeout: 3000 });
       }
     }
 
@@ -559,8 +529,7 @@ function buildShell() {
     /* ── Front card ── */
     const front = document.createElement('div');
     front.className = 'card-front'; front.id = `front-${idx}`;
-    front.style.setProperty('--status-color',
-      isActive ? 'rgba(100,100,110,0.28)' : 'rgba(100,100,110,0.14)');
+    front.style.setProperty('--status-color', isActive ? IDLE_TINT : EMPTY_TINT);
 
     const frontCanvas = document.createElement('canvas');
     if (isMobile) frontCanvas.style.height = 'calc(100% - 48px)';
@@ -627,7 +596,6 @@ function applyCard(idx, job) {
   const back  = document.getElementById(`back-${idx}`);
   const front = document.getElementById(`front-${idx}`);
   const bname = document.getElementById(`back-name-${idx}`);
-  const bmeta = document.getElementById(`back-meta-${idx}`);
   const fname = document.getElementById(`front-name-${idx}`);
   if(!back||!front) return;
 
@@ -639,17 +607,16 @@ function applyCard(idx, job) {
   const wrapEl = document.getElementById(`wrap-${idx}`);
   if (wrapEl && !wrapEl.classList.contains('inactive')) linkTo(wrapEl, cardLink(idx));
   if(!job) {
-    back.style.background='rgba(255,255,255,0.06)'; back.style.color='';
+    applyCardIdle(idx);
     return;
   }
 
   const color = statusColor(job.status);
-  const dark  = color ? needsDark(color) : false;
-  const fg    = dark ? '#1c1c1e' : '#fff';
+  const fg    = statusInk(color);
 
   back.style.background = color||'rgba(255,255,255,0.08)';
   back.style.color = fg;
-  front.style.setProperty('--status-color', color||'rgba(100,100,110,0.28)');
+  front.style.setProperty('--status-color', color||IDLE_TINT);
 
   /* Redraw back canvas with updated text color when status changes */
   const c = _canvases[idx];
@@ -688,6 +655,22 @@ function paintTimes(idx, job) {
   if(last) parts.push(wt('ui.lastAria','last run {when}',{when:last}));
   if(next) parts.push(wt('ui.nextAria','next run {when}',{when:next}));
   front.setAttribute('aria-label', formatList(parts,'plain'));
+}
+
+function applyCardIdle(idx) {
+  const back  = document.getElementById(`back-${idx}`);
+  const front = document.getElementById(`front-${idx}`);
+  const bname = document.getElementById(`back-name-${idx}`);
+  const bmeta = document.getElementById(`back-meta-${idx}`);
+  const fname = document.getElementById(`front-name-${idx}`);
+  const configured = !!slotList()[idx];
+  const name  = configured ? '\u2014' : '';
+  back.style.background='rgba(255,255,255,0.06)'; back.style.color='';
+  front.removeAttribute('role'); front.removeAttribute('aria-label');
+  front.style.setProperty('--status-color', configured ? IDLE_TINT : EMPTY_TINT);
+  if(bname) fitName(bname, name);
+  if(fname) fitName(fname, name);
+  if(bmeta) setHtml(bmeta, html`&nbsp;<br>&nbsp;`);
 }
 
 function applyError(line) {

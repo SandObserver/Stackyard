@@ -28,7 +28,7 @@ let _cfgCache = null,
 const CONFIG_TTL_MS = 5000;
 
 /* Bump when a release changes the shape. Add a matching step in migrate(). */
-const SCHEMA_VERSION = 8;
+const SCHEMA_VERSION = 9;
 
 function migrateSocketProxyScheme(settings) {
   const url = settings?.server?.socketProxyUrl;
@@ -95,6 +95,22 @@ function migrateLegacyBadge(cfg) {
   }
 }
 
+/* Every reader takes the health check from `monitoring.healthcheck` only. */
+function migrateLegacyPing(cfg) {
+  if (!Array.isArray(cfg.items)) return;
+  for (const item of cfg.items) {
+    if (!item || item.type !== 'app' || !('ping' in item)) continue;
+    const mon = item.monitoring;
+    if (mon != null && (typeof mon !== 'object' || Array.isArray(mon))) continue;
+    const ping = typeof item.ping === 'string' ? item.ping.trim() : '';
+    if (ping && !mon?.healthcheck) {
+      const container = typeof item.container === 'string' ? item.container : '';
+      item.monitoring = { ...(mon || {}), healthcheck: { enabled: true, container, pingUrl: ping } };
+    }
+    delete item.ping;
+  }
+}
+
 /* Must stay idempotent. It runs on every read and every write. A config with no
    _schemaVersion is version 1. */
 function migrate(cfg) {
@@ -130,6 +146,10 @@ function migrate(cfg) {
   if (v < 8) {
     migrateLegacyBadge(cfg);
     v = 8;
+  }
+  if (v < 9) {
+    migrateLegacyPing(cfg);
+    v = 9;
   }
   freeSettingsId(cfg);
   dropBadChildren(cfg);

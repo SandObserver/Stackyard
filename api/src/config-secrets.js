@@ -2,7 +2,13 @@
    misses others leaks a stored credential. */
 
 const { scrubConfigSecrets, preserveConfigSecrets, secretSpec } = require('./widget-secrets');
-const { scrubItemBadgeSecrets, preserveItemBadgeSecrets, toRows, loginOf } = require('./badge-headers');
+const {
+  scrubItemBadgeSecrets,
+  preserveItemBadgeSecrets,
+  toRows,
+  loginOf,
+  wantsStoredSecret,
+} = require('./badge-headers');
 const { badgeRequestMatchesSaved, alignSavedConfig, rewriteChanged, widgetTlsChanged } = require('./secret-scope');
 const { getRegistry } = require('./widgets');
 
@@ -141,7 +147,7 @@ function preserveAllSecrets(newCfg, oldCfg) {
         )
           continue;
         set(undefined);
-        if (blockHoldsSecret(oldBlock)) note(item);
+        if (blockHoldsSecret(oldBlock) && wantsStoredSecret(block)) note(item);
       }
       preserveItemBadgeSecrets(item, scoped);
     }

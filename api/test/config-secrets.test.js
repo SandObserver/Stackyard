@@ -436,6 +436,33 @@ test('a login password is not refilled for another username', () => {
   assert.equal(incoming.items[0].monitoring.activity.login.password, '');
 });
 
+test('a save without the rows and login removes them and reports nothing held back', () => {
+  const stored = {
+    items: [
+      {
+        id: 'l1',
+        type: 'app',
+        monitoring: {
+          activity: {
+            enabled: true,
+            url: 'https://legit.example/api',
+            login: { username: 'monitor', password: 'REAL' },
+            params: [{ key: 'token', value: 'SECRET', secret: true }],
+          },
+        },
+      },
+    ],
+  };
+  const incoming = {
+    items: [{ id: 'l1', type: 'app', monitoring: { activity: { enabled: true, url: 'https://legit.example/api' } } }],
+  };
+  const { withheld } = preserveAllSecrets(incoming, stored);
+  const act = incoming.items[0].monitoring.activity;
+  assert.equal(act.login, undefined);
+  assert.equal(act.params, undefined);
+  assert.deepEqual(withheld, []);
+});
+
 function upNextWith(sources, extra = {}) {
   return { items: [{ id: 'u1', type: 'widget', widgetType: 'upnext', widgetConfig: { sources, ...extra } }] };
 }

@@ -1,29 +1,28 @@
 /* Runs the connections map page against a fake DOM and toolbox. The page's
-   scripts are inline, so there is no module to import. */
+   script is inline, so there is no module to import. */
 
 import fs from 'node:fs';
+import { register } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import * as world from '../widgets/connections/world-map.js';
+
+register('./js-root-hooks.mjs', import.meta.url);
+globalThis.location ??= { search: '' };
+const { rgbOf } = await import('../js/widget-toolbox.js');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const source = fs.readFileSync(path.join(root, 'widgets/connections/connections-map.html'), 'utf8');
 const scripts = [...source.matchAll(/<script(?: type="module")?>([\s\S]*?)<\/script>/gi)].map(m => m[1]);
-const dataScript = scripts.find(s => s.includes('window.__DOTS='));
-const placeScript = scripts.find(s => s.includes('window.__MAP='));
 const moduleScript = scripts.find(s => /^import /m.test(s));
-const importLine = /^import \{([^}]+)\} from '[^']+';$/m;
+const importLine = /^import \{([^}]+)\} from '\/js\/widget-toolbox\.js[^']*';$/m;
+const worldLine = /^import \* as (\w+) from '\.\/world-map\.js';$/m;
 const toolboxNames = moduleScript
   .match(importLine)[1]
   .split(',')
   .map(s => s.trim());
-const body = moduleScript.replace(importLine, '');
-
-export function placement(math = Math) {
-  const window = {};
-  new Function('window', dataScript)(window);
-  new Function('window', 'Math', placeScript)(window, math);
-  return { D: window.__DOTS, M: window.__MAP };
-}
+const worldName = moduleScript.match(worldLine)[1];
+const body = moduleScript.replace(importLine, '').replace(worldLine, '');
 
 /* Each canvas records what it last painted: each fill with its colour and
    shape. Copying one canvas onto another copies its fills. */
@@ -139,7 +138,6 @@ export async function mount({ theme = 'dark', onScreen = true } = {}) {
       documentElement: { lang: 'en' },
     },
     location: { search: '?id=map' },
-    matchMedia: () => ({ matches: false }),
     requestAnimationFrame: fn => {
       frames.set(nextFrame, fn);
       return nextFrame++;
@@ -168,23 +166,23 @@ export async function mount({ theme = 'dark', onScreen = true } = {}) {
     html: () => '',
     setHtml() {},
     colorOrFallback: c => c,
+    rgbOf,
     loadStrings: async () => {},
-    wt: (_, text) => text,
+    wt: (_, fallback, vars = {}) => fallback.replace(/\{(\w+)\}/g, (m, k) => (vars[k] == null ? m : String(vars[k]))),
     errorState: () => ({ ok() {}, empty() {}, fail() {} }),
     theme: () => theme,
     formatNumber: n => String(n),
     formatList: items => items.join(', '),
     cssZoom: () => 1,
+    reducedMotion: () => false,
     whileOnScreen: (_, fn) => {
       screenChanged = fn;
       fn(onScreen);
       return { stop() {} };
     },
   };
-  new Function(dataScript)();
-  new Function(placeScript)();
   const AsyncFunction = (async () => {}).constructor;
-  await new AsyncFunction(...toolboxNames, body)(...toolboxNames.map(n => toolbox[n]));
+  await new AsyncFunction(worldName, ...toolboxNames, body)(world, ...toolboxNames.map(n => toolbox[n]));
 
   return {
     frames,

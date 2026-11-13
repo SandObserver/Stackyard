@@ -87,14 +87,11 @@
   </svg>
 </div>
 <script>
-const id  = new URLSearchParams(location.search).get('id') || '';
-const API = '/api';
 const NS  = 'http://www.w3.org/2000/svg';
 
 const _lang = new URLSearchParams(location.search).get('lang') || 'en';
 const _script = _lang.split('-')[0];
 const _rtl = _script === 'fa';
-const _reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
 
 const BX = 22, BY = 22, BW = 262, BR = 18;
@@ -102,7 +99,8 @@ const LEAD_H = 40, TIME_SIZE = 90, DATE_SIZE = 25, LEAD_SIZE = 24, LEAD_MIN = 22
 const CX = (BX + 18 + 306 - BX) / 2;
 
 let _timezone = '', _showDate = true, _tickId = null;
-let _lib = null, _dateYear = null, _dateParts = null, _wt = null, _zoneTime = null;
+let _lib = null, _dateYear = null, _dateParts = null, _wt = null, _zoneTime = null, _two = null, _nextMinute = null;
+let _reduceMotion = () => false;
 let _slots = null, _shown = '', _drawn = false, _leadH = LEAD_H;
 
 const w = () => document.getElementById('widget');
@@ -137,12 +135,8 @@ function measureSlots(sample) {
 }
 
 function hm(d) {
-  const two = n => {
-    try { return new Intl.NumberFormat(_lang, { minimumIntegerDigits: 2, useGrouping: false }).format(n); }
-    catch { return String(n).padStart(2, '0'); }
-  };
   const t = _zoneTime(d);
-  return `${two(t.hours)}:${two(t.minutes)}`;
+  return `${_two(t.hours)}:${_two(t.minutes)}`;
 }
 
 function balloons(ink, leadW, bottom) {
@@ -225,7 +219,7 @@ function drawFace(d) {
 
 function fadeIn(node, rise, delay = 0) {
   if (!node) return;
-  const from = _reduceMotion || !rise ? { opacity: 0 } : { opacity: 0, transform: `translateY(${rise}px)` };
+  const from = _reduceMotion() || !rise ? { opacity: 0 } : { opacity: 0, transform: `translateY(${rise}px)` };
   node.animate([from, { opacity: 1, transform: 'none' }], { duration: 240, delay, easing: EASE, fill: 'backwards' });
 }
 
@@ -235,7 +229,7 @@ function reveal(d) {
   for (const n of [old, ...old.querySelectorAll('[id]')]) n.removeAttribute('id');
   drawFace(d);
   ink.after(old);
-  const blur = _reduceMotion ? 'none' : 'blur(2px)';
+  const blur = _reduceMotion() ? 'none' : 'blur(2px)';
   old.animate([{ opacity: 1, filter: 'none' }, { opacity: 0, filter: blur }],
     { duration: 200, easing: 'ease', fill: 'forwards' }).onfinish = () => old.remove();
   fadeIn(document.getElementById('lead'), 0);
@@ -253,10 +247,11 @@ function step(d) {
     const o = old[i], n = now[i];
     if (!o || !n) continue;
     n.before(o);
-    const out = _reduceMotion
+    const reduce = _reduceMotion();
+    const out = reduce
       ? [{ opacity: 1 }, { opacity: 0 }]
       : [{ opacity: 1, transform: 'none', filter: 'none' }, { opacity: 0, transform: 'translateY(-12px)', filter: 'blur(2px)' }];
-    const into = _reduceMotion
+    const into = reduce
       ? [{ opacity: 0 }, { opacity: 1 }]
       : [{ opacity: 0, transform: 'translateY(12px)', filter: 'blur(2px)' }, { opacity: 1, transform: 'none', filter: 'none' }];
     o.animate(out, { duration: 240, easing: EASE, fill: 'forwards' }).onfinish = () => o.remove();
@@ -284,20 +279,7 @@ function tick() {
   _drawn = true;
   pour();
   if (_tickId) clearTimeout(_tickId);
-  _tickId = setTimeout(tick, (60 - _zoneTime(d).seconds) * 1000);
-}
-
-/* An unknown zone makes every zone formatter throw, so the clock never
-   draws. */
-function zoneOk(z) {
-  try { new Intl.DateTimeFormat('en-US', { timeZone: z || undefined }); return true; }
-  catch { return false; }
-}
-async function showZoneError(toolbox) {
-  document.getElementById('ink').replaceChildren();
-  const line = toolbox.wt('ui.unknownZone', 'Unknown timezone');
-  toolbox.errorState({ root: w(), place: 'center' }).empty(line);
-  w().setAttribute('aria-label', line);
+  _tickId = setTimeout(tick, _nextMinute(d));
 }
 
 const FONT_SAMPLES = {
@@ -311,25 +293,30 @@ function loadFonts() {
 }
 
 async function boot() {
-  const config = fetch(`${API}/widget-config/${encodeURIComponent(id)}`)
-    .then(r => (r.ok ? r.json() : null))
-    .catch(() => null);
+  const toolboxLoad = import('/js/widget-toolbox.js?v=7f16d266');
+  const datesLoad = import('/js/clock-date.js?v=91a77e74');
+  const config = Promise.all([toolboxLoad, datesLoad]).then(([t, d]) => d.clockSettings(t.getConfig));
   const [toolbox, lib, dates] = await Promise.all([
-    import('/js/widget-toolbox.js?v=8ff63ee6'),
+    toolboxLoad,
     import('/js/clock-captain.js?v=c571e432'),
-    import('/js/clock-date.js?v=de40b876'),
+    datesLoad,
   ]);
   _lib = lib;
   _wt = toolbox.wt;
+  _reduceMotion = toolbox.reducedMotion;
+  _two = dates.twoDigits(_lang);
+  _nextMinute = dates.msToNextMinute;
   _zoneTime = dates.zoneTime();
   scene(new Date());
   await Promise.all([toolbox.loadStrings(), loadFonts()]);
   drawLoading(_wt('ui.captainLoading', 'Captain, it’s…'));
-  const d = await config;
-  const wc = (d && d.widgetConfig) || {};
-  _timezone = wc.clockTimezone || '';
-  _showDate = wc.clockShowDate !== false;
-  if (!zoneOk(_timezone)) return showZoneError(toolbox);
+  const settings = await config;
+  _timezone = settings.timeZone;
+  _showDate = settings.showDate;
+  if (!dates.zoneOk(_timezone)) {
+    document.getElementById('ink').replaceChildren();
+    return dates.showUnknownZone(toolbox, w());
+  }
   _zoneTime = dates.zoneTime(_timezone);
   _dateYear = dates.clockDateWithYear(_lang, _timezone);
   _dateParts = dates.clockDateParts(_lang, 'long', true, _timezone);

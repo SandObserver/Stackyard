@@ -142,6 +142,14 @@ function preserveLogin(login, oldLogin) {
   return l;
 }
 
+function wantsStoredSecret(block) {
+  if (!block || typeof block !== 'object') return false;
+  const blank = r => r.secret && (r.value == null || r.value === '');
+  if (SUBKEYS.some(k => toRows(block[k]).some(blank))) return true;
+  const l = loginOf(block.login);
+  return !!l && !l.password;
+}
+
 function eachActivityLike(item, fn) {
   if (!item || typeof item !== 'object') return;
   if (item.badge) fn(item.badge);
@@ -187,6 +195,7 @@ module.exports = {
   requestHeaders,
   requestParts,
   scrubRows,
+  wantsStoredSecret,
   scrubItemBadgeSecrets,
   preserveItemBadgeSecrets,
   migrateItemBadgeHeaders,

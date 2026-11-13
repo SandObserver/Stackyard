@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=2589e494';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=c4a4c298';
+} from '/js/admin-app-form.js?v=b6021f90';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=02ff878c';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,12 +15,12 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=29691237';
+} from '/js/admin-list.js?v=88155681';
 import { folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=4681aa43';
 import {
   afterImport,
+  applyEdit,
   buildAppItem,
-  claimFolderChildren,
   importCounts,
   keptWidget,
   newItemId,
@@ -30,8 +30,7 @@ import {
   revertingSaves,
   serialWrites,
   snapshotItems,
-  upsertItem,
-} from '/js/admin-save-logic.js?v=0bf36ea4';
+} from '/js/admin-save-logic.js?v=b34c833a';
 import {
   applyHealthChecks,
   loadSettings,
@@ -41,7 +40,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=b8ca0fd1';
+} from '/js/admin-settings.js?v=66d2cd2c';
 import {
   announce,
   apiGet,
@@ -66,11 +65,11 @@ import {
   swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=b58b9268';
+} from '/js/admin-shared.js?v=cea59c52';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=b047ee5d';
-import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=b2fb6eef';
-import { recoveryShown } from '/js/config-recovery.js?v=693c8c73';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=8052fc9d';
+import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=faa16955';
+import { recoveryShown } from '/js/config-recovery.js?v=9cc50f91';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=0c57b286';
@@ -89,10 +88,10 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=5194a30f';
+} from '/js/import-foreign.js?v=0bf89857';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=8c8bcb26';
+import { createListbox } from '/js/listbox.js?v=82de2478';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=c4c1c4c4';
 import { passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
@@ -123,7 +122,7 @@ import {
   storeSet,
   tgt,
   within,
-} from '/js/utils.js?v=9f3fe729';
+} from '/js/utils.js?v=9647ab80';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
 
@@ -442,8 +441,13 @@ function _renderEditBody(focusKind) {
   }, 50);
 }
 
-function openModal(idx) {
-  const editing = idx != null ? state.items[idx] : null;
+/** @param {string|null} id */
+function openModal(id) {
+  const editing = id != null ? state.items.find(i => i?.id === id) : null;
+  if (id != null && !editing) {
+    toast(t('toast.dashboardChangedElsewhere'), 'err');
+    return;
+  }
   state.eid = editing?.id ?? null;
   const item = editing ? structuredClone(editing) : null;
   state.ctype = item?.system === 'settings' ? 'settings' : item?.type || 'app';
@@ -491,7 +495,7 @@ function openModal(idx) {
     };
   }
 
-  const isEdit = idx != null;
+  const isEdit = id != null;
   const evTitle = el('ev-title');
   if (isEdit) setUserText(evTitle, t('common.editNamed', { name: isolate(item.label || item.id) }));
   else {
@@ -694,9 +698,7 @@ async function doSave(orig) {
         showFieldError(el('ie-fname'), t('toast.nameRequired'));
         return;
       }
-      /* An app belongs to one folder, or the dashboard renders it twice. */
       const children = state._folderApps?.getValue() || [];
-      claimFolderChildren(state.items, orig?.id, children);
       item = {
         id:
           orig?.id ||
@@ -724,6 +726,7 @@ async function doSave(orig) {
         actEn: inp('act-en')?.checked,
         actUrl: inp('f-burl')?.value?.trim() || '',
         actInt: Math.min(3600, Math.max(10, parseInt(inp('f-bint')?.value || '30', 10))),
+        authEn: inp('auth-en')?.checked || false,
         actParams: serializeKvRows(state._bpar),
         actHeaders: serializeKvRows(state._bhdr),
         actLogin: { username: inp('f-buser')?.value?.trim() || '', password: inp('f-bpass')?.value || '' },
@@ -749,8 +752,7 @@ async function doSave(orig) {
       item = res.item;
     }
     /* By id, never by position. */
-    const before = snapshotItems(state.items);
-    const { replaced } = upsertItem(state.items, state.eid, item);
+    const { before, replaced } = applyEdit(state.items, state.eid, item);
     const session = state._evSession;
     /* The editor stays open on a failed write, with the form intact. */
     if (!(await saveOrRevert(before))) return;
@@ -1389,7 +1391,7 @@ el('btn-imp-docker').onclick = rowBusy(/** @type {HTMLButtonElement} */ (el('btn
     }
     await reviewImport(out.items, out.skipped, out.notes, 'toast.importDockerNothing');
   } catch (err) {
-    toast(t('toast.importFailed', { err: errorText(err) }), 'err');
+    toast(t('toast.importFailed', { err: errorText(err) }), 'err', errorAction(err));
   }
 });
 

@@ -77,3 +77,10 @@ test('an unknown code offers no action, even one named like an object key', () =
   for (const code of ['constructor', '__proto__', 'toString', 'invalid.other'])
     assert.equal(errorAction({ code }), null);
 });
+
+test('a failed Docker label import offers the way to fix it', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
+  const handler = src.slice(src.indexOf("el('btn-imp-docker').onclick"), src.indexOf('async function reviewImport'));
+  assert.match(handler, /toast\(t\('toast\.importFailed', \{ err: errorText\(err\) \}\), 'err', errorAction\(err\)\)/);
+});
