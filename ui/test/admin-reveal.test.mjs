@@ -160,6 +160,19 @@ test('the badge error path opens the authentication rows', () => {
   assert.match(tag[0], /class="reveal/, 'the class it adds must be the mechanism that shows the rows');
 });
 
+test('the Authentication switch and its rows open from one test', () => {
+  assert.match(appForm, /const hasAuth = activityHasAuth\(act\);/);
+  assert.match(appForm, /tog\('auth-en', hasAuth,/);
+  assert.match(appForm, /<div id="auth-sub" class="reveal\$\{hasAuth \? ' open' : ''\}"/);
+});
+
+test('Save and Fetch read the Authentication switch', () => {
+  const fetchFn = /async function fetchBadge\([\s\S]*?\n}/.exec(appForm);
+  assert.ok(fetchFn, 'fetchBadge is gone');
+  assert.match(fetchFn[0], /activityAuth\(\{\s*authEn: inpById\('auth-en'\)\?\.checked/);
+  assert.match(read('js/admin.js'), /authEn: inp\('auth-en'\)\?\.checked/);
+});
+
 /* A view switch rebuilds its form, so there is no element left to open or
    close. The box travels from the old height to the new one instead. */
 

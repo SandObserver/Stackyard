@@ -17,7 +17,7 @@ import {
   labelsWith,
   planFieldSave,
   serialWrites,
-} from '/js/admin-save-logic.js?v=0bf36ea4';
+} from '/js/admin-save-logic.js?v=2427a188';
 import {
   apiGet,
   apiPost,

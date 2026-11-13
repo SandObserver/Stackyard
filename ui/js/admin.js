@@ -4,7 +4,7 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=d7f40ef4';
+} from '/js/admin-app-form.js?v=357f416a';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=bd8f4f0a';
 import {
   applyFilter,
@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=96a149ce';
+} from '/js/admin-list.js?v=0fecd8b2';
 import { folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=4681aa43';
 import {
   afterImport,
@@ -31,7 +31,7 @@ import {
   serialWrites,
   snapshotItems,
   upsertItem,
-} from '/js/admin-save-logic.js?v=0bf36ea4';
+} from '/js/admin-save-logic.js?v=2427a188';
 import {
   applyHealthChecks,
   loadSettings,
@@ -41,7 +41,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=129c3e93';
+} from '/js/admin-settings.js?v=911f7ed4';
 import {
   announce,
   apiGet,
@@ -89,7 +89,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=5194a30f';
+} from '/js/import-foreign.js?v=f5cb2133';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
 import { createListbox } from '/js/listbox.js?v=48295288';
@@ -724,6 +724,7 @@ async function doSave(orig) {
         actEn: inp('act-en')?.checked,
         actUrl: inp('f-burl')?.value?.trim() || '',
         actInt: Math.min(3600, Math.max(10, parseInt(inp('f-bint')?.value || '30', 10))),
+        authEn: inp('auth-en')?.checked || false,
         actParams: serializeKvRows(state._bpar),
         actHeaders: serializeKvRows(state._bhdr),
         actLogin: { username: inp('f-buser')?.value?.trim() || '', password: inp('f-bpass')?.value || '' },
