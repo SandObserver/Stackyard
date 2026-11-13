@@ -3,15 +3,16 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { register } from 'node:module';
+import { createRequire, register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const { errorKind, errorCopy, ERROR_KINDS } = await import('../js/widget-error.js');
+const { errorKind, errorCopy } = await import('../js/widget-error.js');
+const { KINDS } = createRequire(import.meta.url)('../../api/src/api-error.js');
 
 test('the kind the API sent wins', () => {
-  for (const kind of ERROR_KINDS) {
+  for (const kind of KINDS) {
     assert.equal(errorKind({ kind, status: 500 }), kind, `${kind} should be taken as sent`);
   }
 });
@@ -41,13 +42,13 @@ test('nothing at all is an internal failure, not a network one', () => {
 
 test('every kind has its own catalog key and English', () => {
   const keys = new Set();
-  for (const kind of ERROR_KINDS) {
+  for (const kind of KINDS) {
     const { key, text } = errorCopy(kind);
     assert.match(key, /^err[A-Z]/, `${kind} has no key`);
     assert.ok(text.length > 0, `${kind} has no English`);
     keys.add(key);
   }
-  assert.equal(keys.size, ERROR_KINDS.length, 'two kinds share a key');
+  assert.equal(keys.size, KINDS.length, 'two kinds share a key');
 });
 
 test('an unknown kind still gets usable copy', () => {

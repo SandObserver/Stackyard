@@ -5,8 +5,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   mobileMetrics,
-  pillBottom,
-  contentBottom,
   gridColumnWidth,
   gridCellCount,
   dockFit,
@@ -16,27 +14,6 @@ import {
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
-
-/* Page scale changes innerWidth, so these are the widths one phone can report. */
-const WIDTHS = [320, 375, 393, 414, 430, 786, 1024];
-
-test('the reserved bottom zone always clears the pill', () => {
-  for (const vw of WIDTHS) {
-    const m = mobileMetrics(vw);
-    const pillTop = pillBottom(m) + m.pillH;
-    assert.ok(
-      contentBottom(m) >= pillTop,
-      `vw=${vw}: content may paint down to ${contentBottom(m)} but the pill reaches ${pillTop}`,
-    );
-  }
-});
-
-test('a 36px reserve is what let the pill overlap the last row', () => {
-  const m = mobileMetrics(393);
-  const oldDz = Math.round(36 * m.sc);
-  assert.ok(m.dz > oldDz);
-  assert.ok(m.dh + oldDz < pillBottom(m) + m.pillH);
-});
 
 test('sc is 1 at the base width and scales linearly up to the cap', () => {
   assert.equal(mobileMetrics(393).sc, 1);

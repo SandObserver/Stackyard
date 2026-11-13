@@ -14,7 +14,7 @@ export const rect = (x, y, w, h, r, role = 'ink', o = {}) => ({
   role: rl(role),
   ...o,
 });
-export const detail = (x, y, w, h, r, role = 'ink', o = {}) => ({
+const detail = (x, y, w, h, r, role = 'ink', o = {}) => ({
   k: 'solid',
   t: 'rect',
   x,
@@ -26,12 +26,12 @@ export const detail = (x, y, w, h, r, role = 'ink', o = {}) => ({
   ...o,
 });
 export const bar = (x, y, w, role = 'cut') => detail(x, y, w, T.BAR, T.BAR / 2, role);
-export const circle = (cx, cy, r, role = 'ink') => ({ k: 'area', t: 'circle', cx, cy, r, role: rl(role) });
-export const dot = (cx, cy, r, role = 'ink') => ({ k: 'solid', t: 'circle', cx, cy, r, role: rl(role) });
-export const shape = (d, role = 'ink', o = {}) => ({ k: 'area', t: 'path', d, role: rl(role), ...o });
+const circle = (cx, cy, r, role = 'ink') => ({ k: 'area', t: 'circle', cx, cy, r, role: rl(role) });
+const dot = (cx, cy, r, role = 'ink') => ({ k: 'solid', t: 'circle', cx, cy, r, role: rl(role) });
+const shape = (d, role = 'ink', o = {}) => ({ k: 'area', t: 'path', d, role: rl(role), ...o });
 export const line = (d, role = 'ink', o = {}) => ({ k: 'line', t: 'path', d, role: rl(role), ...o });
-export const ring = (cx, cy, r, role = 'ink') => ({ k: 'line', t: 'circle', cx, cy, r, role: rl(role) });
-export const frame = (x, y, w, h, r = T.R_MD) => ({ k: 'line', t: 'rect', x, y, w, h, r, role: 'i', box: true });
+const ring = (cx, cy, r, role = 'ink') => ({ k: 'line', t: 'circle', cx, cy, r, role: rl(role) });
+const frame = (x, y, w, h, r = T.R_MD) => ({ k: 'line', t: 'rect', x, y, w, h, r, role: 'i', box: true });
 const face = () => ({ ...ring(12, 12, 9), box: true });
 
 export const STYLES = {
@@ -40,7 +40,6 @@ export const STYLES = {
   stroke: { line: true, accent: 'ink' },
   duotone: { line: true, accent: 'accent', accentFill: true, tint: true },
 };
-export const WEIGHTS = { light: 1.5, regular: 2, bold: 2.5 };
 
 function colour(role, st) {
   if (role === 'a') return st.accent === 'ink' ? 'i' : 'a';

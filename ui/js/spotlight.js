@@ -1,9 +1,9 @@
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=b4828b62';
-import { t } from '/js/i18n.js?v=e11cab88';
+import { t } from '/js/i18n.js?v=721852aa';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
-import { clr, el, initial, inp as inpById, mk, q, qa, setUserText } from '/js/utils.js?v=9647ab80';
+import { clr, el, initial, inp as inpById, mk, q, qa, setUserText } from '/js/utils.js?v=d49cd680';
 
 /* Attached to the window so a re-open can undo the previous one. */
 const _w = /** @type {any} */ (window);

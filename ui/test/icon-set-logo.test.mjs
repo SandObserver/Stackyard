@@ -4,7 +4,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const { ICONS, STYLES, WEIGHTS, symbol } = await import('../js/icon-set.js');
+const { ICONS, STYLES, symbol } = await import('../js/icon-set.js');
+
+const WEIGHTS = { light: 1.5, regular: 2, bold: 2.5 };
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = p => fs.readFileSync(path.join(repo, p), 'utf8');

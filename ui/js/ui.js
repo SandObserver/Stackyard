@@ -17,8 +17,8 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=9647ab80';
-import { t, currentLang } from '/js/i18n.js?v=e11cab88';
+} from '/js/utils.js?v=d49cd680';
+import { t, currentLang } from '/js/i18n.js?v=721852aa';
 import { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
 import {
   BASE_VW,
@@ -27,7 +27,7 @@ import {
   gridCellCount,
   dockFit,
   WIDEST_PHONE,
-} from '/js/mobile-metrics.js?v=1e189832';
+} from '/js/mobile-metrics.js?v=ae661544';
 import { animate, easing, glide, isScripted, requestFrame, stopGlide } from '/js/frame-motion.js?v=1d86154d';
 import { openFolderGlass } from '/js/glass.js?v=258316fb';
 import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=b4828b62';

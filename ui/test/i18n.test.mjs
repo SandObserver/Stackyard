@@ -12,7 +12,7 @@ const {
   dirFor,
   t,
   initI18n,
-  getLang,
+  currentLang,
   LANGUAGES,
   SOURCE_LANG,
   isSupported,
@@ -57,7 +57,7 @@ test('LANGUAGES entries are well-formed with unique codes', () => {
 
 test('t falls back to the key itself when nothing is loaded', () => {
   assert.equal(t('some.missing.key'), 'some.missing.key');
-  assert.equal(getLang(), 'en');
+  assert.equal(currentLang(), 'en');
 });
 
 /* A catalog must not inherit from Object.prototype, or `active[key]` finds

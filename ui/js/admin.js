@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=b6021f90';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=02ff878c';
+} from '/js/admin-app-form.js?v=56dee4bc';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=76f9343b';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,8 +15,8 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=88155681';
-import { folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=4681aa43';
+} from '/js/admin-list.js?v=34d450e1';
+import { filterActive, folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=06da6a19';
 import {
   afterImport,
   applyEdit,
@@ -30,7 +30,7 @@ import {
   revertingSaves,
   serialWrites,
   snapshotItems,
-} from '/js/admin-save-logic.js?v=b34c833a';
+} from '/js/admin-save-logic.js?v=6ebda0e2';
 import {
   applyHealthChecks,
   loadSettings,
@@ -40,7 +40,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=66d2cd2c';
+} from '/js/admin-settings.js?v=a181a45f';
 import {
   announce,
   apiGet,
@@ -65,18 +65,19 @@ import {
   swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=cea59c52';
+} from '/js/admin-shared.js?v=42a61f1c';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=8052fc9d';
-import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=faa16955';
-import { recoveryShown } from '/js/config-recovery.js?v=9cc50f91';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=5fae4625';
+import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=11aa9737';
+import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
+import { recoveryShown } from '/js/config-recovery.js?v=985c64ad';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=0c57b286';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=e11cab88';
-import { animateIcon } from '/js/icon-motion.js?v=92727d1c';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=4d944cec';
+import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=721852aa';
+import { animateIcon } from '/js/icon-motion.js?v=0b4fc669';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=361e54a5';
 import { loadLocalIcons } from '/js/icons.js?v=76c29d43';
 import {
   clearSkipTls,
@@ -88,10 +89,10 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=0bf89857';
+} from '/js/import-foreign.js?v=46304742';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=82de2478';
+import { createListbox } from '/js/listbox.js?v=794fe194';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=c4c1c4c4';
 import { passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
@@ -122,9 +123,9 @@ import {
   storeSet,
   tgt,
   within,
-} from '/js/utils.js?v=9647ab80';
+} from '/js/utils.js?v=d49cd680';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
-import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=a42ef914';
+import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=39538b71';
 
 ensureSprite();
 for (const b of document.querySelectorAll('.nl[data-sec], .mtab[data-sec]')) {
@@ -468,7 +469,7 @@ function openModal(id) {
       state.slabels[l.path] = {
         name: l.name || '',
         unit: l.unit || '',
-        color: l.color || 'info',
+        color: l.color || BADGE_DEFAULT,
         min: l.min == null ? '' : String(l.min),
       };
     }
@@ -490,7 +491,7 @@ function openModal(id) {
     state.slabels[state.spaths[0]] = {
       name: '',
       unit: typeof custom.unit === 'string' ? custom.unit : '',
-      color: typeof custom.color === 'string' && custom.color ? custom.color : 'info',
+      color: typeof custom.color === 'string' && custom.color ? custom.color : BADGE_DEFAULT,
       min: custom.min == null ? '' : String(custom.min),
     };
   }
@@ -525,7 +526,7 @@ function openModal(id) {
 let _filterTimer;
 function runFilter() {
   applyFilter();
-  if (filter.q || filter.type !== 'all') announce(t('list.matchCount', { count: filterMatchCount() }));
+  if (filterActive(filter)) announce(t('list.matchCount', { count: filterMatchCount() }));
 }
 
 async function _evDelete(item) {
@@ -732,7 +733,7 @@ async function doSave(orig) {
         actLogin: { username: inp('f-buser')?.value?.trim() || '', password: inp('f-bpass')?.value || '' },
         staticEn: inp('static-en')?.checked || false,
         staticLabel: inp('f-static-label')?.value?.trim() || '',
-        staticColor: inp('static-col-val')?.value || 'info',
+        staticColor: inp('static-col-val')?.value || BADGE_DEFAULT,
         dock: inp('f-dock')?.checked || false,
         iconUrl: state.siurl,
         scol: state.scol,
@@ -964,28 +965,22 @@ function initBgType() {
     hidden.value = val;
     showBgFields(val);
   };
+  const opts = () => [
+    { value: 'unsplash', label: t('appearance.sourceUnsplash') },
+    { value: 'url', label: t('appearance.sourceUrl') },
+    { value: 'color', label: t('appearance.sourceColor') },
+  ];
   const box = createListbox({
     id: 'bg-type',
     label: t('appearance.source'),
-    options: [
-      { value: 'unsplash', label: t('appearance.sourceUnsplash') },
-      { value: 'url', label: t('appearance.sourceUrl') },
-      { value: 'color', label: t('appearance.sourceColor') },
-    ],
+    options: opts(),
     value: hidden.value || 'unsplash',
     onChange: v => apply(String(v)),
   });
   slot.appendChild(box.el);
   relabel(() => {
     box.setLabel(t('appearance.source'));
-    box.setOptions(
-      [
-        { value: 'unsplash', label: t('appearance.sourceUnsplash') },
-        { value: 'url', label: t('appearance.sourceUrl') },
-        { value: 'color', label: t('appearance.sourceColor') },
-      ],
-      hidden.value,
-    );
+    box.setOptions(opts(), hidden.value);
   });
   apply(hidden.value || 'unsplash');
 }
@@ -997,26 +992,21 @@ function initBgFit() {
   const apply = val => {
     hidden.value = val;
   };
+  const opts = () => [
+    { value: 'fill', label: t('appearance.fitFill') },
+    { value: 'fit', label: t('appearance.fitContain') },
+  ];
   const box = createListbox({
     id: 'bg-fit',
     label: t('appearance.fit'),
-    options: [
-      { value: 'fill', label: t('appearance.fitFill') },
-      { value: 'fit', label: t('appearance.fitContain') },
-    ],
+    options: opts(),
     value: hidden.value || 'fill',
     onChange: v => apply(String(v)),
   });
   slot.appendChild(box.el);
   relabel(() => {
     box.setLabel(t('appearance.fit'));
-    box.setOptions(
-      [
-        { value: 'fill', label: t('appearance.fitFill') },
-        { value: 'fit', label: t('appearance.fitContain') },
-      ],
-      hidden.value,
-    );
+    box.setOptions(opts(), hidden.value);
   });
   apply(hidden.value || 'fill');
 }
@@ -1091,14 +1081,15 @@ function initLogLevel() {
   const slot = el('log-level-slot');
   const hidden = inp('log-level');
   if (!slot || !hidden) return;
+  const opts = () => [
+    { value: 'debug', label: t('general.logDebug') },
+    { value: 'info', label: t('general.logInfo') },
+    { value: 'error', label: t('general.logError') },
+  ];
   const box = createListbox({
     id: 'log-level',
     label: t('general.loggingLevel'),
-    options: [
-      { value: 'debug', label: t('general.logDebug') },
-      { value: 'info', label: t('general.logInfo') },
-      { value: 'error', label: t('general.logError') },
-    ],
+    options: opts(),
     value: hidden.value || 'info',
     onChange: v => {
       hidden.value = String(v);
@@ -1107,14 +1098,7 @@ function initLogLevel() {
   slot.appendChild(box.el);
   relabel(() => {
     box.setLabel(t('general.loggingLevel'));
-    box.setOptions(
-      [
-        { value: 'debug', label: t('general.logDebug') },
-        { value: 'info', label: t('general.logInfo') },
-        { value: 'error', label: t('general.logError') },
-      ],
-      hidden.value,
-    );
+    box.setOptions(opts(), hidden.value);
   });
   hidden.value = hidden.value || 'info';
 }
@@ -1489,8 +1473,6 @@ async function reviewImport(items, skipped, notes, nothingKey) {
   await appendAndSave(items);
   toast(t('toast.importForeignDone', { apps: formatNumber(apps), folders: formatNumber(folders) }));
 }
-
-el('btn-add').onclick = () => openModal(null);
 
 initList({ openModal, openFolderPicker, save: saveOrRevert });
 initNav();

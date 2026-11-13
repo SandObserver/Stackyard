@@ -7,16 +7,16 @@ import {
   rememberBackground,
   resolveBackground,
   parseWallpaperUrl,
-} from '/js/background.js?v=faa16955';
+} from '/js/background.js?v=11aa9737';
 import {
   badgeMinimum,
   badgeSignature,
   computeBadgeVisual,
   folderLabelName,
   readBadgeUpdate,
-} from '/js/badge-logic.js?v=04a4ece8';
+} from '/js/badge-logic.js?v=7112fd10';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=2338cc3f';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=9cc50f91';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=985c64ad';
 import {
   clampPage,
   configChanged,
@@ -35,8 +35,8 @@ import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import { easing, glide, isScripted } from '/js/frame-motion.js?v=1d86154d';
 import { glassWallpaper, startGlass } from '/js/glass.js?v=258316fb';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { currentLang, initI18n, isSupported, t } from '/js/i18n.js?v=e11cab88';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=4d944cec';
+import { currentLang, initI18n, isSupported, t } from '/js/i18n.js?v=721852aa';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=361e54a5';
 import { iconChain, loadLocalIcons } from '/js/icons.js?v=76c29d43';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import {
@@ -53,7 +53,7 @@ import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
-import { initSpotlight } from '/js/spotlight.js?v=21b6b6aa';
+import { initSpotlight } from '/js/spotlight.js?v=7bf27839';
 import { applyTheme, prefersDark, readMode, resolveTheme, THEME_KEY, watchTransparency } from '/js/theme.js?v=0bbd81e8';
 import {
   buildMobile,
@@ -65,7 +65,7 @@ import {
   openFolderMobile,
   resetMobileChrome,
   swipePager,
-} from '/js/ui.js?v=2904b79b';
+} from '/js/ui.js?v=9e165ad9';
 import {
   mkWrap as _mkWrap,
   el,
@@ -88,7 +88,7 @@ import {
   teardownWidgets,
   titleWhenTruncated,
   within,
-} from '/js/utils.js?v=9647ab80';
+} from '/js/utils.js?v=d49cd680';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import {

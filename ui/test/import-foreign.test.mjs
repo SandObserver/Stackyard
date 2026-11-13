@@ -12,7 +12,7 @@ import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
-const { parseYaml } = await import('/js/yaml-lite.js');
+const { parseYamlTolerant } = await import('/js/yaml-lite.js');
 const { newItemId } = await import('/js/admin-save-logic.js');
 const {
   detectSource,
@@ -30,6 +30,12 @@ const {
   ImportTooLargeError,
   MAX_IMPORT_ENTRIES,
 } = await import('/js/import-foreign.js');
+
+const parseClean = text => {
+  const { doc, errors } = parseYamlTolerant(text);
+  assert.deepEqual(errors, []);
+  return doc;
+};
 
 const apps = out => out.items.filter(i => i.type === 'app');
 const folders = out => out.items.filter(i => i.type === 'folder');
@@ -124,15 +130,15 @@ pages:
 `;
 
 test('detects each format from its shape, not its filename', () => {
-  assert.equal(detectSource(parseYaml(SERVICES)), 'homepage-services');
-  assert.equal(detectSource(parseYaml(BOOKMARKS)), 'homepage-bookmarks');
-  assert.equal(detectSource(parseYaml(DASHY)), 'dashy');
-  assert.equal(detectSource(parseYaml('items:\n  - id: a\n')), null);
+  assert.equal(detectSource(parseClean(SERVICES)), 'homepage-services');
+  assert.equal(detectSource(parseClean(BOOKMARKS)), 'homepage-bookmarks');
+  assert.equal(detectSource(parseClean(DASHY)), 'dashy');
+  assert.equal(detectSource(parseClean('items:\n  - id: a\n')), null);
   assert.equal(detectSource(null), null);
 });
 
 test('a Homepage group becomes a folder holding its services', () => {
-  const out = convertHomepageServices(parseYaml(SERVICES));
+  const out = convertHomepageServices(parseClean(SERVICES));
   const media = folders(out).find(f => f.label === 'Media');
   const plex = apps(out).find(a => a.label === 'Plex');
   assert.ok(media);
@@ -145,7 +151,7 @@ test('a Homepage group becomes a folder holding its services', () => {
 });
 
 test('a nested group becomes its own folder with a compound name', () => {
-  const out = convertHomepageServices(parseYaml(SERVICES));
+  const out = convertHomepageServices(parseClean(SERVICES));
   const nested = folders(out).find(f => f.label === 'Media / Arr Stack');
   assert.ok(nested, 'nested group produced a folder');
   const sonarr = apps(out).find(a => a.label === 'Sonarr');
@@ -154,7 +160,7 @@ test('a nested group becomes its own folder with a compound name', () => {
 });
 
 test('siteMonitor becomes the health check, ping does not', () => {
-  const out = convertHomepageServices(parseYaml(SERVICES));
+  const out = convertHomepageServices(parseClean(SERVICES));
   const plex = apps(out).find(a => a.label === 'Plex');
   const sonarr = apps(out).find(a => a.label === 'Sonarr');
   assert.equal(plex.monitoring.healthcheck.pingUrl, 'http://plex:32400/web');
@@ -164,7 +170,7 @@ test('siteMonitor becomes the health check, ping does not', () => {
 });
 
 test('a container is imported only when it runs on this host', () => {
-  const out = convertHomepageServices(parseYaml(SERVICES));
+  const out = convertHomepageServices(parseClean(SERVICES));
   assert.equal(apps(out).find(a => a.label === 'Plex').monitoring.healthcheck.container, 'plex');
   const sonarr = apps(out).find(a => a.label === 'Sonarr');
   assert.equal(sonarr.monitoring.healthcheck.container, '');
@@ -173,7 +179,7 @@ test('a container is imported only when it runs on this host', () => {
 });
 
 test('a link the other dashboard fills in from its own environment is skipped', () => {
-  const out = convertHomepageServices(parseYaml(SERVICES));
+  const out = convertHomepageServices(parseClean(SERVICES));
   const skip = out.skipped.find(s => s.name === 'Broken');
   assert.equal(skip.reason, SKIP.PLACEHOLDER_HREF);
   assert.equal(
@@ -183,17 +189,17 @@ test('a link the other dashboard fills in from its own environment is skipped', 
 });
 
 test('a script-scheme link is skipped rather than saved and refused', () => {
-  const out = convertHomepageServices(parseYaml(SERVICES));
+  const out = convertHomepageServices(parseClean(SERVICES));
   assert.equal(out.skipped.find(s => s.name === 'Nasty').reason, SKIP.UNSAFE_HREF);
 });
 
 test('a service with no link is skipped', () => {
-  const out = convertHomepageServices(parseYaml(SERVICES));
+  const out = convertHomepageServices(parseClean(SERVICES));
   assert.equal(out.skipped.find(s => s.name === 'NoLink').reason, SKIP.NO_HREF);
 });
 
 test('a group whose services all fail produces no empty folder', () => {
-  const out = convertHomepageServices(parseYaml(SERVICES));
+  const out = convertHomepageServices(parseClean(SERVICES));
   assert.equal(
     folders(out).some(f => f.label === 'Secrets'),
     false,
@@ -202,7 +208,7 @@ test('a group whose services all fail produces no empty folder', () => {
 
 test('a widget keeps its service as a link', () => {
   const out = convertHomepageServices(
-    parseYaml(`- Tools:
+    parseClean(`- Tools:
     - Uptime:
         href: http://up:3001
         widget:
@@ -215,7 +221,7 @@ test('a widget keeps its service as a link', () => {
 });
 
 test('bookmarks are read through their extra list level', () => {
-  const out = convertHomepageBookmarks(parseYaml(BOOKMARKS));
+  const out = convertHomepageBookmarks(parseClean(BOOKMARKS));
   const gh = apps(out).find(a => a.label === 'Github');
   assert.equal(gh.href, 'https://github.com/');
   assert.equal(gh.iconUrl, 'github');
@@ -225,7 +231,7 @@ test('bookmarks are read through their extra list level', () => {
 });
 
 test('a Dashy section becomes a folder and subItems join it', () => {
-  const out = convertDashy(parseYaml(DASHY));
+  const out = convertDashy(parseClean(DASHY));
   const net = folders(out).find(f => f.label === 'Network');
   assert.deepEqual(
     net.children.map(id => apps(out).find(a => a.id === id).label),
@@ -235,7 +241,7 @@ test('a Dashy section becomes a folder and subItems join it', () => {
 });
 
 test('statusCheck decides the health check, with or without its own URL', () => {
-  const out = convertDashy(parseYaml(DASHY));
+  const out = convertDashy(parseClean(DASHY));
   const get = label => apps(out).find(a => a.label === label).monitoring.healthcheck;
   assert.equal(get('Router').pingUrl, 'http://10.0.0.1');
   assert.equal(get('NAS').pingUrl, 'http://nas.lan/health');
@@ -244,7 +250,7 @@ test('statusCheck decides the health check, with or without its own URL', () => 
 });
 
 test('localUrl is dropped and extra pages are reported', () => {
-  const out = convertDashy(parseYaml(DASHY));
+  const out = convertDashy(parseClean(DASHY));
   assert.equal(apps(out).find(a => a.label === 'NAS').href, 'http://nas.lan');
   assert.ok(out.notes.some(n => n.code === NOTE.PAGES_NOT_FOLLOWED && n.detail === '1'));
 });
@@ -287,7 +293,7 @@ test('an icon URL the page cannot load is dropped, not stored', () => {
 /* The preview prints "group / name", so a flattened group must not repeat its
    own name. */
 test('the flattened-group note names the child once', () => {
-  const out = convertHomepageServices(parseYaml(SERVICES));
+  const out = convertHomepageServices(parseClean(SERVICES));
   const note = out.notes.find(n => n.code === NOTE.GROUP_FLATTENED);
   assert.equal(note.name, 'Arr Stack');
   assert.equal(note.group, 'Media');
@@ -297,7 +303,7 @@ test('the flattened-group note names the child once', () => {
 /* All three come from a real Dashy export. */
 test('Dashy allow-insecure carries across to the TLS switch Stackyard already has', () => {
   const out = convertDashy(
-    parseYaml(`sections:
+    parseClean(`sections:
   - name: Net
     items:
       - title: PVE
@@ -318,7 +324,7 @@ test('a homelab-svg-assets icon resolves like a selfh.st one', () => {
 });
 
 test('a second local address is reported rather than dropped in silence', () => {
-  const out = convertDashy(parseYaml(DASHY));
+  const out = convertDashy(parseClean(DASHY));
   const note = out.notes.find(n => n.code === NOTE.LOCAL_URL_DROPPED);
   assert.equal(note.name, 'NAS');
   assert.equal(note.detail, 'http://192.168.1.5');
@@ -326,7 +332,7 @@ test('a second local address is reported rather than dropped in silence', () => 
 
 test('a note about a whole section carries no item name to repeat', () => {
   const out = convertDashy(
-    parseYaml(`sections:
+    parseClean(`sections:
   - name: Stats
     widgets:
       - type: clock
@@ -341,25 +347,25 @@ test('a note about a whole section carries no item name to repeat', () => {
    mangled entry that vanishes leaves a smaller dashboard and no way to tell
    what went missing. */
 test('an entry that is not in a readable shape is reported, not passed over', () => {
-  const hp = convertHomepageServices(parseYaml('- G:\n    - just a string\n    - Two: keys\n      Here: yes\n'));
+  const hp = convertHomepageServices(parseClean('- G:\n    - just a string\n    - Two: keys\n      Here: yes\n'));
   assert.equal(hp.skipped.filter(s => s.reason === SKIP.UNREADABLE).length, 2);
 
-  const dashy = convertDashy(parseYaml('sections:\n  - name: A\n    items:\n      - just a string\n'));
+  const dashy = convertDashy(parseClean('sections:\n  - name: A\n    items:\n      - just a string\n'));
   assert.equal(dashy.skipped.find(s => s.reason === SKIP.UNREADABLE).group, 'A');
 
-  const bm = convertHomepageBookmarks(parseYaml('- G:\n    - Name:\n        - not a mapping\n'));
+  const bm = convertHomepageBookmarks(parseClean('- G:\n    - Name:\n        - not a mapping\n'));
   assert.equal(bm.skipped[0].reason, SKIP.UNREADABLE);
 });
 
 test('a link with no scheme is skipped, since it would resolve against this dashboard', () => {
-  const out = convertHomepageServices(parseYaml('- G:\n    - Trav:\n        href: ../../../../etc/passwd\n'));
+  const out = convertHomepageServices(parseClean('- G:\n    - Trav:\n        href: ../../../../etc/passwd\n'));
   assert.equal(out.skipped[0].reason, SKIP.RELATIVE_HREF);
   assert.equal(apps(out).length, 0);
 });
 
 test('a name written unquoted as a number is still a name', () => {
   const out = convertDashy(
-    parseYaml('sections:\n  - name: 2024\n    items:\n      - title: 42\n        url: http://a.lan\n'),
+    parseClean('sections:\n  - name: 2024\n    items:\n      - title: 42\n        url: http://a.lan\n'),
   );
   assert.equal(apps(out)[0].label, '42');
   assert.equal(folders(out)[0].label, '2024');
@@ -367,7 +373,7 @@ test('a name written unquoted as a number is still a name', () => {
 
 test('a section with no name takes the caller-supplied label, so it can be translated', () => {
   const out = convertDashy(
-    parseYaml('sections:\n  - items:\n      - title: T\n        url: http://a.lan\n'),
+    parseClean('sections:\n  - items:\n      - title: T\n        url: http://a.lan\n'),
     [],
     'Importé',
   );
@@ -379,16 +385,16 @@ test('ids never collide with what is already on the dashboard, or across files',
   t.mock.method(globalThis.crypto, 'getRandomValues', a => a.fill(0));
   const existing = [newItemId('Plex', 'app'), newItemId('Media', 'folder')];
   const taken = new Set(existing);
-  const first = convert('homepage-services', parseYaml(SERVICES), taken);
+  const first = convert('homepage-services', parseClean(SERVICES), taken);
   for (const item of first.items) taken.add(item.id);
-  const second = convert('homepage-services', parseYaml(SERVICES), taken);
+  const second = convert('homepage-services', parseClean(SERVICES), taken);
   assert.ok(first.items.length > 0 && second.items.length > 0);
   const all = [...existing, ...first.items.map(i => i.id), ...second.items.map(i => i.id)];
   assert.equal(new Set(all).size, all.length, 'every id is unique');
 });
 
 test('conversion adds items only, so nothing existing is touched', () => {
-  const out = convert('dashy', parseYaml(DASHY), []);
+  const out = convert('dashy', parseClean(DASHY), []);
   for (const item of out.items) {
     assert.ok(item.id && item.type, 'every item has the id and type the server requires');
     assert.equal(item.type === 'folder' || item.type === 'app', true);
@@ -399,7 +405,7 @@ test('conversion adds items only, so nothing existing is touched', () => {
    the rest of the file does not agree with reaches the converter. Passing over
    it silently imports a smaller dashboard. */
 test('a group that is not a list is counted, not passed over', () => {
-  const doc = parseYaml('- Dev:\n    - Git:\n        href: http://git\n- Broken: notalist\n');
+  const doc = parseClean('- Dev:\n    - Git:\n        href: http://git\n- Broken: notalist\n');
   const out = convertHomepageServices(doc, []);
   assert.equal(apps(out).length, 1);
   assert.equal(byName(out.skipped, 'Broken').length, 1);
@@ -432,7 +438,7 @@ test('a Dashy section holding only widgets reports the widgets alone', () => {
    it inside hides the first file's allocations from the second. */
 test('the caller sees the ids a conversion allocated', () => {
   const taken = new Set(['Plex_abc']);
-  const out = convertHomepageServices(parseYaml(SERVICES), taken);
+  const out = convertHomepageServices(parseClean(SERVICES), taken);
   assert.ok(out.items.length > 0);
   for (const item of out.items) assert.ok(taken.has(item.id), 'the id is in the caller’s set');
 });
@@ -443,7 +449,7 @@ test('the caller sees the ids a conversion allocated', () => {
    the decision. */
 test('the apps a file asked to skip certificate checking for are identifiable', () => {
   const out = convertDashy(
-    parseYaml(`
+    parseClean(`
 sections:
   - name: Net
     items:
@@ -518,22 +524,22 @@ function dashyAliasLadder(levels) {
 const tooLarge = err => err instanceof ImportTooLargeError;
 
 test('a Dashy file whose aliases double per level stops at the entry budget', () => {
-  assert.throws(() => convertDashy(parseYaml(dashyAliasLadder(16))), tooLarge);
+  assert.throws(() => convertDashy(parseClean(dashyAliasLadder(16))), tooLarge);
 });
 
 test('one Dashy section aliased into many sections stops at the entry budget', () => {
   let y = 'sections:\n  - &s\n    name: S\n    items:\n';
   for (let i = 0; i < 100; i++) y += `      - title: T${i}\n        url: http://t${i}.lan\n`;
   for (let i = 0; i < 100; i++) y += '  - *s\n';
-  assert.throws(() => convertDashy(parseYaml(y)), tooLarge);
+  assert.throws(() => convertDashy(parseClean(y)), tooLarge);
 });
 
 test('one Homepage group aliased into many groups stops at the entry budget', () => {
   let y = '- G0: &e\n';
   for (let i = 0; i < 100; i++) y += `    - S${i}:\n        href: http://s${i}.lan\n`;
   for (let i = 1; i <= 100; i++) y += `- G${i}: *e\n`;
-  assert.throws(() => convertHomepageServices(parseYaml(y)), tooLarge);
-  assert.throws(() => convertHomepageBookmarks(parseYaml(y.replaceAll('href:', '- href:'))), tooLarge);
+  assert.throws(() => convertHomepageServices(parseClean(y)), tooLarge);
+  assert.throws(() => convertHomepageBookmarks(parseClean(y.replaceAll('href:', '- href:'))), tooLarge);
 });
 
 test('a Homepage list shared by many entries in one group stops at the entry budget', () => {
@@ -541,7 +547,7 @@ test('a Homepage list shared by many entries in one group stops at the entry bud
   for (let i = 0; i < 100; i++) list += `${i ? ', ' : ''}{S${i}: {href: http://s${i}.lan}}`;
   let y = `- Base: &l [${list}]\n- G:\n`;
   for (let i = 0; i < 100; i++) y += `    - W${i}: *l\n`;
-  assert.throws(() => convertHomepageServices(parseYaml(y)), tooLarge);
+  assert.throws(() => convertHomepageServices(parseClean(y)), tooLarge);
 });
 
 test('telling the format apart stops at the entry budget on an aliased Homepage list', () => {
@@ -549,7 +555,7 @@ test('telling the format apart stops at the entry budget on an aliased Homepage 
   const wraps = Array.from({ length: 2000 }, () => '{k: *c}').join(', ');
   let y = `- g1: &c [${rows}]\n- g2: &b [${wraps}]\n`;
   for (let i = 3; i < 53; i++) y += `- g${i}: *b\n`;
-  const [doc, n] = counted(parseYaml(y));
+  const [doc, n] = counted(parseClean(y));
   assert.throws(() => detectSource(doc), tooLarge);
   /* Without the budget the 50 aliases expand to 200 million rows. */
   assert.ok(n.reads <= MAX_IMPORT_ENTRIES + 10, `${n.reads} entries read`);
@@ -559,7 +565,7 @@ test('one wide map aliased under the budget is read once, not once per alias', (
   let y = '- g1:\n    - &m\n';
   for (let i = 0; i < 20000; i++) y += `      k${i}: 1\n`;
   y += `- g2: [${Array(2000).fill('*m').join(', ')}]\n`;
-  const [doc, n] = counted(parseYaml(y));
+  const [doc, n] = counted(parseClean(y));
   assert.equal(detectSource(doc), 'homepage-services');
   assert.equal(convertHomepageServices(doc).items.length, 0);
   assert.ok(n.keyLists < 10, `the map's 20,000 keys were listed ${n.keyLists} times`);
@@ -567,7 +573,7 @@ test('one wide map aliased under the budget is read once, not once per alias', (
 
 test('aliases that stay under the budget still import everywhere they are used', () => {
   const out = convertDashy(
-    parseYaml(
+    parseClean(
       'sections:\n  - name: A\n    items:\n      - &p\n        title: Plex\n        url: http://plex.lan\n' +
         '  - name: B\n    items:\n      - *p\n',
     ),
@@ -577,7 +583,7 @@ test('aliases that stay under the budget still import everywhere they are used',
     ['Plex', 'Plex'],
   );
   const hp = convertHomepageServices(
-    parseYaml(
+    parseClean(
       '- Media:\n    - Movies:\n        - &plex\n          Plex:\n            href: http://plex.lan\n' +
         '    - TV:\n        - *plex\n        - Sonarr:\n            href: http://sonarr.lan\n',
     ),
@@ -596,7 +602,7 @@ const hostPortYaml = `- Media:
 `;
 
 test('a host:port link gets http:// and says so', () => {
-  const out = convert('homepage-services', parseYaml(hostPortYaml), []);
+  const out = convert('homepage-services', parseClean(hostPortYaml), []);
   const hrefs = Object.fromEntries(out.items.filter(i => i.type === 'app').map(a => [a.label, a.href]));
   assert.deepEqual(hrefs, { Plex: 'http://plex.lan:32400', Jellyfin: 'http://10.0.0.5:8096/web' });
   assert.deepEqual(
@@ -619,7 +625,7 @@ const monitorYaml = `- Media:
 `;
 
 test('a health check address that cannot be reached from here is dropped with a note', () => {
-  const out = convert('homepage-services', parseYaml(monitorYaml), []);
+  const out = convert('homepage-services', parseClean(monitorYaml), []);
   const hc = Object.fromEntries(out.items.filter(i => i.type === 'app').map(a => [a.label, a.monitoring.healthcheck]));
   assert.equal(hc.Plex.pingUrl, '');
   assert.equal(hc.Plex.enabled, false);
@@ -632,7 +638,7 @@ test('a health check address that cannot be reached from here is dropped with a 
 });
 
 test('a Dashy status check URL that is only a path is dropped', () => {
-  const doc = parseYaml(`sections:
+  const doc = parseClean(`sections:
   - name: Home
     items:
       - title: NAS

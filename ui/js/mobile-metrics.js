@@ -78,14 +78,3 @@ export function gridColumnWidth({ gridW, rowH, gap, cols, footprints }) {
   }
   return Math.max(0, Math.floor(k));
 }
-
-/* Both are distances above the bottom safe-area inset, which CSS adds. */
-
-export function pillBottom(m) {
-  return m.dh + m.pillGap;
-}
-
-/* Distance from the reserved bottom to the first pixel the grid may paint. */
-export function contentBottom(m) {
-  return m.dh + m.dz;
-}

@@ -66,7 +66,7 @@ export function dirFor(code) {
    text, so an inherited member must not answer. */
 let base = Object.create(null); /* en.json, flattened: the fallback for every key */
 let active = Object.create(null); /* selected locale, flattened; falls back to base per key */
-let current = 'en';
+let current = SOURCE_LANG;
 
 /** The locale in use. Widgets are iframes that do not load this module, so the
     dashboard reads it here and passes it on their URL. */
@@ -130,15 +130,15 @@ function devLocale() {
 }
 
 export async function initI18n(code) {
-  code = code || 'en';
+  code = code || SOURCE_LANG;
   const dev = devLocale();
-  const wanted = !dev && code !== 'en' ? fetchCatalog(code) : null;
-  base = (await fetchCatalog('en')) || Object.create(null);
+  const wanted = !dev && code !== SOURCE_LANG ? fetchCatalog(code) : null;
+  base = (await fetchCatalog(SOURCE_LANG)) || Object.create(null);
 
   if (dev === KEY_LANG) {
     base = Object.create(null);
     active = base;
-    current = 'en';
+    current = SOURCE_LANG;
   } else if (dev === PSEUDO_LANG) {
     const mapped = Object.create(null);
     for (const k of Object.keys(base)) mapped[k] = pseudo(base[k]);
@@ -148,7 +148,7 @@ export async function initI18n(code) {
   } else {
     const loaded = wanted ? await wanted : base;
     active = loaded || base;
-    current = loaded && code !== 'en' ? code : 'en';
+    current = loaded && code !== SOURCE_LANG ? code : SOURCE_LANG;
   }
 
   setNumberLanguage(current);
@@ -156,10 +156,6 @@ export async function initI18n(code) {
   el.setAttribute('lang', current);
   el.setAttribute('dir', dirFor(current));
   if (typeof document !== 'undefined' && document.querySelectorAll) translateDOM(document);
-  return current;
-}
-
-export function getLang() {
   return current;
 }
 
