@@ -5,7 +5,7 @@ import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
 import { jitter } from '/js/jitter.js?v=087a1fcf';
 import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-error.js?v=e767bd4f';
-import { formatNumber, numberSymbols, setNumberLanguage } from '/js/format-number.js?v=9dcba1ce';
+import { formatNumber, numberSymbols, setNumberLanguage } from '/js/format-number.js?v=cbc54f4c';
 
 export { esc, html, setHtml };
 
@@ -661,7 +661,14 @@ export function wtCount(key, count, fallback, vars) {
 /* Digit shape follows the interface language. Re-exported here so a widget takes it
    from the toolbox rather than reaching for toLocaleString, which is the same
    thing until someone passes it a language. */
-export { formatNumber, formatList, localiseDigits } from '/js/format-number.js?v=9dcba1ce';
+export {
+  formatNumber,
+  formatList,
+  localiseDigits,
+  byteScale,
+  formatBytes,
+  formatByteRate,
+} from '/js/format-number.js?v=cbc54f4c';
 
 export function sinceLabel(ts) {
   if (!ts) return '';

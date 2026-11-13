@@ -182,7 +182,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, wtCount, formatNumber, formatList, errorState, cssZoom } from '/js/widget-toolbox.js?v=048ad37d';
+import { poll, fetchData, openUrl, loadStrings, wt, wtCount, formatNumber, formatList, formatBytes, errorState, cssZoom } from '/js/widget-toolbox.js?v=8ff63ee6';
 await loadStrings();
 document.getElementById('root').setAttribute('aria-label', wt('ui.diskHealth','Disk health'));
 const params    = new URLSearchParams(location.search);
@@ -212,12 +212,12 @@ function statusText(s, hasSmart) {
   if (!hasSmart) return wt('ui.noSmart','No SMART data');
   return s === 0 ? wt('ui.healthy','Healthy') : wt('ui.failed','Failed');
 }
-/* TB and GB are symbols, not words: only the figure is localised. */
-function fmtCap(c){ if(!c||c<=0) return ''; if(c>=1e12){const t=c/1e12; return formatNumber(t>=10?Math.round(t):Number(t.toFixed(1)))+' TB';} return formatNumber(Math.round(c/1e9))+' GB'; }
+const CAP = { min: 'gigabyte', max: 'terabyte', digits: (v, u) => (u === 'terabyte' && v < 10 ? 1 : 0) };
+function fmtCap(c){ return Number(c) > 0 ? formatBytes(Number(c), CAP) : ''; }
 function freeText(d) {
   if (d.free == null) return '';
   return wt('ui.freeOf', '{free} / {size} free')
-    .replace('{free}', fmtCap(d.free) || formatNumber(0) + ' GB')
+    .replace('{free}', formatBytes(Math.max(0, Number(d.free) || 0), CAP))
     .replace('{size}', fmtCap(d.fsTotal));
 }
 function shortName(d) {

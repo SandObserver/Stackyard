@@ -11,7 +11,7 @@
    The filter and the collapsed folders are in admin-state.js, because the page
    reads and writes them too. */
 
-import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=a2deb8b6';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=ea28edd0';
 import { listGroup } from '/js/admin-drag-logic.js?v=f7c8d59a';
 import {
   filterActive,
@@ -23,18 +23,18 @@ import {
   topLevelRows,
 } from '/js/admin-logic.js?v=4681aa43';
 import { snapshotItems } from '/js/admin-save-logic.js?v=0bf36ea4';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=ab69bab7';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=b58b9268';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { sizeLabel } from '/js/admin-widget-form.js?v=4a00c99a';
-import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
+import { sizeLabel } from '/js/admin-widget-form.js?v=b047ee5d';
+import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=ec60b9bd';
+import { t } from '/js/i18n.js?v=e11cab88';
 import { iconSvg } from '/js/icon-set.js?v=4d944cec';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
-import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=ce415079';
+import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=9f3fe729';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=fe814bbe';
 
 /** @type {{ openModal: (idx: number|null) => void,

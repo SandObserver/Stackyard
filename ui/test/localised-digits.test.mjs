@@ -112,7 +112,10 @@ test('the badge takes its formatter by injection, not by import', () => {
 
 test('widgets take it from the toolbox rather than each inventing one', () => {
   const toolbox = read('js/widget-toolbox.js');
-  assert.match(toolbox, /export \{ formatNumber, formatList, localiseDigits \}/);
+  assert.match(
+    toolbox,
+    /export \{\s*formatNumber,\s*formatList,\s*localiseDigits,[^}]*\} from '\/js\/format-number\.js/,
+  );
   for (const w of ['dns', 'weather', 'books', 'system-summary', 'disk-health']) {
     const src = read(`widgets/${w}/index.html`);
     assert.match(src, /formatNumber/, `${w} still writes raw digits`);
