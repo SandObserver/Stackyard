@@ -44,10 +44,10 @@ is not the whole of it.
 
 These are the checks CI runs, in the order it runs them. They are defined once,
 in `.github/actions/checks/action.yml`, so the list here is the whole of that
-action:
+action. Use the Node.js major version in `.nvmrc`.
 
 ```
-npm ci
+npm ci --ignore-scripts
 node scripts/changelog-check.js
 node scripts/bump-cache-busting.js --check
 npm run paths:check

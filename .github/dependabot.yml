@@ -8,6 +8,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
     groups:
       dev-dependencies:
@@ -19,10 +21,14 @@ updates:
   # Base image. The Dockerfile pins it by digest, which is what gives this entry
   # something to raise: a bare `26-alpine` never changes version, so nothing on
   # the 26 line is ever proposed. Major moves stay manual under the ignore below.
+  # Node security fixes reach the image only through this digest. Keep the check
+  # daily and the cooldown short. A longer delay ships a Node CVE that has a fix.
   - package-ecosystem: docker
     directory: /
     schedule:
-      interval: weekly
+      interval: daily
+    cooldown:
+      default-days: 1
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
@@ -35,6 +41,8 @@ updates:
       - /.github/actions/checks
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     groups:
       actions:
         patterns: ["*"]
