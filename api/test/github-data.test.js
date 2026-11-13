@@ -247,3 +247,43 @@ test('a GitHub username that is not a login name fails before any request', asyn
   await assert.rejects(dataFn(ctx), /not valid/);
   assert.equal(called, false);
 });
+
+test('GitHub pull request filters become search qualifiers for the user', async () => {
+  const calls = [];
+  const ctx = {
+    config: { ...PRS, githubPrFilters: ['assigned', 'mentioned', 'review-requested', 'created'] },
+    fetchJSON: async (url, opts) => {
+      calls.push({ url, opts });
+      return { status: 200, data: { total_count: 0, items: [] } };
+    },
+    ...errorParts(),
+  };
+  const r = await dataFn(ctx);
+  const q = new URL(calls[0].url).searchParams.get('q');
+  assert.equal(q, 'is:open is:pr assignee:octo mentions:octo review-requested:octo author:octo');
+  assert.equal(calls[0].opts.headers.Authorization, 'Bearer t');
+  assert.deepEqual(r.filters, ['assigned', 'mentioned', 'review-requested', 'created']);
+  assert.equal(new URL(r.allUrl).searchParams.get('q'), q);
+});
+
+test('GitHub with no saved filter searches the pull requests the user opened', async () => {
+  const calls = [];
+  const ctx = {
+    config: PRS,
+    fetchJSON: async url => {
+      calls.push(url);
+      return { status: 200, data: { total_count: 0, items: [] } };
+    },
+    ...errorParts(),
+  };
+  await dataFn(ctx);
+  assert.equal(new URL(calls[0]).searchParams.get('q'), 'is:open is:pr author:octo');
+});
+
+test('a GitHub token rejected by the pull request search reports an auth failure', async () => {
+  await assert.rejects(dataFn(ctxFor(PRS, { status: 401, data: {} })), err => err.kind === 'auth');
+});
+
+test('a GitHub username the search cannot use reports a setup problem', async () => {
+  await assert.rejects(dataFn(ctxFor(PRS, { status: 422, data: {} })), err => err.kind === 'invalid');
+});
