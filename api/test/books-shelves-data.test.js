@@ -215,3 +215,107 @@ test('the widget links to the reading service when the browser can reach it', as
   );
   assert.equal((await dataFn(ctxFor(ABS, reply))).link, '');
 });
+
+/* Reply shapes follow Kavita's SeriesDto, ReadingListItemDto and ReadingListDto. */
+function kavitaCtx(config, routes) {
+  const calls = [];
+  const ctx = ctxFor({ ...KAVITA, ...config }, () => null);
+  ctx.fetchJSON = async (url, opts = {}) => {
+    calls.push({ url, method: opts.method || 'GET', auth: opts.headers?.Authorization });
+    if (url.includes('/api/Plugin/authenticate')) return { status: 200, data: { token: 'jwt' } };
+    const hit = Object.keys(routes).find(p => url.includes(p));
+    return hit ? { status: 200, data: routes[hit] } : { status: 404, data: null };
+  };
+  return { ctx, calls };
+}
+
+test('Kavita recent shelf maps series progress, falls back to the original name and keeps the cover colour', async () => {
+  const { ctx, calls } = kavitaCtx(
+    {},
+    {
+      '/api/Series/recently-added-v2': [
+        { id: 1, name: 'Dune', pages: 200, pagesRead: 50, primaryColor: '#123456' },
+        { id: 2, name: '', originalName: 'Akira', pages: 100, pagesRead: 100 },
+        { id: 3, name: 'Unopened', pages: 0, pagesRead: 0 },
+        { id: 4, name: '', originalName: '' },
+      ],
+    },
+  );
+  const r = await dataFn(ctx);
+  assert.equal(r.provider, 'kavita');
+  assert.deepEqual(
+    r.shelves[0].books.map(b => [b.title, b.progress, b.finished, b.color]),
+    [
+      ['Dune', 0.25, false, '#123456'],
+      ['Akira', 1, true, null],
+      ['Unopened', null, false, null],
+    ],
+  );
+  const shelfCall = calls.find(c => c.url.includes('recently-added-v2'));
+  assert.equal(shelfCall.method, 'POST');
+  assert.equal(shelfCall.auth, 'Bearer jwt');
+});
+
+test('Kavita unread shelf reads the on-deck series', async () => {
+  const { ctx, calls } = kavitaCtx(
+    { shelves: [{ source: 'unread' }] },
+    {
+      '/api/Series/on-deck': [{ id: 9, name: 'Berserk', pages: 10, pagesRead: 3 }],
+    },
+  );
+  const r = await dataFn(ctx);
+  assert.deepEqual(
+    r.shelves[0].books.map(b => b.title),
+    ['Berserk'],
+  );
+  assert.ok(calls.some(c => c.url.includes('/api/Series/on-deck') && c.method === 'POST'));
+});
+
+test('Kavita list shelf reads its items and takes the list title when the shelf is unnamed', async () => {
+  const { ctx, calls } = kavitaCtx(
+    { shelves: [{ source: 'list', listId: '7' }] },
+    {
+      '/api/ReadingList/items': [
+        { id: 1, seriesName: 'Monster', title: 'Vol 1', pagesTotal: 40, pagesRead: 10 },
+        { id: 2, seriesName: '', title: 'Side Story', pagesTotal: 0, pagesRead: 0 },
+      ],
+      '/api/ReadingList/lists': [
+        { id: 3, title: 'Other' },
+        { id: 7, title: 'Summer' },
+      ],
+    },
+  );
+  const r = await dataFn(ctx);
+  assert.equal(r.shelves[0].name, 'Summer');
+  assert.deepEqual(
+    r.shelves[0].books.map(b => [b.title, b.progress]),
+    [
+      ['Monster', 0.25],
+      ['Side Story', null],
+    ],
+  );
+  assert.ok(calls.some(c => c.url.includes('readingListId=7')));
+});
+
+test('Kavita reading lists feed the list picker', async () => {
+  const { ctx } = kavitaCtx(
+    {},
+    {
+      '/api/ReadingList/lists': [
+        { id: 7, title: 'Summer' },
+        { id: 0, title: 'No id' },
+        { id: 8, title: '' },
+      ],
+    },
+  );
+  ctx.endpoint = 'lists';
+  assert.deepEqual((await dataFn(ctx)).options, [
+    { value: '7', label: 'Summer' },
+    { value: '8', label: 'Reading list' },
+  ]);
+});
+
+test('Kavita without a token in the sign-in reply reports an auth failure', async () => {
+  const ctx = ctxFor(KAVITA, () => ({ status: 200, data: {} }));
+  await assert.rejects(dataFn(ctx), err => err.kind === 'auth');
+});

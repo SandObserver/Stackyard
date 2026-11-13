@@ -496,3 +496,27 @@ test('Up Next: keys never reach the browser', () => {
     ],
   );
 });
+
+function retypedConnections(widgetConfig) {
+  const stored = { items: [{ id: 'w1', type: 'widget', widgetType: 'connections', label: 'Links', widgetConfig }] };
+  const incoming = { items: [{ id: 'w1', type: 'widget', widgetType: 'clock', label: 'Links', widgetConfig: {} }] };
+  return preserveAllSecrets(incoming, stored).withheld.map(w => w.id);
+}
+
+test('changing a widget type names a dropped secret held in a list row', () => {
+  assert.deepEqual(retypedConnections({ services: [{ type: 'plausible', url: 'https://p', apiKey: 'k' }] }), ['w1']);
+});
+
+test('changing a widget type names a dropped secret held in a nested setting', () => {
+  assert.deepEqual(retypedConnections({ vpn: { service: 'netbird', url: 'http://nb', token: 't' } }), ['w1']);
+});
+
+test('changing a widget type that held no secret names nothing', () => {
+  assert.deepEqual(
+    retypedConnections({
+      services: [{ type: 'plausible', url: 'https://p', apiKey: '' }],
+      vpn: { service: 'gluetun' },
+    }),
+    [],
+  );
+});
