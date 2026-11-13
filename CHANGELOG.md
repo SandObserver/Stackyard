@@ -93,6 +93,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - System Summary, Downloads and Disk Health show sizes and transfer rates in the
   same decimal units, with unit names in the reader's language.
 
+- The GitHub contributions grid shows a new day's contributions after midnight,
+  and the grid matches the total.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
