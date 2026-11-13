@@ -199,6 +199,41 @@ test('migrate moves a top-level badge over an empty Live Activity block', () => 
   assert.equal(item.monitoring.healthcheck.enabled, true);
 });
 
+const pingApp = () => ({ id: 'nas', type: 'app', href: 'http://10.0.0.5', ping: 'http://10.0.0.5' });
+
+test('migrate moves a top-level ping into an enabled ping check', () => {
+  const [item] = migrate({ _schemaVersion: 8, items: [pingApp()], settings: {} }).items;
+  assert.equal('ping' in item, false);
+  assert.deepEqual(item.monitoring, { healthcheck: { enabled: true, container: '', pingUrl: 'http://10.0.0.5' } });
+});
+
+test('migrate keeps a top-level container next to the moved ping', () => {
+  const app = { ...pingApp(), container: 'nas', monitoring: { activity: { enabled: true, url: 'http://x' } } };
+  const [item] = migrate({ _schemaVersion: 8, items: [app], settings: {} }).items;
+  assert.deepEqual(item.monitoring.healthcheck, { enabled: true, container: 'nas', pingUrl: 'http://10.0.0.5' });
+  assert.equal(item.monitoring.activity.url, 'http://x');
+});
+
+test('migrate keeps an existing health check and drops the top-level ping', () => {
+  const hc = { enabled: true, container: 'nas', pingUrl: '' };
+  const app = { ...pingApp(), monitoring: { healthcheck: { ...hc } } };
+  const [item] = migrate({ _schemaVersion: 8, items: [app], settings: {} }).items;
+  assert.equal('ping' in item, false);
+  assert.deepEqual(item.monitoring.healthcheck, hc);
+});
+
+test('migrate drops an empty top-level ping without adding a check', () => {
+  const [item] = migrate({ _schemaVersion: 8, items: [{ ...pingApp(), ping: ' ' }], settings: {} }).items;
+  assert.equal('ping' in item, false);
+  assert.equal(item.monitoring, undefined);
+});
+
+test('migrate leaves an app with no top-level ping unchanged', () => {
+  const app = { id: 'a', type: 'app', href: 'http://a', monitoring: { healthcheck: { enabled: false } } };
+  const cfg = migrate({ _schemaVersion: 8, items: [structuredClone(app)], settings: {} });
+  assert.deepEqual(cfg.items[0], app);
+});
+
 test('loadConfig upgrades an unversioned file on disk and keeps data intact', () => {
   fs.writeFileSync(TMP, JSON.stringify({ items: [{ id: 'x', type: 'app' }], settings: { greeting: 'hi' } }));
   const loaded = loadConfig();

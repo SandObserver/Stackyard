@@ -205,8 +205,7 @@ function bupd(id) {
   const hideHealthy = S.server?.hideHealthyBadge !== false;
   const custom = item?.monitoring?.activity?.custom || {};
   const staticBdg = item?.monitoring?.staticBadge || {};
-  const hasHC =
-    S.server?.healthChecks !== false && !!(item?.monitoring?.healthcheck?.enabled || item?.container || item?.ping);
+  const hasHC = S.server?.healthChecks !== false && !!(item?.monitoring?.healthcheck?.enabled || item?.container);
 
   const act = item?.monitoring?.activity || {};
   const isFolder = item?.type === 'folder';

@@ -154,7 +154,10 @@ test('a tile set to Proxmox with no connection says so', async () => {
 });
 
 test('with health checks off nothing is checked', async () => {
-  configure([app('a', 101), { id: 'p', type: 'app', ping: pveBase }], { healthChecks: false });
+  configure(
+    [app('a', 101), { id: 'p', type: 'app', monitoring: { healthcheck: { enabled: true, pingUrl: pveBase } } }],
+    { healthChecks: false },
+  );
   assert.deepEqual((await request('GET', '/api/health')).body, {});
   assert.equal(seen.length, 0);
 });

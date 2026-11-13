@@ -4,7 +4,7 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=8a45784d';
+} from '/js/admin-app-form.js?v=a2b6d016';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=50967a13';
 import {
   applyFilter,

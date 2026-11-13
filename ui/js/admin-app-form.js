@@ -136,9 +136,8 @@ export function buildAppForm(body, item) {
   const globalHealthOn = inpById('srv-hc-en')?.checked !== false;
   const mon = item?.monitoring || {};
   const hc = mon.healthcheck || {
-    enabled: !!(item?.container || item?.ping),
+    enabled: !!item?.container,
     container: item?.container || '',
-    pingUrl: item?.ping || '',
   };
   const act = mon.activity || {
     enabled: !!item?.badge?.enabled,
