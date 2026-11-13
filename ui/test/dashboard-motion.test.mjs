@@ -92,10 +92,7 @@ test('the phone page control is an input a screen reader can adjust', () => {
     'the keyboard pages without the control',
   );
   assert.match(dashboard, /pager\.setAttribute\(\s*'aria-valuetext',\s*t\('home\.pageAnnounce'/);
-  assert.match(
-    dashboard,
-    /pager\.addEventListener\('input', \(\) => goTo\(Number\(pager\.value\) - 1, null, false\)\)/,
-  );
+  assert.match(dashboard, /pager\.addEventListener\('input', \(\) => goTo\(Number\(pager\.value\) - 1, false\)\)/);
   assert.match(dashboard, /if \(e\.target === pager\) return;/, 'an arrow key would turn two pages');
 });
 

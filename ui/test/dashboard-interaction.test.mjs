@@ -20,11 +20,11 @@ const rule = selector => {
 };
 
 test('a layout build leaves the Search pill alone and marks the restored page', () => {
-  assert.match(dashboard, /function goTo\(n, dotEls, announce = true, bump = true, ms = PAGE_TURN_MS\)/);
+  assert.match(dashboard, /function goTo\(n, announce = true, bump = true, ms = PAGE_TURN_MS\)/);
   assert.match(dashboard, /if \(MOB && bump && CB\.mobPillBump\) CB\.mobPillBump\(pg\);/);
   assert.match(
     dashboard,
-    /syncMobPages\(\);\s*goTo\(restorePage\(storeGet\(PAGE_STORE\), totalPages\), null, false, false\);\s*CB\.mobPillSync\?\.\(pg\);/,
+    /totalPages = buildMobile\(\);\s*goTo\(restorePage\(storeGet\(PAGE_STORE\), totalPages\), false, false\);\s*CB\.mobPillSync\?\.\(pg\);/,
   );
 });
 

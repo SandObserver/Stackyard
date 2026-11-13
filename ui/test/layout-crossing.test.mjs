@@ -27,5 +27,5 @@ test('the desktop build clears what the phone build left on the dock and pill', 
   assert.match(reset, /dk\.className = '';/);
   assert.match(reset, /dk\.style\.cssText = '';/);
   assert.match(reset, /pill\.style\.cssText = '';/);
-  assert.match(reset, /removeEventListener\('touchend', _mobTeCleanup\)/, 'the phone swipe would page twice');
+  assert.match(reset, /removeEventListener\('touchend', clearOnTouch\)/, 'the phone swipe would page twice');
 });

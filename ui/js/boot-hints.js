@@ -17,11 +17,19 @@
     }
     if (typeof hint.lang === 'string' && hint.lang !== 'en') root.classList.add('lang-pending');
   } catch {}
+  /* A backend that accepts the connection and never answers would otherwise
+     leave the boot veil up forever. Generous: this only has to beat a hang.
+     dashboard.js takes it from window. */
+  const timeoutMs = 15000;
+  /** @type {any} */ (window).__bootTimeoutMs = timeoutMs;
   /* dashboard.js reads window.__early once and clears it. */
   const script = document.currentScript;
   if (script && 'early' in script.dataset) {
     const get = (url, timed) => {
-      const p = fetch(url, timed ? { cache: 'no-store', signal: AbortSignal.timeout(15000) } : { cache: 'no-store' });
+      const p = fetch(
+        url,
+        timed ? { cache: 'no-store', signal: AbortSignal.timeout(timeoutMs) } : { cache: 'no-store' },
+      );
       p.catch(() => {});
       return p;
     };
