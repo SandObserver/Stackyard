@@ -128,7 +128,7 @@ test('a map service whose URL is only spaces reads as not set up', async () => {
     ctxFor({ type: 'plausible', url: '   ', siteId: 's' }, async () => ({ status: 200, data: {} })),
   );
   assert.equal(r.services.find(s => s.type === 'plausible').errorKind, 'invalid');
-
+});
 test('NetBird on the map counts connected peers per country', async () => {
   const calls = [];
   const fetchJSON = async (url, opts) => {

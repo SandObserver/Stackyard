@@ -97,7 +97,7 @@ test('a NetBird token the management API rejects reads as a rejected key', async
 test('a VPN card with no URL reads as not set up', async () => {
   const r = await dataFn(ctxFor({ service: 'netbird', url: '' }));
   assert.equal(r.errorKind, 'invalid');
-
+});
 /* Peer fields follow NetBird's management API Peer schema. */
 function netbird(peers, status = 200) {
   const calls = [];
