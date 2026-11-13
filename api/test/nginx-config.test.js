@@ -603,3 +603,40 @@ test('a request is flagged as proxied by any forwarding header a proxy adds', ()
   assert.match(map[2], /""\s+"0";/);
   assert.match(map[2], /default\s+"1";/);
 });
+
+/* nginx drops every server-level add_header in a location that sets its own. */
+function locationBlocks(conf) {
+  const blocks = [];
+  for (const m of conf.matchAll(/^\s*location\s+([^{]+)\{/gm)) {
+    let depth = 1;
+    let i = m.index + m[0].length;
+    while (depth && i < conf.length) {
+      if (conf[i] === '{') depth++;
+      else if (conf[i] === '}') depth--;
+      i++;
+    }
+    blocks.push({ name: m[1].trim(), body: conf.slice(m.index + m[0].length, i - 1) });
+  }
+  return blocks;
+}
+
+test('the shared security headers file sets nosniff, a referrer policy and a permissions policy', () => {
+  const shared = read('security-headers.conf');
+  assert.match(shared, /^add_header X-Content-Type-Options "nosniff" always;$/m);
+  assert.match(shared, /^add_header Referrer-Policy "strict-origin-when-cross-origin" always;$/m);
+  assert.match(shared, /^add_header Permissions-Policy "camera=\(\), microphone=\(\), geolocation=\(\)" always;$/m);
+});
+
+test('every location that sets a header also sets the shared security headers', () => {
+  const blocks = locationBlocks(dashboard);
+  assert.ok(blocks.length >= 15, `only ${blocks.length} location blocks found`);
+  const missing = blocks
+    .filter(b => /\badd_header\b|include \/etc\/nginx\/http\.d\/csp-/.test(b.body))
+    .filter(b => !b.body.includes('include /etc/nginx/http.d/security-headers.conf;'))
+    .map(b => b.name);
+  assert.deepEqual(
+    missing,
+    [],
+    `These locations lose nosniff, Referrer-Policy and Permissions-Policy:\n  ${missing.join('\n  ')}`,
+  );
+});
