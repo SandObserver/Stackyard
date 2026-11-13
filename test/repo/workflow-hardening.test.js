@@ -153,17 +153,25 @@ test('CI installs without running package scripts', () => {
   assert.deepEqual(unsafe, [], `Add --ignore-scripts:\n  ${unsafe.join('\n  ')}`);
 });
 
-test('every app token asks only for the permissions it names', () => {
-  const blanket = [];
-  let seen = 0;
+/* The release app bypasses the main ruleset. A token without permission-*
+   inputs gets every permission the app holds. */
+test('every app token asks for exactly the permissions its job needs', () => {
+  const expected = {
+    'workflows/ca-template-changes.yml': [['contents: write', 'pull-requests: write']],
+    'workflows/changelog.yml': [['contents: write']],
+    'workflows/release-prep.yml': [['contents: write', 'pull-requests: write']],
+    'workflows/release-tag.yml': [['contents: write']],
+    'workflows/release.yml': [['contents: write']],
+  };
+  const found = {};
   for (const [f, src] of all) {
     for (const s of src.split(/uses:\s*actions\/create-github-app-token@/).slice(1)) {
-      seen++;
-      if (!/^\s+permission-[a-z-]+:\s*(read|write)\s*$/m.test(s.split(/\n\s*- name:/)[0])) blanket.push(f);
+      const block = s.split(/\n\s*- name:/)[0];
+      const perms = [...block.matchAll(/^\s+permission-([a-z-]+):\s*(\S+)\s*$/gm)].map(m => `${m[1]}: ${m[2]}`);
+      found[f] = [...(found[f] || []), perms.sort()];
     }
   }
-  assert.ok(seen > 0, 'no app token step found');
-  assert.deepEqual(blanket, [], `Add permission-<name> inputs:\n  ${blanket.join('\n  ')}`);
+  assert.deepEqual(found, expected);
 });
 
 test('the checks audit the workflows with zizmor', () => {
