@@ -146,7 +146,8 @@ test('one rotation into the phone layout loads each widget once', async ({ page,
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => screen.orientation.dispatchEvent(new Event('change')));
   await page.locator('body.is-mob').waitFor({ state: 'attached' });
-  await page.waitForTimeout(1000);
+  await expect.poll(() => loads).toBe(1);
+  await page.waitForTimeout(500);
   expect(loads, 'widget documents loaded after one rotation').toBe(1);
 });
 

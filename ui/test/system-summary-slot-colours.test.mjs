@@ -4,7 +4,12 @@
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { register } from 'node:module';
 import { test } from 'node:test';
+
+register('./js-root-hooks.mjs', import.meta.url);
+globalThis.location ??= { search: '' };
+const { colorOrFallback } = await import('../js/widget-toolbox.js');
 
 const src = fs.readFileSync(new URL('../widgets/system-summary/index.html', import.meta.url), 'utf8');
 
@@ -13,11 +18,6 @@ assert.ok(fn, 'slotColour is defined in the widget');
 const defs = src.match(/const SLOT_DEFS = (\[[^\]]*\]);/);
 assert.ok(defs, 'SLOT_DEFS is defined in the widget');
 
-/* The toolbox's own check, so a rejected value takes the fallback here too. */
-const colorOrFallback = (v, f) =>
-  /^(#[0-9a-f]{3}|#[0-9a-f]{6}|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\))$/i.test(String(v ?? '').trim())
-    ? String(v).trim()
-    : f;
 const slotColour = new Function('colorOrFallback', `const SLOT_DEFS = ${defs[1]}; ${fn[0]}; return slotColour;`)(
   colorOrFallback,
 );
