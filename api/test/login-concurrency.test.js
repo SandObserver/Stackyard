@@ -1,6 +1,7 @@
 const path = require('node:path');
 
 const { tmpDir } = require('../test-support/tmp');
+require('../test-support/cheap-scrypt').useCheapScrypt();
 const _tmp = tmpDir('login-concurrency');
 process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
 
