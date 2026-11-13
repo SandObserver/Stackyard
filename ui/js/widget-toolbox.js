@@ -5,9 +5,10 @@ import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
 import { jitter } from '/js/jitter.js?v=087a1fcf';
 import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-error.js?v=e767bd4f';
-import { formatNumber, numberSymbols, setNumberLanguage } from '/js/format-number.js?v=9dcba1ce';
+import { formatNumber, numberSymbols, setNumberLanguage } from '/js/format-number.js?v=cbc54f4c';
 
 export { esc, html, setHtml };
+export { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
 
 /* Escaping cannot make a CSS value safe. `red; background-image: url(...)`
    survives esc() and still parses as a second declaration. Assign the result
@@ -33,10 +34,11 @@ export function readableInk(hex, min = 4.5) {
   return contrastInk(`#${m[1]}`, min);
 }
 
-/** @param {unknown} value @returns {number[] | null} */
-function _rgbOf(value) {
+/** Reads #rgb, #rrggbb, #rrggbbaa (alpha ignored) or rgb() as [r, g, b]. Null for anything else.
+    @param {unknown} value @returns {number[] | null} */
+export function rgbOf(value) {
   const s = String(value ?? '').trim();
-  let m = /^#([0-9a-f]{6})$/i.exec(s);
+  let m = /^#([0-9a-f]{6})(?:[0-9a-f]{2})?$/i.exec(s);
   if (m) return [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16));
   m = /^#([0-9a-f]{3})$/i.exec(s);
   if (m) return [...m[1]].map(c => parseInt(c + c, 16));
@@ -60,7 +62,7 @@ const _cardLum = () => {
 /** Contrast of a colour against the card, as a ratio. NaN when it cannot be read.
     @param {string} colour @returns {number} */
 export function cardContrast(colour) {
-  const rgb = _rgbOf(colour);
+  const rgb = rgbOf(colour);
   if (!rgb) return NaN;
   const a = _lum(rgb) + 0.05;
   const b = _cardLum() + 0.05;
@@ -72,7 +74,7 @@ export function cardContrast(colour) {
     the colour the user picked.
     @param {string} colour hex or rgb() @param {number} [min] @returns {string} #rrggbb, or the input when unreadable */
 export function contrastInk(colour, min = 4.5) {
-  let rgb = _rgbOf(colour);
+  let rgb = rgbOf(colour);
   if (!rgb) return colour;
   const light = _hostTheme() === 'light';
   const card = _cardLum() + 0.05;
@@ -200,6 +202,80 @@ export function linkTo(el, href) {
   return on;
 }
 
+const TAP_SLOP = 8;
+/** @type {Map<Element, () => void>} */
+const _taps = new Map();
+/** @type {Element | null} */
+let _tapActive = null;
+let _tapTimer = 0;
+
+function _tapClear() {
+  clearTimeout(_tapTimer);
+  _tapActive = null;
+  for (const conceal of _taps.values()) conceal();
+}
+
+/** On touch, a first tap reveals `el` and a second tap opens it. A finger that
+    moves more than 8px is a swipe and does nothing. A reveal tells the
+    dashboard, which conceals every element given here through
+    window.__clearActive when another widget is tapped. A tap outside them all
+    conceals them too, and so does `timeout` ms without a second tap.
+    @param {Element} el
+    @param {{ reveal: () => void, conceal: () => void, open: () => void, canReveal?: () => boolean, timeout?: number }} opts */
+export function twoTap(el, { reveal, conceal, open, canReveal = () => true, timeout = 0 }) {
+  if (!_taps.size) {
+    document.addEventListener(
+      'touchend',
+      e => {
+        const target = /** @type {Node} */ (e.target);
+        if (![..._taps.keys()].some(t => t.contains(target))) _tapClear();
+      },
+      { passive: true },
+    );
+    /** @type {any} */ (window).__clearActive = _tapClear;
+  }
+  _taps.set(el, conceal);
+  let x = 0,
+    y = 0,
+    moved = false;
+  el.addEventListener(
+    'touchstart',
+    e => {
+      const t = /** @type {TouchEvent} */ (e).touches[0];
+      if (!t) return;
+      x = t.clientX;
+      y = t.clientY;
+      moved = false;
+    },
+    { passive: true },
+  );
+  el.addEventListener(
+    'touchmove',
+    e => {
+      const t = /** @type {TouchEvent} */ (e).touches[0];
+      if (t && (Math.abs(t.clientX - x) > TAP_SLOP || Math.abs(t.clientY - y) > TAP_SLOP)) moved = true;
+    },
+    { passive: true },
+  );
+  el.addEventListener('touchend', e => {
+    if (moved) return;
+    e.preventDefault();
+    if (!canReveal()) return;
+    if (_tapActive === el) {
+      _tapClear();
+      open();
+      return;
+    }
+    _tapClear();
+    _tapActive = el;
+    reveal();
+    if (timeout) _tapTimer = setTimeout(_tapClear, timeout);
+    try {
+      parent.postMessage({ type: 'widget-active' }, window.location.origin);
+    } catch {}
+  });
+}
+
 export async function getConfig() {
   const id = widgetId();
   const r = await fetch(`/api/widget-config/${encodeURIComponent(id)}`, { cache: 'no-store' });
@@ -300,14 +376,19 @@ export function sparkline(values, opts = {}) {
   return svg;
 }
 
-/* A widget page loads no shared stylesheet, so a reduced-motion rule cannot
-   reach a style set here. Ask for the preference instead. */
-function reducedMotion() {
+/** Whether the reader asks for reduced motion, read at each call. A widget
+    page loads no shared stylesheet, so a style set from script asks here.
+    `onChange` runs with the new answer each time the setting changes.
+    @param {(reduce: boolean) => void} [onChange] @returns {boolean} */
+export function reducedMotion(onChange) {
+  let query;
   try {
-    return !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    query = window.matchMedia?.('(prefers-reduced-motion: reduce)');
   } catch {
     return false;
   }
+  if (onChange) query?.addEventListener?.('change', e => onChange(!!e.matches));
+  return !!query?.matches;
 }
 
 const _fitted = new Map();
@@ -657,11 +738,28 @@ export function wtCount(key, count, fallback, vars) {
   return _fill(typeof own === 'string' && own ? own : en, { ...vars, count: formatNumber(count) });
 }
 
+/** The 12- or 24-hour clock the reader's own locale uses.
+    @param {string} [locale] @returns {string|undefined} */
+export function readerHourCycle(locale) {
+  try {
+    return new Intl.DateTimeFormat(locale || 'en', { hour: 'numeric' }).resolvedOptions().hourCycle;
+  } catch {
+    return undefined;
+  }
+}
+
 /** @param {number} ts @returns {string} */
 /* Digit shape follows the interface language. Re-exported here so a widget takes it
    from the toolbox rather than reaching for toLocaleString, which is the same
    thing until someone passes it a language. */
-export { formatNumber, formatList, localiseDigits } from '/js/format-number.js?v=9dcba1ce';
+export {
+  formatNumber,
+  formatList,
+  localiseDigits,
+  byteScale,
+  formatBytes,
+  formatByteRate,
+} from '/js/format-number.js?v=cbc54f4c';
 
 export function sinceLabel(ts) {
   if (!ts) return '';

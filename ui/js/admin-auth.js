@@ -1,9 +1,9 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=ab69bab7';
-import { initI18n, t } from '/js/i18n.js?v=ec60b9bd';
-import { loginErrorAdvice } from '/js/admin-error.js?v=d1f8f6f4';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=cea59c52';
+import { initI18n, t } from '/js/i18n.js?v=e11cab88';
+import { loginErrorAdvice } from '/js/admin-error.js?v=05a2520c';
 import { passwordMeter, contextWords, meterColor } from '/js/password-policy.js?v=0c0fd0af';
-import { el, inp as inpById, qa } from '/js/utils.js?v=ce415079';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=5e8a2c4c';
+import { el, inp as inpById, qa } from '/js/utils.js?v=9647ab80';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=9cc50f91';
 import { fillUsernames } from '/js/password-reveal.js?v=37f218b4';
 
 export async function checkAuth(onLogin) {
@@ -64,6 +64,7 @@ function showLoginScreen(onLogin) {
     try {
       await apiPost('/api/auth/login', { password: pw?.value || '' });
       signedIn = true;
+      if (pw) pw.value = '';
       s?.close();
       if (focusBefore?.isConnected && focusBefore !== document.body) focusBefore.focus();
       focusBefore = null;

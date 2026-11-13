@@ -4,6 +4,11 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test } from 'node:test';
+import { register } from 'node:module';
+
+register('./js-root-hooks.mjs', import.meta.url);
+Object.defineProperty(globalThis, 'navigator', { value: { language: 'en' }, configurable: true });
+const { byteScale, formatBytes, formatByteRate, formatNumber } = await import('../js/format-number.js');
 
 const src = fs.readFileSync(new URL('../widgets/system-summary/index.html', import.meta.url), 'utf8');
 
@@ -25,8 +30,14 @@ const valueText = lift('valueText', 'type, v', { formatNumber: n => String(n) })
 const scaleFor = lift('scaleFor', 'type, vals');
 const readingFor = lift('readingFor', 'slot, data', { reading });
 const share = liftConst('share', { reading });
-const sizeParts = lift('sizeParts', 'd', { reading, share, formatNumber: n => String(n) });
+const sizeParts = lift('sizeParts', 'd', { reading, share, byteScale, formatBytes, formatNumber });
 const sizeText = liftConst('sizeText');
+const spokenSrc = src.match(/const sizeSpoken = ([\s\S]+?);\n/);
+assert.ok(spokenSrc, 'sizeSpoken is defined in the widget');
+const sizeSpoken = new Function('wt', `return ${spokenSrc[1]};`)((_k, fallback, vars = {}) =>
+  fallback.replace(/\{(\w+)\}/g, (m, k) => (vars[k] == null ? m : String(vars[k]))),
+);
+const fmtRate = lift('fmtRate', 'bytesPerSec', { formatByteRate });
 const ageText = lift('ageText', 'ms', { rtf: new Intl.RelativeTimeFormat('en', { numeric: 'auto', style: 'short' }) });
 
 test('the refresh setting takes only the offered choices, 10 s otherwise', () => {
@@ -78,10 +89,20 @@ test('a flat or empty process window still draws', () => {
   assert.deepEqual(scaleFor('procs', [null, null]), {});
 });
 
-test('a disk size reads in GB, or in TB from 1000 GB', () => {
-  assert.deepEqual(sizeParts({ usedPct: 50, totalGb: 467 }), { used: '234', total: '467', unit: 'GB' });
-  assert.deepEqual(sizeParts({ usedPct: 78, totalGb: 1863 }), { used: '1.4', total: '1.8', unit: 'TB' });
-  assert.equal(sizeText(sizeParts({ usedPct: 50, totalGb: 467 })), '234 / 467 GB');
+test('a disk size counts in steps of 1000, in GB, or in TB from 1000 GB', () => {
+  assert.equal(sizeText(sizeParts({ usedPct: 50, totalGb: 467 })), '251 / 501 GB');
+  assert.equal(sizeText(sizeParts({ usedPct: 78, totalGb: 1863 })), '1.6 / 2 TB');
+  assert.equal(sizeText(sizeParts({ usedPct: 50, totalGb: 931 })), '0.5 / 1 TB');
+  assert.equal(sizeSpoken(sizeParts({ usedPct: 78, totalGb: 1863 })), '1.6 TB of 2 TB');
+});
+
+test('a transfer rate counts in steps of 1000 and keeps its decimal place', () => {
+  assert.equal(fmtRate(1_500_000), '1.5 MB/s');
+  assert.equal(fmtRate(2_000_000), '2.0 MB/s');
+  assert.equal(fmtRate(999_000), '999 kB/s');
+  assert.equal(fmtRate(1000), '1 kB/s');
+  assert.equal(fmtRate(2.5e9), '2.5 GB/s');
+  assert.equal(fmtRate(null), '—');
 });
 
 test('a disk with no total or no share has no size, never a zero', () => {

@@ -134,20 +134,17 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-import { poll, fetchData, linkTo, loadStrings, wt, errorState, localiseDigits, placeholder, whileOnScreen } from '/js/widget-toolbox.js?v=048ad37d';
+import { poll, fetchData, getConfig, reducedMotion, linkTo, loadStrings, wt, errorState, localiseDigits, placeholder, whileOnScreen } from '/js/widget-toolbox.js?v=7f16d266';
 await loadStrings();
 document.getElementById('w').setAttribute('aria-label', wt('widget.label', 'Now Playing'));
 document.getElementById('prev').setAttribute('aria-label', wt('ui.previous', 'Previous item'));
 document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next item'));
-  const API='/api';
-  const id=new URLSearchParams(location.search).get('id')||'';
   const TICK_MS=10000;
   const COLORS={plex:'#e5a00d',jellyfin:'#007ca6',emby:'#4caf50',navidrome:'#0091FF'};
   const PROVIDER_NAME={plex:'Plex',jellyfin:'Jellyfin',emby:'Emby',navidrome:'Navidrome'};
   /* White on Plex, Emby and Navidrome is below 4.5:1. */
   const INK={plex:'#1C1C1E',jellyfin:'#FFFFFF',emby:'#1C1C1E',navidrome:'#1C1C1E'};
   const TAPE_MIN=64, TAPE_MAX=126, TAPE_NOPROG=92;
-  const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
 
   const wEl=document.getElementById('w'), linkEl=document.getElementById('np-link');
   const titleEl=document.getElementById('title'), subEl=document.getElementById('sub'), playerEl=document.getElementById('player');
@@ -213,7 +210,7 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
   function nav(dir){
     if(sessions.length<2) return;
     idx=(idx+dir+sessions.length)%sessions.length;
-    if(reduced){ paint(true); return; }
+    if(reducedMotion()){ paint(true); return; }
     const mine=++swap, busy=running.length>0;
     for(const a of running) a.cancel();
     running=[];
@@ -257,10 +254,8 @@ document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next i
     if(linked) linkEl.setAttribute('aria-label', wt('ui.linkName','{text}. Activate to open link.',{text}));
   }
   async function boot(){
-    try{
-      const r=await fetch(`${API}/widget-config/${encodeURIComponent(id)}`);
-      if(r.ok){ const c=await r.json(); href=(c&&c.widgetConfig&&c.widgetConfig.href)||''; provider=(c&&c.widgetConfig&&c.widgetConfig.provider)||''; }
-    }catch(e){}
+    const c=await getConfig().catch(()=>null);
+    href=c?.widgetConfig?.href||''; provider=c?.widgetConfig?.provider||'';
     const tint=COLORS[provider]||'#8E8E93';
     reelEl.parentElement.style.color=tint;
     wEl.style.setProperty('--band',tint);

@@ -1,8 +1,9 @@
 // @ts-check
 import { esc, html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=ec60b9bd';
+import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=e11cab88';
 import { sanitizeI18nMarkup } from '/js/i18n-markup.js?v=8c90e1dd';
-import { fillNames, pickLanguage, screenFor, setupCodeErrorKey } from '/js/config-recovery-logic.js?v=d3529225';
+import { setupErrorKey } from '/js/admin-error.js?v=05a2520c';
+import { fillNames, pickLanguage, screenFor } from '/js/config-recovery-logic.js?v=3052a1ee';
 import { contextWords, passwordMismatch, passwordProblem, REFUSAL_KEYS } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=4d944cec';
@@ -164,7 +165,7 @@ async function submitSetup(e, form) {
       location.reload();
       return;
     }
-    const key = setupCodeErrorKey(await res.json().catch(() => null));
+    const key = setupErrorKey(await res.json().catch(() => null));
     refuse(key, key === 'hostBlock.codeWrong' ? code : password);
   } catch {
     error.textContent = t('home.apiDownTitle');

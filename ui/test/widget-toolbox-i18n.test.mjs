@@ -22,7 +22,9 @@ globalThis.fetch = async url => {
   return { ok: !!body, json: async () => body };
 };
 
-const { loadStrings, wt, wtCount, relativeTime, sinceLabel, formatNumber } = await import('../js/widget-toolbox.js');
+const { loadStrings, wt, wtCount, relativeTime, sinceLabel, formatNumber, readerHourCycle } = await import(
+  '../js/widget-toolbox.js'
+);
 
 test('loadStrings waits for the shared strings as well as the widget catalog', async () => {
   let done = false;
@@ -64,4 +66,14 @@ test('a relative time reads in the widget language, past and future', () => {
   assert.equal(relativeTime(now + 3 * 86400e3), new Intl.RelativeTimeFormat('fr', { style: 'short' }).format(3, 'day'));
   assert.equal(relativeTime(now - 10e3), new Intl.RelativeTimeFormat('fr', { style: 'short' }).format(-1, 'minute'));
   assert.doesNotMatch(relativeTime(now - 3600e3), /ago|\bin\b/);
+});
+
+test('a placeholder value is inserted as written, dollar signs included', () => {
+  assert.equal(wt('ui.none', 'Switch to {name}', { name: "Savings $$ $& $'" }), "Switch to Savings $$ $& $'");
+});
+
+test('the reader hour cycle follows the locale and survives a bad tag', () => {
+  assert.equal(readerHourCycle('en-US'), 'h12');
+  assert.equal(readerHourCycle('de-DE'), 'h23');
+  assert.equal(readerHourCycle('not a tag!'), undefined);
 });

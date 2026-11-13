@@ -54,7 +54,7 @@ test('the announcement is made where the page changes', () => {
     dashboard.indexOf('function goTo('),
     dashboard.indexOf('\n}', dashboard.indexOf('function goTo(')),
   );
-  assert.match(goTo, /announcePage\(pg, total\)/);
+  assert.match(goTo, /announcePage\(pg, totalPages\)/);
 });
 
 /* Every route to another page, arrow keys, swipes, and the dots, goes through
@@ -63,7 +63,7 @@ test('every way of changing page goes through goTo', () => {
   for (const route of [
     /ArrowRight'\) goTo/,
     /ArrowLeft'\)\s+goTo/,
-    /swipePager\(document,[\s\S]{0,300}turn: \(n, ms\) => goTo\(n, null, true, true, ms\)/,
+    /swipePager\(document,[\s\S]{0,300}turn: \(n, ms\) => goTo\(n, true, true, ms\)/,
   ]) {
     assert.match(dashboard, route, 'a page change that bypasses goTo would be silent');
   }

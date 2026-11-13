@@ -2,7 +2,7 @@
 /* One element for the whole dashboard. A per-tile popover outlives the tiles
    the grid rebuilds on every resize. */
 
-import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
+import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 
 const HOVER_IN_MS = 320;

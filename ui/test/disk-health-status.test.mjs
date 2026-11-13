@@ -3,6 +3,11 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test } from 'node:test';
+import { register } from 'node:module';
+
+register('./js-root-hooks.mjs', import.meta.url);
+Object.defineProperty(globalThis, 'navigator', { value: { language: 'en' }, configurable: true });
+const { formatBytes } = await import('../js/format-number.js');
 
 const src = fs.readFileSync(new URL('../widgets/disk-health/index.html', import.meta.url), 'utf8');
 const led = src.match(/function ledClass\(s, hasSmart\) \{[\s\S]*?\n\}/);
@@ -91,14 +96,29 @@ test('each bay carries its own status light', () => {
   assert.doesNotMatch(src, /id="dots"/);
 });
 
+const capFn = src.match(/const CAP = .*;\n/);
 const fmtFn = src.match(/function fmtCap\(c\)\{.*\}/);
 const freeFn = src.match(/function freeText\(d\) \{[\s\S]*?\n\}/);
-assert.ok(fmtFn && freeFn, 'fmtCap and freeText are defined in the widget');
-const freeText = new Function('wt', 'formatNumber', `${fmtFn[0]}; ${freeFn[0]}; return freeText;`)(
-  (_k, fallback) => fallback,
-  n => String(n),
+assert.ok(capFn && fmtFn && freeFn, 'CAP, fmtCap and freeText are defined in the widget');
+const { fmtCap, freeText } = new Function(
+  'wt',
+  'formatBytes',
+  `${capFn[0]} ${fmtFn[0]}; ${freeFn[0]}; return { fmtCap, freeText };`,
+)(
+  (_k, fallback, vars = {}) => fallback.replace(/\{(\w+)\}/g, (m, k) => (vars[k] == null ? m : String(vars[k]))),
+  formatBytes,
 );
 
 test('free space is measured against the filesystem size, not the drive size', () => {
   assert.equal(freeText({ capacity: 4e12, free: 20e9, fsTotal: 100e9 }), '20 GB / 100 GB free');
+  assert.equal(freeText({ free: 0, fsTotal: 100e9 }), '0 GB / 100 GB free');
+});
+
+test('a drive size counts in steps of 1000, with one decimal place under 10 TB', () => {
+  assert.equal(fmtCap(500_107_862_016), '500 GB');
+  assert.equal(fmtCap(999.6e9), '1 TB');
+  assert.equal(fmtCap(4.5e12), '4.5 TB');
+  assert.equal(fmtCap(18e12), '18 TB');
+  assert.equal(fmtCap(0), '');
+  assert.equal(fmtCap(undefined), '');
 });

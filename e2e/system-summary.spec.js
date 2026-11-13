@@ -101,13 +101,13 @@ test.describe('medium', () => {
 
   test('a hovered disk shows both sizes, and the summary always carries them', async ({ page }) => {
     const frame = await open(page, 'ss-medium');
-    await expect(frame.locator('#sr-sum')).toHaveText(/Disk 50% \(234 GB of 467 GB\)/);
-    await expect(frame.locator('#sr-sum')).toHaveText(/\/mnt\/media 78% \(1\.4 TB of 1\.8 TB\)/);
+    await expect(frame.locator('#sr-sum')).toHaveText(/Disk 50% \(251 GB of 501 GB\)/);
+    await expect(frame.locator('#sr-sum')).toHaveText(/\/mnt\/media 78% \(1\.6 TB of 2 TB\)/);
 
     const before = await boxes(frame);
     await frame.locator('.disk').hover();
     await expect(frame.locator('.disk')).toHaveClass(/\bshow\b/);
-    await expect(frame.locator('.sizes')).toHaveText('234 / 467 GB · 1.4 / 1.8 TB');
+    await expect(frame.locator('.sizes')).toHaveText('251 / 501 GB · 1.6 / 2 TB');
     expect(await boxes(frame)).toEqual(before);
   });
 });
@@ -121,7 +121,7 @@ test('a small widget shows both disks on hover without moving a row', async ({ p
   const before = await rows();
 
   await frame.locator('.row').nth(2).hover();
-  await expect(frame.locator('.row').nth(2).locator('.val span')).toHaveText(['234 / 467 GB', '1.4 / 1.8 TB']);
+  await expect(frame.locator('.row').nth(2).locator('.val span')).toHaveText(['251 / 501 GB', '1.6 / 2 TB']);
   expect(await rows()).toEqual(before);
 });
 

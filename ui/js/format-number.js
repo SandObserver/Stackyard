@@ -118,3 +118,55 @@ export function localiseDigits(text) {
   }
   return String(text).replace(/\d/g, d => digitMap[Number(d)]);
 }
+
+/** @typedef {'byte'|'kilobyte'|'megabyte'|'gigabyte'|'terabyte'|'petabyte'} ByteUnit */
+/** @typedef {{ min?: ByteUnit, max?: ByteUnit, digits?: (value: number, unit: ByteUnit) => number, fixed?: boolean }} ByteOptions */
+
+/** @type {ByteUnit[]} */
+const BYTE_UNITS = ['byte', 'kilobyte', 'megabyte', 'gigabyte', 'terabyte', 'petabyte'];
+
+/** @param {number} _value @param {ByteUnit} unit */
+const byteDigits = (_value, unit) => (unit === 'byte' || unit === 'kilobyte' ? 0 : 1);
+
+/** The unit and figure for a byte count, in decimal steps of 1000.
+    @param {number} bytes @param {ByteOptions} [options]
+    @returns {{ value: number, unit: ByteUnit, digits: number }} */
+export function byteScale(bytes, options = {}) {
+  const lo = Math.max(0, BYTE_UNITS.indexOf(options.min ?? 'byte'));
+  const top = BYTE_UNITS.indexOf(options.max ?? 'petabyte');
+  const hi = top < 0 ? BYTE_UNITS.length - 1 : Math.max(lo, top);
+  const digitsFor = options.digits ?? byteDigits;
+  const at = step => {
+    const value = bytes / 1000 ** step;
+    return { value, unit: BYTE_UNITS[step], digits: digitsFor(Math.abs(value), BYTE_UNITS[step]) };
+  };
+  let k = lo;
+  while (k < hi && Math.abs(bytes) >= 1000 ** (k + 1)) k++;
+  let scaled = at(k);
+  if (k < hi && Math.abs(Number(scaled.value.toFixed(scaled.digits))) >= 1000) scaled = at(k + 1);
+  return scaled;
+}
+
+/** @param {number} n @param {ByteOptions} options @param {string} per */
+function formatScaled(n, options, per) {
+  if (typeof n !== 'number' || !Number.isFinite(n)) return String(n);
+  const { value, unit, digits } = byteScale(n, options);
+  return formatNumber(value, {
+    style: 'unit',
+    unit: unit + per,
+    maximumFractionDigits: digits,
+    minimumFractionDigits: options.fixed ? digits : 0,
+  });
+}
+
+/** A size such as "1.5 GB", in the reader's digits and unit words.
+    @param {number} bytes @param {ByteOptions} [options] @returns {string} */
+export function formatBytes(bytes, options = {}) {
+  return formatScaled(bytes, options, '');
+}
+
+/** A transfer rate such as "1.5 MB/s", in the reader's digits and unit words.
+    @param {number} bytesPerSecond @param {ByteOptions} [options] @returns {string} */
+export function formatByteRate(bytesPerSecond, options = {}) {
+  return formatScaled(bytesPerSecond, options, '-per-second');
+}

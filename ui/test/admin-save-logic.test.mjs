@@ -6,6 +6,8 @@ register('./js-root-hooks.mjs', import.meta.url);
 
 const {
   cleanId,
+  activityAuth,
+  activityHasAuth,
   buildAppItem,
   newItemId,
   upsertItem,
@@ -19,6 +21,7 @@ const {
   revertingSaves,
   serialWrites,
   removeItem,
+  applyEdit,
 } = await import('../js/admin-save-logic.js');
 
 test('cleanId keeps alphanumerics, collapses the rest, and trims', () => {
@@ -86,6 +89,7 @@ test('buildAppItem enables healthcheck and activity from their fields', () => {
       actEn: true,
       actUrl: 'http://api',
       actInt: 45,
+      authEn: true,
       actParams: [{ key: 'a', value: '1', secret: false }],
       actHeaders: [],
       spaths: ['stats.total'],
@@ -102,12 +106,55 @@ test('buildAppItem enables healthcheck and activity from their fields', () => {
 });
 
 test('buildAppItem keeps a login only when it has a username', () => {
-  const base = { label: 'A', href: 'http://x', actEn: true, actUrl: 'http://api', actInt: 30 };
+  const base = { label: 'A', href: 'http://x', actEn: true, actUrl: 'http://api', actInt: 30, authEn: true };
   const login = v => buildAppItem({ ...base, actLogin: v }, null).item.monitoring.activity.login;
   assert.deepEqual(login({ username: 'monitor', password: 'pw' }), { username: 'monitor', password: 'pw' });
   assert.deepEqual(login({ username: 'monitor', password: '' }), { username: 'monitor', password: undefined });
   assert.equal(login({ username: '', password: 'pw' }), undefined);
   assert.equal(login(undefined), undefined);
+});
+
+const authForm = authEn => ({
+  label: 'A',
+  href: 'http://x',
+  actEn: true,
+  actUrl: 'http://api',
+  actInt: 30,
+  authEn,
+  actParams: [{ key: 'token', secret: true, valueSet: true }],
+  actHeaders: [{ key: 'X-Mode', value: 'full', secret: false }],
+  actLogin: { username: 'monitor', password: '' },
+});
+
+test('buildAppItem keeps the rows and login, saved secret included, with Authentication on', () => {
+  const act = buildAppItem(authForm(true), { id: 'a1' }).item.monitoring.activity;
+  assert.deepEqual(act.params, [{ key: 'token', secret: true, valueSet: true }]);
+  assert.deepEqual(act.headers, [{ key: 'X-Mode', value: 'full', secret: false }]);
+  assert.deepEqual(act.login, { username: 'monitor', password: undefined });
+});
+
+test('buildAppItem stores no rows and no login with Authentication off', () => {
+  const act = buildAppItem(authForm(false), { id: 'a1' }).item.monitoring.activity;
+  const sent = JSON.parse(JSON.stringify(act));
+  for (const k of ['params', 'headers', 'login']) assert.ok(!(k in sent), `${k} would keep the stored secret`);
+  assert.equal(act.url, 'http://api');
+});
+
+test('activityAuth sends nothing with the switch off and the typed values with it on', () => {
+  const off = activityAuth(authForm(false));
+  assert.deepEqual(off, { params: undefined, headers: undefined, login: undefined });
+  const on = activityAuth({ ...authForm(true), actLogin: { username: 'monitor', password: 'pw' } });
+  assert.deepEqual(on.login, { username: 'monitor', password: 'pw' });
+  assert.equal(on.params.length, 1);
+});
+
+test('activityHasAuth counts rows and a named login, not empty lists', () => {
+  assert.equal(activityHasAuth({ params: [], headers: [] }), false);
+  assert.equal(activityHasAuth({ login: { username: '' } }), false);
+  assert.equal(activityHasAuth(undefined), false);
+  assert.equal(activityHasAuth({ params: [{ key: 'k', secret: true, valueSet: true }] }), true);
+  assert.equal(activityHasAuth({ headers: [{ key: 'h', value: 'v' }] }), true);
+  assert.equal(activityHasAuth({ login: { username: 'monitor', passwordSet: true } }), true);
 });
 
 test('buildAppItem maps multiple extract paths to objects', () => {
@@ -802,4 +849,42 @@ test('restoreBody drops folder children that are not apps', () => {
     { id: 'f', type: 'folder', children: ['a', 'w', 'gone'] },
   ];
   assert.deepEqual(restoreBody({ items }, {}).items[2].children, ['a']);
+});
+
+test('a folder save keeps the list from before it took apps from other folders', () => {
+  const items = [
+    { id: 'fa', type: 'folder', label: 'A', children: ['app1', 'app2'] },
+    { id: 'fb', type: 'folder', label: 'B', children: [] },
+    { id: 'app1', type: 'app' },
+  ];
+  const original = structuredClone(items);
+  const { before, replaced } = applyEdit(items, 'fb', { id: 'fb', type: 'folder', label: 'B', children: ['app1'] });
+  assert.equal(replaced, true);
+  assert.deepEqual(items[0].children, ['app2'], 'folder A gives the app up');
+  assert.deepEqual(items[1].children, ['app1']);
+  assert.deepEqual(before, original, 'undo would leave folder A without the app');
+});
+
+test('a new folder takes its apps from the others and is added at the end', () => {
+  const items = [{ id: 'fa', type: 'folder', children: ['app1'] }];
+  const { before, replaced } = applyEdit(items, null, { id: 'fn', type: 'folder', children: ['app1'] });
+  assert.equal(replaced, false);
+  assert.deepEqual(
+    items.map(i => [i.id, i.children]),
+    [
+      ['fa', []],
+      ['fn', ['app1']],
+    ],
+  );
+  assert.deepEqual(before, [{ id: 'fa', type: 'folder', children: ['app1'] }]);
+});
+
+test('an app save leaves every folder alone', () => {
+  const items = [
+    { id: 'fa', type: 'folder', children: ['app1'] },
+    { id: 'app1', type: 'app', label: 'x' },
+  ];
+  applyEdit(items, 'app1', { id: 'app1', type: 'app', label: 'y', children: ['app1'] });
+  assert.deepEqual(items[0].children, ['app1']);
+  assert.equal(items[1].label, 'y');
 });

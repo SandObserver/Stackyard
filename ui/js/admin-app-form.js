@@ -1,5 +1,5 @@
-import { BADGE_DEFAULT, renderColorControl } from '/js/admin-color-control.js?v=cf06489e';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=d1f8f6f4';
+import { BADGE_DEFAULT, renderColorControl } from '/js/admin-color-control.js?v=831c9a7b';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=05a2520c';
 import {
   clearsStoredSecret,
   failureIsMissingApiPath,
@@ -27,13 +27,14 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=ab69bab7';
+} from '/js/admin-shared.js?v=cea59c52';
+import { activityAuth, activityHasAuth } from '/js/admin-save-logic.js?v=b34c833a';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { MAX_LABELS } from '/js/badge-logic.js?v=04a4ece8';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
-import { formatNumber } from '/js/format-number.js?v=9dcba1ce';
+import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=ec60b9bd';
+import { t } from '/js/i18n.js?v=e11cab88';
 import { iconSvg } from '/js/icon-set.js?v=4d944cec';
 import {
   cdnIconRef,
@@ -44,9 +45,9 @@ import {
   throughServer,
 } from '/js/icons.js?v=76c29d43';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=48295288';
+import { createListbox } from '/js/listbox.js?v=82de2478';
 import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
-import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=ce415079';
+import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=9647ab80';
 
 export function buildFolderForm(body, item) {
   const children = folderChildren(item);
@@ -135,9 +136,8 @@ export function buildAppForm(body, item) {
   const globalHealthOn = inpById('srv-hc-en')?.checked !== false;
   const mon = item?.monitoring || {};
   const hc = mon.healthcheck || {
-    enabled: !!(item?.container || item?.ping),
+    enabled: !!item?.container,
     container: item?.container || '',
-    pingUrl: item?.ping || '',
   };
   const act = mon.activity || {
     enabled: !!item?.badge?.enabled,
@@ -149,7 +149,7 @@ export function buildAppForm(body, item) {
   const hcType = hc.proxmoxGuest ? 'pve' : hc.pingUrl ? 'ping' : 'con';
   const skipTls = !!item?.skipTlsVerify;
   const login = act.login?.username ? act.login : null;
-  const hasAuth = !!(act.params?.length || act.headers?.length || login);
+  const hasAuth = activityHasAuth(act);
 
   const ier = _ieRow;
   /* Split the string around its placeholder. Word order differs per language. */
@@ -217,7 +217,7 @@ export function buildAppForm(body, item) {
         ${ier('ie-burl', t('app.apiUrl'), 'f-burl', act.url, t('app.apiUrlPh'), 'url')}
         <div class="row"><span class="rl"></span><span id="bst" class="row-status" role="status"></span><button type="button" class="row-btn" id="bfetch">${t('app.fetch')}</button></div>
         <div id="auth-row-wrap">
-          <div class="row"><span class="rl">${t('app.authentication')}</span>${tog('auth-en', !!(act.params || act.headers || login), t('app.authentication'))}</div>
+          <div class="row"><span class="rl">${t('app.authentication')}</span>${tog('auth-en', hasAuth, t('app.authentication'))}</div>
           <div id="auth-sub" class="reveal${hasAuth ? ' open' : ''}"><div class="reveal-in">
             <div class="row kv-hdr"><span class="rl">${t('app.signIn')}</span></div>
             ${ier('ie-buser', t('app.username'), 'f-buser', login?.username, t('common.notSet'))}
@@ -1111,13 +1111,6 @@ function kvRowEl(host, rows, row, ph) {
   return rowEl;
 }
 
-/** @returns {{ username: string, password?: string }|undefined} */
-function badgeLogin() {
-  const username = inpById('f-buser')?.value?.trim() || '';
-  const password = inpById('f-bpass')?.value || '';
-  return username ? { username, password: password || undefined } : undefined;
-}
-
 /** @returns {boolean} whether the warning is shown */
 function warnUrlLogin() {
   const st = el('bst');
@@ -1141,14 +1134,18 @@ async function fetchBadge() {
   const btn = inpById('bfetch');
   if (btn) btn.disabled = true;
   try {
-    const params = serializeKvRows(state._bpar);
-    const headers = serializeKvRows(state._bhdr);
+    const { params, headers, login } = activityAuth({
+      authEn: inpById('auth-en')?.checked || false,
+      actParams: serializeKvRows(state._bpar),
+      actHeaders: serializeKvRows(state._bhdr),
+      actLogin: { username: inpById('f-buser')?.value?.trim() || '', password: inpById('f-bpass')?.value || '' },
+    });
     const skipTls = inpById('f-skip-tls')?.checked || false;
     const r = await apiPost('/api/badge-proxy', {
       url,
       params,
       headers,
-      login: badgeLogin(),
+      login,
       skipTls,
       itemId: state.eid ?? undefined,
     });

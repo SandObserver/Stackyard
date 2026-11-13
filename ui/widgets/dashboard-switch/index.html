@@ -45,7 +45,7 @@
 <body>
 <div id="root"></div>
 <script type="module">
-  import { widgetId, getConfig, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=048ad37d';
+  import { widgetId, getConfig, loadStrings, wt, errorState } from '/js/widget-toolbox.js?v=7f16d266';
   await loadStrings();
   import { buildModel, fitName, textDirection } from '/js/dashboard-switch-model.js?v=a2176749';
 
@@ -136,7 +136,7 @@
       const a = document.createElementNS(NS, 'a');
       a.setAttribute('class', s.isCurrent ? 'kc cur' : 'kc');
       a.setAttribute('tabindex', '0');
-      a.setAttribute('aria-label', wt('ui.switchTo', 'Switch to {name}').replace('{name}', s.name));
+      a.setAttribute('aria-label', wt('ui.switchTo', 'Switch to {name}', { name: s.name }));
       a.setAttributeNS(null, 'href', s.href);
       if (model.openIn === 'new') { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener noreferrer'); }
       else { a.setAttribute('target', '_top'); }

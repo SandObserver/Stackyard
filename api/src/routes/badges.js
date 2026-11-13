@@ -14,6 +14,7 @@ const {
   rowsToObject,
   requestHeaders,
   droppedRowCount,
+  wantsStoredSecret,
 } = require('../badge-headers');
 const log = require('../log');
 const { fail, KIND, errorBody } = require('../api-error');
@@ -198,7 +199,7 @@ on('POST', '/api/badge-proxy', async (req, res) => {
           paramRows = shim.badge.params;
           login = shim.badge.login;
         } else {
-          declined = true;
+          declined = wantsStoredSecret({ headers: headerRows, params: paramRows, login });
         }
       }
     }

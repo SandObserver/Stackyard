@@ -1,9 +1,9 @@
-import { PE_SVG, initInlineEdit, showFieldError, clearFieldError, reveal } from '/js/admin-shared.js?v=ab69bab7';
-import { t } from '/js/i18n.js?v=ec60b9bd';
+import { PE_SVG, initInlineEdit, showFieldError, clearFieldError, reveal } from '/js/admin-shared.js?v=cea59c52';
+import { t } from '/js/i18n.js?v=e11cab88';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { qa, q } from '/js/utils.js?v=ce415079';
+import { qa, q } from '/js/utils.js?v=9647ab80';
 import { iconSvg } from '/js/icon-set.js?v=4d944cec';
-import { createListbox } from '/js/listbox.js?v=48295288';
+import { createListbox } from '/js/listbox.js?v=82de2478';
 import { HUE_NAMES, ROLE_NAMES, TILE_KEYWORDS, pageTheme, tileColor } from '/js/palette.js?v=3fb8ae43';
 
 const CC_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#0289ff', '#cb30df'];
@@ -216,7 +216,7 @@ export function renderColorControl(
         value: styleOf(),
         onChange: next => {
           if (next !== 'color') {
-            if (!styles.includes(mode)) resume = { mode, hex: curHex(), pristine };
+            if (!styles.includes(mode)) resume = { mode, hex: pristine ?? curHex() };
             mode = next;
             showTune = false;
             commit();
@@ -227,17 +227,17 @@ export function renderColorControl(
             setSliders(resume?.hex ?? _swatchFill('blue'));
           }
           showTune = true;
-          commit(resume?.pristine);
+          commit();
         },
       })
     : null;
   if (styleBox) rows[0].appendChild(styleBox.el);
   /* The first paint restores stored state, so it must not animate. */
   let _painted = false;
-  /* The value as it was stored. The sliders are integers, so reading a colour
-     back out of them shifts it, and an untouched control would save a colour
-     nobody picked. Cleared the moment the user changes anything. */
-  let pristine = mode === 'color' ? value : null;
+  /* The colour the sliders were last set from. The sliders are integers, so
+     reading a colour back out of them shifts it and saves a colour nobody
+     picked. Null once a slider moves. */
+  let pristine = mode === 'color' ? value : isKw(value) ? _swatchFill(value) || null : null;
   const curHex = () => _hsvToHex(+hEl.value, +sEl.value, +vEl.value);
   const _rgb = h => {
     const x = _cssToHex(h);
@@ -248,17 +248,18 @@ export function renderColorControl(
       rb = _rgb(b);
     return ra && rb && ra.every((n, i) => Math.abs(n - rb[i]) <= 3);
   };
-  const setSliders = hex => {
-    const hv = _hexToHsv(hex);
+  const setSliders = color => {
+    const hv = _hexToHsv(color);
     if (!hv) return;
     hEl.value = String(hv.h);
     sEl.value = String(hv.s);
     vEl.value = String(hv.v);
+    pristine = color;
   };
   function paint() {
     const h = +hEl.value,
       v = +vEl.value,
-      hex = curHex();
+      hex = (pristine && _cssToHex(pristine)) || curHex();
     /* backgroundImage, never the background shorthand. The shorthand resets
        background-clip, which is what keeps the track thin inside the 44px touch
        target on a phone. */
@@ -288,8 +289,7 @@ export function renderColorControl(
     hidden.value = mode === 'color' ? (pristine ?? hex) : mode;
     _painted = true;
   }
-  const commit = (keep = null) => {
-    pristine = keep;
+  const commit = () => {
     clearFieldError(codeRow);
     paint();
     onChange?.(hidden.value);
@@ -298,6 +298,7 @@ export function renderColorControl(
     el.addEventListener('input', () => {
       mode = 'color';
       showTune = true;
+      pristine = null;
       commit();
     }),
   );
@@ -338,7 +339,7 @@ export function renderColorControl(
       if (hv) {
         mode = 'color';
         showTune = true;
-        setSliders(parsed);
+        setSliders(_cssToHex(parsed));
       }
       commit();
       if (!hv && val) showFieldError(codeRow, t('toast.colorInvalid'), { focus: false });

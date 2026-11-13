@@ -88,7 +88,7 @@
 <div id="cap"></div>
 <div id="ss-link" aria-labelledby="sr-sum"></div>
 <script type="module">
-import { contrastInk, cardContrast, rollText, colorOrFallback, columns, barFill, setBar, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, errorState, cssZoom, linkTo, openUrl, formatList } from '/js/widget-toolbox.js?v=048ad37d';
+import { contrastInk, cardContrast, rollText, colorOrFallback, columns, barFill, setBar, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, byteScale, formatBytes, formatByteRate, errorState, cssZoom, linkTo, openUrl, formatList, getConfig } from '/js/widget-toolbox.js?v=7f16d266';
 await loadStrings();
 const REFRESH_SECONDS = ['5', '10', '30', '60'];
 const SPEED_MS = 60000;
@@ -101,7 +101,6 @@ const COLS = 24;
 const SLOT_DEFS = ['#FF375F', '#30D158', '#00D2E0'];
 const LANG = new URLSearchParams(location.search).get('lang') || 'en';
 const DEFAULT_SLOTS = [{ type: 'cpu' }, { type: 'ram' }, { type: 'disk', primary: '/' }];
-const id       = new URLSearchParams(location.search).get('id') || '';
 const API      = '/api';
 
 let cfg = null;      /* widget config from /api/widget-config/:id */
@@ -145,10 +144,7 @@ function refreshSeconds(wc) {
 }
 
 async function boot() {
-  try {
-    const r = await fetch(`${API}/widget-config/${id}`);
-    if (r.ok) cfg = await r.json();
-  } catch {}
+  cfg = await getConfig().catch(() => null);
   if (!cfg) cfg = { widgetType: 'system-summary', widgetSize: 'medium', widgetConfig: {} };
 
   const wc = cfg.widgetConfig || {};
@@ -468,18 +464,24 @@ function scaleFor(type, vals) {
   return { min: lo - ((hi - lo) * 12) / 88, max: hi, dim: v => v <= mean };
 }
 
-/* TB and GB are symbols, not words: only the figures are localised. */
+/* totalGb counts binary gigabytes (1024 ** 3 bytes). */
 function sizeParts(d) {
   const total = reading(d?.totalGb);
   const pct = share(d);
   if (!total || pct === null) return null;
-  const unit = total >= 1000 ? 'TB' : 'GB';
-  const f = v => formatNumber(Number((unit === 'TB' ? v / 1024 : v).toFixed(unit === 'TB' ? 1 : 0)));
-  return { used: f((pct / 100) * total), total: f(total), unit };
+  const bytes = total * 1024 ** 3;
+  const used = (pct / 100) * bytes;
+  const { unit, digits } = byteScale(bytes, { min: 'gigabyte', digits: (_v, u) => (u === 'gigabyte' ? 0 : 1) });
+  const one = { min: unit, max: unit, digits: () => digits };
+  return {
+    used: formatNumber(byteScale(used, one).value, { maximumFractionDigits: digits }),
+    usedFull: formatBytes(used, one),
+    total: formatBytes(bytes, one),
+  };
 }
-const sizeText = p => (p ? `${p.used} / ${p.total} ${p.unit}` : '');
+const sizeText = p => (p ? `${p.used} / ${p.total}` : '');
 const sizeSpoken = p =>
-  p ? wt('sr.diskSize', '{used} of {total}').replace('{used}', `${p.used} ${p.unit}`).replace('{total}', `${p.total} ${p.unit}`) : '';
+  p ? wt('sr.diskSize', '{used} of {total}', { used: p.usedFull, total: p.total }) : '';
 
 const share = d => { const v = reading(d?.usedPct); return v === null ? null : Math.min(v, 100); };
 
@@ -567,14 +569,10 @@ function fmtMbps(v) {
   return v >= 1000 ? fixed(v/1000, 1)+' Gbps' : fixed(v, 0)+' Mbps';
 }
 
-/* Bytes/second → human rate for the RX/TX throughput mode. */
 function fmtRate(bytesPerSec) {
   const v = Number(bytesPerSec);
   if (bytesPerSec == null || isNaN(v)) return '—';
-  if (v >= 1024*1024*1024) return fixed(v/(1024*1024*1024), 1)+' GB/s';
-  if (v >= 1024*1024)       return fixed(v/(1024*1024), 1)+' MB/s';
-  if (v >= 1024)            return fixed(v/1024, 0)+' KB/s';
-  return fixed(v, 0)+' B/s';
+  return formatByteRate(v, { max: 'gigabyte', fixed: true });
 }
 
 /* Whole seconds → compact uptime label (e.g. "3d 4h", "5h 12m", "8m"). */

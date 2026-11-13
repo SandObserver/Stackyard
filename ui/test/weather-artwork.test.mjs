@@ -108,7 +108,7 @@ test('nothing blurred is moved by a frame-rate css animation', () => {
         assert.doesNotMatch(part, /filter=/, `${cond}: falling parts carry a filter`);
 });
 
-const ambientSource = /const still=[\s\S]*?\nstill\.addEventListener\('change',runAmbient\);/.exec(page)?.[0];
+const ambientSource = /const bounce=[\s\S]*?\nreducedMotion\(runAmbient\);/.exec(page)?.[0];
 
 function ambientHarness(reduced) {
   const styled = [];
@@ -116,19 +116,19 @@ function ambientHarness(reduced) {
   const icoEl = { querySelectorAll: () => [el] };
   const timers = [];
   const env = {
-    matchMedia: () => ({ matches: reduced, addEventListener() {} }),
+    reducedMotion: () => reduced,
     setInterval: (fn, ms) => timers.push(ms),
     clearInterval: () => {},
     performance: { now: () => 1000 },
   };
   const run = new Function(
     'icoEl',
-    'matchMedia',
+    'reducedMotion',
     'setInterval',
     'clearInterval',
     'performance',
     `${ambientSource.replace(/\nwhileOnScreen[^\n]*/, '')}; return v => { onScreen = v; runAmbient(); };`,
-  )(icoEl, env.matchMedia, env.setInterval, env.clearInterval, env.performance);
+  )(icoEl, env.reducedMotion, env.setInterval, env.clearInterval, env.performance);
   return { run, timers, el, styled };
 }
 
