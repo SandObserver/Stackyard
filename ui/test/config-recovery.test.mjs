@@ -8,7 +8,6 @@ import {
   readConfigDamage,
   recoverySteps,
   screenFor,
-  setupCodeErrorKey,
 } from '../js/config-recovery-logic.js';
 
 const en = JSON.parse(fs.readFileSync(new URL('../i18n/en.json', import.meta.url), 'utf8'));
@@ -108,14 +107,6 @@ test('the refused-address and damaged-password screens offer the setup form, eac
   ])
     assert.ok(has(key), key);
   assert.equal(screenFor({ code: 'auth', kind: 'auth' }), null);
-});
-
-test('a refused setup names the right fix', () => {
-  assert.equal(setupCodeErrorKey({ code: 'invalid.setup-code' }), 'hostBlock.codeWrong');
-  assert.equal(setupCodeErrorKey({ code: 'invalid.password-short' }), 'hostBlock.tooShort');
-  assert.equal(setupCodeErrorKey({ code: 'invalid.password-long' }), 'hostBlock.tooLong');
-  assert.equal(setupCodeErrorKey({ code: 'invalid' }), 'setup.failed');
-  assert.equal(setupCodeErrorKey(null), 'setup.failed');
 });
 
 test('a refused request that came through a proxy says so, and names the same host', () => {

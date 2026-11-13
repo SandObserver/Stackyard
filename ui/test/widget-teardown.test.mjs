@@ -211,7 +211,7 @@ test('both build paths tear down before replacing the DOM', () => {
     assert.match(head, /teardownWidgets\(\)/, `${fn} must tear down before rebuilding`);
     /* Before the clear, or the previous widgets are already unreachable. */
     assert.ok(
-      head.indexOf('teardownWidgets()') < head.indexOf('BEL.clear()'),
+      head.indexOf('teardownWidgets()') < head.search(/BEL(\(\))?\.clear\(\)/),
       `${fn} tears down after clearing, which is too late`,
     );
   }

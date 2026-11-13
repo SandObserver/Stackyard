@@ -293,7 +293,7 @@ function loadFonts() {
 }
 
 async function boot() {
-  const toolboxLoad = import('/js/widget-toolbox.js?v=d2ef8e1e');
+  const toolboxLoad = import('/js/widget-toolbox.js?v=9ff36fbd');
   const datesLoad = import('/js/clock-date.js?v=91a77e74');
   const config = Promise.all([toolboxLoad, datesLoad]).then(([t, d]) => d.clockSettings(t.getConfig));
   const [toolbox, lib, dates] = await Promise.all([

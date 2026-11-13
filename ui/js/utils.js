@@ -258,7 +258,6 @@ export function mkWrap(item, sz, r, isz, cls, breg) {
    services forever. */
 const _mounts = new Set();
 
-/** Stop everything the mounted widgets started. */
 /** @param {ParentNode} [root] */
 export function rethemeTiles(root = document) {
   const light = pageTheme() === 'light';

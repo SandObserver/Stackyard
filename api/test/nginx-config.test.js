@@ -367,7 +367,7 @@ test('the API limit leaves real configurations far inside it', () => {
     color: 'dark',
     dock: false,
     monitoring: {
-      healthcheck: { enabled: true },
+      healthcheck: { enabled: true, container: 'radarr', pingUrl: 'https://radarr.example.lan:7878' },
       activity: {
         enabled: true,
         url: 'https://radarr.example.lan:7878/api/v3/queue',
@@ -378,7 +378,6 @@ test('the API limit leaves real configurations far inside it', () => {
     },
     badge: { enabled: true, url: 'https://radarr.example.lan:7878/api/v3/queue', interval: 30 },
     container: 'radarr',
-    ping: 'https://radarr.example.lan:7878',
   };
   const big = JSON.stringify({
     items: Array.from({ length: 300 }, (_, i) => ({ ...app, id: `app${i}` })),

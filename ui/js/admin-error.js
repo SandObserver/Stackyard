@@ -175,14 +175,30 @@ export function loginErrorAdvice(e) {
   return { key: 'adminError.genericInternal' };
 }
 
+const PASSWORD_REFUSAL = Object.freeze({
+  'invalid.setup-code': 'hostBlock.codeWrong',
+  'invalid.current-password': 'toast.currentPasswordWrong',
+  'invalid.password-changed': 'toast.passwordChangedElsewhere',
+  'invalid.password-short': 'hostBlock.tooShort',
+  'invalid.password-long': 'hostBlock.tooLong',
+  'invalid.password-common': 'pwStrength.common',
+});
+
+/** The message for a refused password write, or '' when the code is not one.
+    @param {unknown} e @returns {string} */
+export function passwordRefusalKey(e) {
+  const { code } = readError(e);
+  return Object.hasOwn(PASSWORD_REFUSAL, code) ? PASSWORD_REFUSAL[code] : '';
+}
+
 /* A first-run password is refused as auth or as changed when another tab or
    device set one first. */
 /** @param {unknown} e @returns {string} */
 export function setupErrorKey(e) {
   const { kind, code } = readError(e);
-  if (kind === KIND.AUTH || code === 'invalid.password-changed') return 'toast.passwordChangedElsewhere';
-  if (code === 'invalid.password-common') return 'pwStrength.common';
-  if (code?.startsWith('internal.') && BY_CODE[code]) return BY_CODE[code];
-  if (code === 'invalid.setup-code') return 'hostBlock.codeWrong';
+  if (kind === KIND.AUTH) return 'toast.passwordChangedElsewhere';
+  const refusal = passwordRefusalKey(e);
+  if (refusal) return refusal;
+  if (code.startsWith('internal.') && BY_CODE[code]) return BY_CODE[code];
   return 'setup.failed';
 }
