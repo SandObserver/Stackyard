@@ -109,8 +109,8 @@
 </div>
 <script type="module">
 import {
-  poll, getConfig, loadStrings, wt, wtCount, formatNumber, formatList, localiseDigits, formatByteRate, linkTo, errorState, readingTime, fitText, placeholder, readerHourCycle,
-} from '/js/widget-toolbox.js?v=8415820b';
+  poll, getConfig, loadStrings, wt, wtCount, formatNumber, formatList, localiseDigits, formatByteRate, formatDuration, linkTo, errorState, readingTime, fitText, placeholder, readerHourCycle,
+} from '/js/widget-toolbox.js?v=dbff1c85';
 import { ensureSprite } from '/js/icon-set.js?v=361e54a5';
 import { variations, finishedToday, hoursMinutes, leftover, lidOpen, finishParts } from './belt-logic.js';
 
@@ -178,17 +178,9 @@ function chevron() {
 const iso = text => `\u2068${text}\u2069`;
 /* Spoken text carries no isolates. */
 const plain = text => text.replace(/[\u2068\u2069]/g, '');
-const unit = (v, u, digits = 0, unitDisplay = 'short') =>
-  iso(formatNumber(v, { style: 'unit', unit: u, unitDisplay, maximumFractionDigits: digits }));
 function duration(seconds, unitDisplay) {
-  const part = (v, u) => unit(v, u, 0, unitDisplay);
   const { h, m } = hoursMinutes(seconds);
-  if (h >= 24) {
-    const days = Math.floor(h / 24);
-    return h % 24 ? `${part(days, 'day')} ${part(h % 24, 'hour')}` : part(days, 'day');
-  }
-  if (!h) return part(m, 'minute');
-  return m ? `${part(h, 'hour')} ${part(m, 'minute')}` : part(h, 'hour');
+  return formatDuration(h * 60 + m, unitDisplay, iso);
 }
 const speed = bps => iso(formatByteRate(bps, { min: 'kilobyte' }));
 const percent = p => iso(formatNumber(p, { style: 'percent', maximumFractionDigits: 0 }));

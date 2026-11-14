@@ -88,7 +88,7 @@
 <div id="cap"></div>
 <div id="ss-link" aria-labelledby="sr-sum"></div>
 <script type="module">
-import { contrastInk, cardContrast, rollText, colorOrFallback, columns, barFill, setBar, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, byteScale, formatBytes, formatByteRate, errorState, cssZoom, linkTo, openUrl, formatList, getConfig } from '/js/widget-toolbox.js?v=8415820b';
+import { contrastInk, cardContrast, rollText, colorOrFallback, columns, barFill, setBar, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, byteScale, formatBytes, formatByteRate, formatDuration, errorState, cssZoom, linkTo, openUrl, formatList, getConfig } from '/js/widget-toolbox.js?v=dbff1c85';
 await loadStrings();
 const REFRESH_SECONDS = ['5', '10', '30', '60'];
 const SPEED_MS = 60000;
@@ -379,9 +379,9 @@ const ARROW_UP = html`<svg width="11" height="11" viewBox="0 0 24 24" fill="none
 
 function netRowHtml(net) {
   if ((net.mode || 'speed') === 'uptime') {
-    return html`<span class="net-item">${wt('network.mode.opt.uptime', 'Uptime')} <span id="net-uptime">—</span></span>`;
+    return html`<span class="net-item">${wt('network.mode.opt.uptime', 'Uptime')} <span id="net-uptime" dir="auto">—</span></span>`;
   }
-  return html`<span class="net-item">${ARROW_DOWN}<span id="net-dn">—</span></span><span class="net-item">${ARROW_UP}<span id="net-up">—</span></span>`;
+  return html`<span class="net-item">${ARROW_DOWN}<span id="net-dn" dir="auto">—</span></span><span class="net-item">${ARROW_UP}<span id="net-up" dir="auto">—</span></span>`;
 }
 
 function startNetwork(net) {
@@ -566,7 +566,7 @@ const fixed = (v, d) => formatNumber(v, { minimumFractionDigits: d, maximumFract
 
 function fmtMbps(v) {
   if (v == null || isNaN(v)) return wt('ui.noData','No data');
-  return v >= 1000 ? fixed(v/1000, 1)+' Gbps' : fixed(v, 0)+' Mbps';
+  return v >= 1000 ? wt('ui.gbps', '{value} Gbps', { value: fixed(v/1000, 1) }) : wt('ui.mbps', '{value} Mbps', { value: fixed(v, 0) });
 }
 
 function fmtRate(bytesPerSec) {
@@ -575,14 +575,7 @@ function fmtRate(bytesPerSec) {
   return formatByteRate(v, { max: 'gigabyte', fixed: true });
 }
 
-/* Whole seconds → compact uptime label (e.g. "3d 4h", "5h 12m", "8m"). */
-function fmtUptime(sec) {
-  sec = Math.max(0, Math.floor(Number(sec) || 0));
-  const d = Math.floor(sec/86400), h = Math.floor((sec%86400)/3600), m = Math.floor((sec%3600)/60);
-  if (d) return `${formatNumber(d)}d ${formatNumber(h)}h`;
-  if (h) return `${formatNumber(h)}h ${formatNumber(m)}m`;
-  return `${formatNumber(m)}m`;
-}
+const fmtUptime = sec => formatDuration((Number(sec) || 0) / 60);
 
 async function fetchThroughput() {
   /* A remote source answers through the widget's own data function. Only this
