@@ -47,7 +47,7 @@ test('the Type to Search switch in Settings stores the choice', async ({ page, r
   await page.goto('/admin/');
   await page.locator('body.authed').waitFor({ state: 'attached' });
   await page.locator('.nl[data-sec="appearance"]').click();
-  const sw = page.getByRole('checkbox', { name: 'Type to Search' });
+  const sw = page.getByRole('switch', { name: 'Type to Search' });
   await expect(sw).toBeChecked();
   await sw.focus();
   await page.keyboard.press('Space');

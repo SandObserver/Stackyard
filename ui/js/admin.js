@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=1c07e933';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=308c0123';
+} from '/js/admin-app-form.js?v=8f79cd19';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=c3a5b9c7';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=20c8a8c9';
+} from '/js/admin-list.js?v=5008732c';
 import { filterActive, folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=06da6a19';
 import {
   afterImport,
@@ -40,7 +40,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=18011e86';
+} from '/js/admin-settings.js?v=2a0b7543';
 import {
   announce,
   apiGet,
@@ -65,9 +65,9 @@ import {
   swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=76220214';
+} from '/js/admin-shared.js?v=4a86e8be';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=987fc30d';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=4e92786c';
 import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=fc598e17';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
 import { recoveryShown } from '/js/config-recovery.js?v=da14e1c7';
@@ -93,7 +93,7 @@ import {
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
 import { createListbox } from '/js/listbox.js?v=aaf6e7ab';
-import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=af9010d3';
+import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=84ba5279';
 import { passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import {
@@ -1299,7 +1299,7 @@ const NOTE_TEXT = {
     @param {Array<{ name: string, group: string, why: string }>} rows */
 function dlgSection(parent, heading, rows) {
   if (!rows.length) return;
-  const h = document.createElement('div');
+  const h = document.createElement('h3');
   h.className = 'dlg-sec';
   h.textContent = `${heading} (${formatNumber(rows.length)})`;
   const ul = document.createElement('ul');
@@ -1435,7 +1435,7 @@ async function reviewImport(items, skipped, notes, nothingKey) {
   /** @type {HTMLInputElement|null} */
   let skipTlsChoice = null;
   if (insecure.length) {
-    const heading = document.createElement('div');
+    const heading = document.createElement('h3');
     heading.className = 'dlg-sec';
     heading.textContent = `${t('app.allowSelfSigned')} (${formatNumber(insecure.length)})`;
     const choice = document.createElement('label');

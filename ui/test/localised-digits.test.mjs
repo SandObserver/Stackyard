@@ -191,7 +191,7 @@ test("the widget editor numbers its rows and groups in the reader's digits", () 
 test('the wallpaper brightness follows the locale', () => {
   const settings = read('js/admin-settings.js');
   assert.doesNotMatch(settings, /\.toFixed\(/);
-  assert.match(settings, /formatNumber\(parseFloat\(v\), \{ minimumFractionDigits: 2, maximumFractionDigits: 2 \}\)/);
+  assert.match(settings, /'aria-valuetext', formatNumber\(parseFloat\(slider\.value\), \{ style: 'percent' \}\)/);
 });
 
 /* Where a number becomes text a person reads. A sentence from t() is left out:

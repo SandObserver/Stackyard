@@ -75,6 +75,19 @@ test('the password placeholder is passed as a function', () => {
   assert.match(read('js/admin.js'), /placeholder: \(\) => t\('general\.passwordPh'\)/);
 });
 
+/* ── the import dialog ────────────────────────────────────────────────────── */
+
+test('every import dialog section title is a heading under the dialog title', () => {
+  const src = read('js/admin.js');
+  const titles = [...src.matchAll(/(\w+)\.className = 'dlg-sec';/g)].map(m => m[1]);
+  assert.equal(titles.length, 2, 'the section title markup changed shape');
+  for (const name of titles)
+    assert.match(
+      src,
+      new RegExp(`const ${name} = document\\.createElement\\('h3'\\);\\s*${name}\\.className = 'dlg-sec';`),
+    );
+});
+
 /* ── widget frame names ───────────────────────────────────────────────────── */
 
 /* Two widgets of one type share a manifest label, and the frame list then holds

@@ -162,7 +162,10 @@ test('this device can reduce transparency on its own, and the system can too', a
 test('the boot script and the module read the same transparency key', () => {
   assert.match(preload, /localStorage\.getItem\('sy-transparency'\) === 'reduce'/);
   assert.match(read('../js/theme.js'), /export const TRANSPARENCY_KEY = 'sy-transparency';/);
-  assert.match(adminHtml, /<input type="checkbox" id="dev-transparency" aria-labelledby="rl-dev-transparency">/);
+  assert.match(
+    adminHtml,
+    /<input type="checkbox" role="switch" id="dev-transparency" aria-labelledby="rl-dev-transparency">/,
+  );
 });
 
 test('blocked storage does not hide the system reduced-transparency setting', async () => {

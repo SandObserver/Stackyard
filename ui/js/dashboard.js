@@ -65,7 +65,7 @@ import {
   openFolderMobile,
   resetMobileChrome,
   swipePager,
-} from '/js/ui.js?v=73cc8feb';
+} from '/js/ui.js?v=5af33258';
 import {
   mkWrap as _mkWrap,
   el,

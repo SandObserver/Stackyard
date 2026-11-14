@@ -23,9 +23,9 @@ import {
   topLevelRows,
 } from '/js/admin-logic.js?v=06da6a19';
 import { snapshotItems } from '/js/admin-save-logic.js?v=6ebda0e2';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=76220214';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=4a86e8be';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { sizeLabel } from '/js/admin-widget-form.js?v=987fc30d';
+import { sizeLabel } from '/js/admin-widget-form.js?v=4e92786c';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=99563c71';
@@ -383,11 +383,9 @@ export function render() {
 function listSection(l, group, title, count) {
   const hdr = document.createElement('div');
   hdr.className = 'grp-hdr-row al-hdr';
-  const h = document.createElement('p');
+  const h = document.createElement('h2');
   h.className = 'grp-hdr';
   h.id = 'al-h-' + group;
-  h.setAttribute('role', 'heading');
-  h.setAttribute('aria-level', '2');
   h.textContent = title;
   hdr.appendChild(h);
   if (count) {

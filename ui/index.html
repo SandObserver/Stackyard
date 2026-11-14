@@ -25,7 +25,7 @@
   <script src="/js/page-zoom.js?v=01ccc9cf"></script>
   <title>Stackyard</title>
   <link rel="stylesheet" href="/css/tokens.css?v=9ac63e96">
-  <link rel="stylesheet" href="/css/dashboard.css?v=c996e4b1">
+  <link rel="stylesheet" href="/css/dashboard.css?v=dbc6003f">
   <link rel="stylesheet" href="/css/config-recovery.css?v=9f8ca0ab">
 </head>
 <body>
@@ -34,13 +34,13 @@
 <nav id="dots" aria-label="Dashboard pages" data-i18n-al="home.pagination" hidden></nav>
 <!-- Announces the page after a change. The dots are reachable by keyboard. -->
 <div id="page-live" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
-<div id="mob-search-pill" role="button" tabindex="0">
-  <div class="msp-search">
+<button id="mob-search-pill" type="button">
+  <span class="msp-search">
     <span class="msp-icon"><svg class="sy-icon" width="16" height="16" aria-hidden="true" focusable="false"><use href="#sy-solid-search"/></svg></span>
     <span class="msp-label" data-i18n="home.search">Search</span>
-  </div>
-  <div class="msp-dots"></div>
-</div>
+  </span>
+  <span class="msp-dots" aria-hidden="true"></span>
+</button>
 <input id="mob-pager" class="visually-hidden" type="range" tabindex="-1" min="1" max="1" step="1" value="1" aria-label="Page" data-i18n-al="home.pageControl" hidden>
 <nav id="dock" aria-label="Dock" data-i18n-al="home.dock"></nav>
 <div id="photo-credit" role="group" aria-label="Photo credit" data-i18n-al="home.photoCredit" hidden></div>
@@ -57,5 +57,5 @@
     </div>
   </div>
 </dialog>
-<script type="module" src="/js/dashboard.js?v=8cc18c2e"></script>
+<script type="module" src="/js/dashboard.js?v=6afb233d"></script>
 </body></html>

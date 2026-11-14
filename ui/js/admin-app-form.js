@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=5d89c92c';
+import { renderColorControl } from '/js/admin-color-control.js?v=c94128b4';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=5abd7438';
 import {
   clearsStoredSecret,
@@ -27,7 +27,7 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=76220214';
+} from '/js/admin-shared.js?v=4a86e8be';
 import { activityAuth, activityHasAuth } from '/js/admin-save-logic.js?v=6ebda0e2';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=7112fd10';
@@ -46,7 +46,7 @@ import {
 } from '/js/icons.js?v=76c29d43';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
 import { createListbox } from '/js/listbox.js?v=aaf6e7ab';
-import { slideBlock } from '/js/modal.js?v=af9010d3';
+import { slideBlock } from '/js/modal.js?v=84ba5279';
 import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=dd85f1d0';
 
 export function buildFolderForm(body, item) {
@@ -103,7 +103,7 @@ function _wireFolderApps(apps, children) {
 export function buildSettingsTileForm(body, item) {
   const dockBlocked = isDockBlocked(state.items, item, DOCK_MAX);
   const tog = (id, on, name) =>
-    html`<label class="tog"><input type="checkbox" id="${id}" ${on ? 'checked' : ''} aria-label="${name}"><div class="tr"></div></label>`;
+    html`<label class="tog"><input type="checkbox" role="switch" id="${id}" ${on ? 'checked' : ''} aria-label="${name}"><div class="tr"></div></label>`;
   setHtml(
     body,
     html`
@@ -156,7 +156,7 @@ export function buildAppForm(body, item) {
   const [pollBefore, pollAfter] = t('app.pollInterval').split('{seconds}');
 
   const tog = (id, on, name) =>
-    html`<label class="tog"><input type="checkbox" id="${id}" ${on ? 'checked' : ''} aria-label="${name}"><div class="tr"></div></label>`;
+    html`<label class="tog"><input type="checkbox" role="switch" id="${id}" ${on ? 'checked' : ''} aria-label="${name}"><div class="tr"></div></label>`;
 
   setHtml(
     body,
@@ -167,7 +167,7 @@ export function buildAppForm(body, item) {
     </div>
     <div id="href-login" class="reveal${urlHasLogin(item?.href || '') ? ' open' : ''}"><div class="reveal-in"><p class="grp-tip warn" id="href-login-tip">${t('app.hrefHasLogin')}</p></div></div>
 
-    <p class="grp-hdr" role="heading" aria-level="2">${t('app.icon')}</p>
+    <h2 class="grp-hdr">${t('app.icon')}</h2>
     <div class="grp" id="ipw">
       <div class="icon-src-anchor">
       <div class="row icon-src-row">
@@ -188,7 +188,7 @@ export function buildAppForm(body, item) {
     </div>
     ${dockBlocked ? html`<p class="grp-tip" id="dock-full-tip">${t('app.dockFull', { max: formatNumber(DOCK_MAX) })}</p>` : ''}
 
-    <p class="grp-hdr" role="heading" aria-level="2">${t('app.badge')}</p>
+    <h2 class="grp-hdr">${t('app.badge')}</h2>
     <div class="grp">
       <div class="row"><span class="rl">${t('app.healthCheck')}</span>${tog('hc-en', hc.enabled, t('app.healthCheck'))}</div>
       <div id="hc-sub" class="reveal${hc.enabled ? ' open' : ''} row-wrap"><div class="reveal-in">
@@ -441,12 +441,12 @@ function renderActLabels(host) {
   host.replaceChildren();
   state.spaths.forEach((path, i) => {
     const l = actLabel(path);
-    const hdr = document.createElement('p');
+    const hdr = document.createElement('div');
     hdr.className = 'grp-hdr grp-hdr-row albl-hdr' + (i === 0 ? ' albl-hdr-first' : '');
     hdr.dataset.idx = String(i);
     setHtml(
       hdr,
-      html`<span class="albl-grip" aria-hidden="true">${raw(GRIP_SVG)}</span><span role="heading" aria-level="3">${t('app.labelN', { n: formatNumber(i + 1) })}</span>`,
+      html`<span class="albl-grip" aria-hidden="true">${raw(GRIP_SVG)}</span><h3>${t('app.labelN', { n: formatNumber(i + 1) })}</h3>`,
     );
     const ctl = document.createElement('span');
     ctl.className = 'albl-ctl';
