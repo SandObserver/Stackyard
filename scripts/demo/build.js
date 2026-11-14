@@ -72,6 +72,7 @@ const RULE_HEADERS = [
   'x-content-type-options',
   'referrer-policy',
   'permissions-policy',
+  'cross-origin-opener-policy',
 ];
 const TITLE = {
   'content-security-policy': 'Content-Security-Policy',
@@ -80,6 +81,7 @@ const TITLE = {
   'x-content-type-options': 'X-Content-Type-Options',
   'referrer-policy': 'Referrer-Policy',
   'permissions-policy': 'Permissions-Policy',
+  'cross-origin-opener-policy': 'Cross-Origin-Opener-Policy',
 };
 
 const pick = h => Object.fromEntries(RULE_HEADERS.filter(n => h[n] !== undefined).map(n => [n, h[n]]));

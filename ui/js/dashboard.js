@@ -7,7 +7,7 @@ import {
   rememberBackground,
   resolveBackground,
   parseWallpaperUrl,
-} from '/js/background.js?v=87db4625';
+} from '/js/background.js?v=cef66689';
 import {
   badgeMinimum,
   badgeSignature,
@@ -53,7 +53,7 @@ import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
-import { initSpotlight } from '/js/spotlight.js?v=ac7a1c6b';
+import { initSpotlight } from '/js/spotlight.js?v=ec1a8ef2';
 import { applyTheme, prefersDark, readMode, resolveTheme, THEME_KEY, watchTransparency } from '/js/theme.js?v=0bbd81e8';
 import {
   buildMobile,
@@ -65,7 +65,7 @@ import {
   openFolderMobile,
   resetMobileChrome,
   swipePager,
-} from '/js/ui.js?v=079213a5';
+} from '/js/ui.js?v=92027e4a';
 import {
   mkWrap as _mkWrap,
   el,
@@ -88,7 +88,7 @@ import {
   teardownWidgets,
   titleWhenTruncated,
   within,
-} from '/js/utils.js?v=b7b43fe1';
+} from '/js/utils.js?v=e8f3d601';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import {
@@ -506,18 +506,24 @@ function buildDesktop() {
    polling. Off-screen frames run at a fraction of their configured rate. */
 const OFF_PAGE_RATE = 4;
 
+/** @param {Event} e */
+const onFrameLoad = e => {
+  if (/** @type {Element} */ (e.target).tagName === 'IFRAME') applyPollRates();
+};
+let _rateBound = false;
 function applyPollRates() {
   const strip = el('pages');
   if (!strip) return;
+  /* A frame that has not loaded yet carries no toolbox to tell. A refresh
+     loads a new frame element. */
+  if (!_rateBound) {
+    _rateBound = true;
+    strip.addEventListener('load', onFrameLoad, true);
+  }
   Array.from(strip.children).forEach((page, i) => {
     const rate = i === pg ? 1 : OFF_PAGE_RATE;
     qa('iframe', /** @type {HTMLElement} */ (page)).forEach(ifr => {
       const frame = /** @type {HTMLIFrameElement} */ (ifr);
-      /* A frame that has not loaded yet carries no toolbox to tell. */
-      if (!frame.dataset.rateBound) {
-        frame.dataset.rateBound = '1';
-        frame.addEventListener('load', applyPollRates);
-      }
       try {
         /** @type {any} */ (frame.contentWindow)?.__setPollRate?.(rate);
       } catch {

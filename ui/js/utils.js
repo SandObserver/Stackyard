@@ -325,6 +325,8 @@ export function safeAllow(value, fullscreen = true) {
 const SANDBOX =
   'allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads';
 
+const FRAME_LOAD_WAIT_MS = 30000;
+
 const isCrossOrigin = src => {
   try {
     return new URL(src, location.href).origin !== location.origin;
@@ -384,27 +386,40 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
   card.style.overflow = 'hidden';
   const clip = mk('div');
   clip.style.cssText = 'position:absolute;inset:0;overflow:hidden;';
-  const ifr = mk('iframe', { src, scrolling: o.scrolling === true || o.scrolling === 'yes' ? 'yes' : 'no', title });
-  if (isCrossOrigin(src)) ifr.setAttribute('sandbox', SANDBOX);
   const fullscreen = o.allowFullscreen !== false;
   const allow = safeAllow(o.allow, fullscreen);
-  if (allow) ifr.setAttribute('allow', allow);
-  if (fullscreen) ifr.setAttribute('allowfullscreen', '');
-  ifr.setAttribute('referrerpolicy', o.referrerPolicy || 'strict-origin-when-cross-origin');
-  if (o.loading) ifr.setAttribute('loading', o.loading);
-  ifr.setAttribute('aria-label', title);
-  ifr.style.cssText =
-    `position:absolute;top:0;left:0;display:block;border:0;` +
-    `width:${dw}px;height:${dh}px;transform-origin:top left;opacity:0;transition:opacity .12s ease;`;
+  /** @param {string} url @param {boolean} [refresh] @returns {HTMLIFrameElement} */
+  const makeFrame = (url, refresh) => {
+    const f = mk('iframe', {
+      src: url,
+      scrolling: o.scrolling === true || o.scrolling === 'yes' ? 'yes' : 'no',
+      title,
+    });
+    if (isCrossOrigin(src)) f.setAttribute('sandbox', SANDBOX);
+    if (allow) f.setAttribute('allow', allow);
+    if (fullscreen) f.setAttribute('allowfullscreen', '');
+    f.setAttribute('referrerpolicy', o.referrerPolicy || 'strict-origin-when-cross-origin');
+    /* A lazy frame on a page out of view does not load, so its refresh is
+       dropped. */
+    if (o.loading && !refresh) f.setAttribute('loading', o.loading);
+    f.setAttribute('aria-label', title);
+    f.style.cssText =
+      `position:absolute;top:0;left:0;display:block;border:0;` +
+      `width:${dw}px;height:${dh}px;transform-origin:top left;opacity:0;transition:opacity .12s ease;`;
+    return /** @type {HTMLIFrameElement} */ (f);
+  };
+  /* A refresh replaces this element. Never keep a copy of it. */
+  let ifr = makeFrame(src);
   clip.appendChild(ifr);
   card.appendChild(clip);
 
   /* A widget page sets no direction of its own. Reapplied on every load: a
      refresh replaces the document. */
-  const applyDir = () => {
+  /** @param {HTMLIFrameElement} frame */
+  const applyDir = frame => {
     let doc;
     try {
-      doc = ifr.contentDocument;
+      doc = frame.contentDocument;
     } catch {
       return;
     }
@@ -417,10 +432,11 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
      picture. A scaled frame is resampled, and blurs on a 1x screen. Any other
      page lays out at the design size it was written for. */
   const zoomable = /^\/widgets\//.test(src);
-  const applyZoom = () => {
+  /** @param {HTMLIFrameElement} frame */
+  const applyZoom = frame => {
     try {
-      const doc = ifr.contentDocument;
-      if (doc && doc.documentElement) doc.documentElement.style.zoom = ifr.getAttribute('data-zoom') || '';
+      const doc = frame.contentDocument;
+      if (doc && doc.documentElement) doc.documentElement.style.zoom = frame.getAttribute('data-zoom') || '';
     } catch {}
   };
   /* A wheel over a frame never reaches the dashboard. Hand a bundled page's
@@ -441,10 +457,11 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     card.dispatchEvent(copy);
     if (copy.defaultPrevented) e.preventDefault();
   };
-  const attachWheel = () => {
+  /** @param {HTMLIFrameElement} frame */
+  const attachWheel = frame => {
     try {
       if (wheelWin) wheelWin.removeEventListener('wheel', forwardWheel);
-      wheelWin = ifr.contentWindow;
+      wheelWin = frame.contentWindow;
       if (wheelWin) wheelWin.addEventListener('wheel', forwardWheel, { passive: false });
     } catch {
       wheelWin = null;
@@ -463,31 +480,169 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
   const forwardEscape = e => {
     if (e.key !== 'Escape' || !hovered) return;
     try {
-      const win = ifr.contentWindow;
+      const win = /** @type {any} */ (ifr.contentWindow);
       win?.document.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     } catch {}
   };
-  ifr.addEventListener('load', applyDir);
-  ifr.addEventListener('load', applyZoom);
-  if (zoomable) {
-    ifr.addEventListener('load', attachWheel);
-    ifr.addEventListener('pointerenter', enter);
-    ifr.addEventListener('pointerleave', leave);
-    document.addEventListener('keydown', forwardEscape);
+
+  /* An iframe swallows touches. Listening on its own document keeps interior
+     taps working, which an overlay would block. */
+  /** @param {HTMLIFrameElement} frame */
+  const attachTouch = frame => {
+    /** @type {any} */
+    let doc;
+    try {
+      doc = frame.contentDocument;
+    } catch {
+      return;
+    }
+    if (!doc || doc.__wgesture) return;
+    doc.__wgesture = true;
+    let sx = 0,
+      sy = 0,
+      moved = false,
+      owned = false;
+    const win = /** @type {Window} */ (doc.defaultView);
+    /* A frame touch is in the frame's own pixels, and the frame moves with
+       the page strip. Map every point through the frame's current box. */
+    const at = touch => {
+      const r = frame.getBoundingClientRect();
+      const k = frame.offsetWidth ? r.width / frame.offsetWidth : 1;
+      return [r.left + touch.clientX * k, r.top + touch.clientY * k];
+    };
+    const time = e => e.timeStamp + win.performance.timeOrigin - performance.timeOrigin;
+    const feed = () => (owned || typeof swipe !== 'function' ? null : swipe());
+    doc.addEventListener(
+      'touchstart',
+      e => {
+        const touch = e.changedTouches[0];
+        if (!touch) return;
+        if (e.touches.length === 1) {
+          sx = touch.clientX;
+          sy = touch.clientY;
+          moved = false;
+          owned = ownsSidewaysTouch(e.target);
+        }
+        if (e.touches.length > 1) {
+          feed()?.cancel();
+          return;
+        }
+        const [x, y] = at(touch);
+        feed()?.down('f' + touch.identifier, x, y, time(e));
+      },
+      { passive: true },
+    );
+    doc.addEventListener(
+      'touchmove',
+      e => {
+        const touch = e.touches[0];
+        if (touch && (Math.abs(touch.clientX - sx) > 8 || Math.abs(touch.clientY - sy) > 8)) moved = true;
+        for (const tp of e.changedTouches) {
+          const [x, y] = at(tp);
+          feed()?.move('f' + tp.identifier, x, y, time(e));
+        }
+      },
+      { passive: true },
+    );
+    /** @param {boolean} fling */
+    const lift = fling => e => {
+      for (const tp of e.changedTouches) feed()?.up('f' + tp.identifier, time(e), fling);
+      if (!fling || moved || !overlayHref) return;
+      /* tap on non-interactive area → open link */
+      const target = e.target;
+      const interactive =
+        target &&
+        target.closest &&
+        target.closest('a,button,[role="button"],[onclick],.clickable,.bay,.val-row,.chart-wrap,input,select,textarea');
+      if (!interactive) window.open(overlayHref, '_blank', 'noopener,noreferrer');
+    };
+    doc.addEventListener('touchend', lift(true), { passive: true });
+    doc.addEventListener('touchcancel', lift(false), { passive: true });
+  };
+
+  /** @param {HTMLIFrameElement} frame @returns {boolean} false while the card has no size */
+  const place = frame => {
+    const w = card.clientWidth,
+      h = card.clientHeight;
+    if (!w || !h) return false;
+    const s = Math.min(w / dw, h / dh);
+    /* A bundled page fills the card and lays out at the card's shape, zoomed to
+       the design's scale. Contain leaves strips of card beside anything drawn to
+       the page edge. Whole pixels: a fractional size blurs on a 1x screen. */
+    if (zoomable) {
+      const fw = Math.round(w),
+        fh = Math.round(h);
+      frame.style.width = fw + 'px';
+      frame.style.height = fh + 'px';
+      frame.style.transform = `translate(${Math.round((w - fw) / 2)}px, ${Math.round((h - fh) / 2)}px)`;
+      frame.setAttribute('data-zoom', String(Math.min(fw / dw, fh / dh)));
+      applyZoom(frame);
+    } else {
+      frame.style.transform = `translate(${Math.round((w - dw * s) / 2)}px, ${Math.round((h - dh * s) / 2)}px) scale(${s})`;
+    }
+    return true;
+  };
+  /* Reveal only once scaled, avoids the flash of unscaled content on load. */
+  const fit = () => {
+    if (place(ifr)) ifr.style.opacity = '1';
+  };
+
+  /** @type {HTMLIFrameElement|null} */
+  let pending = null;
+  /** @type {ReturnType<typeof setTimeout>|undefined} */
+  let pendingTimer;
+  /** @param {HTMLIFrameElement} frame */
+  const unwire = frame => {
+    frame.removeEventListener('load', onLoad);
+    if (zoomable) {
+      frame.removeEventListener('pointerenter', enter);
+      frame.removeEventListener('pointerleave', leave);
+    }
+  };
+  /** @param {HTMLIFrameElement} frame */
+  const swapIn = frame => {
+    clearTimeout(pendingTimer);
+    pending = null;
+    const old = ifr;
+    unwire(old);
+    old.remove();
+    ifr = frame;
+    frame.removeAttribute('aria-hidden');
+    frame.removeAttribute('tabindex');
+    frame.style.pointerEvents = '';
+    fit();
+  };
+  /** @param {Event} e */
+  function onLoad(e) {
+    const frame = /** @type {HTMLIFrameElement} */ (e.currentTarget);
+    if (frame === pending) swapIn(frame);
+    applyDir(frame);
+    applyZoom(frame);
+    if (zoomable) attachWheel(frame);
+    if (mobile) attachTouch(frame);
   }
+  /** @param {HTMLIFrameElement} frame */
+  const wire = frame => {
+    frame.addEventListener('load', onLoad);
+    if (zoomable) {
+      frame.addEventListener('pointerenter', enter);
+      frame.addEventListener('pointerleave', leave);
+    }
+  };
+  wire(ifr);
+  if (zoomable) document.addEventListener('keydown', forwardEscape);
   cleanups.push(() => {
-    ifr.removeEventListener('load', applyDir);
-    ifr.removeEventListener('load', applyZoom);
-    ifr.removeEventListener('load', attachWheel);
-    ifr.removeEventListener('pointerenter', enter);
-    ifr.removeEventListener('pointerleave', leave);
+    unwire(ifr);
     document.removeEventListener('keydown', forwardEscape);
     try {
       if (wheelWin) wheelWin.removeEventListener('wheel', forwardWheel);
     } catch {}
   });
   try {
-    if (ifr.contentDocument && ifr.contentDocument.readyState === 'complete') applyDir();
+    if (ifr.contentDocument && ifr.contentDocument.readyState === 'complete') {
+      applyDir(ifr);
+      if (mobile) attachTouch(ifr);
+    }
   } catch {}
 
   /* Jittered, so a dashboard full of widgets does not reload against every
@@ -495,15 +650,26 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
   const refreshInterval = Number(o.refreshInterval) || 0;
   if (refreshInterval >= 250) {
     const base = refreshInterval;
-    /* Not ifr.src alone: each assignment adds an entry to the tab's Back
-       history. */
+    /* A new frame, not a navigation of the old one. A src change adds a Back
+       entry. A location change drops the frame's referrer policy. */
     const reload = () => {
+      if (pending) return;
       const next = src + (src.includes('?') ? '&' : '?') + '_r=' + Date.now();
-      try {
-        ifr.contentWindow.location.replace(next);
-      } catch {
-        ifr.src = next;
-      }
+      const frame = makeFrame(next, true);
+      frame.style.transition = 'none';
+      frame.style.pointerEvents = 'none';
+      frame.setAttribute('aria-hidden', 'true');
+      frame.setAttribute('tabindex', '-1');
+      place(frame);
+      wire(frame);
+      pending = frame;
+      clip.insertBefore(frame, ifr);
+      pendingTimer = setTimeout(() => {
+        if (pending !== frame) return;
+        pending = null;
+        unwire(frame);
+        frame.remove();
+      }, FRAME_LOAD_WAIT_MS);
     };
     const jit = () => Math.round(base * (1 + (Math.random() * 2 - 1) * 0.15));
     /* The handle is reassigned every tick. The cleanup must read the current
@@ -526,112 +692,15 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     cleanups.push(() => {
       clearTimeout(timer);
       document.removeEventListener('visibilitychange', onShow);
+      if (!pending) return;
+      clearTimeout(pendingTimer);
+      unwire(pending);
+      pending.src = 'about:blank';
+      pending.remove();
+      pending = null;
     });
   }
 
-  /* An iframe swallows touches. Listening on its own document keeps interior
-     taps working, which an overlay would block. */
-  if (mobile) {
-    const attach = () => {
-      let doc;
-      try {
-        doc = ifr.contentDocument;
-      } catch {
-        return;
-      }
-      if (!doc || doc.__wgesture) return;
-      doc.__wgesture = true;
-      let sx = 0,
-        sy = 0,
-        moved = false,
-        owned = false;
-      const win = /** @type {Window} */ (doc.defaultView);
-      /* A frame touch is in the frame's own pixels, and the frame moves with
-         the page strip. Map every point through the frame's current box. */
-      const at = touch => {
-        const r = ifr.getBoundingClientRect();
-        const k = ifr.offsetWidth ? r.width / ifr.offsetWidth : 1;
-        return [r.left + touch.clientX * k, r.top + touch.clientY * k];
-      };
-      const time = e => e.timeStamp + win.performance.timeOrigin - performance.timeOrigin;
-      const feed = () => (owned || typeof swipe !== 'function' ? null : swipe());
-      doc.addEventListener(
-        'touchstart',
-        e => {
-          const touch = e.changedTouches[0];
-          if (!touch) return;
-          if (e.touches.length === 1) {
-            sx = touch.clientX;
-            sy = touch.clientY;
-            moved = false;
-            owned = ownsSidewaysTouch(e.target);
-          }
-          if (e.touches.length > 1) {
-            feed()?.cancel();
-            return;
-          }
-          const [x, y] = at(touch);
-          feed()?.down('f' + touch.identifier, x, y, time(e));
-        },
-        { passive: true },
-      );
-      doc.addEventListener(
-        'touchmove',
-        e => {
-          const touch = e.touches[0];
-          if (touch && (Math.abs(touch.clientX - sx) > 8 || Math.abs(touch.clientY - sy) > 8)) moved = true;
-          for (const tp of e.changedTouches) {
-            const [x, y] = at(tp);
-            feed()?.move('f' + tp.identifier, x, y, time(e));
-          }
-        },
-        { passive: true },
-      );
-      /** @param {boolean} fling */
-      const lift = fling => e => {
-        for (const tp of e.changedTouches) feed()?.up('f' + tp.identifier, time(e), fling);
-        if (!fling || moved || !overlayHref) return;
-        /* tap on non-interactive area → open link */
-        const target = e.target;
-        const interactive =
-          target &&
-          target.closest &&
-          target.closest(
-            'a,button,[role="button"],[onclick],.clickable,.bay,.val-row,.chart-wrap,input,select,textarea',
-          );
-        if (!interactive) window.open(overlayHref, '_blank', 'noopener,noreferrer');
-      };
-      doc.addEventListener('touchend', lift(true), { passive: true });
-      doc.addEventListener('touchcancel', lift(false), { passive: true });
-    };
-    ifr.addEventListener('load', attach);
-    cleanups.push(() => ifr.removeEventListener('load', attach));
-    try {
-      if (ifr.contentDocument && ifr.contentDocument.readyState === 'complete') attach();
-    } catch {}
-  }
-
-  const fit = () => {
-    const w = card.clientWidth,
-      h = card.clientHeight;
-    if (!w || !h) return;
-    const s = Math.min(w / dw, h / dh);
-    /* A bundled page fills the card and lays out at the card's shape, zoomed to
-       the design's scale. Contain leaves strips of card beside anything drawn to
-       the page edge. Whole pixels: a fractional size blurs on a 1x screen. */
-    if (zoomable) {
-      const fw = Math.round(w),
-        fh = Math.round(h);
-      ifr.style.width = fw + 'px';
-      ifr.style.height = fh + 'px';
-      ifr.style.transform = `translate(${Math.round((w - fw) / 2)}px, ${Math.round((h - fh) / 2)}px)`;
-      ifr.setAttribute('data-zoom', String(Math.min(fw / dw, fh / dh)));
-      applyZoom();
-    } else {
-      ifr.style.transform = `translate(${Math.round((w - dw * s) / 2)}px, ${Math.round((h - dh * s) / 2)}px) scale(${s})`;
-    }
-    ifr.style.opacity = '1'; /* reveal only once scaled, avoids the flash of unscaled content on load */
-  };
   if (typeof ResizeObserver !== 'undefined') {
     const ro = new ResizeObserver(fit);
     ro.observe(card);
@@ -659,7 +728,6 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     }
   };
   _mounts.add(stop);
-  return ifr;
 }
 
 /** @param {any[]} items */

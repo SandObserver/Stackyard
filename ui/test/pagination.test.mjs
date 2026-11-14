@@ -288,11 +288,8 @@ test('the hidden pager is not painted', () => {
    points are in the frame's own pixels, and the frame moves with the strip. */
 test('a swipe on a phone widget drives the home pager', () => {
   const utils = read('js/utils.js');
-  const gesture = utils.slice(
-    utils.indexOf('An iframe swallows touches'),
-    utils.indexOf("ifr.addEventListener('load', attach)"),
-  );
-  assert.match(gesture, /const r = ifr\.getBoundingClientRect\(\);/, 'the point must be mapped at every event');
+  const gesture = utils.slice(utils.indexOf('An iframe swallows touches'), utils.indexOf('const place = frame =>'));
+  assert.match(gesture, /const r = frame\.getBoundingClientRect\(\);/, 'the point must be mapped at every event');
   assert.match(gesture, /r\.left \+ touch\.clientX \* k/);
   assert.match(gesture, /owned = ownsSidewaysTouch\(e\.target\)/, 'a widget scrubber would page');
   assert.match(gesture, /feed\(\)\?\.down\(/);

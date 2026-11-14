@@ -18,6 +18,7 @@ const CHECKED_HEADERS = [
   'x-content-type-options',
   'referrer-policy',
   'permissions-policy',
+  'cross-origin-opener-policy',
 ];
 
 async function run(origin) {

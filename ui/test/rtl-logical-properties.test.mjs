@@ -167,11 +167,13 @@ test('no widget page spaces text by screen side', () => {
 test('the dashboard gives each widget frame the page direction', () => {
   const utils = read('js/utils.js');
   assert.match(utils, /doc\.documentElement\.setAttribute\('dir'/, 'nothing sets the direction inside a widget frame');
+  const onLoad = utils.slice(utils.indexOf('function onLoad('), utils.indexOf('const wire = frame =>'));
   assert.match(
     utils,
-    /addEventListener\('load', applyDir\)/,
+    /addEventListener\('load', onLoad\)/,
     'a reload replaces the document, so this has to run on every load',
   );
+  assert.match(onLoad, /applyDir\(frame\)/, 'a reload replaces the document, so this has to run on every load');
 });
 
 /* A widget may pin the direction of a fragment: an IP address table or a log

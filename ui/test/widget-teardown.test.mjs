@@ -28,19 +28,45 @@ function harness() {
     tagName: tag,
     style: { cssText: '', setProperty() {} },
     children: [],
+    parent: null,
+    attrs: new Map(),
+    listeners: new Map(),
     clientWidth: 100,
     clientHeight: 100,
     src: '',
-    setAttribute() {},
-    removeAttribute() {},
+    setAttribute(k, v) {
+      this.attrs.set(k, String(v));
+    },
+    getAttribute(k) {
+      return this.attrs.has(k) ? this.attrs.get(k) : null;
+    },
+    removeAttribute(k) {
+      this.attrs.delete(k);
+    },
     appendChild(c) {
+      c.parent = this;
       this.children.push(c);
     },
-    addEventListener() {
-      if (tag === 'iframe') counts.loadListeners++;
+    insertBefore(c, ref) {
+      c.parent = this;
+      this.children.splice(this.children.indexOf(ref), 0, c);
     },
-    removeEventListener() {
-      if (tag === 'iframe') counts.loadListeners--;
+    remove() {
+      if (this.parent) this.parent.children.splice(this.parent.children.indexOf(this), 1);
+      this.parent = null;
+    },
+    addEventListener(type, fn) {
+      if (tag !== 'iframe') return;
+      counts.loadListeners++;
+      if (!this.listeners.has(type)) this.listeners.set(type, new Set());
+      this.listeners.get(type).add(fn);
+    },
+    removeEventListener(type, fn) {
+      if (tag !== 'iframe' || !this.listeners.get(type)?.delete(fn)) return;
+      counts.loadListeners--;
+    },
+    fire(type) {
+      for (const fn of this.listeners.get(type) || []) fn({ type, currentTarget: this, target: this });
     },
     get contentDocument() {
       return null;
@@ -245,33 +271,110 @@ test('the rebuild is driven by the shared layout rule', () => {
   assert.match(src, /onLayoutChange\(\s*mobile => \{/, 'the layout change is what triggers a rebuild');
 });
 
-test('a reload replaces the frame location instead of adding a Back entry', async () => {
-  const h = harness();
+/* A refresh mounts a new frame. Navigating the old one adds a Back entry
+   (src) or sends the dashboard's referrer policy instead of the frame's
+   (location.replace). */
+async function refreshing(h, run, { loadWait } = {}) {
   const frames = [];
   const make = globalThis.document.createElement;
   globalThis.document.createElement = tag => {
     const e = make(tag);
     if (tag === 'iframe') {
-      e.replaced = [];
-      e.contentWindow = { location: { replace: url => e.replaced.push(url) } };
+      e.contentWindow = {
+        location: {
+          replace: () => {
+            throw new Error('the old frame was navigated');
+          },
+        },
+      };
       frames.push(e);
     }
     return e;
   };
+  if (loadWait) {
+    const st = globalThis.setTimeout;
+    globalThis.setTimeout = (fn, ms) => st(fn, ms > 1000 ? loadWait : ms);
+  }
   globalThis.document.hidden = false;
-  const wait = ms => new Promise(r => h.realSetTimeout(r, ms));
+  globalThis.location = { href: 'http://dash.local/', origin: 'http://dash.local' };
+  const card = h.card();
   const { mountScaledWidget, teardownWidgets } = await import('../js/utils.js');
   try {
-    mountScaledWidget(h.card(), { ...OPTS, iframeOpts: { refreshInterval: 250 } });
-    const first = frames[0].src;
-    await wait(800);
-    assert.ok(frames[0].replaced.length > 0, 'no reload ran');
-    assert.match(frames[0].replaced[0], /^http:\/\/svc\/w\?_r=\d+$/);
-    assert.equal(frames[0].src, first, 'src was reassigned, which adds a Back entry');
+    mountScaledWidget(card, { ...OPTS, iframeOpts: { refreshInterval: 250 } });
+    await run({ frames, clip: card.children[0], wait: ms => new Promise(r => h.realSetTimeout(r, ms)) });
   } finally {
     teardownWidgets();
+    delete globalThis.location;
     h.done();
   }
+}
+
+test('a refresh loads a new frame that keeps the referrer policy and sandbox', async () => {
+  const h = harness();
+  await refreshing(h, async ({ frames, clip, wait }) => {
+    const first = frames[0].src;
+    await wait(800);
+    assert.equal(frames.length, 2, 'one refresh frame at a time');
+    const [old, next] = frames;
+    assert.equal(old.src, first, 'src was reassigned, which adds a Back entry');
+    assert.match(next.src, /^http:\/\/svc\/w\?_r=\d+$/);
+    assert.equal(next.getAttribute('referrerpolicy'), 'strict-origin-when-cross-origin');
+    assert.equal(next.getAttribute('sandbox'), old.getAttribute('sandbox'));
+    assert.ok(next.getAttribute('sandbox'), 'a cross-origin frame is sandboxed');
+    assert.equal(next.getAttribute('aria-label'), old.getAttribute('aria-label'));
+    assert.deepEqual(clip.children, [next, old], 'the new frame loads under the one on screen');
+    assert.equal(next.getAttribute('aria-hidden'), 'true');
+
+    next.fire('load');
+    assert.deepEqual(clip.children, [next], 'the old frame stays after the new one loaded');
+    assert.equal(next.getAttribute('aria-hidden'), null);
+    assert.equal(next.style.opacity, '1');
+    assert.equal(old.listeners.get('load')?.size ?? 0, 0, 'the old frame keeps its listeners');
+  });
+});
+
+test('a refresh frame that never loads is dropped and the next tick tries again', async () => {
+  const h = harness();
+  await refreshing(
+    h,
+    async ({ frames, clip, wait }) => {
+      await wait(1000);
+      assert.ok(frames.length >= 3, `${frames.length - 1} refresh frames in 1 s`);
+      assert.ok(clip.children.includes(frames[0]), 'the frame on screen was removed');
+      assert.ok(clip.children.length <= 2, `${clip.children.length} frames in the card`);
+      for (const f of frames.slice(1, -1)) assert.equal(f.parent, null, 'a frame that never loaded stays');
+    },
+    { loadWait: 50 },
+  );
+});
+
+test('teardown removes a refresh frame that is still loading', async () => {
+  const h = harness();
+  const { teardownWidgets } = await import('../js/utils.js');
+  await refreshing(h, async ({ frames, clip, wait }) => {
+    await wait(800);
+    teardownWidgets();
+    assert.equal(frames.length, 2);
+    assert.equal(frames[1].parent, null, 'the loading frame stays in the card');
+    assert.equal(frames[1].src, 'about:blank');
+    assert.equal(frames[0].src, 'about:blank');
+    assert.deepEqual(clip.children, [frames[0]]);
+    assert.equal(h.counts.timers, 0, 'a timer outlives teardown');
+    assert.equal(h.counts.loadListeners, 0, 'a frame listener outlives teardown');
+  });
+});
+
+test('teardown after a refresh releases the new frame', async () => {
+  const h = harness();
+  const { teardownWidgets } = await import('../js/utils.js');
+  await refreshing(h, async ({ frames, wait }) => {
+    await wait(800);
+    frames[1].fire('load');
+    teardownWidgets();
+    assert.equal(frames[1].src, 'about:blank');
+    assert.equal(h.counts.timers, 0, 'a timer outlives teardown');
+    assert.equal(h.counts.loadListeners, 0, 'a frame listener outlives teardown');
+  });
 });
 
 test('a hidden tab does not reload its widgets, and catches up on return', async () => {
@@ -288,12 +391,11 @@ test('a hidden tab does not reload its widgets, and catches up on return', async
   const { mountScaledWidget, teardownWidgets } = await import('../js/utils.js');
   try {
     mountScaledWidget(h.card(), { ...OPTS, iframeOpts: { refreshInterval: 250 } });
-    const first = frames[0].src;
     await wait(800);
-    assert.equal(frames[0].src, first, 'reloaded while hidden');
+    assert.equal(frames.length, 1, 'reloaded while hidden');
     globalThis.document.hidden = false;
     for (const fn of h.docListeners) fn();
-    assert.notEqual(frames[0].src, first, 'a reload missed while hidden runs on return');
+    assert.equal(frames.length, 2, 'a reload missed while hidden runs on return');
   } finally {
     teardownWidgets();
     h.done();

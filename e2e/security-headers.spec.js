@@ -32,3 +32,11 @@ for (const url of PATHS) {
     if (url.startsWith('/api/')) expect(headers['cross-origin-resource-policy']).toBe('same-origin');
   });
 }
+
+test('a widget page refuses plugins and form submissions', async ({ request }) => {
+  const res = await request.get('/widgets/clock/analog.html');
+  const csp = (res.headers()['content-security-policy'] || '').split(';').map(d => d.trim());
+  expect(csp).toContain("object-src 'none'");
+  expect(csp).toContain("form-action 'none'");
+  expect(csp).toContain("base-uri 'self'");
+});

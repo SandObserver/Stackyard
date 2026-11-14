@@ -683,14 +683,15 @@ test('the server level sends the same shared headers as the file', () => {
   }
 });
 
-test('the page and Settings policies refuse plugins and outside form targets, and every page policy pins <base>', () => {
+test('every page policy refuses plugins and outside form targets, and pins <base>', () => {
   const settings = dashboard.match(/location \^~ \/admin \{[\s\S]*?add_header Content-Security-Policy "([^"]+)"/)[1];
   const widgets = dashboard.match(/location \^~ \/widgets\/ \{[\s\S]*?add_header Content-Security-Policy "([^"]+)"/)[1];
   for (const p of [policy, settings]) {
     for (const d of ["object-src 'none'", "base-uri 'self'", "form-action 'self'"])
       assert.ok(p.includes(d), `${d} missing`);
   }
-  assert.ok(widgets.includes("base-uri 'self'"));
+  for (const d of ["object-src 'none'", "base-uri 'self'", "form-action 'none'"])
+    assert.ok(widgets.includes(d), `the widget policy lacks ${d}`);
 });
 
 test('API responses cannot be loaded by another site', () => {
