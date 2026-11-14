@@ -147,6 +147,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Send the query string of a status check URL, so a check such as
   `/status?check=db` reaches the right endpoint.
 
+- Reuse one Pi-hole sign-in until it expires, so a slow Pi-hole no longer
+  collects open sessions until it refuses the widget.
+
+- Limit how many servers widgets remember details for, so previews against many
+  addresses no longer grow memory without limit.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
