@@ -195,7 +195,10 @@ test('an umami account with two-factor sign-in on names the cause instead of the
     ),
   );
   const svc = r.services.find(s => s.type === 'umami');
-  assert.match(svc.error, /two-factor code/);
+  assert.equal(
+    svc.error,
+    'Umami asks this account for a two-factor code. Enter an Umami API key in the API key field.',
+  );
   assert.equal(svc.errorKind, 'auth');
 });
 
@@ -216,6 +219,9 @@ test('an umami account that must finish two-factor setup names the cause instead
     ),
   );
   const svc = r.services.find(s => s.type === 'umami');
-  assert.match(svc.error, /finish two-factor setup/);
+  assert.equal(
+    svc.error,
+    'This Umami account must finish two-factor setup first. Then enter an Umami API key in the API key field.',
+  );
   assert.equal(svc.errorKind, 'auth');
 });

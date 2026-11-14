@@ -351,7 +351,7 @@ async function mapView(ctx) {
             if (authErr(lg)) ctx.fail('Auth required — check username/password', { kind: ctx.KIND.AUTH });
             if (lg.status >= 400) ctx.fail('Login HTTP ' + lg.status);
             if (lg.data?.requiresTwoFactor)
-              ctx.fail('Umami asks this account for a two-factor code. Use an account without two-factor sign-in.', {
+              ctx.fail('Umami asks this account for a two-factor code. Enter an Umami API key in the API key field.', {
                 kind: ctx.KIND.AUTH,
               });
             token = (lg.data && lg.data.token) || '';
@@ -370,7 +370,10 @@ async function mapView(ctx) {
             { headers: { Authorization: 'Bearer ' + token } },
           );
           if (r.status === 403 && r.data?.error?.code === 'two-factor-error-setup-required')
-            ctx.fail('This Umami account must finish two-factor setup in Umami first.', { kind: ctx.KIND.AUTH });
+            ctx.fail(
+              'This Umami account must finish two-factor setup first. Then enter an Umami API key in the API key field.',
+              { kind: ctx.KIND.AUTH },
+            );
           if (authErr(r))
             ctx.fail(usingKey ? 'Auth rejected — check the API key' : 'Auth rejected — check username/password', {
               kind: ctx.KIND.AUTH,
