@@ -28,14 +28,6 @@ function login(ctx) {
   return basicAuth(username, String(ctx.config.password || ''));
 }
 
-/* Per server. Bounded: a preview can name any address. */
-const SESSIONS_KEPT = 32;
-function remember(map, key, value) {
-  map.delete(key);
-  map.set(key, value);
-  if (map.size > SESSIONS_KEPT) map.delete(map.keys().next().value);
-}
-
 function basicAuth(username, password) {
   return username || password
     ? { Authorization: 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64') }
@@ -57,14 +49,14 @@ const _qbitSync = new Map();
 /* A list too large to read once is retried after this long. */
 const QBIT_RETRY_MS = 24 * 3600 * 1000;
 
-async function qbitPaused(get, base) {
+async function qbitPaused(ctx, get, base) {
   const known = _qbitSync.get(base) || { rid: 0, paused: false };
   if (known.tooLargeAt && Date.now() - known.tooLargeAt < QBIT_RETRY_MS) return false;
   let d;
   try {
     d = await get(`/sync/maindata?rid=${known.rid}`, false);
   } catch (e) {
-    if (e && e.responseTooLarge) remember(_qbitSync, base, { rid: 0, paused: false, tooLargeAt: Date.now() });
+    if (e && e.responseTooLarge) ctx.remember(_qbitSync, base, { rid: 0, paused: false, tooLargeAt: Date.now() });
     return known.paused;
   }
   if (!d || typeof d !== 'object' || Array.isArray(d)) return false;
@@ -74,7 +66,7 @@ async function qbitPaused(get, base) {
   };
   const state = d.server_state && d.server_state.session_state;
   if (typeof state === 'boolean') next.paused = state;
-  remember(_qbitSync, base, next);
+  ctx.remember(_qbitSync, base, next);
   return next.paused;
 }
 
@@ -98,7 +90,7 @@ async function qbittorrent(ctx) {
     get('/torrents/info?filter=downloading'),
     get('/torrents/info?filter=errored'),
     get('/torrents/info?filter=completed&sort=completion_on&reverse=true&limit=100').catch(() => []),
-    qbitPaused(get, base),
+    qbitPaused(ctx, get, base),
   ]);
   return { found: items.qbitItems([...active, ...failed]), finished: items.qbitFinished(done), paused };
 }
@@ -226,7 +218,7 @@ async function transmission(ctx) {
       ctx.fail('Transmission could not list torrents', { kind: ctx.KIND.UPSTREAM });
     torrents = reply.arguments.torrents;
   }
-  remember(_transmission, url, state);
+  ctx.remember(_transmission, url, state);
   return { found: items.transmissionItems(torrents), finished: items.transmissionFinished(torrents) };
 }
 
@@ -269,7 +261,7 @@ async function deluge(ctx) {
     const set = [].concat(r.headers?.['set-cookie'] || []).map(String);
     const cookie = set.map(c => c.split(';')[0]).find(c => c.startsWith('_session_id='));
     if (!cookie) ctx.fail('Deluge sent no session cookie', { kind: ctx.KIND.UPSTREAM });
-    remember(_deluge, url, { cookie, password });
+    ctx.remember(_deluge, url, { cookie, password });
     return cookie;
   };
   const cached = _deluge.get(url);

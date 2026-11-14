@@ -6,12 +6,14 @@ const { dispatchProvider } = require('../src/provider-dispatch');
 const { errorParts } = require('../test-support/widget-ctx');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'data.js'));
+const { remember } = require('../src/bounded-cache');
 
 function ctxFor(config, reply, endpoint = 'throughput') {
   const ctx = {
     endpoint,
     config,
     normalizeBase,
+    remember,
     fetchJSON: async (url, opts) => reply(url, opts),
     ...errorParts(),
   };

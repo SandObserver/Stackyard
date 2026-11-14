@@ -202,14 +202,14 @@ function glancesVersion(ctx, base, headers) {
     ctx.fail('Glances HTTP ' + last);
   })();
   /* A failed probe must not be the cached answer for every later poll. */
-  _apiVersion.set(
+  return ctx.remember(
+    _apiVersion,
     base,
     probe.catch(e => {
       _apiVersion.delete(base);
       throw e;
     }),
   );
-  return _apiVersion.get(base);
 }
 
 async function glancesGet(ctx, plugin) {
@@ -321,7 +321,7 @@ async function beszelLogin(ctx, base) {
     });
     if (r.status < 400 && r.data?.token) {
       const session = { collection, token: r.data.token };
-      _beszelSession.set(key, session);
+      ctx.remember(_beszelSession, key, session);
       return session;
     }
   }
@@ -811,7 +811,7 @@ async function systemSummaryTrueNas(ctx) {
    out stands until the counters actually move. */
 const _netPrev = new Map();
 
-function rateFromTotals(key, at, rx, tx) {
+function rateFromTotals(ctx, key, at, rx, tx) {
   const prev = _netPrev.get(key);
   if (prev && at <= prev.at) return prev.rate;
   let rate = null;
@@ -823,7 +823,7 @@ function rateFromTotals(key, at, rx, tx) {
       rate = { rx: Math.round((rx - prev.rx) / seconds), tx: Math.round((tx - prev.tx) / seconds) };
     }
   }
-  _netPrev.set(key, { at, rx, tx, rate });
+  ctx.remember(_netPrev, key, { at, rx, tx, rate });
   return rate;
 }
 
@@ -912,7 +912,7 @@ async function beszelThroughput(ctx) {
   /* Per-interface entries carry totals, and a new record only lands once a
      minute, so the record's own timestamp is the window. */
   const at = Date.parse(record?.created) || 0;
-  return rateFromTotals(`beszel|${base}|${id}|${name}`, at, Number(row[3]) || 0, Number(row[2]) || 0);
+  return rateFromTotals(ctx, `beszel|${base}|${id}|${name}`, at, Number(row[3]) || 0, Number(row[2]) || 0);
 }
 
 /* ── Unraid ──────────────────────────────────────────────────────────────── */
@@ -933,5 +933,11 @@ async function unraidThroughput(ctx) {
   if (!n) ctx.fail(`Unraid is not reporting the ${name} interface.`, { kind: ctx.KIND.INVALID });
   const base = ctx.normalizeBase(ctx.config.unraidUrl);
   /* Unraid's counters move continuously, so the clock is the only window. */
-  return rateFromTotals(`unraid|${base}|${name}`, Date.now(), Number(n.bytesReceived) || 0, Number(n.bytesSent) || 0);
+  return rateFromTotals(
+    ctx,
+    `unraid|${base}|${name}`,
+    Date.now(),
+    Number(n.bytesReceived) || 0,
+    Number(n.bytesSent) || 0,
+  );
 }

@@ -68,11 +68,6 @@ async function calendar(ctx, row, path, from, to, extra = '') {
 const kept = v => (typeof v === 'string' ? v.slice(0, TEXT_KEPT) : '');
 
 const seriesCache = new Map();
-function remember(key, value) {
-  seriesCache.delete(key);
-  seriesCache.set(key, { value, at: Date.now() });
-  if (seriesCache.size > SERIES_KEPT) seriesCache.delete(seriesCache.keys().next().value);
-}
 
 /* Do not add includeSeries. Each episode then carries its whole series record,
    and a large library passes the reply size cap. */
@@ -96,7 +91,7 @@ async function sonarr(ctx, row, from, to, now) {
         runtime: items.minutes(s.runtime),
         seriesType: SERIES_TYPES.has(s.seriesType) ? s.seriesType : '',
       };
-      remember(key, one);
+      ctx.remember(seriesCache, key, { value: one, at: Date.now() }, SERIES_KEPT);
       series.set(id, one);
     }),
   );

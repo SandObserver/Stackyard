@@ -5,6 +5,7 @@ const { normalizeBase } = require('../src/widget-data');
 const { KIND, WidgetError } = require('../src/api-error');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'nowplaying', 'data.js'));
+const { remember } = require('../src/bounded-cache');
 const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
 
 /* Minimal stand-in for the ctx widget-data.js builds. */
@@ -12,6 +13,7 @@ function ctxFor(config, payload) {
   return {
     config,
     normalizeBase,
+    remember,
     serviceBase,
     serviceLink,
     fetchJSON: async () => ({ status: 200, data: payload }),

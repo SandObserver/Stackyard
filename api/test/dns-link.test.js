@@ -6,10 +6,12 @@ const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
 const { KIND, WidgetError } = require('../src/api-error');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'dns', 'data.js'));
+const { remember } = require('../src/bounded-cache');
 
 const ctxFor = config => ({
   config,
   normalizeBase,
+  remember,
   serviceBase,
   serviceLink,
   KIND,

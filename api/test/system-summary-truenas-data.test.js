@@ -7,6 +7,7 @@ const { errorParts } = require('../test-support/widget-ctx');
 const { fakeJsonRpc, denied, refusedUpgrade } = require('../test-support/fake-json-rpc');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'data.js'));
+const { remember } = require('../src/bounded-cache');
 const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
 
 const GB = 1024 ** 3;
@@ -43,6 +44,7 @@ function ctxFor(config = {}, methods = METHODS, events = { 'reporting.realtime':
       ...config,
     },
     normalizeBase,
+    remember,
     serviceBase,
     serviceLink,
     jsonRpc: typeof methods === 'function' ? methods : rpc.jsonRpc,

@@ -7,6 +7,7 @@ const items = require(path.join(widget, 'download-items.js'));
 const { errorParts } = require('../test-support/widget-ctx');
 const { dispatchProvider } = require('../src/provider-dispatch');
 const { normalizeBase } = require('../src/widget-data');
+const { remember } = require('../src/bounded-cache');
 const { serviceLink } = require('../../ui/js/service-link.js');
 
 /* A fresh data.js per test: Transmission and Deluge keep a session per server. */
@@ -20,6 +21,7 @@ function ctxFor(config, route) {
   const ctx = {
     config,
     normalizeBase,
+    remember,
     serviceLink,
     fetchJSON: async (url, opts = {}) => {
       calls.push({ url, opts });
