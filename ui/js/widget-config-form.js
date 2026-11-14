@@ -1,11 +1,11 @@
 /* Renders a widget's declared `fields` into a config form and reads the values
    back. Each builder returns { el, get, control, liveValue }. */
 
-import { t } from '/js/i18n.js?v=721852aa';
+import { t } from '/js/i18n.js?v=99563c71';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { apiPost, fadeIn, PE_SVG, reveal, wireInlineEdit } from '/js/admin-shared.js?v=710af2db';
-import { createListbox } from '/js/listbox.js?v=f5ab7230';
-import { renderColorControl } from '/js/admin-color-control.js?v=cd373b3b';
+import { apiPost, fadeIn, PE_SVG, reveal, wireInlineEdit } from '/js/admin-shared.js?v=495be496';
+import { createListbox } from '/js/listbox.js?v=384c0ad5';
+import { renderColorControl } from '/js/admin-color-control.js?v=aa24597a';
 import {
   seedCarried,
   applyOptionSet,
@@ -16,10 +16,10 @@ import {
   isPlainField,
 } from '/js/admin-logic.js?v=06da6a19';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=5abd7438';
-import { qi } from '/js/utils.js?v=e8f3d601';
-import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
+import { qi } from '/js/utils.js?v=c1d4e76c';
+import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { SAVED_ROW } from '/js/saved-row.js?v=44039df6';
-import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
+import { slideBlock } from '/js/modal.js?v=84ba5279';
 
 /* A counter, not randomness. Six base-36 characters collide plausibly over a
    long session, and an id that changes per run cannot be asserted on. */
@@ -115,7 +115,7 @@ function _toggle(field, value) {
   row.className = 'row';
   setHtml(
     row,
-    html`<span class="rl">${field.label}</span><label class="tog"><input type="checkbox"${on ? ' checked' : ''} aria-label="${field.label}"><div class="tr"></div></label>`,
+    html`<span class="rl">${field.label}</span><label class="tog"><input type="checkbox" role="switch"${on ? ' checked' : ''} aria-label="${field.label}"><div class="tr"></div></label>`,
   );
   const input = row.querySelector('input');
   const get = () => [field.key, input.checked];
@@ -202,10 +202,8 @@ function _picklist(field, value, ctx, size) {
 
   const wrap = document.createElement('div');
   wrap.className = 'wcf-group';
-  const hdr = document.createElement('p');
+  const hdr = document.createElement('h2');
   hdr.className = 'grp-hdr';
-  hdr.setAttribute('role', 'heading');
-  hdr.setAttribute('aria-level', '2');
   hdr.textContent = field.label;
   wrap.appendChild(hdr);
   const card = document.createElement('div');
@@ -516,10 +514,8 @@ function _wireShowIf(built) {
 function _object(field, value, ctx) {
   const cfg = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   const wrap = document.createElement('div');
-  const hdr = document.createElement('p');
+  const hdr = document.createElement('h2');
   hdr.className = 'grp-hdr';
-  hdr.setAttribute('role', 'heading');
-  hdr.setAttribute('aria-level', '2');
   hdr.textContent = field.label;
   wrap.appendChild(hdr);
   const card = document.createElement('div');
@@ -593,9 +589,9 @@ function _group(field, rows, size, ctx) {
     rowsHost.replaceChildren();
     rowBuilt = [];
     data.forEach((rowData, idx) => {
-      const hdr = document.createElement('p');
+      const hdr = document.createElement('div');
       hdr.className = 'grp-hdr grp-hdr-row';
-      setHtml(hdr, html`<span role="heading" aria-level="2">${field.label} ${formatNumber(idx + 1)}</span>`);
+      setHtml(hdr, html`<h2>${field.label} ${formatNumber(idx + 1)}</h2>`);
       const rm = document.createElement('button');
       rm.type = 'button';
       rm.className = 'grp-hdr-rm';

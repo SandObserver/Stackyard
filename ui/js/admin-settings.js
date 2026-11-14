@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=cd373b3b';
+import { renderColorControl } from '/js/admin-color-control.js?v=aa24597a';
 import { passwordRefusalKey, socketProbeAdvice } from '/js/admin-error.js?v=5abd7438';
 import {
   BLOCK,
@@ -34,9 +34,9 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=710af2db';
-import { BACKDROP } from '/js/background.js?v=cef66689';
-import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
+} from '/js/admin-shared.js?v=495be496';
+import { BACKDROP } from '/js/background.js?v=eca5642a';
+import { formatNumber } from '/js/format-number.js?v=263fa390';
 import {
   ALLOWED_HOSTS_MAX,
   firstBadHost,
@@ -44,11 +44,11 @@ import {
   isLocalAddress,
   parseHostList,
 } from '/js/host-names.js?v=98bf44d7';
-import { t } from '/js/i18n.js?v=721852aa';
-import { confirmText, promptModal } from '/js/modal.js?v=c4c1c4c4';
-import { contextWords, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
+import { t } from '/js/i18n.js?v=99563c71';
+import { confirmText, promptModal } from '/js/modal.js?v=84ba5279';
+import { contextWords, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
 import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
-import { el, inp, qa, setUserText } from '/js/utils.js?v=e8f3d601';
+import { el, inp, qa, setUserText } from '/js/utils.js?v=c1d4e76c';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;
@@ -276,22 +276,17 @@ export function loadSettings(c) {
     .then(d => showUnsplashKeyState(!!d.configured))
     .catch(() => {});
   const brEl = inp('bg-br');
-  const brVal = el('bg-br-val');
   function updateSliderFill(slider) {
     if (!slider) return;
     const min = parseFloat(slider.min) || 0.1,
       max = parseFloat(slider.max) || 1.0;
     slider.style.setProperty('--range-fill', String((parseFloat(slider.value) - min) / (max - min)));
+    slider.setAttribute('aria-valuetext', formatNumber(parseFloat(slider.value), { style: 'percent' }));
   }
-  const twoPlaces = v => formatNumber(parseFloat(v), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (brEl) {
     brEl.value = bg.brightness ?? 0.62;
-    if (brVal) brVal.textContent = twoPlaces(brEl.value);
     updateSliderFill(brEl);
-    brEl.addEventListener('input', () => {
-      updateSliderFill(brEl);
-      if (brVal) brVal.textContent = twoPlaces(brEl.value);
-    });
+    brEl.addEventListener('input', () => updateSliderFill(brEl));
   }
   el('bg-save').addEventListener(
     'click',

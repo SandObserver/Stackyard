@@ -170,6 +170,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the port map or the certificate skip changes; its saved credentials must be
   retyped before they are used.
 
+- With reduced motion, Settings and loading fades no longer cut instantly.
+
+- Scrolling over a Settings dialog or the sign-in screen no longer scrolls the
+  page behind it.
+
+- Return no longer commits half-composed IME text in rename, text prompts and
+  icon search.
+
+- An empty sign-in asks for the password and no longer counts toward the
+  lockout.
+
+- The sign-in error is announced with the password field, which is marked
+  invalid only for a wrong password.
+
+- System Summary writes uptime and link speed units in the interface language.
+
+- Downloads no longer shows Latin unit letters in Persian time estimates.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.

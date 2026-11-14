@@ -182,7 +182,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, openUrl, loadStrings, wt, wtCount, formatNumber, formatList, formatBytes, errorState, cssZoom, twoTap } from '/js/widget-toolbox.js?v=8415820b';
+import { poll, fetchData, openUrl, loadStrings, wt, wtCount, formatNumber, formatList, formatBytes, errorState, cssZoom, twoTap } from '/js/widget-toolbox.js?v=dbff1c85';
 await loadStrings();
 document.getElementById('root').setAttribute('aria-label', wt('ui.diskHealth','Disk health'));
 const params    = new URLSearchParams(location.search);
@@ -295,7 +295,7 @@ function positionTip(i) {
 function build() {
   const baysEl = document.getElementById('bays');
   const numsEl = document.getElementById('nums');
-  baysEl.innerHTML = ''; numsEl.innerHTML = '';
+  baysEl.replaceChildren(); numsEl.replaceChildren();
   bayEls = [];
   for (let i = 0; i < BAY_COUNT; i++) {
     const bay = document.createElement('div');

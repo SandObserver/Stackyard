@@ -11,7 +11,7 @@
    The filter and the collapsed folders are in admin-state.js, because the page
    reads and writes them too. */
 
-import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=8ad23610';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=f9ca43d1';
 import { listGroup } from '/js/admin-drag-logic.js?v=4824d269';
 import {
   filterActive,
@@ -23,18 +23,18 @@ import {
   topLevelRows,
 } from '/js/admin-logic.js?v=06da6a19';
 import { snapshotItems } from '/js/admin-save-logic.js?v=6ebda0e2';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=710af2db';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=495be496';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { sizeLabel } from '/js/admin-widget-form.js?v=d30b958f';
-import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
+import { sizeLabel } from '/js/admin-widget-form.js?v=12f780e6';
+import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=721852aa';
+import { t } from '/js/i18n.js?v=99563c71';
 import { iconSvg } from '/js/icon-set.js?v=361e54a5';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
-import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=e8f3d601';
+import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=c1d4e76c';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=aef2eec0';
 
 /** @type {{ openModal: (id: string|null) => void,
@@ -383,11 +383,9 @@ export function render() {
 function listSection(l, group, title, count) {
   const hdr = document.createElement('div');
   hdr.className = 'grp-hdr-row al-hdr';
-  const h = document.createElement('p');
+  const h = document.createElement('h2');
   h.className = 'grp-hdr';
   h.id = 'al-h-' + group;
-  h.setAttribute('role', 'heading');
-  h.setAttribute('aria-level', '2');
   h.textContent = title;
   hdr.appendChild(h);
   if (count) {

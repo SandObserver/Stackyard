@@ -125,7 +125,7 @@
 <body>
 <div class="widget" id="widget" role="group" aria-label="Backup status"></div>
 <script type="module">
-import { poll, fetchData, getConfig, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom, whileOnScreen, twoTap, toneForColor } from '/js/widget-toolbox.js?v=8415820b';
+import { poll, fetchData, getConfig, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom, whileOnScreen, twoTap, toneForColor } from '/js/widget-toolbox.js?v=dbff1c85';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const size = new URLSearchParams(location.search).get('size') || 'small';
@@ -370,7 +370,7 @@ function slotList() {
 
 function assignHaikus(slots) {
   /* Shuffle pool randomly — different every reload */
-  const pool = [...HAIKUS].sort(() => Math.random()-0.5);
+  const pool = HAIKUS.toSorted(() => Math.random()-0.5);
   if (size==='small') return slots.map(j => j ? pool : null);
   const activeIdxs = slots.map((j,i)=>j?i:-1).filter(i=>i>=0);
   if (!activeIdxs.length) return slots.map(()=>null);

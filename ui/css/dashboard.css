@@ -458,6 +458,7 @@
     /* ── Search pill — mobile only ── */
     #mob-search-pill {
       --pill-inset:0px;
+      font:inherit; color:inherit; padding:0; margin:0;
       position:fixed; left:50%; z-index:500;
       transform:translateX(-50%);
       display:none; /* shown by buildMobile */
@@ -932,13 +933,13 @@
 /* Reduced motion: neutralize slides, springs, and lift transforms. */
 @media (prefers-reduced-motion: reduce) {
   /* A ring that does not turn says nothing, so it becomes a resting dot. */
-  body::before { animation:boot-show .3s ease .6s forwards; border-color:var(--label-secondary); }
+  body::before { animation:boot-show .3s ease .6s forwards; animation-duration:.3s !important; border-color:var(--label-secondary); }
   #pages { transition: none !important; }
   .icon:hover .iwrap, .folder-icon-link:hover .iwrap, .di:hover .dwrap,
   .icon:active .iwrap, .folder-icon-link:active .iwrap, .di:active .dwrap,
   .icon .dyn-folder-box, .dyn-mob-icon > .plate, .dyn-dock-icon > .plate, .dyn-mob-btn > .dyn-box, .dyn-fold-anchor > .plate,
   .dot.on { transform: none !important; }
-  html.wall-swap::after, html.wall-in::before { animation-duration:.4s !important; }
+  html.wall-swap::after, html:is(.wall-in, .wall-swap) .glass-canvas { animation-duration:.4s !important; }
   #mob-search-pill:active { scale:none; opacity:.7; }
 }
 

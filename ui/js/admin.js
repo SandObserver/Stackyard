@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=eb176efc';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=af8e7930';
+} from '/js/admin-app-form.js?v=8510149d';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=62124aa1';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=639ac97a';
+} from '/js/admin-list.js?v=09bcde7d';
 import { filterActive, folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=06da6a19';
 import {
   afterImport,
@@ -40,7 +40,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=ed7211e7';
+} from '/js/admin-settings.js?v=6271ace5';
 import {
   announce,
   apiGet,
@@ -65,17 +65,17 @@ import {
   swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=710af2db';
+} from '/js/admin-shared.js?v=495be496';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=d30b958f';
-import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=cef66689';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=12f780e6';
+import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=eca5642a';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
-import { recoveryShown } from '/js/config-recovery.js?v=25ac2101';
+import { recoveryShown } from '/js/config-recovery.js?v=da14e1c7';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
-import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
+import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=0c57b286';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=721852aa';
+import { initI18n, LANGUAGES, t } from '/js/i18n.js?v=99563c71';
 import { animateIcon } from '/js/icon-motion.js?v=0b4fc669';
 import { ensureSprite, iconSvg } from '/js/icon-set.js?v=361e54a5';
 import { loadLocalIcons } from '/js/icons.js?v=76c29d43';
@@ -92,9 +92,9 @@ import {
 } from '/js/import-foreign.js?v=46304742';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=f5ab7230';
-import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=c4c1c4c4';
-import { passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
+import { createListbox } from '/js/listbox.js?v=384c0ad5';
+import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=84ba5279';
+import { passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import {
   applyTheme,
@@ -123,7 +123,7 @@ import {
   storeSet,
   tgt,
   within,
-} from '/js/utils.js?v=e8f3d601';
+} from '/js/utils.js?v=c1d4e76c';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=39538b71';
 
@@ -1299,7 +1299,7 @@ const NOTE_TEXT = {
     @param {Array<{ name: string, group: string, why: string }>} rows */
 function dlgSection(parent, heading, rows) {
   if (!rows.length) return;
-  const h = document.createElement('div');
+  const h = document.createElement('h3');
   h.className = 'dlg-sec';
   h.textContent = `${heading} (${formatNumber(rows.length)})`;
   const ul = document.createElement('ul');
@@ -1435,7 +1435,7 @@ async function reviewImport(items, skipped, notes, nothingKey) {
   /** @type {HTMLInputElement|null} */
   let skipTlsChoice = null;
   if (insecure.length) {
-    const heading = document.createElement('div');
+    const heading = document.createElement('h3');
     heading.className = 'dlg-sec';
     heading.textContent = `${t('app.allowSelfSigned')} (${formatNumber(insecure.length)})`;
     const choice = document.createElement('label');

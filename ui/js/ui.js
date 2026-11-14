@@ -17,8 +17,8 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=e8f3d601';
-import { t, currentLang } from '/js/i18n.js?v=721852aa';
+} from '/js/utils.js?v=c1d4e76c';
+import { t, currentLang } from '/js/i18n.js?v=99563c71';
 import { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
 import {
   BASE_VW,
@@ -31,7 +31,7 @@ import {
 import { animate, easing, glide, isScripted, requestFrame, stopGlide } from '/js/frame-motion.js?v=1d86154d';
 import { openFolderGlass } from '/js/glass.js?v=258316fb';
 import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=b4828b62';
-import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
+import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 
 /* Matches the --pill-inset transition in dashboard.css. */
@@ -1107,7 +1107,7 @@ export function buildMobile() {
   const pillNewDots = q('.msp-dots', pillNew);
   pillNewDots.replaceChildren();
   const pillDotEls = pages.map((_, i) => {
-    const d = document.createElement('div');
+    const d = document.createElement('span');
     d.className = 'msp-dot' + (i === 0 ? ' on' : '');
     pillNewDots.appendChild(d);
     return d;
@@ -1116,12 +1116,6 @@ export function buildMobile() {
   onTap(pillNew, () => {
     if (CB().spotOpen) CB().spotOpen('');
   });
-  pillNew.onkeydown = e => {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    e.preventDefault();
-    e.stopPropagation();
-    if (CB().spotOpen) CB().spotOpen('');
-  };
 
   let _pillIdleTimer = null;
   let _pillClipTimer = 0;

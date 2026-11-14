@@ -68,7 +68,7 @@
 </div>
 
 <script type="module">
-import { poll, fetchData, getConfig, rollText, linkTo, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=8415820b';
+import { poll, fetchData, getConfig, rollText, linkTo, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=dbff1c85';
 await loadStrings();
 /* These two are in the markup, so the widget still reads correctly in English
    if the catalog fetch fails. */
@@ -159,7 +159,7 @@ function render(m, ph = false) {
   _segs = segs;
   if (_sel >= segs.length) _sel = -1;
   if (!ph) renderLegend(segs);
-  if (!segs.length) { svgEl.innerHTML=''; return; }
+  if (!segs.length) { svgEl.replaceChildren(); return; }
 
   const sum = segs.reduce((a,s)=>a+s.value,0);
   const srcH = H * SRC_SHARE;

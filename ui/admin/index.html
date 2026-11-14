@@ -12,8 +12,8 @@
   <script src="/js/admin-theme.js?v=63da492d"></script>
   <script src="/js/boot-hints.js?v=6ffdbc2d"></script>
   <script src="/js/page-zoom.js?v=01ccc9cf"></script>
-  <link rel="stylesheet" href="/css/tokens.css?v=d7064230">
-  <link rel="stylesheet" href="/css/admin.css?v=48e167be">
+  <link rel="stylesheet" href="/css/tokens.css?v=9ac63e96">
+  <link rel="stylesheet" href="/css/admin.css?v=0383ad36">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=53b91d5f">
   <link rel="stylesheet" href="/css/config-recovery.css?v=9f8ca0ab">
 </head>
@@ -67,7 +67,7 @@
       </div>
       <p class="grp-tip" data-i18n="general.hostIpTip">Lets badges fetch from your server's own address. Without it, those requests are blocked.</p>
 
-      <div class="grp-hdr" role="heading" aria-level="2" data-i18n="common.language">Language</div>
+      <h2 class="grp-hdr" data-i18n="common.language">Language</h2>
       <div class="grp">
         <div class="row">
           <span class="rl" data-i18n="common.language">Language</span>
@@ -76,7 +76,7 @@
         </div>
       </div>
 
-      <div class="grp-hdr" role="heading" aria-level="2" data-i18n="general.monitoring">Monitoring</div>
+      <h2 class="grp-hdr" data-i18n="general.monitoring">Monitoring</h2>
       <div class="grp">
         <div class="row">
           <span class="rl" data-i18n="general.loggingLevel">Logging Level</span>
@@ -86,9 +86,9 @@
       </div>
       <p class="grp-tip" data-i18n="general.loggingTip">Setting this to Errors logs warnings and errors only. Security events are always logged.</p>
       <div class="grp">
-        <div class="row"><span class="rl" id="rl-srv-hc-en" data-i18n="general.healthChecks">Health Checks</span><label class="tog"><input type="checkbox" id="srv-hc-en" aria-labelledby="rl-srv-hc-en"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl" id="rl-srv-hc-en" data-i18n="general.healthChecks">Health Checks</span><label class="tog"><input type="checkbox" role="switch" id="srv-hc-en" aria-labelledby="rl-srv-hc-en"><div class="tr"></div></label></div>
         <div class="row-wrap reveal" id="srv-hc-rows"><div class="reveal-in">
-        <div class="row" id="srv-hide-healthy-row"><span class="rl" id="rl-srv-hide-healthy" data-i18n="general.hideHealthy">Hide Healthy Badge</span><label class="tog"><input type="checkbox" id="srv-hide-healthy" aria-labelledby="rl-srv-hide-healthy"><div class="tr"></div></label></div>
+        <div class="row" id="srv-hide-healthy-row"><span class="rl" id="rl-srv-hide-healthy" data-i18n="general.hideHealthy">Hide Healthy Badge</span><label class="tog"><input type="checkbox" role="switch" id="srv-hide-healthy" aria-labelledby="rl-srv-hide-healthy"><div class="tr"></div></label></div>
         </div></div>
       </div>
       <div class="reveal" id="hc-off-wrap"><div class="reveal-in">
@@ -103,15 +103,15 @@
         <div class="row ie-row" id="ie-pve-url"><span class="rl" data-i18n="general.proxmoxUrl">Proxmox Address</span><span class="rv is-ph" id="ie-pve-url-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
         <div class="row ie-row" id="ie-pve-token"><span class="rl" data-i18n="general.proxmoxTokenId">Token ID</span><span class="rv is-ph" id="ie-pve-token-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
         <div class="row ie-row" id="ie-pve-secret"><span class="rl" data-i18n="general.proxmoxSecret">Secret</span><span class="rv is-ph" id="ie-pve-secret-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
-        <div class="row"><span class="rl" id="rl-srv-pve-tls" data-i18n="app.allowSelfSigned">Allow Self-Signed Certificate</span><label class="tog"><input type="checkbox" id="srv-pve-tls" aria-labelledby="rl-srv-pve-tls"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl" id="rl-srv-pve-tls" data-i18n="app.allowSelfSigned">Allow Self-Signed Certificate</span><label class="tog"><input type="checkbox" role="switch" id="srv-pve-tls" aria-labelledby="rl-srv-pve-tls"><div class="tr"></div></label></div>
         <div class="row"><span class="rl" data-i18n="general.proxmoxConnection">Connection</span><span id="pve-status" class="row-status end" role="status" data-i18n="general.proxmoxNotTested">Not tested</span><button type="button" class="row-btn" id="pve-test" data-i18n="app.test">Test</button></div>
       </div>
       <p class="grp-tip" id="pve-hint" data-i18n="general.proxmoxTip">For Proxmox checks. Use an API token with the PVEAuditor role.</p>
       </div></div>
 
-      <div class="grp-hdr" role="heading" aria-level="2" data-i18n="general.security">Security</div>
+      <h2 class="grp-hdr" data-i18n="general.security">Security</h2>
       <div class="grp">
-        <div class="row"><span class="rl" id="rl-sec-en" data-i18n="general.passwordProtection">Password Protection</span><label class="tog"><input type="checkbox" id="sec-en" aria-labelledby="rl-sec-en"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl" id="rl-sec-en" data-i18n="general.passwordProtection">Password Protection</span><label class="tog"><input type="checkbox" role="switch" id="sec-en" aria-labelledby="rl-sec-en"><div class="tr"></div></label></div>
         <div class="row-wrap reveal" id="ie-pw-wrap"><div class="reveal-in"><div class="row ie-row" id="ie-pw"><span class="rl" data-i18n="general.password">Password</span><span class="rv is-ph" id="ie-pw-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button><button class="pw-reveal" type="button" aria-pressed="false" aria-label="Show password" title="Show password" data-i18n-al="common.showPassword" data-i18n-title="common.showPassword"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-eye"/></svg></button></div></div></div>
         <div class="row-wrap reveal" id="ie-pw2-wrap"><div class="reveal-in"><div class="row ie-row" id="ie-pw2"><span class="rl" data-i18n="general.confirmPassword">Confirm Password</span><span class="rv is-ph" id="ie-pw2-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button><button class="pw-reveal" type="button" aria-pressed="false" aria-label="Show password" title="Show password" data-i18n-al="common.showPassword" data-i18n-title="common.showPassword"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-eye"/></svg></button></div></div></div>
         <div class="row-wrap reveal" id="sec-revoke-wrap"><div class="reveal-in"><div class="row" id="sec-revoke-row"><span class="rl" data-i18n="general.signOutEverywhere">Sign Out All Devices</span><div class="row-btns"><button class="btn bg sm" id="sec-revoke" type="button" data-i18n="general.signOutEverywhereBtn">Sign out all</button></div></div></div></div>
@@ -127,7 +127,7 @@
       <div class="reveal" id="hosts-add-tip-wrap"><div class="reveal-in"><p class="grp-tip" id="hosts-add-tip" data-i18n="general.allowedHostsAddTip">This page is open on an address that isn’t listed. Add it so a page on another site can’t use up your sign-in attempts.</p></div></div>
       <p class="grp-tip" data-i18n-html="general.allowedHostsTip">While no password is set, Stackyard answers only on IP addresses, local names such as <code>nas</code> or <code>nas.local</code>, and the addresses listed here. Separate them with commas.</p>
 
-      <div class="grp-hdr" role="heading" aria-level="2" data-i18n="general.backup">Backup</div>
+      <h2 class="grp-hdr" data-i18n="general.backup">Backup</h2>
       <div class="grp">
         <div class="row"><span class="rl" data-i18n="general.importExport">Import / Export</span><div class="row-btns"><label class="btn bg sm cursor-ptr"><span data-i18n="common.import">Import</span><input type="file" id="imp" accept=".json" class="file-hidden" aria-label="Import configuration JSON" data-i18n-al="general.importJson"></label><button class="btn bg sm" id="btn-exp" type="button" data-i18n="common.export">Export</button></div></div>
         <div class="row"><span class="rl" data-i18n="general.importForeign">Import from Another Dashboard</span><div class="row-btns"><label class="btn bg sm cursor-ptr"><span data-i18n="common.chooseFiles">Choose Files</span><input type="file" id="imp-foreign" accept=".yml,.yaml" multiple class="file-hidden" aria-label="Import Homepage or Dashy YAML config" data-i18n-al="general.importForeignFiles"></label></div></div>
@@ -143,12 +143,12 @@
         <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-back"/></svg></a><h1 class="sec-title" data-i18n="nav.appearance">Appearance</h1>
         <div class="sec-hdr-actions"><button class="btn bp sm sv-btn" id="bg-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><span class="sv-busy" aria-hidden="true" data-i18n="common.saving">Saving…</span><span class="sv-done" aria-hidden="true"><svg class="sy-icon" width="16" height="16" aria-hidden="true" focusable="false"><use href="#sy-solid-check"/></svg><span data-i18n="toast.saved">Saved</span></span></button></div>
       </div>
-      <div class="grp-hdr" role="heading" aria-level="2" data-i18n="appearance.appTitle">App Title</div>
+      <h2 class="grp-hdr" data-i18n="appearance.appTitle">App Title</h2>
       <div class="grp">
-        <div class="row"><span class="rl" id="rl-set-lbl-d" data-i18n="appearance.showTitleDesktop">Show App Title on Desktop</span><label class="tog"><input type="checkbox" id="set-lbl-d" aria-labelledby="rl-set-lbl-d"><div class="tr"></div></label></div>
-        <div class="row"><span class="rl" id="rl-set-lbl-m" data-i18n="appearance.showTitleMobile">Show App Title on Mobile</span><label class="tog"><input type="checkbox" id="set-lbl-m" aria-labelledby="rl-set-lbl-m"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl" id="rl-set-lbl-d" data-i18n="appearance.showTitleDesktop">Show App Title on Desktop</span><label class="tog"><input type="checkbox" role="switch" id="set-lbl-d" aria-labelledby="rl-set-lbl-d"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl" id="rl-set-lbl-m" data-i18n="appearance.showTitleMobile">Show App Title on Mobile</span><label class="tog"><input type="checkbox" role="switch" id="set-lbl-m" aria-labelledby="rl-set-lbl-m"><div class="tr"></div></label></div>
       </div>
-      <div class="grp-hdr" role="heading" aria-level="2" data-i18n="appearance.display">Display</div>
+      <h2 class="grp-hdr" data-i18n="appearance.display">Display</h2>
       <div class="grp">
         <div class="row">
           <span class="rl" data-i18n="appearance.displayMode">Settings Display Mode</span>
@@ -158,18 +158,18 @@
       </div>
       <p class="grp-tip" data-i18n="appearance.displayModeTip">Sets the appearance of the Settings pages. It is stored in this browser, applies to this device only, and takes effect at once.</p>
       <div class="grp">
-        <div class="row"><span class="rl" id="rl-dev-transparency" data-i18n="appearance.reduceTransparency">Reduce Transparency</span><label class="tog"><input type="checkbox" id="dev-transparency" aria-labelledby="rl-dev-transparency"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl" id="rl-dev-transparency" data-i18n="appearance.reduceTransparency">Reduce Transparency</span><label class="tog"><input type="checkbox" role="switch" id="dev-transparency" aria-labelledby="rl-dev-transparency"><div class="tr"></div></label></div>
       </div>
       <p class="grp-tip" data-i18n="appearance.reduceTransparencyTip">Replaces the glass with solid surfaces on this device. It is stored in this browser and takes effect at once.</p>
       <div class="grp">
-        <div class="row"><span class="rl" id="rl-set-awake" data-i18n="appearance.keepAwake">Keep Screen Awake</span><label class="tog"><input type="checkbox" id="set-awake" aria-labelledby="rl-set-awake"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl" id="rl-set-awake" data-i18n="appearance.keepAwake">Keep Screen Awake</span><label class="tog"><input type="checkbox" role="switch" id="set-awake" aria-labelledby="rl-set-awake"><div class="tr"></div></label></div>
       </div>
       <p class="grp-tip" data-i18n="appearance.keepAwakeTip">Stops the screen dimming or locking while the dashboard is open. Browsers only allow this over HTTPS, so it has no effect on a plain HTTP address.</p>
       <div class="grp">
-        <div class="row"><span class="rl" id="rl-set-type-search" data-i18n="appearance.typeToSearch">Type to Search</span><label class="tog"><input type="checkbox" id="set-type-search" aria-labelledby="rl-set-type-search"><div class="tr"></div></label></div>
+        <div class="row"><span class="rl" id="rl-set-type-search" data-i18n="appearance.typeToSearch">Type to Search</span><label class="tog"><input type="checkbox" role="switch" id="set-type-search" aria-labelledby="rl-set-type-search"><div class="tr"></div></label></div>
       </div>
       <p class="grp-tip" data-i18n="appearance.typeToSearchTip">Typing a letter anywhere on the dashboard opens search. Turn this off if search opens by accident, for example with voice control.</p>
-      <div class="grp-hdr" role="heading" aria-level="2" data-i18n="appearance.wallpaper">Wallpaper</div>
+      <h2 class="grp-hdr" data-i18n="appearance.wallpaper">Wallpaper</h2>
       <div class="grp">
         <div class="row">
           <span class="rl" data-i18n="appearance.source">Source</span>
@@ -320,11 +320,11 @@
     <form id="login-form" class="login-form" method="post" novalidate>
     <input type="text" name="username" autocomplete="username" hidden>
     <div id="login-err" class="login-err" role="alert"></div>
-    <input id="login-pw" name="password" type="password" placeholder="Password" aria-label="Password" data-i18n-ph="login.password" data-i18n-al="login.password" autocomplete="current-password" enterkeyhint="go" class="login-pw">
+    <input id="login-pw" name="password" type="password" placeholder="Password" aria-label="Password" data-i18n-ph="login.password" data-i18n-al="login.password" autocomplete="current-password" enterkeyhint="go" class="login-pw" required>
     <button id="login-btn" type="submit" class="login-btn" data-i18n="login.signIn">Sign in</button>
     </form>
   </div>
 </dialog>
-<script type="module" src="/js/admin.js?v=2b13986a"></script>
+<script type="module" src="/js/admin.js?v=c9d55a1a"></script>
 </body>
 </html>

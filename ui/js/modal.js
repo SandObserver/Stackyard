@@ -74,7 +74,7 @@ export function openModal({ title, className, onClose }) {
   const box = /** @type {HTMLDialogElement} */ (document.createElement('dialog'));
   box.className = 'dlg-box' + (className ? ' ' + className : '');
 
-  const hdr = document.createElement('div');
+  const hdr = document.createElement('h2');
   hdr.className = 'dlg-hdr';
   /* Unique per open. Two ids point the second dialog's label at the first one's
      heading. */
@@ -322,6 +322,7 @@ export function promptModal({
       m.close();
     };
     input.onkeydown = e => {
+      if (e.isComposing || e.keyCode === 229) return;
       if (e.key === 'Enter') {
         e.preventDefault();
         accept();

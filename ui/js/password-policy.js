@@ -35,7 +35,7 @@ function onlyContextWords(pw, words) {
     .toLowerCase()
     .replace(/[^\p{L}]/gu, '');
   if (!letters) return false;
-  for (const w of [...words].sort((a, b) => b.length - a.length)) letters = letters.split(w).join('');
+  for (const w of words.toSorted((a, b) => b.length - a.length)) letters = letters.split(w).join('');
   return letters === '';
 }
 

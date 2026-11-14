@@ -88,7 +88,7 @@ function buildShell(){
   face.setAttribute('width', sz);
   face.setAttribute('height', sz);
   face.setAttribute('viewBox', `0 0 ${_vb} ${_vb}`);
-  while(face.firstChild) face.removeChild(face.firstChild);
+  face.replaceChildren();
 
   const V=_vb, cx=V/2, cy=V/2;
   const dial=DIAL[_mode];
@@ -277,7 +277,7 @@ if(typeof MutationObserver==='function') new MutationObserver(()=>{
 }).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 async function boot(){
   const [toolbox, dates] = await Promise.all([
-    import('/js/widget-toolbox.js?v=8415820b'),
+    import('/js/widget-toolbox.js?v=dbff1c85'),
     import('/js/clock-date.js?v=91a77e74'),
   ]);
   _theme=toolbox.theme;
