@@ -141,6 +141,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show a readable error when a request is too large for the web server.
 
+- Stop requests to a service by name from timing out when the DNS server never
+  answers IPv6 lookups.
+
+- Send the query string of a status check URL, so a check such as
+  `/status?check=db` reaches the right endpoint.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
