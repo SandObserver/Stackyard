@@ -7,7 +7,7 @@ const { ICONS_PATH } = require('../config');
 const { fetchUnchecked } = require('../proxy');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
-const { writeFileAtomic } = require('../atomic-write');
+const { writeFileAtomic, removeStaleUploads, ICONS_WRITE_FAILURES } = require('../atomic-write');
 const { sanitizeSvg } = require('../svg-sanitize');
 const { sniffIconType } = require('../icon-sniff');
 
@@ -15,6 +15,7 @@ const ICON_EXT_RE = /\.(svg|png|ico)$/i;
 const STEM_MAX_CHARS = 100;
 /* NAME_MAX is 255 bytes. A suffix and the extension must still fit. */
 const STEM_MAX_BYTES = 200;
+const STALE_UPLOAD_MS = 3_600_000;
 
 /** @param {number} code */
 function unsafeNameChar(code) {
@@ -260,11 +261,15 @@ on('POST', '/api/icons/upload', async (req, res) => {
         kind: KIND.INVALID,
         code: 'invalid.file-type',
       });
+    removeStaleUploads(ICONS_PATH, STALE_UPLOAD_MS);
     let saved = '';
     for (let attempt = 1; ; attempt++) {
       saved = safeIconName(ICONS_PATH, filename, content.ext);
       try {
-        writeFileAtomic(path.join(ICONS_PATH, saved), content.data, { noReplace: true });
+        writeFileAtomic(path.join(ICONS_PATH, saved), content.data, {
+          noReplace: true,
+          failures: ICONS_WRITE_FAILURES,
+        });
         break;
       } catch (e) {
         if (e.code !== 'EEXIST' || attempt >= 3) throw e;

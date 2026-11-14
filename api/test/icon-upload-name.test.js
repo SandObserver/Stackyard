@@ -391,7 +391,7 @@ function failingWrite(code) {
 
 for (const [code, status, apiCode] of [
   ['ENOSPC', 507, 'internal.disk-full'],
-  ['EROFS', 500, 'internal.config-not-writable'],
+  ['EROFS', 500, 'internal.icons-not-writable'],
 ]) {
   t2(`${code} during an icon upload answers ${apiCode} and leaves no file`, async () => {
     const listed = fs.readdirSync(uploadDir).sort();
@@ -408,3 +408,19 @@ for (const [code, status, apiCode] of [
     assert.deepEqual(fs.readdirSync(uploadDir).sort(), listed);
   });
 }
+
+t2('an upload removes temp files older than an hour and keeps the rest', async () => {
+  const old = path.join(uploadDir, '.upload-0123456789ab.tmp');
+  const fresh = path.join(uploadDir, '.upload-ba9876543210.tmp');
+  const icon = path.join(uploadDir, 'kept.png');
+  for (const file of [old, fresh, icon]) fs.writeFileSync(file, PNG);
+  const twoHoursAgo = new Date(Date.now() - 2 * 3_600_000);
+  fs.utimesSync(old, twoHoursAgo, twoHoursAgo);
+  fs.utimesSync(icon, twoHoursAgo, twoHoursAgo);
+  const r = await postMultipart(parts(['sweep.png', PNG]));
+  assert.equal(r.status, 200);
+  assert.ok(!fs.existsSync(old));
+  assert.ok(fs.existsSync(fresh));
+  assert.ok(fs.existsSync(icon));
+  for (const file of [fresh, icon]) fs.unlinkSync(file);
+});

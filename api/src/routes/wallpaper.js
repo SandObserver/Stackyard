@@ -10,7 +10,7 @@ const { sniffImageType } = require('../image-sniff');
 const { parseMultipartFile } = require('../parse-multipart');
 const log = require('../log');
 const { fail, KIND, errorBody } = require('../api-error');
-const { writeFileAtomic } = require('../atomic-write');
+const { writeFileAtomic, ICONS_WRITE_FAILURES } = require('../atomic-write');
 
 const WALLPAPER_DIR = () => path.join(ICONS_PATH, 'wallpaper');
 const WALLPAPER_URL_BASE = '/icons/wallpaper/';
@@ -43,7 +43,7 @@ function wallpaperName(ext) {
     @param {Buffer} data @param {string} ext @returns {string} */
 function storeWallpaper(data, ext) {
   const saved = wallpaperName(ext);
-  writeFileAtomic(path.join(WALLPAPER_DIR(), saved), data);
+  writeFileAtomic(path.join(WALLPAPER_DIR(), saved), data, { failures: ICONS_WRITE_FAILURES });
   return WALLPAPER_URL_BASE + saved;
 }
 

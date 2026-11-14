@@ -13,6 +13,35 @@ const WRITE_FAILURES = Object.freeze({
   EROFS: [500, 'internal.config-not-writable'],
 });
 
+/** @type {WriteFailures} */
+const ICONS_WRITE_FAILURES = Object.freeze({
+  ...WRITE_FAILURES,
+  EACCES: [500, 'internal.icons-not-writable'],
+  EPERM: [500, 'internal.icons-not-writable'],
+  EROFS: [500, 'internal.icons-not-writable'],
+});
+
+const UPLOAD_TMP_RE = /^\.upload-[0-9a-f]+\.tmp$/;
+
+/** @param {string} dir @param {number} maxAgeMs */
+function removeStaleUploads(dir, maxAgeMs) {
+  let names;
+  try {
+    names = fs.readdirSync(dir);
+  } catch {
+    return;
+  }
+  for (const name of names) {
+    if (!UPLOAD_TMP_RE.test(name)) continue;
+    const file = path.join(dir, name);
+    try {
+      if (Date.now() - fs.lstatSync(file).mtimeMs > maxAgeMs) fs.unlinkSync(file);
+    } catch {
+      /* nothing more to do */
+    }
+  }
+}
+
 /** @param {any} e @param {WriteFailures} [failures] */
 function tagWriteFailure(e, failures = WRITE_FAILURES) {
   const known = failures[e?.code];
@@ -96,4 +125,4 @@ function writeFileAtomic(target, data, opts = {}) {
   }
 }
 
-module.exports = { writeFileAtomic, tagWriteFailure, WRITE_FAILURES };
+module.exports = { writeFileAtomic, removeStaleUploads, tagWriteFailure, WRITE_FAILURES, ICONS_WRITE_FAILURES };

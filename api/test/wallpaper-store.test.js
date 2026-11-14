@@ -209,7 +209,7 @@ test('an uploaded image is stored and answered with its served URL', async () =>
 
 for (const [code, status, apiCode] of [
   ['ENOSPC', 507, 'internal.disk-full'],
-  ['EACCES', 500, 'internal.config-not-writable'],
+  ['EACCES', 500, 'internal.icons-not-writable'],
 ]) {
   test(`${code} during a wallpaper upload answers ${apiCode} and leaves no file`, async () => {
     fs.mkdirSync(dir(), { recursive: true });

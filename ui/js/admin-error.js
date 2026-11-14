@@ -48,6 +48,7 @@ const BY_CODE = Object.freeze({
   'invalid.newer-config': 'adminError.newerConfig',
   'internal.disk-full': 'adminError.diskFull',
   'internal.config-not-writable': 'adminError.configNotWritable',
+  'internal.icons-not-writable': 'adminError.iconsNotWritable',
   'internal.config-file-mounted': 'adminError.configFileMounted',
   'invalid.too-many-items': 'adminError.tooManyItems',
   'network.refused': 'adminError.refused',

@@ -289,6 +289,7 @@
     "newerConfig": "This backup was made by a newer version of Stackyard. Update first, then import it.",
     "diskFull": "The disk is full. Free some space, then try again.",
     "configNotWritable": "Stackyard cannot write to its data folder. Give the user running Stackyard write access, and check that the folder is not read-only.",
+    "iconsNotWritable": "Stackyard cannot write to its icons folder. Give the user running Stackyard write access, and check that the folder is not read-only.",
     "configFileMounted": "The config file is mounted on its own. Mount its folder instead.",
     "tooManyItems": "The item limit is {max}. Remove some first.",
     "socketRefused": "The socket proxy refused the request.",

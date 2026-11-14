@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=56dee4bc';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=76f9343b';
+} from '/js/admin-app-form.js?v=a6ca5f88';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=4261ba58';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=34d450e1';
+} from '/js/admin-list.js?v=91e7299b';
 import { filterActive, folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=06da6a19';
 import {
   afterImport,
@@ -40,7 +40,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=a181a45f';
+} from '/js/admin-settings.js?v=58c53f96';
 import {
   announce,
   apiGet,
@@ -65,12 +65,12 @@ import {
   swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=42a61f1c';
+} from '/js/admin-shared.js?v=89fe2e81';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=5fae4625';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=1714277b';
 import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=11aa9737';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
-import { recoveryShown } from '/js/config-recovery.js?v=985c64ad';
+import { recoveryShown } from '/js/config-recovery.js?v=25ac2101';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=0c57b286';

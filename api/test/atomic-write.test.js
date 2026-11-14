@@ -4,7 +4,7 @@ const { test, afterEach, mock } = require('node:test');
 const assert = require('node:assert/strict');
 
 const { tmpDir } = require('../test-support/tmp');
-const { writeFileAtomic } = require('../src/atomic-write');
+const { writeFileAtomic, ICONS_WRITE_FAILURES } = require('../src/atomic-write');
 
 afterEach(() => mock.restoreAll());
 
@@ -62,6 +62,24 @@ for (const [code, status, apiCode] of [
     });
     assert.throws(
       () => writeFileAtomic(path.join(dir, 'a.png'), 'x'),
+      e => e.status === status && e.apiCode === apiCode,
+    );
+  });
+}
+
+for (const [code, status, apiCode] of [
+  ['ENOSPC', 507, 'internal.disk-full'],
+  ['EACCES', 500, 'internal.icons-not-writable'],
+  ['EPERM', 500, 'internal.icons-not-writable'],
+  ['EROFS', 500, 'internal.icons-not-writable'],
+]) {
+  test(`${code} with the icons failures is reported as ${apiCode}`, () => {
+    const dir = tmpDir('atomic');
+    mock.method(fs, 'openSync', () => {
+      throw Object.assign(new Error(code), { code });
+    });
+    assert.throws(
+      () => writeFileAtomic(path.join(dir, 'a.png'), 'x', { failures: ICONS_WRITE_FAILURES }),
       e => e.status === status && e.apiCode === apiCode,
     );
   });
