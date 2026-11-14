@@ -1,4 +1,4 @@
-import { setupErrorKey } from '/js/admin-error.js?v=05a2520c';
+import { setupErrorKey } from '/js/admin-error.js?v=5abd7438';
 import {
   applyBackground,
   BACKDROP,
@@ -16,7 +16,7 @@ import {
   readBadgeUpdate,
 } from '/js/badge-logic.js?v=7112fd10';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=2338cc3f';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=985c64ad';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=25ac2101';
 import {
   clampPage,
   configChanged,
