@@ -88,7 +88,7 @@ function buildShell(){
   face.setAttribute('width', sz);
   face.setAttribute('height', sz);
   face.setAttribute('viewBox', `0 0 ${_vb} ${_vb}`);
-  while(face.firstChild) face.removeChild(face.firstChild);
+  face.replaceChildren();
 
   const V=_vb, cx=V/2, cy=V/2;
   const dial=DIAL[_mode];
