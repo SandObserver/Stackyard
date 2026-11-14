@@ -214,7 +214,7 @@ test('a widget whose service stalls answers pending, then with the data once it 
     await new Promise(r => setTimeout(r, 50));
     const second = await req('GET', '/api/widget-data/slow-w', { cookie: validCookie });
     assert.equal(second.status, 200);
-    assert.deepEqual(second.body, { status: 200, data: { n: 7 } });
+    assert.deepEqual(second.body, { status: 200, data: { n: 7 }, format: 'json' });
   } finally {
     release();
     saveConfig(cfg);
@@ -246,7 +246,7 @@ test('a stored reply served while a refresh stalls says how old it is', async ()
     assert.equal(first.headers.age, '0');
     await new Promise(r => setTimeout(r, 2100));
     const second = await req('GET', '/api/widget-data/aged-w', { cookie: validCookie });
-    assert.deepEqual(second.body, { status: 200, data: { n: 1 } });
+    assert.deepEqual(second.body, { status: 200, data: { n: 1 }, format: 'json' });
     assert.ok(Number(second.headers.age) >= 2, `Age was ${second.headers.age}`);
   } finally {
     release();

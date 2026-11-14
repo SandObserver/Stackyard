@@ -867,15 +867,15 @@ async function glancesThroughput(ctx) {
   const list = await glancesGet(ctx, 'network');
   const e = (Array.isArray(list) ? list : []).find(x => x?.interface_name === name);
   if (!e) ctx.fail(`Glances is not reporting the ${name} interface.`, { kind: ctx.KIND.INVALID });
-  /* Version 4 reports the rate. Version 3 reports the window and its length. */
+  /* Version 4 reports the rate. Version 3 reports the bytes in the window and its length. */
   const perSec = (rate, bytes) => {
     if (typeof rate === 'number') return Math.round(rate);
     const window = Number(e.time_since_update);
     return window > 0 ? Math.round((Number(bytes) || 0) / window) : 0;
   };
   return {
-    rx: perSec(e.bytes_recv_rate_per_sec, e.bytes_recv),
-    tx: perSec(e.bytes_sent_rate_per_sec, e.bytes_sent),
+    rx: perSec(e.bytes_recv_rate_per_sec, e.rx),
+    tx: perSec(e.bytes_sent_rate_per_sec, e.tx),
   };
 }
 
