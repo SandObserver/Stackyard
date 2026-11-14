@@ -1,9 +1,14 @@
+const path = require('node:path');
+const { tmpDir } = require('../test-support/tmp');
+process.env.CONFIG_PATH = path.join(tmpDir('disk-health'), 'apps.json');
+
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const path = require('node:path');
+const http = require('node:http');
 
 const { dispatchProvider } = require(path.join(__dirname, '..', 'src', 'provider-dispatch.js'));
-const { normalizeBase } = require(path.join(__dirname, '..', 'src', 'widget-data.js'));
+const { normalizeBase, dataFnContext } = require(path.join(__dirname, '..', 'src', 'widget-data.js'));
+const { fetchUnchecked } = require(path.join(__dirname, '..', 'src', 'proxy.js'));
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'disk-health', 'data.js'));
 const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
@@ -218,23 +223,67 @@ for (const endpoint of ['', 'devices']) {
   });
 }
 
+async function unraidRuntime(array, bays) {
+  const srv = http.createServer((req, res) => {
+    req.resume();
+    req.on('end', () => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ data: { array } }));
+    });
+  });
+  await new Promise(r => srv.listen(0, '127.0.0.1', r));
+  const config = { ...UNRAID, unraidUrl: `http://127.0.0.1:${srv.address().port}`, bays };
+  try {
+    return await dataFn(dataFnContext(config, '', new URLSearchParams(), fetchUnchecked));
+  } finally {
+    srv.closeAllConnections();
+    srv.close();
+  }
+}
+
 for (const [status, health] of [
   ['DISK_OK', 'healthy'],
   ['DISK_NEW', 'healthy'],
+  ['DISK_NP', 'failed'],
+  ['DISK_NP_MISSING', 'failed'],
   ['DISK_INVALID', 'failed'],
   ['DISK_WRONG', 'failed'],
   ['DISK_DSBL', 'failed'],
+  ['DISK_NP_DSBL', 'failed'],
   ['DISK_DSBL_NEW', 'failed'],
   ['SOMETHING_NEW', 'unknown'],
   [null, 'unknown'],
 ]) {
   test(`Unraid state ${status} is a ${health} drive`, async () => {
-    const array = { disks: [unraidSlot('disk1', status)] };
-    const [bay] = (await dataFn(makeCtx('', { ...UNRAID, bays: ['disk1'] }, unraidFetch(array)))).bays;
+    const array = { parities: [], disks: [unraidSlot('disk1', status)], caches: [] };
+    const [bay] = (await unraidRuntime(array, ['disk1'])).bays;
+    assert.equal(bay.error, undefined);
     assert.equal(bay.hasSmart, health !== 'unknown');
     if (health !== 'unknown') assert.equal(bay.device_status, health === 'failed' ? 2 : 0);
   });
 }
+
+test('a degraded Unraid array reports its missing and disabled drives as failed', async () => {
+  const array = {
+    parities: [unraidSlot('parity', 'DISK_OK')],
+    disks: [
+      unraidSlot('disk1', 'DISK_OK'),
+      { name: 'disk2', device: null, size: null, status: 'DISK_NP_MISSING', temp: null },
+      unraidSlot('disk3', 'DISK_NP_DSBL', { temp: null }),
+    ],
+    caches: [],
+  };
+  const bays = (await unraidRuntime(array, ['parity', 'disk1', 'disk2', 'disk3'])).bays;
+  assert.deepEqual(
+    bays.map(b => [b.device_id, b.hasSmart, b.device_status]),
+    [
+      ['parity', true, 0],
+      ['disk1', true, 0],
+      ['disk2', true, 2],
+      ['disk3', true, 2],
+    ],
+  );
+});
 
 test('an Unraid drive reports its size in bytes and no temperature while spun down', async () => {
   const array = { disks: [unraidSlot('disk1', 'DISK_OK', { size: 1953514552, temp: null })] };
@@ -244,7 +293,7 @@ test('an Unraid drive reports its size in bytes and no temperature while spun do
   assert.equal(bay.device_name, 'disk1');
 });
 
-test('an Unraid bay left out of the reply is a failed drive, as Unraid omits a missing drive', async () => {
+test('an Unraid bay left out of the reply is a failed drive', async () => {
   const array = { disks: [unraidSlot('disk1', 'DISK_OK')] };
   const [, bay] = (await dataFn(makeCtx('', { ...UNRAID, bays: ['disk1', 'disk2'] }, unraidFetch(array)))).bays;
   assert.equal(bay.error, undefined);

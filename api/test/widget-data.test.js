@@ -117,7 +117,7 @@ test('a data function sends at most six requests at once to one service', async 
     peak = Math.max(peak, active);
     await new Promise(r => setTimeout(r, 5));
     active--;
-    return { status: 200, data: {} };
+    return { status: 200, data: {}, format: 'json' };
   };
   const ctx = dataFnContext({}, '', new URLSearchParams(), fetch);
   await Promise.all([
@@ -132,7 +132,7 @@ test('a queued request gets its timeout when it is sent', async () => {
   const fetch = async (url, opts) => {
     timeouts.push(opts.timeout);
     await new Promise(r => setTimeout(r, 300));
-    return { status: 200, data: {} };
+    return { status: 200, data: {}, format: 'json' };
   };
   const ctx = dataFnContext({}, '', new URLSearchParams(), fetch);
   await Promise.all(Array.from({ length: 7 }, () => ctx.fetchJSON('http://svc/', { timeout: 60000 })));
@@ -141,17 +141,30 @@ test('a queued request gets its timeout when it is sent', async () => {
 });
 
 test('a data function cannot read a reply that is not JSON as data', async () => {
-  const fetchFor = data => async () => ({ status: 200, data });
-  const ctx = dataFnContext({}, '', new URLSearchParams(), fetchFor('{"num_dns_queries": 12'));
+  const reply = { status: 200, data: '{"num_dns_queries": 12', format: 'text' };
+  const ctx = dataFnContext({}, '', new URLSearchParams(), async () => reply);
   await assert.rejects(ctx.fetchJSON('http://svc'), { name: 'WidgetError', kind: 'upstream' });
+});
+
+test('a reply that does not say how it was read is refused', async () => {
+  for (const data of ['7 days, 20:30:06', { ok: true }]) {
+    const ctx = dataFnContext({}, '', new URLSearchParams(), async () => ({ status: 200, data }));
+    await assert.rejects(ctx.fetchJSON('http://svc'), { name: 'WidgetError', kind: 'upstream' });
+  }
 });
 
 test('raw text, empty bodies, error replies and parsed replies still reach the data function', async () => {
   const cases = [
-    [{ status: 200, data: 'line one' }, { raw: true }],
-    [{ status: 204, data: '' }, {}],
-    [{ status: 401, data: 'Unauthorized' }, {}],
-    [{ status: 200, data: { ok: true } }, {}],
+    [{ status: 200, data: 'line one', format: 'text' }, { raw: true }],
+    [{ status: 204, data: '', format: 'text' }, {}],
+    [{ status: 401, data: 'Unauthorized', format: 'text' }, {}],
+    [{ status: 200, data: { ok: true }, format: 'json' }, {}],
+    [{ status: 200, data: '7 days, 20:30:06', format: 'json' }, {}],
+    [{ status: 200, data: 42, format: 'json' }, {}],
+    [{ status: 200, data: null, format: 'json' }, {}],
+    [{ status: 200, data: { a: { b: '1' } }, format: 'xml' }, {}],
+    [{ status: 200, data: { up: [{ labels: {}, value: 1 }] }, format: 'metrics' }, {}],
+    [{ status: 503, data: null, error: 'Outbound requests are disabled in demo mode' }, {}],
   ];
   for (const [reply, opts] of cases) {
     const ctx = dataFnContext({}, '', new URLSearchParams(), async () => reply);
@@ -165,7 +178,7 @@ test('every upstream call of one request shares the widget time budget', async t
   const seen = [];
   const ctx = dataFnContext({}, '', new URLSearchParams(), async (url, opts) => {
     seen.push(opts.timeout);
-    return { status: 200, data: {} };
+    return { status: 200, data: {}, format: 'json' };
   });
 
   await ctx.fetchJSON('http://svc/a');

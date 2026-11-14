@@ -9,20 +9,20 @@
    Assertions are about keys. The API's `error` prose is written for a log and
    is never rendered, so nothing here asserts on English. */
 
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
+import { test } from 'node:test';
 import {
   badgeErrorAdvice,
   errorAdvice,
-  socketProbeAdvice,
+  KIND,
   loginErrorAdvice,
   optionsErrorAdvice,
   passwordRefusalKey,
   readError,
   setupErrorKey,
-  KIND,
+  socketProbeAdvice,
   TONE,
 } from '../js/admin-error.js';
 
@@ -288,6 +288,14 @@ test('an API refusal maps to its own sentence, not the per-kind one', () => {
   assert.equal(errorAdvice({ kind: 'blocked', code: 'blocked.rate-limit' }).key, 'toast.tooManyAttempts');
   assert.equal(errorAdvice({ kind: 'invalid', code: 'invalid.too-large' }).key, 'toast.imageTooLarge');
   assert.equal(errorAdvice({ kind: 'invalid', code: 'invalid.file-type' }).key, 'adminError.fileType');
+  assert.equal(
+    errorAdvice({ kind: 'internal', code: 'internal.config-not-writable' }).key,
+    'adminError.configNotWritable',
+  );
+  assert.equal(
+    errorAdvice({ kind: 'internal', code: 'internal.icons-not-writable' }).key,
+    'adminError.iconsNotWritable',
+  );
   assert.equal(errorAdvice({ kind: 'invalid' }).key, 'adminError.genericInvalid');
   assert.equal(errorAdvice(new TypeError('Failed to fetch')).key, 'adminError.offline');
 });

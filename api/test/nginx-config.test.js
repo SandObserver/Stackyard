@@ -299,28 +299,58 @@ test('nginx sets a body size limit at all', () => {
   assert.ok(limit, 'unset means nginx quietly applies its own 1 MB default');
 });
 
+function streamCap(file, name) {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'routes', file), 'utf8');
+  const max = new RegExp(`${name}_MAX_BYTES = (\\d+) \\* 1024 \\* 1024;`).exec(src);
+  const factor = new RegExp(`${name}_STREAM_MAX_BYTES = Math\\.round\\(${name}_MAX_BYTES \\* ([\\d.]+)\\);`).exec(src);
+  assert.ok(max && factor, `${name} limits not found in routes/${file}`);
+  return Math.round(Number(max[1]) * 1024 * 1024 * Number(factor[1]));
+}
+
 test('nginx allows at least as much as the API does', () => {
   const nginxLimit = nginxSize(dashboard, 'client_max_body_size');
-  const iconLimit = 2 * 1024 * 1024; /* ICON_MAX_BYTES in routes/icons.js */
+  const iconCap = streamCap('icons.js', 'ICON');
 
   assert.ok(nginxLimit >= BODY_LIMIT, `nginx allows ${nginxLimit} but the API accepts bodies up to ${BODY_LIMIT}`);
-  assert.ok(nginxLimit >= iconLimit, `nginx allows ${nginxLimit} but icon uploads may be ${iconLimit}`);
+  assert.ok(nginxLimit >= iconCap, `nginx allows ${nginxLimit} but the icon upload reads up to ${iconCap}`);
 });
 
 /* The same trap, one address along: a wallpaper is a photo, so the upload route
-   allows far more than the site-wide limit. nginx has to allow at least as much
-   on that address, or the request never reaches the code that knows the rule
+   allows far more than the site-wide limit. nginx has to allow as much on that
+   address, or the request never reaches the code that knows the rule
    and the browser is handed an HTML error page it cannot read. */
 
-test('nginx allows a wallpaper upload as large as the API accepts', () => {
+test('nginx allows a wallpaper upload body as large as the API reads', () => {
   const block = /location\s*=\s*\/api\/wallpaper\/upload\s*\{([\s\S]*?)\n {4}\}/.exec(dashboard);
   assert.ok(block, 'the wallpaper upload has no location of its own');
   const routeLimit = nginxSize(block[1], 'client_max_body_size');
-  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'routes', 'wallpaper.js'), 'utf8');
-  const m = /UPLOAD_MAX_BYTES = (\d+) \* 1024 \* 1024/.exec(src);
-  assert.ok(m, 'UPLOAD_MAX_BYTES not found in routes/wallpaper.js');
-  const apiLimit = Number(m[1]) * 1024 * 1024;
-  assert.ok(routeLimit >= apiLimit, `nginx allows ${routeLimit} but the API accepts ${apiLimit}`);
+  const apiCap = streamCap('wallpaper.js', 'UPLOAD');
+  assert.equal(routeLimit, apiCap, `nginx allows ${routeLimit} but the API reads up to ${apiCap}`);
+});
+
+/* nginx answers an oversized body itself. The admin reads only the API's JSON
+   error shape. */
+test('every /api/ location answers an oversized body with the API error shape', () => {
+  const locations = [...dashboard.matchAll(/location (?:(?:=|\^~) )?(\/api\/\S*) \{/g)];
+  assert.equal(locations.length, 5);
+  for (const m of locations) {
+    const block = dashboard.slice(m.index, dashboard.indexOf('\n    }', m.index));
+    assert.match(block, /^\s*error_page 413 @api_too_large;$/m, m[1]);
+  }
+
+  const block = locationBlock('@api_too_large');
+  assert.match(block, /^\s*types \{ \}$/m);
+  assert.match(block, /^\s*default_type application\/json;$/m);
+  assert.ok(block.includes('include /etc/nginx/http.d/security-headers.conf;'));
+  assert.ok(block.includes('include /etc/nginx/http.d/csp-api.conf;'));
+  assert.ok(!block.includes(INCLUDE), 'the page policy is for pages');
+  assert.match(block, /add_header Cache-Control "no-store" always;/);
+  const ret = /^\s*return 413 '([^']+)';$/m.exec(block);
+  assert.ok(ret, 'no JSON body for the 413');
+  const body = JSON.parse(ret[1]);
+  assert.equal(typeof body.error, 'string');
+  assert.equal(body.kind, 'invalid');
+  assert.equal(body.code, 'invalid.too-large');
 });
 
 test('nginx waits for a wallpaper download at least as long as the API does', () => {

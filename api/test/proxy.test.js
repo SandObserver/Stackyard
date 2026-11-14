@@ -205,6 +205,37 @@ test('getHostIp returns an empty string when no config file exists', () => {
   assert.equal(getHostIp(), '');
 });
 
+test('fetchJSON says how it read the body', async () => {
+  const bodies = {
+    '/string': ['application/json', '"7 days, 20:30:06"'],
+    '/number': ['application/json', '42'],
+    '/xml': ['application/xml', '<a><b>1</b></a>'],
+    '/metrics': ['text/plain; version=0.0.4', '# TYPE up gauge\nup 1\n'],
+    '/text': ['text/plain', 'not json'],
+  };
+  const server = http.createServer((req, res) => {
+    const [ct, body] = bodies[req.url];
+    res.writeHead(200, { 'Content-Type': ct });
+    res.end(body);
+  });
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    const read = async (p, opts = {}) => {
+      const r = await fetchJSON(base + p, { timeout: 3000, ...opts });
+      return [r.format, r.data];
+    };
+    assert.deepEqual(await read('/string'), ['json', '7 days, 20:30:06']);
+    assert.deepEqual(await read('/number'), ['json', 42]);
+    assert.equal((await read('/xml'))[0], 'xml');
+    assert.equal((await read('/metrics'))[0], 'metrics');
+    assert.deepEqual(await read('/text'), ['text', 'not json']);
+    assert.deepEqual(await read('/string', { raw: true }), ['text', '"7 days, 20:30:06"']);
+  } finally {
+    server.close();
+  }
+});
+
 test('fetchJSON returns response headers only when asked', async () => {
   const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json', 'X-Total-Count': '7', 'Set-Cookie': 'sid=1' });
@@ -214,7 +245,7 @@ test('fetchJSON returns response headers only when asked', async () => {
   const port = server.address().port;
   try {
     const plain = await fetchJSON(`http://127.0.0.1:${port}/`, { timeout: 3000 });
-    assert.deepEqual(Object.keys(plain).sort(), ['data', 'status']);
+    assert.deepEqual(Object.keys(plain).sort(), ['data', 'format', 'status']);
     const withHeaders = await fetchJSON(`http://127.0.0.1:${port}/`, { withHeaders: true, timeout: 3000 });
     assert.equal(withHeaders.headers['x-total-count'], '7');
   } finally {
@@ -252,4 +283,19 @@ test('a reply past the size limit is marked, so a route can word it as too large
   } finally {
     server.close();
   }
+});
+
+test('a ping sends the query string, on HEAD and on the GET retry after 405', async t => {
+  const { pingUrl } = _internals;
+  const seen = [];
+  const server = http.createServer((req, res) => {
+    seen.push(`${req.method} ${req.url}`);
+    res.writeHead(req.method === 'HEAD' ? 405 : 200);
+    res.end();
+  });
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  t.after(() => server.close());
+  const result = await pingUrl(`http://127.0.0.1:${server.address().port}/status?check=db&full=1`, 2000);
+  assert.deepEqual(seen, ['HEAD /status?check=db&full=1', 'GET /status?check=db&full=1']);
+  assert.equal(result.status, 200);
 });
