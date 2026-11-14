@@ -36,24 +36,73 @@ test('dupNormalizeBase adds a scheme, strips a trailing slash, and rejects empty
 
 test('dupParseDate handles compact, ISO, empty and invalid dates', () => {
   assert.equal(b.dupParseDate('20240115T133000Z'), Date.UTC(2024, 0, 15, 13, 30, 0));
+  assert.equal(b.dupParseDate('20240115T133000'), Date.UTC(2024, 0, 15, 13, 30, 0));
+  assert.equal(b.dupParseDate('20240115T153000+02:00'), Date.UTC(2024, 0, 15, 13, 30, 0));
   assert.equal(b.dupParseDate('2024-01-15T13:30:00Z'), Date.UTC(2024, 0, 15, 13, 30, 0));
+  assert.equal(b.dupParseDate('20241315T133000Z'), 0);
   assert.equal(b.dupParseDate(''), 0);
   assert.equal(b.dupParseDate('not a date'), 0);
 });
 
-test('dupDeriveStatus resolves running/error/missed/warning/healthy in priority order', () => {
-  const job = { ID: '1', Metadata: { LastBackupFinished: '20200101T000000Z' } };
-  assert.equal(b.dupDeriveStatus(job, { ActiveTask: { BackupID: '1' } }), 'running');
-  assert.equal(b.dupDeriveStatus(job, { ActiveTask: { Item1: '1' } }), 'running');
-  assert.equal(b.dupDeriveStatus(job, { ActiveTask: { BackupID: '1' }, HasError: true }), 'running'); // running wins
-  assert.equal(b.dupDeriveStatus(job, { HasError: true }), 'error');
-  assert.equal(b.dupDeriveStatus(job, { ProposedSchedule: [{ Item1: '1', Item2: '2020-06-01T00:00:00Z' }] }), 'missed');
-  assert.equal(b.dupDeriveStatus(job, { HasWarning: true }), 'warning');
-  assert.equal(b.dupDeriveStatus(job, {}), 'healthy');
+/* Shapes from Duplicati: ActiveTask is (task id, backup id) per ServerStatus.cs.
+   Runner.cs writes the metadata dates with SerializeDateTime. */
+const dupJob = (id, meta, operationType = 'Backup') => ({
+  Backup: { ID: id, Name: `Job ${id}`, OperationType: operationType, Metadata: meta },
+  Schedule: null,
+});
+
+test('dupDeriveStatus marks the job named by the backup id of the active task as running', () => {
+  const state = { ActiveTask: { Item1: 2, Item2: '5' }, ProposedSchedule: [] };
+  assert.equal(b.dupDeriveStatus(dupJob('5', { LastBackupFinished: '20261101T020000Z' }), state), 'running');
+  assert.equal(b.dupDeriveStatus(dupJob('2', { LastBackupFinished: '20261101T020000Z' }), state), 'healthy');
+});
+
+test('dupDeriveStatus reads errors per job, not from the server-wide flags', () => {
+  const state = { ActiveTask: null, ProposedSchedule: [], HasError: true, HasWarning: true };
+  const failed = dupJob('1', { LastBackupFinished: '20261101T020000Z', LastErrorDate: '20261102T020000Z' });
+  const fixed = dupJob('2', { LastBackupFinished: '20261103T020000Z', LastErrorDate: '20261102T020000Z' });
+  const never = dupJob('3', { LastErrorDate: '20261102T020000Z' });
+  const same = dupJob('4', { LastBackupFinished: '20261102T020000Z', LastErrorDate: '20261102T020000Z' });
+  assert.equal(b.dupDeriveStatus(failed, state), 'error');
+  assert.equal(b.dupDeriveStatus(fixed, state), 'healthy');
+  assert.equal(b.dupDeriveStatus(never, state), 'error');
+  assert.equal(b.dupDeriveStatus(same, state), 'error');
+  assert.equal(b.dupDeriveStatus(dupJob('5', { LastBackupFinished: '20261101T020000Z' }), state), 'healthy');
+});
+
+test('dupDeriveStatus reads the run keys that match the job operation type', () => {
+  const state = { ActiveTask: null, ProposedSchedule: [] };
+  const err = '20261102T020000Z';
+  assert.equal(
+    b.dupDeriveStatus(dupJob('1', { LastSyncFinished: '20261103T020000Z', LastErrorDate: err }, 'Sync'), state),
+    'healthy',
+  );
+  assert.equal(
+    b.dupDeriveStatus(dupJob('1', { LastBackupFinished: '20261103T020000Z', LastErrorDate: err }, 'Sync'), state),
+    'error',
+  );
+  assert.equal(
+    b.dupDeriveStatus(dupJob('1', { LastBackupDate: '20261103T020000Z', LastErrorDate: err }), state),
+    'healthy',
+  );
+  assert.equal(
+    b.dupDeriveStatus(dupJob('1', { LastBackupDate: '20261103T020000Z', LastErrorDate: err }, 'Sync'), state),
+    'error',
+  );
+});
+
+test('dupDeriveStatus resolves running, error, missed and healthy in priority order', () => {
+  const failed = dupJob('1', { LastBackupFinished: '20200101T000000Z', LastErrorDate: '20200102T000000Z' });
+  const ok = dupJob('1', { LastBackupFinished: '20200101T000000Z' });
+  const due = [{ Item1: '1', Item2: '2020-06-01T00:00:00Z' }];
+  assert.equal(b.dupDeriveStatus(failed, { ActiveTask: { Item1: 9, Item2: '1' }, ProposedSchedule: due }), 'running');
+  assert.equal(b.dupDeriveStatus(failed, { ProposedSchedule: due }), 'error');
+  assert.equal(b.dupDeriveStatus(ok, { ProposedSchedule: due }), 'missed');
+  assert.equal(b.dupDeriveStatus(ok, {}), 'healthy');
 });
 
 test('dupDeriveStatus is not missed when the last backup is newer than the scheduled run', () => {
-  const job = { ID: '1', Metadata: { LastBackupFinished: '2025-12-31T00:00:00Z' } };
+  const job = dupJob('1', { LastBackupFinished: '20251231T000000Z' });
   assert.equal(
     b.dupDeriveStatus(job, { ProposedSchedule: [{ Item1: '1', Item2: '2020-06-01T00:00:00Z' }] }),
     'healthy',

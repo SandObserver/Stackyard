@@ -43,13 +43,16 @@ function resolveRow(wc, row) {
   return r && typeof r === 'object' && !Array.isArray(r) ? r : null;
 }
 
-/* A body that is not JSON, XML or metrics resolves as a string. A widget that
+/* A body that is not JSON, XML or metrics resolves as text. A widget that
    spreads it into its reply blocks the API for seconds. */
+const READABLE = new Set(['json', 'xml', 'metrics']);
+const isEmpty = data => data == null || (typeof data === 'string' && data.trim() === '');
+
 const refuseUnreadable =
   fetch =>
   async (url, opts = {}) => {
     const r = await fetch(url, opts);
-    if (!opts.raw && r.status < 400 && typeof r.data === 'string' && r.data.trim() !== '') {
+    if (!opts.raw && r.status < 400 && !READABLE.has(r.format) && !isEmpty(r.data)) {
       throw new WidgetError('The service sent a reply that is not JSON.', { kind: KIND.UPSTREAM });
     }
     return r;

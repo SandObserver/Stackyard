@@ -5,9 +5,9 @@ const {
   dupList,
   dupId,
   dupName,
-  dupMeta,
   dupSchedule,
   dupNormalizeBase,
+  dupLastFinished,
   dupDeriveStatus,
   kopiaDeriveStatus,
   kopiaSourceId,
@@ -388,12 +388,12 @@ async function slots(config, ctx) {
             return;
           }
           const id = dupId(j);
-          const meta = dupMeta(j);
+          const finishedMs = dupLastFinished(j);
           result[i] = {
             id,
             name: customName || dupName(j),
             status: dupDeriveStatus(j, serverState),
-            lastFinished: meta.LastBackupFinished || meta.LastBackupDate || meta.LastBackupStarted || null,
+            lastFinished: finishedMs ? new Date(finishedMs).toISOString() : null,
             nextRun: proposed[id] || dupSchedule(j)?.Time || null,
             link: dupLink(ctx, list[i], id),
           };
