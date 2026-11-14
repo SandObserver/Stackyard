@@ -45,38 +45,58 @@ async function adGuard(ctx, base, config, fetchJSON) {
   };
 }
 
-async function piHole(ctx, base, config, fetchJSON) {
-  /* v6 session auth: POST /api/auth { password } -> session.sid, sent as the
-     X-FTL-SID header. */
-  let sid = '';
-  if (config.dnsPiholePassword) {
+/* Do not sign in per poll. Pi-hole v6 caps open sessions and then refuses this
+   client. */
+const _piHoleSessions = new Map();
+
+const piHoleKey = (base, password) => JSON.stringify([base, password]);
+
+function piHoleSession(ctx, base, password, fetchJSON, spent) {
+  const key = piHoleKey(base, password);
+  const known = _piHoleSessions.get(key);
+  if (known && known !== spent && Date.now() < known.expiresAt) return known.ready;
+  const session = { sid: '', lifetimeMs: Infinity, expiresAt: Infinity };
+  session.ready = (async () => {
+    const sentAt = Date.now();
     const a = await fetchJSON(base + '/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: config.dnsPiholePassword }),
+      body: JSON.stringify({ password }),
       timeout: 8000,
     });
-    const valid = a.data && a.data.session && a.data.session.valid;
-    if (a.status === 401 || valid === false) ctx.fail('Pi-hole auth failed — check password', { kind: ctx.KIND.AUTH });
-    sid = (a.data && a.data.session && a.data.session.sid) || '';
-  }
-  const headers = sid ? { 'X-FTL-SID': sid } : {};
+    const reply = a.data && a.data.session;
+    if (a.status === 401 || (reply && reply.valid === false))
+      ctx.fail('Pi-hole auth failed — check password', { kind: ctx.KIND.AUTH });
+    session.sid = (reply && typeof reply.sid === 'string' && reply.sid) || '';
+    if (reply && Number.isFinite(reply.validity) && reply.validity > 0) session.lifetimeMs = reply.validity * 1000;
+    session.expiresAt = session.sid ? sentAt + session.lifetimeMs : 0;
+    return session;
+  })().catch(e => {
+    if (_piHoleSessions.get(key) === session) _piHoleSessions.delete(key);
+    throw e;
+  });
+  ctx.remember(_piHoleSessions, key, session);
+  return session.ready;
+}
 
-  /* Release the session on every path. Pi-hole v6 caps concurrent sessions,
-     and polling piles them up until it locks this client out. */
-  try {
-    return await piHoleStats(ctx, base, headers, fetchJSON);
-  } finally {
-    if (sid) {
-      try {
-        await fetchJSON(base + '/api/auth', { method: 'DELETE', headers, timeout: 5000 });
-      } catch {}
+async function piHole(ctx, base, config, fetchJSON) {
+  const password = config.dnsPiholePassword;
+  if (!password) return piHoleStats(ctx, base, {}, fetchJSON);
+  let session = await piHoleSession(ctx, base, password, fetchJSON);
+  for (let attempt = 0; ; attempt++) {
+    const sentAt = Date.now();
+    const out = await piHoleStats(ctx, base, session.sid ? { 'X-FTL-SID': session.sid } : {}, fetchJSON, attempt === 0);
+    if (out) {
+      if (session.sid) session.expiresAt = sentAt + session.lifetimeMs;
+      return out;
     }
+    session = await piHoleSession(ctx, base, password, fetchJSON, session);
   }
 }
 
-async function piHoleStats(ctx, base, headers, fetchJSON) {
+async function piHoleStats(ctx, base, headers, fetchJSON, mayRetry = false) {
   const sum = await fetchJSON(base + '/api/stats/summary', { headers, timeout: 8000 });
+  if (sum.status === 401 && mayRetry && headers['X-FTL-SID']) return null;
   if (sum.status === 401) ctx.fail('Pi-hole auth failed — set a password', { kind: ctx.KIND.AUTH });
   if (sum.status >= 400 || !sum.data || !sum.data.queries) ctx.fail('Pi-hole HTTP ' + sum.status);
 

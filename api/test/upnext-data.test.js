@@ -7,6 +7,7 @@ const items = require(path.join(widget, 'upnext-items.js'));
 const data = require(path.join(widget, 'data.js'));
 const { errorParts } = require('../test-support/widget-ctx');
 const { normalizeBase } = require('../src/widget-data');
+const { remember } = require('../src/bounded-cache');
 const { serviceLink } = require('../../ui/js/service-link.js');
 
 const HOUR = 3600 * 1000;
@@ -18,6 +19,7 @@ function ctxFor(config, route) {
   const ctx = {
     config,
     normalizeBase,
+    remember,
     serviceLink,
     fetchJSON: async (url, opts = {}) => {
       calls.push({ url, opts });

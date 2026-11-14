@@ -22,6 +22,7 @@ const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
 const { FETCH_MS, WIDGET_BUDGET_MS, WIDGET_HOLD_MS, WIDGET_KEEP_MS } = require('./timeouts');
 const { latest } = require('./latest');
 const { limitPerOrigin } = require('./origin-limit');
+const { remember } = require('./bounded-cache');
 
 const PER_ORIGIN = 6;
 
@@ -86,6 +87,7 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
     normalizeBase,
     serviceBase,
     serviceLink,
+    remember,
     fail: (message, opts) => {
       throw new WidgetError(message, opts);
     },

@@ -5,6 +5,7 @@ const { normalizeBase } = require('../src/widget-data');
 const { errorParts } = require('../test-support/widget-ctx');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'data.js'));
+const { remember } = require('../src/bounded-cache');
 
 /* Minimal stand-in for the ctx widget-data.js builds, capturing the last fetch
    call so header/URL wiring can be asserted. fetchJSON returns { status, data }. */
@@ -15,6 +16,7 @@ function ctxFor(network, response) {
       endpoint: 'speed',
       config: { network },
       normalizeBase,
+      remember,
       fetchJSON: async (url, opts) => {
         calls.push({ url, opts });
         return response;
@@ -96,6 +98,7 @@ test('a thrown fetch propagates rather than becoming a successful result', async
     endpoint: 'speed',
     config: { network: { enabled: true, url: 'http://ms', provider: 'myspeed' } },
     normalizeBase,
+    remember,
     fetchJSON: async () => {
       throw new Error('connect ECONNREFUSED');
     },

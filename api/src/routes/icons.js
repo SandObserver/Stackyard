@@ -6,6 +6,7 @@ const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { ICONS_PATH } = require('../config');
 const { fetchUnchecked } = require('../proxy');
 const log = require('../log');
+const { remember } = require('../bounded-cache');
 const { fail, KIND } = require('../api-error');
 const { writeFileAtomic, removeStaleUploads, ICONS_WRITE_FAILURES } = require('../atomic-write');
 const { sanitizeSvg } = require('../svg-sanitize');
@@ -126,11 +127,7 @@ const _cdnIcons = new Map();
 
 /** @param {string} key @param {CdnIconEntry} entry */
 function cdnCachePut(key, entry) {
-  _cdnIcons.delete(key);
-  _cdnIcons.set(key, entry);
-  /* Bounded. Icon names come from config an admin writes, but the map would
-     otherwise grow for the life of the process. */
-  while (_cdnIcons.size > CDN_CACHE_MAX) _cdnIcons.delete(_cdnIcons.keys().next().value);
+  remember(_cdnIcons, key, entry, CDN_CACHE_MAX);
 }
 
 /* Held in memory only. A restart refetches, so a changed upstream icon is never

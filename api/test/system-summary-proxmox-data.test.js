@@ -7,6 +7,7 @@ const { dispatchProvider } = require('../src/provider-dispatch');
 const { errorParts } = require('../test-support/widget-ctx');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'data.js'));
+const { remember } = require('../src/bounded-cache');
 const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
 
 const GB = 1024 ** 3;
@@ -44,6 +45,7 @@ function ctxFor(config, reply, endpoint = 'system') {
       ...config,
     },
     normalizeBase,
+    remember,
     serviceBase,
     serviceLink,
     fetchJSON: async (url, opts) => {

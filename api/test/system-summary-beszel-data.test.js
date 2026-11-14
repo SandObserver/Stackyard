@@ -6,6 +6,7 @@ const { dispatchProvider } = require('../src/provider-dispatch');
 const { errorParts } = require('../test-support/widget-ctx');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'data.js'));
+const { remember } = require('../src/bounded-cache');
 const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
 
 const SYSTEM = { id: 'sys1', name: 'homelab', status: 'up' };
@@ -73,6 +74,7 @@ function ctxFor(config, h = hub(), endpoint = 'system') {
       ...config,
     },
     normalizeBase,
+    remember,
     serviceBase,
     serviceLink,
     fetchJSON: h.fetchJSON,

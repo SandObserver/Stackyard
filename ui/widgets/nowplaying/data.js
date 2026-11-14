@@ -16,7 +16,7 @@ async function plexMachineId(ctx, base, token) {
     timeout: 5000,
   });
   const id = (r.status < 400 && r.data?.MediaContainer?.machineIdentifier) || '';
-  if (id) plexMachineIds.set(base, id);
+  if (id) ctx.remember(plexMachineIds, base, id);
   return id;
 }
 
