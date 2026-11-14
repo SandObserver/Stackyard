@@ -17,7 +17,14 @@ const { entrypointArgs } = require('../../api/test-support/entrypoint');
 const { tmpDir } = require('../../api/test-support/tmp');
 
 /* @returns {{ status: number, chowned: string[], stderr: string }} */
-function run({ uid = 0, writable = true, readOnly = false, chownFails = false, dirs = ['data', 'icons'] } = {}) {
+function run({
+  uid = 0,
+  writable = true,
+  readOnly = false,
+  chownFails = false,
+  dirs = ['data', 'icons'],
+  env = () => ({}),
+} = {}) {
   const dir = tmpDir('entrypoint-ownership');
   const binDir = path.join(dir, 'bin');
   fs.mkdirSync(binDir);
@@ -31,8 +38,24 @@ function run({ uid = 0, writable = true, readOnly = false, chownFails = false, d
   };
   stub('nginx', 'exit 0');
   stub('id', `echo ${uid}`);
-  stub('su', `case "$*" in *mkdir*) exit 0 ;; esac\nexit ${writable ? 0 : 1}`);
-  stub('chown', `echo "$*" >> ${log}\n[ "$1" = -R ] || exit 0\nexit ${chownFails ? 1 : 0}`);
+  /* A folder counts as writable for node once a chown -R has covered it. */
+  stub(
+    'su',
+    [
+      'case "$*" in *mkdir*) exit 0 ;; esac',
+      writable ? 'exit 0' : '',
+      'd="$(printf %s "$5" | sed \'s/^test -w "\\(.*\\)"$/\\1/\')"',
+      '[ -e "$d/.chowned" ]',
+    ].join('\n'),
+  );
+  stub(
+    'chown',
+    [
+      `echo "$*" >> ${log}`,
+      '[ "$1" = -R ] || exit 0',
+      chownFails ? 'exit 1' : 'find "$3" -type d -exec touch {}/.chowned \\;',
+    ].join('\n'),
+  );
   const handoff = stub('handoff', 'true');
   if (readOnly) {
     stub('mktemp', 'case "$1" in */data/* | */icons/*) exit 1 ;; esac\nPATH="${PATH#*:}" exec mktemp "$@"');
@@ -40,7 +63,7 @@ function run({ uid = 0, writable = true, readOnly = false, chownFails = false, d
 
   const made = dirs.map(name => {
     const p = path.join(dir, name);
-    fs.mkdirSync(p);
+    fs.mkdirSync(p, { recursive: true });
     if (uid !== 0 && !writable) fs.chmodSync(p, 0o555);
     return p;
   });
@@ -51,6 +74,7 @@ function run({ uid = 0, writable = true, readOnly = false, chownFails = false, d
     {
       env: {
         PATH: `${binDir}:${process.env.PATH}`,
+        ...env(dir),
       },
       encoding: 'utf8',
     },
@@ -65,7 +89,7 @@ function run({ uid = 0, writable = true, readOnly = false, chownFails = false, d
         .split('\n')
         .filter(line => line.startsWith('-R '))
     : [];
-  return { status, chowned, stderr, dirs: made };
+  return { status, chowned, stderr, dir, dirs: made };
 }
 
 test('a root-owned mount is taken over for the node user', () => {
@@ -115,4 +139,36 @@ test('started as another UID, a read-only volume is reported', () => {
   const r = run({ uid: 2000, writable: true, readOnly: true });
   assert.equal(r.status, 0);
   assert.equal((r.stderr.match(/UID 2000 cannot write/g) || []).length, 2);
+});
+
+test('started as root, the folders CONFIG_PATH and ICONS_PATH name are taken over, not the defaults', () => {
+  const r = run({
+    writable: false,
+    dirs: ['data', 'icons', 'config', 'media/icons'],
+    env: dir => ({ CONFIG_PATH: `${dir}/config/apps.json`, ICONS_PATH: `${dir}/media/icons` }),
+  });
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(r.chowned, [`-R node:node ${r.dir}/config`, `-R node:node ${r.dir}/media/icons`]);
+});
+
+/* One volume at /data, as on Railway, with the icons folder not made yet. */
+test('started as root, an icons folder inside the data folder is made and taken over once', () => {
+  const r = run({ writable: false, dirs: ['data'], env: dir => ({ ICONS_PATH: `${dir}/data/icons` }) });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stderr, '');
+  assert.deepEqual(r.chowned, [`-R node:node ${r.dir}/data`]);
+  assert.ok(fs.statSync(path.join(r.dir, 'data', 'icons')).isDirectory());
+});
+
+test('started as another UID, the folders CONFIG_PATH and ICONS_PATH name are the ones checked', () => {
+  const r = run({
+    uid: 2000,
+    writable: false,
+    dirs: ['config', 'media/icons'],
+    env: dir => ({ CONFIG_PATH: `${dir}/config/apps.json`, ICONS_PATH: `${dir}/media/icons` }),
+  });
+  assert.equal(r.status, 0);
+  assert.deepEqual(r.chowned, []);
+  assert.match(r.stderr, /UID 2000 cannot write \S+\/config;/);
+  assert.match(r.stderr, /UID 2000 cannot write \S+\/media\/icons;/);
 });

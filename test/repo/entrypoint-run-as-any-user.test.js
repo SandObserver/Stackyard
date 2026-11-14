@@ -20,9 +20,9 @@ const root = path.join(__dirname, '../..');
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');
 
 /* floor: null for Docker's 0, 'absent' for a kernel without the file, or the
-   file's content.
+   file's content. env may be a function of the test's folders.
    @returns {{ status: number, started: boolean, stderr: string, runtime: string, tmpdir: string, file: (name: string) => string }} */
-function run({ uid = 0, env = {}, floor = null, inet6 = null, setup = () => {} } = {}) {
+function run({ uid = 0, env = {}, floor = null, inet6 = null, paths: extraPaths = {}, setup = () => {} } = {}) {
   const dir = tmpDir('entrypoint-any-user');
   const binDir = path.join(dir, 'bin');
   const runtime = path.join(dir, 'run');
@@ -30,6 +30,7 @@ function run({ uid = 0, env = {}, floor = null, inet6 = null, setup = () => {} }
   fs.mkdirSync(runtime);
   fs.chmodSync(runtime, 0o1777);
   setup({ dir, runtime });
+  const extraEnv = typeof env === 'function' ? env({ dir, runtime }) : env;
 
   const stub = (name, body) => {
     const p = path.join(binDir, name);
@@ -44,7 +45,7 @@ function run({ uid = 0, env = {}, floor = null, inet6 = null, setup = () => {} }
   const started = path.join(dir, 'started');
   const handoff = stub('handoff', 'printf %s "$TMPDIR" > "$SY_STARTED"');
 
-  const paths = { runtime };
+  const paths = { runtime, ...extraPaths };
   if (inet6) paths.inet6 = inet6;
   if (floor !== null) {
     paths.floor = path.join(dir, 'floor');
@@ -55,7 +56,7 @@ function run({ uid = 0, env = {}, floor = null, inet6 = null, setup = () => {} }
     env: {
       PATH: `${binDir}:${process.env.PATH}`,
       SY_STARTED: started,
-      ...env,
+      ...extraEnv,
     },
     encoding: 'utf8',
   });
@@ -63,6 +64,7 @@ function run({ uid = 0, env = {}, floor = null, inet6 = null, setup = () => {} }
     status: r.status,
     started: fs.existsSync(started),
     stderr: r.stderr,
+    dir,
     runtime,
     tmpdir: fs.existsSync(started) ? fs.readFileSync(started, 'utf8') : '',
     file: name => fs.readFileSync(path.join(runtime, name), 'utf8'),
@@ -110,6 +112,139 @@ test('the highest and lowest valid ports are accepted', () => {
   for (const value of ['1', '65535']) {
     const r = run({ env: { LISTEN_PORT: value } });
     assert.equal(r.status, 0, `${value}: ${r.stderr}`);
+  }
+});
+
+/* ── ICONS_PATH and CONFIG_PATH ──────────────────────────────────────────── */
+
+const iconsAlias = r => /^alias (.+);$/m.exec(r.file('icons-alias.conf'))?.[1];
+const iconsRoot = r => /^root (.+);$/m.exec(r.file('icons-root.conf'))?.[1];
+
+test('unset, nginx serves icons from the folder docker-entrypoint.sh passes', () => {
+  for (const env of [{}, { ICONS_PATH: '', CONFIG_PATH: '' }]) {
+    const r = run({ env });
+    assert.equal(r.status, 0, r.stderr);
+    assert.equal(r.stderr, '');
+    assert.equal(iconsAlias(r), `${path.join(r.dir, 'no-icons')}/`);
+    assert.equal(iconsRoot(r), path.join(r.dir, 'no-icons'));
+    assert.ok(!fs.existsSync(path.join(r.dir, 'no-icons')), 'a default folder was created');
+  }
+});
+
+/* One volume at /data, as on Railway. */
+test('ICONS_PATH inside the data folder is served and created', () => {
+  for (const uid of [0, 2000]) {
+    const r = run({
+      uid,
+      setup: ({ dir }) => fs.mkdirSync(path.join(dir, 'data')),
+      env: ({ dir }) => ({ ICONS_PATH: `${dir}/data/icons/`, CONFIG_PATH: `${dir}/data/apps.json` }),
+    });
+    assert.equal(r.status, 0, `uid ${uid}: ${r.stderr}`);
+    const icons = path.join(r.dir, 'data', 'icons');
+    assert.equal(iconsAlias(r), `${icons}/`, `uid ${uid}`);
+    assert.equal(iconsRoot(r), icons, `uid ${uid}`);
+    assert.ok(fs.statSync(icons).isDirectory(), `uid ${uid}: the icons folder was not created`);
+    assert.equal(r.stderr, '', `uid ${uid}`);
+  }
+});
+
+test('an ICONS_PATH that could break nginx config stops the container', () => {
+  for (const value of [
+    'icons',
+    './icons',
+    '/',
+    '//',
+    '/data//icons',
+    '/data/../etc',
+    '/data/./icons',
+    '/data/..',
+    '/icons;',
+    '/icons; alias /etc/',
+    '/icons"',
+    "/icons'",
+    '/icons{',
+    '/icons}',
+    '/my icons',
+    '/icons\ttab',
+    '/icons$host',
+    '/icons\nalias /etc/;',
+    '/icons`id`',
+    '/icons#x',
+    '/icônes',
+  ]) {
+    const r = run({ env: { ICONS_PATH: value } });
+    assert.equal(r.status, 1, `"${value}" was accepted`);
+    assert.ok(!r.started, `"${value}" started the container`);
+    assert.match(r.stderr, /ICONS_PATH must be/, `"${value}" gave no reason`);
+  }
+});
+
+test('a CONFIG_PATH with no usable folder stops the container', () => {
+  for (const value of ['apps.json', '/apps.json', '/data/"x"/apps.json', '/data/$x/apps.json', '/data/../apps.json']) {
+    const r = run({ env: { CONFIG_PATH: value } });
+    assert.equal(r.status, 1, `"${value}" was accepted`);
+    assert.ok(!r.started, `"${value}" started the container`);
+    assert.match(r.stderr, /CONFIG_PATH must/, `"${value}" gave no reason`);
+  }
+});
+
+/* nginx serves every file in the icons folder, and the config holds the
+   password hash and every service key. */
+test('a config inside the icons folder stops the container', () => {
+  for (const env of [
+    ({ dir }) => ({ ICONS_PATH: `${dir}/data`, CONFIG_PATH: `${dir}/data/apps.json` }),
+    ({ dir }) => ({ ICONS_PATH: `${dir}/data`, CONFIG_PATH: `${dir}/data/sub/apps.json` }),
+    ({ dir }) => ({ ICONS_PATH: path.join(dir, 'no-data') }),
+  ]) {
+    const r = run({ env });
+    assert.equal(r.status, 1, r.stderr);
+    assert.ok(!r.started);
+    assert.match(r.stderr, /CONFIG_PATH cannot be inside ICONS_PATH/);
+  }
+});
+
+test('a folder that overlaps the runtime folder stops the container', () => {
+  for (const env of [
+    ({ runtime }) => ({ ICONS_PATH: runtime }),
+    ({ runtime }) => ({ ICONS_PATH: `${runtime}/icons` }),
+    ({ runtime }) => ({ CONFIG_PATH: `${runtime}/apps.json` }),
+    ({ runtime }) => ({ ICONS_PATH: path.dirname(runtime), CONFIG_PATH: '/elsewhere/apps.json' }),
+  ]) {
+    const r = run({ env });
+    assert.equal(r.status, 1, r.stderr);
+    assert.ok(!r.started);
+    assert.match(r.stderr, /cannot use .* it overlaps/);
+  }
+});
+
+/* nginx would serve the folder, and a root start would give it to the API's
+   account. */
+test('a folder inside a system folder of the image stops the container', () => {
+  for (const env of [
+    ({ dir }) => ({ ICONS_PATH: `${dir}/system` }),
+    ({ dir }) => ({ ICONS_PATH: `${dir}/system/icons` }),
+    ({ dir }) => ({ CONFIG_PATH: `${dir}/system/apps.json` }),
+    ({ dir }) => ({ CONFIG_PATH: `${dir}/system/stackyard/apps.json` }),
+  ]) {
+    const r = run({ env });
+    assert.equal(r.status, 1, r.stderr);
+    assert.ok(!r.started);
+    assert.match(r.stderr, /cannot use \S+; \S+\/system is a system folder of the image/);
+  }
+});
+
+test('every system folder named by docker-entrypoint.sh is refused, and a sibling name is not', () => {
+  const system = '/app /bin /boot /dev /etc /lib /lib64 /proc /root /run /sbin /sys /tmp /usr /var';
+  for (const folder of system.split(' ')) {
+    const r = run({ env: { ICONS_PATH: `${folder}/icons`, CONFIG_PATH: '/data/apps.json' }, paths: { system } });
+    assert.equal(r.status, 1, `${folder}/icons was accepted`);
+    assert.match(r.stderr, new RegExp(`${folder} is a system folder`), folder);
+  }
+  /* The config check that follows stops the run before any folder is made. */
+  for (const value of ['/data/icons', '/srv/icons', '/variable', '/application', '/tmpicons']) {
+    const r = run({ env: { ICONS_PATH: value, CONFIG_PATH: `${value}/apps.json` }, paths: { system } });
+    assert.match(r.stderr, /CONFIG_PATH cannot be inside ICONS_PATH/, value);
+    assert.doesNotMatch(r.stderr, /system folder/, value);
   }
 });
 
@@ -234,7 +369,14 @@ test('the entrypoint never touches /tmp', () => {
 /* A redirect that fails on a { } group does not end the script under set -e.
    nginx would then start on a stale or missing file. */
 test('a generated file that cannot be written stops the container', () => {
-  for (const name of ['realip.conf', 'listen.conf', 'nginx-user.conf', 'supervisord-user.conf']) {
+  for (const name of [
+    'realip.conf',
+    'listen.conf',
+    'icons-alias.conf',
+    'icons-root.conf',
+    'nginx-user.conf',
+    'supervisord-user.conf',
+  ]) {
     const r = run({ uid: 2000, setup: ({ runtime }) => fs.mkdirSync(path.join(runtime, name)) });
     assert.equal(r.status, 1, name);
     assert.ok(!r.started, name);
@@ -271,13 +413,15 @@ test('no path the entrypoint writes or deletes can be moved by the environment',
 test('the entrypoint reads only documented settings from the environment', () => {
   const lib = read('docker-entrypoint-lib.sh');
   const fromEnv = [...new Set([...lib.matchAll(/\$\{([A-Z_]+):-/g)].map(m => m[1]))].sort();
-  assert.deepEqual(fromEnv, ['LISTEN_PORT', 'TRUSTED_PROXY']);
+  assert.deepEqual(fromEnv, ['CONFIG_PATH', 'ICONS_PATH', 'LISTEN_PORT', 'TRUSTED_PROXY']);
   assert.doesNotMatch(read('docker-entrypoint.sh'), /\$\{?[A-Z_]+/, 'docker-entrypoint.sh must pass literal paths');
 });
 
 /* ── the shipped config agrees with the entrypoint ───────────────────────── */
 
-const call = /^stackyard_main (\S+) (\S+) (\S+) (\S+) (\S+) -- "\$@"$/m.exec(read('docker-entrypoint.sh'));
+const call = /^stackyard_main (\S+) (\S+) (\S+) (\S+) (\S+) \\\n\s+"([^"]+)" -- "\$@"$/m.exec(
+  read('docker-entrypoint.sh'),
+);
 const runtimeDir = call?.[1];
 const defaultPath = name => {
   const m = new RegExp(`${name}="\\$RUNTIME_DIR/([^"]+)"`).exec(read('docker-entrypoint-lib.sh'));
@@ -286,13 +430,14 @@ const defaultPath = name => {
 };
 
 test('docker-entrypoint.sh passes the real paths', () => {
-  assert.ok(call, 'docker-entrypoint.sh does not call stackyard_main with five paths');
+  assert.ok(call, 'docker-entrypoint.sh does not call stackyard_main with five paths and the system folders');
   assert.deepEqual(call.slice(1), [
     '/run/stackyard',
     '/data',
     '/icons',
     '/proc/net/if_inet6',
     '/proc/sys/net/ipv4/ip_unprivileged_port_start',
+    '/app /bin /boot /dev /etc /lib /lib64 /proc /root /run /sbin /sys /tmp /usr /var',
   ]);
 });
 
@@ -318,7 +463,18 @@ test('nginx reads the files the entrypoint writes', () => {
   const dashboard = read('nginx/dashboard.conf');
   assert.ok(dashboard.includes(`include ${defaultPath('LISTEN_CONF')};`));
   assert.ok(dashboard.includes(`include ${defaultPath('REALIP_CONF')};`));
+  assert.ok(dashboard.includes(`include ${defaultPath('ICONS_ALIAS_CONF')};`));
+  assert.ok(dashboard.includes(`include ${defaultPath('ICONS_ROOT_CONF')};`));
   assert.ok(read('Dockerfile').includes(`include ${defaultPath('NGINX_USER_CONF')};`));
+});
+
+/* The image build runs nginx -t. A generated file it lacks fails the build. */
+test('the image build writes a stand-in for every generated nginx include', () => {
+  const dashboard = read('nginx/dashboard.conf');
+  const build = read('Dockerfile').split('nginx -t &&')[0];
+  const includes = [...new Set([...dashboard.matchAll(/include (\/run\/stackyard\/[^;]+);/g)].map(m => m[1]))];
+  assert.ok(includes.length >= 4, `found ${includes.length} generated includes`);
+  for (const file of includes) assert.ok(build.includes(`> ${file} &&`), `${file} has no stand-in before nginx -t`);
 });
 
 test('supervisord reads the file the entrypoint writes, and sets no user itself', () => {

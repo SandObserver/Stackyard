@@ -126,6 +126,8 @@ RUN chmod +x /docker-entrypoint.sh && \
     printf 'user nginx;\n' > /run/stackyard/nginx-user.conf && \
     printf 'listen 80;\nlisten [::]:80;\n' > /run/stackyard/listen.conf && \
     printf 'set_real_ip_from 127.0.0.1;\nreal_ip_header X-Forwarded-For;\nreal_ip_recursive on;\n' > /run/stackyard/realip.conf && \
+    printf 'alias /icons/;\n' > /run/stackyard/icons-alias.conf && \
+    printf 'root /icons;\n' > /run/stackyard/icons-root.conf && \
     nginx -t && \
     rm -rf /run/stackyard/*
 

@@ -7,8 +7,9 @@ const HARNESS = path.join(__dirname, 'entrypoint-harness.sh');
 /** Arguments for `sh` that run the entrypoint as docker-entrypoint.sh does,
     with the paths a test chooses.
     @param {string} dir test directory. A path not given is a missing file in
-      it, except the port floor, which holds 0 as Docker sets it.
-    @param {{ runtime?: string, data?: string, icons?: string, inet6?: string, floor?: string }} paths
+      it, except the port floor, which holds 0 as Docker sets it. The system
+      folders default to one folder, `system`, in it.
+    @param {{ runtime?: string, data?: string, icons?: string, inet6?: string, floor?: string, system?: string }} paths
     @param {string[]} command what the entrypoint hands off to
     @returns {string[]} */
 function entrypointArgs(dir, paths, command) {
@@ -19,9 +20,10 @@ function entrypointArgs(dir, paths, command) {
     icons: path.join(dir, 'no-icons'),
     inet6: path.join(dir, 'absent-inet6'),
     floor: path.join(dir, 'docker-floor'),
+    system: path.join(dir, 'system'),
     ...paths,
   };
-  return [HARNESS, LIB, p.runtime, p.data, p.icons, p.inet6, p.floor, '--', ...command];
+  return [HARNESS, LIB, p.runtime, p.data, p.icons, p.inet6, p.floor, p.system, '--', ...command];
 }
 
 module.exports = { entrypointArgs, LIB };
