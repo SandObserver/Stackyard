@@ -1299,7 +1299,7 @@ const NOTE_TEXT = {
     @param {Array<{ name: string, group: string, why: string }>} rows */
 function dlgSection(parent, heading, rows) {
   if (!rows.length) return;
-  const h = document.createElement('div');
+  const h = document.createElement('h3');
   h.className = 'dlg-sec';
   h.textContent = `${heading} (${formatNumber(rows.length)})`;
   const ul = document.createElement('ul');
@@ -1435,7 +1435,7 @@ async function reviewImport(items, skipped, notes, nothingKey) {
   /** @type {HTMLInputElement|null} */
   let skipTlsChoice = null;
   if (insecure.length) {
-    const heading = document.createElement('div');
+    const heading = document.createElement('h3');
     heading.className = 'dlg-sec';
     heading.textContent = `${t('app.allowSelfSigned')} (${formatNumber(insecure.length)})`;
     const choice = document.createElement('label');

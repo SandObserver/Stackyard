@@ -51,16 +51,64 @@ test('settings toggles are switches, named by their row', async ({ page }) => {
   await expect(page.getByRole('switch', { name: 'Bildschirm aktiv lassen' })).toHaveCount(1);
 });
 
-test('the wallpaper brightness is spoken as a percentage', async ({ page }) => {
-  await openSection(page, 'appearance');
-  await expect(page.locator('#bg-br')).toHaveAttribute('aria-valuetext', /^\d+\s?%$/);
+async function expectTogglesAreSwitches(scope) {
+  await expect(scope.locator('.tog input').first()).toBeAttached();
+  const toggles = await scope.locator('.tog input').count();
+  await expect(scope.locator('.tog').getByRole('switch', { includeHidden: true })).toHaveCount(toggles);
+}
+
+test('every toggle in Settings and the editors is a switch', async ({ page, request }) => {
+  await openSection(page, 'general');
+  await expectTogglesAreSwitches(page.locator('main'));
+
+  await openDashboardList(page);
+  await rowByName(page, 'Alpha').getByRole('button', { name: 'Alpha bearbeiten' }).click();
+  await expectTogglesAreSwitches(page.locator('#ev-body'));
+
+  await openDashboardList(page);
+  await page.locator('#btn-add').click();
+  await page.locator('.tile-opt[data-ctype="widget"]').click();
+  await expect(page.locator('#if-fs')).toHaveRole('switch');
+
+  await seedConfig(request, {
+    items: [{ id: 'clk', type: 'widget', widgetType: 'clock', label: 'Uhr', widgetSize: 'small' }],
+    settings: { language: 'de' },
+  });
+  await openDashboardList(page);
+  await rowByName(page, 'Uhr').getByRole('button', { name: 'Uhr bearbeiten', exact: true }).click();
+  await expectTogglesAreSwitches(page.locator('#ev-body'));
 });
 
-test('the colour sliders are spoken in degrees and percent', async ({ page }) => {
+test('the wallpaper brightness is spoken as a percentage', async ({ page }) => {
   await openSection(page, 'appearance');
-  await expect(page.locator('#bg-color-h')).toHaveAttribute('aria-valuetext', /^\d+°$/);
-  await expect(page.locator('#bg-color-s')).toHaveAttribute('aria-valuetext', /^\d+\s?%$/);
-  await expect(page.locator('#bg-color-v')).toHaveAttribute('aria-valuetext', /^\d+\s?%$/);
+  const br = page.locator('#bg-br');
+  await expect(br).toHaveAttribute('aria-valuetext', /^\d+\s?%$/);
+  await br.evaluate((/** @type {HTMLInputElement} */ e) => {
+    e.value = '0.5';
+    e.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await expect(br).toHaveAttribute('aria-valuetext', /^50\s?%$/);
+});
+
+test('the colour sliders are spoken in degrees and percent, and follow the slider', async ({ page }) => {
+  await openSection(page, 'appearance');
+  const h = page.locator('#bg-color-h');
+  const s = page.locator('#bg-color-s');
+  const v = page.locator('#bg-color-v');
+  await expect(h).toHaveAttribute('aria-valuetext', /^\d+°$/);
+  await expect(s).toHaveAttribute('aria-valuetext', /^\d+\s?%$/);
+  await expect(v).toHaveAttribute('aria-valuetext', /^\d+\s?%$/);
+  const slide = (loc, value) =>
+    loc.evaluate((/** @type {HTMLInputElement} */ e, x) => {
+      e.value = x;
+      e.dispatchEvent(new Event('input', { bubbles: true }));
+    }, value);
+  await slide(h, '123');
+  await slide(s, '45');
+  await slide(v, '67');
+  await expect(h).toHaveAttribute('aria-valuetext', '123°');
+  await expect(s).toHaveAttribute('aria-valuetext', /^45\s?%$/);
+  await expect(v).toHaveAttribute('aria-valuetext', /^67\s?%$/);
 });
 
 test('the health check type radios are grouped under their label', async ({ page }) => {
@@ -102,6 +150,61 @@ test('the current Settings section is marked current', async ({ page }) => {
 test('Settings group titles are headings', async ({ page }) => {
   await openSection(page, 'general');
   await expect(page.locator('#sec-general').getByRole('heading', { level: 2, name: 'Sprache' })).toBeVisible();
+});
+
+test('the Dock and Home Screen titles are headings in the group title style', async ({ page }) => {
+  const type = loc => loc.evaluate(e => [getComputedStyle(e).fontSize, getComputedStyle(e).fontWeight]);
+  await openSection(page, 'general');
+  const title = await type(page.locator('#sec-general').getByRole('heading', { level: 2, name: 'Sprache' }));
+  await openDashboardList(page);
+  for (const name of ['Dock', 'Startbildschirm']) {
+    const h = page.locator('#al').getByRole('heading', { level: 2, name, exact: true });
+    await expect(h).toBeVisible();
+    expect(await type(h)).toEqual(title);
+  }
+});
+
+test('the editor group titles are headings', async ({ page, request }) => {
+  await openDashboardList(page);
+  await rowByName(page, 'Alpha').getByRole('button', { name: 'Alpha bearbeiten' }).click();
+  const body = page.locator('#ev-body');
+  await expect(body.getByRole('heading', { level: 2, name: 'Symbol', exact: true })).toBeVisible();
+  await expect(body.getByRole('heading', { level: 2, name: 'Badge', exact: true })).toBeVisible();
+
+  await openDashboardList(page);
+  await page.locator('#btn-add').click();
+  await page.locator('.tile-opt[data-ctype="widget"]').click();
+  await expect(body.getByRole('heading', { level: 2, name: 'Größe', exact: true })).toBeVisible();
+  await expect(body.getByRole('heading', { level: 2, name: 'Erweitert', exact: true })).toBeVisible();
+
+  const service = name => ({ type: 'netbird', name, url: `http://${name}.invalid`, token: 't' });
+  await seedConfig(request, {
+    items: [
+      {
+        id: 'net',
+        type: 'widget',
+        widgetType: 'connections',
+        label: 'Net',
+        widgetSize: 'medium',
+        widgetConfig: { services: [service('a'), service('b')] },
+      },
+    ],
+    settings: { language: 'de' },
+  });
+  await openDashboardList(page);
+  await rowByName(page, 'Net').getByRole('button', { name: 'Net bearbeiten', exact: true }).click();
+  await expect(body.locator('.grp-hdr-row').getByRole('heading', { level: 2 })).toHaveCount(2);
+});
+
+test('the import dialog has a title heading and a heading per section', async ({ page }) => {
+  await openDashboardList(page);
+  const yaml = '- Media:\n    - Plex:\n        href: http://plex.invalid\n';
+  await page
+    .locator('#imp-foreign')
+    .setInputFiles({ name: 'services.yaml', mimeType: 'application/yaml', buffer: Buffer.from(yaml) });
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('heading', { level: 2, name: 'Aus anderem Dashboard importieren' })).toBeVisible();
+  await expect(dialog.getByRole('heading', { level: 3, name: 'Neue Apps (1)' })).toBeVisible();
 });
 
 test('the icon colour Style is a named drop-down', async ({ page }) => {

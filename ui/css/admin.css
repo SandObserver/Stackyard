@@ -532,7 +532,7 @@ input::placeholder,textarea::placeholder{color:var(--dm-strong)}
 /* Widget config-form: in-card hints, repeatable-group header/add */
 .grp-tip.in-card{margin:0;padding:7px 16px 12px;font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote)}
 .grp-hdr-row{display:flex;align-items:center;justify-content:space-between}
-.grp-hdr-row > :is(h2,h3){font:inherit;letter-spacing:inherit}
+:where(.grp-hdr-row > :is(h2,h3)){font:inherit;letter-spacing:inherit}
 .grp-hdr-rm{background:none;border:none;color:var(--danger);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-family:inherit;cursor:pointer;padding:2px 4px}
 .grp-hdr-rm:active:not(:disabled){opacity:var(--press-dim)}
 .albl-hdr{display:flex;align-items:center;gap:6px;touch-action:none}
