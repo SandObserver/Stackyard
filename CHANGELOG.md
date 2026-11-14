@@ -108,6 +108,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The GitHub contributions grid shows a new day's contributions after midnight,
   and the grid matches the total.
 
+- Show a running Duplicati job as running on its own card instead of another
+  job's card.
+
+- Stop one failed Duplicati job from turning every Duplicati card red.
+
+- Show a Duplicati sync job's own last run time, and use it for the error and
+  missed checks.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
