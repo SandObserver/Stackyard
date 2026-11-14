@@ -110,7 +110,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
         const info={role:s.role,serviceName:s.name,color:rgbCss(col),cc:a.cc,users:a.users};
         for(const cell of M.place(a.cc,a.n,taken))lit.set(M.key(cell),{col,over:a.over,role:s.role,info});
       }
-      const top=shares.slice().sort((x,y)=>y.users-x.users);
+      const top=shares.toSorted((x,y)=>y.users-x.users);
       const said=top.slice(0,10).map(a=>fmtName(a.cc)+' '+formatNumber(a.users));
       if(top.length>10)said.push(wt('ui.more','+{n} more',{n:formatNumber(top.length-10)}));
       s.chip.spoken=formatList(said,'plain');
