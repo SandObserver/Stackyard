@@ -293,7 +293,7 @@
     "invalidUrl": "Introduce una dirección que empiece por http:// o https://.",
     "configTooLarge": "Esta configuración supera el límite de {max} MB.",
     "newerConfig": "Esta copia se creó con una versión más reciente de Stackyard. Actualiza primero y luego impórtala.",
-    "diskFull": "El disco está lleno. Libera espacio y vuelve a guardar.",
+    "diskFull": "El disco está lleno. Libera espacio y vuelve a intentarlo.",
     "configNotWritable": "Stackyard no puede escribir en su carpeta de datos. Da permiso de escritura al usuario que ejecuta Stackyard y comprueba que la carpeta no sea de solo lectura.",
     "configFileMounted": "El archivo de configuración está montado por separado. Monta su carpeta en su lugar.",
     "tooManyItems": "El límite es {max}. Elimina algunos primero.",

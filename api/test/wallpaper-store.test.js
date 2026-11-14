@@ -9,7 +9,7 @@ process.env.ICONS_PATH = iconsDir;
 process.env.CONFIG_PATH = path.join(tmpDir('wallpaper-cfg'), 'apps.json');
 process.env.ALLOW_PRIVATE_IPS = 'true';
 
-const { test, before, after } = require('node:test');
+const { test, before, after, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 const { unfinishedUpload } = require('../test-support/unfinished-upload');
@@ -206,6 +206,31 @@ test('an uploaded image is stored and answered with its served URL', async () =>
   assert.ok(r.body.url.startsWith(WALLPAPER_URL_BASE), r.body.url);
   assert.ok(fs.existsSync(path.join(iconsDir, r.body.url.replace('/icons/', ''))));
 });
+
+for (const [code, status, apiCode] of [
+  ['ENOSPC', 507, 'internal.disk-full'],
+  ['EACCES', 500, 'internal.config-not-writable'],
+]) {
+  test(`${code} during a wallpaper upload answers ${apiCode} and leaves no file`, async () => {
+    fs.mkdirSync(dir(), { recursive: true });
+    const listed = fs.readdirSync(dir()).sort();
+    const real = fs.writeFileSync;
+    mock.method(fs, 'writeFileSync', (file, data, ...rest) => {
+      real(file, Buffer.from(data).subarray(0, 3), ...rest);
+      throw Object.assign(new Error(`${code}: /secret/path`), { code });
+    });
+    let r;
+    try {
+      r = await upload('photo.jpg', JPEG);
+    } finally {
+      mock.restoreAll();
+    }
+    assert.equal(r.status, status);
+    assert.equal(r.body.code, apiCode);
+    assert.doesNotMatch(JSON.stringify(r.body), /secret\/path/);
+    assert.deepEqual(fs.readdirSync(dir()).sort(), listed);
+  });
+}
 
 test('a name claiming a format the bytes do not have is refused', async () => {
   const r = await upload('photo.png', Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>'));

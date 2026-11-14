@@ -10,13 +10,14 @@ const { sniffImageType } = require('../image-sniff');
 const { parseMultipartFile } = require('../parse-multipart');
 const log = require('../log');
 const { fail, KIND, errorBody } = require('../api-error');
+const { writeFileAtomic } = require('../atomic-write');
 
 const WALLPAPER_DIR = () => path.join(ICONS_PATH, 'wallpaper');
 const WALLPAPER_URL_BASE = '/icons/wallpaper/';
 
-/* Keep client_max_body_size on /api/wallpaper/upload at or above this. nginx
-   refuses a larger body before the request reaches this code. */
 const UPLOAD_MAX_BYTES = 16 * 1024 * 1024;
+/* Keep client_max_body_size on /api/wallpaper/upload equal to this. nginx
+   refuses a larger body before the request reaches this code. */
 const UPLOAD_STREAM_MAX_BYTES = Math.round(UPLOAD_MAX_BYTES * 1.25);
 const LINK_BODY_MAX_BYTES = 4096;
 const UPLOADS_PER_HOUR = 20;
@@ -41,10 +42,8 @@ function wallpaperName(ext) {
 
     @param {Buffer} data @param {string} ext @returns {string} */
 function storeWallpaper(data, ext) {
-  const dir = WALLPAPER_DIR();
-  fs.mkdirSync(dir, { recursive: true });
   const saved = wallpaperName(ext);
-  fs.writeFileSync(path.join(dir, saved), data);
+  writeFileAtomic(path.join(WALLPAPER_DIR(), saved), data);
   return WALLPAPER_URL_BASE + saved;
 }
 

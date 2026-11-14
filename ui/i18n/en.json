@@ -287,7 +287,7 @@
     "invalidUrl": "Enter an address that starts with http:// or https://.",
     "configTooLarge": "This configuration is larger than the {max} MB limit.",
     "newerConfig": "This backup was made by a newer version of Stackyard. Update first, then import it.",
-    "diskFull": "The disk is full. Free some space, then save again.",
+    "diskFull": "The disk is full. Free some space, then try again.",
     "configNotWritable": "Stackyard cannot write to its data folder. Give the user running Stackyard write access, and check that the folder is not read-only.",
     "configFileMounted": "The config file is mounted on its own. Mount its folder instead.",
     "tooManyItems": "The item limit is {max}. Remove some first.",
