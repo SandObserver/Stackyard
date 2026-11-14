@@ -41,34 +41,36 @@ function dupNormalizeBase(url) {
 function dupParseDate(v) {
   if (!v) return 0;
   const s = String(v).trim();
-  const compact = s.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z?$/);
+  const compact = s.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z|[+-]\d{2}:\d{2})?$/);
   if (compact) {
-    const [, yr, mo, dy, hh, mm, ss] = compact;
-    return new Date(`${yr}-${mo}-${dy}T${hh}:${mm}:${ss}Z`).getTime();
+    const [, yr, mo, dy, hh, mm, ss, zone = 'Z'] = compact;
+    const t = new Date(`${yr}-${mo}-${dy}T${hh}:${mm}:${ss}${zone}`).getTime();
+    return Number.isNaN(t) ? 0 : t;
   }
   const d = new Date(s);
   return Number.isNaN(d.getTime()) ? 0 : d.getTime();
 }
 
+function dupLastFinished(job) {
+  const meta = dupMeta(job);
+  if (dupCore(job).OperationType === 'Sync') return dupParseDate(meta.LastSyncFinished);
+  return dupParseDate(meta.LastBackupFinished) || dupParseDate(meta.LastBackupDate);
+}
+
 function dupDeriveStatus(job, serverState) {
   const id = dupId(job);
-  const meta = dupMeta(job);
-  const tasks = serverState?.ActiveTask;
-  const proposed = serverState?.ProposedSchedule || [];
+  const task = serverState?.ActiveTask;
+  if (id !== '' && task?.Item2 != null && String(task.Item2) === id) return 'running';
 
-  const isRunning = tasks != null && String(tasks.BackupID || tasks.Item1 || '') === id;
-  if (isRunning) return 'running';
+  const lastFinished = dupLastFinished(job);
+  const lastError = dupParseDate(dupMeta(job).LastErrorDate);
+  if (lastError && lastError >= lastFinished) return 'error';
 
-  if (serverState?.HasError) return 'error';
-
-  const nextEntry = proposed.find(p => String(p.Item1) === id);
+  const nextEntry = (serverState?.ProposedSchedule || []).find(p => String(p.Item1) === id);
   if (nextEntry && nextEntry.Item2) {
     const nextRun = new Date(nextEntry.Item2).getTime();
-    const lastFinished = dupParseDate(meta.LastBackupFinished || meta.LastBackupDate || '');
     if (Date.now() > nextRun && lastFinished < nextRun) return 'missed';
   }
-
-  if (serverState?.HasWarning) return 'warning';
 
   return 'healthy';
 }
@@ -169,6 +171,7 @@ module.exports = {
   dupSchedule,
   dupNormalizeBase,
   dupParseDate,
+  dupLastFinished,
   dupDeriveStatus,
   kopiaDeriveStatus,
   kopiaSourceId,

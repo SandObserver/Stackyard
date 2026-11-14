@@ -37,6 +37,47 @@ function hostsText() {
 
 const failed = (code, host) => Object.assign(new Error(`${code} ${host}`), { code, hostname: host });
 
+const RESOLUTION_DELAY_MS = 50;
+
+/** @returns {Promise<PromiseSettledResult<string[]>[]>} */
+function queryBoth(resolver, host, ms) {
+  return new Promise(done => {
+    /** @type {(PromiseSettledResult<string[]> | undefined)[]} */
+    const results = [undefined, undefined];
+    let over = false;
+    let grace;
+    const finish = () => {
+      if (over) return;
+      over = true;
+      clearTimeout(deadline);
+      clearTimeout(grace);
+      resolver.cancel();
+      done(
+        results.map(
+          r => r ?? { status: 'rejected', reason: Object.assign(new Error(dns.CANCELLED), { code: dns.CANCELLED }) },
+        ),
+      );
+    };
+    const start = Date.now();
+    const deadline = setTimeout(finish, ms);
+    [resolver.resolve4(host), resolver.resolve6(host)].forEach((query, i) => {
+      query
+        .then(
+          value => ({ status: 'fulfilled', value }),
+          reason => ({ status: 'rejected', reason }),
+        )
+        .then((/** @type {PromiseSettledResult<string[]>} */ r) => {
+          if (over) return;
+          results[i] = r;
+          if (results.every(Boolean)) return finish();
+          if (r.status !== 'fulfilled' || !r.value.length) return;
+          const wait = i === 0 ? RESOLUTION_DELAY_MS : ms / 2 - (Date.now() - start);
+          grace = setTimeout(finish, Math.max(0, wait));
+        });
+    });
+  });
+}
+
 /** Every address for `host`, IPv4 first. Rejects within `ms`.
     @param {string} host @param {number} ms @param {{ servers?: string[] }} [opts]
     @returns {Promise<Address[]>} */
@@ -48,13 +89,7 @@ async function resolveAll(host, ms, opts = {}) {
 
   const resolver = new dns.promises.Resolver({ timeout: Math.max(1, ms), tries: 1 });
   if (opts.servers) resolver.setServers(opts.servers);
-  const timer = setTimeout(() => resolver.cancel(), ms);
-  let results;
-  try {
-    results = await Promise.allSettled([resolver.resolve4(host), resolver.resolve6(host)]);
-  } finally {
-    clearTimeout(timer);
-  }
+  const results = await queryBoth(resolver, host, ms);
   const out = [];
   for (const [i, r] of results.entries()) {
     if (r.status === 'fulfilled') for (const address of r.value) out.push({ address, family: i ? 6 : 4 });

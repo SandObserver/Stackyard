@@ -14,4 +14,12 @@ const errorParts = () => ({
   KIND,
 });
 
-module.exports = { errorParts };
+/* The ctx the route builds, with the real fetcher, so the runtime's reply
+   guards run. Set CONFIG_PATH before the first call. */
+function runtimeCtx(config, endpoint = '') {
+  const { dataFnContext } = require('../src/widget-data');
+  const { fetchUnchecked } = require('../src/proxy');
+  return dataFnContext(config, endpoint, new URLSearchParams(), fetchUnchecked);
+}
+
+module.exports = { errorParts, runtimeCtx };

@@ -399,16 +399,16 @@ function fetchJSON(raw, opts = {}) {
             });
           const body = Buffer.concat(bufs).toString('utf8');
           /* Keep headers opt-in. Some widgets return the reply as is, and headers can carry cookies. */
-          const reply = data =>
+          const reply = (data, format) =>
             opts.withHeaders
-              ? { status: res.statusCode, data, headers: res.headers }
-              : { status: res.statusCode, data };
-          if (opts.raw) return done(resolve, reply(body));
+              ? { status: res.statusCode, data, format, headers: res.headers }
+              : { status: res.statusCode, data, format };
+          if (opts.raw) return done(resolve, reply(body, 'text'));
           const ct = (res.headers['content-type'] || '').toLowerCase();
           try {
-            done(resolve, reply(JSON.parse(body)));
+            done(resolve, reply(JSON.parse(body), 'json'));
           } catch {
-            if (looksLikeMetrics(ct, body)) done(resolve, reply(parsePrometheus(body)));
+            if (looksLikeMetrics(ct, body)) done(resolve, reply(parsePrometheus(body), 'metrics'));
             else if (ct.includes('xml') || body.trimStart().startsWith('<')) {
               const parsed = parseXml(body);
               if (parsed['#truncated']) {
@@ -419,8 +419,8 @@ function fetchJSON(raw, opts = {}) {
                   bytes: body.length,
                 });
               }
-              done(resolve, reply(parsed));
-            } else done(resolve, reply(body));
+              done(resolve, reply(parsed, 'xml'));
+            } else done(resolve, reply(body, 'text'));
           }
         });
       },
@@ -655,7 +655,7 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp, lookup) {
     const opts = {
       hostname: connectHost,
       port,
-      path: u.pathname || '/',
+      path: u.pathname + u.search,
       timeout: ms,
       lookup: guard.lookup,
       rejectUnauthorized: !skip,

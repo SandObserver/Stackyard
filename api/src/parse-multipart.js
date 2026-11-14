@@ -18,7 +18,7 @@ function parseMultipartFile(buf, boundary) {
     const headerStart = afterDelim + (buf[afterDelim] === 0x0d ? 2 : 0);
     const headerEnd = buf.indexOf(CRLFCRLF, headerStart);
     if (headerEnd === -1) break;
-    const headerStr = buf.slice(headerStart, headerEnd).toString('latin1');
+    const headerStr = buf.slice(headerStart, headerEnd).toString('utf8');
     const bodyStart = headerEnd + 4;
     const nextDelim = buf.indexOf(Buffer.from('\r\n--' + boundary), bodyStart);
     const bodyEnd = nextDelim === -1 ? buf.length : nextDelim;

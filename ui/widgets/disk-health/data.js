@@ -262,7 +262,14 @@ async function unraidDiskOptions(ctx) {
 }
 
 const UNRAID_HEALTHY = new Set(['DISK_OK', 'DISK_NEW']);
-const UNRAID_FAILED = new Set(['DISK_INVALID', 'DISK_WRONG', 'DISK_DSBL', 'DISK_DSBL_NEW']);
+const UNRAID_FAILED = new Set([
+  'DISK_NP_MISSING',
+  'DISK_INVALID',
+  'DISK_WRONG',
+  'DISK_DSBL',
+  'DISK_NP_DSBL',
+  'DISK_DSBL_NEW',
+]);
 
 async function diskHealthUnraid(ctx) {
   const { config } = ctx;
@@ -275,8 +282,8 @@ async function diskHealthUnraid(ctx) {
   const result = bays.map(name => {
     if (!name) return null;
     const d = byName[name];
-    /* Unraid leaves a slot with no drive out of the reply, so a missing
-       drive is an absent bay. Reading it as not found hides a degraded array. */
+    /* A bay with no slot in the reply is a failed drive. Reading it as not
+       found hides a degraded array. */
     if (!d)
       return {
         device_id: name,

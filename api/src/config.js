@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const log = require('./log');
+const { writeFileAtomic, WRITE_FAILURES } = require('./atomic-write');
 const { IS_DEMO } = require('./demo');
 const { migrateItemBadgeHeaders } = require('./badge-headers');
 
@@ -358,20 +359,8 @@ function loadConfigForUpdate() {
   return structuredClone(loadConfig());
 }
 
-const WRITE_FAILURES = {
-  ENOSPC: [507, 'internal.disk-full'],
-  EDQUOT: [507, 'internal.disk-full'],
-  EACCES: [500, 'internal.config-not-writable'],
-  EPERM: [500, 'internal.config-not-writable'],
-  EROFS: [500, 'internal.config-not-writable'],
-  EBUSY: [500, 'internal.config-file-mounted'],
-};
-
-function tagWriteFailure(e) {
-  const known = WRITE_FAILURES[e?.code];
-  if (known) [e.status, e.apiCode] = known;
-  return e;
-}
+/** @type {import('./atomic-write').WriteFailures} */
+const CONFIG_WRITE_FAILURES = { ...WRITE_FAILURES, EBUSY: [500, 'internal.config-file-mounted'] };
 
 /* keepRev is only for writes the browser never sees. Every open dashboard
    reloads when _rev changes. */
@@ -387,48 +376,11 @@ function saveConfig(data, { keepRev = false } = {}) {
   /* Clone before writing. A value the clone cannot handle must fail here, not
      after the file is replaced: every later read clones it and fails too. */
   const copy = structuredClone(data);
-  const dir = path.dirname(CONFIG_PATH);
-  const tmp = CONFIG_PATH + '.tmp';
-
-  /* Write, flush, rename, flush the directory. Without both flushes a power cut
-     leaves the rename applied and the contents lost. */
-  try {
-    fs.mkdirSync(dir, { recursive: true });
-    /* Keep the unlink. A temp file left by a crash keeps its mode through the
-       rename and exposes the secrets. */
-    try {
-      fs.unlinkSync(tmp);
-    } catch (e) {
-      if (e.code !== 'ENOENT') throw e;
-    }
-    const fd = fs.openSync(tmp, 'wx', 0o600);
-    try {
-      fs.writeFileSync(fd, JSON.stringify(data, null, 2), 'utf8');
-      fs.fsyncSync(fd);
-    } finally {
-      fs.closeSync(fd);
-    }
-    fs.renameSync(tmp, CONFIG_PATH);
-  } catch (e) {
-    try {
-      fs.unlinkSync(tmp);
-    } catch {
-      /* nothing more to do */
-    }
-    throw tagWriteFailure(e);
-  }
-
-  try {
-    const dirFd = fs.openSync(dir, 'r');
-    try {
-      fs.fsyncSync(dirFd);
-    } finally {
-      fs.closeSync(dirFd);
-    }
-  } catch {
-    /* Some filesystems refuse to fsync a directory. The contents are already
-       durable. */
-  }
+  writeFileAtomic(CONFIG_PATH, JSON.stringify(data, null, 2), {
+    mode: 0o600,
+    tmp: `${CONFIG_PATH}.tmp`,
+    failures: CONFIG_WRITE_FAILURES,
+  });
 
   /* Only after the write succeeded. */
   _cfgCache = copy;
