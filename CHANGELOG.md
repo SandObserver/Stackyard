@@ -199,6 +199,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
 
+- Pages no longer send their address to wallpaper and icon hosts.
+
+- Add opener, resource and stricter content security policies.
+
+- Widget pages refuse plugins and form submissions.
+
 ## [1.22.0] - 2026-11-10
 
 ### Added
