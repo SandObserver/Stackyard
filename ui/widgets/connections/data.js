@@ -230,8 +230,7 @@ async function vpnView(ctx) {
       out.status = out.connected ? 'running' : 'stopped';
       const rep =
         connected
-          .slice()
-          .sort((a, b) => new Date(b.last_seen || 0) - new Date(a.last_seen || 0))
+          .toSorted((a, b) => new Date(b.last_seen || 0) - new Date(a.last_seen || 0))
           .find(p => p.city_name || p.country_code) ||
         connected[0] ||
         null;
