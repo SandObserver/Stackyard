@@ -184,6 +184,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The sign-in error is announced with the password field, which is marked
   invalid only for a wrong password.
 
+- System Summary writes uptime and link speed units in the interface language.
+
+- Downloads no longer shows Latin unit letters in Persian time estimates.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
