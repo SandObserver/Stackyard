@@ -119,6 +119,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show a missing or removed disabled Unraid drive as failed in Disk Health and
   count it among the failed bays.
 
+- Fix System Summary and Network widgets set to Glances failing with "The
+  service sent a reply that is not JSON."
+
+- Show the real network rate from Glances 3 instead of 0 B/s.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
