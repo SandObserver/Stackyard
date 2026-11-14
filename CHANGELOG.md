@@ -188,6 +188,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Downloads no longer shows Latin unit letters in Persian time estimates.
 
+- Screen readers announce toggles as switches and slider values with their
+  units.
+
+- Settings group and dialog titles are real headings.
+
+- The phone search pill is a button.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
