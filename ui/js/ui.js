@@ -1107,7 +1107,7 @@ export function buildMobile() {
   const pillNewDots = q('.msp-dots', pillNew);
   pillNewDots.replaceChildren();
   const pillDotEls = pages.map((_, i) => {
-    const d = document.createElement('div');
+    const d = document.createElement('span');
     d.className = 'msp-dot' + (i === 0 ? ' on' : '');
     pillNewDots.appendChild(d);
     return d;
@@ -1116,12 +1116,6 @@ export function buildMobile() {
   onTap(pillNew, () => {
     if (CB().spotOpen) CB().spotOpen('');
   });
-  pillNew.onkeydown = e => {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    e.preventDefault();
-    e.stopPropagation();
-    if (CB().spotOpen) CB().spotOpen('');
-  };
 
   let _pillIdleTimer = null;
   let _pillClipTimer = 0;

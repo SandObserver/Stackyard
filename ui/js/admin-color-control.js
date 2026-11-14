@@ -1,9 +1,10 @@
-import { PE_SVG, initInlineEdit, showFieldError, clearFieldError, reveal } from '/js/admin-shared.js?v=89fe2e81';
+import { PE_SVG, initInlineEdit, showFieldError, clearFieldError, reveal } from '/js/admin-shared.js?v=4e01da0b';
 import { t } from '/js/i18n.js?v=721852aa';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { qa, q } from '/js/utils.js?v=d49cd680';
 import { iconSvg } from '/js/icon-set.js?v=361e54a5';
 import { createListbox } from '/js/listbox.js?v=794fe194';
+import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import { HUE_NAMES, ROLE_NAMES, TILE_KEYWORDS, pageTheme, tileColor } from '/js/palette.js?v=3fb8ae43';
 
 const CC_SWATCHES = ['#1c1c1e', '#8e8e93', '#f2f2f7', '#ff393c', '#ffcd00', '#35c759', '#0289ff', '#cb30df'];
@@ -264,6 +265,9 @@ export function renderColorControl(
        target on a phone. */
     sEl.style.backgroundImage = `linear-gradient(var(--slider-dir), ${_hsvToHex(h, 0, v)}, ${_hsvToHex(h, 100, v)})`;
     vEl.style.backgroundImage = `linear-gradient(var(--slider-dir), #000, ${_hsvToHex(h, 100, 100)})`;
+    hEl.setAttribute('aria-valuetext', `${formatNumber(h)}°`);
+    sEl.setAttribute('aria-valuetext', formatNumber(+sEl.value / 100, { style: 'percent' }));
+    vEl.setAttribute('aria-valuetext', formatNumber(v / 100, { style: 'percent' }));
     qa('.cc-swatch', container).forEach(b => {
       let on = false;
       if (mode !== 'color') on = b.dataset.v === mode;

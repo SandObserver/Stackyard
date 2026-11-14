@@ -15,11 +15,10 @@ const css = read('css/dashboard.css');
 const js = read('js/spotlight.js');
 
 test('the Search pill is a button that cannot be text-selected', () => {
-  assert.match(html, /<div id="mob-search-pill" role="button" tabindex="0">/);
+  assert.match(html, /<button id="mob-search-pill" type="button">/);
   const rule = css.match(/#mob-search-pill \{([^}]*)\}/)[1];
   assert.match(rule, /user-select:none/);
   assert.match(rule, /-webkit-touch-callout:none/);
-  assert.match(read('js/ui.js'), /pillNew\.onkeydown = e => \{\s*if \(e\.key !== 'Enter' && e\.key !== ' '\) return;/);
 });
 
 test('closing search puts focus back where it was', () => {

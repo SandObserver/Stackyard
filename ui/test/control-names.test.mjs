@@ -49,6 +49,18 @@ test('every toggle is named by the row label beside it', () => {
 
 /* aria-label on an element with no role is discarded, so a name written there
    is not a name at all. */
+test('every toggle is announced as a switch, here and in the forms built in script', () => {
+  const plain = TOGGLES.filter(attrs => !/^ role="switch"/.test(attrs));
+  assert.deepEqual(plain, [], 'a toggle reads as a checkbox');
+  for (const file of ['js/admin-app-form.js', 'js/admin-widget-form.js', 'js/widget-config-form.js']) {
+    const src = read(file);
+    const all = src.match(/<label class="tog"><input type="checkbox"/g) || [];
+    const switches = src.match(/<label class="tog"><input type="checkbox" role="switch"/g) || [];
+    assert.ok(all.length > 0, `${file} has no toggle`);
+    assert.equal(switches.length, all.length, `${file} has a toggle that reads as a checkbox`);
+  }
+});
+
 test('no toggle carries its name on the label element', () => {
   assert.doesNotMatch(admin, /<label class="tog" aria-label=/);
 });

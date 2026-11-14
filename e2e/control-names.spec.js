@@ -45,6 +45,24 @@ test('the custom widget fullscreen switch is named', async ({ page }) => {
   await expect(page.locator('#if-fs')).toHaveAccessibleName('Vollbild erlauben');
 });
 
+test('settings toggles are switches, named by their row', async ({ page }) => {
+  await openSection(page, 'appearance');
+  await expect(page.locator('#set-awake')).toHaveRole('switch');
+  await expect(page.getByRole('switch', { name: 'Bildschirm aktiv lassen' })).toHaveCount(1);
+});
+
+test('the wallpaper brightness is spoken as a percentage', async ({ page }) => {
+  await openSection(page, 'appearance');
+  await expect(page.locator('#bg-br')).toHaveAttribute('aria-valuetext', /^\d+\s?%$/);
+});
+
+test('the colour sliders are spoken in degrees and percent', async ({ page }) => {
+  await openSection(page, 'appearance');
+  await expect(page.locator('#bg-color-h')).toHaveAttribute('aria-valuetext', /^\d+°$/);
+  await expect(page.locator('#bg-color-s')).toHaveAttribute('aria-valuetext', /^\d+\s?%$/);
+  await expect(page.locator('#bg-color-v')).toHaveAttribute('aria-valuetext', /^\d+\s?%$/);
+});
+
 test('the health check type radios are grouped under their label', async ({ page }) => {
   await openDashboardList(page);
   await rowByName(page, 'Alpha').getByRole('button', { name: 'Alpha bearbeiten' }).click();

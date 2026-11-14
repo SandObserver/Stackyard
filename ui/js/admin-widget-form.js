@@ -1,12 +1,12 @@
 import { carriesTypedValues, rejectionLines, sizesForView, widgetConfigMode } from '/js/admin-logic.js?v=06da6a19';
-import { initInlineEdit, PE_SVG, swapContent } from '/js/admin-shared.js?v=89fe2e81';
+import { initInlineEdit, PE_SVG, swapContent } from '/js/admin-shared.js?v=4e01da0b';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=721852aa';
 import { iconSvg } from '/js/icon-set.js?v=361e54a5';
 import { createListbox } from '/js/listbox.js?v=794fe194';
 import { focusFirst, q, qa, qi } from '/js/utils.js?v=d49cd680';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=bdae239f';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=56b8bd16';
 
 const SIZES_WITH_ICONS = new Set(['small', 'medium', 'large', 'xlarge']);
 
@@ -102,10 +102,8 @@ function _renderWidgetForm(body) {
 
   const _sizeOpts = sizesForView(widgetSizes(state._wtype), state._widgetReg[state._wtype], state._wAutoCfg);
   if (!_sizeOpts.includes(state._wsize)) state._wsize = _sizeOpts.includes('medium') ? 'medium' : _sizeOpts[0];
-  const sizeHdr = document.createElement('p');
+  const sizeHdr = document.createElement('h2');
   sizeHdr.className = 'grp-hdr';
-  sizeHdr.setAttribute('role', 'heading');
-  sizeHdr.setAttribute('aria-level', '2');
   sizeHdr.textContent = t('widgetCfg.size');
   body.appendChild(sizeHdr);
   const scard = document.createElement('div');
@@ -206,10 +204,8 @@ function _renderCustomConfig(body) {
   });
 
   const o = state._iframeOpts || {};
-  const advHdr = document.createElement('p');
+  const advHdr = document.createElement('h2');
   advHdr.className = 'grp-hdr';
-  advHdr.setAttribute('role', 'heading');
-  advHdr.setAttribute('aria-level', '2');
   advHdr.textContent = t('widgetCfg.advanced');
   body.appendChild(advHdr);
   const adv = document.createElement('div');
@@ -231,7 +227,7 @@ function _renderCustomConfig(body) {
     html`
     <div class="row" id="if-referrer-row"><span class="rl">${t('widgetCfg.referrerPolicy')}</span></div>
     <div class="row ie-row" id="if-allow-row"><span class="rl">${t('widgetCfg.allowFeaturePolicy')}</span><span class="rv${o.allow ? '' : ' is-ph'}">${o.allow ? o.allow : 'autoplay; fullscreen'}</span><input id="if-allow" type="text" value="${o.allow || ''}" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>
-    <div class="row"><span class="rl">${t('widgetCfg.allowFullscreen')}</span><label class="tog"><input type="checkbox" id="if-fs" aria-label="${t('widgetCfg.allowFullscreen')}" ${o.allowFullscreen !== false ? 'checked' : ''}><div class="tr"></div></label></div>
+    <div class="row"><span class="rl">${t('widgetCfg.allowFullscreen')}</span><label class="tog"><input type="checkbox" role="switch" id="if-fs" aria-label="${t('widgetCfg.allowFullscreen')}" ${o.allowFullscreen !== false ? 'checked' : ''}><div class="tr"></div></label></div>
     <div class="row ie-row" id="if-refresh-row"><span class="rl">${t('widgetCfg.refreshInterval')} <span class="opt-span">(ms)</span></span><span class="rv${o.refreshInterval ? '' : ' is-ph'}">${o.refreshInterval ? o.refreshInterval : t('widgetCfg.refreshPh')}</span><input id="if-refresh" type="number" inputmode="numeric" min="250" step="250" value="${o.refreshInterval || ''}" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`,
   );
   const refBox = createListbox({

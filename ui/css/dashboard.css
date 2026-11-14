@@ -458,6 +458,7 @@
     /* ── Search pill — mobile only ── */
     #mob-search-pill {
       --pill-inset:0px;
+      font:inherit; color:inherit; padding:0; margin:0;
       position:fixed; left:50%; z-index:500;
       transform:translateX(-50%);
       display:none; /* shown by buildMobile */
