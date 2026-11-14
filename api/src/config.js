@@ -1,11 +1,13 @@
 const fs = require('fs');
 const path = require('path');
 const log = require('./log');
-const { writeFileAtomic, WRITE_FAILURES } = require('./atomic-write');
+const { writeFileAtomic, tagWriteFailure, WRITE_FAILURES } = require('./atomic-write');
 const { IS_DEMO } = require('./demo');
 const { migrateItemBadgeHeaders } = require('./badge-headers');
 
 const CONFIG_PATH = process.env.CONFIG_PATH || '/data/apps.json';
+/* Holds secrets. Never send it, export it, back it up or log its contents. */
+const HELD_PATH = path.join(path.dirname(CONFIG_PATH), 'held-widget-config.json');
 const ICONS_PATH = process.env.ICONS_PATH || '/icons';
 
 /* A path set to somewhere that does not exist starts the process normally and
@@ -273,7 +275,14 @@ function _tightenEarlierFiles() {
   } catch {
     /* unreadable folder: the config read reports it */
   }
-  for (const file of [CONFIG_PATH, `${CONFIG_PATH}.tmp`, ...names.map(n => path.join(dir, n))]) {
+  const files = [
+    CONFIG_PATH,
+    `${CONFIG_PATH}.tmp`,
+    HELD_PATH,
+    `${HELD_PATH}.tmp`,
+    ...names.map(n => path.join(dir, n)),
+  ];
+  for (const file of files) {
     try {
       if (fs.lstatSync(file).isFile()) fs.chmodSync(file, 0o600);
     } catch {
@@ -326,6 +335,8 @@ function _readDisk() {
   return shaped;
 }
 
+const _releaseLogged = new Set();
+
 /* Returns the live cache. Do not write to it. Call loadConfigForUpdate to
    change the config. A write here survives a failed save. */
 function loadConfig() {
@@ -339,15 +350,24 @@ function loadConfig() {
 
   const before = shaped._schemaVersion;
   migrate(shaped);
+  /* Required here. widget-secrets loads widgets.js, which loads this file. */
+  const { moved, stale } = require('./widget-secrets').releaseHeldConfigs(shaped, _readHeldForLoad());
+  const fresh = moved.filter(id => !_releaseLogged.has(id));
+  if (fresh.length) log.audit('stored credentials dropped until retyped', { items: fresh });
   _cfgCache = shaped;
   _cfgCacheAt = now;
   /* A failed write must not break reads. */
-  if (shaped._schemaVersion !== before) {
+  if (shaped._schemaVersion !== before || moved.length) {
     try {
-      saveConfig(shaped);
+      saveConfig(shaped, { release: [...moved, ...stale] });
+      for (const id of moved) _releaseLogged.delete(id);
     } catch (e) {
-      log.warn('migrated config could not be written back', { path: CONFIG_PATH, error: e.message });
+      for (const id of moved) _releaseLogged.add(id);
+      if (shaped._schemaVersion !== before || fresh.length)
+        log.warn('migrated config could not be written back', { path: CONFIG_PATH, error: e.message });
     }
+  } else if (stale.length) {
+    _pruneHeld(shaped, stale);
   }
   return shaped;
 }
@@ -364,7 +384,76 @@ const CONFIG_WRITE_FAILURES = { ...WRITE_FAILURES, EBUSY: [500, 'internal.config
 
 /* keepRev is only for writes the browser never sees. Every open dashboard
    reloads when _rev changes. */
-function saveConfig(data, { keepRev = false } = {}) {
+function _writeAtomic(file, text) {
+  writeFileAtomic(file, text, { mode: 0o600, tmp: `${file}.tmp`, failures: CONFIG_WRITE_FAILURES });
+}
+
+/** @returns {Record<string, { widgetType: string, widgetConfig: object }>} */
+function _readHeld() {
+  let raw;
+  try {
+    raw = fs.readFileSync(HELD_PATH, 'utf8');
+  } catch (e) {
+    if (e.code === 'ENOENT') return {};
+    throw e;
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return {};
+  }
+  /** @type {Record<string, { widgetType: string, widgetConfig: any }>} */
+  const out = {};
+  if (!isPlainObject(parsed)) return out;
+  for (const [id, entry] of Object.entries(parsed))
+    if (isPlainObject(entry) && typeof entry.widgetType === 'string' && isPlainObject(entry.widgetConfig))
+      out[id] = entry;
+  return out;
+}
+
+function _readHeldForLoad() {
+  try {
+    return _readHeld();
+  } catch (e) {
+    log.warn('held widget config could not be read', { path: HELD_PATH, error: e.message });
+    return {};
+  }
+}
+
+function _writeHeld(held) {
+  if (Object.keys(held).length) return _writeAtomic(HELD_PATH, JSON.stringify(held, null, 2));
+  try {
+    fs.unlinkSync(HELD_PATH);
+  } catch (e) {
+    if (e.code !== 'ENOENT') throw tagWriteFailure(e, CONFIG_WRITE_FAILURES);
+  }
+}
+
+function _pruneHeld(data, release = []) {
+  if (!Array.isArray(data?.items)) return;
+  try {
+    const held = _readHeld();
+    const items = data.items;
+    const kept = {};
+    for (const [id, entry] of Object.entries(held)) {
+      if (release.includes(id)) continue;
+      const item = items.find(i => i && i.id === id);
+      if (item?.type === 'widget' && item.widgetType === entry.widgetType) kept[id] = entry;
+    }
+    if (Object.keys(kept).length !== Object.keys(held).length) _writeHeld(kept);
+  } catch (e) {
+    log.warn('held widget config could not be updated', { path: HELD_PATH, error: e.message });
+  }
+}
+
+function loadHeldConfigs() {
+  return structuredClone(_readHeld());
+}
+
+/** @param {any} data
+    @param {{ keepRev?: boolean, hold?: Record<string, { widgetType: string, widgetConfig: any }>, release?: string[] }} [opts] */
+function saveConfig(data, { keepRev = false, hold = {}, release = [] } = {}) {
   /* Check the file, not the cache. A file broken after the last read must be
      kept, not overwritten. */
   _readDisk();
@@ -376,11 +465,10 @@ function saveConfig(data, { keepRev = false } = {}) {
   /* Clone before writing. A value the clone cannot handle must fail here, not
      after the file is replaced: every later read clones it and fails too. */
   const copy = structuredClone(data);
-  writeFileAtomic(CONFIG_PATH, JSON.stringify(data, null, 2), {
-    mode: 0o600,
-    tmp: `${CONFIG_PATH}.tmp`,
-    failures: CONFIG_WRITE_FAILURES,
-  });
+  /* Keep this order. Writing the config file first loses the held config on a crash. */
+  if (Object.keys(hold).length) _writeHeld({ ..._readHeld(), ...hold });
+  _writeAtomic(CONFIG_PATH, JSON.stringify(data, null, 2));
+  _pruneHeld(data, release);
 
   /* Only after the write succeeded. */
   _cfgCache = copy;
@@ -432,6 +520,8 @@ module.exports = {
   configDamage,
   configFileIsMount,
   saveConfig,
+  loadHeldConfigs,
+  HELD_PATH,
   ensureSystemItems,
   migrate,
   missingPathDirs,

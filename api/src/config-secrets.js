@@ -59,10 +59,14 @@ const mayHoldSecret = (config, entry) =>
     request is still the one the secret was stored for. Matching by item id
     alone sends a stored credential to a destination the incoming config names.
 
-    @param {any} newCfg @param {any} oldCfg
-    @returns {{ withheld: Array<{ id: string, label: string }> }} */
-function preserveAllSecrets(newCfg, oldCfg) {
+    A widget with no manifest whose destination changed keeps its stored config
+    in holds, never in newCfg.
+
+    @param {any} newCfg @param {any} oldCfg @param {Record<string, any>} [held] the stored held configs
+    @returns {{ withheld: Array<{ id: string, label: string }>, holds: Record<string, any> }} */
+function preserveAllSecrets(newCfg, oldCfg, held = {}) {
   const withheld = [];
+  const toHold = {};
   const noted = new Set();
   const note = item => {
     if (noted.has(item.id)) return;
@@ -95,9 +99,25 @@ function preserveAllSecrets(newCfg, oldCfg) {
     const tlsChanged = widgetTlsChanged(newCfg.settings?.server, oldCfg?.settings?.server);
     for (const item of newCfg.items) {
       if (!item || item.type !== 'widget') continue;
+      const entry = reg[item.widgetType];
+      const stored = savedById.get(item.id);
+      if (!entry && (redirected || tlsChanged) && stored?.type === 'widget' && stored.widgetType === item.widgetType) {
+        const prior = Object.hasOwn(held, item.id) && held[item.id].widgetType === item.widgetType;
+        const keep = mayHoldSecret(stored.widgetConfig, undefined)
+          ? stored.widgetConfig
+          : prior
+            ? held[item.id].widgetConfig
+            : undefined;
+        keepWidget.set(item, null);
+        item.widgetConfig = {};
+        if (mayHoldSecret(keep, undefined)) {
+          toHold[item.id] = { widgetType: item.widgetType, widgetConfig: structuredClone(keep) };
+          note(item);
+        }
+        continue;
+      }
       const prev = prevOf(item);
       if (!prev) continue;
-      const entry = reg[item.widgetType];
       const sameWidget = prev.type === 'widget' && prev.widgetType === item.widgetType && !tlsChanged;
       if (!entry) {
         keepWidget.set(item, sameWidget ? prev : null);
@@ -152,7 +172,7 @@ function preserveAllSecrets(newCfg, oldCfg) {
       preserveItemBadgeSecrets(item, scoped);
     }
   }
-  return { withheld };
+  return { withheld, holds: toHold };
 }
 
 module.exports = { scrubAllSecrets, preserveAllSecrets };
