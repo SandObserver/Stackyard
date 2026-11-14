@@ -20,7 +20,7 @@ const root = path.join(__dirname, '../..');
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');
 
 /* floor: null for Docker's 0, 'absent' for a kernel without the file, or the
-   file's content. env may be a function of the test's folders.
+   file's content. env and paths may be functions of the test's folders.
    @returns {{ status: number, started: boolean, stderr: string, runtime: string, tmpdir: string, file: (name: string) => string }} */
 function run({ uid = 0, env = {}, floor = null, inet6 = null, paths: extraPaths = {}, setup = () => {} } = {}) {
   const dir = tmpDir('entrypoint-any-user');
@@ -41,11 +41,11 @@ function run({ uid = 0, env = {}, floor = null, inet6 = null, paths: extraPaths 
   stub('nginx', 'exit 0');
   stub('id', `echo ${uid}`);
   stub('chown', 'exit 0');
-  stub('su', 'while [ "$1" != -c ]; do shift; done\nsh -c "$2"');
+  stub('su', 'while [ "$1" != -c ]; do shift; done\nshift\nsh -c "$@"');
   const started = path.join(dir, 'started');
   const handoff = stub('handoff', 'printf %s "$TMPDIR" > "$SY_STARTED"');
 
-  const paths = { runtime, ...extraPaths };
+  const paths = { runtime, ...(typeof extraPaths === 'function' ? extraPaths({ dir, runtime }) : extraPaths) };
   if (inet6) paths.inet6 = inet6;
   if (floor !== null) {
     paths.floor = path.join(dir, 'floor');
@@ -180,11 +180,41 @@ test('an ICONS_PATH that could break nginx config stops the container', () => {
 });
 
 test('a CONFIG_PATH with no usable folder stops the container', () => {
-  for (const value of ['apps.json', '/apps.json', '/data/"x"/apps.json', '/data/$x/apps.json', '/data/../apps.json']) {
+  for (const value of ['apps.json', '/apps.json', '/data/../apps.json', '/data/./apps.json', '/data/a\nb/apps.json']) {
     const r = run({ env: { CONFIG_PATH: value } });
     assert.equal(r.status, 1, `"${value}" was accepted`);
     assert.ok(!r.started, `"${value}" started the container`);
     assert.match(r.stderr, /CONFIG_PATH must/, `"${value}" gave no reason`);
+  }
+});
+
+test('a CONFIG_PATH folder with a space or a non-ASCII letter is used and created', () => {
+  for (const uid of [0, 2000]) {
+    for (const name of ['my data', 'café']) {
+      const r = run({ uid, env: ({ dir }) => ({ CONFIG_PATH: `${dir}/${name}/apps.json` }) });
+      assert.equal(r.status, 0, `uid ${uid}, ${name}: ${r.stderr}`);
+      assert.ok(r.started, `uid ${uid}, ${name}`);
+      assert.equal(r.stderr, '', `uid ${uid}, ${name}`);
+      assert.ok(fs.statSync(path.join(r.dir, name)).isDirectory(), `uid ${uid}, ${name}: the folder was not created`);
+    }
+  }
+});
+
+test('a CONFIG_PATH folder name cannot run a command as the API account', () => {
+  for (const name of [
+    'q"$(touch "$SY_PWNED")"q',
+    'b`touch "$SY_PWNED"`b',
+    's\';touch "$SY_PWNED";\'s',
+    'd$(touch $SY_PWNED)',
+  ]) {
+    const pwned = path.join(tmpDir('entrypoint-any-user-pwned'), 'pwned');
+    const r = run({
+      setup: ({ dir }) => fs.mkdirSync(path.join(dir, name)),
+      env: ({ dir }) => ({ CONFIG_PATH: `${dir}/${name}/apps.json`, SY_PWNED: pwned }),
+    });
+    assert.equal(r.status, 0, `${name}: ${r.stderr}`);
+    assert.ok(r.started, name);
+    assert.ok(!fs.existsSync(pwned), `${name} ran a command`);
   }
 });
 
@@ -233,19 +263,112 @@ test('a folder inside a system folder of the image stops the container', () => {
   }
 });
 
+const systemDirs = '/bin /boot /dev /etc /lib /lib64 /proc /run /sbin /sys /usr';
+const mountDirs = '/app /root /tmp /var';
+
 test('every system folder named by docker-entrypoint.sh is refused, and a sibling name is not', () => {
-  const system = '/app /bin /boot /dev /etc /lib /lib64 /proc /root /run /sbin /sys /tmp /usr /var';
-  for (const folder of system.split(' ')) {
-    const r = run({ env: { ICONS_PATH: `${folder}/icons`, CONFIG_PATH: '/data/apps.json' }, paths: { system } });
+  const paths = { system: systemDirs, mountable: mountDirs };
+  for (const folder of `${systemDirs} ${mountDirs}`.split(' ')) {
+    const r = run({ env: { ICONS_PATH: `${folder}/icons`, CONFIG_PATH: '/data/apps.json' }, paths });
     assert.equal(r.status, 1, `${folder}/icons was accepted`);
     assert.match(r.stderr, new RegExp(`${folder} is a system folder`), folder);
   }
   /* The config check that follows stops the run before any folder is made. */
   for (const value of ['/data/icons', '/srv/icons', '/variable', '/application', '/tmpicons']) {
-    const r = run({ env: { ICONS_PATH: value, CONFIG_PATH: `${value}/apps.json` }, paths: { system } });
+    const r = run({ env: { ICONS_PATH: value, CONFIG_PATH: `${value}/apps.json` }, paths });
     assert.match(r.stderr, /CONFIG_PATH cannot be inside ICONS_PATH/, value);
     assert.doesNotMatch(r.stderr, /system folder/, value);
   }
+});
+
+const mountLine = point =>
+  `412 380 0:52 / ${point.replace(/\\/g, '\\134').replace(/ /g, '\\040')} rw,relatime - ext4 /dev/sda1 rw\n`;
+
+/* mounted: folders below `mountable` listed as mount points. made: folders created. */
+function runMounted({ mounted = [], made = [], env, uid = 0 }) {
+  return run({
+    uid,
+    paths: ({ dir }) => ({ mountinfo: path.join(dir, 'mountinfo') }),
+    setup: ({ dir }) => {
+      for (const f of made) fs.mkdirSync(path.join(dir, f), { recursive: true });
+      const info = path.join(dir, 'mountinfo');
+      fs.writeFileSync(
+        info,
+        `23 1 0:21 / / rw - overlay overlay rw\n${mounted.map(f => mountLine(path.join(dir, f))).join('')}`,
+      );
+    },
+    env: ({ dir }) => env(dir),
+  });
+}
+
+test('a folder below a system folder that may hold a mount is used when it is on its own mount', () => {
+  for (const c of [
+    { mounted: ['mountable/stackyard'], made: ['mountable/stackyard'], config: 'mountable/stackyard/apps.json' },
+    {
+      mounted: ['mountable/lib/stackyard'],
+      made: ['mountable/lib/stackyard/sub'],
+      config: 'mountable/lib/stackyard/sub/apps.json',
+    },
+    { mounted: ['mountable/my data'], made: ['mountable/my data'], config: 'mountable/my data/apps.json' },
+    { mounted: ['mountable/stackyard'], made: ['mountable/stackyard/icons'], icons: 'mountable/stackyard/icons' },
+    { mounted: ['mountable/stackyard'], made: ['mountable/stackyard'], icons: 'mountable/stackyard/icons' },
+  ]) {
+    for (const uid of [0, 2000]) {
+      const r = runMounted({
+        uid,
+        mounted: c.mounted,
+        made: c.made,
+        env: dir => ({
+          ...(c.config && { CONFIG_PATH: `${dir}/${c.config}` }),
+          ...(c.icons && { ICONS_PATH: `${dir}/${c.icons}` }),
+        }),
+      });
+      assert.equal(r.status, 0, `uid ${uid}, ${c.config || c.icons}: ${r.stderr}`);
+      assert.ok(r.started);
+      if (c.icons) assert.equal(iconsRoot(r), path.join(r.dir, c.icons));
+    }
+  }
+});
+
+test('a folder below a system folder that may hold a mount is refused when it is not on its own mount', () => {
+  for (const c of [
+    { mounted: [], made: ['mountable/stackyard'], config: 'mountable/stackyard/apps.json' },
+    { mounted: ['mountable'], made: ['mountable/stackyard'], config: 'mountable/stackyard/apps.json' },
+    { mounted: ['mountable'], made: ['mountable'], config: 'mountable/apps.json' },
+    { mounted: ['mountable/stack'], made: ['mountable/stackyard'], config: 'mountable/stackyard/apps.json' },
+    {
+      mounted: ['mountable/stackyard/sub'],
+      made: ['mountable/stackyard/sub'],
+      config: 'mountable/stackyard/apps.json',
+    },
+    { mounted: [], made: ['mountable/icons'], icons: 'mountable/icons' },
+  ]) {
+    const r = runMounted({
+      mounted: c.mounted,
+      made: c.made,
+      env: dir => ({
+        ...(c.config && { CONFIG_PATH: `${dir}/${c.config}` }),
+        ...(c.icons && { ICONS_PATH: `${dir}/${c.icons}` }),
+      }),
+    });
+    const label = `${c.config || c.icons} with ${JSON.stringify(c.mounted)}`;
+    assert.equal(r.status, 1, label);
+    assert.ok(!r.started, label);
+    assert.match(r.stderr, /\/mountable is a system folder of the image\. Mount a volume at /, label);
+  }
+});
+
+/* Docker mounts files into /etc and /run, and nginx and the entrypoint read the
+   image's files there and in /usr. */
+test('a folder below a system folder that may not hold a mount is refused even on its own mount', () => {
+  const r = runMounted({
+    mounted: ['system/stackyard'],
+    made: ['system/stackyard'],
+    env: dir => ({ CONFIG_PATH: `${dir}/system/stackyard/apps.json` }),
+  });
+  assert.equal(r.status, 1, r.stderr);
+  assert.ok(!r.started);
+  assert.match(r.stderr, /\/system is a system folder of the image\. Use a folder/);
 });
 
 /* ── ports below the system's floor ───────────────────────────────────────── */
@@ -419,7 +542,7 @@ test('the entrypoint reads only documented settings from the environment', () =>
 
 /* ── the shipped config agrees with the entrypoint ───────────────────────── */
 
-const call = /^stackyard_main (\S+) (\S+) (\S+) (\S+) (\S+) \\\n\s+"([^"]+)" -- "\$@"$/m.exec(
+const call = /^stackyard_main (\S+) (\S+) (\S+) (\S+) (\S+) \\\n\s+(\S+) "([^"]+)" "([^"]+)" -- "\$@"$/m.exec(
   read('docker-entrypoint.sh'),
 );
 const runtimeDir = call?.[1];
@@ -430,14 +553,16 @@ const defaultPath = name => {
 };
 
 test('docker-entrypoint.sh passes the real paths', () => {
-  assert.ok(call, 'docker-entrypoint.sh does not call stackyard_main with five paths and the system folders');
+  assert.ok(call, 'docker-entrypoint.sh does not call stackyard_main with six paths and two lists of system folders');
   assert.deepEqual(call.slice(1), [
     '/run/stackyard',
     '/data',
     '/icons',
     '/proc/net/if_inet6',
     '/proc/sys/net/ipv4/ip_unprivileged_port_start',
-    '/app /bin /boot /dev /etc /lib /lib64 /proc /root /run /sbin /sys /tmp /usr /var',
+    '/proc/self/mountinfo',
+    systemDirs,
+    mountDirs,
   ]);
 });
 

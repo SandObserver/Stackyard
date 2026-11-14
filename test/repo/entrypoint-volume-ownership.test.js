@@ -41,12 +41,7 @@ function run({
   /* A folder counts as writable for node once a chown -R has covered it. */
   stub(
     'su',
-    [
-      'case "$*" in *mkdir*) exit 0 ;; esac',
-      writable ? 'exit 0' : '',
-      'd="$(printf %s "$5" | sed \'s/^test -w "\\(.*\\)"$/\\1/\')"',
-      '[ -e "$d/.chowned" ]',
-    ].join('\n'),
+    ['case "$*" in *mkdir*) exit 0 ;; esac', writable ? 'exit 0' : '', 'd="$7"', '[ -e "$d/.chowned" ]'].join('\n'),
   );
   stub(
     'chown',
@@ -149,6 +144,14 @@ test('started as root, the folders CONFIG_PATH and ICONS_PATH name are taken ove
   });
   assert.equal(r.status, 0, r.stderr);
   assert.deepEqual(r.chowned, [`-R node:node ${r.dir}/config`, `-R node:node ${r.dir}/media/icons`]);
+});
+
+test('started as root, a CONFIG_PATH folder with a space or a non-ASCII letter is taken over', () => {
+  for (const name of ['my data', 'café']) {
+    const r = run({ writable: false, dirs: [name], env: dir => ({ CONFIG_PATH: `${dir}/${name}/apps.json` }) });
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(r.chowned, [`-R node:node ${r.dir}/${name}`]);
+  }
 });
 
 /* One volume at /data, as on Railway, with the icons folder not made yet. */
