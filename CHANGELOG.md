@@ -172,6 +172,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - With reduced motion, Settings and loading fades no longer cut instantly.
 
+- Scrolling over a Settings dialog or the sign-in screen no longer scrolls the
+  page behind it.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
