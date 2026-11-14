@@ -109,6 +109,26 @@ test('header rules start from the main page and group folders that differ', () =
   assert.doesNotMatch(text, /\/js\//, 'a folder with the base headers needs no rule');
 });
 
+/* The demo host sends only what _headers names. A header left off the lists
+   is dropped without an error. */
+test('every shared security header reaches the demo and its check', () => {
+  const fs = require('node:fs');
+  const root = path.join(__dirname, '..', '..');
+  const shared = fs.readFileSync(path.join(root, 'nginx/security-headers.conf'), 'utf8');
+  const tour = fs.readFileSync(path.join(root, 'scripts/demo/tour.js'), 'utf8');
+  const headers = Object.fromEntries(
+    [...shared.matchAll(/^add_header (\S+) "([^"]*)" always;$/gm)].map(([, n, v]) => [n.toLowerCase(), v]),
+  );
+  assert.ok(headers['cross-origin-opener-policy'], 'the shared file sets no opener policy');
+  const text = headerRules({ '/index.html': headers }).toLowerCase();
+  const at = tour.indexOf('const CHECKED_HEADERS');
+  const checked = tour.slice(at, tour.indexOf('];', at));
+  for (const [n, v] of Object.entries(headers)) {
+    assert.ok(text.includes(`  ${n}: ${v}\n`.toLowerCase()), `_headers drops ${n}`);
+    assert.ok(checked.includes(`'${n}'`), `the tour does not check ${n}`);
+  }
+});
+
 test('a folder with mixed headers gets one rule per differing file', () => {
   const text = headerRules({
     '/index.html': BASE,

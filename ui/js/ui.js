@@ -17,7 +17,7 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=dd85f1d0';
+} from '/js/utils.js?v=c1d4e76c';
 import { t, currentLang } from '/js/i18n.js?v=99563c71';
 import { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
 import {

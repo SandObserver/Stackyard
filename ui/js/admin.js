@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=8f79cd19';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=c3a5b9c7';
+} from '/js/admin-app-form.js?v=8510149d';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=62124aa1';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=5008732c';
+} from '/js/admin-list.js?v=09bcde7d';
 import { filterActive, folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=06da6a19';
 import {
   afterImport,
@@ -40,7 +40,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=2a0b7543';
+} from '/js/admin-settings.js?v=6271ace5';
 import {
   announce,
   apiGet,
@@ -65,10 +65,10 @@ import {
   swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=4a86e8be';
+} from '/js/admin-shared.js?v=495be496';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=4e92786c';
-import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=fc598e17';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=12f780e6';
+import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=eca5642a';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
 import { recoveryShown } from '/js/config-recovery.js?v=da14e1c7';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
@@ -92,7 +92,7 @@ import {
 } from '/js/import-foreign.js?v=46304742';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=aaf6e7ab';
+import { createListbox } from '/js/listbox.js?v=384c0ad5';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=84ba5279';
 import { passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
@@ -123,7 +123,7 @@ import {
   storeSet,
   tgt,
   within,
-} from '/js/utils.js?v=dd85f1d0';
+} from '/js/utils.js?v=c1d4e76c';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=39538b71';
 

@@ -132,7 +132,7 @@ const read = f => fs.readFileSync(path.join(uiRoot, f), 'utf8');
    the aspects match. */
 test('the widget is contained by its card, not cropped to it', () => {
   const src = read('js/utils.js');
-  const fit = src.slice(src.indexOf('const fit = () =>'), src.indexOf('ifr.style.opacity'));
+  const fit = src.slice(src.indexOf('const place = frame =>'), src.indexOf('const fit = () =>'));
   assert.match(fit, /Math\.min\(w \/ dw, h \/ dh\)/, 'cover lets a card clip its own widget');
   assert.doesNotMatch(fit, /Math\.max\(w \/ dw, h \/ dh\)/);
 });

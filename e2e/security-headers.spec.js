@@ -24,7 +24,19 @@ for (const url of PATHS) {
     const res = await request.get(url, { maxRedirects: 0 });
     const headers = res.headers();
     expect(headers['x-content-type-options']).toBe('nosniff');
-    expect(headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
-    expect(headers['permissions-policy']).toBe('camera=(), microphone=(), geolocation=()');
+    expect(headers['referrer-policy']).toBe('same-origin');
+    expect(headers['cross-origin-opener-policy']).toBe('same-origin-allow-popups');
+    expect(headers['permissions-policy']).toBe(
+      'camera=(), microphone=(), geolocation=(), usb=(), serial=(), hid=(), payment=(), display-capture=()',
+    );
+    if (url.startsWith('/api/')) expect(headers['cross-origin-resource-policy']).toBe('same-origin');
   });
 }
+
+test('a widget page refuses plugins and form submissions', async ({ request }) => {
+  const res = await request.get('/widgets/clock/analog.html');
+  const csp = (res.headers()['content-security-policy'] || '').split(';').map(d => d.trim());
+  expect(csp).toContain("object-src 'none'");
+  expect(csp).toContain("form-action 'none'");
+  expect(csp).toContain("base-uri 'self'");
+});

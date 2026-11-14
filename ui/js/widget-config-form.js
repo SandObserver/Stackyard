@@ -3,9 +3,9 @@
 
 import { t } from '/js/i18n.js?v=99563c71';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { apiPost, fadeIn, PE_SVG, reveal, wireInlineEdit } from '/js/admin-shared.js?v=4a86e8be';
-import { createListbox } from '/js/listbox.js?v=aaf6e7ab';
-import { renderColorControl } from '/js/admin-color-control.js?v=c94128b4';
+import { apiPost, fadeIn, PE_SVG, reveal, wireInlineEdit } from '/js/admin-shared.js?v=495be496';
+import { createListbox } from '/js/listbox.js?v=384c0ad5';
+import { renderColorControl } from '/js/admin-color-control.js?v=aa24597a';
 import {
   seedCarried,
   applyOptionSet,
@@ -16,7 +16,7 @@ import {
   isPlainField,
 } from '/js/admin-logic.js?v=06da6a19';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=5abd7438';
-import { qi } from '/js/utils.js?v=dd85f1d0';
+import { qi } from '/js/utils.js?v=c1d4e76c';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { SAVED_ROW } from '/js/saved-row.js?v=44039df6';
 import { slideBlock } from '/js/modal.js?v=84ba5279';

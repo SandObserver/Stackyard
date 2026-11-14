@@ -32,5 +32,5 @@ test('off-screen pages are slowed rather than left at full rate', () => {
 /* A frame that loads after the page change would otherwise keep the rate it
    started with, which is the normal one. */
 test('a frame that loads later is told its rate', () => {
-  assert.match(dashboard, /addEventListener\('load', applyPollRates\)/);
+  assert.match(dashboard, /strip\.addEventListener\('load', onFrameLoad, true\)/);
 });
