@@ -101,6 +101,6 @@
   "network.stToken.label": "توکن API",
   "network.stToken.hint": "اختیاری. برای استفاده از مسیر سازگاری قدیمی خالی بگذارید.",
   "ui.noData": "داده‌ای نیست",
-  "ui.mbps": "{value} مگابیت بر ثانیه",
-  "ui.gbps": "{value} گیگابیت بر ثانیه"
+  "ui.mbps": "{value} مگابیت/ثانیه",
+  "ui.gbps": "{value} گیگابیت/ثانیه"
 }
