@@ -124,6 +124,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show the real network rate from Glances 3 instead of 0 B/s.
 
+- Leave no broken file behind when an icon or wallpaper upload fails on a full
+  or read-only disk, and say why it failed.
+
+- Save an icon uploaded as ".svg" under a proper name so it appears in the icon
+  list.
+
+- Save an icon with the extension that matches its contents.
+
+- Refuse an icon named .svg that contains no SVG image.
+
+- Save upload names with accented or non-Latin letters correctly, without
+  control characters.
+
+- Accept a wallpaper up to the 16 MB limit.
+
+- Show a readable error when a request is too large for the web server.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
