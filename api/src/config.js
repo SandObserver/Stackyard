@@ -403,6 +403,7 @@ function _readHeld() {
   } catch {
     return {};
   }
+  /** @type {Record<string, { widgetType: string, widgetConfig: any }>} */
   const out = {};
   if (!isPlainObject(parsed)) return out;
   for (const [id, entry] of Object.entries(parsed))
@@ -450,6 +451,8 @@ function loadHeldConfigs() {
   return structuredClone(_readHeld());
 }
 
+/** @param {any} data
+    @param {{ keepRev?: boolean, hold?: Record<string, { widgetType: string, widgetConfig: any }>, release?: string[] }} [opts] */
 function saveConfig(data, { keepRev = false, hold = {}, release = [] } = {}) {
   /* Check the file, not the cache. A file broken after the last read must be
      kept, not overwritten. */
