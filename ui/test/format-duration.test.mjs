@@ -75,3 +75,44 @@ test('a narrow unit written in Latin letters falls back to the short unit word',
     assert.equal(formatDuration(4 * 60 + 7, 'narrow'), '4小时 7分钟');
   });
 });
+
+test('unit words follow the interface language, not the browser language', async () => {
+  await withLocale(
+    'en-US',
+    ({ formatDuration }) => {
+      assert.equal(formatDuration(3 * 1440 + 4 * 60), '۳ روز ۴ ساعت');
+      assert.equal(formatDuration(4 * 60 + 7, 'narrow'), '۴ ساعت ۷ دقیقه');
+    },
+    'fa',
+  );
+  await withLocale(
+    'en-US',
+    ({ formatDuration }) => {
+      assert.equal(formatDuration(3 * 1440 + 4 * 60), '3 Tg. 4 Std.');
+    },
+    'de',
+  );
+  await withLocale(
+    'fa-IR',
+    ({ formatDuration }) => {
+      assert.equal(formatDuration(3 * 1440 + 4 * 60), '3 days 4 hr');
+    },
+    'en',
+  );
+});
+
+test('without a usable interface language, unit words follow the browser language', async () => {
+  await withLocale('de', ({ formatDuration }) => {
+    assert.equal(formatDuration(3 * 1440 + 4 * 60), '3 Tg. 4 Std.');
+  });
+  await withLocale(
+    'de',
+    ({ formatDuration }) => {
+      assert.equal(formatDuration(3 * 1440 + 4 * 60), '3 Tg. 4 Std.');
+    },
+    'not a language',
+  );
+  await withLocale('not a language', ({ formatDuration }) => {
+    assert.equal(formatDuration(3 * 1440 + 4 * 60), '3 days 4 hr');
+  });
+});

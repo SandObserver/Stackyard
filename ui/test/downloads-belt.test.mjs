@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { test } from 'node:test';
 import {
   ENDS,
@@ -79,4 +80,28 @@ test('a finish time today shows only the clock, and a week out only the date', (
   const us = 'h12';
   assert.deepEqual(finishParts(new Date(2026, 9, 27, 9, 30).getTime(), now, 'en', us), { time: '9:30', half: 'am' });
   assert.deepEqual(finishParts(new Date(2026, 10, 9, 9, 30).getTime(), now, 'de', us), { time: '9. Nov.', half: '' });
+});
+
+test('a time left reads in the interface language, each unit isolated', async () => {
+  const src = fs.readFileSync(new URL('../widgets/downloads/index.html', import.meta.url), 'utf8');
+  const isoSrc = src.match(/const iso = (.+);\n/);
+  const durationSrc = src.match(/function duration\(seconds, unitDisplay\) \{[\s\S]*?\n\}/);
+  assert.ok(isoSrc && durationSrc, 'iso and duration are defined in the widget');
+  const had = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  Object.defineProperty(globalThis, 'navigator', { value: { language: 'en-US' }, configurable: true });
+  try {
+    const fmt = await import('../js/format-number.js?downloads=fa');
+    fmt.setNumberLanguage('fa');
+    const duration = new Function(
+      'hoursMinutes',
+      'formatDuration',
+      `const iso = ${isoSrc[1]}; ${durationSrc[0]}; return duration;`,
+    )(hoursMinutes, fmt.formatDuration);
+    assert.equal(duration(4 * 3600 + 6 * 60 + 30, 'narrow'), '\u2068۴ ساعت\u2069 \u2068۷ دقیقه\u2069');
+    assert.equal(duration(3 * 86400 + 4 * 3600), '\u2068۳ روز\u2069 \u2068۴ ساعت\u2069');
+    assert.equal(duration(20), '\u2068۱ دقیقه\u2069');
+  } finally {
+    if (had) Object.defineProperty(globalThis, 'navigator', had);
+    else delete globalThis.navigator;
+  }
 });

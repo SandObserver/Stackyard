@@ -8,9 +8,9 @@
 
 import { nextActiveIndex, singleChoice } from '/js/admin-logic.js?v=06da6a19';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
-import { formatList } from '/js/format-number.js?v=1e831585';
+import { formatList } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { qa } from '/js/utils.js?v=d0e83a9f';
+import { qa } from '/js/utils.js?v=dd85f1d0';
 import { iconSvg } from '/js/icon-set.js?v=361e54a5';
 
 const CHEV = iconSvg('chevrons', 22, 'solid', 'dd-chev');

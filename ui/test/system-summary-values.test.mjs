@@ -8,7 +8,7 @@ import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
 Object.defineProperty(globalThis, 'navigator', { value: { language: 'en' }, configurable: true });
-const { byteScale, formatBytes, formatByteRate, formatNumber } = await import('../js/format-number.js');
+const { byteScale, formatBytes, formatByteRate, formatDuration, formatNumber } = await import('../js/format-number.js');
 
 const src = fs.readFileSync(new URL('../widgets/system-summary/index.html', import.meta.url), 'utf8');
 
@@ -131,4 +131,16 @@ test('link speeds take their unit word from the catalogue', () => {
   assert.equal(fmtMbps(940), '940 Mbit/s');
   assert.equal(fmtMbps(1250), '1.3 Gbit/s');
   assert.equal(fmtMbps(null), 'Keine Daten');
+});
+
+test('uptime is written as its two largest units, in the interface language', async () => {
+  const fmtUptime = liftConst('fmtUptime', { formatDuration });
+  assert.equal(fmtUptime(3 * 86400 + 4 * 3600 + 7 * 60 + 30), '3 days 4 hr');
+  assert.equal(fmtUptime(5 * 3600 + 12 * 60), '5 hr 12 min');
+  assert.equal(fmtUptime(59), '0 min');
+  assert.equal(fmtUptime(undefined), '0 min');
+  const fa = await import('../js/format-number.js?uptime=fa');
+  fa.setNumberLanguage('fa');
+  const fmtUptimeFa = liftConst('fmtUptime', { formatDuration: fa.formatDuration });
+  assert.equal(fmtUptimeFa(3 * 86400 + 4 * 3600), '۳ روز ۴ ساعت');
 });

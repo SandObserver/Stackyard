@@ -33,19 +33,23 @@ function numberingSystem(loc) {
   }
 }
 
+/** @param {string} loc @param {number} value @param {Intl.NumberFormatOptions} options
+    @param {string} [nu] @returns {string} */
+function formatIn(loc, value, options, nu = numberingSystem(loc)) {
+  try {
+    return new Intl.NumberFormat(loc, nu ? { numberingSystem: nu, ...options } : options).format(value);
+  } catch {
+    return String(value);
+  }
+}
+
 /** @param {number} value @param {Intl.NumberFormatOptions} [options]
     @returns {string} */
 export function formatNumber(value, options) {
   if (typeof value !== 'number' || !Number.isFinite(value)) return String(value);
   const loc = locale();
+  if (options) return formatIn(loc, value, options);
   const nu = numberingSystem(loc);
-  if (options) {
-    try {
-      return new Intl.NumberFormat(loc, nu ? { numberingSystem: nu, ...options } : options).format(value);
-    } catch {
-      return String(value);
-    }
-  }
   /* One formatter for the common case: this runs per badge on every poll. */
   const key = `${loc}|${nu || ''}`;
   if (!cached || cachedFor !== key) {
@@ -173,16 +177,41 @@ export function formatByteRate(bytesPerSecond, options = {}) {
 
 const LATIN = /[a-z]/i;
 
+/** The reader's own numbering system, else the interface language's.
+    @param {string} loc @returns {string|undefined} */
+function durationDigits(loc) {
+  try {
+    const own = new Intl.Locale(locale()).numberingSystem;
+    if (own) return own;
+  } catch {}
+  return numberingSystem(loc);
+}
+
+/** The interface language, else the reader's locale, else 'en': the first one
+    the engine accepts. @returns {string} */
+function interfaceLocale() {
+  for (const tag of [language, locale()]) {
+    if (!tag) continue;
+    try {
+      if (Intl.NumberFormat.supportedLocalesOf(tag).length) return tag;
+    } catch {}
+  }
+  return 'en';
+}
+
 /** A span such as "3 days 4 hr" or "5 hr 12 min": its two largest units, in the
-    reader's digits and unit words. `part` receives each unit as it is written.
+    interface language's digits and unit words. `part` receives each unit as it
+    is written.
     @param {number} minutes @param {Intl.NumberFormatOptions['unitDisplay']} [unitDisplay]
     @param {(text: string) => string} [part] @returns {string} */
 export function formatDuration(minutes, unitDisplay = 'short', part = text => text) {
   const total = Math.max(0, Math.floor(minutes));
+  const loc = interfaceLocale();
+  const nu = durationDigits(loc);
   const say = (/** @type {number} */ v, /** @type {string} */ unit) => {
-    const text = formatNumber(v, { style: 'unit', unit, unitDisplay, maximumFractionDigits: 0 });
+    const text = formatIn(loc, v, { style: 'unit', unit, unitDisplay, maximumFractionDigits: 0 }, nu);
     if (unitDisplay !== 'narrow' || !LATIN.test(text)) return part(text);
-    const short = formatNumber(v, { style: 'unit', unit, unitDisplay: 'short', maximumFractionDigits: 0 });
+    const short = formatIn(loc, v, { style: 'unit', unit, unitDisplay: 'short', maximumFractionDigits: 0 }, nu);
     return part(LATIN.test(short) ? text : short);
   };
   const h = Math.floor(total / 60);
