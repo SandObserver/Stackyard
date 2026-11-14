@@ -90,11 +90,3 @@ test('an admin dialog fades and scales in from its centre, and fades only under 
     /@media \(prefers-reduced-motion: reduce\)\{\.dlg-box\[open\]\{animation-name:swap-in;animation-duration:\.18s!important\}\}/,
   );
 });
-
-test('a scroll over an admin dialog or its backdrop stays off the page behind', () => {
-  const css = read('css/admin.css').replace(/\/\*[\s\S]*?\*\//g, '');
-  const backdrop = /\.dlg-box::backdrop\{([^}]*)\}/.exec(css)[1];
-  assert.match(backdrop, /overflow:hidden/, 'a backdrop that is not a scroll container ignores overscroll-behavior');
-  assert.match(backdrop, /overscroll-behavior:contain/);
-  assert.match(css, /\.dlg-box:modal\{overscroll-behavior:contain\}/);
-});

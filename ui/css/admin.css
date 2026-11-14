@@ -154,6 +154,7 @@ html,body{min-height:100vh;min-height:100dvh;color:var(--tx);font-family:var(--f
    toolbar's height and exposes a strip of canvas at the top and the bottom. The
    canvas is this background; a different value here is a visible band. */
 html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable;-webkit-tap-highlight-color:transparent}
+html:has(dialog:modal){overflow:hidden}
 button,a,[role="button"],label.tog,.segr-opt{touch-action:manipulation}
 
 /* ── Outer: wallpaper shows here, panel centered ── */
@@ -708,8 +709,7 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
    dialog with, and a width that is not 100%, which would leave that centring
    no free space. The 48px is the gap it keeps from the viewport edge. */
 .dlg-box{margin:auto;background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-window);width:calc(100% - 48px);max-width:380px;max-height:70dvh;display:flex;flex-direction:column;box-shadow:var(--shadow-pop);padding:0;color:var(--tx)}
-.dlg-box::backdrop{background:var(--scrim);overflow:hidden;overscroll-behavior:contain}
-.dlg-box:modal{overscroll-behavior:contain}
+.dlg-box::backdrop{background:var(--scrim)}
 .dlg-box[open]{animation:pop-in var(--t-reveal) var(--ease-reveal)}
 .dlg-box[open]::backdrop{animation:swap-in var(--t-reveal) ease-out}
 .dlg-box.closing{animation:pop-out calc(var(--t-reveal) * .6) var(--ease-reveal) forwards;pointer-events:none}
