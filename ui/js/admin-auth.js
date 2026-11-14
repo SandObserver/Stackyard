@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=89fe2e81';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=2b2f6a61';
 import { initI18n, t } from '/js/i18n.js?v=721852aa';
 import { loginErrorAdvice } from '/js/admin-error.js?v=5abd7438';
 import { passwordMeter, contextWords, meterColor } from '/js/password-policy.js?v=0c0fd0af';
@@ -61,6 +61,8 @@ function showLoginScreen(onLogin) {
   async function doLogin() {
     if (btn) btn.disabled = true;
     if (err) err.style.display = 'none';
+    pw?.removeAttribute('aria-invalid');
+    pw?.removeAttribute('aria-describedby');
     try {
       await apiPost('/api/auth/login', { password: pw?.value || '' });
       signedIn = true;
@@ -81,6 +83,8 @@ function showLoginScreen(onLogin) {
         const advice = loginErrorAdvice(e);
         err.textContent = t(advice.key, advice.vars);
         err.style.display = 'block';
+        pw?.setAttribute('aria-invalid', 'true');
+        pw?.setAttribute('aria-describedby', 'login-err');
       }
       if (pw) {
         pw.value = '';
@@ -96,6 +100,10 @@ function showLoginScreen(onLogin) {
     fillUsernames(form);
     form.onsubmit = e => {
       e.preventDefault();
+      if (!pw?.value) {
+        pw?.focus();
+        return;
+      }
       if (!btn?.disabled) doLogin();
     };
   }

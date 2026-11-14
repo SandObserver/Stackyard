@@ -7,7 +7,20 @@ import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
-const field = () => ({ value: '', disabled: false, style: {}, textContent: '', focus() {} });
+const field = () => ({
+  value: '',
+  disabled: false,
+  style: {},
+  textContent: '',
+  attrs: {},
+  focus() {},
+  setAttribute(k, v) {
+    this.attrs[k] = v;
+  },
+  removeAttribute(k) {
+    delete this.attrs[k];
+  },
+});
 const els = {
   'login-screen': {
     open: false,
@@ -35,11 +48,15 @@ globalThis.document = {
 };
 
 let status = 200;
-globalThis.fetch = async () => ({
-  ok: status < 400,
-  status,
-  json: async () => (status < 400 ? { ok: true } : { error: 'Wrong password', kind: 'auth' }),
-});
+let posts = 0;
+globalThis.fetch = async () => (
+  posts++,
+  {
+    ok: status < 400,
+    status,
+    json: async () => (status < 400 ? { ok: true } : { error: 'Wrong password', kind: 'auth' }),
+  }
+);
 
 const { requireLogin } = await import('../js/admin-auth.js');
 
@@ -62,5 +79,32 @@ test('a refused sign-in still empties the field and keeps the box open', async (
   submit();
   await new Promise(r => setTimeout(r, 0));
   assert.equal(els['login-pw'].value, '');
+  assert.equal(els['login-screen'].open, true);
+});
+
+test('a refused sign-in ties the error to the field until the next try', async () => {
+  status = 401;
+  requireLogin();
+  els['login-pw'].value = 'wrong';
+  submit();
+  await new Promise(r => setTimeout(r, 0));
+  assert.equal(els['login-pw'].attrs['aria-invalid'], 'true');
+  assert.equal(els['login-pw'].attrs['aria-describedby'], 'login-err');
+  status = 200;
+  els['login-pw'].value = 'quiet otter lantern 42';
+  submit();
+  await new Promise(r => setTimeout(r, 0));
+  assert.equal(els['login-pw'].attrs['aria-invalid'], undefined);
+  assert.equal(els['login-pw'].attrs['aria-describedby'], undefined);
+});
+
+test('an empty sign-in sends nothing, so it costs no attempt', async () => {
+  status = 401;
+  requireLogin();
+  const before = posts;
+  els['login-pw'].value = '';
+  submit();
+  await new Promise(r => setTimeout(r, 0));
+  assert.equal(posts, before);
   assert.equal(els['login-screen'].open, true);
 });
