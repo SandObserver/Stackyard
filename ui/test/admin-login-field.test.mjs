@@ -13,6 +13,9 @@ const field = () => ({
   style: {},
   textContent: '',
   attrs: {},
+  get validity() {
+    return { valueMissing: this.value === '' };
+  },
   focus() {},
   setAttribute(k, v) {
     this.attrs[k] = v;
@@ -48,15 +51,14 @@ globalThis.document = {
 };
 
 let status = 200;
+let refusal = { error: 'Wrong password', kind: 'auth' };
+let offline = false;
 let posts = 0;
-globalThis.fetch = async () => (
-  posts++,
-  {
-    ok: status < 400,
-    status,
-    json: async () => (status < 400 ? { ok: true } : { error: 'Wrong password', kind: 'auth' }),
-  }
-);
+globalThis.fetch = async () => {
+  posts++;
+  if (offline) throw new TypeError('Failed to fetch');
+  return { ok: status < 400, status, json: async () => (status < 400 ? { ok: true } : refusal) };
+};
 
 const { requireLogin } = await import('../js/admin-auth.js');
 
@@ -108,3 +110,46 @@ test('an empty sign-in sends nothing, so it costs no attempt', async () => {
   assert.equal(posts, before);
   assert.equal(els['login-screen'].open, true);
 });
+
+test('an empty sign-in says what is missing and ties it to the field', async () => {
+  status = 401;
+  requireLogin();
+  els['login-pw'].value = '';
+  submit();
+  await new Promise(r => setTimeout(r, 0));
+  assert.match(els['login-err'].textContent, /login\.empty|Enter your password/);
+  assert.equal(els['login-err'].style.display, 'block');
+  assert.equal(els['login-pw'].attrs['aria-invalid'], 'true');
+  assert.equal(els['login-pw'].attrs['aria-describedby'], 'login-err');
+  status = 200;
+  els['login-pw'].value = 'quiet otter lantern 42';
+  submit();
+  await new Promise(r => setTimeout(r, 0));
+  assert.equal(els['login-err'].style.display, 'none');
+  assert.equal(els['login-pw'].attrs['aria-invalid'], undefined);
+  assert.equal(els['login-pw'].attrs['aria-describedby'], undefined);
+});
+
+for (const [name, setUp] of [
+  [
+    'too many attempts',
+    () => ((status = 429), (refusal = { error: 'Too many', kind: 'blocked', code: 'blocked.rate-limit' })),
+  ],
+  ['a busy server', () => ((status = 503), (refusal = { error: 'Busy', kind: 'blocked', code: 'blocked.busy' }))],
+  ['no answer', () => (offline = true)],
+]) {
+  test(`${name} shows the error but does not call the password wrong`, async () => {
+    setUp();
+    requireLogin();
+    els['login-pw'].value = 'quiet otter lantern 42';
+    submit();
+    await new Promise(r => setTimeout(r, 0));
+    status = 200;
+    refusal = { error: 'Wrong password', kind: 'auth' };
+    offline = false;
+    assert.equal(els['login-err'].style.display, 'block');
+    assert.ok(els['login-err'].textContent);
+    assert.equal(els['login-pw'].attrs['aria-invalid'], undefined);
+    assert.equal(els['login-pw'].attrs['aria-describedby'], 'login-err');
+  });
+}

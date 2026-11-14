@@ -5,7 +5,7 @@ import {
   captureActLabels,
   serializeKvRows,
 } from '/js/admin-app-form.js?v=425d55f5';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=d72e0bbc';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=73bf980d';
 import {
   applyFilter,
   filterMatchCount,

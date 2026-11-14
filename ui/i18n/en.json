@@ -611,7 +611,8 @@
     "subtitle": "Sign in to continue",
     "password": "Password",
     "signIn": "Sign in",
-    "incorrect": "Incorrect password."
+    "incorrect": "Incorrect password.",
+    "empty": "Enter your password."
   },
   "setpw": {
     "submit": "Set password"

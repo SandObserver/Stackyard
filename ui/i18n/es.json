@@ -628,7 +628,8 @@
     "subtitle": "Inicia sesión para continuar",
     "password": "Contraseña",
     "signIn": "Iniciar sesión",
-    "incorrect": "Contraseña incorrecta."
+    "incorrect": "Contraseña incorrecta.",
+    "empty": "Introduce tu contraseña."
   },
   "setpw": {
     "submit": "Establecer contraseña"

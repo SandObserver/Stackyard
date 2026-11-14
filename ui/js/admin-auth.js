@@ -58,11 +58,23 @@ function showLoginScreen(onLogin) {
     }
   }
 
-  async function doLogin() {
-    if (btn) btn.disabled = true;
+  function clearError() {
     if (err) err.style.display = 'none';
     pw?.removeAttribute('aria-invalid');
     pw?.removeAttribute('aria-describedby');
+  }
+
+  /** @param {{ key: string, vars?: Record<string, unknown> }} advice @param {boolean} invalid */
+  function showError(advice, invalid) {
+    if (!err) return;
+    err.textContent = t(advice.key, advice.vars);
+    err.style.display = 'block';
+    if (invalid) pw?.setAttribute('aria-invalid', 'true');
+    pw?.setAttribute('aria-describedby', 'login-err');
+  }
+
+  async function doLogin() {
+    if (btn) btn.disabled = true;
     try {
       await apiPost('/api/auth/login', { password: pw?.value || '' });
       signedIn = true;
@@ -79,13 +91,8 @@ function showLoginScreen(onLogin) {
         await showBlockingScreen(screen);
         return;
       }
-      if (err) {
-        const advice = loginErrorAdvice(e);
-        err.textContent = t(advice.key, advice.vars);
-        err.style.display = 'block';
-        pw?.setAttribute('aria-invalid', 'true');
-        pw?.setAttribute('aria-describedby', 'login-err');
-      }
+      const advice = loginErrorAdvice(e);
+      showError(advice, advice.key === 'login.incorrect');
       if (pw) {
         pw.value = '';
         pw.focus();
@@ -100,11 +107,14 @@ function showLoginScreen(onLogin) {
     fillUsernames(form);
     form.onsubmit = e => {
       e.preventDefault();
-      if (!pw?.value) {
-        pw?.focus();
+      if (btn?.disabled) return;
+      clearError();
+      if (pw?.validity.valueMissing) {
+        showError({ key: 'login.empty' }, true);
+        pw.focus();
         return;
       }
-      if (!btn?.disabled) doLogin();
+      doLogin();
     };
   }
   pw?.focus();
