@@ -16,7 +16,7 @@ import {
   readBadgeUpdate,
 } from '/js/badge-logic.js?v=7112fd10';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=2338cc3f';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=25ac2101';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=b145cffd';
 import {
   clampPage,
   configChanged,
@@ -50,7 +50,7 @@ import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
-import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
+import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
 import { initSpotlight } from '/js/spotlight.js?v=7bf27839';

@@ -295,7 +295,7 @@ function positionTip(i) {
 function build() {
   const baysEl = document.getElementById('bays');
   const numsEl = document.getElementById('nums');
-  baysEl.innerHTML = ''; numsEl.innerHTML = '';
+  baysEl.replaceChildren(); numsEl.replaceChildren();
   bayEls = [];
   for (let i = 0; i < BAY_COUNT; i++) {
     const bay = document.createElement('div');

@@ -170,6 +170,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the port map or the certificate skip changes; its saved credentials must be
   retyped before they are used.
 
+- With reduced motion, Settings and loading fades no longer cut instantly.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.

@@ -370,7 +370,7 @@ function slotList() {
 
 function assignHaikus(slots) {
   /* Shuffle pool randomly — different every reload */
-  const pool = [...HAIKUS].sort(() => Math.random()-0.5);
+  const pool = HAIKUS.toSorted(() => Math.random()-0.5);
   if (size==='small') return slots.map(j => j ? pool : null);
   const activeIdxs = slots.map((j,i)=>j?i:-1).filter(i=>i>=0);
   if (!activeIdxs.length) return slots.map(()=>null);
