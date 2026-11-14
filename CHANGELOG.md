@@ -166,6 +166,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Take ownership, on a root start, of the folders `CONFIG_PATH` and `ICONS_PATH`
   name, and create them when missing.
 
+- Keep the saved settings of a widget whose type is not installed when Host IP,
+  the port map or the certificate skip changes; its saved credentials must be
+  retyped before they are used.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
