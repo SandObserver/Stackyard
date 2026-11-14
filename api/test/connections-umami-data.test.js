@@ -185,3 +185,37 @@ test('Plausible visitors are summed per country from the stats query', async () 
   assert.deepEqual(svc.regions, { US: 12, DE: 3 });
   assert.equal(svc.connected, 15);
 });
+
+test('an umami account with two-factor sign-in on names the cause instead of the password', async () => {
+  const fetchJSON = async () => ({ status: 200, data: { requiresTwoFactor: true, partialToken: 'p' } });
+  const r = await dataFn(
+    ctxFor(
+      { type: 'umami', url: 'http://umami.local:3000', websiteId: 'abc', username: 'a', password: 'pw' },
+      fetchJSON,
+    ),
+  );
+  const svc = r.services.find(s => s.type === 'umami');
+  assert.match(svc.error, /two-factor code/);
+  assert.equal(svc.errorKind, 'auth');
+});
+
+test('an umami account that must finish two-factor setup names the cause instead of the password', async () => {
+  const fetchJSON = async url => {
+    if (url.endsWith('/api/auth/login')) return { status: 200, data: { token: 'jwt' } };
+    return {
+      status: 403,
+      data: {
+        error: { message: 'Two-factor authentication setup is required', code: 'two-factor-error-setup-required' },
+      },
+    };
+  };
+  const r = await dataFn(
+    ctxFor(
+      { type: 'umami', url: 'http://umami.local:3000', websiteId: 'abc', username: 'a', password: 'pw' },
+      fetchJSON,
+    ),
+  );
+  const svc = r.services.find(s => s.type === 'umami');
+  assert.match(svc.error, /finish two-factor setup/);
+  assert.equal(svc.errorKind, 'auth');
+});
