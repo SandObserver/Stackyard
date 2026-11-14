@@ -1,8 +1,6 @@
 /* Every provider is normalised into AdGuard's /control/stats shape, which is
    what the widget HTML renders. */
 
-const crypto = require('crypto');
-
 module.exports = async function (ctx) {
   const { config, fetchJSON, normalizeBase } = ctx;
   const provider = config.provider || 'adguard';
@@ -51,7 +49,7 @@ async function adGuard(ctx, base, config, fetchJSON) {
    client. */
 const _piHoleSessions = new Map();
 
-const piHoleKey = (base, password) => `${base}\n${crypto.createHash('sha256').update(password).digest('hex')}`;
+const piHoleKey = (base, password) => JSON.stringify([base, password]);
 
 function piHoleSession(ctx, base, password, fetchJSON, spent) {
   const key = piHoleKey(base, password);
