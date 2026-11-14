@@ -82,16 +82,28 @@ test('every icon path tries the mounted volume, then the bundled copy', () => {
     return dashboard.slice(at, dashboard.indexOf('\n    }', at));
   };
 
-  assert.match(block('/icons/'), /^\s*root \/;$/m, 'root / maps the request path onto the mount');
+  assert.match(block('/icons/'), /^\s*include \/run\/stackyard\/icons-alias\.conf;$/m);
   assert.match(block('/icons/'), /try_files \$uri @icon_miss;/);
   assert.match(block('@icon_miss'), /root \/usr\/share\/nginx\/html;/);
 
   for (const name of ['= /apple-touch-icon.png', '= /apple-touch-icon-precomposed.png']) {
-    assert.match(block(name), /^\s*root \/;$/m, name);
-    assert.match(block(name), /try_files \/icons\/favicon\.png @apple_icon_miss;/, name);
+    assert.match(block(name), /^\s*include \/run\/stackyard\/icons-root\.conf;$/m, name);
+    assert.match(block(name), /try_files \/favicon\.png @apple_icon_miss;/, name);
   }
   assert.match(block('@apple_icon_miss'), /root \/usr\/share\/nginx\/html;/);
   assert.match(block('@apple_icon_miss'), /try_files \/icons\/favicon\.png =404;/);
+});
+
+/* The icons folder comes from ICONS_PATH at start. A fixed root would serve
+   the wrong folder, and root / would serve the whole filesystem to any
+   location that reaches it. */
+test('the icons folder is reached only through the generated includes', () => {
+  assert.doesNotMatch(dashboard, /^\s*root \/;$/m);
+  assert.doesNotMatch(dashboard, /^\s*alias /m);
+  const at = dashboard.indexOf('location /icons/ {');
+  const uses = [...dashboard.matchAll(/include \/run\/stackyard\/icons-alias\.conf;/g)];
+  assert.equal(uses.length, 1, 'the alias belongs to /icons/ alone');
+  assert.ok(uses[0].index > at && uses[0].index < dashboard.indexOf('\n    }', at));
 });
 
 test('no icon path resolves its fallback through a logged 404', () => {
@@ -107,8 +119,8 @@ test('/favicon.ico tries the mounted volume before the bundled file', () => {
     assert.ok(at !== -1, `location ${name} not found`);
     return dashboard.slice(at, dashboard.indexOf('\n    }', at));
   };
-  assert.match(block('= /favicon.ico'), /^\s*root \/;$/m, 'root / maps the request path onto the mount');
-  assert.match(block('= /favicon.ico'), /try_files \/icons\/favicon\.ico \/icons\/favicon\.png @favicon_miss;/);
+  assert.match(block('= /favicon.ico'), /^\s*include \/run\/stackyard\/icons-root\.conf;$/m);
+  assert.match(block('= /favicon.ico'), /try_files \/favicon\.ico \/favicon\.png @favicon_miss;/);
   assert.match(block('@favicon_miss'), /root \/usr\/share\/nginx\/html;/);
   assert.match(block('@favicon_miss'), /try_files \/icons\/favicon\.ico \/favicon\.ico =404;/);
 });

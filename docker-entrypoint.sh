@@ -5,4 +5,5 @@ set -eu
 
 . /usr/local/lib/stackyard/entrypoint.sh
 
-stackyard_main /run/stackyard /data /icons /proc/net/if_inet6 /proc/sys/net/ipv4/ip_unprivileged_port_start -- "$@"
+stackyard_main /run/stackyard /data /icons /proc/net/if_inet6 /proc/sys/net/ipv4/ip_unprivileged_port_start \
+  /proc/self/mountinfo "/bin /boot /dev /etc /lib /lib64 /proc /run /sbin /sys /usr" "/app /root /tmp /var" -- "$@"

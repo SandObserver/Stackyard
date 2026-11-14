@@ -1,9 +1,9 @@
 # Sourced by docker-entrypoint.sh, which passes the real paths. The tests pass
-# temporary ones. Never read a path from the environment here: root empties the
-# runtime folder, so a path an operator can set is a path root can delete.
+# temporary ones. Root empties the runtime folder. Never let a path from the
+# environment choose a file that root writes or deletes.
 
 fail() {
-  echo "stackyard: $*" >&2
+  printf 'stackyard: %s\n' "$*" >&2
   exit 1
 }
 
@@ -12,6 +12,81 @@ fail() {
 can_write() {
   probe="$(mktemp "$1/.writable.XXXXXX" 2>/dev/null)" || return 1
   rm -f "$probe"
+}
+
+# Usage: container_path NAME VALUE
+# Prints VALUE with no repeated or trailing slashes.
+container_path() {
+  value="$2"
+  case "$value" in
+    *"
+"*) fail "$1 must be one line" ;;
+    /*) ;;
+    *) fail "$1 must be an absolute path, not \"$2\"" ;;
+  esac
+  while :; do
+    case "$value" in
+      *//*) value="${value%%//*}/${value#*//}" ;;
+      *) break ;;
+    esac
+  done
+  [ "$value" = / ] || value="${value%/}"
+  case "$value" in
+    / | */./* | */../* | */. | */..) fail "$1 must be a path below / with no . or .. part, not \"$2\"" ;;
+  esac
+  printf '%s\n' "$value"
+}
+
+# Usage: nginx_path NAME VALUE
+# The value goes into nginx config, so only plain path characters pass.
+nginx_path() {
+  case "$2" in
+    *[!A-Za-z0-9._/-]* | *//*)
+      fail "$1 must be a folder below / named with letters, digits, dots, dashes, underscores and slashes, with no . or .. part, not \"$2\""
+      ;;
+  esac
+  container_path "$1" "$2"
+}
+
+# Usage: inside PATH FOLDER
+# True when PATH is FOLDER or anything below it.
+inside() {
+  case "$1/" in
+    "$2/"*) return 0 ;;
+  esac
+  return 1
+}
+
+# Usage: on_mount PATH FOLDER
+# True when PATH, or a parent of it below FOLDER, is a mount point in
+# MOUNTINFO_PROC.
+on_mount() {
+  [ -r "$MOUNTINFO_PROC" ] || return 1
+  candidate="$1"
+  while [ "$candidate" != "$2" ] && inside "$candidate" "$2"; do
+    escaped="$(printf '%s\n' "$candidate" | sed 's/\\/\\134/g; s/ /\\040/g; s/	/\\011/g')"
+    while read -r _ _ _ _ point _; do
+      [ "$point" != "$escaped" ] || return 0
+    done < "$MOUNTINFO_PROC"
+    candidate="${candidate%/*}"
+  done
+  return 1
+}
+
+# Usage: check_folder NAME FOLDER
+check_folder() {
+  if inside "$2" "$RUNTIME_DIR" || inside "$RUNTIME_DIR" "$2"; then
+    fail "$1 cannot use $2; it overlaps $RUNTIME_DIR, which the container empties at every start"
+  fi
+  for system in $SYSTEM_DIRS; do
+    inside "$2" "$system" &&
+      fail "$1 cannot use $2; $system is a system folder of the image. Use a folder such as /data or /icons"
+  done
+  for system in $MOUNT_DIRS; do
+    inside "$2" "$system" && ! on_mount "$2" "$system" &&
+      fail "$1 cannot use $2; $system is a system folder of the image. Mount a volume at $2, or use a folder such as /data or /icons"
+  done
+  return 0
 }
 
 # Usage: resolve_proxy_name NAME
@@ -48,18 +123,26 @@ trusted_width_warning() {
   fi
 }
 
-# Usage: stackyard_main RUNTIME_DIR DATA_DIR ICONS_DIR INET6_PROC PORT_FLOOR_PROC -- COMMAND...
+# Usage: stackyard_main RUNTIME_DIR DATA_DIR ICONS_DIR INET6_PROC PORT_FLOOR_PROC MOUNTINFO_PROC SYSTEM_DIRS MOUNT_DIRS -- COMMAND...
+# SYSTEM_DIRS and MOUNT_DIRS are one argument each: the image's own folders,
+# separated by spaces. A folder below one in MOUNT_DIRS passes only when it is
+# on a mount of its own.
 stackyard_main() {
   RUNTIME_DIR="$1"
   DATA_DIR="$2"
   ICONS_DIR="$3"
   INET6_PROC="$4"
   PORT_FLOOR_PROC="$5"
-  [ "$6" = -- ] || fail "stackyard_main: expected -- before the command"
-  shift 6
+  MOUNTINFO_PROC="$6"
+  SYSTEM_DIRS="$7"
+  MOUNT_DIRS="$8"
+  [ "$9" = -- ] || fail "stackyard_main: expected -- before the command"
+  shift 9
 
   REALIP_CONF="$RUNTIME_DIR/realip.conf"
   LISTEN_CONF="$RUNTIME_DIR/listen.conf"
+  ICONS_ALIAS_CONF="$RUNTIME_DIR/icons-alias.conf"
+  ICONS_ROOT_CONF="$RUNTIME_DIR/icons-root.conf"
   NGINX_USER_CONF="$RUNTIME_DIR/nginx-user.conf"
   SUPERVISOR_USER_CONF="$RUNTIME_DIR/supervisord-user.conf"
   MARKER="$RUNTIME_DIR/fatal"
@@ -73,6 +156,23 @@ stackyard_main() {
   [ "${#LISTEN_PORT}" -le 5 ] && [ "$LISTEN_PORT" -le 65535 ] ||
     fail "LISTEN_PORT must be a number from 1 to 65535, not \"$LISTEN_PORT\""
   [ "$LISTEN_PORT" != 3000 ] || fail "LISTEN_PORT cannot be 3000; the API uses that port inside the container"
+
+  make_data=""
+  make_icons=""
+  if [ -n "${CONFIG_PATH:-}" ]; then
+    config="$(container_path CONFIG_PATH "$CONFIG_PATH")" || exit 1
+    DATA_DIR="${config%/*}"
+    [ -n "$DATA_DIR" ] || fail "CONFIG_PATH must name a file inside a folder below /, not \"$CONFIG_PATH\""
+    make_data=1
+  fi
+  if [ -n "${ICONS_PATH:-}" ]; then
+    ICONS_DIR="$(nginx_path ICONS_PATH "$ICONS_PATH")" || exit 1
+    make_icons=1
+  fi
+  check_folder CONFIG_PATH "$DATA_DIR"
+  check_folder ICONS_PATH "$ICONS_DIR"
+  inside "$DATA_DIR" "$ICONS_DIR" &&
+    fail "CONFIG_PATH cannot be inside ICONS_PATH; nginx serves every file in $ICONS_DIR to anyone"
 
   if [ "$uid" != 0 ]; then
     # Kernels before 4.11 have no such file and reserve every port below 1024.
@@ -191,6 +291,19 @@ stackyard_main() {
     fi
   } > "$LISTEN_CONF" || fail "cannot write $LISTEN_CONF"
 
+  {
+    echo "# Generated by docker-entrypoint.sh from ICONS_PATH. Do not edit."
+    echo "alias $ICONS_DIR/;"
+  } > "$ICONS_ALIAS_CONF" || fail "cannot write $ICONS_ALIAS_CONF"
+
+  {
+    echo "# Generated by docker-entrypoint.sh from ICONS_PATH. Do not edit."
+    echo "root $ICONS_DIR;"
+  } > "$ICONS_ROOT_CONF" || fail "cannot write $ICONS_ROOT_CONF"
+
+  [ -z "$make_data" ] || [ -d "$DATA_DIR" ] || mkdir -p "$DATA_DIR" 2>/dev/null || true
+  [ -z "$make_icons" ] || [ -d "$ICONS_DIR" ] || mkdir -p "$ICONS_DIR" 2>/dev/null || true
+
   # A mounted volume carries the host's ownership. Started as root, the API runs
   # as node and cannot write a root-owned mount: every config and icon write
   # then fails. Started as any other UID, only the host can change ownership.
@@ -198,12 +311,12 @@ stackyard_main() {
     [ -d "$dir" ] || continue
     if [ "$uid" != 0 ]; then
       can_write "$dir" ||
-        echo "stackyard: UID $uid cannot write $dir; config and icon writes will fail. Make it writable by $uid:$(id -g) on the host." >&2
+        printf 'stackyard: UID %s cannot write %s; config and icon writes will fail. Make it writable by %s:%s on the host.\n' "$uid" "$dir" "$uid" "$(id -g)" >&2
       continue
     fi
-    if su -s /bin/sh node -c "test -w \"$dir\"" 2>/dev/null; then continue; fi
+    if su -s /bin/sh node -c 'test -w "$1"' sh "$dir" 2>/dev/null; then continue; fi
     chown -R node:node "$dir" ||
-      echo "stackyard: cannot take ownership of $dir; config and icon writes will fail" >&2
+      printf 'stackyard: cannot take ownership of %s; config and icon writes will fail\n' "$dir" >&2
   done
 
   # Fail fast and loudly rather than starting with a config nginx will reject.
