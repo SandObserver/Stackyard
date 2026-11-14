@@ -1,5 +1,3 @@
-const crypto = require('crypto');
-
 const SEED_POINTS = 120;
 const SEED_STEP_SEC = 10;
 
@@ -178,7 +176,7 @@ async function speedtestTrackerV1(ctx, base, token) {
 
 /* Glances serves the same fields under /api/4 and /api/3, and offers no way to
    ask which it speaks. One probe per host settles it, shared by every call in
-   the poll and remembered afterwards. */
+   the poll and remembered until a plugin answers 404. */
 const API_VERSIONS = [4, 3];
 const _apiVersion = new Map();
 
@@ -217,8 +215,10 @@ async function glancesGet(ctx, plugin) {
   if (!config.glancesUrl) ctx.fail('Enter the Glances URL first.', { kind: ctx.KIND.INVALID });
   const base = normalizeBase(config.glancesUrl);
   const headers = glancesAuth(config);
-  const version = await glancesVersion(ctx, base, headers);
+  const probe = glancesVersion(ctx, base, headers);
+  const version = await probe;
   const r = await fetchJSON(`${base}/api/${version}/${plugin}`, { headers, timeout: 8000 });
+  if (r.status === 404 && _apiVersion.get(base) === probe) _apiVersion.delete(base);
   if (r.status === 401) ctx.fail('Glances returned 401, check the username and password', { kind: ctx.KIND.AUTH });
   if (r.status >= 400) ctx.fail('Glances HTTP ' + r.status);
   return r.data;
@@ -300,7 +300,7 @@ const _beszelSession = new Map();
    token to every config that names the same hub. */
 function beszelSessionKey(ctx, base) {
   const { beszelUser = '', beszelPass = '' } = ctx.config;
-  return [base, beszelUser, crypto.createHash('sha256').update(String(beszelPass)).digest('hex')].join('\n');
+  return JSON.stringify([base, String(beszelUser), String(beszelPass)]);
 }
 
 async function beszelLogin(ctx, base) {

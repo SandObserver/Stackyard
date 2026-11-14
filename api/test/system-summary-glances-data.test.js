@@ -112,6 +112,15 @@ test('a version 3 host is found by falling back, then remembered', async () => {
   );
 });
 
+test('a host upgraded from version 3 to version 4 is probed again', async () => {
+  const { ctx } = ctxFor('upgraded', {}, { serves: [3] });
+  assert.equal((await dataFn(ctx)).cpu, 12.5);
+  stub.url('upgraded', { serves: [4] });
+  let r;
+  for (let poll = 0; poll < 2 && !r; poll++) r = await dataFn(ctx).catch(() => null);
+  assert.equal(r?.cpu, 12.5, 'the second poll after the upgrade reads data');
+});
+
 test('basic auth is sent only when a credential is set', async () => {
   const from = stub.headers.length;
   await dataFn(ctxFor('auth', { glancesUser: 'admin', glancesPass: 'pw' }).ctx);
