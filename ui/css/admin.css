@@ -154,6 +154,7 @@ html,body{min-height:100vh;min-height:100dvh;color:var(--tx);font-family:var(--f
    toolbar's height and exposes a strip of canvas at the top and the bottom. The
    canvas is this background; a different value here is a visible band. */
 html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable;-webkit-tap-highlight-color:transparent}
+html:has(dialog:modal){overflow:hidden}
 button,a,[role="button"],label.tog,.segr-opt{touch-action:manipulation}
 
 /* ── Outer: wallpaper shows here, panel centered ── */
@@ -717,6 +718,8 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
 @keyframes fade-out{to{opacity:0}}
 @media (prefers-reduced-motion: reduce){.dlg-box[open]{animation-name:swap-in;animation-duration:.18s!important}}
 @media (prefers-reduced-motion: reduce){.dlg-box.closing{animation-name:fade-out;animation-duration:.12s!important}}
+@media (prefers-reduced-motion: reduce){.dlg-box[open]::backdrop{animation-duration:.18s!important}.dlg-box.closing::backdrop{animation-duration:.12s!important}}
+@media (prefers-reduced-motion: reduce){.swapping > :not(.add-new-card){animation-name:swap-in;animation-duration:var(--t-reveal)!important}}
 .dlg-box.wide{max-width:560px;max-height:80dvh}
 .dlg-hdr{overflow-wrap:anywhere;min-width:0;padding:22px 22px 12px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline)}
 /* flex:1 sets flex-basis:0, so the body contributes nothing to a dialog that
@@ -1067,7 +1070,7 @@ body:not(.loaded):not(.load-stopped)::after{
   animation:boot-wait 1s linear infinite,boot-show .3s ease .6s forwards;
 }
 @media (prefers-reduced-motion: reduce){
-  body:not(.loaded):not(.load-stopped)::after{animation:boot-show .3s ease .6s forwards}
+  body:not(.loaded):not(.load-stopped)::after{animation:boot-show .3s ease .6s forwards;animation-duration:.3s!important}
 }
 
 @media (prefers-reduced-motion: reduce){

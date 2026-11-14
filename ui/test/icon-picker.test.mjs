@@ -73,6 +73,12 @@ test('the cursor is the one the admin already has', () => {
   for (const key of ['Enter', 'Escape', 'Tab']) assert.ok(kd.includes(`'${key}'`), `${key} does nothing`);
 });
 
+test('keys typed into an input method are left to it', () => {
+  const kd = form.slice(form.indexOf('inp.onkeydown'), form.indexOf('const upInput'));
+  const first = kd.slice(0, kd.indexOf('const open'));
+  assert.match(first, /if \(e\.isComposing \|\| e\.keyCode === 229\) return;/);
+});
+
 /* nextActiveIndex also answers Home and End, which is right for a listbox that
    holds focus. Focus here is in a text field, where they move the caret. */
 test('Home and End are left to the caret', () => {

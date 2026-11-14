@@ -289,6 +289,19 @@ test('promptModal returns the trimmed value and refuses an empty one', async () 
   });
 });
 
+test('promptModal ignores the Enter that confirms an input-method candidate', async () => {
+  await withDom(async ({ promptModal }, dom) => {
+    const answer = promptModal({ title: 'T', label: 'Name', confirmLabel: 'Save', cancelLabel: 'No' });
+    const box = dialog(dom);
+    const { input } = promptParts(box);
+    input.value = 'ni';
+    input.onkeydown({ key: 'Enter', isComposing: true, keyCode: 229, preventDefault() {} });
+    assert.equal(dom.body.children.includes(box), true);
+    input.onkeydown({ key: 'Enter', preventDefault() {} });
+    assert.equal(await answer, 'ni');
+  });
+});
+
 test('promptModal resolves null when it is cancelled', async () => {
   await withDom(async ({ promptModal }, dom) => {
     const answer = promptModal({ title: 'T', label: 'Name', confirmLabel: 'Save', cancelLabel: 'No' });

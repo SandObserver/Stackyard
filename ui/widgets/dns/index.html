@@ -159,7 +159,7 @@ function render(m, ph = false) {
   _segs = segs;
   if (_sel >= segs.length) _sel = -1;
   if (!ph) renderLegend(segs);
-  if (!segs.length) { svgEl.innerHTML=''; return; }
+  if (!segs.length) { svgEl.replaceChildren(); return; }
 
   const sum = segs.reduce((a,s)=>a+s.value,0);
   const srcH = H * SRC_SHARE;
