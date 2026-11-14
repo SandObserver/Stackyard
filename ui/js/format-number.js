@@ -170,3 +170,27 @@ export function formatBytes(bytes, options = {}) {
 export function formatByteRate(bytesPerSecond, options = {}) {
   return formatScaled(bytesPerSecond, options, '-per-second');
 }
+
+const LATIN = /[a-z]/i;
+
+/** A span such as "3 days 4 hr" or "5 hr 12 min": its two largest units, in the
+    reader's digits and unit words. `part` receives each unit as it is written.
+    @param {number} minutes @param {Intl.NumberFormatOptions['unitDisplay']} [unitDisplay]
+    @param {(text: string) => string} [part] @returns {string} */
+export function formatDuration(minutes, unitDisplay = 'short', part = text => text) {
+  const total = Math.max(0, Math.floor(minutes));
+  const say = (/** @type {number} */ v, /** @type {string} */ unit) => {
+    const text = formatNumber(v, { style: 'unit', unit, unitDisplay, maximumFractionDigits: 0 });
+    if (unitDisplay !== 'narrow' || !LATIN.test(text)) return part(text);
+    const short = formatNumber(v, { style: 'unit', unit, unitDisplay: 'short', maximumFractionDigits: 0 });
+    return part(LATIN.test(short) ? text : short);
+  };
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h >= 24) {
+    const days = Math.floor(h / 24);
+    return h % 24 ? `${say(days, 'day')} ${say(h % 24, 'hour')}` : say(days, 'day');
+  }
+  if (!h) return say(m, 'minute');
+  return m ? `${say(h, 'hour')} ${say(m, 'minute')}` : say(h, 'hour');
+}

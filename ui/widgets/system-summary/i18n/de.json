@@ -100,5 +100,7 @@
   "network.myspeedPass.label": "MySpeed-Passwort",
   "network.stToken.label": "API-Token",
   "network.stToken.hint": "Optional. Leer lassen, um die ältere Kompatibilitätsroute zu verwenden.",
-  "ui.noData": "Keine Daten"
+  "ui.noData": "Keine Daten",
+  "ui.mbps": "{value} Mbit/s",
+  "ui.gbps": "{value} Gbit/s"
 }

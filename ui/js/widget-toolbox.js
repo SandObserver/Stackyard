@@ -5,7 +5,7 @@ import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
 import { jitter } from '/js/jitter.js?v=087a1fcf';
 import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-error.js?v=cae2caee';
-import { formatNumber, numberSymbols, setNumberLanguage } from '/js/format-number.js?v=cbc54f4c';
+import { formatNumber, numberSymbols, setNumberLanguage } from '/js/format-number.js?v=1e831585';
 
 export { esc, html, setHtml };
 export { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
@@ -759,7 +759,8 @@ export {
   byteScale,
   formatBytes,
   formatByteRate,
-} from '/js/format-number.js?v=cbc54f4c';
+  formatDuration,
+} from '/js/format-number.js?v=1e831585';
 
 export function sinceLabel(ts) {
   if (!ts) return '';

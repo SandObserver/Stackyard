@@ -117,3 +117,18 @@ test('a hovered column says how long ago it was read', () => {
   assert.equal(ageText(40000), '40 sec. ago');
   assert.equal(ageText(3 * 60000), '3 min. ago');
 });
+
+test('link speeds take their unit word from the catalogue', () => {
+  const fixedSrc = src.match(/const fixed = (.+);\n/);
+  assert.ok(fixedSrc, 'fixed is defined in the widget');
+  const fixed = new Function('formatNumber', `return ${fixedSrc[1]};`)(formatNumber);
+  const strings = JSON.parse(
+    fs.readFileSync(new URL('../widgets/system-summary/i18n/de.json', import.meta.url), 'utf8'),
+  );
+  const wt = (key, fallback, vars = {}) =>
+    (strings[key] ?? fallback).replace(/\{(\w+)\}/g, (m, k) => (vars[k] == null ? m : String(vars[k])));
+  const fmtMbps = lift('fmtMbps', 'v', { fixed, wt });
+  assert.equal(fmtMbps(940), '940 Mbit/s');
+  assert.equal(fmtMbps(1250), '1.3 Gbit/s');
+  assert.equal(fmtMbps(null), 'Keine Daten');
+});

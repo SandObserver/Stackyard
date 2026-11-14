@@ -2,15 +2,15 @@
 
 import { errorAdvice } from '/js/admin-error.js?v=5abd7438';
 import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=06da6a19';
-import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=25ac2101';
-import { formatList, formatNumber } from '/js/format-number.js?v=cbc54f4c';
+import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=7177becb';
+import { formatList, formatNumber } from '/js/format-number.js?v=1e831585';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=721852aa';
+import { t } from '/js/i18n.js?v=14775deb';
 import { iconSvg } from '/js/icon-set.js?v=361e54a5';
 import { iconChain } from '/js/icons.js?v=76c29d43';
 import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
-import { el, isolate, q, qa } from '/js/utils.js?v=d49cd680';
+import { el, isolate, q, qa } from '/js/utils.js?v=d0e83a9f';
 
 const API = '';
 
