@@ -151,3 +151,15 @@ test('stops at the closing terminator without consuming trailing bytes', () => {
   assert.equal(r.data.toString('utf8'), '<svg/>');
   assert.equal(r.fileParts, 1);
 });
+
+test('reads the filename as UTF-8', () => {
+  for (const name of ['Café.png', 'ホーム.png', 'иконка.svg', '😀.svg']) {
+    const buf = Buffer.from(
+      `--${B}\r\nContent-Disposition: form-data; name="i"; filename="${name}"\r\n\r\nx\r\n--${B}--\r\n`,
+      'utf8',
+    );
+    const r = parseMultipartFile(buf, B);
+    assert.equal(r.filename, name);
+    assert.doesNotMatch(r.filename, /[\u0080-\u009f]/, 'a UTF-8 byte read as a C1 control');
+  }
+});

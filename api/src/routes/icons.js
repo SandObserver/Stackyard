@@ -7,30 +7,51 @@ const { ICONS_PATH } = require('../config');
 const { fetchUnchecked } = require('../proxy');
 const log = require('../log');
 const { fail, KIND } = require('../api-error');
+const { writeFileAtomic, removeStaleUploads, ICONS_WRITE_FAILURES } = require('../atomic-write');
+const { sanitizeSvg } = require('../svg-sanitize');
+const { sniffIconType } = require('../icon-sniff');
+
+const ICON_EXT_RE = /\.(svg|png|ico)$/i;
+const STEM_MAX_CHARS = 100;
+/* NAME_MAX is 255 bytes. A suffix and the extension must still fit. */
+const STEM_MAX_BYTES = 200;
+const STALE_UPLOAD_MS = 3_600_000;
+
+/** @param {number} code */
+function unsafeNameChar(code) {
+  return (
+    code <= 0x1f ||
+    (code >= 0x7f && code <= 0x9f) ||
+    code === 0x061c ||
+    code === 0x200e ||
+    code === 0x200f ||
+    (code >= 0x202a && code <= 0x202e) ||
+    (code >= 0x2066 && code <= 0x2069)
+  );
+}
+
+/** @param {string} lastPart @returns {string} */
+function iconStem(lastPart) {
+  const chars = [...lastPart.replace(ICON_EXT_RE, '')].filter(
+    ch => !unsafeNameChar(/** @type {number} */ (ch.codePointAt(0))) && !'<>:"|?*'.includes(ch),
+  );
+  let stem = chars
+    .join('')
+    .replace(/^\.+/, '') /* no leading dots: not hidden, not '..' */
+    .trim();
+  stem = [...stem].slice(0, STEM_MAX_CHARS).join('');
+  while (Buffer.byteLength(stem) > STEM_MAX_BYTES) stem = [...stem].slice(0, -1).join('');
+  return stem.trim();
+}
 
 /* A safe, unused filename for an upload. Never reuse the submitted name: it
    overwrites an icon other apps still reference. Strip backslashes as well as
    slashes, because path.basename does not treat one as a separator on Linux.
 
-   @param {string} dir @param {string} raw @returns {string} */
-function safeIconName(dir, raw) {
-  const ext = path.extname(String(raw).split(/[\\/]/).pop() || '').toLowerCase();
-  const lastPart = String(raw).split(/[\\/]/).pop() || '';
-  const stem =
-    lastPart
-      .slice(0, lastPart.length - path.extname(lastPart).length)
-      /* Drop control characters and the characters that are awkward in a URL or
-       on a filesystem. */
-      .split('')
-      .filter(ch => {
-        const code = ch.charCodeAt(0);
-        return code > 0x1f && code !== 0x7f && !'<>:"|?*'.includes(ch);
-      })
-      .join('')
-      .replace(/^\.+/, '') /* no leading dots: not hidden, not '..' */
-      .trim()
-      .slice(0, 100) || 'icon';
-
+   @param {string} dir @param {string} raw @param {string} ext from the content, with its dot
+   @returns {string} */
+function safeIconName(dir, raw, ext) {
+  const stem = iconStem(String(raw).split(/[\\/]/).pop() || '') || 'icon';
   let candidate = `${stem}${ext}`;
   /* Bounded. An unbounded loop here is a way to spend the server's time. */
   for (let n = 2; n <= 999 && fs.existsSync(path.join(dir, candidate)); n++) {
@@ -40,11 +61,22 @@ function safeIconName(dir, raw) {
   return candidate;
 }
 
+/** The extension the bytes support, and the bytes to store. Null when the
+    content is not a PNG, an ICO, or an SVG named as one.
+
+    @param {string} filename @param {Buffer} data @returns {{ ext: string, data: Buffer } | null} */
+function iconContent(filename, data) {
+  const sniffed = sniffIconType(data);
+  if (sniffed) return { ext: `.${sniffed}`, data };
+  if (!/\.svg$/i.test(filename)) return null;
+  const svg = sanitizeSvg(data.toString('utf8'));
+  if (!/<(?:[\w-]+:)?svg[\s/>]/i.test(svg)) return null;
+  return { ext: '.svg', data: Buffer.from(svg, 'utf8') };
+}
+
 const ICON_MAX_BYTES = 2 * 1024 * 1024;
 const ICON_STREAM_MAX_BYTES = Math.round(ICON_MAX_BYTES * 1.25);
 const { rateLimit } = require('../auth');
-const { sanitizeSvg } = require('../svg-sanitize');
-const { sniffIconType } = require('../icon-sniff');
 const { parseMultipartFile } = require('../parse-multipart');
 
 const { searchIcons, lookupIcon, formatHint, fileUrl, rawFileUrl, SOURCE_IDS } = require('../icon-catalogs');
@@ -212,30 +244,37 @@ on('POST', '/api/icons/upload', async (req, res) => {
     const boundary = bMatch[1] || bMatch[2];
     const buf = await readBodyCapped(req, ICON_STREAM_MAX_BYTES);
     const { filename, data, fileParts } = parseMultipartFile(buf, boundary);
-    let fileData = data;
-    if (!filename || !fileData?.length) return json(res, 400, { error: 'no file found in upload', kind: KIND.INVALID });
+    if (!filename || !data?.length) return json(res, 400, { error: 'no file found in upload', kind: KIND.INVALID });
     if (fileParts > 1) return json(res, 400, { error: 'only one file per upload', kind: KIND.INVALID });
-    if (!/\.(svg|png|ico)$/i.test(filename))
+    if (!ICON_EXT_RE.test(filename))
       return json(res, 400, {
         error: 'only .svg, .png, .ico files allowed',
         kind: KIND.INVALID,
         code: 'invalid.file-type',
       });
-    if (fileData.length > ICON_MAX_BYTES)
+    if (data.length > ICON_MAX_BYTES)
       return json(res, 400, { error: 'file too large (max 2 MB)', kind: KIND.INVALID, code: 'invalid.too-large' });
-    if (/\.svg$/i.test(filename)) {
-      fileData = Buffer.from(sanitizeSvg(fileData.toString('utf8')), 'utf8');
-    } else if (!sniffIconType(fileData)) {
+    const content = iconContent(filename, data);
+    if (!content)
       return json(res, 400, {
-        error: 'file is not a valid PNG or ICO image',
+        error: /\.svg$/i.test(filename) ? 'file is not a valid SVG image' : 'file is not a valid PNG or ICO image',
         kind: KIND.INVALID,
         code: 'invalid.file-type',
       });
+    removeStaleUploads(ICONS_PATH, STALE_UPLOAD_MS);
+    let saved = '';
+    for (let attempt = 1; ; attempt++) {
+      saved = safeIconName(ICONS_PATH, filename, content.ext);
+      try {
+        writeFileAtomic(path.join(ICONS_PATH, saved), content.data, {
+          noReplace: true,
+          failures: ICONS_WRITE_FAILURES,
+        });
+        break;
+      } catch (e) {
+        if (e.code !== 'EEXIST' || attempt >= 3) throw e;
+      }
     }
-    fs.mkdirSync(ICONS_PATH, { recursive: true });
-    /* Never the submitted name directly. See safeIconName. */
-    const saved = safeIconName(ICONS_PATH, filename);
-    fs.writeFileSync(path.join(ICONS_PATH, saved), fileData, { flag: 'wx' });
     log.audit('icon uploaded', { filename: saved });
     json(res, 200, { ok: true, filename: saved });
   } catch (e) {

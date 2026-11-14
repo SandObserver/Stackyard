@@ -19,19 +19,19 @@ const touch = (d, name) => fs.writeFileSync(path.join(d, name), 'x');
 /* ── not overwriting ──────────────────────────────────────────────────────── */
 
 test('a free name is used as given', () => {
-  assert.equal(safeIconName(dir(), 'logo.svg'), 'logo.svg');
+  assert.equal(safeIconName(dir(), 'logo.svg', '.svg'), 'logo.svg');
 });
 
 test('a name already taken does not overwrite', () => {
   const d = dir();
   touch(d, 'logo.svg');
-  assert.equal(safeIconName(d, 'logo.svg'), 'logo-2.svg');
+  assert.equal(safeIconName(d, 'logo.svg', '.svg'), 'logo-2.svg');
 });
 
 test('several uploads of the same name each get their own', () => {
   const d = dir();
   for (const expected of ['logo.svg', 'logo-2.svg', 'logo-3.svg', 'logo-4.svg']) {
-    const got = safeIconName(d, 'logo.svg');
+    const got = safeIconName(d, 'logo.svg', '.svg');
     assert.equal(got, expected);
     touch(d, got);
   }
@@ -41,7 +41,7 @@ test('a name whose numbered copies are all taken still gets a free name', () => 
   const d = dir();
   touch(d, 'logo.svg');
   for (let n = 2; n <= 999; n++) touch(d, `logo-${n}.svg`);
-  const got = safeIconName(d, 'logo.svg');
+  const got = safeIconName(d, 'logo.svg', '.svg');
   assert.match(got, /^logo-[0-9a-f]{12}\.svg$/);
   assert.equal(fs.existsSync(path.join(d, got)), false);
 });
@@ -49,13 +49,13 @@ test('a name whose numbered copies are all taken still gets a free name', () => 
 test('the extension is preserved when a suffix is added', () => {
   const d = dir();
   touch(d, 'icon.png');
-  assert.equal(safeIconName(d, 'icon.png'), 'icon-2.png');
+  assert.equal(safeIconName(d, 'icon.png', '.png'), 'icon-2.png');
 });
 
 test('a different extension is a different file', () => {
   const d = dir();
   touch(d, 'logo.svg');
-  assert.equal(safeIconName(d, 'logo.png'), 'logo.png', 'only an exact name collides');
+  assert.equal(safeIconName(d, 'logo.png', '.png'), 'logo.png', 'only an exact name collides');
 });
 
 /* Unbounded searching would be a way to spend the server's time, and a directory
@@ -64,35 +64,35 @@ test('the search for a free name is bounded', () => {
   const d = dir();
   touch(d, 'a.svg');
   for (let n = 2; n <= 999; n++) touch(d, `a-${n}.svg`);
-  assert.doesNotThrow(() => safeIconName(d, 'a.svg'));
+  assert.doesNotThrow(() => safeIconName(d, 'a.svg', '.svg'));
 });
 
 /* ── tidying the name ─────────────────────────────────────────────────────── */
 
 test('a path is reduced to its filename, either separator', () => {
   const d = dir();
-  assert.equal(safeIconName(d, '/abs/path/logo.svg'), 'logo.svg');
-  assert.equal(safeIconName(d, 'a/b/c.svg'), 'c.svg');
-  assert.equal(safeIconName(d, '..\\..\\etc\\passwd.svg'), 'passwd.svg', 'a Windows path too');
+  assert.equal(safeIconName(d, '/abs/path/logo.svg', '.svg'), 'logo.svg');
+  assert.equal(safeIconName(d, 'a/b/c.svg', '.svg'), 'c.svg');
+  assert.equal(safeIconName(d, '..\\..\\etc\\passwd.svg', '.svg'), 'passwd.svg', 'a Windows path too');
 });
 
 test('the result always stays inside the icons directory', () => {
   const d = dir();
   for (const raw of ['../../etc/passwd.svg', '..\\..\\x.svg', '/etc/shadow.svg', '....//..svg', 'a/../../b.svg']) {
-    const full = path.resolve(d, safeIconName(d, raw));
+    const full = path.resolve(d, safeIconName(d, raw, '.svg'));
     assert.ok(full.startsWith(path.resolve(d) + path.sep), `${raw} escaped to ${full}`);
   }
 });
 
 test('leading dots are removed, so nothing becomes hidden or a traversal', () => {
   const d = dir();
-  assert.equal(safeIconName(d, '...hidden.svg'), 'hidden.svg');
-  assert.ok(!safeIconName(d, '..svg').startsWith('.'));
+  assert.equal(safeIconName(d, '...hidden.svg', '.svg'), 'hidden.svg');
+  assert.ok(!safeIconName(d, '..svg', '.svg').startsWith('.'));
 });
 
 test('control characters and awkward characters are dropped', () => {
   const d = dir();
-  const got = safeIconName(d, 'a\u0000b<c>d:e"f|g?h*i.svg');
+  const got = safeIconName(d, 'a\u0000b<c>d:e"f|g?h*i.svg', '.svg');
   assert.equal(got, 'abcdefghi.svg');
 });
 
@@ -100,14 +100,14 @@ test('control characters and awkward characters are dropped', () => {
    so there is no reason to mangle a legible one. */
 test('spaces, case and non-Latin names are kept', () => {
   const d = dir();
-  assert.equal(safeIconName(d, 'My Icon.SVG'), 'My Icon.svg', 'only the extension is normalised');
-  assert.equal(safeIconName(d, 'иконка.svg'), 'иконка.svg');
+  assert.equal(safeIconName(d, 'My Icon.SVG', '.svg'), 'My Icon.svg', 'only the extension is normalised');
+  assert.equal(safeIconName(d, 'иконка.svg', '.svg'), 'иконка.svg');
 });
 
 test('a name with nothing usable left still produces a file', () => {
   const d = dir();
   for (const raw of ['   .svg', '...svg', '\u0000.svg']) {
-    const got = safeIconName(d, raw);
+    const got = safeIconName(d, raw, '.svg');
     assert.ok(got.length > 4, `${JSON.stringify(raw)} produced ${JSON.stringify(got)}`);
     assert.match(got, /\.svg$/);
   }
@@ -115,9 +115,42 @@ test('a name with nothing usable left still produces a file', () => {
 
 test('a very long name is shortened', () => {
   const d = dir();
-  const got = safeIconName(d, `${'x'.repeat(300)}.svg`);
+  const got = safeIconName(d, `${'x'.repeat(300)}.svg`, '.svg');
   assert.ok(got.length <= 110, `name is ${got.length} characters`);
   assert.match(got, /\.svg$/);
+});
+
+test('a name that is only an extension gets a generated stem and keeps its extension', () => {
+  const d = dir();
+  for (const [raw, ext] of [
+    ['.svg', '.svg'],
+    ['.png', '.png'],
+    ['.ICO', '.ico'],
+  ]) {
+    assert.equal(safeIconName(d, raw, ext), `icon${ext}`, raw);
+  }
+});
+
+test('the extension comes from the content, not the submitted name', () => {
+  const d = dir();
+  assert.equal(safeIconName(d, 'logo.svg', '.png'), 'logo.png');
+  assert.equal(safeIconName(d, 'logo.png', '.ico'), 'logo.ico');
+});
+
+test('C1 and bidirectional control characters are dropped', () => {
+  const d = dir();
+  const raw = 'a\u0080b\u0085c\u009fd؜e‎f‏g‪h‮i⁦j⁩k.svg';
+  assert.equal(safeIconName(d, raw, '.svg'), 'abcdefghijk.svg');
+});
+
+test('a long name in a multi-byte script still fits a file name', () => {
+  const d = dir();
+  for (const ch of ['漢', 'é', '😀']) {
+    const got = safeIconName(d, `${ch.repeat(300)}.png`, '.png');
+    assert.ok(Buffer.byteLength(got) <= 255 - 8, `${ch}: ${Buffer.byteLength(got)} bytes`);
+    assert.ok(got.isWellFormed(), `${ch}: a character was cut in half`);
+    assert.match(got, /\.png$/);
+  }
 });
 
 /* ── through the upload route ─────────────────────────────────────────────── */
@@ -314,4 +347,80 @@ t2('an icon upload past the stream cap is answered before the body ends', { time
   const r = await unfinishedUpload(base + '/api/icons/upload', 8 * 1024 * 1024, 3 * 1024 * 1024);
   assert.equal(r.status, 400);
   assert.match(r.body.error, /too large/);
+});
+
+t2('a non-Latin upload name is saved as it was sent', async () => {
+  const r = await upload('Café ホーム.svg', SVG);
+  assert.equal(r.status, 200);
+  assert.equal(r.body.filename, 'Café ホーム.svg');
+  assert.ok(fs.existsSync(path.join(uploadDir, 'Café ホーム.svg')));
+});
+
+t2('an upload named only .svg is saved under a listed name', async () => {
+  const r = await upload('.svg', SVG);
+  assert.equal(r.status, 200);
+  assert.match(r.body.filename, /^icon(-\d+)?\.svg$/);
+  const list = await (await fetch(`${base}/api/icons/local`)).json();
+  assert.ok(list.files.includes(r.body.filename), 'the icon list must show the upload');
+});
+
+t2('png bytes named .svg are stored as a png', async () => {
+  const r = await postMultipart(parts(['picture.svg', PNG]));
+  assert.equal(r.status, 200);
+  assert.equal(r.body.filename, 'picture.png');
+  assert.deepEqual(fs.readFileSync(path.join(uploadDir, 'picture.png')), PNG);
+});
+
+t2('an svg name on bytes that are not svg is refused', async () => {
+  const r = await postMultipart(parts(['notes.svg', Buffer.from('plain text, no markup')]));
+  assert.equal(r.status, 400);
+  assert.equal(r.body.code, 'invalid.file-type');
+  assert.ok(!fs.existsSync(path.join(uploadDir, 'notes.svg')));
+});
+
+const { mock } = require('node:test');
+
+/** @param {string} code */
+function failingWrite(code) {
+  const real = fs.writeFileSync;
+  return mock.method(fs, 'writeFileSync', (file, data, ...rest) => {
+    real(file, Buffer.from(data).subarray(0, 3), ...rest);
+    throw Object.assign(new Error(`${code}: /secret/path`), { code });
+  });
+}
+
+for (const [code, status, apiCode] of [
+  ['ENOSPC', 507, 'internal.disk-full'],
+  ['EROFS', 500, 'internal.icons-not-writable'],
+]) {
+  t2(`${code} during an icon upload answers ${apiCode} and leaves no file`, async () => {
+    const listed = fs.readdirSync(uploadDir).sort();
+    failingWrite(code);
+    let r;
+    try {
+      r = await postMultipart(parts(['full.png', PNG]));
+    } finally {
+      mock.restoreAll();
+    }
+    assert.equal(r.status, status);
+    assert.equal(r.body.code, apiCode);
+    assert.doesNotMatch(JSON.stringify(r.body), /secret\/path/);
+    assert.deepEqual(fs.readdirSync(uploadDir).sort(), listed);
+  });
+}
+
+t2('an upload removes temp files older than an hour and keeps the rest', async () => {
+  const old = path.join(uploadDir, '.upload-0123456789ab.tmp');
+  const fresh = path.join(uploadDir, '.upload-ba9876543210.tmp');
+  const icon = path.join(uploadDir, 'kept.png');
+  for (const file of [old, fresh, icon]) fs.writeFileSync(file, PNG);
+  const twoHoursAgo = new Date(Date.now() - 2 * 3_600_000);
+  fs.utimesSync(old, twoHoursAgo, twoHoursAgo);
+  fs.utimesSync(icon, twoHoursAgo, twoHoursAgo);
+  const r = await postMultipart(parts(['sweep.png', PNG]));
+  assert.equal(r.status, 200);
+  assert.ok(!fs.existsSync(old));
+  assert.ok(fs.existsSync(fresh));
+  assert.ok(fs.existsSync(icon));
+  for (const file of [fresh, icon]) fs.unlinkSync(file);
 });
