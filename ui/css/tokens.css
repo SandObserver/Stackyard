@@ -280,6 +280,7 @@ html[data-theme="light"] {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
   }
+  html.wall-in::before { animation-duration:.4s !important; }
 }
 
 /* Reduce Transparency: drop the blur, keep the motion. admin-theme.js sets the
