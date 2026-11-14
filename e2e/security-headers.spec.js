@@ -24,7 +24,11 @@ for (const url of PATHS) {
     const res = await request.get(url, { maxRedirects: 0 });
     const headers = res.headers();
     expect(headers['x-content-type-options']).toBe('nosniff');
-    expect(headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
-    expect(headers['permissions-policy']).toBe('camera=(), microphone=(), geolocation=()');
+    expect(headers['referrer-policy']).toBe('same-origin');
+    expect(headers['cross-origin-opener-policy']).toBe('same-origin-allow-popups');
+    expect(headers['permissions-policy']).toBe(
+      'camera=(), microphone=(), geolocation=(), usb=(), serial=(), hid=(), payment=(), display-capture=()',
+    );
+    if (url.startsWith('/api/')) expect(headers['cross-origin-resource-policy']).toBe('same-origin');
   });
 }

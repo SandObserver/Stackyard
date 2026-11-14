@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=d9a3ab04';
+import { renderColorControl } from '/js/admin-color-control.js?v=0208b5bf';
 import { passwordRefusalKey, socketProbeAdvice } from '/js/admin-error.js?v=5abd7438';
 import {
   BLOCK,
@@ -34,8 +34,8 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=89fe2e81';
-import { BACKDROP } from '/js/background.js?v=11aa9737';
+} from '/js/admin-shared.js?v=4c03c11b';
+import { BACKDROP } from '/js/background.js?v=87db4625';
 import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
 import {
   ALLOWED_HOSTS_MAX,
@@ -48,7 +48,7 @@ import { t } from '/js/i18n.js?v=721852aa';
 import { confirmText, promptModal } from '/js/modal.js?v=c4c1c4c4';
 import { contextWords, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
 import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
-import { el, inp, qa, setUserText } from '/js/utils.js?v=d49cd680';
+import { el, inp, qa, setUserText } from '/js/utils.js?v=b7b43fe1';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;

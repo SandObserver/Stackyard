@@ -390,7 +390,7 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
   const allow = safeAllow(o.allow, fullscreen);
   if (allow) ifr.setAttribute('allow', allow);
   if (fullscreen) ifr.setAttribute('allowfullscreen', '');
-  if (o.referrerPolicy) ifr.setAttribute('referrerpolicy', o.referrerPolicy);
+  ifr.setAttribute('referrerpolicy', o.referrerPolicy || 'strict-origin-when-cross-origin');
   if (o.loading) ifr.setAttribute('loading', o.loading);
   ifr.setAttribute('aria-label', title);
   ifr.style.cssText =

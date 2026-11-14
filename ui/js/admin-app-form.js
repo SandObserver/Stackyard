@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=d9a3ab04';
+import { renderColorControl } from '/js/admin-color-control.js?v=0208b5bf';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=5abd7438';
 import {
   clearsStoredSecret,
@@ -27,7 +27,7 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=89fe2e81';
+} from '/js/admin-shared.js?v=4c03c11b';
 import { activityAuth, activityHasAuth } from '/js/admin-save-logic.js?v=6ebda0e2';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=7112fd10';
@@ -45,9 +45,9 @@ import {
   throughServer,
 } from '/js/icons.js?v=76c29d43';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=794fe194';
+import { createListbox } from '/js/listbox.js?v=db59a5a1';
 import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
-import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=d49cd680';
+import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=b7b43fe1';
 
 export function buildFolderForm(body, item) {
   const children = folderChildren(item);

@@ -661,11 +661,40 @@ function locationBlocks(conf) {
   return blocks;
 }
 
-test('the shared security headers file sets nosniff, a referrer policy and a permissions policy', () => {
+const PERMISSIONS =
+  'camera=(), microphone=(), geolocation=(), usb=(), serial=(), hid=(), payment=(), display-capture=()';
+
+/* no-referrer would send Origin: null on same-origin POSTs, which the API's
+   origin check refuses. */
+test('the shared security headers file sets nosniff, a referrer policy, an opener policy and a permissions policy', () => {
   const shared = read('security-headers.conf');
   assert.match(shared, /^add_header X-Content-Type-Options "nosniff" always;$/m);
-  assert.match(shared, /^add_header Referrer-Policy "strict-origin-when-cross-origin" always;$/m);
-  assert.match(shared, /^add_header Permissions-Policy "camera=\(\), microphone=\(\), geolocation=\(\)" always;$/m);
+  assert.match(shared, /^add_header Referrer-Policy "same-origin" always;$/m);
+  assert.match(shared, /^add_header Cross-Origin-Opener-Policy "same-origin-allow-popups" always;$/m);
+  assert.ok(shared.includes(`add_header Permissions-Policy "${PERMISSIONS}" always;`));
+});
+
+test('the server level sends the same shared headers as the file', () => {
+  const server = dashboard.slice(0, dashboard.search(/^\s*location /m));
+  for (const line of read('security-headers.conf')
+    .split('\n')
+    .filter(l => l.startsWith('add_header'))) {
+    assert.ok(server.includes(`    ${line}`), `the server level lacks: ${line}`);
+  }
+});
+
+test('the page and Settings policies refuse plugins and outside form targets, and every page policy pins <base>', () => {
+  const settings = dashboard.match(/location \^~ \/admin \{[\s\S]*?add_header Content-Security-Policy "([^"]+)"/)[1];
+  const widgets = dashboard.match(/location \^~ \/widgets\/ \{[\s\S]*?add_header Content-Security-Policy "([^"]+)"/)[1];
+  for (const p of [policy, settings]) {
+    for (const d of ["object-src 'none'", "base-uri 'self'", "form-action 'self'"])
+      assert.ok(p.includes(d), `${d} missing`);
+  }
+  assert.ok(widgets.includes("base-uri 'self'"));
+});
+
+test('API responses cannot be loaded by another site', () => {
+  assert.match(read('csp-api.conf'), /^add_header Cross-Origin-Resource-Policy "same-origin" always;$/m);
 });
 
 test('every location that sets a header also sets the shared security headers', () => {

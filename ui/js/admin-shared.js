@@ -10,7 +10,7 @@ import { iconSvg } from '/js/icon-set.js?v=361e54a5';
 import { iconChain } from '/js/icons.js?v=76c29d43';
 import { slideBlock } from '/js/modal.js?v=c4c1c4c4';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
-import { el, isolate, q, qa } from '/js/utils.js?v=d49cd680';
+import { el, isolate, q, qa } from '/js/utils.js?v=b7b43fe1';
 
 const API = '';
 
