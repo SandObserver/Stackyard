@@ -284,3 +284,18 @@ test('a reply past the size limit is marked, so a route can word it as too large
     server.close();
   }
 });
+
+test('a ping sends the query string, on HEAD and on the GET retry after 405', async t => {
+  const { pingUrl } = _internals;
+  const seen = [];
+  const server = http.createServer((req, res) => {
+    seen.push(`${req.method} ${req.url}`);
+    res.writeHead(req.method === 'HEAD' ? 405 : 200);
+    res.end();
+  });
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  t.after(() => server.close());
+  const result = await pingUrl(`http://127.0.0.1:${server.address().port}/status?check=db&full=1`, 2000);
+  assert.deepEqual(seen, ['HEAD /status?check=db&full=1', 'GET /status?check=db&full=1']);
+  assert.equal(result.status, 200);
+});
