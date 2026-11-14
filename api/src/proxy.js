@@ -655,7 +655,7 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp, lookup) {
     const opts = {
       hostname: connectHost,
       port,
-      path: u.pathname || '/',
+      path: u.pathname + u.search,
       timeout: ms,
       lookup: guard.lookup,
       rejectUnauthorized: !skip,
