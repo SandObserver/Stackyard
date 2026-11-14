@@ -92,9 +92,10 @@ const pollWith = (name, fetch, endpoint, config) =>
 
 test('Backup forgets the oldest Duplicati token once more than the cap are polled', async () => {
   const stub = countingStub(url => {
-    if (url.endsWith('/auth/login')) return { status: 200, data: { AccessToken: 'a', RefreshNonce: 'n' } };
-    if (url.endsWith('/serverstate')) return { status: 200, data: {} };
-    return { status: 200, data: [{ Backup: { ID: '1', Name: 'Daily' } }] };
+    if (url.endsWith('/auth/login'))
+      return { status: 200, format: 'json', data: { AccessToken: 'a', RefreshNonce: 'n' } };
+    if (url.endsWith('/serverstate')) return { status: 200, format: 'json', data: {} };
+    return { status: 200, format: 'json', data: [{ Backup: { ID: '1', Name: 'Daily' } }] };
   });
   const host = i => `dup${i}.lan:8200`;
   const poll = i =>
@@ -123,17 +124,22 @@ const PBS_GROUP = { 'backup-type': 'vm', 'backup-id': '100', 'last-backup': 1700
 
 test('Backup forgets the oldest Proxmox Backup Server task namespace past the cap', async () => {
   const stub = countingStub(url => {
-    if (url.includes('/groups')) return { status: 200, data: { data: [PBS_GROUP] } };
+    if (url.includes('/groups')) return { status: 200, format: 'json', data: { data: [PBS_GROUP] } };
     if (url.includes('/log?')) {
-      return { status: 200, data: { data: [{ t: `starting new backup on datastore 's' from ::1: "vm/100/x"` }] } };
+      return {
+        status: 200,
+        format: 'json',
+        data: { data: [{ t: `starting new backup on datastore 's' from ::1: "vm/100/x"` }] },
+      };
     }
     if (url.includes('/nodes/localhost/tasks?')) {
       return {
         status: 200,
+        format: 'json',
         data: { data: [{ upid: 'UPID:pbs:1', worker_id: 's:vm/100', worker_type: 'backup', status: 'OK' }] },
       };
     }
-    return { status: 200, data: { data: [] } };
+    return { status: 200, format: 'json', data: { data: [] } };
   });
   const host = i => `pbs-task${i}.lan:8007`;
   const poll = i => pollWith('backup', stub.fetch, '', { slots: [pbsSlot(host(i), 's::vm/100')] });
@@ -148,9 +154,10 @@ test('Backup forgets the oldest Proxmox Backup Server task namespace past the ca
 
 test('Backup forgets the oldest moved Proxmox Backup Server group past the cap', async () => {
   const stub = countingStub(url => {
-    if (url.endsWith('/namespace')) return { status: 200, data: { data: [{ ns: '' }, { ns: 'moved' }] } };
-    if (url.includes('/groups?ns=moved')) return { status: 200, data: { data: [PBS_GROUP] } };
-    return { status: 200, data: { data: [] } };
+    if (url.endsWith('/namespace'))
+      return { status: 200, format: 'json', data: { data: [{ ns: '' }, { ns: 'moved' }] } };
+    if (url.includes('/groups?ns=moved')) return { status: 200, format: 'json', data: { data: [PBS_GROUP] } };
+    return { status: 200, format: 'json', data: { data: [] } };
   });
   const host = i => `pbs-move${i}.lan:8007`;
   const poll = i => pollWith('backup', stub.fetch, '', { slots: [pbsSlot(host(i), 's::vm/100')] });
@@ -166,8 +173,8 @@ test('Backup forgets the oldest moved Proxmox Backup Server group past the cap',
 test('System Summary forgets the oldest Glances API version once more than the cap are polled', async () => {
   const stub = countingStub(url => {
     if (url.endsWith('/network'))
-      return { status: 200, data: [{ interface_name: 'eth0', bytes_recv_rate_per_sec: 1 }] };
-    return { status: 200, data: {} };
+      return { status: 200, format: 'json', data: [{ interface_name: 'eth0', bytes_recv_rate_per_sec: 1 }] };
+    return { status: 200, format: 'json', data: {} };
   });
   const host = i => `glances${i}.lan:61208`;
   const poll = i =>
@@ -186,8 +193,8 @@ test('System Summary forgets the oldest Glances API version once more than the c
 test('System Summary forgets the oldest Beszel session once more than the cap are polled', async () => {
   const created = new Date(Date.now() - 60 * 1000).toISOString();
   const stub = countingStub(url => {
-    if (url.includes('auth-with-password')) return { status: 200, data: { token: 'tok' } };
-    return { status: 200, data: { items: [{ stats: { b: [1, 2] }, created }] } };
+    if (url.includes('auth-with-password')) return { status: 200, format: 'json', data: { token: 'tok' } };
+    return { status: 200, format: 'json', data: { items: [{ stats: { b: [1, 2] }, created }] } };
   });
   const host = i => `beszel${i}.lan:8090`;
   const poll = i =>
@@ -212,6 +219,7 @@ test('System Summary forgets the oldest network totals once more than the cap ar
     total += 1000;
     return {
       status: 200,
+      format: 'json',
       data: { data: { metrics: { network: [{ name: 'eth0', bytesReceived: total, bytesSent: total }] } } },
     };
   });
