@@ -4,6 +4,7 @@ const {
   loadConfig,
   loadConfigForUpdate,
   saveConfig,
+  loadHeldConfigs,
   ensureSystemItems,
   migrate,
   SCHEMA_VERSION,
@@ -302,12 +303,12 @@ on('POST', '/api/config', async (req, res) => {
       const refusal = duplicateRowRefusal(item, stored, reg);
       if (refusal) return json(res, 400, refusal);
     }
-    const { withheld } = preserveAllSecrets(data, existing);
+    const { withheld, holds } = preserveAllSecrets(data, existing, loadHeldConfigs());
     if (redirected && existing.settings?.background?.apiKey && !data.settings?.background?.apiKey)
       withheld.push({ id: 'background', label: 'Unsplash' });
     if (proxmoxDropped) withheld.push({ id: 'proxmox', label: 'Proxmox' });
     ensureSystemItems(data);
-    saveConfig(data);
+    saveConfig(data, { hold: holds });
     /* Only now: until the config points at it, the file being replaced is still
        the wallpaper on screen. */
     pruneWallpapers(data.settings?.background?.url);

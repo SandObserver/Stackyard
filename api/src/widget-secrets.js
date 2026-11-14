@@ -145,29 +145,35 @@ function withholdWidgetConfig(item) {
   item[WITHHELD_FLAG] = true;
 }
 
-/* Stored. Only the server sets it: the stored secrets of a widget with no
-   manifest outlived a change of destination. A posted value is dropped. */
-const RETYPE_FLAG = 'secretsNeedRetype';
+const _isEmptyConfig = wc => !wc || typeof wc !== 'object' || Object.keys(wc).length === 0;
 
-/** Drops the stored secrets of each marked widget whose manifest is loaded,
-    and clears its marker. Mutates cfg. @returns {string[]} the item ids */
-function applyRetypeMarks(cfg) {
-  const ids = [];
-  if (!cfg || !Array.isArray(cfg.items)) return ids;
+/** Moves each held config whose manifest is loaded back into an empty
+    widgetConfig, without its secrets. Mutates cfg.
+    @returns {{ moved: string[], stale: string[] }} stale: a widgetConfig that is
+    not empty wins, and the held entry is to be dropped */
+function releaseHeldConfigs(cfg, held) {
+  const moved = [];
+  const stale = [];
+  if (!cfg || !Array.isArray(cfg.items) || !held) return { moved, stale };
   const reg = getRegistry();
-  for (const item of cfg.items) {
-    if (!item || item.type !== 'widget' || !item[RETYPE_FLAG]) continue;
-    const entry = reg[item.widgetType];
-    if (!entry) continue;
-    if (item.widgetConfig && typeof item.widgetConfig === 'object')
-      _forEachSecret(item.widgetConfig, entry, (obj, k) => {
-        delete obj[k];
-        delete obj[k + 'Set'];
-      });
-    delete item[RETYPE_FLAG];
-    ids.push(item.id);
+  for (const [id, entry] of Object.entries(held)) {
+    const item = cfg.items.find(i => i && i.id === id);
+    if (item?.type !== 'widget' || item.widgetType !== entry.widgetType) continue;
+    const manifest = reg[item.widgetType];
+    if (!manifest) continue;
+    if (!_isEmptyConfig(item.widgetConfig)) {
+      stale.push(id);
+      continue;
+    }
+    const wc = structuredClone(entry.widgetConfig);
+    _forEachSecret(wc, manifest, (obj, k) => {
+      delete obj[k];
+      delete obj[k + 'Set'];
+    });
+    item.widgetConfig = wc;
+    moved.push(id);
   }
-  return ids;
+  return { moved, stale };
 }
 
 function restoreWithheldConfig(newItem, oldItem) {
@@ -182,7 +188,6 @@ function scrubConfigSecrets(cfgCopy) {
   if (Array.isArray(cfgCopy.items)) {
     for (const item of cfgCopy.items) {
       if (!item || item.type !== 'widget') continue;
-      delete item[RETYPE_FLAG];
       const entry = reg[item.widgetType];
       if (entry) scrubWidgetSecrets(item, entry);
       else withholdWidgetConfig(item);
@@ -216,8 +221,7 @@ module.exports = {
   cosmeticSpec,
   transientSpec,
   WITHHELD_FLAG,
-  RETYPE_FLAG,
-  applyRetypeMarks,
+  releaseHeldConfigs,
   scrubWidgetSecrets,
   preserveWidgetSecrets,
   scrubConfigSecrets,

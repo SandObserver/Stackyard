@@ -1,7 +1,7 @@
 /* Every item-level secret system in one place. A route that runs some and
    misses others leaks a stored credential. */
 
-const { scrubConfigSecrets, preserveConfigSecrets, secretSpec, RETYPE_FLAG } = require('./widget-secrets');
+const { scrubConfigSecrets, preserveConfigSecrets, secretSpec } = require('./widget-secrets');
 const {
   scrubItemBadgeSecrets,
   preserveItemBadgeSecrets,
@@ -59,10 +59,14 @@ const mayHoldSecret = (config, entry) =>
     request is still the one the secret was stored for. Matching by item id
     alone sends a stored credential to a destination the incoming config names.
 
-    @param {any} newCfg @param {any} oldCfg
-    @returns {{ withheld: Array<{ id: string, label: string }> }} */
-function preserveAllSecrets(newCfg, oldCfg) {
+    A widget with no manifest whose destination changed keeps its stored config
+    in holds, never in newCfg.
+
+    @param {any} newCfg @param {any} oldCfg @param {Record<string, any>} [held] the stored held configs
+    @returns {{ withheld: Array<{ id: string, label: string }>, holds: Record<string, any> }} */
+function preserveAllSecrets(newCfg, oldCfg, held = {}) {
   const withheld = [];
+  const toHold = {};
   const noted = new Set();
   const note = item => {
     if (noted.has(item.id)) return;
@@ -71,7 +75,6 @@ function preserveAllSecrets(newCfg, oldCfg) {
   };
   const savedItems = Array.isArray(oldCfg?.items) ? oldCfg.items : [];
   const savedById = firstById(savedItems);
-  if (Array.isArray(newCfg.items)) for (const item of newCfg.items) if (item) delete item[RETYPE_FLAG];
   const redirected = rewriteChanged(newCfg.settings?.server, oldCfg?.settings?.server);
   if (redirected && Array.isArray(newCfg.items)) {
     const reg = getRegistry();
@@ -85,6 +88,7 @@ function preserveAllSecrets(newCfg, oldCfg) {
       if (holds) note(item);
     }
   }
+  const oldItems = redirected ? [] : savedItems;
   const prevOf = item => (redirected ? undefined : savedById.get(item.id));
 
   if (Array.isArray(newCfg.items)) {
@@ -97,19 +101,24 @@ function preserveAllSecrets(newCfg, oldCfg) {
       if (!item || item.type !== 'widget') continue;
       const entry = reg[item.widgetType];
       const stored = savedById.get(item.id);
-      if (!entry && stored?.type === 'widget' && stored.widgetType === item.widgetType) {
-        const moved = redirected || tlsChanged;
-        if (moved || stored[RETYPE_FLAG]) {
-          keepWidget.set(item, stored);
-          if (stored[RETYPE_FLAG] || mayHoldSecret(stored.widgetConfig, undefined)) item[RETYPE_FLAG] = true;
-          if (moved && item[RETYPE_FLAG]) note(item);
-          continue;
+      if (!entry && (redirected || tlsChanged) && stored?.type === 'widget' && stored.widgetType === item.widgetType) {
+        const prior = Object.hasOwn(held, item.id) && held[item.id].widgetType === item.widgetType;
+        const keep = mayHoldSecret(stored.widgetConfig, undefined)
+          ? stored.widgetConfig
+          : prior
+            ? held[item.id].widgetConfig
+            : undefined;
+        keepWidget.set(item, null);
+        item.widgetConfig = {};
+        if (mayHoldSecret(keep, undefined)) {
+          toHold[item.id] = { widgetType: item.widgetType, widgetConfig: structuredClone(keep) };
+          note(item);
         }
+        continue;
       }
       const prev = prevOf(item);
       if (!prev) continue;
-      const sameWidget =
-        prev.type === 'widget' && prev.widgetType === item.widgetType && !tlsChanged && !prev[RETYPE_FLAG];
+      const sameWidget = prev.type === 'widget' && prev.widgetType === item.widgetType && !tlsChanged;
       if (!entry) {
         keepWidget.set(item, sameWidget ? prev : null);
         if (!sameWidget && mayHoldSecret(prev.widgetConfig, reg[prev.widgetType])) note(item);
@@ -125,9 +134,9 @@ function preserveAllSecrets(newCfg, oldCfg) {
     const newWidgets = firstById(newCfg.items, n => n.type === 'widget');
     const oldForWidgets = {
       ...oldCfg,
-      items: savedItems.flatMap(o => {
+      items: oldItems.flatMap(o => {
         const match = o ? newWidgets.get(o.id) : undefined;
-        if (!match || !keepWidget.has(match)) return redirected ? [] : [o];
+        if (!match || !keepWidget.has(match)) return [o];
         const keep = keepWidget.get(match);
         return keep ? [keep] : [];
       }),
@@ -163,7 +172,7 @@ function preserveAllSecrets(newCfg, oldCfg) {
       preserveItemBadgeSecrets(item, scoped);
     }
   }
-  return { withheld };
+  return { withheld, holds: toHold };
 }
 
 module.exports = { scrubAllSecrets, preserveAllSecrets };

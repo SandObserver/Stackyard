@@ -14,7 +14,7 @@ const http = require('node:http');
 
 require('../src/routes');
 const { dispatch } = require('../src/router');
-const { saveConfig } = require('../src/config');
+const { saveConfig, loadConfig, HELD_PATH } = require('../src/config');
 const { loadRegistry } = require('../src/widgets');
 const log = require('../src/log');
 
@@ -29,7 +29,10 @@ const MANIFEST = {
   ],
 };
 const STORED = { url: 'http://retired.lan:8080', apiKey: 'STORED-KEY', refresh: 30 };
+const RELEASED = { url: STORED.url, refresh: 30 };
 const SERVER = { hostIp: '10.0.0.5', portMap: { 8080: { host: 'retired.lan', port: '8081' } } };
+const ITEM = { id: 'w1', type: 'widget', label: 'Old service', widgetType: 'retired' };
+const HELD_W1 = { w1: { widgetType: 'retired', widgetConfig: STORED } };
 
 const installManifest = () => {
   fs.mkdirSync(path.join(widgetsDir, 'retired'), { recursive: true });
@@ -40,8 +43,26 @@ const removeManifest = () => {
   fs.rmSync(path.join(widgetsDir, 'retired'), { recursive: true, force: true });
   loadRegistry();
 };
-const disk = () => JSON.parse(fs.readFileSync(process.env.CONFIG_PATH, 'utf8'));
-const diskItem = () => disk().items.find(i => i.id === 'w1');
+const rawConfig = () => fs.readFileSync(process.env.CONFIG_PATH, 'utf8');
+const diskItem = () => JSON.parse(rawConfig()).items.find(i => i.id === 'w1');
+const held = () => (fs.existsSync(HELD_PATH) ? JSON.parse(fs.readFileSync(HELD_PATH, 'utf8')) : null);
+const w1Of = cfg => cfg.items.find(i => i.id === 'w1');
+
+const writeHeldState = (widgetConfig = {}) => {
+  saveConfig({ items: [{ ...ITEM, widgetConfig }], settings: { server: structuredClone(SERVER) } });
+  fs.writeFileSync(HELD_PATH, JSON.stringify(HELD_W1), { mode: 0o600 });
+};
+
+let clock;
+const enableClock = t => {
+  clock = Date.now() + 60_000;
+  t.mock.timers.enable({ apis: ['Date'], now: clock });
+};
+const freshLoad = t => {
+  clock += 60_000;
+  t.mock.timers.setTime(clock);
+  return loadConfig();
+};
 
 let server, base;
 
@@ -60,28 +81,32 @@ after(async () => {
 
 beforeEach(() => {
   removeManifest();
-  saveConfig({
-    items: [{ id: 'w1', type: 'widget', label: 'Old service', widgetType: 'retired', widgetConfig: STORED }],
-    settings: { server: structuredClone(SERVER) },
-  });
+  fs.rmSync(HELD_PATH, { force: true });
+  saveConfig({ items: [{ ...ITEM, widgetConfig: STORED }], settings: { server: structuredClone(SERVER) } });
 });
 
-async function call(method, route, body) {
-  const res = await fetch(`${base}${route}`, {
+async function request(method, route, body) {
+  return fetch(`${base}${route}`, {
     method,
     headers: body ? { 'Content-Type': 'application/json', Origin: base } : {},
     body: body ? JSON.stringify(body) : undefined,
   });
+}
+
+async function call(method, route, body) {
+  const res = await request(method, route, body);
   assert.equal(res.status, 200, `${method} ${route}`);
   return res.json();
 }
 
-async function saveWithServer(change) {
+async function withServer(change) {
   const cfg = await call('GET', '/api/config');
-  assert.deepEqual(cfg.items.find(i => i.id === 'w1').widgetConfig, {});
+  assert.deepEqual(w1Of(cfg).widgetConfig, {});
   cfg.settings = { ...cfg.settings, server: { ...cfg.settings.server, ...change } };
-  return call('POST', '/api/config', cfg);
+  return cfg;
 }
+
+const saveWithServer = async change => call('POST', '/api/config', await withServer(change));
 
 const TRIGGERS = [
   ['the certificate skip', { skipTlsVerify: true }],
@@ -90,72 +115,163 @@ const TRIGGERS = [
 ];
 
 for (const [name, change] of TRIGGERS) {
-  test(`changing ${name} keeps the config of a widget with no manifest and marks it`, async () => {
+  test(`changing ${name} moves the config of a widget with no manifest out of the config file`, async () => {
     const reply = await saveWithServer(change);
     assert.deepEqual(reply.withheld, [{ id: 'w1', label: 'Old service' }]);
-    const item = diskItem();
-    assert.deepEqual(item.widgetConfig, STORED);
-    assert.equal(item.secretsNeedRetype, true);
+    assert.ok(!rawConfig().includes('STORED-KEY'));
+    assert.deepEqual(diskItem(), { ...ITEM, widgetConfig: {} });
+    assert.deepEqual(held(), HELD_W1);
+    assert.equal(fs.statSync(HELD_PATH).mode & 0o777, 0o600);
+    assert.ok(!JSON.stringify(loadConfig()).includes('STORED-KEY'));
   });
 }
 
-test('only a change of destination sets the marker, and a later save keeps it', async () => {
+test('only a change of destination holds the config, and later saves keep it', async () => {
   await saveWithServer({});
-  assert.equal(Object.hasOwn(diskItem(), 'secretsNeedRetype'), false);
+  assert.equal(held(), null);
+  assert.deepEqual(diskItem().widgetConfig, STORED);
   await saveWithServer({ skipTlsVerify: true });
   const reply = await saveWithServer({});
   assert.equal(reply.withheld, undefined);
-  assert.deepEqual(diskItem().widgetConfig, STORED);
-  assert.equal(diskItem().secretsNeedRetype, true);
+  assert.deepEqual(diskItem().widgetConfig, {});
+  assert.deepEqual(held(), HELD_W1);
+
+  await saveWithServer({ hostIp: '10.0.0.7' });
+  assert.deepEqual(held(), HELD_W1);
+
+  await call('POST', '/api/settings/unsplash-key', { apiKey: 'unsplash' });
+  assert.deepEqual(held(), HELD_W1);
 });
 
-test('when the manifest returns, the stored secret is dropped before any read sees it', async t => {
+test('when the manifest returns, the held config comes back without its secret', async t => {
   await saveWithServer({ hostIp: '10.0.0.9' });
   const audits = [];
   t.mock.method(log, 'audit', (msg, data) => audits.push([msg, data]));
   installManifest();
-  t.mock.timers.enable({ apis: ['Date'], now: Date.now() + 60_000 });
+  enableClock(t);
 
   const read = await call('GET', '/api/widget-config/w1');
-  assert.deepEqual(read.widgetConfig, { url: STORED.url, refresh: 30 });
-  const item = diskItem();
-  assert.deepEqual(item.widgetConfig, { url: STORED.url, refresh: 30 });
-  assert.equal(Object.hasOwn(item, 'secretsNeedRetype'), false);
+  assert.deepEqual(read.widgetConfig, RELEASED);
+  assert.deepEqual(diskItem().widgetConfig, RELEASED);
+  assert.equal(held(), null);
   assert.deepEqual(audits, [['stored credentials dropped until retyped', { items: ['w1'] }]]);
 
   const cfg = await call('GET', '/api/config');
-  cfg.items.find(i => i.id === 'w1').widgetConfig.apiKey = 'RETYPED-KEY';
+  w1Of(cfg).widgetConfig.apiKey = 'RETYPED-KEY';
   await call('POST', '/api/config', cfg);
   assert.deepEqual(diskItem().widgetConfig, { ...STORED, apiKey: 'RETYPED-KEY' });
-  assert.equal(Object.hasOwn(diskItem(), 'secretsNeedRetype'), false);
+  assert.equal(held(), null);
 });
 
-test('a save from the browser cannot set or clear the marker', async () => {
+test('a widgetConfig that is not empty wins over a held config', t => {
+  const newer = { url: 'http://new.lan', refresh: 5 };
+  writeHeldState(newer);
   installManifest();
-  const cfg = await call('GET', '/api/config');
-  cfg.items.find(i => i.id === 'w1').secretsNeedRetype = true;
-  await call('POST', '/api/config', cfg);
-  assert.equal(Object.hasOwn(diskItem(), 'secretsNeedRetype'), false);
-  assert.equal(diskItem().widgetConfig.apiKey, STORED.apiKey);
-
-  removeManifest();
-  await saveWithServer({ skipTlsVerify: true });
-  const next = await call('GET', '/api/config');
-  next.items.find(i => i.id === 'w1').secretsNeedRetype = false;
-  await call('POST', '/api/config', next);
-  assert.equal(diskItem().secretsNeedRetype, true);
+  enableClock(t);
+  assert.deepEqual(w1Of(freshLoad(t)).widgetConfig, newer);
+  assert.equal(held(), null);
 });
 
-test('export leaves the marker out, and a file carrying one is imported', async () => {
+test('export and the admin read never carry the held config, and an import cannot add one', async () => {
   await saveWithServer({ skipTlsVerify: true });
-  const exported = await call('GET', '/api/config/export');
-  const item = exported.items.find(i => i.id === 'w1');
-  assert.equal(Object.hasOwn(item, 'secretsNeedRetype'), false);
-  assert.deepEqual((await call('GET', '/api/config')).items.find(i => i.id === 'w1').secretsNeedRetype, undefined);
+  for (const route of ['/api/config/export', '/api/config']) {
+    const text = await (await request('GET', route)).text();
+    assert.ok(!text.includes('STORED-KEY'), route);
+  }
 
-  item.secretsNeedRetype = true;
-  const reply = await call('POST', '/api/config', exported);
-  assert.equal(reply.ok, true);
-  assert.deepEqual(diskItem().widgetConfig, STORED);
-  assert.equal(diskItem().secretsNeedRetype, true);
+  const exported = await call('GET', '/api/config/export');
+  exported.items.push({ id: 'w2', type: 'widget', widgetType: 'retired', widgetConfig: { apiKey: 'IMPORTED' } });
+  assert.equal((await call('POST', '/api/config', exported)).ok, true);
+  assert.deepEqual(held(), HELD_W1);
+});
+
+test('a deleted widget loses its held config on the next save', async () => {
+  await saveWithServer({ skipTlsVerify: true });
+  const cfg = await call('GET', '/api/config');
+  cfg.items = cfg.items.filter(i => i.id !== 'w1');
+  await call('POST', '/api/config', cfg);
+  assert.equal(held(), null);
+});
+
+test('a widget of another type loses its held config on the next save', async () => {
+  await saveWithServer({ skipTlsVerify: true });
+  const cfg = await call('GET', '/api/config');
+  w1Of(cfg).widgetType = 'other';
+  await call('POST', '/api/config', cfg);
+  assert.equal(held(), null);
+});
+
+test('a failed held write fails the save and leaves the config file as it was', async t => {
+  const original = rawConfig();
+  const rename = fs.renameSync;
+  t.mock.method(fs, 'renameSync', (from, to) => {
+    if (to === HELD_PATH) throw Object.assign(new Error('EIO'), { code: 'EIO' });
+    return rename(from, to);
+  });
+  const res = await request('POST', '/api/config', await withServer({ skipTlsVerify: true }));
+  assert.notEqual(res.status, 200);
+  assert.equal(rawConfig(), original);
+  assert.equal(held(), null);
+});
+
+test('a failed config write after the held write keeps the full stored config', async t => {
+  const original = rawConfig();
+  const rename = fs.renameSync;
+  const failing = t.mock.method(fs, 'renameSync', (from, to) => {
+    if (to === process.env.CONFIG_PATH) throw Object.assign(new Error('EIO'), { code: 'EIO' });
+    return rename(from, to);
+  });
+  const res = await request('POST', '/api/config', await withServer({ skipTlsVerify: true }));
+  assert.notEqual(res.status, 200);
+  assert.equal(rawConfig(), original);
+  assert.deepEqual(held(), HELD_W1);
+  failing.mock.restore();
+
+  installManifest();
+  enableClock(t);
+  assert.deepEqual(w1Of(freshLoad(t)).widgetConfig, STORED);
+  assert.equal(held(), null);
+});
+
+test('a failed held removal after the release drops the entry on the next read', t => {
+  writeHeldState();
+  installManifest();
+  const audits = [];
+  t.mock.method(log, 'audit', msg => audits.push(msg));
+  const unlink = fs.unlinkSync;
+  const failing = t.mock.method(fs, 'unlinkSync', file => {
+    if (file === HELD_PATH) throw Object.assign(new Error('EIO'), { code: 'EIO' });
+    return unlink(file);
+  });
+  enableClock(t);
+
+  assert.deepEqual(w1Of(freshLoad(t)).widgetConfig, RELEASED);
+  assert.deepEqual(diskItem().widgetConfig, RELEASED);
+  assert.deepEqual(held(), HELD_W1);
+  failing.mock.restore();
+
+  assert.deepEqual(w1Of(freshLoad(t)).widgetConfig, RELEASED);
+  assert.equal(held(), null);
+  assert.deepEqual(audits, ['stored credentials dropped until retyped']);
+});
+
+test('an unwritable config logs the release once and never holds the secret in memory', t => {
+  writeHeldState();
+  installManifest();
+  const audits = [];
+  const warns = [];
+  t.mock.method(log, 'audit', msg => audits.push(msg));
+  t.mock.method(log, 'warn', msg => warns.push(msg));
+  enableClock(t);
+  fs.chmodSync(root, 0o555);
+  t.after(() => fs.chmodSync(root, 0o755));
+
+  for (let i = 0; i < 5; i++) {
+    const cfg = freshLoad(t);
+    assert.deepEqual(w1Of(cfg).widgetConfig, RELEASED);
+    assert.ok(!JSON.stringify(cfg).includes('STORED-KEY'));
+  }
+  assert.deepEqual(audits, ['stored credentials dropped until retyped']);
+  assert.deepEqual(warns, ['migrated config could not be written back']);
+  assert.deepEqual(held(), HELD_W1);
 });
