@@ -186,6 +186,16 @@ test('Enter in the field commits and returns focus to the pencil', () => {
   assert.equal(active, r.pen);
 });
 
+test('Enter that confirms an input-method candidate does not commit the row', () => {
+  const r = passwordRow();
+  r.open();
+  r.type('ni');
+  const ev = fire(r.inp, 'keydown', { key: 'Enter', isComposing: true, keyCode: 229 });
+  assert.equal(ev.defaultPrevented, false);
+  assert.deepEqual(r.commits, []);
+  assert.equal(r.editing(), true);
+});
+
 test('Enter on the show-password button does not commit the row', () => {
   const r = passwordRow();
   r.open();

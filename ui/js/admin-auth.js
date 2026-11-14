@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=f5519e9a';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=1ed462d9';
 import { initI18n, t } from '/js/i18n.js?v=721852aa';
 import { loginErrorAdvice } from '/js/admin-error.js?v=5abd7438';
 import { passwordMeter, contextWords, meterColor } from '/js/password-policy.js?v=e16ebd1a';
@@ -58,9 +58,23 @@ function showLoginScreen(onLogin) {
     }
   }
 
+  function clearError() {
+    if (err) err.style.display = 'none';
+    pw?.removeAttribute('aria-invalid');
+    pw?.removeAttribute('aria-describedby');
+  }
+
+  /** @param {{ key: string, vars?: Record<string, unknown> }} advice @param {boolean} invalid */
+  function showError(advice, invalid) {
+    if (!err) return;
+    err.textContent = t(advice.key, advice.vars);
+    err.style.display = 'block';
+    if (invalid) pw?.setAttribute('aria-invalid', 'true');
+    pw?.setAttribute('aria-describedby', 'login-err');
+  }
+
   async function doLogin() {
     if (btn) btn.disabled = true;
-    if (err) err.style.display = 'none';
     try {
       await apiPost('/api/auth/login', { password: pw?.value || '' });
       signedIn = true;
@@ -77,11 +91,8 @@ function showLoginScreen(onLogin) {
         await showBlockingScreen(screen);
         return;
       }
-      if (err) {
-        const advice = loginErrorAdvice(e);
-        err.textContent = t(advice.key, advice.vars);
-        err.style.display = 'block';
-      }
+      const advice = loginErrorAdvice(e);
+      showError(advice, advice.key === 'login.incorrect');
       if (pw) {
         pw.value = '';
         pw.focus();
@@ -96,7 +107,14 @@ function showLoginScreen(onLogin) {
     fillUsernames(form);
     form.onsubmit = e => {
       e.preventDefault();
-      if (!btn?.disabled) doLogin();
+      if (btn?.disabled) return;
+      clearError();
+      if (pw?.validity.valueMissing) {
+        showError({ key: 'login.empty' }, true);
+        pw.focus();
+        return;
+      }
+      doLogin();
     };
   }
   pw?.focus();

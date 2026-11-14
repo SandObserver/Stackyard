@@ -628,7 +628,8 @@
     "subtitle": "Connectez-vous pour continuer",
     "password": "Mot de passe",
     "signIn": "Se connecter",
-    "incorrect": "Mot de passe incorrect."
+    "incorrect": "Mot de passe incorrect.",
+    "empty": "Saisissez votre mot de passe."
   },
   "setpw": {
     "submit": "Définir le mot de passe"

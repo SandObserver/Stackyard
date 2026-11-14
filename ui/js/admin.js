@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=e50911a3';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=8cb6799f';
+} from '/js/admin-app-form.js?v=5cae9c71';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=dee8ff82';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=b1993ac7';
+} from '/js/admin-list.js?v=9c75b26f';
 import { filterActive, folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=06da6a19';
 import {
   afterImport,
@@ -40,7 +40,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=b7c02626';
+} from '/js/admin-settings.js?v=6ff1b406';
 import {
   announce,
   apiGet,
@@ -65,9 +65,9 @@ import {
   swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=f5519e9a';
+} from '/js/admin-shared.js?v=1ed462d9';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=d51aa25a';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=06285e44';
 import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=11aa9737';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
 import { recoveryShown } from '/js/config-recovery.js?v=b145cffd';
@@ -93,7 +93,7 @@ import {
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
 import { createListbox } from '/js/listbox.js?v=794fe194';
-import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=c4c1c4c4';
+import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=af9010d3';
 import { passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import {
