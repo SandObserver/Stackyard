@@ -116,7 +116,31 @@ test('code that waits on transitionend has a way out under reduced motion', () =
 
 test('reduced motion keeps the wallpaper crossfade', () => {
   const motion = dashboard.slice(dashboard.indexOf('@media (prefers-reduced-motion'));
-  assert.match(motion, /html\.wall-swap::after, html\.wall-in::before \{ animation-duration:\.4s !important; \}/);
+  assert.match(
+    motion,
+    /html\.wall-swap::after, html:is\(\.wall-in, \.wall-swap\) \.glass-canvas \{ animation-duration:\.4s !important; \}/,
+  );
+  const block = tokens.slice(tokens.indexOf('@media (prefers-reduced-motion'));
+  assert.match(
+    block,
+    /html\.wall-in::before \{ animation-duration:\.4s !important; \}/,
+    'Settings loses its wallpaper fade',
+  );
+});
+
+test('reduced motion keeps every keyframe fade at its own duration', () => {
+  assert.match(admin, /\.dlg-box\[open\]::backdrop\{animation-duration:\.18s!important\}/);
+  assert.match(admin, /\.dlg-box\.closing::backdrop\{animation-duration:\.12s!important\}/);
+  assert.match(
+    admin,
+    /\.swapping > :not\(\.add-new-card\)\{animation-name:swap-in;animation-duration:var\(--t-reveal\)!important\}/,
+  );
+  assert.match(admin, /::after\{animation:boot-show \.3s ease \.6s forwards;animation-duration:\.3s!important\}/);
+  const motion = dashboard.slice(dashboard.indexOf('@media (prefers-reduced-motion'));
+  assert.match(
+    motion,
+    /body::before \{ animation:boot-show \.3s ease \.6s forwards; animation-duration:\.3s !important;/,
+  );
 });
 
 test('reduced motion keeps the theme crossfade and fades a new badge', () => {
