@@ -28,13 +28,13 @@ const stats = {
 };
 
 /** @param {import('@playwright/test').Page} page */
-async function stub(page, failing = false) {
+async function stub(page, failing = false, reply = stats) {
   await page.route('**/api/badges', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
   await page.route('**/api/health', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
   await page.route('**/api/widget-data/ss-*', r =>
     failing
       ? r.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"stub"}' })
-      : r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(stats) }),
+      : r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(reply) }),
   );
 }
 
@@ -133,4 +133,27 @@ test('the failure caption follows the reader direction', async ({ page, request 
   const cap = page.frameLocator('iframe[src*="ss-failing"]').locator('#cap');
   await expect(cap).toBeVisible();
   expect(await cap.evaluate(el => getComputedStyle(el).direction)).toBe('rtl');
+});
+
+test('a Persian uptime reads right to left, each figure before its unit', async ({ page, request }) => {
+  const item = widget('ss-uptime', 'medium');
+  item.widgetConfig = { ...item.widgetConfig, network: { enabled: true, mode: 'uptime' } };
+  await seedConfig(request, { items: [item], settings: { language: 'fa' } });
+  await dismissSetupPrompt(request);
+  await stub(page, false, { ...stats, uptime: 3 * 86400 + 4 * 3600 });
+  await page.goto('/');
+  const uptime = page.frameLocator('iframe[src*="ss-uptime"]').locator('#net-uptime');
+  await expect(uptime).toHaveText('۳ روز ۴ ساعت');
+  const rightToLeft = await uptime.evaluate(el => {
+    const node = /** @type {Text} */ (el.firstChild);
+    const words = [];
+    for (const m of node.data.matchAll(/\S+/g)) {
+      const r = document.createRange();
+      r.setStart(node, m.index ?? 0);
+      r.setEnd(node, (m.index ?? 0) + m[0].length);
+      words.push({ word: m[0], x: r.getBoundingClientRect().left });
+    }
+    return words.sort((a, b) => b.x - a.x).map(w => w.word);
+  });
+  expect(rightToLeft).toEqual(['۳', 'روز', '۴', 'ساعت']);
 });

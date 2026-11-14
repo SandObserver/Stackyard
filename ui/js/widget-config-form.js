@@ -1,11 +1,11 @@
 /* Renders a widget's declared `fields` into a config form and reads the values
    back. Each builder returns { el, get, control, liveValue }. */
 
-import { t } from '/js/i18n.js?v=721852aa';
+import { t } from '/js/i18n.js?v=99563c71';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { apiPost, fadeIn, PE_SVG, reveal, wireInlineEdit } from '/js/admin-shared.js?v=4e01da0b';
-import { createListbox } from '/js/listbox.js?v=794fe194';
-import { renderColorControl } from '/js/admin-color-control.js?v=3f699e61';
+import { apiPost, fadeIn, PE_SVG, reveal, wireInlineEdit } from '/js/admin-shared.js?v=4a86e8be';
+import { createListbox } from '/js/listbox.js?v=aaf6e7ab';
+import { renderColorControl } from '/js/admin-color-control.js?v=c94128b4';
 import {
   seedCarried,
   applyOptionSet,
@@ -16,10 +16,10 @@ import {
   isPlainField,
 } from '/js/admin-logic.js?v=06da6a19';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=5abd7438';
-import { qi } from '/js/utils.js?v=d49cd680';
-import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
+import { qi } from '/js/utils.js?v=dd85f1d0';
+import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { SAVED_ROW } from '/js/saved-row.js?v=44039df6';
-import { slideBlock } from '/js/modal.js?v=cda89159';
+import { slideBlock } from '/js/modal.js?v=84ba5279';
 
 /* A counter, not randomness. Six base-36 characters collide plausibly over a
    long session, and an id that changes per run cannot be asserted on. */

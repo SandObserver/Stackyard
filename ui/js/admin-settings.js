@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=3f699e61';
+import { renderColorControl } from '/js/admin-color-control.js?v=c94128b4';
 import { passwordRefusalKey, socketProbeAdvice } from '/js/admin-error.js?v=5abd7438';
 import {
   BLOCK,
@@ -34,9 +34,9 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=4e01da0b';
-import { BACKDROP } from '/js/background.js?v=11aa9737';
-import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
+} from '/js/admin-shared.js?v=4a86e8be';
+import { BACKDROP } from '/js/background.js?v=fc598e17';
+import { formatNumber } from '/js/format-number.js?v=263fa390';
 import {
   ALLOWED_HOSTS_MAX,
   firstBadHost,
@@ -44,11 +44,11 @@ import {
   isLocalAddress,
   parseHostList,
 } from '/js/host-names.js?v=98bf44d7';
-import { t } from '/js/i18n.js?v=721852aa';
-import { confirmText, promptModal } from '/js/modal.js?v=cda89159';
-import { contextWords, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=0c0fd0af';
+import { t } from '/js/i18n.js?v=99563c71';
+import { confirmText, promptModal } from '/js/modal.js?v=84ba5279';
+import { contextWords, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
 import { setRevealed } from '/js/password-reveal.js?v=37f218b4';
-import { el, inp, qa, setUserText } from '/js/utils.js?v=d49cd680';
+import { el, inp, qa, setUserText } from '/js/utils.js?v=dd85f1d0';
 
 /* Mirrors the server's rule: auth cannot be switched on with no password. */
 let _passwordSet = false;

@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=3f699e61';
+import { renderColorControl } from '/js/admin-color-control.js?v=c94128b4';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=5abd7438';
 import {
   clearsStoredSecret,
@@ -27,14 +27,14 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=4e01da0b';
+} from '/js/admin-shared.js?v=4a86e8be';
 import { activityAuth, activityHasAuth } from '/js/admin-save-logic.js?v=6ebda0e2';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=7112fd10';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
-import { formatNumber } from '/js/format-number.js?v=cbc54f4c';
+import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=721852aa';
+import { t } from '/js/i18n.js?v=99563c71';
 import { iconSvg } from '/js/icon-set.js?v=361e54a5';
 import {
   cdnIconRef,
@@ -45,9 +45,9 @@ import {
   throughServer,
 } from '/js/icons.js?v=76c29d43';
 import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
-import { createListbox } from '/js/listbox.js?v=794fe194';
-import { slideBlock } from '/js/modal.js?v=cda89159';
-import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=d49cd680';
+import { createListbox } from '/js/listbox.js?v=aaf6e7ab';
+import { slideBlock } from '/js/modal.js?v=84ba5279';
+import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=dd85f1d0';
 
 export function buildFolderForm(body, item) {
   const children = folderChildren(item);
@@ -775,6 +775,7 @@ function wireIcon() {
   };
 
   inp.onkeydown = e => {
+    if (e.isComposing || e.keyCode === 229) return;
     const open = rs?.classList.contains('open');
     /* Arrows only. nextActiveIndex also answers Home and End, which belong to
        the caret while focus is in a text field. */

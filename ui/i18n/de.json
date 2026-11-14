@@ -611,7 +611,8 @@
     "subtitle": "Melde dich an, um fortzufahren",
     "password": "Passwort",
     "signIn": "Anmelden",
-    "incorrect": "Falsches Passwort."
+    "incorrect": "Falsches Passwort.",
+    "empty": "Gib dein Passwort ein."
   },
   "setpw": {
     "submit": "Passwort festlegen"

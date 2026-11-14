@@ -44,7 +44,7 @@
 <div id="key" dir="ltr" hidden></div>
 <p class="sr-only" id="sr"></p>
 <script type="module">
-import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, rgbOf, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen, reducedMotion } from '/js/widget-toolbox.js?v=8415820b';
+import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, rgbOf, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen, reducedMotion } from '/js/widget-toolbox.js?v=dbff1c85';
 import * as M from './world-map.js';
 await loadStrings();
 document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World map of connections'));
@@ -110,7 +110,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
         const info={role:s.role,serviceName:s.name,color:rgbCss(col),cc:a.cc,users:a.users};
         for(const cell of M.place(a.cc,a.n,taken))lit.set(M.key(cell),{col,over:a.over,role:s.role,info});
       }
-      const top=shares.slice().sort((x,y)=>y.users-x.users);
+      const top=shares.toSorted((x,y)=>y.users-x.users);
       const said=top.slice(0,10).map(a=>fmtName(a.cc)+' '+formatNumber(a.users));
       if(top.length>10)said.push(wt('ui.more','+{n} more',{n:formatNumber(top.length-10)}));
       s.chip.spoken=formatList(said,'plain');

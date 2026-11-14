@@ -1,9 +1,9 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=4e01da0b';
-import { initI18n, t } from '/js/i18n.js?v=721852aa';
+import { apiGet, apiPost } from '/js/admin-shared.js?v=4a86e8be';
+import { initI18n, t } from '/js/i18n.js?v=99563c71';
 import { loginErrorAdvice } from '/js/admin-error.js?v=5abd7438';
-import { passwordMeter, contextWords, meterColor } from '/js/password-policy.js?v=0c0fd0af';
-import { el, inp as inpById, qa } from '/js/utils.js?v=d49cd680';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=25ac2101';
+import { passwordMeter, contextWords, meterColor } from '/js/password-policy.js?v=e16ebd1a';
+import { el, inp as inpById, qa } from '/js/utils.js?v=dd85f1d0';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=da14e1c7';
 import { fillUsernames } from '/js/password-reveal.js?v=37f218b4';
 
 export async function checkAuth(onLogin) {
@@ -58,9 +58,23 @@ function showLoginScreen(onLogin) {
     }
   }
 
+  function clearError() {
+    if (err) err.style.display = 'none';
+    pw?.removeAttribute('aria-invalid');
+    pw?.removeAttribute('aria-describedby');
+  }
+
+  /** @param {{ key: string, vars?: Record<string, unknown> }} advice @param {boolean} invalid */
+  function showError(advice, invalid) {
+    if (!err) return;
+    err.textContent = t(advice.key, advice.vars);
+    err.style.display = 'block';
+    if (invalid) pw?.setAttribute('aria-invalid', 'true');
+    pw?.setAttribute('aria-describedby', 'login-err');
+  }
+
   async function doLogin() {
     if (btn) btn.disabled = true;
-    if (err) err.style.display = 'none';
     try {
       await apiPost('/api/auth/login', { password: pw?.value || '' });
       signedIn = true;
@@ -77,11 +91,8 @@ function showLoginScreen(onLogin) {
         await showBlockingScreen(screen);
         return;
       }
-      if (err) {
-        const advice = loginErrorAdvice(e);
-        err.textContent = t(advice.key, advice.vars);
-        err.style.display = 'block';
-      }
+      const advice = loginErrorAdvice(e);
+      showError(advice, advice.key === 'login.incorrect');
       if (pw) {
         pw.value = '';
         pw.focus();
@@ -96,7 +107,14 @@ function showLoginScreen(onLogin) {
     fillUsernames(form);
     form.onsubmit = e => {
       e.preventDefault();
-      if (!btn?.disabled) doLogin();
+      if (btn?.disabled) return;
+      clearError();
+      if (pw?.validity.valueMissing) {
+        showError({ key: 'login.empty' }, true);
+        pw.focus();
+        return;
+      }
+      doLogin();
     };
   }
   pw?.focus();

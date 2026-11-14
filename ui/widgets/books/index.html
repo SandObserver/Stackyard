@@ -106,7 +106,7 @@
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-  import { poll, getConfig, linkTo, loadStrings, wt, formatNumber, errorState, placeholder, toneForColor } from '/js/widget-toolbox.js?v=8415820b';
+  import { poll, getConfig, linkTo, loadStrings, wt, formatNumber, errorState, placeholder, toneForColor } from '/js/widget-toolbox.js?v=dbff1c85';
   await loadStrings();
   document.getElementById('card').setAttribute('aria-label', wt('widget.label', 'Books'));
   const params=new URLSearchParams(location.search);
@@ -165,7 +165,7 @@
   }
 
   function render(books,list,shelf){
-    list.innerHTML='';
+    list.replaceChildren();
     list.removeAttribute('aria-hidden');
     list.classList.remove('sparse','pointing');
     shelf.querySelectorAll('.empty').forEach(n=>n.remove());
