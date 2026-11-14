@@ -338,10 +338,13 @@ function loadConfig() {
 
   const before = shaped._schemaVersion;
   migrate(shaped);
+  /* Required here. widget-secrets loads widgets.js, which loads this file. */
+  const retyped = require('./widget-secrets').applyRetypeMarks(shaped);
+  if (retyped.length) log.audit('stored credentials dropped until retyped', { items: retyped });
   _cfgCache = shaped;
   _cfgCacheAt = now;
   /* A failed write must not break reads. */
-  if (shaped._schemaVersion !== before) {
+  if (shaped._schemaVersion !== before || retyped.length) {
     try {
       saveConfig(shaped);
     } catch (e) {

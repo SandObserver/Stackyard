@@ -63,36 +63,36 @@ function _entryFor(item, entry) {
   return entry || getRegistry()[item && item.widgetType];
 }
 
-/* Mutates the item. Pass a copy. */
-function scrubWidgetSecrets(item, entry) {
-  const e = _entryFor(item, entry);
-  if (!e || !item || !item.widgetConfig) return;
-  const wc = item.widgetConfig;
-  const { topLevel, groups, objects } = secretSpec(e);
-
-  /* Set the marker from the secret. An older config can carry a stale one. */
-  const mark = (obj, k) => {
-    const held = Object.hasOwn(obj, k) && obj[k] != null && obj[k] !== '';
-    if (held) obj[k + 'Set'] = true;
-    else delete obj[k + 'Set'];
-    delete obj[k];
-  };
-
-  for (const k of topLevel) mark(wc, k);
+function _forEachSecret(wc, entry, visit) {
+  const { topLevel, groups, objects } = secretSpec(entry);
+  for (const k of topLevel) visit(wc, k);
   for (const [gk, subKeys] of Object.entries(groups)) {
     if (!Array.isArray(wc[gk])) continue;
     wc[gk] = wc[gk].map(row => {
       if (!row || typeof row !== 'object') return row;
       const out = { ...row };
-      for (const sk of subKeys) mark(out, sk);
+      for (const sk of subKeys) visit(out, sk);
       return out;
     });
   }
   for (const [ok, subKeys] of Object.entries(objects)) {
     const obj = wc[ok];
     if (!obj || typeof obj !== 'object') continue;
-    for (const sk of subKeys) mark(obj, sk);
+    for (const sk of subKeys) visit(obj, sk);
   }
+}
+
+/* Mutates the item. Pass a copy. */
+function scrubWidgetSecrets(item, entry) {
+  const e = _entryFor(item, entry);
+  if (!e || !item || !item.widgetConfig) return;
+  /* Set the marker from the secret. An older config can carry a stale one. */
+  _forEachSecret(item.widgetConfig, e, (obj, k) => {
+    const held = Object.hasOwn(obj, k) && obj[k] != null && obj[k] !== '';
+    if (held) obj[k + 'Set'] = true;
+    else delete obj[k + 'Set'];
+    delete obj[k];
+  });
 }
 
 /* Mutates newItem.widgetConfig. Never store a "<key>Set" marker. A stored
@@ -145,6 +145,31 @@ function withholdWidgetConfig(item) {
   item[WITHHELD_FLAG] = true;
 }
 
+/* Stored. Only the server sets it: the stored secrets of a widget with no
+   manifest outlived a change of destination. A posted value is dropped. */
+const RETYPE_FLAG = 'secretsNeedRetype';
+
+/** Drops the stored secrets of each marked widget whose manifest is loaded,
+    and clears its marker. Mutates cfg. @returns {string[]} the item ids */
+function applyRetypeMarks(cfg) {
+  const ids = [];
+  if (!cfg || !Array.isArray(cfg.items)) return ids;
+  const reg = getRegistry();
+  for (const item of cfg.items) {
+    if (!item || item.type !== 'widget' || !item[RETYPE_FLAG]) continue;
+    const entry = reg[item.widgetType];
+    if (!entry) continue;
+    if (item.widgetConfig && typeof item.widgetConfig === 'object')
+      _forEachSecret(item.widgetConfig, entry, (obj, k) => {
+        delete obj[k];
+        delete obj[k + 'Set'];
+      });
+    delete item[RETYPE_FLAG];
+    ids.push(item.id);
+  }
+  return ids;
+}
+
 function restoreWithheldConfig(newItem, oldItem) {
   delete newItem[WITHHELD_FLAG];
   if (oldItem && oldItem.widgetConfig) {
@@ -157,6 +182,7 @@ function scrubConfigSecrets(cfgCopy) {
   if (Array.isArray(cfgCopy.items)) {
     for (const item of cfgCopy.items) {
       if (!item || item.type !== 'widget') continue;
+      delete item[RETYPE_FLAG];
       const entry = reg[item.widgetType];
       if (entry) scrubWidgetSecrets(item, entry);
       else withholdWidgetConfig(item);
@@ -190,6 +216,8 @@ module.exports = {
   cosmeticSpec,
   transientSpec,
   WITHHELD_FLAG,
+  RETYPE_FLAG,
+  applyRetypeMarks,
   scrubWidgetSecrets,
   preserveWidgetSecrets,
   scrubConfigSecrets,

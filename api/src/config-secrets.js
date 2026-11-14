@@ -1,7 +1,7 @@
 /* Every item-level secret system in one place. A route that runs some and
    misses others leaks a stored credential. */
 
-const { scrubConfigSecrets, preserveConfigSecrets, secretSpec } = require('./widget-secrets');
+const { scrubConfigSecrets, preserveConfigSecrets, secretSpec, RETYPE_FLAG } = require('./widget-secrets');
 const {
   scrubItemBadgeSecrets,
   preserveItemBadgeSecrets,
@@ -71,6 +71,7 @@ function preserveAllSecrets(newCfg, oldCfg) {
   };
   const savedItems = Array.isArray(oldCfg?.items) ? oldCfg.items : [];
   const savedById = firstById(savedItems);
+  if (Array.isArray(newCfg.items)) for (const item of newCfg.items) if (item) delete item[RETYPE_FLAG];
   const redirected = rewriteChanged(newCfg.settings?.server, oldCfg?.settings?.server);
   if (redirected && Array.isArray(newCfg.items)) {
     const reg = getRegistry();
@@ -84,7 +85,6 @@ function preserveAllSecrets(newCfg, oldCfg) {
       if (holds) note(item);
     }
   }
-  const oldItems = redirected ? [] : savedItems;
   const prevOf = item => (redirected ? undefined : savedById.get(item.id));
 
   if (Array.isArray(newCfg.items)) {
@@ -95,10 +95,21 @@ function preserveAllSecrets(newCfg, oldCfg) {
     const tlsChanged = widgetTlsChanged(newCfg.settings?.server, oldCfg?.settings?.server);
     for (const item of newCfg.items) {
       if (!item || item.type !== 'widget') continue;
+      const entry = reg[item.widgetType];
+      const stored = savedById.get(item.id);
+      if (!entry && stored?.type === 'widget' && stored.widgetType === item.widgetType) {
+        const moved = redirected || tlsChanged;
+        if (moved || stored[RETYPE_FLAG]) {
+          keepWidget.set(item, stored);
+          if (stored[RETYPE_FLAG] || mayHoldSecret(stored.widgetConfig, undefined)) item[RETYPE_FLAG] = true;
+          if (moved && item[RETYPE_FLAG]) note(item);
+          continue;
+        }
+      }
       const prev = prevOf(item);
       if (!prev) continue;
-      const entry = reg[item.widgetType];
-      const sameWidget = prev.type === 'widget' && prev.widgetType === item.widgetType && !tlsChanged;
+      const sameWidget =
+        prev.type === 'widget' && prev.widgetType === item.widgetType && !tlsChanged && !prev[RETYPE_FLAG];
       if (!entry) {
         keepWidget.set(item, sameWidget ? prev : null);
         if (!sameWidget && mayHoldSecret(prev.widgetConfig, reg[prev.widgetType])) note(item);
@@ -114,9 +125,9 @@ function preserveAllSecrets(newCfg, oldCfg) {
     const newWidgets = firstById(newCfg.items, n => n.type === 'widget');
     const oldForWidgets = {
       ...oldCfg,
-      items: oldItems.flatMap(o => {
+      items: savedItems.flatMap(o => {
         const match = o ? newWidgets.get(o.id) : undefined;
-        if (!match || !keepWidget.has(match)) return [o];
+        if (!match || !keepWidget.has(match)) return redirected ? [] : [o];
         const keep = keepWidget.get(match);
         return keep ? [keep] : [];
       }),
