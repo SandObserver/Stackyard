@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show translucent widget cards as glass over the wallpaper.
 
+- Refuse to start when `ICONS_PATH` or `CONFIG_PATH` is not an absolute path,
+  has a `.` or `..` part, sits inside a system folder such as `/etc` or `/usr`,
+  or would put the config file inside `ICONS_PATH`. `ICONS_PATH` must use plain
+  path characters. A folder below `/var`, `/tmp`, `/root` or `/app` is accepted
+  only on a mounted volume.
+
 ### Fixed
 
 - Enable Save after uploading a wallpaper or fetching an Image URL, including
@@ -152,6 +158,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Limit how many servers widgets remember details for, so previews against many
   addresses no longer grow memory without limit.
+
+- Serve uploaded icons, wallpapers and the custom favicon from `ICONS_PATH`;
+  before, they were saved but returned 404. With `ICONS_PATH=/data/icons`, one
+  volume at `/data` keeps them across updates.
+
+- Take ownership, on a root start, of the folders `CONFIG_PATH` and `ICONS_PATH`
+  name, and create them when missing.
 
 ### Security
 
