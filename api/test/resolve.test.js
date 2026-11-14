@@ -1,6 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const dgram = require('node:dgram');
+const dns = require('node:dns');
 const crypto = require('node:crypto');
 const { resolveAll, lookupWithin, fromHosts } = require('../src/resolve');
 
@@ -55,8 +56,13 @@ test('a DNS server that never answers AAAA still resolves well within the budget
 test('a DNS server that never answers A still resolves from AAAA well within the budget', async t => {
   const server = await dnsServer(t, { a: null, aaaa: 0 });
   const t0 = Date.now();
-  assert.deepEqual(await resolveAll('svc.example.test', 3000, { servers: [server] }), [AAAA]);
-  assert.ok(Date.now() - t0 < 500, `${Date.now() - t0} ms`);
+  assert.deepEqual(await resolveAll('svc.example.test', 1000, { servers: [server] }), [AAAA]);
+  assert.ok(Date.now() - t0 < 800, `${Date.now() - t0} ms`);
+});
+
+test('an A answer well after an AAAA answer is still returned, IPv4 first', async t => {
+  const server = await dnsServer(t, { a: 150, aaaa: 0 });
+  assert.deepEqual(await resolveAll('svc.example.test', 3000, { servers: [server] }), [A, AAAA]);
 });
 
 test('an AAAA answer first still waits briefly for A and lists IPv4 first', async t => {
@@ -78,11 +84,24 @@ test('an answer later than the resolution delay is left out', async t => {
 
 test('a lookup leaves no timer or query behind', async t => {
   const server = await dnsServer(t, { a: 0, aaaa: null });
+  const ended = [];
+  const Resolver = dns.promises.Resolver;
+  dns.promises.Resolver = class extends Resolver {
+    resolve6(host) {
+      const query = super.resolve6(host);
+      query.catch(e => ended.push(e.code));
+      return query;
+    }
+  };
+  t.after(() => {
+    dns.promises.Resolver = Resolver;
+  });
   const timers = () => process.getActiveResourcesInfo().filter(r => r === 'Timeout').length;
   const before = timers();
   await resolveAll('svc.example.test', 3000, { servers: [server] });
   await new Promise(r => setImmediate(r));
   assert.equal(timers(), before);
+  assert.deepEqual(ended, [dns.CANCELLED]);
 });
 
 test('a hosts file entry resolves without DNS', () => {

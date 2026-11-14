@@ -58,6 +58,7 @@ function queryBoth(resolver, host, ms) {
         ),
       );
     };
+    const start = Date.now();
     const deadline = setTimeout(finish, ms);
     [resolver.resolve4(host), resolver.resolve6(host)].forEach((query, i) => {
       query
@@ -69,7 +70,9 @@ function queryBoth(resolver, host, ms) {
           if (over) return;
           results[i] = r;
           if (results.every(Boolean)) return finish();
-          if (r.status === 'fulfilled' && r.value.length && !grace) grace = setTimeout(finish, RESOLUTION_DELAY_MS);
+          if (r.status !== 'fulfilled' || !r.value.length) return;
+          const wait = i === 0 ? RESOLUTION_DELAY_MS : ms / 2 - (Date.now() - start);
+          grace = setTimeout(finish, Math.max(0, wait));
         });
     });
   });
