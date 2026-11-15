@@ -595,8 +595,8 @@ html[data-transparency="reduce"] .tog:not(.tog-disabled):active input:not(:disab
 html[data-transparency="reduce"] .tr::before{display:none}
 html[data-transparency="reduce"] .adm-range,html[data-transparency="reduce"] .hsb-range{--lens-lc:transparent;--lens-rc:transparent}
 html[data-transparency="reduce"] .adm-range:active{--range-cap:var(--ac)}
-html[data-transparency="reduce"] .adm-range:active::-webkit-slider-thumb{background-color:var(--control-knob)}
-html[data-transparency="reduce"] .adm-range:active::-moz-range-thumb{background-color:var(--control-knob)}
+html[data-transparency="reduce"] .adm-range:active::-webkit-slider-thumb,html[data-transparency="reduce"] .hsb-range:active::-webkit-slider-thumb{background-color:var(--control-knob)}
+html[data-transparency="reduce"] .adm-range:active::-moz-range-thumb,html[data-transparency="reduce"] .hsb-range:active::-moz-range-thumb{background-color:var(--control-knob)}
 /* Still focusable and announced, so it needs a real focus ring rather than
    pointer-events:none. */
 .tog-disabled{opacity:.45;cursor:not-allowed}

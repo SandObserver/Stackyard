@@ -123,6 +123,19 @@ test('the switch ring and the slider lens have no hairline gradient edges', () =
   assert.ok(gradients >= 6, 'the ring and both lenses are drawn with gradients');
 });
 
+test('under Reduce Transparency every held slider knob is solid', () => {
+  for (const range of ['.adm-range', '.hsb-range']) {
+    for (const thumb of ['::-webkit-slider-thumb', '::-moz-range-thumb']) {
+      const held = rule(admin, `html[data-transparency="reduce"] ${range}:active${thumb}`);
+      assert.match(held, /background-color:var\(--control-knob\)/, `${range}${thumb}`);
+    }
+    assert.match(
+      rule(admin, `html[data-transparency="reduce"] ${range}`),
+      /--lens-lc:transparent;--lens-rc:transparent/,
+    );
+  }
+});
+
 test('both sliders run a 6 track', () => {
   assert.match(rule(admin, '.adm-range'), /height:6px/);
   assert.match(rule(admin, '.hsb-range'), /height:6px/);
