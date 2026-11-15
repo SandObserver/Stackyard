@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.23.0] - 2026-11-15
+
 ### Added
 
 - Add a Reduce Transparency switch for this device under Appearance.
@@ -2729,7 +2731,8 @@ Everything before 1.0.0 was iterative development, condensed here:
 - **i18n**: full localization added
 - **Tooling**: linting, type-checking, test coverage, core docs added
 
-[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.22.0...HEAD
+[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.23.0...HEAD
+[1.23.0]: https://github.com/SandObserver/stackyard/compare/v1.22.0...v1.23.0
 [1.22.0]: https://github.com/SandObserver/stackyard/compare/v1.21.0...v1.22.0
 [1.21.0]: https://github.com/SandObserver/stackyard/compare/v1.20.0...v1.21.0
 [1.20.0]: https://github.com/SandObserver/stackyard/compare/v1.19.0...v1.20.0
