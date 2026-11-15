@@ -4,7 +4,7 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=8510149d';
+} from '/js/admin-app-form.js?v=48f04139';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=62124aa1';
 import {
   applyFilter,
@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=09bcde7d';
+} from '/js/admin-list.js?v=0864084c';
 import { filterActive, folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=06da6a19';
 import {
   afterImport,
@@ -40,7 +40,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=6271ace5';
+} from '/js/admin-settings.js?v=36a32fdf';
 import {
   announce,
   apiGet,
@@ -67,7 +67,7 @@ import {
   withheldText,
 } from '/js/admin-shared.js?v=495be496';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=12f780e6';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=93bb034e';
 import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=eca5642a';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
 import { recoveryShown } from '/js/config-recovery.js?v=da14e1c7';

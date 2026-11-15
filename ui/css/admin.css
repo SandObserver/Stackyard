@@ -312,10 +312,10 @@ html[data-transparency="reduce"] .row-dd-list{background:var(--bg-outer)}
 @property --lens-l{syntax:'<color>';inherits:false;initial-value:transparent}
 @property --lens-r{syntax:'<color>';inherits:false;initial-value:transparent}
 .adm-range:active{--range-cap:transparent}
-.adm-range:active::-webkit-slider-thumb{--lens-l:var(--lens-lc);--lens-r:var(--lens-rc)}
-.adm-range:active::-moz-range-thumb{--lens-l:var(--lens-lc);--lens-r:var(--lens-rc)}
-.adm-range::-webkit-slider-thumb{background-image:radial-gradient(circle 10px at 100% -6.67px,transparent 9px,var(--lens-l) 10px),radial-gradient(circle 10px at 100% calc(100% + 6.67px),transparent 9px,var(--lens-l) 10px),radial-gradient(circle 10px at 0 -6.67px,transparent 9px,var(--lens-r) 10px),radial-gradient(circle 10px at 0 calc(100% + 6.67px),transparent 9px,var(--lens-r) 10px);background-size:7px 3px;background-repeat:no-repeat;background-position:left 0 top 6px,left 0 top 15px,right 0 top 6px,right 0 top 15px}
-.adm-range::-moz-range-thumb{background-image:radial-gradient(circle 10px at 100% -6.67px,transparent 9px,var(--lens-l) 10px),radial-gradient(circle 10px at 100% calc(100% + 6.67px),transparent 9px,var(--lens-l) 10px),radial-gradient(circle 10px at 0 -6.67px,transparent 9px,var(--lens-r) 10px),radial-gradient(circle 10px at 0 calc(100% + 6.67px),transparent 9px,var(--lens-r) 10px);background-size:7px 3px;background-repeat:no-repeat;background-position:left 0 top 6px,left 0 top 15px,right 0 top 6px,right 0 top 15px}
+.adm-range:active::-webkit-slider-thumb,.hsb-range:active::-webkit-slider-thumb{--lens-l:var(--lens-lc);--lens-r:var(--lens-rc)}
+.adm-range:active::-moz-range-thumb,.hsb-range:active::-moz-range-thumb{--lens-l:var(--lens-lc);--lens-r:var(--lens-rc)}
+.adm-range::-webkit-slider-thumb,.hsb-range::-webkit-slider-thumb{background-image:radial-gradient(circle 10px at 100% -6.67px,transparent 9px,var(--lens-l) 10px),radial-gradient(circle 10px at 100% calc(100% + 6.67px),transparent 9px,var(--lens-l) 10px),radial-gradient(circle 10px at 0 -6.67px,transparent 9px,var(--lens-r) 10px),radial-gradient(circle 10px at 0 calc(100% + 6.67px),transparent 9px,var(--lens-r) 10px);background-size:7px 3px;background-repeat:no-repeat;background-position:left 0 top 6px,left 0 top 15px,right 0 top 6px,right 0 top 15px}
+.adm-range::-moz-range-thumb,.hsb-range::-moz-range-thumb{background-image:radial-gradient(circle 10px at 100% -6.67px,transparent 9px,var(--lens-l) 10px),radial-gradient(circle 10px at 100% calc(100% + 6.67px),transparent 9px,var(--lens-l) 10px),radial-gradient(circle 10px at 0 -6.67px,transparent 9px,var(--lens-r) 10px),radial-gradient(circle 10px at 0 calc(100% + 6.67px),transparent 9px,var(--lens-r) 10px);background-size:7px 3px;background-repeat:no-repeat;background-position:left 0 top 6px,left 0 top 15px,right 0 top 6px,right 0 top 15px}
 .adm-range:active::-webkit-slider-thumb,.hsb-range:active::-webkit-slider-thumb{background-color:var(--knob-held-range);box-shadow:var(--shadow-knob-held)}
 .adm-range:active::-moz-range-thumb,.hsb-range:active::-moz-range-thumb{background-color:var(--knob-held-range);box-shadow:var(--shadow-knob-held)}
 @media (forced-colors: active){
@@ -593,7 +593,7 @@ input::placeholder,textarea::placeholder{color:var(--dm-strong)}
 .tog input:focus-visible+.tr{outline:2px solid var(--ac);outline-offset:3px}
 html[data-transparency="reduce"] .tog:not(.tog-disabled):active input:not(:disabled)+.tr::after{background:var(--control-knob)}
 html[data-transparency="reduce"] .tr::before{display:none}
-html[data-transparency="reduce"] .adm-range{--lens-lc:transparent;--lens-rc:transparent}
+html[data-transparency="reduce"] .adm-range,html[data-transparency="reduce"] .hsb-range{--lens-lc:transparent;--lens-rc:transparent}
 html[data-transparency="reduce"] .adm-range:active{--range-cap:var(--ac)}
 html[data-transparency="reduce"] .adm-range:active::-webkit-slider-thumb{background-color:var(--control-knob)}
 html[data-transparency="reduce"] .adm-range:active::-moz-range-thumb{background-color:var(--control-knob)}

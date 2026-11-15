@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=aa24597a';
+import { renderColorControl } from '/js/admin-color-control.js?v=860d341e';
 import { passwordRefusalKey, socketProbeAdvice } from '/js/admin-error.js?v=5abd7438';
 import {
   BLOCK,

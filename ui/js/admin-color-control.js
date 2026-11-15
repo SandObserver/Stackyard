@@ -49,6 +49,22 @@ function _hsvToHex(h, s, v) {
       .join('')
   );
 }
+/** The bar colour under the physical left and right edges of a slider knob.
+    @param {'h'|'s'|'v'} k @param {{h:number,s:number,v:number}} hsv
+    @param {number} frac value / max @param {number} width @param {number} knob
+    @param {boolean} rtl @returns {[string, string]} */
+function _lensEdges(k, hsv, frac, width, knob, rtl) {
+  const start = Math.max(0, width - knob) * frac;
+  const near = width > 0 ? Math.min(1, start / width) : 0;
+  const far = width > 0 ? Math.min(1, (start + knob) / width) : 0;
+  const at = f =>
+    k === 'h'
+      ? _hsvToHex(f * 360, 100, 100)
+      : k === 's'
+        ? _hsvToHex(hsv.h, f * 100, hsv.v)
+        : _hsvToHex(hsv.h, 100, f * 100);
+  return rtl ? [at(far), at(near)] : [at(near), at(far)];
+}
 /* Any CSS colour to lowercase #rrggbb, or null. Callers compare these strings,
    so the case must stay stable. */
 const _HEX6 = /^#[0-9a-f]{6}$/i;
@@ -110,7 +126,7 @@ function _hexToHsv(hex) {
   return { h: Math.round(h), s: Math.round(mx ? (d / mx) * 100 : 0), v: Math.round(mx * 100) };
 }
 
-export const _internals = { cssToHex: _cssToHex, hsvToRgb: _hsvToRgb, hexToHsv: _hexToHsv };
+export const _internals = { cssToHex: _cssToHex, hsvToRgb: _hsvToRgb, hexToHsv: _hexToHsv, lensEdges: _lensEdges };
 
 const COLOR_KEYS = {
   dark: 'color.dark',
@@ -256,6 +272,20 @@ export function renderColorControl(
     vEl.value = String(hv.v);
     pristine = color;
   };
+  function tintLenses() {
+    const hsv = { h: +hEl.value, s: +sEl.value, v: +vEl.value };
+    for (const [el, k] of /** @type {const} */ ([
+      [hEl, 'h'],
+      [sEl, 's'],
+      [vEl, 'v'],
+    ])) {
+      const cs = getComputedStyle(el);
+      const knob = parseFloat(cs.getPropertyValue('--range-thumb')) || 38;
+      const [l, r] = _lensEdges(k, hsv, +el.value / +el.max, el.clientWidth, knob, cs.direction === 'rtl');
+      el.style.setProperty('--lens-lc', `color-mix(in srgb,${l} 80%,var(--control-knob))`);
+      el.style.setProperty('--lens-rc', `color-mix(in srgb,${r} 80%,var(--control-knob))`);
+    }
+  }
   function paint() {
     const h = +hEl.value,
       v = +vEl.value,
@@ -297,12 +327,14 @@ export function renderColorControl(
     paint();
     onChange?.(hidden.value);
   };
+  [hEl, sEl, vEl].forEach(el => el.addEventListener('pointerdown', tintLenses));
   [hEl, sEl, vEl].forEach(el =>
     el.addEventListener('input', () => {
       mode = 'color';
       showTune = true;
       pristine = null;
       commit();
+      tintLenses();
     }),
   );
   qa('.cc-swatch', container).forEach(b =>
