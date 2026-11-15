@@ -35,7 +35,7 @@ export function errorKind(err) {
 }
 
 /** @param {string} kind @param {Document} doc @returns {Element} */
-function errorGlyph(kind, doc) {
+export function kindGlyph(kind, doc) {
   const [g] = COPY[kind] || COPY[FALLBACK];
   const id = `err-${g}`;
   const { defs, sym } = symbol(id, ICONS[id]);
@@ -145,7 +145,7 @@ export function errorState(opts = {}) {
       const line = t(key, text);
       const dim = info.inert !== false;
       for (const el of contentOf()) el.classList.toggle('wt-inert', dim);
-      paint(errorGlyph(kind, doc), line, info.since || '');
+      paint(kindGlyph(kind, doc), line, info.since || '');
       return line;
     },
     /** @param {string} text */

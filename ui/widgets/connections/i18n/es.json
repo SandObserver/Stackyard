@@ -63,7 +63,6 @@
   "showLegend.hint": "Leyenda de los servicios en la parte inferior del mapa.",
   "ui.vpnStatus": "Estado de la VPN",
   "ui.unavailable": "No disponible",
-  "ui.unavailableNote": ", no disponible",
   "ui.connected": "Conectado",
   "ui.disconnected": "Desconectado",
   "ui.secured": "Protegido",

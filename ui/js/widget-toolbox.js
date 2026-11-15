@@ -4,7 +4,7 @@
 import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
 import { isSafeLinkUrl } from '/js/link-url.js?v=54adb40f';
 import { jitter } from '/js/jitter.js?v=087a1fcf';
-import { errorState as _errorState, errorKind, errorCopy } from '/js/widget-error.js?v=cae2caee';
+import { errorState as _errorState, errorKind, errorCopy, kindGlyph } from '/js/widget-error.js?v=f8d3aca3';
 import { formatNumber, numberSymbols, setNumberLanguage } from '/js/format-number.js?v=263fa390';
 
 export { esc, html, setHtml };
@@ -849,6 +849,13 @@ export function placeholder(width, height = 10, radius = 4) {
 export function errorLine(err) {
   const { key, text } = errorCopy(errorKind(err));
   return _t(key, text);
+}
+
+/** The glyph the shared error caption draws for a failure.
+    @param {unknown} err a caught error, or { kind } from a response
+    @returns {Element} */
+export function errorGlyph(err) {
+  return kindGlyph(errorKind(err), document);
 }
 
 /** Calls onChange(true) while el is on screen in a visible tab and
