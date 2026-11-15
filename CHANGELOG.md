@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add a Reduce Transparency switch for this device under Appearance.
 
+- Connections map: a failed service shows what kind of failure it is, and
+  pressing it shows the full reason.
+
 ### Changed
 
 - Restyle the dock, folders, search pill, page dots and Settings header buttons
