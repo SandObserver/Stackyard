@@ -20,8 +20,7 @@ concurrency:
 
 jobs:
   e2e:
-    # Keep. Playwright's WebKit does not launch on ubuntu-26.04 (libicudata.so.74 missing).
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -37,22 +36,22 @@ jobs:
       - name: Install dev tooling
         run: npm ci --ignore-scripts
 
+      - name: Read the runner image and the Playwright version
+        id: image
+        run: |
+          echo "version=$ImageOS-$ImageVersion" >> "$GITHUB_OUTPUT"
+          echo "os=$ImageOS" >> "$GITHUB_OUTPUT"
+          echo "playwright=$(node -p "require('./package-lock.json').packages['node_modules/playwright-core'].version")" >> "$GITHUB_OUTPUT"
+
+      # Keep the runner OS release in the key. Playwright skips a browser whose
+      # folder exists, so a build for another Ubuntu release fails to launch.
       - name: Cache Playwright browsers
         id: browsers
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-          # Any dev-dependency bump changes the key, so fall back to the last
-          # browser set rather than re-downloading all of them; the install step
-          # below fetches whatever that set is missing.
-          restore-keys: playwright-${{ runner.os }}-
-
-      - name: Read the runner image and the Playwright version
-        id: image
-        run: |
-          echo "version=$ImageOS-$ImageVersion" >> "$GITHUB_OUTPUT"
-          echo "playwright=$(node -p "require('./package-lock.json').packages['node_modules/playwright-core'].version")" >> "$GITHUB_OUTPUT"
+          key: playwright-${{ steps.image.outputs.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright-${{ steps.image.outputs.os }}-
 
       # No restore-keys. A partial hit installs an older package set and skips
       # --with-deps, so browsers that need a new package fail to launch.
