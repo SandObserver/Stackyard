@@ -20,7 +20,8 @@ concurrency:
 
 jobs:
   e2e:
-    runs-on: ubuntu-latest
+    # Keep. Playwright's WebKit does not launch on ubuntu-26.04 (libicudata.so.74 missing).
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - name: Checkout
