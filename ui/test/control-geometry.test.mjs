@@ -11,17 +11,19 @@ const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'cs
 const admin = fs.readFileSync(path.join(dir, 'admin.css'), 'utf8');
 const tokens = fs.readFileSync(path.join(dir, 'tokens.css'), 'utf8');
 
-/* The declaration block for a selector, comments stripped.
-
-   Anchored to the start of a rule. A bare indexOf finds `.pe{` inside
-   `.ie-row.editing .pe{`, which sits earlier in the file and reports the wrong
-   block. */
-function rule(css, selector) {
+/* Match whole selectors. A substring match finds `.pe{` inside `.ie-row.editing .pe{`. */
+function rules(css) {
   const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
-  const at = bare.search(new RegExp(`(^|[}\n])\\s*${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{`));
-  assert.ok(at >= 0, `${selector} is not in the stylesheet`);
-  const open = bare.indexOf('{', at);
-  return bare.slice(open + 1, bare.indexOf('}', open));
+  return [...bare.matchAll(/(?<=^|[{};])\s*([^{}@;]+?)\s*\{([^{}]*)\}/g)].map(m => ({
+    selectors: m[1].split(/,(?![^(]*\))/).map(s => s.trim()),
+    body: m[2],
+  }));
+}
+
+function rule(css, selector) {
+  const found = rules(css).filter(r => r.selectors.includes(selector));
+  assert.ok(found.length, `${selector} is not in the stylesheet`);
+  return found.map(r => r.body).join(';');
 }
 
 test('a row is 52, and a row carrying two lines is 68', () => {
@@ -75,6 +77,50 @@ test('the pressed knob stretches by transform only', () => {
   );
   assert.ok(Math.abs(38 * 1.2105 - 46) < 0.01);
   assert.doesNotMatch(admin, /\.tr::after\{width:46px\}/);
+});
+
+test('the held ring moves with the knob in every state', () => {
+  const moves = rules(admin).filter(r => /(^|;)\s*transform(-origin)?:/.test(r.body));
+  const knobs = moves.flatMap(r => r.selectors.filter(s => s.endsWith('.tr::after')).map(s => [s, r]));
+  assert.ok(knobs.length >= 6, 'rest, on, held and held-on, each with its right-to-left twin');
+  for (const [knob, r] of knobs) {
+    assert.ok(r.selectors.includes(knob.replace(/::after$/, '::before')), `the ring does not follow ${knob}`);
+  }
+  assert.match(rule(admin, '.tr::before'), /width:38px/);
+  assert.match(rule(admin, '.tr::before'), /border-radius:12px/);
+});
+
+test('the switch ring and the slider lens have no hairline gradient edges', () => {
+  const parts = ['.tr::before', '.tr::after', '.adm-range::-webkit-slider-thumb', '.adm-range::-moz-range-thumb'];
+  const bodies = rules(admin)
+    .filter(r => r.selectors.some(s => parts.includes(s)))
+    .map(r => r.body)
+    .join(';');
+  const args = (s, open) => {
+    const out = [];
+    let depth = 0;
+    let from = open + 1;
+    for (let i = from; i < s.length; i++) {
+      if (s[i] === '(') depth++;
+      else if (s[i] === ')' && depth-- === 0) return [...out, s.slice(from, i)];
+      else if (s[i] === ',' && depth === 0) {
+        out.push(s.slice(from, i));
+        from = i + 1;
+      }
+    }
+    throw new Error('unclosed gradient');
+  };
+  let gradients = 0;
+  for (const m of bodies.matchAll(/(?:linear|radial)-gradient\(/g)) {
+    gradients++;
+    const list = args(bodies, m.index + m[0].length - 1);
+    const stops = /^\s*(to |circle|ellipse|at |[\d.]+deg)/.test(list[0]) ? list.slice(1) : list;
+    const at = stops.flatMap(s => [...s.replace(/var\([^)]*\)/g, '').matchAll(/(-?[\d.]+)px/g)].map(x => Number(x[1])));
+    for (let i = 1; i < at.length; i++) {
+      assert.ok(at[i] - at[i - 1] >= 1, `${list.join(',')} has an edge of ${(at[i] - at[i - 1]).toFixed(2)}px`);
+    }
+  }
+  assert.ok(gradients >= 6, 'the ring and both lenses are drawn with gradients');
 });
 
 test('both sliders run a 6 track', () => {
