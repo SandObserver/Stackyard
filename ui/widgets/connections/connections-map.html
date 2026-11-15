@@ -41,7 +41,7 @@
   .why{width:10px;height:10px;flex:none}
   .why .sy-i{fill:currentColor}
   .why .sy-is{stroke:currentColor}
-  .pop{position:fixed;inset:auto;margin:0;width:max-content;max-width:min(236px,calc(100vw - 16px));max-height:calc(100vh - 16px);
+  .pop{position:fixed;inset:auto;margin:0;width:max-content;max-width:236px;
     display:flex;flex-direction:column;overflow:hidden;padding:9px 12px 10px 11px;border-radius:13px;
     border:.5px solid rgba(255,255,255,.1);background:#2C2C2E;color:#fff;box-shadow:0 8px 26px rgba(0,0,0,.5);
     font:500 12px/15px -apple-system, BlinkMacSystemFont, system-ui, sans-serif;text-shadow:none;white-space:normal;text-align:start;
@@ -241,6 +241,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
     /* Never over its item. A second press on the item must reach it to close. */
     const above=r.top/z-gap-pad, below=wh-pad-r.bottom/z-gap;
     const inner=pop.firstElementChild, scrolled=inner?inner.scrollTop:0;
+    pop.style.maxWidth=Math.max(0,Math.min(236,Math.floor(ww-2*pad)))+'px';
     pop.style.maxHeight='none';
     const up=pop.offsetHeight<=above||above>=below;
     pop.style.maxHeight=Math.max(0,Math.floor(up?above:below))+'px';
