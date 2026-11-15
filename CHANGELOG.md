@@ -201,6 +201,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The glass ring on a held switch and the lens on a held slider no longer look
   jagged on standard-resolution screens.
 
+- The colour sliders now show the glass edges on a held knob, tinted from the
+  colour under it.
+
 ### Security
 
 - Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
