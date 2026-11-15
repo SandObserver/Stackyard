@@ -25,7 +25,11 @@ class FakeEl {
     this.children = [];
     this.parentElement = null;
     this.on = Object.create(null);
-    this.style = {};
+    this.style = {
+      setProperty: (k, v) => {
+        this.style[k] = v;
+      },
+    };
     this._text = '';
     this.value = '';
     this.dataset = new Proxy(
@@ -192,6 +196,7 @@ function matchOne(el, simple) {
 }
 
 globalThis.CSS = { escape: s => s };
+globalThis.getComputedStyle = () => ({ direction: 'ltr', getPropertyValue: () => '38px' });
 globalThis.document = {
   documentElement: { getAttribute: () => null },
   createElement: tag =>
@@ -287,6 +292,7 @@ test('a slider drag saves what the sliders show', () => {
       .map(n => n.toString(16).padStart(2, '0'))
       .join('');
   assert.equal(api.getValue(), want);
+  assert.match($('#cc-h').style['--lens-lc'], /^color-mix\(in srgb,#[0-9a-f]{6} 80%,var\(--control-knob\)\)$/);
 });
 
 test('opening the sliders does not change a stored colour', () => {

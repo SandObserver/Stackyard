@@ -202,3 +202,17 @@ test('the control writes no English of its own', async () => {
     assert.ok(src.includes(`t('${key}')`), `${key} is not used`);
   }
 });
+
+test('the held knob is tinted from the bar under each of its edges', () => {
+  const { lensEdges } = _internals;
+  const hsv = { h: 212, s: 99, v: 100 };
+  assert.deepEqual(lensEdges('h', hsv, 0, 380, 38, false), ['#ff0000', '#ff9900']);
+  assert.deepEqual(lensEdges('h', hsv, 1, 380, 38, false), ['#ff0099', '#ff0000']);
+  assert.deepEqual(lensEdges('h', hsv, 0, 380, 38, true), ['#ff9900', '#ff0000']);
+  assert.deepEqual(lensEdges('s', { h: 0, s: 50, v: 100 }, 0, 380, 38, false), ['#ffffff', '#ffe6e6']);
+  assert.deepEqual(lensEdges('v', { h: 0, s: 50, v: 50 }, 1, 380, 38, false), ['#e60000', '#ff0000']);
+});
+
+test('a slider with no width yet gives the start colour on both sides', () => {
+  assert.deepEqual(_internals.lensEdges('h', { h: 0, s: 0, v: 0 }, 0.5, 0, 38, false), ['#ff0000', '#ff0000']);
+});

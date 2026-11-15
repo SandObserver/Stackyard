@@ -5,7 +5,7 @@ import { t } from '/js/i18n.js?v=99563c71';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { apiPost, fadeIn, PE_SVG, reveal, wireInlineEdit } from '/js/admin-shared.js?v=495be496';
 import { createListbox } from '/js/listbox.js?v=384c0ad5';
-import { renderColorControl } from '/js/admin-color-control.js?v=aa24597a';
+import { renderColorControl } from '/js/admin-color-control.js?v=860d341e';
 import {
   seedCarried,
   applyOptionSet,
