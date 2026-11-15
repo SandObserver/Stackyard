@@ -63,7 +63,6 @@
   "showLegend.hint": "A legend of the services along the bottom of the map.",
   "ui.vpnStatus": "VPN status",
   "ui.unavailable": "Unavailable",
-  "ui.unavailableNote": ", unavailable",
   "ui.connected": "Connected",
   "ui.disconnected": "Disconnected",
   "ui.secured": "Secured",

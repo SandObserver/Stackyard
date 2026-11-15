@@ -63,7 +63,6 @@
   "showLegend.hint": "Legende der Dienste am unteren Rand der Karte.",
   "ui.vpnStatus": "VPN-Status",
   "ui.unavailable": "Nicht verfügbar",
-  "ui.unavailableNote": ", nicht verfügbar",
   "ui.connected": "Verbunden",
   "ui.disconnected": "Getrennt",
   "ui.secured": "Geschützt",

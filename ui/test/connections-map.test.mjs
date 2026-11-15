@@ -155,7 +155,7 @@ test('the key shows at most three lines', async () => {
     assert.equal(lines.length, 3);
     assert.deepEqual(lines.slice(0, 2).map(texts), ['Site 1', 'Site 2']);
     assert.equal(texts(lines[2]), '+10 more');
-    assert.match(lines[2].title, /^Site 3, Site 4, .*Site 12$/);
+    assert.match(lines[2].attrs['aria-label'], /^\+10 more, Site 3, Site 4, .*Site 12$/);
 
     map.render({ services: [svc('B'), svc('A'), svc('C')] });
     assert.deepEqual(map.key.children.map(texts), ['A', 'B', 'C'], 'three fit, so no count line');
@@ -177,16 +177,166 @@ test('the key is a button only where it opens something', async () => {
   }
 });
 
-test('an unavailable service shows a hollow dot and says so', async () => {
+const failed = (name, extra = {}) =>
+  svc(name, { kind: undefined, error: 'Auth rejected, check the password.', errorKind: 'auth', ...extra });
+const press = (el, detail = 1) => el.dispatch('click', { detail });
+const textOf = el => (typeof el === 'object' ? el.textContent + el.children.map(textOf).join('') : String(el));
+const rowsIn = pop => pop.querySelectorAll('.pop-row');
+
+test('a failed service shows a hollow dot and its kind of failure under its name', async () => {
   const map = await mount();
   try {
-    map.render({ services: [svc('Down', { error: 'timeout', kind: undefined })] });
+    map.render({ services: [failed('Down', { errorKind: 'timeout' })] });
     const [line] = map.key.children;
-    const [dot, , state] = line.children;
+    const dot = line.querySelector('.dot');
     assert.equal(dot.style.backgroundColor, 'transparent');
     assert.match(dot.style.boxShadow, /^inset /);
-    assert.equal(state.textContent, ', unavailable');
-    assert.match(map.sr.textContent, /^Down: Unavailable$/);
+    const sub = line.querySelector('.sub');
+    assert.ok(sub.querySelector('svg.why'), 'the kind line has its glyph');
+    assert.equal(textOf(sub), 'Took too long');
+    assert.equal(map.sr.textContent, 'Down: Took too long. Auth rejected, check the password');
+  } finally {
+    map.restore();
+  }
+});
+
+test('a failed service is a button named by its kind and described by the full reason', async () => {
+  const map = await mount();
+  try {
+    map.render({ services: [failed('Umami')] });
+    const [line] = map.key.children;
+    assert.equal(line.tagName, 'BUTTON');
+    assert.equal(line.attrs['aria-label'], 'Umami, Key rejected');
+    assert.equal(line.attrs['aria-expanded'], 'false');
+    const desc = map.body.querySelectorAll('span').find(s => s.id === line.attrs['aria-describedby']);
+    assert.equal(desc.textContent, 'Auth rejected, check the password.');
+    assert.equal(desc.lang, 'en');
+  } finally {
+    map.restore();
+  }
+});
+
+test('pressing a failed service opens its reason right after it, and pressing again closes it', async () => {
+  const map = await mount();
+  try {
+    map.render({ services: [failed('Umami', { adminUrl: 'https://umami.example.com' }), failed('Zed')] });
+    const [umami, plain] = map.key.children;
+    press(umami);
+    const pop = map.pop();
+    assert.equal(pop.open, true);
+    assert.equal(map.key.children[1], pop, 'the reason follows its item in reading order');
+    assert.equal(umami.attrs['aria-expanded'], 'true');
+    const [row] = rowsIn(pop);
+    assert.equal(textOf(row.querySelector('.pop-h')), 'Umami');
+    assert.equal(row.querySelector('.pop-kind').textContent, 'Key rejected');
+    const msg = row.querySelector('.pop-msg');
+    assert.equal(msg.textContent, 'Auth rejected, check the password.');
+    assert.equal(msg.lang, 'en');
+    assert.equal(row.querySelector('button.pop-act').textContent, 'open admin');
+
+    press(umami, 0);
+    assert.equal(pop.open, false, 'Enter on the open item closes it');
+    assert.equal(umami.attrs['aria-expanded'], 'false');
+    assert.equal(pop.parent, map.body, 'a closed popover leaves the legend');
+
+    press(plain);
+    assert.equal(rowsIn(pop)[0].querySelector('button.pop-act'), null, 'no admin address, no Open admin');
+  } finally {
+    map.restore();
+  }
+});
+
+test('a press on the open item closes it and does not open it again', async () => {
+  const map = await mount();
+  try {
+    map.render({ services: [failed('Umami')] });
+    const [umami] = map.key.children;
+    press(umami);
+    const pop = map.pop();
+    umami.dispatch('pointerdown');
+    pop.hidePopover();
+    press(umami);
+    assert.equal(pop.open, false);
+    press(umami);
+    assert.equal(pop.open, true, 'the next press opens it');
+  } finally {
+    map.restore();
+  }
+});
+
+test('Escape from inside the reason puts focus back on its item', async () => {
+  const map = await mount();
+  try {
+    map.render({ services: [failed('Umami', { adminUrl: 'https://umami.example.com' })] });
+    const [umami] = map.key.children;
+    press(umami, 0);
+    const pop = map.pop();
+    pop.querySelector('button.pop-act').focus();
+    pop.hidePopover();
+    assert.equal(map.doc.activeElement, umami);
+  } finally {
+    map.restore();
+  }
+});
+
+test('the count line is a button that lists the hidden services and why they failed', async () => {
+  const map = await mount();
+  try {
+    map.render({ services: [svc('A'), svc('B'), failed('C', { errorKind: 'timeout' }), svc('D'), failed('E')] });
+    const more = map.key.children[2];
+    assert.equal(more.tagName, 'BUTTON');
+    assert.ok(more.querySelector('.ring'), 'a hollow ring says a hidden service failed');
+    assert.equal(more.attrs['aria-label'], '+3 more, C Took too long, D, E Key rejected');
+    press(more);
+    const rows = rowsIn(map.pop());
+    assert.deepEqual(
+      rows.map(r => textOf(r.querySelector('.pop-h'))),
+      ['C', 'D', 'E'],
+    );
+    assert.equal(rows[0].querySelector('.pop-kind').textContent, 'Took too long');
+    assert.equal(rows[1].querySelector('.pop-kind'), null, 'a working service shows only its name');
+  } finally {
+    map.restore();
+  }
+});
+
+test('a refresh keeps the reason open on the same item with the new reading', async () => {
+  const map = await mount();
+  try {
+    map.render({ services: [svc('A'), failed('Umami', { adminUrl: 'https://umami.example.com' })] });
+    press(map.key.children[1], 0);
+    map.pop().querySelector('button.pop-act').focus();
+
+    map.render({
+      services: [svc('A'), failed('Umami', { adminUrl: 'https://umami.example.com', error: 'Timed out' })],
+    });
+    const pop = map.pop();
+    const umami = map.key.children.find(c => c.dataset.key === 's:Umami');
+    assert.equal(pop.open, true);
+    assert.equal(umami.attrs['aria-expanded'], 'true');
+    assert.equal(map.key.children[map.key.children.indexOf(umami) + 1], pop);
+    assert.equal(rowsIn(pop)[0].querySelector('.pop-msg').textContent, 'Timed out');
+    assert.equal(map.doc.activeElement, pop.querySelector('button.pop-act'), 'focus stays where it was');
+
+    map.render({ services: [svc('A'), svc('Umami')] });
+    assert.equal(pop.open, false, 'a service that works again has nothing to show');
+  } finally {
+    map.restore();
+  }
+});
+
+test('a refresh keeps the hidden services list open', async () => {
+  const map = await mount();
+  const five = err => ({ services: [svc('A'), svc('B'), failed('C', { error: err }), svc('D'), svc('E')] });
+  try {
+    map.render(five('first'));
+    press(map.key.children[2]);
+    map.render(five('second'));
+    const pop = map.pop();
+    assert.equal(pop.open, true);
+    assert.equal(map.key.children[3], pop);
+    assert.equal(map.key.children[2].attrs['aria-expanded'], 'true');
+    assert.equal(rowsIn(pop)[0].querySelector('.pop-msg').textContent, 'second');
   } finally {
     map.restore();
   }

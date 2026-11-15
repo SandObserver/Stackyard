@@ -31,6 +31,41 @@
   .k .dot{width:9px;height:9px;border-radius:50%;flex:none;forced-color-adjust:none}
   .k bdi{display:block;max-width:66px;overflow:hidden;text-overflow:ellipsis}
   .k.more{padding-inline-start:15.9px}
+  .k.more.has-ring{padding-inline-start:0}
+  .k .ring{width:9px;height:9px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1.5px currentColor}
+  .k.has-why{align-items:flex-start}
+  .k.has-why .dot{margin-top:4px}
+  .k .col{display:flex;flex-direction:column;min-width:0}
+  .k .sub{display:flex;align-items:center;gap:4px;max-width:132px;font-weight:500;font-size:11px;line-height:13.5px}
+  .k .sub span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .why{width:10px;height:10px;flex:none}
+  .why .sy-i{fill:currentColor}
+  .why .sy-is{stroke:currentColor}
+  .pop{position:fixed;inset:auto;margin:0;width:max-content;max-width:236px;
+    display:flex;flex-direction:column;overflow:hidden;padding:9px 12px 10px 11px;border-radius:13px;
+    border:.5px solid rgba(255,255,255,.1);background:#2C2C2E;color:#fff;box-shadow:0 8px 26px rgba(0,0,0,.5);
+    font:500 12px/15px -apple-system, BlinkMacSystemFont, system-ui, sans-serif;text-shadow:none;white-space:normal;text-align:start;
+    -webkit-user-select:text;user-select:text;cursor:auto}
+  /* Keep. The display above overrides the hidden state of a closed popover. */
+  .pop:not(:popover-open){display:none}
+  html[data-theme="light"] .pop{background:#FFFFFF;color:#000;border-color:rgba(0,0,0,.1);box-shadow:0 6px 24px rgba(0,0,0,.16),0 1px 3px rgba(0,0,0,.08)}
+  .pop-in{min-height:0;margin:-3px -8px;padding:3px 8px;overflow:auto;overscroll-behavior:contain}
+  .pop-in.fade{mask-image:linear-gradient(#000 calc(100% - 20px),transparent)}
+  .pop-row+.pop-row{margin-top:8px;padding-top:8px;border-top:.5px solid rgba(255,255,255,.14)}
+  html[data-theme="light"] .pop-row+.pop-row{border-top-color:rgba(0,0,0,.12)}
+  .pop-h{display:flex;align-items:center;gap:6px;font-weight:600;font-size:11px;line-height:14px;color:#AEAEB2}
+  .pop-h bdi{min-width:0;overflow-wrap:anywhere}
+  .pop .dot{width:7px;height:7px;border-radius:50%;flex:none;forced-color-adjust:none}
+  .pop-kind{margin-top:3px;font-weight:600;font-size:13.6px;line-height:17px;letter-spacing:-.01em}
+  .pop-msg{margin-top:2px;color:#AEAEB2;overflow-wrap:anywhere}
+  .pop[dir="rtl"] .pop-msg{text-align:end}
+  html[data-theme="light"] .pop-h,html[data-theme="light"] .pop-msg{color:#636366}
+  .pop-act{all:unset;position:relative;display:block;width:fit-content;margin:1px -8px -5px;padding:5px 8px;border-radius:4px;
+    font-weight:600;font-size:12px;line-height:15px;color:#409CFF;cursor:pointer}
+  .pop-act::first-letter{text-transform:uppercase}
+  html[data-theme="light"] .pop-act{color:#0066CC}
+  .pop-in:focus-visible,.pop-act:focus-visible{outline:2px solid #0091FF;outline-offset:2px}
+  @media (forced-colors:active){.pop{border:1px solid CanvasText}}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   #map-link{position:absolute;inset:0;pointer-events:none;border-radius:inherit}
   #map-link:focus-visible{outline:2px solid #0091FF;outline-offset:-3px}
@@ -44,7 +79,7 @@
 <div id="key" dir="ltr" hidden></div>
 <p class="sr-only" id="sr"></p>
 <script type="module">
-import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, rgbOf, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen, reducedMotion } from '/js/widget-toolbox.js?v=dbff1c85';
+import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, rgbOf, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen, reducedMotion, errorLine, errorGlyph } from '/js/widget-toolbox.js?v=643fc12f';
 import * as M from './world-map.js';
 await loadStrings();
 document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World map of connections'));
@@ -91,9 +126,13 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
     const taken=new Set();
     for(const s of services){
       const svc=s.svc, col=colourOf(svc.color);
-      s.chip={name:s.name,color:rgbCss(col),role:s.role,adminUrl:svc.adminUrl||'',error:svc.error||'',spoken:''};
+      s.chip={name:s.name,color:rgbCss(col),role:s.role,adminUrl:svc.adminUrl||'',error:svc.error?String(svc.error):'',errorKind:svc.errorKind||'internal',kind:'',spoken:''};
       legend.push(s.chip);
-      if(svc.error){s.chip.spoken=wt('ui.unavailable','Unavailable');continue;}
+      if(svc.error){
+        s.chip.kind=errorLine({kind:s.chip.errorKind});
+        s.chip.spoken=s.chip.kind+'. '+s.chip.error.replace(/\.$/,'');
+        continue;
+      }
       if(svc.kind==='point'&&Number.isFinite(svc.lat)&&Number.isFinite(svc.lng)){
         const cell=M.pointCell(svc.lat,svc.lng);
         if(!cell)continue;
@@ -125,52 +164,235 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
     kick();
   }
 
+  /* Validate the dot colour. Assign it through named CSSOM properties, never a style string. */
+  function dotFor(l){
+    const dot=document.createElement('span');
+    dot.className='dot';
+    const c=colorOrFallback(l.color,DEFAULT_DOT);
+    dot.style.backgroundColor=l.error?'transparent':c;
+    if(l.error)dot.style.boxShadow='inset 0 0 0 1.5px '+c;
+    return dot;
+  }
+  function glyphFor(l){
+    const g=errorGlyph({kind:l.errorKind});
+    g.classList.add('why');
+    return g;
+  }
+  const pageDir=()=>document.documentElement.getAttribute('dir')==='rtl'?'rtl':'ltr';
+
+  /* Keep the popover right after its item. Tab and screen readers reach it from there. */
+  const pop=document.createElement('div');
+  pop.id='why';
+  pop.className='pop';
+  pop.setAttribute('popover','auto');
+  const descs=document.createElement('div');
+  descs.hidden=true;
+  document.body.append(descs,pop);
+  const rowsOf=new Map();
+  let openFor=null, refocus=null, pressedOpen=false;
+  pop.addEventListener('beforetoggle',e=>{
+    if(e.newState!=='closed'||!openFor)return;
+    openFor.setAttribute('aria-expanded','false');
+    refocus=pop.contains(document.activeElement)?openFor:null;
+    openFor=null;
+  });
+  window.addEventListener('blur',()=>{if(openFor)pop.hidePopover();});
+  pop.addEventListener('toggle',()=>{
+    if(pop.matches(':popover-open'))return;
+    document.body.append(pop);
+    if(refocus&&refocus.isConnected&&document.activeElement!==refocus)refocus.focus({preventScroll:true});
+    refocus=null;
+  });
+
+  function popRow(l){
+    const row=document.createElement('div');
+    row.className='pop-row';
+    const head=document.createElement('div');
+    head.className='pop-h';
+    const name=document.createElement('bdi');
+    name.textContent=l.name;
+    head.append(dotFor(l),name);
+    row.append(head);
+    if(!l.error)return row;
+    const kind=document.createElement('div');
+    kind.className='pop-kind';
+    kind.textContent=l.kind;
+    /* Upstream text. Assigned, never interpolated. */
+    const msg=document.createElement('p');
+    msg.className='pop-msg';
+    msg.lang='en';
+    msg.dir='ltr';
+    msg.textContent=l.error;
+    row.append(kind,msg);
+    if(l.adminUrl){
+      const act=document.createElement('button');
+      act.type='button';
+      act.className='pop-act';
+      act.textContent=wt('ui.openAdmin','open admin');
+      act.addEventListener('click',()=>openUrl(l.adminUrl));
+      row.append(act);
+    }
+    return row;
+  }
+
+  function placePop(btn){
+    const z=cssZoom(), r=btn.getBoundingClientRect(), d=(btn.querySelector('.dot,.ring')||btn).getBoundingClientRect();
+    const ww=window.innerWidth/z, wh=window.innerHeight/z, gap=6, pad=8;
+    /* Never over its item. A second press on the item must reach it to close. */
+    const above=r.top/z-gap-pad, below=wh-pad-r.bottom/z-gap;
+    const inner=pop.firstElementChild, scrolled=inner?inner.scrollTop:0;
+    pop.style.maxWidth=Math.max(0,Math.min(236,Math.floor(ww-2*pad)))+'px';
+    pop.style.maxHeight='none';
+    const up=pop.offsetHeight<=above||above>=below;
+    pop.style.maxHeight=Math.max(0,Math.floor(up?above:below))+'px';
+    const top=up?r.top/z-gap-pop.offsetHeight:r.bottom/z+gap;
+    const left=Math.min(Math.max(pad,d.left/z-11),ww-pop.offsetWidth-pad);
+    pop.style.top=Math.round(top)+'px';
+    pop.style.left=Math.round(left)+'px';
+    if(!inner)return;
+    inner.scrollTop=scrolled;
+    const scrolls=inner.scrollHeight>inner.clientHeight+4;
+    if(scrolls){
+      inner.tabIndex=0;
+      inner.setAttribute('role','group');
+      inner.setAttribute('aria-label',btn.getAttribute('aria-label')||'');
+    } else {
+      inner.removeAttribute('tabindex');
+      inner.removeAttribute('role');
+      inner.removeAttribute('aria-label');
+    }
+    fadeEdge();
+  }
+  function fadeEdge(){
+    const inner=pop.firstElementChild;
+    if(inner)inner.classList.toggle('fade',inner.scrollTop+inner.clientHeight<inner.scrollHeight-4);
+  }
+  function growPop(btn){
+    if(typeof pop.animate!=='function')return;
+    const b=(btn.querySelector('.dot,.ring')||btn).getBoundingClientRect(), r=pop.getBoundingClientRect();
+    const x=Math.round(b.left+b.width/2-r.left), y=Math.round(b.top+b.height/2-r.top);
+    pop.style.transformOrigin=String(x)+'px '+String(y)+'px';
+    pop.animate(reduce?[{opacity:0},{opacity:1}]:[{opacity:0,transform:'scale(.96)'},{opacity:1,transform:'none'}],
+      {duration:reduce?120:180,easing:'cubic-bezier(.32,.72,0,1)'});
+  }
+  function openPop(btn,animate){
+    if(openFor)pop.hidePopover();
+    const inner=document.createElement('div');
+    inner.className='pop-in';
+    inner.append(...rowsOf.get(btn)());
+    inner.addEventListener('scroll',fadeEdge,{passive:true});
+    pop.replaceChildren(inner);
+    pop.dir=pageDir();
+    btn.after(pop);
+    pop.showPopover();
+    openFor=btn;
+    btn.setAttribute('aria-expanded','true');
+    placePop(btn);
+    if(animate)growPop(btn);
+  }
+  function popButton(btn,rows){
+    rowsOf.set(btn,rows);
+    btn.setAttribute('aria-expanded','false');
+    btn.setAttribute('aria-controls','why');
+    /* A press on the open item closes it by light dismiss before its click. */
+    btn.addEventListener('pointerdown',()=>{pressedOpen=openFor===btn;});
+    btn.addEventListener('click',e=>{
+      const wasOpen=openFor===btn||(pressedOpen&&e.detail>0);
+      pressedOpen=false;
+      if(!wasOpen)openPop(btn,true);
+      else if(openFor===btn)pop.hidePopover();
+    });
+  }
+
   function renderLegend(){
+    const keep=openFor?openFor.dataset.key:'';
+    const keepTop=keep&&pop.firstElementChild?pop.firstElementChild.scrollTop:0;
+    /* Only a frame that holds focus gets it back. Focusing in another one takes it from the page. */
+    const act=document.hasFocus()?document.activeElement:null;
+    let focusKey=act&&keyEl.contains(act)?act.dataset.key||'':'';
+    const focusIn=act&&pop.contains(act)?[...pop.querySelectorAll('button,[tabindex]')].indexOf(act):-1;
+    if(focusIn>=0)focusKey=keep;
+    if(openFor)pop.hidePopover();
+    refocus=null;
+    rowsOf.clear();
+    descs.replaceChildren();
     keyEl.replaceChildren();
     keyEl.hidden=!showLegend||!legend.length;
     if(keyEl.hidden)return;
     const shown=legend.length>3?legend.slice(0,2):legend;
-    for(const l of shown){
-      const clickable=!!l.adminUrl;
+    shown.forEach((l,i)=>{
+      const failed=!!l.error, clickable=failed||!!l.adminUrl;
       const it=document.createElement(clickable?'button':'span');
-      it.className='k';
+      it.className=failed?'k has-why':'k';
       it.dataset.role=l.role;
-      /* The dot's colour is a CSS value. Validate it and assign it through
-         named CSSOM properties, never a style string. */
-      const dot=document.createElement('span');
-      dot.className='dot';
-      const dotColor=colorOrFallback(l.color,DEFAULT_DOT);
-      dot.style.backgroundColor=l.error?'transparent':dotColor;
-      if(l.error)dot.style.boxShadow='inset 0 0 0 1.5px '+dotColor;
+      it.dataset.key='s:'+l.role;
       const name=document.createElement('bdi');
       name.textContent=l.name;
-      it.append(dot,name);
+      if(failed){
+        const col=document.createElement('span');
+        col.className='col';
+        const sub=document.createElement('span');
+        sub.className='sub';
+        const kind=document.createElement('span');
+        kind.dir='auto';
+        kind.textContent=l.kind;
+        sub.append(glyphFor(l),kind);
+        col.append(name,sub);
+        it.append(dotFor(l),col);
+      } else it.append(dotFor(l),name);
       if(clickable){
         it.type='button';
-        it.setAttribute('aria-label',formatList([l.name,...(l.error?[wt('ui.unavailable','Unavailable')]:[]),wt('ui.openAdmin','open admin')],'plain'));
-        it.addEventListener('click',()=>openUrl(l.adminUrl));
+        if(failed){
+          it.setAttribute('aria-label',formatList([l.name,l.kind],'plain'));
+          const desc=document.createElement('span');
+          desc.id='why-'+i;
+          desc.lang='en';
+          desc.textContent=l.error;
+          descs.append(desc);
+          it.setAttribute('aria-describedby',desc.id);
+          popButton(it,()=>[popRow(l)]);
+        } else {
+          it.setAttribute('aria-label',formatList([l.name,wt('ui.openAdmin','open admin')],'plain'));
+          it.addEventListener('click',()=>openUrl(l.adminUrl));
+        }
         it.addEventListener('focus',()=>setEmphasis(l.role));
         it.addEventListener('blur',()=>setEmphasis(null));
-      } else if(l.error){
-        const state=document.createElement('span');
-        state.className='sr-only';
-        state.textContent=wt('ui.unavailableNote',', unavailable');
-        it.append(state);
       }
       it.addEventListener('pointerenter',()=>setEmphasis(l.role));
       it.addEventListener('pointerleave',()=>setEmphasis(null));
       keyEl.append(it);
-    }
+    });
     if(legend.length>3){
-      const more=document.createElement('span');
+      const rest=legend.slice(2), count=wt('ui.more','+{n} more',{n:formatNumber(rest.length)});
+      const more=document.createElement('button');
+      more.type='button';
+      more.dataset.key='more';
       more.className='k more';
+      if(rest.some(l=>l.error)){
+        more.classList.add('has-ring');
+        const ring=document.createElement('span');
+        ring.className='ring';
+        more.append(ring);
+      }
       const text=document.createElement('bdi');
-      text.textContent=wt('ui.more','+{n} more',{n:formatNumber(legend.length-2)});
-      more.title=formatList(legend.slice(2).map(l=>l.name),'plain');
+      text.textContent=count;
       more.append(text);
+      more.setAttribute('aria-label',formatList([count,...rest.map(l=>l.error?l.name+' '+l.kind:l.name)],'plain'));
+      popButton(more,()=>rest.map(popRow));
       keyEl.append(more);
     }
-    keyEl.querySelectorAll('.k > bdi').forEach(b=>{if(b.scrollWidth>b.clientWidth)b.title=b.textContent;});
+    keyEl.querySelectorAll('.k bdi').forEach(b=>{if(b.scrollWidth>b.clientWidth)b.title=b.textContent;});
+    const byKey=k=>[...keyEl.querySelectorAll('button.k')].find(b=>b.dataset.key===k);
+    const again=keep&&byKey(keep);
+    if(again&&rowsOf.has(again)){
+      openPop(again,false);
+      const inner=pop.firstElementChild;
+      if(inner&&keepTop){inner.scrollTop=keepTop;fadeEdge();}
+      const f=focusIn>=0&&pop.querySelectorAll('button,[tabindex]')[focusIn];
+      if(f){f.focus({preventScroll:true});focusKey='';}
+    }
+    const b=focusKey&&byKey(focusKey);
+    if(b)b.focus({preventScroll:true});
   }
 
   function frameScale(){
@@ -235,7 +457,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
       disc(cx(pt.cell[0]),cy(pt.cell[1]),p*2/3*pulse);
     }
   }
-  function redraw(){relayout();kick();}
+  function redraw(){relayout();kick();if(openFor)placePop(openFor);}
 
   async function mapFetch(){
     if(!id) throw new Error('no id');

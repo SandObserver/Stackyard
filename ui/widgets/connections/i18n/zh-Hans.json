@@ -63,7 +63,6 @@
   "showLegend.hint": "地图底部的服务图例。",
   "ui.vpnStatus": "VPN 状态",
   "ui.unavailable": "不可用",
-  "ui.unavailableNote": "，不可用",
   "ui.connected": "已连接",
   "ui.disconnected": "已断开",
   "ui.secured": "已加密",
