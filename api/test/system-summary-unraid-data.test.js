@@ -82,8 +82,36 @@ test('a named slot reads a share and a blank one reads the whole array', async (
   assert.deepEqual(r.disks, [
     { mount: 'media', usedPct: 25, totalGb: 8 },
     { mount: 'appdata', usedPct: 25, totalGb: 4 },
-    { mount: '', usedPct: 25, totalGb: 20 },
+    { mount: '/', usedPct: 25, totalGb: 20 },
   ]);
+});
+
+test('a blank slot and a / slot both read the whole array under the key the widget looks up', async () => {
+  for (const primary of [undefined, '', '/']) {
+    const { ctx, sent } = ctxFor({ slots: [{ type: 'disk', primary }] });
+    const r = await dataFn(ctx);
+    assert.deepEqual(r.disks, [{ mount: '/', usedPct: 25, totalGb: 20 }], `primary ${JSON.stringify(primary)}`);
+    assert.match(sent[0].query, /array/);
+    assert.doesNotMatch(sent[0].query, /shares/, 'no share is named');
+  }
+});
+
+test('a / second slot reads the whole array next to a share', async () => {
+  const { ctx } = ctxFor({ slots: [{ type: 'disk', primary: 'media', secondary: '/' }] });
+  const r = await dataFn(ctx);
+  assert.deepEqual(r.disks, [
+    { mount: 'media', usedPct: 25, totalGb: 8 },
+    { mount: '/', usedPct: 25, totalGb: 20 },
+  ]);
+});
+
+test('the Unraid share field may be left blank and no other provider field changes', () => {
+  const manifest = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'widget.json'));
+  const slotGroups = manifest.fields.filter(f => f.key === 'slots');
+  const primaryOf = provider =>
+    slotGroups.find(g => g.showIf?.equals === provider).fields.find(f => f.key === 'primary');
+  assert.equal(primaryOf('unraid').optional, true);
+  for (const provider of ['proxmox', 'truenas']) assert.notEqual(primaryOf(provider).optional, true, provider);
 });
 
 test('boot time becomes an elapsed uptime', async () => {

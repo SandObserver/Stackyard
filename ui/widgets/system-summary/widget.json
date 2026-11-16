@@ -560,6 +560,7 @@
           "label": "slots.sharePrimary.label",
           "default": "/",
           "placeholder": "slots.sharePrimary.placeholder",
+          "optional": true,
           "showIf": {
             "field": "type",
             "equals": "disk"

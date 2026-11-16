@@ -555,9 +555,9 @@ async function unraidSensorOptions(ctx) {
 const KB = 1024;
 const kbToGb = v => (Number(v) || 0) / KB ** 2;
 
-/* A named slot is a user share. A blank one is the array as a whole. */
+/* A named slot is a user share. '/' is the array as a whole. */
 function unraidDisk(data, name) {
-  if (!name) {
+  if (name === '/') {
     const kb = data.array?.capacity?.kilobytes || {};
     const total = Number(kb.total) || 0;
     const used = Number(kb.used) || 0;
@@ -575,10 +575,11 @@ function unraidDisk(data, name) {
 async function systemSummaryUnraid(ctx) {
   const slots = ctx.config.slots || [];
   const wants = type => slots.some(s => s.type === type);
+  /* The widget looks an empty slot up as '/'. */
   const mounts = new Set();
   for (const s of slots) {
     if (s.type !== 'disk') continue;
-    mounts.add(s.primary || '');
+    mounts.add(s.primary || '/');
     if (s.secondary) mounts.add(s.secondary);
   }
 
@@ -586,8 +587,8 @@ async function systemSummaryUnraid(ctx) {
      asked for when a slot needs them. */
   const parts = [`metrics { cpu { percentTotal } memory { percentTotal }${wants('temp') ? ' ' + UNRAID_TEMPS : ''} }`];
   parts.push('info { os { uptime } }');
-  if ([...mounts].some(m => m)) parts.push('shares { name size used free }');
-  if (mounts.has('')) parts.push('array { capacity { kilobytes { total used } } }');
+  if ([...mounts].some(m => m !== '/')) parts.push('shares { name size used free }');
+  if (mounts.has('/')) parts.push('array { capacity { kilobytes { total used } } }');
 
   const data = await unraidQuery(ctx, `{ ${parts.join(' ')} }`);
   const temps = unraidTemps(data.metrics?.temperature);
