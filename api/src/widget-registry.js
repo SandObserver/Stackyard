@@ -117,6 +117,10 @@ function _validateField(f, where, depth = 0) {
       if (!(typeof value === 'string' || typeof value === 'number') || typeof o.label !== 'string' || !o.label)
         errs.push(`${where}: option ${i} of "${f.key}" must be an object with a "value" and a "label"`);
     });
+  if (f.link !== undefined && (f.link !== true || f.type !== 'text'))
+    errs.push(`${where}: field "${f.key}" may set "link" only to true, and only on a text field`);
+  if (f.type === 'object' && Array.isArray(f.fields) && f.fields.some(sf => sf && sf.link !== undefined))
+    errs.push(`${where}: object "${f.key}" cannot hold a link field`);
   if (f.type === 'picklist' && f.count === undefined && f.countBySize === undefined)
     errs.push(`${where}: picklist "${f.key}" needs "count" or "countBySize"`);
   if (f.type === 'group' || f.type === 'object') {

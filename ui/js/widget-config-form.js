@@ -3,22 +3,22 @@
 
 import { t } from '/js/i18n.js?v=99563c71';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { apiPost, fadeIn, PE_SVG, reveal, wireInlineEdit } from '/js/admin-shared.js?v=73be77ed';
-import { createListbox } from '/js/listbox.js?v=384c0ad5';
-import { renderColorControl } from '/js/admin-color-control.js?v=4b33fe0a';
+import { apiPost, fadeIn, PE_SVG, reveal, wireInlineEdit } from '/js/admin-shared.js?v=2ad2dc2f';
+import { createListbox } from '/js/listbox.js?v=c24cf643';
+import { renderColorControl } from '/js/admin-color-control.js?v=e8a56e19';
 import {
   seedCarried,
   applyOptionSet,
   collectFieldValues,
   requiredFieldMissing,
   groupBounds,
-  visibleFieldFlags,
   isPlainField,
-} from '/js/admin-logic.js?v=06da6a19';
+} from '/js/admin-logic.js?v=81fd47cf';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=5abd7438';
 import { qi } from '/js/utils.js?v=c1d4e76c';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { SAVED_ROW } from '/js/saved-row.js?v=44039df6';
+import { visibleFieldFlags } from '/js/widget-types.js?v=afec2dab';
 import { slideBlock } from '/js/modal.js?v=84ba5279';
 
 /* A counter, not randomness. Six base-36 characters collide plausibly over a

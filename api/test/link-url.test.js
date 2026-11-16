@@ -1,6 +1,7 @@
 const { tmpDir } = require('../test-support/tmp');
 
 const path = require('node:path');
+process.env.WIDGETS_PATH = path.join(__dirname, '../../ui/widgets');
 const fs = require('node:fs');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -78,15 +79,34 @@ test('an absent link is allowed, and a non-string is not', () => {
 
 /* ── firstUnsafeLink, used to reject a save ───────────────────────────────── */
 
+const FIELDS = {
+  demo: [
+    { key: 'siteHref', type: 'text', link: true },
+    { key: 'note', type: 'text' },
+    { key: 'rows', type: 'group', fields: [{ key: 'rowHref', type: 'text', link: true }] },
+  ],
+};
+const fieldsFor = type => FIELDS[type];
+
 test('an unsafe link is reported with the field that holds it', () => {
   assert.deepEqual(firstUnsafeLink({ href: 'javascript:alert(1)' }), { field: 'href', value: 'javascript:alert(1)' });
   assert.equal(firstUnsafeLink({ url: 'data:text/html,x' }).field, 'url');
-  assert.equal(firstUnsafeLink({ widgetConfig: { linkUrl: 'javascript:x' } }).field, 'widgetConfig.linkUrl');
-  assert.equal(firstUnsafeLink({ widgetConfig: { scrutinyHref: 'javascript:x' } }).field, 'widgetConfig.scrutinyHref');
+  const top = { widgetType: 'demo', widgetConfig: { siteHref: 'javascript:x' } };
+  assert.equal(firstUnsafeLink(top, fieldsFor).field, 'widgetConfig.siteHref');
+  const row = { widgetType: 'demo', widgetConfig: { rows: [{ rowHref: 'https://ok' }, { rowHref: 'javascript:x' }] } };
+  assert.equal(firstUnsafeLink(row, fieldsFor).field, 'widgetConfig.rows.1.rowHref');
+});
+
+test('a widget field the manifest does not mark as a link is not checked', () => {
+  const item = { widgetType: 'demo', widgetConfig: { note: 'javascript:x', linkUrl: 'javascript:x' } };
+  assert.equal(firstUnsafeLink(item, fieldsFor), null);
 });
 
 test('a clean item reports nothing', () => {
-  assert.equal(firstUnsafeLink({ href: 'https://example.com', widgetConfig: { linkUrl: 'ssh://h' } }), null);
+  const item = { href: 'https://example.com', widgetType: 'demo', widgetConfig: { siteHref: 'ssh://h' } };
+  assert.equal(firstUnsafeLink(item, fieldsFor), null);
+  assert.equal(firstUnsafeLink({ widgetType: 'gone', widgetConfig: { siteHref: 'javascript:x' } }, fieldsFor), null);
+  assert.equal(firstUnsafeLink({ widgetType: 'demo', widgetConfig: { rows: 'x' } }, fieldsFor), null);
   assert.equal(firstUnsafeLink({}), null);
   assert.equal(firstUnsafeLink(null), null);
 });
@@ -97,7 +117,7 @@ test('the shared rule loads on the server and exports what both sides need', () 
   for (const name of ['isSafeLinkUrl', 'firstUnsafeLink', 'sanitizeItemLinks']) {
     assert.equal(typeof shared[name], 'function', `${name} should be exported`);
   }
-  for (const name of ['UNSAFE_LINK_SCHEMES', 'LINK_FIELDS', 'WIDGET_LINK_FIELDS']) {
+  for (const name of ['UNSAFE_LINK_SCHEMES', 'LINK_FIELDS']) {
     assert.ok(Array.isArray(shared[name]), `${name} should be exported`);
   }
 });
@@ -128,16 +148,21 @@ test('sanitizeItemLinks blanks an unsafe link and leaves the rest alone', () => 
     {
       id: 'd',
       type: 'widget',
-      widgetConfig: { linkUrl: 'javascript:x', scrutinyHref: 'https://ok.example', other: 'kept' },
+      widgetType: 'demo',
+      widgetConfig: {
+        siteHref: 'javascript:x',
+        note: 'javascript:kept',
+        rows: [{ rowHref: 'data:text/html,x' }, { rowHref: 'https://ok.example' }],
+      },
     },
   ];
-  sanitizeItemLinks(items);
+  sanitizeItemLinks(items, fieldsFor);
   assert.equal(items[0].href, '');
   assert.equal(items[1].href, 'https://example.com');
   assert.equal(items[2].url, '');
-  assert.equal(items[3].widgetConfig.linkUrl, '');
-  assert.equal(items[3].widgetConfig.scrutinyHref, 'https://ok.example');
-  assert.equal(items[3].widgetConfig.other, 'kept', 'unrelated config must not be touched');
+  assert.equal(items[3].widgetConfig.siteHref, '');
+  assert.deepEqual(items[3].widgetConfig.rows, [{ rowHref: '' }, { rowHref: 'https://ok.example' }]);
+  assert.equal(items[3].widgetConfig.note, 'javascript:kept', 'unrelated config must not be touched');
 });
 
 test('sanitizeItemLinks does not invent fields that were absent', () => {
@@ -209,6 +234,72 @@ test('a config save is rejected when an item carries an unsafe link', async () =
       undefined,
       'nothing may be stored',
     );
+
+    const shipped = [];
+    const widgetsDir = path.join(__dirname, '../../ui/widgets');
+    for (const name of fs.readdirSync(widgetsDir)) {
+      const file = path.join(widgetsDir, name, 'widget.json');
+      if (!fs.existsSync(file)) continue;
+      for (const f of JSON.parse(fs.readFileSync(file, 'utf8')).fields || []) {
+        if (f.link) shipped.push({ type: name, key: f.key, config: { [f.key]: 'javascript:alert(1)' } });
+        for (const sf of f.fields || [])
+          if (sf.link)
+            shipped.push({ type: name, key: sf.key, config: { [f.key]: [{ [sf.key]: 'javascript:alert(1)' }] } });
+      }
+    }
+    assert.deepEqual(shipped.map(s => s.key).sort(), [
+      'backrestHref',
+      'dnsHref',
+      'dupHref',
+      'githubHref',
+      'kopiaHref',
+      'pbsHref',
+      'scrutinyHref',
+      'truenasHref',
+      'unraidHref',
+    ]);
+    for (const { type, key, config } of shipped) {
+      const item = { id: `w-${key}`, type: 'widget', widgetType: type, widgetSize: 'small', widgetConfig: config };
+      const refused = await post({ items: [item], settings: {} });
+      assert.equal(refused.status, 400, `${type}.${key} must be refused`);
+      assert.equal(refused.body.code, 'invalid.unsafe-link', `${type}.${key}`);
+      assert.match(refused.body.error, new RegExp(key));
+    }
+
+    const legacy = await post({
+      items: [
+        {
+          id: 'old-stats',
+          type: 'widget',
+          widgetType: 'stats',
+          widgetSize: 'small',
+          widgetConfig: { widgetSubType: 'disk-health', scrutinyHref: 'javascript:alert(1)' },
+        },
+      ],
+      settings: {},
+    });
+    assert.equal(legacy.status, 400, 'a widget type renamed by migration must be checked against its new manifest');
+    assert.equal(legacy.body.code, 'invalid.unsafe-link');
+    assert.match(legacy.body.error, /scrutinyHref/);
+
+    const log = require('../src/log');
+    saveConfig({ items: [], settings: { auth: { enabled: false, passwordHash: 'x' } } });
+    const audits = [];
+    const audit = log.audit;
+    log.audit = msg => audits.push(msg);
+    try {
+      const refusedStale = await post({
+        items: [{ id: 'a3', type: 'app', name: 'Z', href: 'javascript:alert(1)' }],
+        settings: {},
+      });
+      assert.equal(refusedStale.status, 400);
+      assert.ok(!audits.includes('stale password cleared'), 'a refused save must not audit a change it did not make');
+      const cleared = await post({ items: [], settings: {} });
+      assert.equal(cleared.status, 200);
+      assert.ok(audits.includes('stale password cleared'));
+    } finally {
+      log.audit = audit;
+    }
 
     const ok = await post({ items: [{ id: 'a2', type: 'app', name: 'Y', href: 'ssh://host' }], settings: {} });
     assert.equal(ok.status, 200, 'a protocol handler must still save');

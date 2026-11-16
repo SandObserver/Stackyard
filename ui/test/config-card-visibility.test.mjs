@@ -18,7 +18,7 @@ import { register } from 'node:module';
 register('./js-root-hooks.mjs', import.meta.url);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const { visibleFieldFlags } = await import('../js/admin-logic.js');
+const { visibleFieldFlags } = await import('../js/widget-types.js');
 
 const widgets = fs
   .readdirSync(path.join(root, 'widgets'), { withFileTypes: true })

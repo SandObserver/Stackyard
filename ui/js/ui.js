@@ -1,5 +1,12 @@
 import { iconChain } from '/js/icons.js?v=76c29d43';
-import { widgetSrc, cardPreset, fixedAppearance, uniqueTitle, WIDGET_DESIGN } from '/js/widget-types.js?v=73d8b12e';
+import {
+  widgetSrc,
+  cardPreset,
+  fixedAppearance,
+  overlayHref,
+  uniqueTitle,
+  WIDGET_DESIGN,
+} from '/js/widget-types.js?v=afec2dab';
 import {
   mk,
   clr,
@@ -1027,13 +1034,12 @@ export function buildMobile() {
       `flex-shrink:0;border-radius:${wBR}px;overflow:hidden;position:relative;`;
     /* An iframe swallows the touch, so the home pager never sees the swipe
        without the transparent layer. */
-    const overlayHref = item.url || item.href || item.widgetConfig?.scrutinyHref || item.widgetConfig?.linkUrl || null;
     mountScaledWidget(card, {
       src: widgetSrc(item, widgetReg(), { mobile: true, lang: currentLang() }),
       title: widgetTitle(item),
       design,
       iframeOpts: item.iframe,
-      overlayHref,
+      overlayHref: overlayHref(item, widgetReg()),
       mobile: true,
       swipe: () => CB().homeSwipe,
     });

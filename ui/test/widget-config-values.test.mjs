@@ -1,14 +1,17 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { register } from 'node:module';
+import { test } from 'node:test';
 import {
-  seedCarried as _seedCarried,
   applyOptionSet as _applyOptionSet,
   collectFieldValues as _collectFieldValues,
-  showIfMatches,
+  seedCarried as _seedCarried,
   requiredFieldMissing,
   sizesForView,
 } from '../js/admin-logic.js';
 import { plain } from './plain.mjs';
+
+register('./js-root-hooks.mjs', import.meta.url);
+const { showIfMatches } = await import('../js/widget-types.js');
 
 /* All three build null-prototype objects, because their keys are manifest
    field keys. assert/strict compares prototypes, so the results are copied

@@ -34,6 +34,69 @@ export function cardPreset(item, reg) {
   return CARD_PRESETS.includes(card) ? card : '';
 }
 
+export function showIfMatches(cond, current) {
+  if (Array.isArray(cond.in)) return cond.in.map(String).includes(String(current));
+  if (typeof current === 'boolean') return current === !!cond.equals;
+  return String(current) === String(cond.equals);
+}
+
+/* Follow showIf chains. A hidden controller still holds a value underneath, and
+   its dependants would show themselves against it.
+
+   Resolve each field by its position. Two fields may share a key, one per
+   branch of a showIf, and resolving by key gives both the same answer: the
+   wrong branch is shown, or both branches are hidden. */
+export function visibleFieldFlags(fields, readValue) {
+  const idxsByKey = new Map();
+  fields.forEach((f, i) => {
+    if (!f || f.key == null) return;
+    const at = idxsByKey.get(f.key);
+    if (at) at.push(i);
+    else idxsByKey.set(f.key, [i]);
+  });
+  const memo = new Map();
+  const isShown = i => {
+    if (memo.has(i)) return memo.get(i);
+    memo.set(i, false); /* guard against a cycle in malformed manifests */
+    const f = fields[i];
+    let ok = true;
+    if (f && f.showIf) {
+      const dep = f.showIf.field;
+      const depIdxs = idxsByKey.get(dep);
+      ok = depIdxs
+        ? depIdxs.some(j => isShown(j)) && showIfMatches(f.showIf, readValue(dep))
+        : showIfMatches(f.showIf, readValue(dep));
+    }
+    memo.set(i, ok);
+    return ok;
+  };
+  return fields.map((f, i) => (f && f.key != null ? isShown(i) : false));
+}
+
+/** @param {any} item @param {any} reg @returns {string|null} */
+export function overlayHref(item, reg) {
+  if (item?.url || item?.href) return item.url || item.href;
+  const fields = item?.widgetType ? reg?.[item.widgetType]?.fields : null;
+  if (!Array.isArray(fields)) return null;
+  const wc = item.widgetConfig && typeof item.widgetConfig === 'object' ? item.widgetConfig : {};
+  /** @param {string} key */
+  const readValue = key => {
+    if (wc[key] != null) return wc[key];
+    const declared = fields.filter(f => f && f.key === key);
+    const withDefault = declared.find(f => f.default != null);
+    if (withDefault) return withDefault.default;
+    return declared.find(f => Array.isArray(f.options) && f.options.length)?.options[0].value;
+  };
+  const shown = visibleFieldFlags(fields, readValue);
+  for (let i = 0; i < fields.length; i++) {
+    const f = fields[i];
+    if (!shown[i] || f.link !== true) continue;
+    const value = wc[f.key];
+    if (typeof value === 'string' && value) return value;
+  }
+  return null;
+}
+
 export function fixedAppearance(item, reg) {
   const entry = item?.widgetType ? reg?.[item.widgetType] : null;
   return entry?.appearance === 'dark' ? 'dark' : '';

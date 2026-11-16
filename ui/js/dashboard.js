@@ -48,7 +48,7 @@ import {
 } from '/js/label-contrast.js?v=a160c6d1';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=ff61256e';
-import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
+import { sanitizeItemLinks } from '/js/link-url.js?v=4cd593b5';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
@@ -65,7 +65,7 @@ import {
   openFolderMobile,
   resetMobileChrome,
   swipePager,
-} from '/js/ui.js?v=9f6fc28b';
+} from '/js/ui.js?v=b6c4e954';
 import {
   mkWrap as _mkWrap,
   el,
@@ -100,7 +100,7 @@ import {
   WIDGET_HEIGHTS,
   WIDGET_ROWS,
   widgetSrc,
-} from '/js/widget-types.js?v=73d8b12e';
+} from '/js/widget-types.js?v=afec2dab';
 
 ensureSprite();
 
@@ -176,6 +176,8 @@ let _rev = null;
 /* Null prototype. Keyed by values from config, so an inherited property must
    never answer a miss. */
 let widgetReg = Object.create(null);
+/** @param {string} type */
+const linkFields = type => widgetReg[type]?.fields;
 
 const badgeState = Object.create(null);
 let _badgeFails = 0,
@@ -1000,9 +1002,7 @@ async function boot() {
     const res = got.v;
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const c = await res.json();
-    /* Saving rejects these, but a config written earlier still reaches here.
-       See ui/js/link-url.js. */
-    items = withKnownSizes(sanitizeItemLinks(c.items || []), WIDGET_COLS.desktop);
+    items = withKnownSizes(c.items || [], WIDGET_COLS.desktop);
     S = c.settings || {};
     _rev = c._rev ?? null;
     storeSet(LANG_STORE, await initI18n(S.language || 'en'));
@@ -1042,6 +1042,9 @@ async function boot() {
   widgetReg = Object.create(null);
   const wr = (await widgetsReq).v;
   for (const w of Array.isArray(wr?.widgets) ? wr.widgets : []) if (w && w.name) widgetReg[w.name] = w;
+  /* Saving rejects these, but a config written earlier still reaches here.
+     See ui/js/link-url.js. */
+  sanitizeItemLinks(items, linkFields);
 
   initUI({ items, S, CB, BEL, breg, bunreg, bupd, widgetReg });
   initFluidHover();
@@ -1338,7 +1341,7 @@ async function boot() {
 
   /** @param {any} c a fetched config */
   const differs = c => {
-    sanitizeItemLinks(c.items || []);
+    sanitizeItemLinks(c.items || [], linkFields);
     return configChanged({ items, settings: S, _rev }, c);
   };
 

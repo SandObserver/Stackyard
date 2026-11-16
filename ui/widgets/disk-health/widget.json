@@ -54,6 +54,7 @@
     {
       "key": "scrutinyHref",
       "type": "text",
+      "link": true,
       "label": "scrutinyHref.label",
       "placeholder": "scrutinyHref.placeholder",
       "hint": "scrutinyHref.hint",
@@ -96,6 +97,7 @@
     {
       "key": "truenasHref",
       "type": "text",
+      "link": true,
       "label": "truenasHref.label",
       "placeholder": "truenasHref.placeholder",
       "hint": "truenasHref.hint",
@@ -129,6 +131,7 @@
     {
       "key": "unraidHref",
       "type": "text",
+      "link": true,
       "label": "unraidHref.label",
       "placeholder": "unraidHref.placeholder",
       "hint": "unraidHref.hint",

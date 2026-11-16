@@ -16,10 +16,10 @@ import {
   edgeScrollSpeed,
   folderRowZone,
   pastLiftSlop,
-} from '/js/admin-drag-logic.js?v=4824d269';
+} from '/js/admin-drag-logic.js?v=7033af1f';
 import { DOCK_MAX } from '/js/limits.js?v=ff61256e';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { snapshotItems } from '/js/admin-save-logic.js?v=eaf7fbd5';
+import { snapshotItems } from '/js/admin-save-logic.js?v=4a332c56';
 import { qa } from '/js/utils.js?v=c1d4e76c';
 
 /** @type {(before: unknown) => void} */
