@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Drop the unneeded temperature mount from the example `docker-compose.yml`.
 
+### Removed
+
+- Remove the `WIDGETS_PATH` setting from the Compose example. Mount a custom
+  widget into the built-in widgets folder instead.
+
 ### Fixed
 
 - With Reduce Transparency on, a held colour slider knob is solid instead of
