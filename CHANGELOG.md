@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Keep a System Summary temperature on the same sensor after a reboot.
 
+- Show the whole Unraid array in a System Summary disk slot that is blank or set
+  to /.
+
 ## [1.23.0] - 2026-11-15
 
 ### Added
