@@ -300,7 +300,7 @@ test('a query value the widget manifest declares reaches its data function', asy
   fs.writeFileSync(manifest, JSON.stringify({ ...JSON.parse(savedManifest), params: ['range'] }));
   fs.writeFileSync(dataFn, 'module.exports = async ctx => ({ q: ctx.params.toString() });\n');
   delete require.cache[require.resolve(dataFn)];
-  const { loadRegistry } = require('../src/widgets');
+  const { loadRegistry } = require('../src/widget-registry');
   loadRegistry();
   const cfg = loadConfig();
   saveConfig({ ...cfg, items: [...(cfg.items || []), { id: 'param-w', type: 'widget', widgetType: 'fixture' }] });

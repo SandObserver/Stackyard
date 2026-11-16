@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { validateManifest } = require('../src/widgets');
+const { validateManifest } = require('../src/widget-registry');
 
 const base = { name: 'w', label: 'W', sizes: ['small'] };
 

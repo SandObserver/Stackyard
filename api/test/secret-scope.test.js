@@ -13,7 +13,7 @@ const {
   leavesStoredSecretBlank,
   alignSavedConfig,
 } = require('../src/secret-scope');
-const { getRegistry } = require('../src/widgets');
+const { getRegistry } = require('../src/widget-registry');
 
 const books = getRegistry().books;
 const SAVED = { absUrl: 'https://real.example', absKey: 'STORED-KEY', absKeySet: true };

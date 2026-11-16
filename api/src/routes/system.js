@@ -2,7 +2,7 @@ const fs = require('fs');
 const { on, json } = require('../router');
 const { loadConfig } = require('../config');
 const { scrubWidgetSecrets, WITHHELD_FLAG } = require('../widget-secrets');
-const { getRegistry } = require('../widgets');
+const { getRegistry } = require('../widget-registry');
 
 let _netCache = { rx: 0, tx: 0 };
 let _netPrev = null;

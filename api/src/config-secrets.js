@@ -10,7 +10,7 @@ const {
   wantsStoredSecret,
 } = require('./badge-headers');
 const { badgeRequestMatchesSaved, alignSavedConfig, rewriteChanged, widgetTlsChanged } = require('./secret-scope');
-const { getRegistry } = require('./widgets');
+const { getRegistry } = require('./widget-registry');
 
 function scrubAllSecrets(cfg) {
   scrubConfigSecrets(cfg);

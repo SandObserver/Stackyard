@@ -104,7 +104,7 @@ test('a default array is copied, not shared', () => {
 });
 
 test('the data function reads a saved config with its defaults filled in', async () => {
-  const { getRegistry } = require('../src/widgets');
+  const { getRegistry } = require('../src/widget-registry');
   const { getWidgetData } = require('../src/widget-data');
   const out = await getWidgetData(
     { widgetType: 'fixture', widgetConfig: { url: 'http://x' } },

@@ -31,7 +31,7 @@ process.env.CONFIG_PATH = path.join(root, 'apps.json');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const widgets = require('../src/widgets');
+const widgets = require('../src/widget-registry');
 
 widgets.loadRegistry();
 const rejected = widgets.getRejected();

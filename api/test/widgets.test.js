@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const widgets = require('../src/widgets');
+const widgets = require('../src/widget-registry');
 const { plain } = require('../test-support/plain');
 
 function dir(name) {

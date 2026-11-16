@@ -15,7 +15,7 @@ const http = require('node:http');
 require('../src/routes');
 const { dispatch } = require('../src/router');
 const { saveConfig, loadConfig, HELD_PATH } = require('../src/config');
-const { loadRegistry } = require('../src/widgets');
+const { loadRegistry } = require('../src/widget-registry');
 const log = require('../src/log');
 
 const MANIFEST = {

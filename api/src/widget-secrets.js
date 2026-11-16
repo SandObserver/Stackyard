@@ -1,4 +1,4 @@
-const { getRegistry } = require('./widgets');
+const { getRegistry } = require('./widget-registry');
 const { SAVED_ROW } = require('../../ui/js/saved-row.js');
 
 /* The matching field keys a widget declares, top level and one row deep. Test

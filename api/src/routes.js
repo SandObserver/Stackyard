@@ -6,3 +6,4 @@ require('./routes/system');
 require('./routes/icons');
 require('./routes/wallpaper');
 require('./routes/version');
+require('./routes/widgets');

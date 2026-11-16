@@ -10,7 +10,6 @@ const http = require('node:http');
 const fs = require('node:fs');
 
 require('../src/routes');
-require('../src/widgets');
 require('../src/widget-data');
 const { dispatch, _routeTable } = require('../src/router');
 const { saveConfig } = require('../src/config');

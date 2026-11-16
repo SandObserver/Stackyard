@@ -4,6 +4,7 @@ const log = require('./log');
 const { writeFileAtomic, tagWriteFailure, WRITE_FAILURES } = require('./atomic-write');
 const { IS_DEMO } = require('./demo');
 const { migrateItemBadgeHeaders } = require('./badge-headers');
+const { releaseHeldConfigs } = require('./widget-secrets');
 
 const CONFIG_PATH = process.env.CONFIG_PATH || '/data/apps.json';
 /* Holds secrets. Never send it, export it, back it up or log its contents. */
@@ -371,8 +372,7 @@ function loadConfig() {
 
   const before = shaped._schemaVersion;
   migrate(shaped);
-  /* Required here. widget-secrets loads widgets.js, which loads this file. */
-  const { moved, stale } = require('./widget-secrets').releaseHeldConfigs(shaped, _readHeldForLoad());
+  const { moved, stale } = releaseHeldConfigs(shaped, _readHeldForLoad());
   const fresh = moved.filter(id => !_releaseLogged.has(id));
   if (fresh.length) log.audit('stored credentials dropped until retyped', { items: fresh });
   _cfgCache = shaped;

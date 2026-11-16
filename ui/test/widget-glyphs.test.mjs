@@ -71,7 +71,7 @@ test('the list draws the glyph from the widget registry', () => {
 /* The validator has its own copy of the names, because the API is CommonJS and
    this module is ESM. */
 test('the manifest validator knows exactly the same glyphs', () => {
-  const api = fs.readFileSync(path.join(root, '..', 'api/src/widgets.js'), 'utf8');
+  const api = fs.readFileSync(path.join(root, '..', 'api/src/widget-registry.js'), 'utf8');
   const block = api.slice(api.indexOf('const VALID_GLYPHS'), api.indexOf(']);', api.indexOf('const VALID_GLYPHS')));
   const declared = [...block.matchAll(/'([\w-]+)'/g)].map(m => m[1]).sort();
   assert.deepEqual(declared, [...GLYPH_NAMES].sort(), 'the two lists have drifted');
@@ -88,7 +88,7 @@ test('no manifest carries a build stamp', () => {
    the API sends. A manifest field the endpoint does not forward never arrives,
    and the list quietly falls back to the size icon. */
 test('the widgets endpoint forwards the glyph', () => {
-  const api = fs.readFileSync(path.join(root, '..', 'api/src/widgets.js'), 'utf8');
+  const api = fs.readFileSync(path.join(root, '..', 'api/src/routes/widgets.js'), 'utf8');
   const entry = api.slice(api.indexOf('label: m.label'), api.indexOf('entryVersions: m.entryVersions'));
   assert.match(entry, /glyph: m\.glyph/, 'the glyph never reaches the browser');
 });
