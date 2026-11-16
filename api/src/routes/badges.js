@@ -157,7 +157,7 @@ on('GET', '/api/badges', async (req, res) => {
           backoff.success(key);
           if (!out[item.id].kind) readings.set(item.id, { fp, at: Date.now(), body: out[item.id] });
         } catch (e) {
-          const body = Object.assign({ value: 0 }, errorBody(e.responseTooLarge ? tooLarge() : e));
+          const body = Object.assign({ value: 0 }, errorBody(e));
           backoff.failure(key, body);
           out[item.id] = body;
         }
@@ -225,6 +225,6 @@ on('POST', '/api/badge-proxy', async (req, res) => {
     }
     json(res, 200, { status: r.status, data: r.data, numbers: collectNumbers(r.data) });
   } catch (e) {
-    fail(res, e.responseTooLarge ? tooLarge() : e, { status: 502 });
+    fail(res, e, { status: 502 });
   }
 });
