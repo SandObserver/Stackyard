@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 
 /* A kernel reporting fewer fields yields undefined. That becomes NaN and
    poisons every later result. */
@@ -70,14 +71,208 @@ function ramPercent() {
   return ((total - avail) / total) * 100;
 }
 
-function cpuTemp(zone = 0) {
+const SYS_CLASS = '/sys/class';
+const PCI_ADDRESS = /[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]/gi;
+
+function _text(file) {
   try {
-    const raw = fs.readFileSync(`/sys/class/thermal/thermal_zone${zone}/temp`, 'utf8').trim();
-    const val = parseInt(raw, 10);
-    return Number.isNaN(val) ? null : parseFloat((val / 1000).toFixed(1));
+    return fs.readFileSync(file, 'utf8').trim();
   } catch {
     return null;
   }
+}
+
+function _entries(dir) {
+  try {
+    return fs.readdirSync(dir);
+  } catch {
+    return [];
+  }
+}
+
+function _milliDegrees(file) {
+  const raw = _text(file);
+  if (raw === null) return null;
+  const val = parseInt(raw, 10);
+  return Number.isNaN(val) ? null : parseFloat((val / 1000).toFixed(1));
+}
+
+function zoneTemp(zone, root = SYS_CLASS) {
+  return _milliDegrees(path.join(root, 'thermal', `thermal_zone${zone}`, 'temp'));
+}
+
+function _deviceName(dir) {
+  try {
+    const real = fs.realpathSync(path.join(dir, 'device'));
+    const pci = real.match(PCI_ADDRESS);
+    return pci ? pci.at(-1) : path.basename(real);
+  } catch {
+    return '';
+  }
+}
+
+/** @typedef {{ chip: string, device: string, channel: string, label: string, alone: boolean,
+      zone: boolean, file: string, id: string, qualifier: string, raw: string }} Sensor */
+
+/** @param {Partial<Sensor> & { chip: string, file: string }} fields @returns {Sensor} */
+const _sensor = fields => ({
+  device: '',
+  channel: '',
+  label: '',
+  alone: true,
+  zone: false,
+  id: '',
+  qualifier: '',
+  raw: '',
+  ...fields,
+});
+
+/* Older kernels keep the attributes under hwmonN/device. */
+function _hwmonSensors(root) {
+  /** @type {Sensor[]} */
+  const out = [];
+  for (const entry of _entries(path.join(root, 'hwmon'))) {
+    const top = path.join(root, 'hwmon', entry);
+    const dir = _text(path.join(top, 'name')) !== null ? top : path.join(top, 'device');
+    const chip = _text(path.join(dir, 'name'));
+    if (!chip) continue;
+    const channels = _entries(dir)
+      .flatMap(f => {
+        const m = /^(temp\d+)_input$/.exec(f);
+        return m ? [m[1]] : [];
+      })
+      .sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
+    const device = _deviceName(top);
+    for (const channel of channels) {
+      const label = _text(path.join(dir, `${channel}_label`)) || '';
+      out.push(
+        _sensor({
+          chip,
+          device,
+          channel,
+          label,
+          alone: channels.length === 1,
+          file: path.join(dir, `${channel}_input`),
+        }),
+      );
+    }
+  }
+  return out;
+}
+
+function _zoneSensors(root) {
+  const zones = _entries(path.join(root, 'thermal'))
+    .filter(e => /^thermal_zone\d+$/.test(e))
+    .sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
+  /** @type {Sensor[]} */
+  const out = [];
+  for (const zone of zones) {
+    const type = _text(path.join(root, 'thermal', zone, 'type'));
+    if (type) out.push(_sensor({ chip: type, zone: true, file: path.join(root, 'thermal', zone, 'temp') }));
+  }
+  return out;
+}
+
+function _countBy(list, key) {
+  const counts = new Map();
+  for (const s of list) counts.set(key(s), (counts.get(key(s)) || 0) + 1);
+  return counts;
+}
+
+/* An id must name the same physical sensor after a reboot. hwmonN and
+   thermal_zoneN numbers follow driver load order, so neither may appear in an
+   id. */
+/** @param {Sensor[]} list */
+function _name(list) {
+  const base = s => (s.zone ? `zone/${s.chip}` : `${s.chip}/${s.label || s.channel}`);
+  const shared = _countBy(list, base);
+  for (const s of list) {
+    s.id = base(s);
+    if (shared.get(s.id) > 1 && !s.zone && s.device) {
+      s.qualifier = s.device;
+      s.id = `${s.chip}@${s.device}/${s.label || s.channel}`;
+    }
+  }
+  const left = _countBy(list, s => s.id);
+  const seen = new Map();
+  for (const s of list) {
+    if (left.get(s.id) < 2) continue;
+    const n = (seen.get(s.id) || 0) + 1;
+    seen.set(s.id, n);
+    s.qualifier = s.qualifier ? `${s.qualifier} #${n}` : `#${n}`;
+    s.id = `${s.id}#${n}`;
+  }
+  for (const s of list) {
+    s.raw = s.label || '';
+    const chip = s.qualifier ? `${s.chip} ${s.qualifier}` : s.chip;
+    if (s.zone || (!s.label && s.alone)) s.label = chip;
+    else s.label = s.label ? `${s.label} (${chip})` : `${chip} ${s.channel}`;
+  }
+  return list;
+}
+
+/** Temperature sensors by stable id. Thermal zones are read only when no hwmon
+    chip reports a temperature.
+    @returns {{ id: string, label: string, chip: string, raw: string, file: string }[]} */
+function tempSensors(root = SYS_CLASS) {
+  let list = _hwmonSensors(root);
+  if (!list.length) list = _zoneSensors(root);
+  return _name(list)
+    .map(({ id, label, chip, raw, file }) => ({ id, label, chip, raw, file }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'en', { numeric: true }));
+}
+
+function _cpuRank(s) {
+  const chip = s.chip.toLowerCase();
+  const label = s.raw;
+  const amd = chip === 'k10temp' || chip === 'zenpower';
+  if (chip === 'coretemp' && /^Package id \d+$/.test(label)) return 0;
+  if (amd && label === 'Tdie') return 1;
+  if (amd && label === 'Tctl') return 2;
+  if (/^(cpu|soc)[-_]thermal$/.test(chip)) return 3;
+  if (chip === 'x86_pkg_temp') return 4;
+  if (chip === 'coretemp' || amd) return 5;
+  if (chip === 'acpitz') return 6;
+  return null;
+}
+
+function cpuSensor(sensors) {
+  let best = null;
+  let bestRank = Infinity;
+  for (const s of [...sensors].sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true }))) {
+    const rank = _cpuRank(s);
+    if (rank !== null && rank < bestRank) {
+      best = s;
+      bestRank = rank;
+    }
+  }
+  return best;
+}
+
+const LEGACY_ZONE = /^thermal_zone(\d+)$/;
+
+/** Readings for the keys a widget asks for: "cpu", a sensor id, or a thermal
+    zone number in either legacy form. Keys with no reading are left out.
+    @param {(string|number)[]} keys @returns {Record<string, number>} */
+function sensorTemps(keys, root = SYS_CLASS) {
+  let sensors = null;
+  const all = () => {
+    sensors ??= tempSensors(root);
+    return sensors;
+  };
+  /** @type {Record<string, number>} */
+  const out = {};
+  for (const key of new Set(keys)) {
+    let value = null;
+    const legacy = Number.isInteger(key) ? key : LEGACY_ZONE.exec(String(key))?.[1];
+    if (legacy !== undefined) value = zoneTemp(legacy, root);
+    else {
+      const s = key === 'cpu' ? cpuSensor(all()) : all().find(x => x.id === key);
+      if (s) value = _milliDegrees(s.file);
+    }
+    if (value !== null) out[key] = value;
+  }
+  return out;
 }
 
 function diskStats(mountPoint) {
@@ -91,4 +286,15 @@ function diskStats(mountPoint) {
   }
 }
 
-module.exports = { cpuSample, computeCpu, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds };
+module.exports = {
+  cpuSample,
+  computeCpu,
+  ramPercent,
+  zoneTemp,
+  tempSensors,
+  cpuSensor,
+  sensorTemps,
+  diskStats,
+  procCount,
+  uptimeSeconds,
+};

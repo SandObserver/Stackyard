@@ -44,3 +44,29 @@ test('a reply without keyed options passes through untouched', () => {
   assert.equal(labelOptions(plain, entry, 'system-summary'), plain);
   assert.equal(labelOptions(null, entry, 'system-summary'), null);
 });
+
+test('a keyed option fills its placeholders from labelVars', () => {
+  saveConfig({ items: [], settings: { language: 'de' } });
+  const out = labelOptions(
+    {
+      options: [
+        { value: 'thermal_zone1', label: 'Thermal Zone 1', labelKey: 'slots.sensor.opt.zone', labelVars: { n: '1' } },
+      ],
+    },
+    entry,
+    'system-summary',
+  );
+  assert.deepEqual(out.options, [
+    { value: 'thermal_zone1', label: 'Thermalzone 1 (kann sich nach einem Neustart ändern)' },
+  ]);
+});
+
+test('an option whose key no catalog has drops its labelVars', () => {
+  saveConfig({ items: [], settings: { language: 'en' } });
+  const out = labelOptions(
+    { options: [{ value: 'x', label: 'Fallback', labelKey: 'no.such.key', labelVars: { n: '1' } }] },
+    entry,
+    'system-summary',
+  );
+  assert.deepEqual(out.options, [{ value: 'x', label: 'Fallback' }]);
+});

@@ -17,21 +17,21 @@ test('ramPercent returns 0 when MemTotal is missing', t => {
   assert.equal(metrics.ramPercent(), 0);
 });
 
-test('cpuTemp converts millidegrees to one decimal', t => {
+test('zoneTemp converts millidegrees to one decimal', t => {
   t.mock.method(fs, 'readFileSync', () => '45123\n');
-  assert.equal(metrics.cpuTemp(), 45.1);
+  assert.equal(metrics.zoneTemp(0), 45.1);
 });
 
-test('cpuTemp returns null for non-numeric contents', t => {
+test('zoneTemp returns null for non-numeric contents', t => {
   t.mock.method(fs, 'readFileSync', () => 'n/a');
-  assert.equal(metrics.cpuTemp(), null);
+  assert.equal(metrics.zoneTemp(0), null);
 });
 
-test('cpuTemp returns null when the sensor read throws', t => {
+test('zoneTemp returns null when the sensor read throws', t => {
   t.mock.method(fs, 'readFileSync', () => {
     throw new Error('ENOENT');
   });
-  assert.equal(metrics.cpuTemp(), null);
+  assert.equal(metrics.zoneTemp(0), null);
 });
 
 test('procCount reads the total from the loadavg process field', t => {

@@ -31,7 +31,7 @@ let _cfgCache = null,
 const CONFIG_TTL_MS = 5000;
 
 /* Bump when a release changes the shape. Add a matching step in migrate(). */
-const SCHEMA_VERSION = 9;
+const SCHEMA_VERSION = 10;
 
 function migrateSocketProxyScheme(settings) {
   const url = settings?.server?.socketProxyUrl;
@@ -114,6 +114,23 @@ function migrateLegacyPing(cfg) {
   }
 }
 
+/* A local temperature slot names its thermal zone number as a sensor id. */
+function migrateThermalZoneSlots(cfg) {
+  if (!Array.isArray(cfg.items)) return;
+  for (const item of cfg.items) {
+    if (!item || item.widgetType !== 'system-summary') continue;
+    const wc = item.widgetConfig;
+    if (!wc || typeof wc !== 'object' || !Array.isArray(wc.slots)) continue;
+    if (wc.statProvider != null && wc.statProvider !== '' && wc.statProvider !== 'system') continue;
+    for (const slot of wc.slots) {
+      if (!slot || typeof slot !== 'object' || slot.type !== 'temp' || slot.sensor) continue;
+      const zone = Number.isInteger(slot.thermalZone) && slot.thermalZone >= 0 ? slot.thermalZone : 0;
+      slot.sensor = `thermal_zone${zone}`;
+      delete slot.thermalZone;
+    }
+  }
+}
+
 /* Must stay idempotent. It runs on every read and every write. A config with no
    _schemaVersion is version 1. */
 function migrate(cfg) {
@@ -153,6 +170,10 @@ function migrate(cfg) {
   if (v < 9) {
     migrateLegacyPing(cfg);
     v = 9;
+  }
+  if (v < 10) {
+    migrateThermalZoneSlots(cfg);
+    v = 10;
   }
   freeSettingsId(cfg);
   dropBadChildren(cfg);

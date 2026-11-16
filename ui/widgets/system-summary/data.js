@@ -37,13 +37,39 @@ function summaryLink(ctx) {
   return ctx.serviceLink(c.href, c.beszelUrl, `/system/${encodeURIComponent(c.beszelSystem)}`);
 }
 
-/* Only a source that names its sensors offers the picker, so the local machine
-   has no handler here. */
 function sensorOptions(ctx) {
   return ctx.dispatchProvider(
-    { glances: glancesSensorOptions, beszel: beszelSensorOptions, unraid: unraidSensorOptions },
-    { field: 'statProvider' },
+    {
+      system: localSensorOptions,
+      glances: glancesSensorOptions,
+      beszel: beszelSensorOptions,
+      unraid: unraidSensorOptions,
+    },
+    { field: 'statProvider', default: 'system' },
   );
+}
+
+const LEGACY_ZONE = /^thermal_zone(\d+)$/;
+
+/* Must match the key readingFor in index.html looks up. */
+function tempKey(slot) {
+  if (slot.sensor) return slot.sensor;
+  return Number.isInteger(slot.thermalZone) ? slot.thermalZone : 0;
+}
+
+function localSensorOptions({ metrics, row }) {
+  const options = [{ value: 'cpu', label: 'CPU (automatic)', labelKey: 'slots.sensor.opt.cpu' }];
+  const legacy = LEGACY_ZONE.exec(String(row?.sensor ?? ''));
+  if (legacy) {
+    options.push({
+      value: row.sensor,
+      label: `Thermal Zone ${legacy[1]} (can change after a restart)`,
+      labelKey: 'slots.sensor.opt.zone',
+      labelVars: { n: legacy[1] },
+    });
+  }
+  for (const s of metrics.tempSensors()) options.push({ value: s.id, label: s.label });
+  return { options };
 }
 
 /* Mount paths come from the widget's disk slots, then the global
@@ -67,37 +93,31 @@ async function systemSummaryLocal({ config, settings, metrics, params }) {
   const procs = metrics.procCount();
   const uptime = metrics.uptimeSeconds();
 
-  const zones = new Set([0]);
-  for (const s of slots) if (s.type === 'temp' && Number.isInteger(s.thermalZone)) zones.add(s.thermalZone);
-  const temps = {};
-  for (const z of zones) {
-    const t = metrics.cpuTemp(z);
-    if (t !== null) temps[z] = t;
-  }
+  const keys = slots.filter(s => s.type === 'temp').map(tempKey);
+  const temps = keys.length ? metrics.sensorTemps(keys) : {};
 
   return {
     cpu,
     ram,
-    temp: temps[0] ?? null,
     temps,
     disks,
     iowait,
     procs,
     uptime,
-    history: params?.get('seed') === '1' ? seedHistory(metrics, zones) : undefined,
+    history: params?.get('seed') === '1' ? seedHistory(metrics, keys) : undefined,
   };
 }
 
 /* Charts start empty and gain one point per tick, so a fresh demo shows a flat
    widget for minutes. Only the demo host supplies a past. */
-function seedHistory(metrics, zones) {
+function seedHistory(metrics, keys) {
   if (typeof metrics.series !== 'function') return undefined;
   /* The series ends at the reading this same response reports live, and the
      widget appends that reading to the seed. Stop one step short, or the chart
      draws the same value twice at its right edge. */
   const past = kind => metrics.series(kind, SEED_POINTS + 1, SEED_STEP_SEC).slice(0, -1);
   const temps = {};
-  for (const z of zones) temps[z] = past('temp');
+  for (const k of keys) temps[k] = past('temp');
   return {
     cpu: past('cpu'),
     ram: past('ram'),

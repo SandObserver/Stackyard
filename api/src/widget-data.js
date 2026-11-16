@@ -3,7 +3,7 @@ const { on, json, readBody, checkOrigin, getIp } = require('./router');
 const { loadConfig } = require('./config');
 const { fetchChecked, fetchUnchecked, jsonRpcChecked, jsonRpcUnchecked, SsrfBlockedError } = require('./proxy');
 const { parsePrometheus } = require('./parse-prometheus');
-const { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds } = require('./metrics');
+const { cpuSample, ramPercent, tempSensors, sensorTemps, diskStats, procCount, uptimeSeconds } = require('./metrics');
 const { getRegistry, WIDGETS_PATH } = require('./widgets');
 const { translatorFor } = require('./widget-i18n');
 const { preserveWidgetSecrets } = require('./widget-secrets');
@@ -82,7 +82,9 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
     /* Follows the fetcher's provenance. Anything but saved config is checked. */
     jsonRpc: withinBudget(fetch === fetchUnchecked ? jsonRpcUnchecked : jsonRpcChecked, deadline),
     parsePrometheus,
-    metrics: IS_DEMO ? demoData.metrics : { cpuSample, ramPercent, cpuTemp, diskStats, procCount, uptimeSeconds },
+    metrics: IS_DEMO
+      ? demoData.metrics
+      : { cpuSample, ramPercent, tempSensors, sensorTemps, diskStats, procCount, uptimeSeconds },
     demo: IS_DEMO ? demoData.helpers : null,
     normalizeBase,
     serviceBase,
@@ -198,9 +200,13 @@ function labelOptions(body, entry, widget) {
   const translate = translatorFor(entry.dir, widget, loadConfig().settings?.language || 'en');
   const options = body.options.map(o => {
     if (!o || typeof o.labelKey !== 'string') return o;
-    const { labelKey, ...rest } = o;
+    const { labelKey, labelVars, ...rest } = o;
     const found = translate(labelKey);
-    return found === labelKey ? rest : { ...rest, label: found };
+    if (found === labelKey) return rest;
+    const label = found.replace(/\{(\w+)\}/g, (m, k) =>
+      labelVars && Object.hasOwn(labelVars, k) ? String(labelVars[k]) : m,
+    );
+    return { ...rest, label };
   });
   return { ...body, options };
 }

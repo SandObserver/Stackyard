@@ -45,7 +45,10 @@ const metrics = {
   cpuSample: () => ({ cpu: at('cpu', Date.now() / 1000), iowait: at('iowait', Date.now() / 1000) }),
   ramPercent: () => at('ram', Date.now() / 1000),
   diskStats: mount => ({ usedPct: mount === '/' ? 61.4 : 78.2, totalGb: mount === '/' ? 467 : 1863 }),
-  cpuTemp: () => at('temp', Date.now() / 1000),
+  tempSensors: () => [
+    { id: 'coretemp/Package id 0', label: 'Package id 0 (coretemp)', chip: 'coretemp', raw: 'Package id 0' },
+  ],
+  sensorTemps: keys => Object.fromEntries(keys.map(k => [k, at('temp', Date.now() / 1000)])),
   procCount: () => at('procs', Date.now() / 1000),
   uptimeSeconds: () => 1_512_540 + (Math.floor(Date.now() / 1000) % 86400),
   series,

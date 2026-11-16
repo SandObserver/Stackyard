@@ -179,7 +179,7 @@ test('the local source is still the default when no provider is saved', async ()
   const metrics = {
     cpuSample: async () => ({ cpu: 5, iowait: 1 }),
     ramPercent: () => 50,
-    cpuTemp: () => 40,
+    sensorTemps: () => ({}),
     diskStats: () => ({ usedPct: 10, totalGb: 100 }),
     procCount: () => 200,
     uptimeSeconds: () => 60,

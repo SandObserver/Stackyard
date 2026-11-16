@@ -65,7 +65,7 @@ test('the demo host supplies a past for every charted slot', async () => {
   const r = await statsFn(ctxFor(SLOTS, metrics));
   assert.equal(r.history.cpu.length, 120);
   assert.equal(r.history.ram.length, 120);
-  assert.deepEqual(Object.keys(r.history.temps).sort(), ['0', '1']);
+  assert.deepEqual(Object.keys(r.history.temps), ['1']);
   assert.equal(r.history.temps[1].length, 120);
 });
 
@@ -93,7 +93,7 @@ test('a real host supplies no history', async () => {
     cpuSample: async () => ({ cpu: 3, iowait: 0.1 }),
     ramPercent: () => 40,
     diskStats: () => ({ usedPct: 10, totalGb: 100 }),
-    cpuTemp: () => 41,
+    sensorTemps: keys => Object.fromEntries(keys.map(k => [k, 41])),
     procCount: () => 200,
     uptimeSeconds: () => 60,
   };
