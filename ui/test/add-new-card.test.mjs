@@ -22,3 +22,4 @@ test('the size chooser tells assistive technology which size is chosen', () => {
     /class="tile-opt[^"]*"[^>]*aria-pressed="\$\{String\(s === state\._wsize\)\}"/,
   );
 });
+
