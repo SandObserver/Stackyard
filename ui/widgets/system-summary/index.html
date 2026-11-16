@@ -421,8 +421,7 @@ function seedFromPast(slot, i, past, step = 1) {
   else if (slot.type === 'iowait') src = past.iowait;
   else if (slot.type === 'procs') src = past.procs;
   else if (slot.type === 'temp') {
-    const key = slot.sensor ? slot.sensor : (Number.isInteger(slot.thermalZone) ? slot.thermalZone : 0);
-    src = past.temps?.[key];
+    src = past.temps?.[tempKey(slot)];
   }
   if (!Array.isArray(src) || !src.length) return;
 
@@ -430,6 +429,13 @@ function seedFromPast(slot, i, past, step = 1) {
   const tail = [];
   for (let k = src.length - step; k >= 0 && tail.length < want; k -= step) tail.unshift(src[k]);
   history[i].vals = Array(h.length - tail.length).fill(null).concat(tail);
+}
+
+/* Must match tempKey in data.js. */
+function tempKey(slot) {
+  const named = isRemote() ? slot.sensor : slot.localSensor;
+  if (named) return named;
+  return Number.isInteger(slot.thermalZone) ? slot.thermalZone : 0;
 }
 
 const reading = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
@@ -440,9 +446,7 @@ function readingFor(slot, data) {
   if (slot.type === 'iowait') return reading(data.iowait);
   if (slot.type === 'procs') return reading(data.procs);
   if (slot.type === 'temp') {
-    /* A slot names either a thermal zone or a sensor, depending on the source */
-    const key = slot.sensor ? slot.sensor : (Number.isInteger(slot.thermalZone) ? slot.thermalZone : 0);
-    return reading(data.temps?.[key]);
+    return reading(data.temps?.[tempKey(slot)]);
   }
   return null;
 }

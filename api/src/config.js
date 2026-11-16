@@ -123,9 +123,9 @@ function migrateThermalZoneSlots(cfg) {
     if (!wc || typeof wc !== 'object' || !Array.isArray(wc.slots)) continue;
     if (wc.statProvider != null && wc.statProvider !== '' && wc.statProvider !== 'system') continue;
     for (const slot of wc.slots) {
-      if (!slot || typeof slot !== 'object' || slot.type !== 'temp' || slot.sensor) continue;
+      if (!slot || typeof slot !== 'object' || slot.type !== 'temp' || slot.localSensor) continue;
       const zone = Number.isInteger(slot.thermalZone) && slot.thermalZone >= 0 ? slot.thermalZone : 0;
-      slot.sensor = `thermal_zone${zone}`;
+      slot.localSensor = `thermal_zone${zone}`;
       delete slot.thermalZone;
     }
   }

@@ -10,21 +10,23 @@ const { tempSensors, sensorTemps, cpuSensor } = require('../src/metrics');
 function sysfs(spec) {
   const root = tmpDir('sysfs');
   const devices = path.join(root, 'devices');
+  for (const dev of spec.devices || []) fs.mkdirSync(path.join(devices, dev), { recursive: true });
+  const link = (dev, dir) => {
+    fs.mkdirSync(path.join(devices, dev), { recursive: true });
+    fs.symlinkSync(path.join(devices, dev), path.join(dir, 'device'));
+  };
   for (const [zone, z] of Object.entries(spec.thermal || {})) {
     const dir = path.join(root, 'thermal', zone);
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'type'), `${z.type}\n`);
     fs.writeFileSync(path.join(dir, 'temp'), `${z.temp}\n`);
+    if (z.device) link(z.device, dir);
   }
   for (const [hwmon, h] of Object.entries(spec.hwmon || {})) {
     const dir = path.join(root, 'hwmon', hwmon);
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'name'), `${h.name}\n`);
-    if (h.device) {
-      const dev = path.join(devices, h.device);
-      fs.mkdirSync(dev, { recursive: true });
-      fs.symlinkSync(dev, path.join(dir, 'device'));
-    }
+    if (h.device) link(h.device, dir);
     for (const [channel, c] of Object.entries(h.temps)) {
       fs.writeFileSync(path.join(dir, `${channel}_input`), `${c.input}\n`);
       if (c.label) fs.writeFileSync(path.join(dir, `${channel}_label`), `${c.label}\n`);
@@ -87,6 +89,81 @@ test('two chips with the same name are told apart by PCI address', () => {
       ['nvme@0000:04:00.0/Composite', 'Composite (nvme 0000:04:00.0)'],
     ],
   );
+});
+
+const PORTS = ['ata1', 'ata2', 'ata3', 'ata4'];
+
+test('disks behind one controller keep their ids when hwmon and ATA numbers change', () => {
+  const disk = (port, lun, input) => ({
+    name: 'drivetemp',
+    device: `pci0000:00/0000:00:17.0/${port}/host${lun}/target${lun}:0:0/${lun}:0:0:0`,
+    temps: { temp1: { input } },
+  });
+  const ctl = ports => ports.map(p => `pci0000:00/0000:00:17.0/${p}`);
+  const before = sysfs({
+    devices: ctl(PORTS),
+    hwmon: { hwmon2: disk('ata1', 0, 30000), hwmon3: disk('ata3', 2, 50000) },
+  });
+  const after = sysfs({
+    devices: ctl(['ata5', 'ata6', 'ata7', 'ata8']),
+    hwmon: { hwmon2: disk('ata7', 6, 50000), hwmon3: disk('ata5', 4, 30000) },
+  });
+  const ids = tempSensors(before).map(s => s.id);
+  assert.deepEqual(ids, ['drivetemp@0000:00:17.0-ata1/temp1', 'drivetemp@0000:00:17.0-ata3/temp1']);
+  assert.deepEqual(
+    tempSensors(after).map(s => s.id),
+    ids,
+  );
+  const want = { [ids[0]]: 30, [ids[1]]: 50 };
+  assert.deepEqual(sensorTemps(ids, before), want);
+  assert.deepEqual(sensorTemps(ids, after), want);
+});
+
+test('memory sensors on one bus are told apart by I2C address, not bus number', () => {
+  const dimm = (bus, addr, input) => ({
+    name: 'spd5118',
+    device: `pci0000:00/0000:00:1f.4/i2c-${bus}/${bus}-${addr}`,
+    temps: { temp1: { input } },
+  });
+  const before = sysfs({ hwmon: { hwmon4: dimm(4, '0050', 35000), hwmon5: dimm(4, '0052', 37000) } });
+  const after = sysfs({ hwmon: { hwmon4: dimm(7, '0052', 37000), hwmon5: dimm(7, '0050', 35000) } });
+  const keys = ['spd5118@0000:00:1f.4-0050/temp1', 'spd5118@0000:00:1f.4-0052/temp1'];
+  const want = { [keys[0]]: 35, [keys[1]]: 37 };
+  assert.deepEqual(sensorTemps(keys, before), want);
+  assert.deepEqual(sensorTemps(keys, after), want);
+});
+
+test('a drive keeps its id when an identical drive is added or removed', () => {
+  const nvme = (addr, input) => ({
+    name: 'nvme',
+    device: `pci0000:00/${addr}/nvme/nvme0`,
+    temps: { temp1: { label: 'Composite', input } },
+  });
+  const one = sysfs({ hwmon: { hwmon2: nvme('0000:04:00.0', 38000) } });
+  const two = sysfs({ hwmon: { hwmon2: nvme('0000:03:00.0', 45000), hwmon3: nvme('0000:04:00.0', 38000) } });
+  const key = 'nvme@0000:04:00.0/Composite';
+  assert.deepEqual(sensorTemps([key], one), { [key]: 38 });
+  assert.deepEqual(sensorTemps([key], two), { [key]: 38 });
+  assert.deepEqual(
+    tempSensors(one).map(s => [s.id, s.label]),
+    [[key, 'Composite (nvme)']],
+  );
+});
+
+test('thermal zones of one type are told apart by their device when they have one', () => {
+  const zones = order =>
+    sysfs({
+      thermal: Object.fromEntries(
+        order.map((n, i) => [
+          `thermal_zone${i}`,
+          { type: 'acpitz', temp: 50000 + n * 1000, device: `LNXSYSTM:00/LNXSYBUS:01/LNXTHERM:0${n}` },
+        ]),
+      ),
+    });
+  const keys = ['zone/acpitz@LNXTHERM:00', 'zone/acpitz@LNXTHERM:01'];
+  const want = { [keys[0]]: 50, [keys[1]]: 51 };
+  assert.deepEqual(sensorTemps(keys, zones([0, 1])), want);
+  assert.deepEqual(sensorTemps(keys, zones([1, 0])), want);
 });
 
 test('thermal zones are listed only when no hwmon chip reports a temperature', () => {

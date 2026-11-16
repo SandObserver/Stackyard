@@ -51,18 +51,18 @@ function sensorOptions(ctx) {
 
 const LEGACY_ZONE = /^thermal_zone(\d+)$/;
 
-/* Must match the key readingFor in index.html looks up. */
+/* Must match tempKey in index.html. */
 function tempKey(slot) {
-  if (slot.sensor) return slot.sensor;
+  if (slot.localSensor) return slot.localSensor;
   return Number.isInteger(slot.thermalZone) ? slot.thermalZone : 0;
 }
 
 function localSensorOptions({ metrics, row }) {
   const options = [{ value: 'cpu', label: 'CPU (automatic)', labelKey: 'slots.sensor.opt.cpu' }];
-  const legacy = LEGACY_ZONE.exec(String(row?.sensor ?? ''));
+  const legacy = LEGACY_ZONE.exec(String(row?.localSensor ?? ''));
   if (legacy) {
     options.push({
-      value: row.sensor,
+      value: row.localSensor,
       label: `Thermal Zone ${legacy[1]} (can change after a restart)`,
       labelKey: 'slots.sensor.opt.zone',
       labelVars: { n: legacy[1] },

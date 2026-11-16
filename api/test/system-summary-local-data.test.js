@@ -30,12 +30,18 @@ function ctxFor(config, extra = {}) {
 }
 
 test('each temperature slot is read by the sensor it names', async () => {
-  const slots = [{ type: 'temp', sensor: 'cpu' }, { type: 'temp', sensor: 'thermal_zone1' }, { type: 'cpu' }];
+  const slots = [{ type: 'temp', localSensor: 'cpu' }, { type: 'temp', localSensor: 'thermal_zone1' }, { type: 'cpu' }];
   const { ctx, asked } = ctxFor({ slots });
   const r = await dataFn(ctx);
   assert.deepEqual(asked, [['cpu', 'thermal_zone1']]);
   assert.deepEqual(r.temps, { cpu: 40, thermal_zone1: 41 });
   assert.equal('temp' in r, false);
+});
+
+test('a sensor value left by another source is not read on this machine', async () => {
+  const { ctx, asked } = ctxFor({ slots: [{ type: 'temp', sensor: 'Core 0', localSensor: 'cpu' }] });
+  await dataFn(ctx);
+  assert.deepEqual(asked, [['cpu']]);
 });
 
 test('no temperature slot reads no sensor', async () => {
@@ -46,7 +52,7 @@ test('no temperature slot reads no sensor', async () => {
 });
 
 test('the local sensor list offers the automatic CPU first, then each sensor', async () => {
-  const { ctx } = ctxFor({ slots: [] }, { endpoint: 'sensors', row: { type: 'temp', sensor: 'cpu' } });
+  const { ctx } = ctxFor({ slots: [] }, { endpoint: 'sensors', row: { type: 'temp', localSensor: 'cpu' } });
   const r = await dataFn(ctx);
   assert.deepEqual(r.options, [
     { value: 'cpu', label: 'CPU (automatic)', labelKey: 'slots.sensor.opt.cpu' },
@@ -56,7 +62,7 @@ test('the local sensor list offers the automatic CPU first, then each sensor', a
 });
 
 test('a slot still on a zone number keeps that zone in the list until another is picked', async () => {
-  const { ctx } = ctxFor({ slots: [] }, { endpoint: 'sensors', row: { type: 'temp', sensor: 'thermal_zone1' } });
+  const { ctx } = ctxFor({ slots: [] }, { endpoint: 'sensors', row: { type: 'temp', localSensor: 'thermal_zone1' } });
   const r = await dataFn(ctx);
   assert.deepEqual(r.options[1], {
     value: 'thermal_zone1',

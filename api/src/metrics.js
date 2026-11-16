@@ -72,7 +72,8 @@ function ramPercent() {
 }
 
 const SYS_CLASS = '/sys/class';
-const PCI_ADDRESS = /[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]/gi;
+const PCI_ADDRESS = /^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]$/i;
+const I2C_CLIENT = /^\d+-([0-9a-f]{4})$/i;
 
 function _text(file) {
   try {
@@ -101,22 +102,48 @@ function zoneTemp(zone, root = SYS_CLASS) {
   return _milliDegrees(path.join(root, 'thermal', `thermal_zone${zone}`, 'temp'));
 }
 
-function _deviceName(dir) {
+const _natural = (a, b) => a.localeCompare(b, 'en', { numeric: true });
+const _shape = name => name.replace(/\d+/g, '#');
+
+/* Kernel instance numbers below a PCI function (ataN, hostN, i2c-N) follow
+   probe order. Never put one in a key. */
+function _device(dir) {
+  let real;
   try {
-    const real = fs.realpathSync(path.join(dir, 'device'));
-    const pci = real.match(PCI_ADDRESS);
-    return pci ? pci.at(-1) : path.basename(real);
+    real = fs.realpathSync(path.join(dir, 'device'));
   } catch {
-    return '';
+    return { key: '', bus: false, path: '' };
   }
+  const parts = real.split(path.sep);
+  const at = parts.findLastIndex(p => PCI_ADDRESS.test(p));
+  if (at < 0) {
+    const key = parts.includes('virtual') ? '' : path.basename(real);
+    return { key, bus: false, path: real };
+  }
+  const key = [parts[at].toLowerCase()];
+  let parent = parts.slice(0, at + 1).join(path.sep);
+  for (const part of parts.slice(at + 1)) {
+    const i2c = I2C_CLIENT.exec(part);
+    if (i2c) key.push(i2c[1].toLowerCase());
+    else if (/\d/.test(part)) {
+      const same = _entries(parent)
+        .filter(e => _shape(e) === _shape(part))
+        .sort(_natural);
+      if (same.length > 1) key.push(`${part.replace(/[^a-z]/gi, '')}${same.indexOf(part) + 1}`);
+    }
+    parent = path.join(parent, part);
+  }
+  return { key: key.join('-'), bus: true, path: real };
 }
 
-/** @typedef {{ chip: string, device: string, channel: string, label: string, alone: boolean,
-      zone: boolean, file: string, id: string, qualifier: string, raw: string }} Sensor */
+/** @typedef {{ chip: string, device: string, bus: boolean, path: string, channel: string, label: string,
+      alone: boolean, zone: boolean, file: string, id: string, qualifier: string, raw: string }} Sensor */
 
 /** @param {Partial<Sensor> & { chip: string, file: string }} fields @returns {Sensor} */
 const _sensor = fields => ({
   device: '',
+  bus: false,
+  path: '',
   channel: '',
   label: '',
   alone: true,
@@ -141,14 +168,16 @@ function _hwmonSensors(root) {
         const m = /^(temp\d+)_input$/.exec(f);
         return m ? [m[1]] : [];
       })
-      .sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
-    const device = _deviceName(top);
+      .sort(_natural);
+    const device = _device(top);
     for (const channel of channels) {
       const label = _text(path.join(dir, `${channel}_label`)) || '';
       out.push(
         _sensor({
           chip,
-          device,
+          device: device.key,
+          bus: device.bus,
+          path: device.path,
           channel,
           label,
           alone: channels.length === 1,
@@ -163,12 +192,24 @@ function _hwmonSensors(root) {
 function _zoneSensors(root) {
   const zones = _entries(path.join(root, 'thermal'))
     .filter(e => /^thermal_zone\d+$/.test(e))
-    .sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
+    .sort(_natural);
   /** @type {Sensor[]} */
   const out = [];
   for (const zone of zones) {
-    const type = _text(path.join(root, 'thermal', zone, 'type'));
-    if (type) out.push(_sensor({ chip: type, zone: true, file: path.join(root, 'thermal', zone, 'temp') }));
+    const dir = path.join(root, 'thermal', zone);
+    const type = _text(path.join(dir, 'type'));
+    if (!type) continue;
+    const device = _device(dir);
+    out.push(
+      _sensor({
+        chip: type,
+        zone: true,
+        device: device.key,
+        bus: device.bus,
+        path: device.path,
+        file: path.join(dir, 'temp'),
+      }),
+    );
   }
   return out;
 }
@@ -181,21 +222,22 @@ function _countBy(list, key) {
 
 /* An id must name the same physical sensor after a reboot. hwmonN and
    thermal_zoneN numbers follow driver load order, so neither may appear in an
-   id. */
+   id. A bus device is always keyed, or its id changes when an identical
+   device is added or removed. */
 /** @param {Sensor[]} list */
 function _name(list) {
   const base = s => (s.zone ? `zone/${s.chip}` : `${s.chip}/${s.label || s.channel}`);
+  const keyed = s => (s.zone ? `zone/${s.chip}@${s.device}` : `${s.chip}@${s.device}/${s.label || s.channel}`);
   const shared = _countBy(list, base);
   for (const s of list) {
-    s.id = base(s);
-    if (shared.get(s.id) > 1 && !s.zone && s.device) {
-      s.qualifier = s.device;
-      s.id = `${s.chip}@${s.device}/${s.label || s.channel}`;
-    }
+    const clash = shared.get(base(s)) > 1;
+    s.id = s.device && (s.bus || clash) ? keyed(s) : base(s);
+    if (clash && s.device) s.qualifier = s.device;
   }
   const left = _countBy(list, s => s.id);
   const seen = new Map();
-  for (const s of list) {
+  const byPlace = [...list].sort((a, b) => _natural(a.path, b.path) || _natural(a.channel, b.channel));
+  for (const s of byPlace) {
     if (left.get(s.id) < 2) continue;
     const n = (seen.get(s.id) || 0) + 1;
     seen.set(s.id, n);

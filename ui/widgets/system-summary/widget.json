@@ -314,7 +314,7 @@
           "cosmetic": true
         },
         {
-          "key": "sensor",
+          "key": "localSensor",
           "type": "select",
           "label": "slots.sensor.label",
           "default": "cpu",
