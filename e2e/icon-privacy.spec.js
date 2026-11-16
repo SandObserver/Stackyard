@@ -24,6 +24,16 @@ for (const [path, open] of [
     page.on('request', r => {
       if (new URL(r.url()).host === 'cdn.jsdelivr.net') outside.push(r.url());
     });
+    await page.route('**/api/icons/cdn?*', route => {
+      const name = new URL(route.request().url()).searchParams.get('name');
+      return name === 'jellyfin-light'
+        ? route.fulfill({
+            status: 200,
+            contentType: 'image/svg+xml',
+            body: '<svg xmlns="http://www.w3.org/2000/svg"/>',
+          })
+        : route.fulfill({ status: 404, contentType: 'application/json', body: '{"error":"Icon not found"}' });
+    });
     const proxied = [];
     page.on('response', r => {
       if (r.url().includes('/api/icons/cdn?')) proxied.push(new URL(r.url()).searchParams.get('name'));
