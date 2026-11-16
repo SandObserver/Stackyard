@@ -4,7 +4,7 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=48f04139';
+} from '/js/admin-app-form.js?v=9c06d0ec';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=62124aa1';
 import {
   applyFilter,
@@ -15,12 +15,13 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=9df1c6f2';
+} from '/js/admin-list.js?v=1aa3c576';
 import { filterActive, folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=06da6a19';
 import {
   afterImport,
   applyEdit,
   buildAppItem,
+  configWrites,
   importCounts,
   keptWidget,
   newItemId,
@@ -28,9 +29,8 @@ import {
   restoreBody,
   restoresSettings,
   revertingSaves,
-  serialWrites,
   snapshotItems,
-} from '/js/admin-save-logic.js?v=6ebda0e2';
+} from '/js/admin-save-logic.js?v=eaf7fbd5';
 import {
   applyHealthChecks,
   loadSettings,
@@ -40,7 +40,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=36a32fdf';
+} from '/js/admin-settings.js?v=96134bc7';
 import {
   announce,
   apiGet,
@@ -89,7 +89,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=46304742';
+} from '/js/import-foreign.js?v=6d0bccd7';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
 import { createListbox } from '/js/listbox.js?v=384c0ad5';
@@ -172,7 +172,7 @@ async function load() {
   render();
   _savedItems = JSON.stringify(state.items);
   syncDashSave();
-  loadSettings(c);
+  loadSettings(c, { applyBg });
   syncPickerLabels();
   await within(applyBg(), firstViewWait());
 }
@@ -202,7 +202,6 @@ async function applyBg() {
 /* The list as the server last returned it to this page. A save that finds a
    different list on the server would delete what another tab or device added. */
 let _serverItems = '';
-const saves = serialWrites();
 
 /* Counts imports that replaced a stale list. Refuse a save asked for before
    one: its change was made on the replaced list. */
@@ -213,7 +212,7 @@ let _replaced = 0;
       save, or false for a save that announces nothing */
 function save(done) {
   const asked = _replaced;
-  return saves.run(() => writeItems(asked, done));
+  return configWrites.run(() => writeItems(asked, done));
 }
 
 /** @param {number} asked @param {string|false} [done] */
@@ -228,6 +227,7 @@ async function writeItems(asked, done) {
     const sent = JSON.stringify(state.items);
     full.items = JSON.parse(sent);
     const r = await apiPost('/api/config', full);
+    state._settings = full.settings || {};
     _serverItems = JSON.stringify(r.items);
     _savedItems = sent;
     saveOrRestore.landed(JSON.parse(sent));
@@ -252,7 +252,7 @@ async function writeItems(asked, done) {
 
     @param {any[]} newItems */
 function appendAndSave(newItems) {
-  return saves.run(() => appendItems(newItems));
+  return configWrites.run(() => appendItems(newItems));
 }
 
 /** @param {any[]} newItems */
@@ -266,6 +266,7 @@ async function appendItems(newItems) {
     if (clash) throw new ShownError(t('toast.importIdTaken', { name: isolate(clash.label || clash.id) }));
     full.items = [...current, ...newItems];
     const r = await apiPost('/api/config', full);
+    state._settings = full.settings || {};
     const next = afterImport({
       local: state.items,
       saved: JSON.parse(_savedItems),
@@ -298,7 +299,7 @@ async function wallpaperMissing(url) {
     reached the server.
     @param {any} file */
 function restoreBackup(file) {
-  return saves.run(() => writeBackup(file));
+  return configWrites.run(() => writeBackup(file));
 }
 
 /** @param {any} file */
@@ -309,7 +310,9 @@ async function writeBackup(file) {
       throw Object.assign(new Error('stale'), { status: 409 });
     }
     const keepBackground = await wallpaperMissing(file?.settings?.background?.url);
-    const r = await apiPost('/api/config', restoreBody(file, live, keepBackground));
+    const body = restoreBody(file, live, keepBackground);
+    const r = await apiPost('/api/config', body);
+    state._settings = body.settings || {};
     _replaced++;
     state.items = r.items;
     _serverItems = JSON.stringify(r.items);

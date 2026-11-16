@@ -56,7 +56,7 @@ test('a scroll that moves the button closes the menu', () => {
 test('saved settings reach the pickers through the picker', () => {
   const settings = read('js/admin-settings.js');
   assert.doesNotMatch(settings, /-btn'\)|childNodes\[0\]/, 'loadSettings writes a picker button directly again');
-  assert.match(read('js/admin.js'), /loadSettings\(c\);\s*syncPickerLabels\(\);/);
+  assert.match(read('js/admin.js'), /loadSettings\(c, \{ applyBg \}\);\s*syncPickerLabels\(\);/);
 });
 
 /* A list that is only pointed at cannot be reached by the keyboard. */

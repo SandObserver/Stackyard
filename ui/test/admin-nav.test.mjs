@@ -61,14 +61,14 @@ test('an import records what it saved', () => {
 /* A list change made while a save runs must wait for it, not be undone. */
 test('list saves run through one queue and undo through one reverting save', () => {
   const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
-  assert.match(src, /return saves\.run\(\(\) => appendItems\(newItems\)\);/);
+  assert.match(src, /return configWrites\.run\(\(\) => appendItems\(newItems\)\);/);
   assert.match(src, /revertingSaves\(\{\s*write: save,/);
   assert.match(
     src,
     /if \(next\.stale\) _replaced\+\+;/,
     'a change queued on a list an import replaced must be refused, not saved over',
   );
-  assert.match(src, /const asked = _replaced;\s*return saves\.run\(\(\) => writeItems\(asked, done\)\);/);
+  assert.match(src, /const asked = _replaced;\s*return configWrites\.run\(\(\) => writeItems\(asked, done\)\);/);
   assert.match(src, /if \(asked !== _replaced \|\| JSON\.stringify\(full\.items \|\| \[\]\) !== _serverItems\)/);
   assert.match(
     src,

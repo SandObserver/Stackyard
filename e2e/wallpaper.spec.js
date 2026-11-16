@@ -156,6 +156,10 @@ test('an upload that lands while Save runs leaves Save on', async ({ page, reque
 
 test.describe('Unsplash key', () => {
   const UNSPLASH = { type: 'unsplash', brightness: 0.62, collection: '' };
+  const PIXEL = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGMQEREBAAB8AD2SgCfbAAAAAElFTkSuQmCC',
+    'base64',
+  );
 
   test.beforeEach(async ({ page, request }) => {
     await seedConfig(request, { items: [], settings: { background: { ...UNSPLASH } } });
@@ -164,7 +168,12 @@ test.describe('Unsplash key', () => {
       headers: { Origin: BASE_URL },
     });
     expect(res.ok()).toBeTruthy();
-    await page.route('**/api/wallpaper', route => route.fulfill({ json: { url: null } }));
+    await page.route('**/api/wallpaper', route =>
+      route.fulfill({ json: { url: 'https://images.unsplash.com/photo-1?ixid=x&w=2880&h=1800' } }),
+    );
+    await page.route('https://images.unsplash.com/**', route =>
+      route.fulfill({ body: PIXEL, contentType: 'image/png', headers: { 'Access-Control-Allow-Origin': '*' } }),
+    );
     await page.goto('/admin/');
     await page.locator('.nl[data-sec="appearance"]').click();
     await expect(page.locator('#ie-apikey-v')).toHaveText('Configured');
