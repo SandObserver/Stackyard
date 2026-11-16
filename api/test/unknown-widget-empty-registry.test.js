@@ -6,7 +6,7 @@ process.env.WIDGETS_PATH = path.join(tmpDir('nowidgets'), 'missing');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { getRegistry } = require('../src/widgets');
+const { getRegistry } = require('../src/widget-registry');
 const { scrubAllSecrets, preserveAllSecrets } = require('../src/config-secrets');
 
 const stored = () => ({

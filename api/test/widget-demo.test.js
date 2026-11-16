@@ -92,7 +92,7 @@ test('the system widgets have no demo module and the registry reflects who does'
   for (const n of ['backup', 'books', 'dns', 'github', 'nowplaying', 'weather']) assert.equal(has(n), true, n);
 
   process.env.WIDGETS_PATH = dir;
-  const reg = require('../src/widgets').getRegistry();
+  const reg = require('../src/widget-registry').getRegistry();
   assert.equal(reg['system-summary'].hasDemoFn, false);
   assert.equal(reg['disk-health'].hasDemoFn, false);
   assert.equal(reg.weather.hasDemoFn, true);

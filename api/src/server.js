@@ -21,7 +21,6 @@ process.on('unhandledRejection', fatal('unhandledRejection'));
 for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => process.exit(0));
 
 require('./routes');
-require('./widgets');
 require('./widget-data');
 
 const { dispatch } = require('./router');
@@ -43,7 +42,7 @@ applyInitialPassword().then(
 
 function onListening() {
   const { CONFIG_PATH, ICONS_PATH } = require('./config');
-  const { getRegistry } = require('./widgets');
+  const { getRegistry } = require('./widget-registry');
   const pkg = require('../package.json');
   const version = process.env.APP_VERSION || pkg.version;
   const widgets = Object.keys(getRegistry());

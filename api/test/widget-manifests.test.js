@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { validateManifest } = require('../src/widgets');
+const { validateManifest } = require('../src/widget-registry');
 
 /* The shipped manifests, checked against the same validator the server uses at
    startup. Without this a typo only shows up as a widget silently missing from

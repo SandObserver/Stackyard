@@ -65,7 +65,7 @@ function get(id) {
 }
 
 test('the fixture widgets really loaded', () => {
-  const reg = require('../src/widgets').getRegistry();
+  const reg = require('../src/widget-registry').getRegistry();
   assert.ok(reg.vouched, 'the vouched fixture is not registered');
   assert.ok(reg.raw, 'the raw fixture is not registered');
 });
