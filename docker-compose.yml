@@ -87,7 +87,6 @@ services:
       # Internal paths. Change only if you have moved them.
       # - CONFIG_PATH=/data/apps.json
       # - ICONS_PATH=/icons
-      # - WIDGETS_PATH=/usr/share/nginx/html/widgets
       # PORT does not change anything inside the container: nginx serves on
       # LISTEN_PORT and supervisord pins the API to 3000. Set it only for a
       # hosting platform that reads PORT to decide where to route, and give it

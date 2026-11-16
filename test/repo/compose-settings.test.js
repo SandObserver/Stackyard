@@ -11,6 +11,8 @@ const compose = read('docker-compose.yml');
 /* Variables the code reads that an operator is not meant to set. */
 const INTERNAL = {
   SUPERVISOR_FATAL_MARKER: 'internal handoff between the supervisord listener and the entrypoint',
+  WIDGETS_PATH:
+    'moves only the API widget folder; nginx keeps serving /widgets/ from the image, so it is for tests and running the API without Docker',
 };
 
 function envInCode() {
@@ -39,6 +41,11 @@ test('docker-compose.yml carries every operator variable', () => {
   /* Stamped by the release build. There is nothing for an operator to set. */
   const missing = envInCode().filter(n => n !== 'APP_VERSION' && !compose.includes(n));
   assert.deepEqual(missing, [], `Add a commented line to docker-compose.yml for:\n  ${missing.join('\n  ')}`);
+});
+
+test('docker-compose.yml offers no internal variable', () => {
+  const offered = Object.keys(INTERNAL).filter(n => compose.includes(n));
+  assert.deepEqual(offered, [], `Remove from docker-compose.yml:\n  ${offered.join('\n  ')}`);
 });
 
 /* The one setting in the example that turns a security control off. */
