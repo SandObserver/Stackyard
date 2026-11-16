@@ -23,9 +23,9 @@ import {
   topLevelRows,
 } from '/js/admin-logic.js?v=06da6a19';
 import { snapshotItems } from '/js/admin-save-logic.js?v=eaf7fbd5';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=495be496';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=73be77ed';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { sizeLabel } from '/js/admin-widget-form.js?v=88d0e4be';
+import { sizeLabel } from '/js/admin-widget-form.js?v=c789479a';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=99563c71';

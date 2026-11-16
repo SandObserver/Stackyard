@@ -16,7 +16,7 @@ import {
   readBadgeUpdate,
 } from '/js/badge-logic.js?v=7112fd10';
 import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=b2c35c27';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=da14e1c7';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=797944ce';
 import {
   clampPage,
   configChanged,
