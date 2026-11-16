@@ -1,8 +1,8 @@
 name: End-to-end
 
-# A required check. Do not filter it by path or skip the job. A required check
-# that never starts blocks a pull request forever. A skipped job passes it
-# untested.
+# The final e2e job is a required check. Do not filter it by path or skip it. A
+# required check that never starts blocks a pull request forever. A skipped job
+# passes it untested.
 on:
   pull_request:
   push:
@@ -20,12 +20,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  e2e:
+  shards:
+    name: browsers (${{ matrix.name }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
       pull-requests: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: chromium, project: chromium, shard: 1/1 }
+          - { name: webkit-1, project: webkit, shard: 1/3 }
+          - { name: webkit-2, project: webkit, shard: 2/3 }
+          - { name: webkit-3, project: webkit, shard: 3/3 }
+    outputs:
+      ran: ${{ steps.changes.outputs.e2e != 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -119,28 +130,30 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ steps.image.outputs.os }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: playwright-${{ steps.image.outputs.os }}-
+          key: playwright-${{ steps.image.outputs.os }}-${{ matrix.project }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright-${{ steps.image.outputs.os }}-${{ matrix.project }}-
 
-      # No restore-keys. A partial hit installs an older package set and skips
-      # --with-deps, so browsers that need a new package fail to launch.
+      # No restore-keys, and one key per browser. A partial hit, or another
+      # browser's package set, skips --with-deps, and the browser fails to launch.
       - name: Cache system packages for the browsers
         if: steps.changes.outputs.e2e != 'false'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/apt-archives
-          key: apt-${{ steps.image.outputs.version }}-playwright-${{ steps.image.outputs.playwright }}
+          key: apt-${{ steps.image.outputs.version }}-playwright-${{ steps.image.outputs.playwright }}-${{ matrix.project }}
 
       - name: Install browsers
         if: steps.changes.outputs.e2e != 'false'
+        env:
+          PROJECT: ${{ matrix.project }}
         run: |
           debs="$HOME/.cache/apt-archives"
           if ls "$debs"/*.deb >/dev/null 2>&1 && sudo dpkg -i "$debs"/*.deb; then
-            npx playwright install chromium webkit
+            npx playwright install "$PROJECT"
           else
             sudo apt-get -f install -y
             echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/99keep-debs >/dev/null
-            npx playwright install --with-deps chromium webkit
+            npx playwright install --with-deps "$PROJECT"
             rm -rf "$debs" && mkdir -p "$debs"
             cp /var/cache/apt/archives/*.deb "$debs"/
           fi
@@ -172,9 +185,11 @@ jobs:
 
       - name: Run the specs
         if: steps.changes.outputs.e2e != 'false'
-        run: npx playwright test
+        run: npx playwright test --project="$PROJECT" --shard="$SHARD"
         env:
           BASE_URL: http://127.0.0.1:8730
+          PROJECT: ${{ matrix.project }}
+          SHARD: ${{ matrix.shard }}
 
       - name: Stop and restart the container
         if: steps.changes.outputs.e2e != 'false'
@@ -222,14 +237,69 @@ jobs:
         if: failure()
         run: docker logs stackyard-e2e
 
+      - name: Upload the shard report
+        if: ${{ !cancelled() && steps.changes.outputs.e2e != 'false' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: blob-report-${{ matrix.name }}
+          path: blob-report/
+          retention-days: 1
+
+      - name: Stop the container
+        if: always()
+        run: docker rm -f stackyard-e2e || true
+
+  # Fails unless every shard passed. A shard that fails, is cancelled or never
+  # starts must fail this check.
+  e2e:
+    needs: shards
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        if: ${{ !cancelled() && needs.shards.outputs.ran == 'true' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        if: ${{ !cancelled() && needs.shards.outputs.ran == 'true' }}
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dev tooling
+        if: ${{ !cancelled() && needs.shards.outputs.ran == 'true' }}
+        run: npm ci --ignore-scripts
+
+      - name: Download the shard reports
+        if: ${{ !cancelled() && needs.shards.outputs.ran == 'true' }}
+        continue-on-error: true
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: blob-report-*
+          path: all-blob-reports
+          merge-multiple: true
+
+      - name: Merge the reports
+        if: ${{ !cancelled() && needs.shards.outputs.ran == 'true' }}
+        continue-on-error: true
+        run: npx playwright merge-reports --reporter html ./all-blob-reports
+
       - name: Upload the report
-        if: failure()
+        if: ${{ !cancelled() && needs.shards.outputs.ran == 'true' && needs.shards.result == 'failure' }}
+        continue-on-error: true
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
 
-      - name: Stop the container
+      - name: Require every shard to pass
         if: always()
-        run: docker rm -f stackyard-e2e || true
+        env:
+          RESULT: ${{ needs.shards.result }}
+        run: |
+          echo "browser shards: $RESULT"
+          test "$RESULT" = success

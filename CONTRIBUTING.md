@@ -71,6 +71,9 @@ npx playwright install chromium webkit
 BASE_URL=http://127.0.0.1:<port> npx playwright test
 ```
 
+CI runs it on four machines: Chromium on one, WebKit split over three. Every
+test must pass when run alone.
+
 On a pull request, the suite is skipped when every changed file is on the list
 in that workflow. Those files reach neither the image nor the specs. A file
 missing from the list runs the suite.
