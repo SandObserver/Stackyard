@@ -22,15 +22,16 @@ const { BASE_URL: baseURL } = require('./e2e/base-url');
 module.exports = defineConfig({
   testDir: './e2e',
   /* Each spec seeds its own state through the API, so they must not interleave
-     against one shared container. */
+     against one shared container. CI shards split single tests across
+     machines, so no test may depend on another test in its file. */
   workers: 1,
-  fullyParallel: false,
+  fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   timeout: 30_000,
   globalTimeout: 20 * 60_000,
   expect: { timeout: 7_000 },
-  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : [['list']],
+  reporter: process.env.CI ? [['list'], ['blob']] : [['list']],
   use: {
     baseURL,
     /* Only on a retry: a trace for every passing test is a lot of artefact for

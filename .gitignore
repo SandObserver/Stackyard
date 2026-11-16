@@ -16,6 +16,8 @@ coverage/
 
 # Playwright output.
 playwright-report/
+blob-report/
+all-blob-reports/
 test-results/
 
 # Data from earlier dev Compose setups. Holds stored secrets.

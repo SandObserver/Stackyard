@@ -8,7 +8,9 @@ const yaml = require('js-yaml');
 const root = path.join(__dirname, '..', '..');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const e2e = yaml.load(read('.github/workflows/e2e.yml'));
-const steps = Object.values(e2e.jobs)[0].steps;
+const shards = e2e.jobs.shards;
+const final = e2e.jobs.e2e;
+const steps = shards.steps;
 const filterAt = steps.findIndex(s => String(s.uses).startsWith('dorny/paths-filter@'));
 const filterStep = steps[filterAt];
 const patterns = yaml.load(filterStep.with.filters).e2e;
@@ -18,7 +20,8 @@ const GATE = "steps.changes.outputs.e2e != 'false'";
 /* Only forms that read the same here and in picomatch with dot: true. */
 function matches(pattern, file) {
   if (pattern === '**') return true;
-  if (/^[^*?[\]{}!]+\/\*\*$/.test(pattern)) return file.startsWith(pattern.slice(0, -2));
+  if (/^[^*?[\]{}!]+\/\*\*$/.test(pattern))
+    return file === pattern.slice(0, -3) || file.startsWith(pattern.slice(0, -2));
   const ext = /^((?:[^*?[\]{}!]+\/)?)\*(\.\w+)$/.exec(pattern);
   if (ext) {
     const [, dir, suffix] = ext;
@@ -55,7 +58,9 @@ test('the filter starts from every file and only removes paths', () => {
 test('every step after the filter runs unless the filter says false', () => {
   const ungated = steps
     .slice(filterAt + 1)
-    .filter(s => s.if !== GATE && !/^(failure|always)\(\)$/.test(String(s.if)))
+    .filter(
+      s => s.if !== GATE && s.if !== `\${{ !cancelled() && ${GATE} }}` && !/^(failure|always)\(\)$/.test(String(s.if)),
+    )
     .map(s => s.name);
   assert.deepEqual(ungated, []);
   assert.ok(steps.some(s => s.name === 'Run the specs' && s.if === GATE));
@@ -125,4 +130,53 @@ test('the release grants the called e2e job what it asks for', () => {
   for (const [scope, level] of Object.entries(asked)) {
     assert.equal(granted[scope], level, `the release call would fail: ${scope} is not granted`);
   }
+});
+
+test('the shards cover every project once and every shard of it', () => {
+  const config = require(path.join(root, 'playwright.config.js'));
+  assert.equal(config.workers, 1);
+  assert.equal(config.fullyParallel, true, 'without it a shard takes whole files and the split is uneven');
+  assert.equal(shards.strategy['fail-fast'], false);
+  const legs = shards.strategy.matrix.include;
+  assert.equal(new Set(legs.map(l => l.name)).size, legs.length, 'report artifact names must be unique');
+  for (const { name } of config.projects) {
+    const parts = legs.filter(l => l.project === name).map(l => l.shard.split('/').map(Number));
+    assert.ok(parts.length > 0, `${name} never runs`);
+    const total = parts[0][1];
+    assert.ok(
+      parts.every(([, n]) => n === total),
+      `${name} mixes shard totals`,
+    );
+    assert.deepEqual(
+      parts.map(([k]) => k).sort((a, b) => a - b),
+      Array.from({ length: total }, (_, i) => i + 1),
+      name,
+    );
+  }
+  const run = steps.find(s => s.name === 'Run the specs');
+  assert.match(run.run, /--project="\$PROJECT" --shard="\$SHARD"/);
+});
+
+test('each browser keeps its own caches', () => {
+  for (const name of ['Cache Playwright browsers', 'Cache system packages for the browsers']) {
+    const step = steps.find(s => s.name === name);
+    assert.match(step.with.key, /\$\{\{ matrix\.project \}\}/, name);
+    if (step.with['restore-keys']) assert.match(step.with['restore-keys'], /\$\{\{ matrix\.project \}\}/, name);
+  }
+});
+
+test('the required e2e check fails unless every shard passed', () => {
+  assert.equal(final.needs, 'shards');
+  assert.equal(final.if, 'always()', 'a skipped job counts as a pass on a required check');
+  const last = final.steps.at(-1);
+  assert.equal(last.if, 'always()');
+  assert.equal(last.env.RESULT, '${{ needs.shards.result }}');
+  assert.match(last.run, /test "\$RESULT" = success/);
+  for (const step of final.steps.slice(0, -1)) {
+    assert.match(String(step.if), /!cancelled\(\)/, `${step.name} must not run in a cancelled run`);
+    if (step.name !== 'Checkout' && step.name !== 'Set up Node.js' && step.name !== 'Install dev tooling') {
+      assert.equal(step['continue-on-error'], true, `${step.name} is a report step and must not decide the check`);
+    }
+  }
+  assert.equal(shards.outputs.ran, "${{ steps.changes.outputs.e2e != 'false' }}");
 });
