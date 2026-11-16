@@ -72,16 +72,18 @@ function _ieRow(field, value, inputType) {
 }
 
 /* ── Secret: shows Configured / Not set, edit reveals a password input. Blank = keep. ── */
-function _secret(field, isSet) {
+function _secret(field, isSet, typed) {
   const row = document.createElement('div');
   row.className = 'row ie-row';
   row.id = uniqueId('wcf-secret');
   const display = isSet ? t('common.configured') : t('common.notSet');
+  const carried = typeof typed === 'string' && typed.trim() !== '';
   setHtml(
     row,
-    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv is-ph">${display}</span><input class="row-inp d-none" type="password" autocomplete="new-password"><button class="pe" type="button" aria-label="${t('common.editNamed', { name: field.label })}">${raw(PE_SVG)}</button>`,
+    html`<span class="rl">${field.label}${_tag(field)}</span><span class="rv is-ph">${carried ? t('widgetCfg.newValueSet') : display}</span><input class="row-inp d-none" type="password" autocomplete="new-password"><button class="pe" type="button" aria-label="${t('common.editNamed', { name: field.label })}">${raw(PE_SVG)}</button>`,
   );
   const inp = qi('.row-inp', row);
+  if (carried) inp.value = typed;
   wireInlineEdit(row, inp, {
     type: 'password',
     placeholder: isSet ? t('widgetCfg.replaceSecret') : field.placeholder || '',
@@ -557,7 +559,11 @@ function _group(field, rows, size, ctx) {
   const secretKeys = subFields.filter(sf => sf.type === 'secret').map(sf => sf.key);
   const tracked = secretKeys.length > 0;
   const newRow = () => (tracked ? { [SAVED_ROW]: null } : {});
-  let data = Array.isArray(rows) ? rows.map((r, i) => (tracked ? { ...r, [SAVED_ROW]: i } : { ...r })) : [];
+  let data = Array.isArray(rows)
+    ? rows.map((r, i) =>
+        tracked ? { ...r, [SAVED_ROW]: r && Object.hasOwn(r, SAVED_ROW) ? r[SAVED_ROW] : i } : { ...r },
+      )
+    : [];
   while (data.length < min) data.push(newRow());
   if (data.length > max) data.length = max;
 
@@ -679,7 +685,7 @@ function _buildSimple(field, config, ctx) {
   const value = config[field.key];
   switch (field.type) {
     case 'secret':
-      return _secret(field, config[field.key + 'Set'] === true);
+      return _secret(field, config[field.key + 'Set'] === true, value);
     case 'number':
       return _ieRow(field, value, 'number');
     case 'toggle':

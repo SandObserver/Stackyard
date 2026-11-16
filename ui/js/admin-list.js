@@ -25,7 +25,7 @@ import {
 import { snapshotItems } from '/js/admin-save-logic.js?v=6ebda0e2';
 import { announce, paintIcon, toast } from '/js/admin-shared.js?v=495be496';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { sizeLabel } from '/js/admin-widget-form.js?v=93bb034e';
+import { sizeLabel } from '/js/admin-widget-form.js?v=88d0e4be';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=99563c71';

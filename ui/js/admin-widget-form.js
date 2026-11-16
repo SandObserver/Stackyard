@@ -6,7 +6,7 @@ import { t } from '/js/i18n.js?v=99563c71';
 import { iconSvg } from '/js/icon-set.js?v=361e54a5';
 import { createListbox } from '/js/listbox.js?v=384c0ad5';
 import { focusFirst, q, qa, qi } from '/js/utils.js?v=c1d4e76c';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=8109f3fd';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=d0dfc06a';
 
 const SIZES_WITH_ICONS = new Set(['small', 'medium', 'large', 'xlarge']);
 
