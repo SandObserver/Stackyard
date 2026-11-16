@@ -5,6 +5,8 @@ const { writeFileAtomic, tagWriteFailure, WRITE_FAILURES } = require('./atomic-w
 const { IS_DEMO } = require('./demo');
 const { migrateItemBadgeHeaders } = require('./badge-headers');
 const { releaseHeldConfigs } = require('./widget-secrets');
+const { getRegistry } = require('./widget-registry');
+const { DEFAULT_WIDGET_SIZE } = require('../../ui/js/limits.js');
 
 const CONFIG_PATH = process.env.CONFIG_PATH || '/data/apps.json';
 /* Holds secrets. Never send it, export it, back it up or log its contents. */
@@ -210,12 +212,26 @@ function dropBadChildren(cfg) {
   for (const item of cfg.items) if (item && item.children != null && !Array.isArray(item.children)) item.children = [];
 }
 
+function fillWidgetSizes(cfg) {
+  if (!Array.isArray(cfg?.items)) return false;
+  let filled = false;
+  for (const item of cfg.items) {
+    if (!item || item.type !== 'widget' || (item.widgetSize !== undefined && item.widgetSize !== null)) continue;
+    const sizes = getRegistry()[item.widgetType]?.manifest?.sizes;
+    item.widgetSize =
+      Array.isArray(sizes) && sizes.length && !sizes.includes(DEFAULT_WIDGET_SIZE) ? sizes[0] : DEFAULT_WIDGET_SIZE;
+    filled = true;
+  }
+  return filled;
+}
+
 let _demoCfg = null;
 /* Never read from disk. Nothing a demo visitor does may persist. */
 function loadDemoConfig() {
   if (!_demoCfg) {
     const raw = fs.readFileSync(path.join(__dirname, '..', 'demo', 'demo-config.json'), 'utf8');
     _demoCfg = migrate(JSON.parse(raw));
+    fillWidgetSizes(_demoCfg);
     ensureSystemItems(_demoCfg);
   }
   return _demoCfg;
@@ -372,19 +388,20 @@ function loadConfig() {
 
   const before = shaped._schemaVersion;
   migrate(shaped);
+  const filled = fillWidgetSizes(shaped);
   const { moved, stale } = releaseHeldConfigs(shaped, _readHeldForLoad());
   const fresh = moved.filter(id => !_releaseLogged.has(id));
   if (fresh.length) log.audit('stored credentials dropped until retyped', { items: fresh });
   _cfgCache = shaped;
   _cfgCacheAt = now;
   /* A failed write must not break reads. */
-  if (shaped._schemaVersion !== before || moved.length) {
+  if (shaped._schemaVersion !== before || filled || moved.length) {
     try {
       saveConfig(shaped, { release: [...moved, ...stale] });
       for (const id of moved) _releaseLogged.delete(id);
     } catch (e) {
       for (const id of moved) _releaseLogged.add(id);
-      if (shaped._schemaVersion !== before || fresh.length)
+      if (shaped._schemaVersion !== before || filled || fresh.length)
         log.warn('migrated config could not be written back', { path: CONFIG_PATH, error: e.message });
     }
   } else if (stale.length) {
@@ -482,6 +499,7 @@ function saveConfig(data, { keepRev = false, hold = {}, release = [] } = {}) {
   if (data && typeof data === 'object') {
     data._schemaVersion = SCHEMA_VERSION;
     if (!keepRev) data._rev = (Number(data._rev) || 0) + 1;
+    fillWidgetSizes(data);
   }
   /* Clone before writing. A value the clone cannot handle must fail here, not
      after the file is replaced: every later read clones it and fails too. */

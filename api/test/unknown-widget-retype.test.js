@@ -31,7 +31,7 @@ const MANIFEST = {
 const STORED = { url: 'http://retired.lan:8080', apiKey: 'STORED-KEY', refresh: 30 };
 const RELEASED = { url: STORED.url, refresh: 30 };
 const SERVER = { hostIp: '10.0.0.5', portMap: { 8080: { host: 'retired.lan', port: '8081' } } };
-const ITEM = { id: 'w1', type: 'widget', label: 'Old service', widgetType: 'retired' };
+const ITEM = { id: 'w1', type: 'widget', label: 'Old service', widgetType: 'retired', widgetSize: 'medium' };
 const HELD_W1 = { w1: { widgetType: 'retired', widgetConfig: STORED } };
 
 const installManifest = () => {

@@ -1,4 +1,5 @@
 // @ts-check
+import { DEFAULT_WIDGET_SIZE } from '/js/limits.js?v=ff61256e';
 
 /* Layout geometry, keyed by widget family size, never by widget. */
 export const WIDGET_HEIGHTS = { small: 150, medium: 150, large: 330, xlarge: 510 };
@@ -55,7 +56,7 @@ export function widgetSrc(item, reg, opts) {
   const ver = entry.entryVersions?.[file];
   if (ver) parts.push('v=' + encodeURIComponent(ver));
   parts.push('id=' + encodeURIComponent(item?.id ?? ''));
-  parts.push('size=' + encodeURIComponent(item?.widgetSize || entry.sizes?.[0] || 'medium'));
+  parts.push('size=' + encodeURIComponent(item?.widgetSize || DEFAULT_WIDGET_SIZE));
   if (opts?.mobile) parts.push('mobile=1');
   /* The strings cannot travel here: this URL is also the cache key. */
   if (opts?.lang) parts.push('lang=' + encodeURIComponent(opts.lang));

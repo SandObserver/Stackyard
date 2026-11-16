@@ -1,6 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, widgetSrc, cardPreset } from '../js/widget-types.js';
+import fs from 'node:fs';
+import { register } from 'node:module';
+
+register('./js-root-hooks.mjs', import.meta.url);
+
+const { WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, widgetSrc, cardPreset } = await import(
+  '../js/widget-types.js'
+);
+const { DEFAULT_WIDGET_SIZE } = await import('../js/limits.js');
 
 /* Stand-in for the /api/widgets registry, keyed by widget name. Mirrors the
    shipped manifests' view routing; versions are illustrative. */
@@ -81,9 +89,29 @@ test('the widget id is URL-encoded into the src', () => {
   assert.match(src, /id=a%20b%2Fc/);
 });
 
-test('size comes from the item, falling back to the first declared size', () => {
-  assert.match(widgetSrc({ id: 'a', widgetType: 'system-summary', widgetSize: 'medium' }, REG), /[?&]size=medium/);
-  assert.match(widgetSrc({ id: 'a', widgetType: 'system-summary' }, REG), /[?&]size=small/);
+test('size comes from the item, falling back to the default size', () => {
+  assert.equal(DEFAULT_WIDGET_SIZE, 'medium');
+  assert.match(widgetSrc({ id: 'a', widgetType: 'system-summary', widgetSize: 'small' }, REG), /[?&]size=small/);
+  assert.match(widgetSrc({ id: 'a', widgetType: 'system-summary' }, REG), /[?&]size=medium/);
+});
+
+test('the frame URL and every layout reader agree on the size of an item with no size', () => {
+  const size = new URL(widgetSrc({ id: 'a', widgetType: 'system-summary' }, REG), 'http://x').searchParams.get('size');
+  assert.equal(size, DEFAULT_WIDGET_SIZE);
+  const readers = [
+    'js/dashboard.js',
+    'js/ui.js',
+    'js/admin-list.js',
+    'js/admin-widget-form.js',
+    'js/widget-types.js',
+    '../api/src/routes/system.js',
+  ];
+  for (const file of readers) {
+    const src = fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+    const fallbacks = src.match(/widgetSize \|\| [^\s,;)]+/g) || [];
+    assert.ok(fallbacks.length, `${file} reads no widget size`);
+    for (const f of fallbacks) assert.equal(f.split('|| ')[1], 'DEFAULT_WIDGET_SIZE', `${file}: ${f}`);
+  }
 });
 
 test('opts.mobile appends the mobile flag', () => {

@@ -59,7 +59,7 @@ test('an unknown or missing glyph falls back rather than throwing', () => {
   }
   assert.match(
     settingsSource(),
-    /glyph \|\| SIZE_ICONS\[item\.widgetSize\] \|\| SIZE_ICONS\.medium/,
+    /glyph \|\| SIZE_ICONS\[item\.widgetSize\] \|\| SIZE_ICONS\[DEFAULT_WIDGET_SIZE\]/,
     'no fallback to the size icon',
   );
 });

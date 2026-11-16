@@ -47,7 +47,7 @@ import {
   toneForColor,
 } from '/js/label-contrast.js?v=a160c6d1';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
-import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
+import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=ff61256e';
 import { sanitizeItemLinks } from '/js/link-url.js?v=54adb40f';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
@@ -65,7 +65,7 @@ import {
   openFolderMobile,
   resetMobileChrome,
   swipePager,
-} from '/js/ui.js?v=2905a03c';
+} from '/js/ui.js?v=9f6fc28b';
 import {
   mkWrap as _mkWrap,
   el,
@@ -100,7 +100,7 @@ import {
   WIDGET_HEIGHTS,
   WIDGET_ROWS,
   widgetSrc,
-} from '/js/widget-types.js?v=b0e8f76d';
+} from '/js/widget-types.js?v=73d8b12e';
 
 ensureSprite();
 
@@ -369,7 +369,7 @@ function paginate() {
   /** @returns {[number, number]} */
   const span = item => {
     if (item.type !== 'widget') return [1, 1];
-    const sz = item.widgetSize || 'medium';
+    const sz = item.widgetSize || DEFAULT_WIDGET_SIZE;
     return [WIDGET_COLS.desktop[sz], WIDGET_ROWS.desktop[sz]];
   };
   return desktopPages(tiles, span, gm.cols, rows);
@@ -405,7 +405,7 @@ function widgetTitle(item) {
   return uniqueTitle(item.label || widgetReg[item.widgetType]?.label || t('type.widget'), usedWidgetTitles);
 }
 function mkWidget(item) {
-  const sz = item.widgetSize || 'medium';
+  const sz = item.widgetSize || DEFAULT_WIDGET_SIZE;
   const cell = mk('div');
   const rows = WIDGET_ROWS.desktop[sz];
   let cls = `wc c${WIDGET_COLS.desktop[sz]}`;

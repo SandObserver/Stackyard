@@ -1,12 +1,21 @@
 const fs = require('node:fs');
+const path = require('node:path');
 
 const { tmpPath } = require('../test-support/tmp');
 const TMP = tmpPath('apps.json', 'config');
 process.env.CONFIG_PATH = TMP;
+process.env.WIDGETS_PATH = path.join(__dirname, '../../ui/widgets');
 
 const { test, after } = require('node:test');
 const assert = require('node:assert/strict');
-const { migrate, saveConfig, loadConfig, SCHEMA_VERSION, missingPathDirs } = require('../src/config');
+const {
+  migrate,
+  saveConfig,
+  loadConfig,
+  loadConfigForUpdate,
+  SCHEMA_VERSION,
+  missingPathDirs,
+} = require('../src/config');
 
 after(() => {
   try {
@@ -315,6 +324,32 @@ test('saveConfig treats a missing or junk _rev as zero', () => {
     saveConfig(cfg);
     assert.equal(cfg._rev, 1);
   }
+});
+
+const UNSIZED = () => [
+  { id: 'w1', type: 'widget', widgetType: 'system-summary' },
+  { id: 'w2', type: 'widget', widgetType: 'clock', widgetSize: null },
+  { id: 'w3', type: 'widget', widgetType: 'not-installed' },
+  { id: 'w4', type: 'widget', widgetType: 'backup', widgetSize: 'small' },
+  { id: 'a1', type: 'app' },
+];
+const SIZED = [
+  { id: 'w1', type: 'widget', widgetType: 'system-summary', widgetSize: 'medium' },
+  { id: 'w2', type: 'widget', widgetType: 'clock', widgetSize: 'small' },
+  { id: 'w3', type: 'widget', widgetType: 'not-installed', widgetSize: 'medium' },
+  { id: 'w4', type: 'widget', widgetType: 'backup', widgetSize: 'small' },
+  { id: 'a1', type: 'app' },
+];
+
+test('loadConfig gives every widget with no size the default size and writes it back', () => {
+  fs.writeFileSync(TMP, JSON.stringify({ _schemaVersion: SCHEMA_VERSION, items: UNSIZED(), settings: {} }));
+  assert.deepEqual(loadConfigForUpdate().items, SIZED);
+  assert.deepEqual(JSON.parse(fs.readFileSync(TMP, 'utf8')).items, SIZED);
+});
+
+test('saveConfig gives every widget with no size the default size', () => {
+  saveConfig({ items: UNSIZED(), settings: {} });
+  assert.deepEqual(JSON.parse(fs.readFileSync(TMP, 'utf8')).items, SIZED);
 });
 
 test('missingPathDirs reports a config path whose directory is absent', () => {

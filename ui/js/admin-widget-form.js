@@ -4,6 +4,7 @@ import { state } from '/js/admin-state.js?v=064b9b85';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=99563c71';
 import { iconSvg } from '/js/icon-set.js?v=361e54a5';
+import { DEFAULT_WIDGET_SIZE } from '/js/limits.js?v=ff61256e';
 import { createListbox } from '/js/listbox.js?v=384c0ad5';
 import { focusFirst, q, qa, qi } from '/js/utils.js?v=c1d4e76c';
 import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=ebdcaf99';
@@ -12,7 +13,7 @@ const SIZES_WITH_ICONS = new Set(['small', 'medium', 'large', 'xlarge']);
 
 const CUSTOM_SIZES = ['small', 'medium', 'large', 'xlarge'];
 function widgetSizes(type) {
-  return type === 'custom' ? CUSTOM_SIZES : state._widgetReg[type]?.sizes || ['medium'];
+  return type === 'custom' ? CUSTOM_SIZES : state._widgetReg[type]?.sizes || [DEFAULT_WIDGET_SIZE];
 }
 const SIZE_KEYS = {
   small: 'widgetCfg.sizeSmall',
@@ -26,7 +27,7 @@ export const sizeLabel = size => (SIZE_KEYS[size] ? t(SIZE_KEYS[size]) : size);
 
 export function buildWidgetForm(body, item) {
   const wt = item?.widgetType || 'custom';
-  const ws = item?.widgetSize || 'medium';
+  const ws = item?.widgetSize || DEFAULT_WIDGET_SIZE;
   const wc = item?.widgetConfig || {};
   state._wtype = wt;
   state._wsize = ws;
@@ -101,7 +102,8 @@ function _renderWidgetForm(body) {
   }
 
   const _sizeOpts = sizesForView(widgetSizes(state._wtype), state._widgetReg[state._wtype], state._wAutoCfg);
-  if (!_sizeOpts.includes(state._wsize)) state._wsize = _sizeOpts.includes('medium') ? 'medium' : _sizeOpts[0];
+  if (!_sizeOpts.includes(state._wsize))
+    state._wsize = _sizeOpts.includes(DEFAULT_WIDGET_SIZE) ? DEFAULT_WIDGET_SIZE : _sizeOpts[0];
   const sizeHdr = document.createElement('h2');
   sizeHdr.className = 'grp-hdr';
   sizeHdr.textContent = t('widgetCfg.size');
