@@ -39,8 +39,6 @@ services:
       - icons:/icons
       # Earlier versions of this file used `./data:/data` and `./icons:/icons`.
       # Keep those two lines if yours has them; the data stays where it is.
-      # Optional: CPU temperature sensors
-      # - /sys/class/thermal:/sys/class/thermal:ro
       # Optional: disk usage monitoring (add your mount paths)
       # - /mnt/your-drive:/mnt/your-drive:ro
     environment:
