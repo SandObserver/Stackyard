@@ -7,10 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Pick a local System Summary temperature by sensor name, starting on the CPU.
+
 ### Fixed
 
 - With Reduce Transparency on, a held colour slider knob is solid instead of
   see-through.
+
+- Keep a System Summary temperature on the same sensor after a reboot.
 
 ## [1.23.0] - 2026-11-15
 
