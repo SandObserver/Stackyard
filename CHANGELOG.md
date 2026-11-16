@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Pick a local System Summary temperature by sensor name, starting on the CPU.
 
+- Drop the unneeded temperature mount from the example `docker-compose.yml`.
+
 ### Fixed
 
 - With Reduce Transparency on, a held colour slider knob is solid instead of
