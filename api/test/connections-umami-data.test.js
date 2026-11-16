@@ -3,17 +3,14 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'connections', 'data.js'));
-const { KIND, WidgetError } = require('../src/api-error');
+const { errorParts } = require('../test-support/widget-ctx');
 
 function ctxFor(service, fetchJSON) {
   return {
     endpoint: 'map',
     config: { services: [{ enabled: true, ...service }] },
     fetchJSON,
-    KIND,
-    fail(msg, opts) {
-      throw new WidgetError(msg, opts);
-    },
+    ...errorParts(),
   };
 }
 

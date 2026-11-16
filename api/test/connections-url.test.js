@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 
 const data = require(path.join(__dirname, '../../ui/widgets/connections/data.js'));
 const { normBase } = data;
-const { WidgetError, KIND } = require('../src/api-error');
+const { errorParts } = require('../test-support/widget-ctx');
 
 /* ── the normaliser ───────────────────────────────────────────────────────── */
 
@@ -56,10 +56,7 @@ function run(config, endpoint = 'map') {
     config,
     endpoint,
     fetchJSON,
-    KIND,
-    fail: (message, opts) => {
-      throw new WidgetError(message, opts);
-    },
+    ...errorParts(),
   };
   return data(ctx).then(result => ({ result, requested }));
 }

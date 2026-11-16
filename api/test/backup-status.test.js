@@ -28,12 +28,6 @@ test('dupCore/dupId/dupName/dupMeta/dupSchedule read across casing variants', ()
   assert.equal(b.dupSchedule({}), null);
 });
 
-test('dupNormalizeBase adds a scheme, strips a trailing slash, and rejects empty', () => {
-  assert.equal(b.dupNormalizeBase('host:8200'), 'http://host:8200');
-  assert.equal(b.dupNormalizeBase('https://host/'), 'https://host');
-  assert.throws(() => b.dupNormalizeBase(''), /not configured/);
-});
-
 test('dupParseDate handles compact, ISO, empty and invalid dates', () => {
   assert.equal(b.dupParseDate('20240115T133000Z'), Date.UTC(2024, 0, 15, 13, 30, 0));
   assert.equal(b.dupParseDate('20240115T133000'), Date.UTC(2024, 0, 15, 13, 30, 0));

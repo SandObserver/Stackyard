@@ -102,15 +102,6 @@ function errorText(e) {
   return 'Unreachable';
 }
 
-function errorKindOf(e) {
-  if (e && e.name === 'WidgetError') return e.kind;
-  if (e && e.name === 'SsrfBlockedError') return 'blocked';
-  const code = e && e.code;
-  if (TIMEOUT_CODES.has(code)) return 'timeout';
-  if (typeof code === 'string' && code) return 'network';
-  return 'upstream';
-}
-
 function authErr(r) {
   return r.status === 401 || r.status === 403;
 }
@@ -174,7 +165,7 @@ async function vpnView(ctx) {
         ipRes = await fetchJSON(base + '/v1/publicip/ip', { headers, timeout: 7000 });
       } catch (e) {
         out.error = errorText(e);
-        out.errorKind = errorKindOf(e);
+        out.errorKind = ctx.classify(e).kind;
       }
       if (ipRes) {
         if (authErr(ipRes)) {
@@ -243,7 +234,7 @@ async function vpnView(ctx) {
     }
   } catch (e) {
     out.error = errorText(e);
-    out.errorKind = errorKindOf(e);
+    out.errorKind = ctx.classify(e).kind;
   }
 
   return out;
@@ -399,7 +390,7 @@ async function mapView(ctx) {
         }
       } catch (e) {
         o.error = errorText(e);
-        o.errorKind = errorKindOf(e);
+        o.errorKind = ctx.classify(e).kind;
       }
       return o;
     }),

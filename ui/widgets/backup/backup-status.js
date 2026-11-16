@@ -33,11 +33,6 @@ function dupSchedule(j) {
   return j.Schedule || j.schedule || dupCore(j).Schedule || null;
 }
 
-function dupNormalizeBase(url) {
-  if (!url) throw new Error('Duplicati URL not configured');
-  return (url.includes('://') ? url : `http://${url}`).replace(/\/$/, '');
-}
-
 function dupParseDate(v) {
   if (!v) return 0;
   const s = String(v).trim();
@@ -169,7 +164,6 @@ module.exports = {
   dupName,
   dupMeta,
   dupSchedule,
-  dupNormalizeBase,
   dupParseDate,
   dupLastFinished,
   dupDeriveStatus,

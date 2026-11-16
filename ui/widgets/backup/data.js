@@ -6,7 +6,6 @@ const {
   dupId,
   dupName,
   dupSchedule,
-  dupNormalizeBase,
   dupLastFinished,
   dupDeriveStatus,
   kopiaDeriveStatus,
@@ -29,14 +28,6 @@ const BACKUP_MS = 10000; /* backup providers respond more slowly than a normal d
 const _dupTokens = new Map();
 
 const authKind = (r, ctx) => ([400, 401, 403].includes(r.status) ? ctx.KIND.AUTH : ctx.KIND.UPSTREAM);
-
-function thrownKind(e, ctx) {
-  if (e && typeof e.kind === 'string') return e.kind;
-  if (e && e.name === 'SsrfBlockedError') return ctx.KIND.BLOCKED;
-  if (e && e.message === 'Timed out') return ctx.KIND.TIMEOUT;
-  if (e && e.message === 'Response too large') return ctx.KIND.UPSTREAM;
-  return ctx.KIND.NETWORK;
-}
 
 async function dupLogin(base, password, ctx) {
   const r = await ctx.fetchJSON(base + '/api/v1/auth/login', {
@@ -107,7 +98,7 @@ function kopiaFetch(url, username, password, path, ctx) {
   if (username && password) {
     headers['Authorization'] = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
   }
-  return ctx.fetchJSON(url.replace(/\/$/, '') + path, { headers, timeout: BACKUP_MS });
+  return ctx.fetchJSON(ctx.normalizeBase(url) + path, { headers, timeout: BACKUP_MS });
 }
 
 const PBS_TOKEN_ID = /^[^\s:@!]+@[A-Za-z0-9_][A-Za-z0-9._-]*![A-Za-z0-9_][A-Za-z0-9._-]*$/;
@@ -120,7 +111,7 @@ const PBS_LOG_READS = 4;
 const PBS_TASK_NS_MAX = 2000;
 
 /* The PBS API listens on HTTPS only. A bare host must not send the token over http. */
-const pbsBase = url => dupNormalizeBase(/^[a-z][a-z0-9+.-]*:\/\//i.test(url) ? url : `https://${url}`);
+const pbsBase = (url, ctx) => ctx.normalizeBase(/^[a-z][a-z0-9+.-]*:\/\//i.test(url) ? url : `https://${url}`);
 
 function pbsConn(row, ctx) {
   const url = (row.pbsUrl || '').trim();
@@ -131,7 +122,7 @@ function pbsConn(row, ctx) {
   if (!PBS_TOKEN_ID.test(tokenId) || !PBS_SECRET.test(secret)) {
     ctx.fail('Enter a token ID like user@pbs!name and its secret', { kind: ctx.KIND.INVALID });
   }
-  return { base: pbsBase(url), tokenId, secret, skipTls: row.pbsSkipTls === true };
+  return { base: pbsBase(url, ctx), tokenId, secret, skipTls: row.pbsSkipTls === true };
 }
 
 async function pbsGet(conn, path, ctx, keep) {
@@ -268,7 +259,7 @@ function backrestHeaders(user, pass) {
 }
 
 async function backrestSummary(url, user, pass, ctx) {
-  const r = await ctx.fetchJSON(dupNormalizeBase(url) + '/v1.Backrest/GetSummaryDashboard', {
+  const r = await ctx.fetchJSON(ctx.normalizeBase(url) + '/v1.Backrest/GetSummaryDashboard', {
     method: 'POST',
     headers: backrestHeaders(user, pass),
     body: '{}',
@@ -294,7 +285,7 @@ async function backrestPlans(row, ctx) {
 async function duplicatiJobs(row, ctx) {
   const url = (row.dupUrl || '').trim();
   if (!url) ctx.fail('Duplicati URL not configured', { kind: ctx.KIND.INVALID });
-  const r = await dupFetch(dupNormalizeBase(url), row.dupPass || '', '/api/v1/backups', ctx);
+  const r = await dupFetch(ctx.normalizeBase(url), row.dupPass || '', '/api/v1/backups', ctx);
   if (r.status === 401) ctx.fail('Authentication failed, check password', { kind: ctx.KIND.AUTH });
   return {
     options: dupList(r.data)
@@ -335,7 +326,7 @@ async function slots(config, ctx) {
   list.forEach((s, i) => {
     if (!s?.provider || !s.jobId) return;
     if (s.provider === 'duplicati' && s.dupUrl) {
-      const base = dupNormalizeBase(s.dupUrl);
+      const base = ctx.normalizeBase(s.dupUrl);
       if (!dupGroups[base]) dupGroups[base] = { base, pass: s.dupPass || '', slots: [] };
       dupGroups[base].slots.push({ i, jobId: String(s.jobId), customName: s.customName || '' });
     } else if (s.provider === 'kopia' && s.kopiaUrl) {
@@ -401,7 +392,7 @@ async function slots(config, ctx) {
       } catch (e) {
         /* One unreachable instance must leave the rest of the widget intact. */
         ctx.log.warn('backup: duplicati group failed', { base, error: e.message });
-        failSlots(gs, thrownKind(e, ctx));
+        failSlots(gs, ctx.classify(e).kind);
       }
     }),
   );
@@ -430,7 +421,7 @@ async function slots(config, ctx) {
         });
       } catch (e) {
         ctx.log.warn('backup: kopia group failed', { url, error: e.message });
-        failSlots(gs, thrownKind(e, ctx));
+        failSlots(gs, ctx.classify(e).kind);
       }
     }),
   );
@@ -510,13 +501,13 @@ async function slots(config, ctx) {
               };
             } catch (e) {
               ctx.log.warn('backup: proxmox backup server slot failed', { url: row.pbsUrl, error: e.message });
-              result[i] = { error: thrownKind(e, ctx) };
+              result[i] = { error: ctx.classify(e).kind };
             }
           }),
         );
       } catch (e) {
         ctx.log.warn('backup: proxmox backup server group failed', { url: row.pbsUrl, error: e.message });
-        failSlots(gs, thrownKind(e, ctx));
+        failSlots(gs, ctx.classify(e).kind);
       }
     }),
   );
@@ -544,7 +535,7 @@ async function slots(config, ctx) {
         });
       } catch (e) {
         ctx.log.warn('backup: backrest group failed', { url, error: e.message });
-        failSlots(gs, thrownKind(e, ctx));
+        failSlots(gs, ctx.classify(e).kind);
       }
     }),
   );
