@@ -314,10 +314,18 @@
           "cosmetic": true
         },
         {
-          "key": "thermalZone",
-          "type": "number",
-          "label": "slots.thermalZone.label",
-          "default": 0,
+          "key": "localSensor",
+          "type": "select",
+          "label": "slots.sensor.label",
+          "default": "cpu",
+          "options": [
+            {
+              "value": "cpu",
+              "label": "slots.sensor.opt.cpu"
+            }
+          ],
+          "optionsFrom": "sensors",
+          "hint": "slots.sensor.localHint",
           "showIf": {
             "field": "type",
             "equals": "temp"

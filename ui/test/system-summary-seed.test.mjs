@@ -14,11 +14,13 @@ const src = fs.readFileSync(path.join(root, 'widgets/system-summary/index.html')
 
 const fn = src.match(/function seedFromPast\(slot, i, past, step = 1\) \{[\s\S]*?\n\}/);
 assert.ok(fn, 'seedFromPast is defined in the widget');
+const keyFn = src.match(/function tempKey\(slot\) \{[\s\S]*?\n\}/);
+assert.ok(keyFn, 'tempKey is defined in the widget');
 
 function load(bars) {
   const history = [{}, {}, {}, {}];
   for (const h of history) h.vals = Array(bars).fill(null);
-  const seed = new Function('history', `${fn[0]}; return seedFromPast;`)(history);
+  const seed = new Function('history', 'isRemote', `${keyFn[0]}; ${fn[0]}; return seedFromPast;`)(history, () => false);
   return { history, seed };
 }
 

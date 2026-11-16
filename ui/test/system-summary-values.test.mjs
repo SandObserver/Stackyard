@@ -28,7 +28,9 @@ const reading = liftConst('reading');
 const refreshSeconds = lift('refreshSeconds', 'wc', { REFRESH_SECONDS });
 const valueText = lift('valueText', 'type, v', { formatNumber: n => String(n) });
 const scaleFor = lift('scaleFor', 'type, vals');
-const readingFor = lift('readingFor', 'slot, data', { reading });
+let remote = false;
+const tempKey = lift('tempKey', 'slot', { isRemote: () => remote });
+const readingFor = lift('readingFor', 'slot, data', { reading, tempKey });
 const share = liftConst('share', { reading });
 const sizeParts = lift('sizeParts', 'd', { reading, share, byteScale, formatBytes, formatNumber });
 const sizeText = liftConst('sizeText');
@@ -57,10 +59,22 @@ test('anything but a finite, non-negative number is no reading', () => {
 
 test('a missing source field, sensor or zone reads as no reading, not as zero', () => {
   assert.equal(readingFor({ type: 'cpu' }, {}), null);
-  assert.equal(readingFor({ type: 'temp', sensor: 'nvme' }, { temps: { 0: 40 } }), null);
+  assert.equal(readingFor({ type: 'temp', localSensor: 'nvme' }, { temps: { 0: 40 } }), null);
   assert.equal(readingFor({ type: 'temp' }, { temps: { 0: 40 } }), 40);
   assert.equal(readingFor({ type: 'temp', thermalZone: 2 }, { temps: { 2: 71 } }), 71);
   assert.equal(readingFor({ type: 'nonsense' }, { cpu: 5 }), null);
+});
+
+test('a temperature slot reads the sensor field of its own source only', () => {
+  const slot = { type: 'temp', sensor: 'Core 0', localSensor: 'cpu' };
+  const temps = { 'Core 0': 41, cpu: 43 };
+  remote = false;
+  assert.equal(readingFor(slot, { temps }), 43);
+  assert.equal(readingFor({ type: 'temp', sensor: 'Core 0' }, { temps: { 0: 40, 'Core 0': 41 } }), 40);
+  remote = true;
+  assert.equal(readingFor(slot, { temps }), 41);
+  assert.equal(readingFor({ type: 'temp', localSensor: 'cpu' }, { temps: { 0: 40, cpu: 43 } }), 40);
+  remote = false;
 });
 
 test('each type writes its own unit, and a missing value writes a dash', () => {

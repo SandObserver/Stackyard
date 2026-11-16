@@ -234,6 +234,56 @@ test('migrate leaves an app with no top-level ping unchanged', () => {
   assert.deepEqual(cfg.items[0], app);
 });
 
+const summary = (widgetConfig, extra = {}) => ({
+  id: 's',
+  type: 'widget',
+  widgetType: 'system-summary',
+  widgetConfig,
+  ...extra,
+});
+
+test('migrate names a saved thermal zone as a sensor on the local source', () => {
+  const slots = [
+    { type: 'temp', thermalZone: 1, color: '#f00' },
+    { type: 'temp', thermalZone: 0 },
+    { type: 'temp' },
+    { type: 'temp', thermalZone: '2' },
+    { type: 'cpu' },
+  ];
+  const [item] = migrate({ _schemaVersion: 9, items: [summary({ slots })], settings: {} }).items;
+  assert.deepEqual(item.widgetConfig.slots, [
+    { type: 'temp', localSensor: 'thermal_zone1', color: '#f00' },
+    { type: 'temp', localSensor: 'thermal_zone0' },
+    { type: 'temp', localSensor: 'thermal_zone0' },
+    { type: 'temp', localSensor: 'thermal_zone0' },
+    { type: 'cpu' },
+  ]);
+});
+
+test('migrate leaves temperature slots of other sources and named sensors alone', () => {
+  const glances = { statProvider: 'glances', slots: [{ type: 'temp', sensor: 'Core 0' }, { type: 'temp' }] };
+  const local = { statProvider: 'system', slots: [{ type: 'temp', localSensor: 'cpu', thermalZone: 3 }] };
+  const items = [summary(structuredClone(glances)), summary(structuredClone(local), { id: 't' })];
+  const cfg = migrate({ _schemaVersion: 9, items, settings: {} });
+  assert.deepEqual(cfg.items[0].widgetConfig, glances);
+  assert.deepEqual(cfg.items[1].widgetConfig, local);
+});
+
+test('migrate gives a local slot its own sensor field beside one left by another source', () => {
+  const slots = [{ type: 'temp', sensor: 'Core 0', thermalZone: 2 }];
+  const [item] = migrate({ _schemaVersion: 9, items: [summary({ slots })], settings: {} }).items;
+  assert.deepEqual(item.widgetConfig.slots, [{ type: 'temp', sensor: 'Core 0', localSensor: 'thermal_zone2' }]);
+});
+
+test('migrate runs the thermal zone step once', () => {
+  const cfg = migrate({
+    _schemaVersion: 10,
+    items: [summary({ slots: [{ type: 'temp', thermalZone: 1 }] })],
+    settings: {},
+  });
+  assert.deepEqual(cfg.items[0].widgetConfig.slots, [{ type: 'temp', thermalZone: 1 }]);
+});
+
 test('loadConfig upgrades an unversioned file on disk and keeps data intact', () => {
   fs.writeFileSync(TMP, JSON.stringify({ items: [{ id: 'x', type: 'app' }], settings: { greeting: 'hi' } }));
   const loaded = loadConfig();
