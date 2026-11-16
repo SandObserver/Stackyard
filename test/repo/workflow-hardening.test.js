@@ -209,6 +209,14 @@ test('dependabot delays version updates, and the base image only briefly', () =>
   assert.match(entries.find(e => e.startsWith('docker')) || '', /interval:\s*daily/);
 });
 
+test('dependabot opens npm and Actions updates on different days', () => {
+  const cfg = fs.readFileSync(path.join(root, '.github', 'dependabot.yml'), 'utf8');
+  const entries = cfg.split(/\n\s*- package-ecosystem:\s*/).slice(1);
+  const day = name => (/\n\s*day:\s*(\w+)/.exec(entries.find(e => e.startsWith(name)) || '') || [])[1];
+  assert.equal(day('npm'), 'tuesday');
+  assert.equal(day('github-actions'), 'wednesday');
+});
+
 /* An expression in a run script is pasted into the shell before it runs. A
    value an outsider controls, such as a branch name, then runs as a command. */
 test('no run script holds an expression', () => {
@@ -232,13 +240,13 @@ test('no run script holds an expression', () => {
   assert.deepEqual(found, [], `Pass the value through env and read it as a variable:\n  ${found.join('\n  ')}`);
 });
 
-test('a new push to a pull request cancels its older check runs', () => {
+test('a new push to a pull request or a branch cancels its older check runs', () => {
   for (const name of ['test.yml', 'e2e.yml', 'codeql.yml']) {
     const [, src] = workflows.find(([f]) => f === `workflows/${name}`);
     assert.match(
       src,
-      /^concurrency:\n {2}group: [\w-]+-\$\{\{ github\.event\.pull_request\.number \|\| github\.run_id \}\}\n {2}cancel-in-progress: true$/m,
-      `${name} should group runs by pull request and cancel the superseded one`,
+      /^concurrency:\n {2}group: [\w-]+-\$\{\{ github\.event\.pull_request\.number \|\| format\('\{0\}-\{1\}', github\.event_name, github\.ref\) \}\}\n {2}cancel-in-progress: true$/m,
+      `${name} should group runs by pull request, or by event and ref, and cancel the superseded one`,
     );
   }
 });

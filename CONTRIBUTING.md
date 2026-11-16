@@ -71,6 +71,10 @@ npx playwright install chromium webkit
 BASE_URL=http://127.0.0.1:<port> npx playwright test
 ```
 
+On a pull request, the suite is skipped when every changed file is on the list
+in that workflow. Those files reach neither the image nor the specs. A file
+missing from the list runs the suite.
+
 CodeQL also runs on every pull request. A finding it reports has to be resolved
 before merge.
 

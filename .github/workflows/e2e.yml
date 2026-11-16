@@ -1,7 +1,8 @@
 name: End-to-end
 
-# A required check. Do not filter it by path. A required check that never starts
-# blocks a pull request forever.
+# A required check. Do not filter it by path or skip the job. A required check
+# that never starts blocks a pull request forever. A skipped job passes it
+# untested.
 on:
   pull_request:
   push:
@@ -15,28 +16,95 @@ permissions:
   contents: read
 
 concurrency:
-  group: e2e-${{ github.event.pull_request.number || github.run_id }}
+  group: e2e-${{ github.event.pull_request.number || format('{0}-{1}', github.event_name, github.ref) }}
   cancel-in-progress: true
 
 jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
+      # Every later step runs unless this step outputs 'false'. Add a path below
+      # only if neither the image nor the specs read it. The API lists at most
+      # 3000 files, so a larger pull request runs everything.
+      - name: Find what the change can affect
+        id: changes
+        if: github.event_name == 'pull_request' && github.event.pull_request.changed_files < 3000
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          predicate-quantifier: every
+          filters: |
+            e2e:
+              - '**'
+              - '!*.md'
+              - '!LICENSE'
+              - '!NOTICE'
+              - '!.editorconfig'
+              - '!.gitignore'
+              - '!.git-blame-ignore-revs'
+              - '!docs/**'
+              - '!.github/*.md'
+              - '!.github/ISSUE_TEMPLATE/**'
+              - '!.github/dependabot.yml'
+              - '!.github/actions/checks/**'
+              - '!.github/workflows/ca-template-changes.yml'
+              - '!.github/workflows/ca-template-check.yml'
+              - '!.github/workflows/changelog.yml'
+              - '!.github/workflows/codeql.yml'
+              - '!.github/workflows/demo.yml'
+              - '!.github/workflows/release-prep.yml'
+              - '!.github/workflows/release-tag.yml'
+              - '!.github/workflows/release.yml'
+              - '!.github/workflows/scan-published.yml'
+              - '!.github/workflows/test.yml'
+              - '!api/test/**'
+              - '!api/test-support/**'
+              - '!api/.c8rc.json'
+              - '!ui/test/**'
+              - '!test/**'
+              - '!templates/**'
+              - '!ca_profile.xml'
+              - '!scripts/demo/**'
+              - '!scripts/ca-changes.js'
+              - '!scripts/ca-validate.py'
+              - '!scripts/changelog-check.js'
+              - '!scripts/changelog-merged-pr.sh'
+              - '!scripts/changelog-pr.js'
+              - '!scripts/changelog-push.sh'
+              - '!scripts/changelog.js'
+              - '!scripts/check-frontend-paths.js'
+              - '!scripts/clock-fonts.py'
+              - '!scripts/dockerhub-description.js'
+              - '!scripts/is-prerelease.js'
+              - '!scripts/node-security.js'
+              - '!scripts/release-notes.js'
+              - '!scripts/release-prep.js'
+              - '!biome.json'
+              - '!tsconfig.json'
+              - '!tsconfig.frontend.json'
+              - '!docker-compose.yml'
+              - '!docker-compose.dev.yml'
+
       - name: Set up Node.js
+        if: steps.changes.outputs.e2e != 'false'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
 
       - name: Install dev tooling
+        if: steps.changes.outputs.e2e != 'false'
         run: npm ci --ignore-scripts
 
       - name: Read the runner image and the Playwright version
+        if: steps.changes.outputs.e2e != 'false'
         id: image
         run: |
           echo "version=$ImageOS-$ImageVersion" >> "$GITHUB_OUTPUT"
@@ -46,6 +114,7 @@ jobs:
       # Keep the runner OS release in the key. Playwright skips a browser whose
       # folder exists, so a build for another Ubuntu release fails to launch.
       - name: Cache Playwright browsers
+        if: steps.changes.outputs.e2e != 'false'
         id: browsers
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -56,12 +125,14 @@ jobs:
       # No restore-keys. A partial hit installs an older package set and skips
       # --with-deps, so browsers that need a new package fail to launch.
       - name: Cache system packages for the browsers
+        if: steps.changes.outputs.e2e != 'false'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/apt-archives
           key: apt-${{ steps.image.outputs.version }}-playwright-${{ steps.image.outputs.playwright }}
 
       - name: Install browsers
+        if: steps.changes.outputs.e2e != 'false'
         run: |
           debs="$HOME/.cache/apt-archives"
           if ls "$debs"/*.deb >/dev/null 2>&1 && sudo dpkg -i "$debs"/*.deb; then
@@ -78,9 +149,11 @@ jobs:
       # tested. A bug this project has already had, an inline handler refused by
       # the Content-Security-Policy, is invisible without them.
       - name: Build the image
+        if: steps.changes.outputs.e2e != 'false'
         run: docker build -t stackyard:e2e .
 
       - name: Start the container
+        if: steps.changes.outputs.e2e != 'false'
         run: |
           mkdir -p "$RUNNER_TEMP/data" "$RUNNER_TEMP/icons"
           chmod 777 "$RUNNER_TEMP/data" "$RUNNER_TEMP/icons"
@@ -98,11 +171,13 @@ jobs:
           exit 1
 
       - name: Run the specs
+        if: steps.changes.outputs.e2e != 'false'
         run: npx playwright test
         env:
           BASE_URL: http://127.0.0.1:8730
 
       - name: Stop and restart the container
+        if: steps.changes.outputs.e2e != 'false'
         run: |
           before=$(docker exec stackyard-e2e sha256sum /data/apps.json)
           docker stop -t 30 stackyard-e2e
@@ -125,6 +200,7 @@ jobs:
           fi
 
       - name: Start with reduced privileges
+        if: steps.changes.outputs.e2e != 'false'
         run: |
           check() {
             name=$1 port=$2; shift 2
