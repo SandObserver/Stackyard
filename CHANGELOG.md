@@ -33,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Reach a Kopia backup server whose address has no http:// or https://.
 
+- Report a service reply too large to read as a service error, not "Something
+  went wrong".
+
 ## [1.23.0] - 2026-11-15
 
 ### Added
