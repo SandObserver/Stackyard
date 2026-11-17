@@ -261,6 +261,11 @@ export function serialWrites() {
   };
 }
 
+/** Every admin write that posts /api/config or bumps its revision runs here,
+    and reads the config inside its turn. Two writes that overlap read the same
+    revision, and the server refuses the second as stale. */
+export const configWrites = serialWrites();
+
 /** Put `item` where the item with `id` currently is, or append it. Match by id,
     never by position: a position goes stale as soon as items move, and writing
     past the end grows the array with holes that JSON turns into nulls.

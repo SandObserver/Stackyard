@@ -13,11 +13,11 @@ import {
 import {
   advancedBase,
   applyGeneralFields,
+  configWrites,
   generalServerFields,
   labelsWith,
   planFieldSave,
-  serialWrites,
-} from '/js/admin-save-logic.js?v=6ebda0e2';
+} from '/js/admin-save-logic.js?v=eaf7fbd5';
 import {
   apiGet,
   apiPost,
@@ -35,6 +35,7 @@ import {
   toast,
   wireInlineEdit,
 } from '/js/admin-shared.js?v=495be496';
+import { state } from '/js/admin-state.js?v=064b9b85';
 import { BACKDROP } from '/js/background.js?v=eca5642a';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import {
@@ -65,6 +66,8 @@ let _srvBase = { form: {}, server: {} };
 let _bgBase = { form: {}, server: {} };
 let _unsplashKeySet = false;
 let _pveSecretSet = false;
+/** @type {{ applyBg: () => unknown }} */
+let _page = { applyBg: () => {} };
 
 /** The wallpaper link the server holds, for undoing a link that failed. */
 export const savedWallpaperUrl = () => _savedWallpaperUrl;
@@ -239,7 +242,9 @@ function renderBgColor(value) {
   renderColorControl(slot, { value, idPrefix: 'bg-color', label: t('appearance.color') });
 }
 
-export function loadSettings(c) {
+/** @param {any} c the config as loaded @param {typeof _page} page what the page owns */
+export function loadSettings(c, page) {
+  _page = page;
   const s = c.settings || {};
   const ld = inp('set-lbl-d');
   const lm = inp('set-lbl-m');
@@ -368,7 +373,7 @@ export function loadSettings(c) {
     if (!ok) return;
     secRevoke.disabled = true;
     try {
-      await apiPost('/api/auth/revoke-sessions', {});
+      await configWrites.run(() => apiPost('/api/auth/revoke-sessions', {}));
       location.reload();
     } catch (e) {
       toast(errorText(e), 'err');
@@ -529,22 +534,19 @@ export function showBgFields(type) {
   });
 }
 /** @param {Event} [e] */
-/* Switch saves run one after another. Overlapping saves read the same _rev,
-   so the second one is refused as stale and its switch is put back. */
-const switchSaves = serialWrites();
-
 /** Save a switch's change, and put it back if the save fails and no later
     click has moved it since.
     @param {Event} e @param {(c: any) => void} apply */
 function saveSwitchChange(e, apply) {
   const toggled = /** @type {HTMLInputElement} */ (e.target);
   const value = toggled.checked;
-  return switchSaves.run(async () => {
+  return configWrites.run(async () => {
     try {
       const c = await apiGet('/api/config');
       c.settings = c.settings || {};
       apply(c.settings);
       await apiPost('/api/config', c);
+      state._settings = c.settings;
       confirmSaved(sectionSave(toggled));
     } catch (err) {
       /* Assigning `checked` fires no event, so this does not loop. */
@@ -572,18 +574,25 @@ function saveSwitch(e, key) {
     settings[key] = value;
   });
 }
-async function saveWallpaper() {
+function saveWallpaper() {
+  const sent = wallpaperFormValues();
+  const form = readBackgroundFields();
+  return configWrites.run(() => writeWallpaper(sent, form));
+}
+
+/** @param {string[]} sent @param {{ background: any }} form */
+async function writeWallpaper(sent, form) {
   try {
-    const sent = wallpaperFormValues();
-    const form = readBackgroundFields();
     const bg = form.background;
     const type = bg.type;
     const c = await apiGet('/api/config');
     c.settings = c.settings || {};
-    if (fieldsToWrite(_bgBase, form, { background: storedBackground(c.settings) }).length) {
+    let written = fieldsToWrite(_bgBase, form, { background: storedBackground(c.settings) }).length > 0;
+    if (written) {
       c.settings.background = bg;
       await apiPost('/api/config', c);
       _bgBase = { form, server: { background: bg } };
+      state._settings = c.settings;
     }
     _savedWallpaperUrl = bg.url || '';
     /* After the main config. GET /api/config strips the key, so a config write
@@ -595,8 +604,10 @@ async function saveWallpaper() {
         await apiPost('/api/settings/unsplash-key', { apiKey: keyVal });
         keyEl.value = '';
         showUnsplashKeyState(true);
+        written = true;
       }
     }
+    if (written) _page.applyBg();
     /* Not the live form. A wallpaper that lands during the save would never be written. */
     _bgTrack?.reset(true, JSON.stringify(sent.with(-1, _val('bg-apikey-inp'))));
     confirmSaved(el('bg-save'));
@@ -682,7 +693,8 @@ async function saveServer() {
     if (!probe.ok) socketWarning = t('toast.socketUrlUnverified', { reason: socketReason }) + hint;
   }
 
-  const write = (currentPassword, code) => writeServer({ enabled, pw, currentPassword, code, allowedHosts });
+  const write = (currentPassword, code) =>
+    configWrites.run(() => writeServer({ enabled, pw, currentPassword, code, allowedHosts }));
 
   /** @type {{ langChanged: boolean } | undefined} */
   let done;
@@ -830,6 +842,7 @@ async function writeServer({ enabled, pw, currentPassword, code, allowedHosts })
     if (changed.length) {
       applyGeneralFields(c.settings, changed, form);
       await apiPost('/api/config', c);
+      state._settings = c.settings;
     }
     if (!enabled) {
       const pwEl = inp('sec-pw');
