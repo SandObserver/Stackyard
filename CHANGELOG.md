@@ -54,6 +54,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show a widget saved without a size at the same size on the dashboard as its
   frame loads, instead of a smaller frame in a larger tile.
 
+- Open the link for the selected Disk Health provider when the widget is tapped
+  on a phone.
+
+### Security
+
+- Refuse an unsafe link in the Disk Health TrueNAS and Unraid, DNS, GitHub and
+  Backup link fields on save, as the Scrutiny link already was.
+
 ## [1.23.0] - 2026-11-15
 
 ### Added
