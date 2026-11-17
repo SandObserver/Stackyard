@@ -50,6 +50,7 @@
     {
       "key": "dnsHref",
       "type": "text",
+      "link": true,
       "label": "dnsHref.label",
       "optional": true,
       "hint": "dnsHref.hint",

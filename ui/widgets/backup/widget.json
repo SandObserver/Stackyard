@@ -87,6 +87,7 @@
         {
           "key": "dupHref",
           "type": "text",
+          "link": true,
           "label": "slots.dupHref.label",
           "placeholder": "slots.dupHref.placeholder",
           "hint": "slots.dupHref.hint",
@@ -154,6 +155,7 @@
         {
           "key": "kopiaHref",
           "type": "text",
+          "link": true,
           "label": "slots.kopiaHref.label",
           "placeholder": "slots.kopiaHref.placeholder",
           "hint": "slots.kopiaHref.hint",
@@ -219,6 +221,7 @@
         {
           "key": "pbsHref",
           "type": "text",
+          "link": true,
           "label": "slots.pbsHref.label",
           "placeholder": "slots.pbsUrl.placeholder",
           "hint": "slots.pbsHref.hint",
@@ -275,6 +278,7 @@
         {
           "key": "backrestHref",
           "type": "text",
+          "link": true,
           "label": "slots.backrestHref.label",
           "placeholder": "slots.backrestUrl.placeholder",
           "hint": "slots.backrestHref.hint",

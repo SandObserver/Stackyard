@@ -1,42 +1,45 @@
-import fs from 'node:fs';
-import { DOCK_MAX } from '../js/limits.js';
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { register } from 'node:module';
+import { test } from 'node:test';
 import {
-  reorderItems,
-  topLevelRows,
-  shownChildren,
-  folderChildren,
-  settleDock,
-  isDockBlocked,
-  nextActiveIndex,
-  isPlainTextKey,
-  isPlainField,
-  sameIconName,
-  groupBounds,
-  carriesTypedValues,
-  visibleFieldFlags,
-  collectFieldValues,
-  clearsStoredSecret,
   authEnableBlocked,
-  shouldWritePassword,
-  widgetConfigMode,
-  resolveAdminSection,
-  rejectionLines,
-  settingsSaveBlocker,
+  BLOCK,
+  carriesTypedValues,
   clearsStoredPassword,
+  clearsStoredSecret,
+  collectFieldValues,
+  createDirtyTracker,
+  failureIsMissingApiPath,
+  folderChildren,
+  groupBounds,
+  isBareHostUrl,
+  isDockBlocked,
+  isPlainField,
+  isPlainTextKey,
   needsCurrentPassword,
   needsSetupCode,
+  nextActiveIndex,
   recoversSession,
-  toastMs,
-  toastHoldMs,
-  isBareHostUrl,
-  urlHasLogin,
-  failureIsMissingApiPath,
-  createDirtyTracker,
-  BLOCK,
+  rejectionLines,
+  reorderItems,
+  resolveAdminSection,
+  sameIconName,
+  settingsSaveBlocker,
+  settleDock,
+  shouldWritePassword,
+  shownChildren,
   singleChoice,
+  toastHoldMs,
+  toastMs,
+  topLevelRows,
+  urlHasLogin,
+  widgetConfigMode,
 } from '../js/admin-logic.js';
+import { DOCK_MAX } from '../js/limits.js';
+
+register('./js-root-hooks.mjs', import.meta.url);
+const { visibleFieldFlags } = await import('../js/widget-types.js');
 
 test('createDirtyTracker is clean until the value moves, and clean again after reset', () => {
   let v = 'a';
@@ -60,6 +63,7 @@ test('createDirtyTracker reset to a given value stays dirty while the live value
   v = 'sent';
   assert.equal(tr.dirty(), false);
 });
+
 /* The real strength check, so these assert the rule the save actually applies. */
 import { passwordMeter } from '../js/password-policy.js';
 

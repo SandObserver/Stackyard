@@ -201,23 +201,12 @@ on('POST', '/api/config', async (req, res) => {
         });
       }
     }
-    /* A link is rendered into an <a href>. A javascript: or data: URL would
-       execute in the dashboard's own origin when the tile is clicked. */
     for (const item of data.items) {
       const badRow = firstMalformedRow(item);
       if (badRow) {
         return json(res, 400, {
           error: `${item.id}: ${badRow.field}[${badRow.index}] is not a { key, value, secret } entry`,
           kind: KIND.INVALID,
-        });
-      }
-      const unsafe = firstUnsafeLink(item);
-      if (unsafe) {
-        return json(res, 400, {
-          error: `${item.id}: ${unsafe.field} must not use the ${unsafe.value.split(':')[0].trim().toLowerCase()} scheme`,
-          kind: KIND.INVALID,
-          code: 'invalid.unsafe-link',
-          detail: { id: item.id },
         });
       }
     }
@@ -271,10 +260,11 @@ on('POST', '/api/config', async (req, res) => {
     /* settings.auth is owned entirely by the /api/auth/* routes. Keep nothing a
        config write supplies. */
     if (data.settings) delete data.settings.auth;
+    let staleCleared = false;
     if (existing.settings?.auth) {
       data.settings = data.settings || {};
       data.settings.auth = structuredClone(existing.settings.auth);
-      if (stripDisabledCredentials(data.settings.auth)) log.audit('stale password cleared', {});
+      staleCleared = stripDisabledCredentials(data.settings.auth);
     }
     /* An absent list is set by the next page load, so a write that leaves it out
        must not clear it. */
@@ -297,6 +287,21 @@ on('POST', '/api/config', async (req, res) => {
        stores secrets the new manifest does not scrub. */
     migrate(data);
     const reg = getRegistry();
+    /* A link is rendered into an <a href>. A javascript: or data: URL would
+       execute in the dashboard's own origin when the tile is clicked. Check
+       after migrate: a renamed widget type is matched to its manifest. */
+    const linkFields = type => reg[type]?.manifest?.fields;
+    for (const item of data.items) {
+      const unsafe = firstUnsafeLink(item, linkFields);
+      if (unsafe) {
+        return json(res, 400, {
+          error: `${item.id}: ${unsafe.field} must not use the ${unsafe.value.split(':')[0].trim().toLowerCase()} scheme`,
+          kind: KIND.INVALID,
+          code: 'invalid.unsafe-link',
+          detail: { id: item.id },
+        });
+      }
+    }
     for (const item of data.items) {
       if (item.type !== 'widget') continue;
       const stored = (existing.items || []).find(i => i.id === item.id && i.type === 'widget');
@@ -317,6 +322,7 @@ on('POST', '/api/config', async (req, res) => {
     backoff.reset();
     if (data.settings) log.setLevel(data.settings.logLevel);
     log.audit('config saved', {});
+    if (staleCleared) log.audit('stale password cleared', {});
     if (withheld.length) log.audit('stored credentials withheld', { items: withheld.map(w => w.id) });
     const { items } = clientConfig();
     json(res, 200, withheld.length ? { ok: true, items, withheld } : { ok: true, items });

@@ -142,6 +142,34 @@ test('validateManifest still rejects an unknown field type', () => {
   assert.match(errs[0], /unknown type "colour"/);
 });
 
+test('validateManifest accepts a link marker on a text field, top level and in a group', () => {
+  const link = { key: 'siteHref', type: 'text', label: 'Link', link: true };
+  assert.deepEqual(errsFor([link]), []);
+  assert.deepEqual(errsFor([{ key: 'slots', type: 'group', label: 'Slots', fields: [link] }]), []);
+});
+
+test('validateManifest rejects a link marker on a field that is not text', () => {
+  for (const type of ['secret', 'select', 'number', 'toggle']) {
+    const errs = errsFor([{ key: 'k', type, label: 'K', link: true, options: [{ value: 'a', label: 'A' }] }]);
+    assert.ok(
+      errs.some(e => /may set "link" only to true, and only on a text field/.test(e)),
+      `${type}: ${errs}`,
+    );
+  }
+});
+
+test('validateManifest rejects a link marker that is not true', () => {
+  const errs = errsFor([{ key: 'k', type: 'text', label: 'K', link: 'yes' }]);
+  assert.ok(errs.some(e => /may set "link" only to true/.test(e)));
+});
+
+test('validateManifest rejects a link field inside an object', () => {
+  const errs = errsFor([
+    { key: 'o', type: 'object', label: 'O', fields: [{ key: 'siteHref', type: 'text', label: 'L', link: true }] },
+  ]);
+  assert.ok(errs.some(e => /object "o" cannot hold a link field/.test(e)));
+});
+
 /* ── Repeated sibling keys ──────────────────────────────────────────────── */
 
 const cond = v => ({ field: 'type', equals: v });

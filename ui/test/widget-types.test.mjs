@@ -5,7 +5,7 @@ import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
-const { WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, widgetSrc, cardPreset } = await import(
+const { WIDGET_HEIGHTS, WIDGET_DESIGN, WIDGET_COLS, WIDGET_ROWS, widgetSrc, cardPreset, overlayHref } = await import(
   '../js/widget-types.js'
 );
 const { DEFAULT_WIDGET_SIZE } = await import('../js/limits.js');
@@ -199,4 +199,37 @@ test('a widget over several desktop rows is as tall as those rows and the gaps b
     const rows = WIDGET_ROWS.desktop[sz] || 1;
     assert.equal(WIDGET_HEIGHTS[sz], rows * WIDGET_HEIGHTS.small + (rows - 1) * ROW_GAP, sz);
   }
+});
+
+const manifest = name =>
+  JSON.parse(fs.readFileSync(new URL(`../widgets/${name}/widget.json`, import.meta.url), 'utf8'));
+const SHIPPED = { 'disk-health': manifest('disk-health'), backup: manifest('backup') };
+const HREFS = {
+  scrutinyHref: 'https://scrutiny.lan',
+  truenasHref: 'https://truenas.lan',
+  unraidHref: 'https://unraid.lan',
+};
+
+test('the phone overlay opens the link field shown for the chosen provider', () => {
+  const item = { widgetType: 'disk-health', widgetConfig: { diskProvider: 'truenas', ...HREFS } };
+  assert.equal(overlayHref(item, SHIPPED), 'https://truenas.lan');
+  item.widgetConfig.diskProvider = 'unraid';
+  assert.equal(overlayHref(item, SHIPPED), 'https://unraid.lan');
+});
+
+test('the phone overlay reads the provider default when none is saved', () => {
+  assert.equal(overlayHref({ widgetType: 'disk-health', widgetConfig: { ...HREFS } }, SHIPPED), 'https://scrutiny.lan');
+});
+
+test('the phone overlay skips an empty link and has none without a manifest', () => {
+  const item = { widgetType: 'disk-health', widgetConfig: { diskProvider: 'truenas', scrutinyHref: 'https://s' } };
+  assert.equal(overlayHref(item, SHIPPED), null);
+  assert.equal(overlayHref({ widgetType: 'gone', widgetConfig: { ...HREFS } }, SHIPPED), null);
+});
+
+test('the phone overlay prefers the item address and ignores group-row links', () => {
+  const item = { widgetType: 'disk-health', url: 'https://item', widgetConfig: { diskProvider: 'truenas', ...HREFS } };
+  assert.equal(overlayHref(item, SHIPPED), 'https://item');
+  const backup = { widgetType: 'backup', widgetConfig: { slots: [{ provider: 'duplicati', dupHref: 'https://d' }] } };
+  assert.equal(overlayHref(backup, SHIPPED), null);
 });

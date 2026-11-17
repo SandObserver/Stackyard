@@ -45,45 +45,6 @@ export function sizesForView(allSizes, reg, config) {
   return narrowed.length ? narrowed : allSizes;
 }
 
-export function showIfMatches(cond, current) {
-  if (Array.isArray(cond.in)) return cond.in.map(String).includes(String(current));
-  if (typeof current === 'boolean') return current === !!cond.equals;
-  return String(current) === String(cond.equals);
-}
-
-/* Follow showIf chains. A hidden controller still holds a value underneath, and
-   its dependants would show themselves against it.
-
-   Resolve each field by its position. Two fields may share a key, one per
-   branch of a showIf, and resolving by key gives both the same answer: the
-   wrong branch is shown, or both branches are hidden. */
-export function visibleFieldFlags(fields, readValue) {
-  const idxsByKey = new Map();
-  fields.forEach((f, i) => {
-    if (!f || f.key == null) return;
-    const at = idxsByKey.get(f.key);
-    if (at) at.push(i);
-    else idxsByKey.set(f.key, [i]);
-  });
-  const memo = new Map();
-  const isShown = i => {
-    if (memo.has(i)) return memo.get(i);
-    memo.set(i, false); /* guard against a cycle in malformed manifests */
-    const f = fields[i];
-    let ok = true;
-    if (f && f.showIf) {
-      const dep = f.showIf.field;
-      const depIdxs = idxsByKey.get(dep);
-      ok = depIdxs
-        ? depIdxs.some(j => isShown(j)) && showIfMatches(f.showIf, readValue(dep))
-        : showIfMatches(f.showIf, readValue(dep));
-    }
-    memo.set(i, ok);
-    return ok;
-  };
-  return fields.map((f, i) => (f && f.key != null ? isShown(i) : false));
-}
-
 /* A blank secret means "keep the stored one", not empty. */
 const _ALWAYS_FILLED = new Set(['toggle', 'color', 'group', 'object', 'secret']);
 export function requiredFieldMissing(field, kv) {
