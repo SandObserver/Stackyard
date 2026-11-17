@@ -137,6 +137,8 @@
   --glass-bend:           .9;
   --glass-dispersion:     .5;
   --glass-folder:         rgb(107 107 112 / .5);
+  --glass-folder-frost:   .4;
+  --glass-folder-bend:    1.8;
 }
 
 /* ── Light theme ─────────────────────────────────────────────────────────────

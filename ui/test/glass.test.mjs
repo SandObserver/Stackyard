@@ -28,6 +28,22 @@ test('the wallpaper bitmap never exceeds the GPU texture limit', () => {
   assert.deepEqual(bitmapSize(3000, 2000, 1500, 4096), [1500, 1000], 'a large picture shrinks to its shown width');
 });
 
+test('the open folder is clear glass with a stronger bend', () => {
+  const tokens = fs.readFileSync(path.join(root, 'css/tokens.css'), 'utf8');
+  assert.match(tokens, /--glass-folder-frost:\s*\.4;/);
+  assert.match(tokens, /--glass-folder-bend:\s*1\.8;/);
+});
+
+test('the frost is even across a glass surface', () => {
+  const gpu = fs.readFileSync(path.join(root, 'js/glass-gpu.js'), 'utf8');
+  assert.match(gpu, /col = mix\(col, uFrost\.rgb, uFrost\.a\);/);
+  assert.doesNotMatch(
+    gpu,
+    /smoothstep\([^)]*min\(uRect\.z, uRect\.w\)/,
+    'frost scaled by distance from the edge shows a diamond on a large panel',
+  );
+});
+
 test('the folder frost is read from the folder fill in either colour syntax', () => {
   assert.deepEqual(unitColour('rgb(102 102 102 / .5)'), [0.4, 0.4, 0.4, 0.5]);
   assert.deepEqual(unitColour('rgba(255,255,255,.55)'), [1, 1, 1, 0.55]);
@@ -158,7 +174,7 @@ class FakeEl {
 }
 
 /** A page, a window and a GPU, all recorded. */
-function harness({ webgl = true, accept = () => true } = {}) {
+function harness({ webgl = true, accept = () => true, tokens = {} } = {}) {
   const doc = {
     documentElement: Object.assign(new FakeEl('html'), { clientWidth: 400 }),
     body: Object.assign(new FakeEl('body'), { isConnected: true }),
@@ -180,7 +196,8 @@ function harness({ webgl = true, accept = () => true } = {}) {
     innerHeight: 800,
     location: { origin: 'http://host' },
     getComputedStyle: () => ({
-      getPropertyValue: name => ({ '--glass-folder': 'rgb(107 107 112 / .5)', '--folder-blur': '20' })[name] ?? '',
+      getPropertyValue: name =>
+        ({ '--glass-folder': 'rgb(107 107 112 / .5)', '--folder-blur': '20', ...tokens })[name] ?? '',
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       borderTopLeftRadius: '20px',
       opacity: '1',
@@ -223,6 +240,7 @@ function harness({ webgl = true, accept = () => true } = {}) {
         maxSize: 4096,
         wallpapers: [],
         draws: [],
+        looks: [],
         boxes: [],
         sizes: [],
         setWallpaper(bitmap) {
@@ -235,8 +253,9 @@ function harness({ webgl = true, accept = () => true } = {}) {
         resize(width, height) {
           r.sizes.push([width, height]);
         },
-        draw(items) {
+        draw(items, look) {
           r.draws.push(items);
+          r.looks.push(look);
         },
       };
       renderers.push(r);
@@ -434,4 +453,29 @@ test('a folder layer that refuses a new wallpaper gives the open folder its CSS 
   assert.equal(h.glass.stats().folderLayer, false);
   assert.equal(ov.hasAttribute('data-glass-drawn'), false, 'the panel stays clear over a dead layer');
   assert.equal(h.renderers[1].canvas.hidden, true);
+});
+
+/** The look the open folder was last drawn with, on a page whose glass bend is 2. */
+async function folderLook(tokens) {
+  const h = harness({ tokens: { '--glass-bend': '2', ...tokens } });
+  await live(h);
+  h.runIdle();
+  const ov = Object.assign(new FakeEl(), { isConnected: true });
+  const panel = new FakeEl();
+  ov.append(panel);
+  h.glass.openFolder(ov, panel);
+  h.tick();
+  return h.renderers[1].looks.at(-1);
+}
+
+test('the folder tokens scale its bend and frost, and 0 turns either off', async () => {
+  const set = await folderLook({ '--glass-folder-bend': '1.8', '--glass-folder-frost': '.4' });
+  assert.ok(Math.abs(set.bend - 3.6) < 1e-9);
+  assert.ok(Math.abs(set.frost[3] - 0.5 * 0.4) < 1e-9, 'the fill alpha is scaled by the frost token');
+  const off = await folderLook({ '--glass-folder-bend': '0', '--glass-folder-frost': '0' });
+  assert.equal(off.bend, 0);
+  assert.equal(off.frost[3], 0);
+  const unset = await folderLook({});
+  assert.equal(unset.bend, 2, 'an unset token leaves the bend as it is');
+  assert.ok(Math.abs(unset.frost[3] - 0.5) < 1e-9);
 });

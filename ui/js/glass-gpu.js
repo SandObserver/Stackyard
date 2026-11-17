@@ -61,8 +61,7 @@ void main() {
       col[i] = wall(p + shift)[i];
     }
   }
-  float inner = smoothstep(0.0, 0.18 * min(uRect.z, uRect.w), d);
-  col = mix(col, uFrost.rgb, uFrost.a * mix(0.2, 1.0, inner));
+  col = mix(col, uFrost.rgb, uFrost.a);
   float k = cover * uAlpha;
   o = vec4(col * k, k);
 }`;

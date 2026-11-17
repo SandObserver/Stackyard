@@ -1,10 +1,10 @@
 // @ts-check
 import { onFrame, requestFrame, setScripted } from '/js/frame-motion.js?v=1d86154d';
-import { createGlassRenderer } from '/js/glass-gpu.js?v=5787df05';
+import { createGlassRenderer } from '/js/glass-gpu.js?v=9733cf9b';
 import { loadSamplingImage } from '/js/label-contrast.js?v=a160c6d1';
 
-/** @typedef {import('/js/glass-gpu.js?v=5787df05').GlassLook} GlassLook */
-/** @typedef {import('/js/glass-gpu.js?v=5787df05').GlassItem} GlassItem */
+/** @typedef {import('/js/glass-gpu.js?v=9733cf9b').GlassLook} GlassLook */
+/** @typedef {import('/js/glass-gpu.js?v=9733cf9b').GlassItem} GlassItem */
 /** @typedef {ReturnType<typeof createGlassRenderer>} Renderer */
 
 /* Keep in step with the rim list in dashboard.css. */
@@ -87,6 +87,11 @@ export function createGlass(env) {
   const css = (/** @type {Element} */ el) => win.getComputedStyle(el);
   /** @param {Element} el @param {string} name */
   const num = (el, name) => Number.parseFloat(css(el).getPropertyValue(name));
+  /** A token that is unset reads as `fallback`; 0 stays 0. @param {Element} el @param {string} name @param {number} fallback */
+  const numOr = (el, name, fallback) => {
+    const v = num(el, name);
+    return Number.isFinite(v) ? v : fallback;
+  };
 
   function dropPanel() {
     if (!panel) return;
@@ -155,14 +160,21 @@ export function createGlass(env) {
     };
   }
 
+  /** @param {number[]} c @param {number} k */
+  const frostOf = (c, k) => [c[0], c[1], c[2], c[3] * k];
+
   /** @param {HTMLElement} ov @returns {GlassLook} */
   function folderLook(ov) {
     const [r, g, b, a] = unitColour(css(ov).backgroundColor);
     return {
       ...look,
+      bend: look.bend * numOr(doc.documentElement, '--glass-folder-bend', 1),
       brightness: look.brightness * Math.sqrt(num(ov, '--folder-dim') || 1),
       tint: [r, g, b, a * 0.5],
-      frost: unitColour(css(doc.documentElement).getPropertyValue('--glass-folder')),
+      frost: frostOf(
+        unitColour(css(doc.documentElement).getPropertyValue('--glass-folder')),
+        numOr(doc.documentElement, '--glass-folder-frost', 1),
+      ),
     };
   }
 
