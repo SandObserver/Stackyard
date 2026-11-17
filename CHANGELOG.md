@@ -42,6 +42,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep each source's stored key with the right source after one is removed and
   the Size or View changes.
 
+- Save a Settings change made while another save is still running, instead of
+  refusing it as changed elsewhere.
+
+- Show a new wallpaper behind Settings as soon as it is saved, not on the next
+  visit.
+
 ## [1.23.0] - 2026-11-15
 
 ### Added
