@@ -48,6 +48,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show a new wallpaper behind Settings as soon as it is saved, not on the next
   visit.
 
+- Show the icons and the show-password button on the setup screen for a refused
+  address or a damaged password.
+
 ## [1.23.0] - 2026-11-15
 
 ### Added
