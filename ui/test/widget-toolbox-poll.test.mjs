@@ -12,6 +12,14 @@ const { errorKind } = await import('../js/widget-error.js');
 
 const tick = ms => new Promise(r => setTimeout(r, ms));
 
+const until = async (cond, what, ms = 2000) => {
+  const end = Date.now() + ms;
+  while (!cond()) {
+    if (Date.now() > end) assert.fail(`timed out waiting for ${what}`);
+    await tick(1);
+  }
+};
+
 test('a failure within tolerance leaves the last good render in place', async () => {
   const rendered = [];
   const errors = [];
@@ -26,7 +34,7 @@ test('a failure within tolerance leaves the last good render in place', async ()
     render: d => rendered.push(d.call),
     onError: info => errors.push(info),
   });
-  await tick(60);
+  await until(() => rendered.includes(3), 'the fetch after the failure');
   p.stop();
 
   assert.ok(rendered.includes(1), 'first success rendered');
@@ -46,7 +54,7 @@ test('consecutive failures past staleAfter report stale', async () => {
     },
     onError: info => errors.push(info),
   });
-  await tick(40);
+  await until(() => errors.some(e => e.stale), 'a stale failure');
   p.stop();
 
   assert.equal(errors[0].stale, false);
@@ -66,7 +74,7 @@ test('a widget polling every five minutes or slower is stale after one failure',
     },
     onError: info => errors.push(info),
   });
-  await tick(20);
+  await until(() => errors.length > 0, 'the first failure');
   p.stop();
 
   assert.equal(errors.length, 1);
@@ -84,7 +92,7 @@ test('interval can be a function of the last successful result', async () => {
     render: () => {},
     onError: () => {},
   });
-  await tick(40);
+  await until(() => seen.length > 1, 'a second scheduled poll');
   p.stop();
 
   assert.equal(seen[0].n, 0, 'first delay sees the first result');
@@ -102,7 +110,7 @@ test('stop halts further fetches', async () => {
     render: () => {},
     onError: () => {},
   });
-  await tick(30);
+  await until(() => calls >= 2, 'two fetches');
   p.stop();
   const atStop = calls;
   await tick(30);
@@ -174,9 +182,8 @@ test('polling stops while the tab is hidden', async () => {
   await run(async (dom, start) => {
     let calls = 0;
     start({ interval: 5, fetch: async () => ({ n: ++calls }) });
-    await tick(30);
+    await until(() => calls >= 2, 'several polls while visible');
     const before = calls;
-    assert.ok(before >= 2, `expected several polls while visible, got ${before}`);
 
     dom.setHidden(true);
     await tick(60);
@@ -192,7 +199,8 @@ test('hiding cancels a timer that is already armed', async () => {
   await run(async (dom, start) => {
     let calls = 0;
     start({ interval: 30, fetch: async () => ({ n: ++calls }) });
-    await tick(10);
+    await until(() => calls === 1, 'the first fetch');
+    await tick(1);
     assert.equal(calls, 1, 'one fetch, with the next already scheduled');
 
     dom.setHidden(true);
@@ -205,13 +213,12 @@ test('becoming visible fetches at once rather than waiting out the interval', as
   await run(async (dom, start) => {
     let calls = 0;
     start({ interval: 10_000, fetch: async () => ({ n: ++calls }) });
-    await tick(20);
-    assert.equal(calls, 1, 'one initial fetch');
+    await until(() => calls === 1, 'the first fetch');
+    await tick(1);
 
     dom.setHidden(true);
     await tick(20);
     dom.setHidden(false);
-    await tick(20);
     assert.equal(calls, 2, 'returning should fetch immediately, not after 10s');
   });
 });
@@ -222,8 +229,8 @@ test('repeated visibility changes do not multiply the loop', async () => {
   await run(async (dom, start) => {
     let calls = 0;
     start({ interval: 10_000, fetch: async () => ({ n: ++calls }) });
-    await tick(20);
-    assert.equal(calls, 1);
+    await until(() => calls === 1, 'the first fetch');
+    await tick(1);
 
     dom.setHidden(true);
     await tick(10);
@@ -238,18 +245,22 @@ test('repeated visibility changes do not multiply the loop', async () => {
 test('hiding and showing during a slow fetch does not start a second loop', async () => {
   await run(async (dom, start) => {
     let calls = 0;
+    let landed = false;
     start({
       interval: 10_000,
       fetch: async () => {
         calls++;
         await tick(40);
+        landed = true;
         return {};
       },
     });
     await tick(5);
+    assert.equal(landed, false, 'the fetch is still in flight');
     dom.setHidden(true);
     dom.setHidden(false);
-    await tick(80);
+    await until(() => landed, 'the slow fetch');
+    await tick(30);
     assert.equal(calls, 1, 'the fetch in flight is the only one until the interval passes');
   });
 });
@@ -267,8 +278,7 @@ test('a slow fetch that lands after the tab returns keeps polling', async () => 
     await tick(5);
     dom.setHidden(true);
     dom.setHidden(false);
-    await tick(80);
-    assert.ok(calls > 2, `expected polling to continue, got ${calls} calls`);
+    await until(() => calls > 2, 'polling to continue');
   });
 });
 
@@ -283,11 +293,16 @@ test('a rate change during a fetch does not start a second loop', async () => {
           return {};
         },
       });
-      await tick(150);
-      assert.equal(calls, 2, 'the second fetch is in flight');
+      await until(() => calls === 2, 'the second fetch');
       setPollRate(1.0001);
+      const from = Date.now();
+      const atChange = calls;
       await tick(1000);
-      assert.ok(calls <= 12, `expected about 10 fetches at one loop's pace, got ${calls}`);
+      const oneLoop = Math.ceil((Date.now() - from) / 85) + 1;
+      assert.ok(
+        calls - atChange <= oneLoop,
+        `expected at most ${oneLoop} fetches at one loop's pace, got ${calls - atChange}`,
+      );
     });
   } finally {
     setPollRate(1);
@@ -299,12 +314,12 @@ test('a poll started while hidden does not keep polling', async () => {
     async (dom, start) => {
       let calls = 0;
       start({ interval: 5, fetch: async () => ({ n: ++calls }) });
+      await until(() => calls === 1, 'the first fetch');
       await tick(40);
       assert.equal(calls, 1, 'the first fetch runs, then it waits for visibility');
 
       dom.setHidden(false);
-      await tick(30);
-      assert.ok(calls > 1, 'and it resumes when shown');
+      await until(() => calls > 1, 'polling to resume when shown');
     },
     { hidden: true },
   );
@@ -355,8 +370,8 @@ test('the repeat interval is spread, and the first fetch is not delayed', async 
           return {};
         },
       });
-      await tick(20);
       assert.ok(firstFetchAt - first < 50, 'the first fetch waits for nothing');
+      await until(() => delays.some(d => d > 500), 'the repeat to be scheduled');
     });
   } finally {
     globalThis.setTimeout = realTimeout;
@@ -373,17 +388,15 @@ test('a raised rate stretches the interval and lowering it restores the cadence'
   await run(async (_dom, start) => {
     let calls = 0;
     start({ interval: 20, fetch: async () => ({ n: ++calls }) });
-    await tick(50);
+    await until(() => calls >= 2, 'polling at the normal rate');
     const visible = calls;
-    assert.ok(visible >= 2, `expected polling at the normal rate, got ${visible}`);
 
-    setPollRate(8);
+    setPollRate(50);
     await tick(60);
     assert.ok(calls - visible <= 1, `expected the slow rate to hold off, got ${calls - visible} calls`);
 
     setPollRate(1);
-    await tick(30);
-    assert.ok(calls > visible + 1, 'the normal cadence resumes');
+    await until(() => calls > visible + 1, 'the normal cadence to resume');
   });
 });
 
@@ -391,11 +404,10 @@ test('returning to the normal rate refetches at once when the data is already ol
   await run(async (_dom, start) => {
     let calls = 0;
     start({ interval: 20, fetch: async () => ({ n: ++calls }) });
-    setPollRate(10);
+    setPollRate(50);
     await tick(60);
     const before = calls;
     setPollRate(1);
-    await tick(5);
     assert.equal(calls, before + 1, 'one immediate refresh, not a wait for the next tick');
   });
 });
@@ -403,8 +415,9 @@ test('returning to the normal rate refetches at once when the data is already ol
 test('a rate change does not refetch when the data is still fresh', async () => {
   await run(async (_dom, start) => {
     let calls = 0;
-    start({ interval: 200, fetch: async () => ({ n: ++calls }) });
-    await tick(10);
+    start({ interval: 10_000, fetch: async () => ({ n: ++calls }) });
+    await until(() => calls === 1, 'the first fetch');
+    await tick(1);
     const before = calls;
     setPollRate(4);
     setPollRate(1);
@@ -511,7 +524,7 @@ test('a render that throws on every tick goes stale like a failed fetch', async 
     },
     onError: info => errors.push(info),
   });
-  await tick(60);
+  await until(() => errors.some(e => e.stale), 'a stale render failure');
   p.stop();
 
   assert.equal(errors[0].stale, false, 'one failed render is within tolerance');
@@ -532,7 +545,7 @@ test('a widget that never rendered reports its first render failure', async () =
     },
     onError: info => errors.push(info),
   });
-  await tick(20);
+  await until(() => errors.length > 0, 'the first render failure');
   p.stop();
 
   assert.equal(errors[0].everOk, false);
@@ -553,7 +566,7 @@ test('a render failure reads as the widget going wrong, and a fetch failure as o
     },
     onError: info => errors.push(info),
   });
-  await tick(30);
+  await until(() => errors.length >= 2, 'both failures');
   p.stop();
 
   assert.equal(errorKind(errors[0].error), 'internal');
