@@ -191,7 +191,7 @@ button,a,[role="button"],label.tog,.segr-opt{touch-action:manipulation}
 .sec-title{font-size:var(--fs-large-title);line-height:var(--lh-large-title);letter-spacing:var(--tr-large-title);font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}
 .sec-hdr-actions{display:flex;gap:6px;flex-shrink:0}
 .ev-back::before,.m-back::before,.sec-hdr-actions .btn::before,.mtabbar::before{content:"";position:absolute;inset:0;z-index:6;border-radius:inherit;padding:1px;pointer-events:none;background:var(--glass-rim-paint);mask:var(--glass-rim-mask)}
-.ev-back{display:flex;align-items:center;justify-content:center;gap:3px;position:relative;background:var(--glass-control);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-control-shadow);border:none;border-radius:999px;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;font-family:inherit;cursor:pointer;min-width:44px;min-height:44px;padding-block:0;padding-inline:10px 14px;flex-shrink:0}
+.ev-back{display:flex;align-items:center;justify-content:center;gap:3px;position:relative;background:var(--glass-control);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-control-shadow);border:none;border-radius:999px;color:var(--tx);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-weight:500;font-family:inherit;cursor:pointer;min-width:44px;min-height:44px;padding-block:0;padding-inline:10px 14px;flex-shrink:0}
 @media (hover:hover) and (pointer:fine){.ev-back:hover{opacity:.8}}
 .ev-back:active{opacity:var(--press-dim)}
 
@@ -274,7 +274,7 @@ button,a,[role="button"],label.tog,.segr-opt{touch-action:manipulation}
 @media (hover:hover) and (pointer:fine){.row-dd-btn:hover{color:var(--tx)}}
 .row-dd-btn:active{opacity:var(--press-dim)}
 .dd-chev{flex-shrink:0;width:18px;height:18px;color:inherit}
-.row-dd-list{position:fixed;inset:auto;margin:0;top:-9999px;z-index:9000;background:var(--menu-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--menu-rim);border-radius:34px;list-style:none;min-width:250px;max-width:min(320px,calc(100vw - 16px));max-height:min(360px,60dvh);overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--shadow-pop);padding:10px 0;transition:opacity calc(var(--t-reveal) * .9) var(--ease-reveal),transform calc(var(--t-reveal) * .9) var(--ease-reveal)}
+.row-dd-list{position:fixed;inset:auto;margin:0;top:-9999px;z-index:9000;background:var(--menu-bg);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--menu-rim);border-radius:34px;list-style:none;min-width:250px;max-width:min(320px,calc(100vw - 16px));max-height:min(360px,60dvh);overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--shadow-pop);padding:10px 0;transition:opacity calc(var(--t-reveal) * .9) var(--ease-reveal),transform calc(var(--t-reveal) * .9) var(--ease-reveal)}
 html[data-transparency="reduce"] .row-dd-list{background:var(--bg-outer)}
 /* Off screen until place() sets the real position, so a frame drawn before it
    lands is not a flash somewhere else. 9000 clears the phone tab bar at 8000. */
@@ -640,7 +640,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .sv-btn.busy .sv-lbl{opacity:0;transition-delay:0s;transition-duration:calc(var(--t-reveal) * .6)}
 .sv-btn.busy .sv-busy{opacity:1;transition-delay:calc(var(--t-reveal) * .4)}
 .sm{padding:5px 12px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);min-height:28px}
-.sec-hdr-actions .btn{min-height:36px;padding:7px 16px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);position:relative;background:var(--glass-control);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-control-shadow)}
+.sec-hdr-actions .btn{min-height:36px;padding:7px 16px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);position:relative;background:var(--glass-control);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-control-shadow)}
 .sec-hdr-actions .btn.bp{color:var(--ac)}
 .sec-hdr-actions .btn.bp:disabled{color:var(--dm)}
 .sec-hdr-actions .btn.bd-btn{color:var(--rd)}
@@ -656,7 +656,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .pw-hint{font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);color:var(--dm);margin-top:4px;min-height:16px;padding-inline:16px}
 
 /* ── Toast ── */
-#toast{position:fixed;bottom:24px;inset-inline-end:max(24px,var(--safe-left),var(--safe-right));background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-group);display:flex;align-items:flex-start;gap:10px;padding-block:14px;padding-inline:18px 12px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);color:var(--tx);box-shadow:var(--shadow-pop);opacity:0;transform:translateY(8px);transition:opacity var(--t-reveal) var(--ease-reveal),transform var(--t-reveal) var(--ease-reveal);pointer-events:none;z-index:9999;max-width:min(320px,calc(100vw - 48px))}
+#toast{position:fixed;bottom:24px;inset-inline-end:max(24px,var(--safe-left),var(--safe-right));background:var(--glass-bg);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-group);display:flex;align-items:flex-start;gap:10px;padding-block:14px;padding-inline:18px 12px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);color:var(--tx);box-shadow:var(--shadow-pop);opacity:0;transform:translateY(8px);transition:opacity var(--t-reveal) var(--ease-reveal),transform var(--t-reveal) var(--ease-reveal);pointer-events:none;z-index:9999;max-width:min(320px,calc(100vw - 48px))}
 /* Only the shown toast takes pointer events. A hidden one would swallow a
    click. */
 #toast.show{opacity:1;transform:translateY(0);pointer-events:auto;cursor:pointer;-webkit-user-select:text;user-select:text}
@@ -714,7 +714,7 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
    universal reset in tokens.css zeroes the auto margin the browser centres a
    dialog with, and a width that is not 100%, which would leave that centring
    no free space. The 48px is the gap it keeps from the viewport edge. */
-.dlg-box{margin:auto;background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-window);width:calc(100% - 48px);max-width:380px;max-height:70dvh;display:flex;flex-direction:column;box-shadow:var(--shadow-pop);padding:0;color:var(--tx)}
+.dlg-box{margin:auto;background:var(--glass-bg);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-window);width:calc(100% - 48px);max-width:380px;max-height:70dvh;display:flex;flex-direction:column;box-shadow:var(--shadow-pop);padding:0;color:var(--tx)}
 .dlg-box::backdrop{background:var(--scrim)}
 .dlg-box[open]{animation:pop-in var(--t-reveal) var(--ease-reveal)}
 .dlg-box[open]::backdrop{animation:swap-in var(--t-reveal) ease-out}
@@ -765,7 +765,7 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
    below the field it belongs to. */
 .icon-src-anchor{position:relative}
 .ipv{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--on-tint);flex-shrink:0}
-.iprs{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--glass-bg);-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-group);padding:6px;max-height:180px;overflow-y:auto;overscroll-behavior:contain;display:none;z-index:50;box-shadow:var(--shadow-pop)}
+.iprs{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--glass-bg);backdrop-filter:blur(32px) saturate(180%);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-group);padding:6px;max-height:180px;overflow-y:auto;overscroll-behavior:contain;display:none;z-index:50;box-shadow:var(--shadow-pop)}
 .iprs.open{display:block}
 .ipr{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:20px;background:none;border:none;width:100%;text-align:start;cursor:pointer;color:var(--tx);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);font-family:inherit;position:relative;z-index:1}
 /* No hover background of its own: the glide highlight draws it. */
@@ -787,7 +787,7 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
 .bprow-hidden{display:none!important}
 
 /* ── Auth overlays ── */
-.login-screen{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding-block:max(16px,var(--safe-top)) max(16px,var(--safe-bottom));padding-inline:max(16px,var(--safe-left),var(--safe-right));border:0;color:var(--tx);background:var(--scrim-strong);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
+.login-screen{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding-block:max(16px,var(--safe-top)) max(16px,var(--safe-bottom));padding-inline:max(16px,var(--safe-left),var(--safe-right));border:0;color:var(--tx);background:var(--scrim-strong);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
 .login-screen[open]{display:flex}
 .login-screen::backdrop{background:transparent}
 .login-wrap{background:var(--glass-bg);border:0.5px solid var(--glass-rim);border-radius:var(--sy-radius-window);padding:28px 22px 22px;width:100%;max-width:360px;box-shadow:var(--shadow-login);display:flex;flex-direction:column;gap:14px}
@@ -904,7 +904,7 @@ html.is-mobile .sec-hdr{padding:10px 0 10px;flex-wrap:wrap;row-gap:6px}
 html.is-mobile .sec-title{order:1;flex-basis:100%;min-width:0;overflow-wrap:break-word}
 html.is-mobile .sec-hdr-actions{margin-inline-start:auto}
 html.is-mobile .sec-hdr-actions .btn{min-height:44px;padding-inline:18px}
-html.is-mobile .m-back{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;position:relative;background:var(--glass-control);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-control-shadow);color:var(--tx);text-decoration:none;flex-shrink:0}
+html.is-mobile .m-back{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;position:relative;background:var(--glass-control);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-control-shadow);color:var(--tx);text-decoration:none;flex-shrink:0}
 html.is-mobile .m-back:active{opacity:var(--press-dim)}
 /* Under 16px, iOS zooms the page on focus and does not zoom back. */
 html.is-mobile .kv-k,html.is-mobile .kv-v{font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body)}
@@ -912,7 +912,7 @@ html.is-mobile .kv-k,html.is-mobile .kv-v{font-size:var(--fs-body);line-height:v
 html.is-mobile body.authed .mtabbar{
   display:flex;position:fixed;left:21px;right:21px;bottom:21px;
   z-index:8000;justify-content:space-around;align-items:center;gap:2px;
-  background:var(--glass-fill);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  background:var(--glass-fill);backdrop-filter:var(--glass-blur);
   border:.5px solid transparent;border-radius:50px;
   padding:4px;box-shadow:var(--shadow-bar);
 }

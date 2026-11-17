@@ -46,14 +46,14 @@
   .aq{position:absolute;inset-block-start:4px;inset-inline-end:4px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:#2C2C2E}
   .aq[hidden]{display:none}
   .aq-hit{display:flex}
-  .aq-cap{position:absolute;inset-block-start:2px;inset-inline-end:2px;display:flex;align-items:center;gap:5px;padding-block:5px;padding-inline:10px 5px;border-radius:999px;font-size:13px;font-weight:600;line-height:18px;white-space:nowrap;color:#2C2C2E;background:rgba(255,255,255,0.82);box-shadow:0 1px 6px rgba(0,0,0,0.12);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s,visibility .2s}
+  .aq-cap{position:absolute;inset-block-start:2px;inset-inline-end:2px;display:flex;align-items:center;gap:5px;padding-block:5px;padding-inline:10px 5px;border-radius:999px;font-size:13px;font-weight:600;line-height:18px;white-space:nowrap;color:#2C2C2E;background:rgba(255,255,255,0.82);box-shadow:0 1px 6px rgba(0,0,0,0.12);backdrop-filter:blur(12px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s,visibility .2s}
   .night .aq,.night .aq-cap{color:#FFFFFF}
   .night .aq-cap{background:rgba(58,58,60,0.82);box-shadow:0 1px 6px rgba(0,0,0,0.4)}
   @media(hover:hover){.widget:hover .aq-cap{opacity:1;visibility:visible}}
   .widget:focus-visible .aq-cap,.widget.peek .aq-cap{opacity:1;visibility:visible}
   .widget.hush .aq-cap{opacity:0;visibility:hidden}
   @media(prefers-reduced-motion:reduce){.aq-cap{transition:none}}
-  html[data-transparency="reduce"] .aq-cap{-webkit-backdrop-filter:none;backdrop-filter:none}
+  html[data-transparency="reduce"] .aq-cap{backdrop-filter:none}
   .sy-sprite{position:absolute;width:0;height:0;overflow:hidden}
   .sy-icon{flex-shrink:0}
   .sy-i{fill:currentColor}

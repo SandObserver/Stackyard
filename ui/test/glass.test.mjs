@@ -95,7 +95,7 @@ test('the renderer refuses a picture the GPU cannot take', async () => {
 test('a translucent card turns solid under reduced transparency', () => {
   assert.match(
     read('css/dashboard.css'),
-    /html\[data-transparency="reduce"\] :is\(\.widget, \.mob-widget-card\)\[data-card="translucent"\] \{\s*background:var\(--glass-card-solid\); -webkit-backdrop-filter:none; backdrop-filter:none;/,
+    /html\[data-transparency="reduce"\] :is\(\.widget, \.mob-widget-card\)\[data-card="translucent"\] \{\s*background:var\(--glass-card-solid\); backdrop-filter:none;/,
   );
 });
 

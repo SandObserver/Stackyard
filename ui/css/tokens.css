@@ -1,8 +1,5 @@
 /* ── Browser support ─────────────────────────────────────────────────────────
-   Desktop: Safari 17.6 and newer, and current Chrome, Edge and Firefox.
-   iOS: Safari 17.0 and newer.
-
-   The rule behind each number is in docs/frontend.md.
+   Safari 26.2 and newer on macOS and iOS, and current Chrome, Edge and Firefox.
 
    There is no autoprefixer. The vendor prefixes still in this project are the
    ones with no working unprefixed equivalent at that floor. Do not remove one
@@ -285,7 +282,7 @@ html[data-theme="light"] {
 
 /* Reduce Transparency: drop the blur, keep the motion. admin-theme.js sets the
    attribute from the system setting or this device's own switch. */
-:where(html[data-transparency="reduce"] *) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+:where(html[data-transparency="reduce"] *) { backdrop-filter: none !important; }
 
 /* Increased contrast: raise the hues and every role follows. Both selectors are
    needed. The light theme sets the palette at a higher specificity, so a :root
@@ -355,7 +352,6 @@ html.wall-in::before { animation:wall-in .4s ease-out }
 @media (forced-colors: active) {
   html::before { background-image:none; background-color:Canvas; filter:none; }
   *, *::before, *::after {
-    -webkit-backdrop-filter:none !important;
     backdrop-filter:none !important;
   }
 }

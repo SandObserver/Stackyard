@@ -152,7 +152,7 @@ test('a closing folder takes no input and shrinks from where it is', () => {
   assert.match(css, /\.folder-overlay-mobile:not\(\[open\]\) \{ display:block \}/);
   assert.match(
     css,
-    /:is\(\.folder-overlay, \.folder-overlay-mobile\):not\(\[open\]\) \{\s*background:none !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important;/,
+    /:is\(\.folder-overlay, \.folder-overlay-mobile\):not\(\[open\]\) \{\s*background:none !important; backdrop-filter:none !important;/,
     'a fading blur darkens the top edge of the screen',
   );
   assert.match(motion, /stop = playFolder\(\s*parts\.flatMap/, 'only the panel animates the close');
