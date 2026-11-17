@@ -51,6 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show the icons and the show-password button on the setup screen for a refused
   address or a damaged password.
 
+- Show a widget saved without a size at the same size on the dashboard as its
+  frame loads, instead of a smaller frame in a larger tile.
+
 ## [1.23.0] - 2026-11-15
 
 ### Added
