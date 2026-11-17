@@ -384,7 +384,14 @@ function fetchJSON(raw, opts = {}) {
           total += c.length;
           if (total > sizeLimit) {
             req.destroy();
-            return done(reject, Object.assign(new Error('Response too large'), { responseTooLarge: true }));
+            return done(
+              reject,
+              Object.assign(new Error('Response too large'), {
+                responseTooLarge: true,
+                kind: 'upstream',
+                apiCode: 'upstream.too-large',
+              }),
+            );
           }
           bufs.push(c);
         });

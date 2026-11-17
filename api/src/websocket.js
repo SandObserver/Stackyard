@@ -12,7 +12,8 @@ const FRAGMENT_FLOOR = 1024;
 const OP = { CONTINUATION: 0, TEXT: 1, BINARY: 2, CLOSE: 8, PING: 9, PONG: 10 };
 
 const protocolError = message => Object.assign(new Error(message), { kind: 'upstream' });
-const tooLarge = () => Object.assign(protocolError('Response too large'), { responseTooLarge: true });
+const tooLarge = () =>
+  Object.assign(protocolError('Response too large'), { responseTooLarge: true, apiCode: 'upstream.too-large' });
 
 const handshakeKey = () => crypto.randomBytes(16).toString('base64');
 

@@ -280,6 +280,9 @@ test('a reply past the size limit is marked, so a route can word it as too large
       x => x,
     );
     assert.equal(e.responseTooLarge, true);
+    const body = require('../src/api-error').errorBody(e);
+    assert.equal(body.kind, 'upstream', 'an oversized reply is the service at fault, not the dashboard');
+    assert.equal(body.code, 'upstream.too-large');
   } finally {
     server.close();
   }
