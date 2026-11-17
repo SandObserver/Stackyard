@@ -3,6 +3,7 @@ const { on, json } = require('../router');
 const { loadConfig } = require('../config');
 const { scrubWidgetSecrets, WITHHELD_FLAG } = require('../widget-secrets');
 const { getRegistry } = require('../widget-registry');
+const { DEFAULT_WIDGET_SIZE } = require('../../../ui/js/limits.js');
 
 let _netCache = { rx: 0, tx: 0 };
 let _netPrev = null;
@@ -74,11 +75,11 @@ on('GET', '/api/widget-config/:id', (req, res) => {
   /* With no manifest there is no way to tell which fields are secret, so
      nothing is sent. See widget-secrets.js. */
   if (!_entry) {
-    return json(res, 200, { widgetSize: w.widgetSize || 'medium', widgetConfig: {}, [WITHHELD_FLAG]: true });
+    return json(res, 200, { widgetSize: w.widgetSize || DEFAULT_WIDGET_SIZE, widgetConfig: {}, [WITHHELD_FLAG]: true });
   }
   const wc = structuredClone(w.widgetConfig || {});
   scrubWidgetSecrets({ widgetType: w.widgetType, widgetConfig: wc }, _entry);
-  json(res, 200, { widgetSize: w.widgetSize || 'medium', widgetConfig: wc });
+  json(res, 200, { widgetSize: w.widgetSize || DEFAULT_WIDGET_SIZE, widgetConfig: wc });
 });
 
 module.exports = { parseNetDev };

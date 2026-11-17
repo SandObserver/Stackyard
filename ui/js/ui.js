@@ -1,5 +1,5 @@
 import { iconChain } from '/js/icons.js?v=76c29d43';
-import { widgetSrc, cardPreset, fixedAppearance, uniqueTitle, WIDGET_DESIGN } from '/js/widget-types.js?v=b0e8f76d';
+import { widgetSrc, cardPreset, fixedAppearance, uniqueTitle, WIDGET_DESIGN } from '/js/widget-types.js?v=73d8b12e';
 import {
   mk,
   clr,
@@ -20,6 +20,7 @@ import {
 } from '/js/utils.js?v=c1d4e76c';
 import { t, currentLang } from '/js/i18n.js?v=99563c71';
 import { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
+import { DEFAULT_WIDGET_SIZE } from '/js/limits.js?v=ff61256e';
 import {
   BASE_VW,
   mobileMetrics,
@@ -895,7 +896,7 @@ export function buildMobile() {
       1,
       ...items()
         .filter(i => i.type === 'widget' && !i.hidden)
-        .map(i => (MOB_FOOTPRINT[i.widgetSize] || MOB_FOOTPRINT.medium)[1]),
+        .map(i => (MOB_FOOTPRINT[i.widgetSize] || MOB_FOOTPRINT[DEFAULT_WIDGET_SIZE])[1]),
     ),
   });
   css(document.body, { '--mcols': String(COLS), '--mrows': String(ROWS) });
@@ -914,7 +915,7 @@ export function buildMobile() {
       ...new Set(
         items()
           .filter(i => i.type === 'widget' && !i.hidden)
-          .map(i => i.widgetSize || 'medium'),
+          .map(i => i.widgetSize || DEFAULT_WIDGET_SIZE),
       ),
     ].map(sz => ({
       design: WIDGET_DESIGN[sz] || WIDGET_DESIGN.medium,
@@ -932,7 +933,7 @@ export function buildMobile() {
      is 0.424 of the icon it sits beside. */
   const wBR = Math.round(isz * 0.424);
 
-  const fp = it => (it.type !== 'widget' ? [1, 1] : MOB_FOOTPRINT[it.widgetSize] || MOB_FOOTPRINT.medium);
+  const fp = it => (it.type !== 'widget' ? [1, 1] : MOB_FOOTPRINT[it.widgetSize] || MOB_FOOTPRINT[DEFAULT_WIDGET_SIZE]);
 
   const inFolder = new Set(
     items()
@@ -1012,7 +1013,7 @@ export function buildMobile() {
 
   function makeWidgetCard(item) {
     const card = mk('div');
-    const sz = item.widgetSize || 'medium';
+    const sz = item.widgetSize || DEFAULT_WIDGET_SIZE;
     const design = WIDGET_DESIGN[sz] || WIDGET_DESIGN.medium;
     const wtype = item.widgetType || '';
     card.className = 'mob-widget-card';

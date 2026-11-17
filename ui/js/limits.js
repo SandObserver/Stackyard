@@ -7,6 +7,8 @@ export const NAME_MAX = 64;
 
 export const ITEMS_MAX = 5000;
 
+export const DEFAULT_WIDGET_SIZE = 'medium';
+
 /** @param {string} name @returns {string} */
 export function clampName(name) {
   const s = String(name);

@@ -4,7 +4,7 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=d1a211cc';
+} from '/js/admin-app-form.js?v=40a6cc35';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=d8d0ed6a';
 import {
   applyFilter,
@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=18f2a98a';
+} from '/js/admin-list.js?v=14455e5d';
 import { filterActive, folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=06da6a19';
 import {
   afterImport,
@@ -67,7 +67,7 @@ import {
   withheldText,
 } from '/js/admin-shared.js?v=73be77ed';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=c789479a';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=1382f3cf';
 import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=eca5642a';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
 import { recoveryShown } from '/js/config-recovery.js?v=797944ce';
@@ -89,9 +89,9 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=6d0bccd7';
+} from '/js/import-foreign.js?v=a367526b';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
-import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=4b70a7dd';
+import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=ff61256e';
 import { createListbox } from '/js/listbox.js?v=384c0ad5';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=84ba5279';
 import { passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';

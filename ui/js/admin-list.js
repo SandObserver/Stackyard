@@ -11,7 +11,7 @@
    The filter and the collapsed folders are in admin-state.js, because the page
    reads and writes them too. */
 
-import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=a1aa95f8';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=a3908baf';
 import { listGroup } from '/js/admin-drag-logic.js?v=4824d269';
 import {
   filterActive,
@@ -25,12 +25,12 @@ import {
 import { snapshotItems } from '/js/admin-save-logic.js?v=eaf7fbd5';
 import { announce, paintIcon, toast } from '/js/admin-shared.js?v=73be77ed';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { sizeLabel } from '/js/admin-widget-form.js?v=c789479a';
+import { sizeLabel } from '/js/admin-widget-form.js?v=1382f3cf';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=99563c71';
 import { iconSvg } from '/js/icon-set.js?v=361e54a5';
-import { DOCK_MAX } from '/js/limits.js?v=4b70a7dd';
+import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=ff61256e';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
@@ -226,7 +226,7 @@ function mkRow(item, { indent = false, childIdx = null, folderId = null, top = {
   } else if (item.type === 'widget') {
     /* The type when the widget declares one, the size otherwise. */
     const glyph = widgetGlyph(state._widgetReg?.[item.widgetType]?.glyph);
-    ico.appendChild(svgNode(glyph || SIZE_ICONS[item.widgetSize] || SIZE_ICONS.medium));
+    ico.appendChild(svgNode(glyph || SIZE_ICONS[item.widgetSize] || SIZE_ICONS[DEFAULT_WIDGET_SIZE]));
   } else if (item.system === 'settings') {
     ico.style.background = clr('auto');
     const img = document.createElement('img');
@@ -283,7 +283,7 @@ function mkRow(item, { indent = false, childIdx = null, folderId = null, top = {
   if (item.type === 'widget') {
     const wt = item.widgetType || 'custom';
     const wtLabel = state._widgetReg?.[wt]?.label || t('widgetCfg.typeCustom');
-    mt.textContent = t('widgetCfg.meta', { type: wtLabel, size: sizeLabel(item.widgetSize || 'medium') });
+    mt.textContent = t('widgetCfg.meta', { type: wtLabel, size: sizeLabel(item.widgetSize || DEFAULT_WIDGET_SIZE) });
   } else if (item.type === 'folder')
     mt.textContent = t('folder.appsCount', { count: shownChildren(state.items, item).length });
   else if (item.system === 'settings') mt.textContent = t('home.opensSettings');
