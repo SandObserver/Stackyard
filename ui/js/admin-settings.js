@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=e8a56e19';
+import { renderColorControl } from '/js/admin-color-control.js?v=8a3cc51c';
 import { passwordRefusalKey, socketProbeAdvice } from '/js/admin-error.js?v=5abd7438';
 import {
   BLOCK,
@@ -27,6 +27,7 @@ import {
   confirmSaved,
   errorAction,
   errorText,
+  failedSave,
   reveal,
   sectionSave,
   setStatus,
@@ -34,7 +35,7 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=2ad2dc2f';
+} from '/js/admin-shared.js?v=889fe8d5';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { BACKDROP } from '/js/background.js?v=eca5642a';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
@@ -368,6 +369,7 @@ export function loadSettings(c, page) {
       text: t('confirm.revokeSessions'),
       confirmLabel: t('confirm.revokeBtn'),
       cancelLabel: t('common.cancel'),
+      destructive: true,
       irreversible: true,
     });
     if (!ok) return;
@@ -551,6 +553,7 @@ function saveSwitchChange(e, apply) {
     } catch (err) {
       /* Assigning `checked` fires no event, so this does not loop. */
       if (toggled.checked === value) toggled.checked = !value;
+      failedSave(sectionSave(toggled));
       toast(t('toast.saveFailed', { err: errorText(err) }), 'err', errorAction(err));
     }
   });
@@ -612,6 +615,7 @@ async function writeWallpaper(sent, form) {
     _bgTrack?.reset(true, JSON.stringify(sent.with(-1, _val('bg-apikey-inp'))));
     confirmSaved(el('bg-save'));
   } catch (e) {
+    failedSave(el('bg-save'));
     toast(staleText(e) || t('toast.saveFailed', { err: errorText(e) }), 'err', errorAction(e));
   }
 }
@@ -675,6 +679,7 @@ async function saveServer() {
     try {
       probe = await apiPost('/api/docker/test', { url });
     } catch (e) {
+      failedSave(el('srv-save'));
       toast(t('toast.saveFailed', { err: errorText(e) }), 'err', errorAction(e));
       return;
     }
@@ -758,6 +763,7 @@ async function saveServer() {
 
   if (failure || !done) {
     const key = passwordRefusalKey(failure);
+    failedSave(el('srv-save'));
     if (/** @type {any} */ (failure)?.protectionOff)
       toast(
         t('toast.protectionOffOthersNot', { err: staleText(failure) || errorText(failure) }),

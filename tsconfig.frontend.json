@@ -350,6 +350,48 @@
       "/js/frame-motion.js?v=*": [
         "./ui/js/frame-motion.js"
       ],
+      "/js/glass-controls.js": [
+        "./ui/js/glass-controls.js"
+      ],
+      "/js/glass-controls.js?v=*": [
+        "./ui/js/glass-controls.js"
+      ],
+      "/js/glass-bar.js": [
+        "./ui/js/glass-bar.js"
+      ],
+      "/js/glass-bar.js?v=*": [
+        "./ui/js/glass-bar.js"
+      ],
+      "/js/glass-control.js": [
+        "./ui/js/glass-control.js"
+      ],
+      "/js/glass-control.js?v=*": [
+        "./ui/js/glass-control.js"
+      ],
+      "/js/glass-paint.js": [
+        "./ui/js/glass-paint.js"
+      ],
+      "/js/glass-paint.js?v=*": [
+        "./ui/js/glass-paint.js"
+      ],
+      "/js/glass-prefs.js": [
+        "./ui/js/glass-prefs.js"
+      ],
+      "/js/glass-prefs.js?v=*": [
+        "./ui/js/glass-prefs.js"
+      ],
+      "/js/glass-slider.js": [
+        "./ui/js/glass-slider.js"
+      ],
+      "/js/glass-slider.js?v=*": [
+        "./ui/js/glass-slider.js"
+      ],
+      "/js/glass-switch.js": [
+        "./ui/js/glass-switch.js"
+      ],
+      "/js/glass-switch.js?v=*": [
+        "./ui/js/glass-switch.js"
+      ],
       "/js/glass-gpu.js": [
         "./ui/js/glass-gpu.js"
       ],

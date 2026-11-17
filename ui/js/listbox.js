@@ -67,6 +67,22 @@ function focusBeside(from, step) {
                 setOptions: (o: ListboxOption[], v?: any) => void,
                 setLabel: (l: string) => void,
                 close: () => void }} */
+/** How long after a touch the browser's own click for it can still arrive. */
+const CLICK_WINDOW_MS = 400;
+
+/** Drops the browser's click for a touch already acted on. */
+export function dropNextClick() {
+  const until = performance.now() + CLICK_WINDOW_MS;
+  const block = (/** @type {MouseEvent} */ e) => {
+    document.removeEventListener('click', block, true);
+    if (e.detail === 0 || e.timeStamp > until) return;
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  document.addEventListener('click', block, true);
+  setTimeout(() => document.removeEventListener('click', block, true), CLICK_WINDOW_MS);
+}
+
 export function createListbox(
   {
     options = [],
@@ -163,17 +179,22 @@ export function createListbox(
     const vw = visualViewport?.width ?? window.innerWidth;
     const gap = 4;
     let top = r.bottom + gap;
-    let above = false;
     if (top + pr.height > vh - 8) {
       top = Math.max(8, r.top - gap - pr.height);
-      above = true;
     }
     const rtl = (document.documentElement.getAttribute('dir') || 'ltr') === 'rtl';
-    list.style.transformOrigin = `${above ? 'bottom' : 'top'} ${rtl ? 'left' : 'right'}`;
     let left = rtl ? r.left : r.right - pr.width;
     left = Math.min(Math.max(8, left), vw - pr.width - 8);
     list.style.top = `${Math.round(top)}px`;
     list.style.left = `${Math.round(left)}px`;
+    fromButton(r, top, left, pr);
+  }
+  function fromButton(r, top, left, pr) {
+    const rad = Math.min(r.height / 2, 22);
+    list.style.setProperty(
+      '--dd-from',
+      `inset(${r.top - top}px ${left + pr.width - r.right}px ${top + pr.height - r.bottom}px ${r.left - left}px round ${rad}px)`,
+    );
   }
 
   const setActive = i => {
@@ -188,15 +209,20 @@ export function createListbox(
     fluidHoverKb(o[active]);
   };
 
+  /** @type {(() => void) | null} */
+  let endGrow = null;
+
   /** @param {{ animate?: boolean }} [o] */
   const open = ({ animate = false } = {}) => {
     if (open_) return;
+    endGrow?.();
     const leaving = list.classList.contains('dd-out');
-    list.classList.remove('dd-out');
+    list.classList.remove('dd-out', 'dd-grow', 'dd-wide');
     list.hidden = false;
     open_ = true;
     btn.setAttribute('aria-expanded', 'true');
     place();
+    list.style.touchAction = list.scrollHeight > list.clientHeight + 1 ? '' : 'none';
     outside = new AbortController();
     /* The visible area resizes a frame after the menu opens. */
     visualViewport?.addEventListener('resize', place, { signal: outside.signal });
@@ -227,7 +253,18 @@ export function createListbox(
     if (animate && !leaving) {
       list.classList.add('dd-pre');
       void list.offsetWidth;
-      list.classList.remove('dd-pre');
+      list.classList.replace('dd-pre', 'dd-grow');
+      let timer = 0;
+      const grown = e => {
+        if (e && e.target !== list) return;
+        clearTimeout(timer);
+        list.removeEventListener('transitionend', grown);
+        list.classList.remove('dd-grow');
+        endGrow = null;
+      };
+      list.addEventListener('transitionend', grown);
+      timer = setTimeout(grown, 260);
+      endGrow = grown;
     }
   };
 
@@ -246,18 +283,26 @@ export function createListbox(
   function leave(node, instant) {
     if (instant || node.hidden || !node.isConnected) {
       node.hidden = true;
-      node.classList.remove('dd-out');
+      node.classList.remove('dd-out', 'dd-grow', 'dd-wide');
       return;
     }
+    const r = btn.getBoundingClientRect();
+    const L = node.getBoundingClientRect();
+    if (r.width) fromButton(r, L.top, L.left, L);
+    endGrow?.();
+    node.style.transition = 'none';
+    node.classList.add('dd-wide');
+    void node.offsetWidth;
+    node.style.transition = '';
     node.classList.add('dd-out');
     let timer = 0;
     const hide = e => {
-      if (e && (e.target !== node || e.propertyName !== 'opacity')) return;
+      if (e && (e.target !== node || (e.propertyName !== 'clip-path' && e.propertyName !== 'opacity'))) return;
       clearTimeout(timer);
       node.removeEventListener('transitionend', hide);
       if (open_) return;
       node.hidden = true;
-      node.classList.remove('dd-out');
+      node.classList.remove('dd-out', 'dd-grow', 'dd-wide');
     };
     node.addEventListener('transitionend', hide);
     /* transitionend never fires if the transition is dropped. */
@@ -313,7 +358,40 @@ export function createListbox(
       }
     }
   });
-
+  let slideId = null;
+  const optionAt = e => {
+    const li = document.elementFromPoint(e.clientX, e.clientY)?.closest('li[role="option"]');
+    return li && list.contains(li) ? /** @type {HTMLElement} */ (li) : null;
+  };
+  const mark = li => {
+    for (const o of items()) o.classList.toggle('kb-active', o === li);
+  };
+  list.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' || list.scrollHeight > list.clientHeight + 1) return;
+    const li = optionAt(e);
+    if (!li) return;
+    slideId = e.pointerId;
+    list.setPointerCapture(e.pointerId);
+    mark(li);
+  });
+  list.addEventListener('pointermove', e => {
+    if (e.pointerId === slideId) mark(optionAt(e));
+  });
+  list.addEventListener('pointerup', e => {
+    if (e.pointerId !== slideId) return;
+    slideId = null;
+    const li = optionAt(e);
+    if (!li) {
+      mark(items()[active] ?? null);
+      return;
+    }
+    dropNextClick();
+    commit(li);
+  });
+  list.addEventListener('pointercancel', () => {
+    slideId = null;
+    mark(items()[active] ?? null);
+  });
   list.addEventListener('click', e => {
     const li = /** @type {HTMLElement} */ (e.target).closest('li[role="option"]');
     if (li) commit(/** @type {HTMLElement} */ (li));

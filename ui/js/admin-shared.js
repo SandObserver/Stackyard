@@ -140,6 +140,7 @@ export function busyPress(btn, run, after) {
   return async (...args) => {
     if (btn.getAttribute('aria-busy') === 'true') return;
     const had = document.activeElement === btn;
+    clearSaveMark(btn);
     btn.disabled = true;
     btn.setAttribute('aria-busy', 'true');
     const cancel = afterDialogs(() => btn.classList.add('busy'));
@@ -252,6 +253,92 @@ export function setStatus(st, tone, text, action = null) {
 /** @type {WeakMap<Element, number>} */
 const _savedTimers = new WeakMap();
 
+const SAVE_EASE = 'cubic-bezier(.35,.15,.25,1)';
+
+/** @param {Element} b */
+function resetSaveMark(b) {
+  for (const n of b.querySelectorAll('.sv-i, .sv-i *')) for (const a of n.getAnimations()) a.cancel();
+}
+
+/** @param {Element} b @param {boolean} ok */
+function playSaveMark(b, ok) {
+  const svg = b.querySelector('.sv-i');
+  if (!svg) return;
+  resetSaveMark(b);
+  const dots = [...svg.querySelectorAll('.sv-c')];
+  const marks = [...svg.querySelectorAll(ok ? '.sv-k' : '.sv-x')];
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fromDots = b.classList.contains('busy') && !still;
+  if (!fromDots) for (const d of dots) d.animate([{ opacity: 0 }], { duration: 0, fill: 'forwards' });
+  if (still) {
+    for (const m of marks) m.animate([{ strokeDashoffset: 0, opacity: 1 }], { duration: 0, fill: 'forwards' });
+    return;
+  }
+  const gather = fromDots ? 120 : 0;
+  if (fromDots) {
+    const to = ok ? [0, -6, -12] : [6, 0, -6];
+    dots.forEach((d, i) => {
+      d.animate(
+        [
+          { transform: 'translateX(0)', opacity: 1 },
+          { transform: `translateX(${to[i]}px)`, opacity: 1 },
+          { transform: `translateX(${to[i]}px)`, opacity: 0 },
+        ],
+        { duration: gather + 40, easing: 'cubic-bezier(.55,0,.45,1)', fill: 'forwards' },
+      );
+    });
+  }
+  for (const m of marks)
+    m.animate(
+      [
+        { strokeDashoffset: 1, opacity: 1 },
+        { strokeDashoffset: 0, opacity: 1 },
+      ],
+      {
+        duration: ok ? 240 : 180,
+        delay: gather,
+        easing: SAVE_EASE,
+        fill: 'both',
+      },
+    );
+  if (!ok)
+    svg.animate(
+      [
+        { transform: 'translateX(0)' },
+        { transform: 'translateX(-2px)' },
+        { transform: 'translateX(2px)' },
+        { transform: 'translateX(0)' },
+      ],
+      { duration: 200, delay: gather + 200, easing: 'ease-in-out' },
+    );
+}
+
+/** @param {Element} b */
+function clearSaveMark(b) {
+  clearTimeout(_savedTimers.get(b));
+  _savedTimers.delete(b);
+  if (!b.classList.contains('saved') && !b.classList.contains('failed')) return;
+  b.classList.remove('saved', 'failed');
+  resetSaveMark(b);
+}
+
+/** @param {HTMLElement} b @param {'saved'|'failed'} cls @param {number} ms */
+function showSaveMark(b, cls, ms) {
+  clearSaveMark(b);
+  playSaveMark(b, cls === 'saved');
+  b.classList.add(cls);
+  _savedTimers.set(
+    b,
+    window.setTimeout(() => {
+      b.classList.remove(cls);
+      _savedTimers.set(
+        b,
+        window.setTimeout(() => resetSaveMark(b), 200),
+      );
+    }, ms),
+  );
+}
+
 /** Keep `quiet` for list moves. Otherwise the save announcement replaces the position
     announcement before a screen reader reads it.
     @param {Element|null|undefined} btn
@@ -260,17 +347,19 @@ const _savedTimers = new WeakMap();
 export function confirmSaved(btn, quiet = false) {
   const b = /** @type {HTMLElement|null|undefined} */ (btn);
   if (el('toast')?.classList.contains('err')) hideToast();
-  if (!b?.isConnected || !b.getClientRects().length || !b.querySelector('.sv-done')) {
+  if (!b?.isConnected || !b.getClientRects().length || !b.querySelector('.sv-i')) {
     if (!quiet) toast(t('toast.saved'));
     return;
   }
-  clearTimeout(_savedTimers.get(b));
-  b.classList.add('saved');
+  showSaveMark(b, 'saved', 1500);
   if (!quiet) announce(t('toast.saved'));
-  _savedTimers.set(
-    b,
-    window.setTimeout(() => b.classList.remove('saved'), 1500),
-  );
+}
+
+/** @param {Element|null|undefined} btn */
+export function failedSave(btn) {
+  const b = /** @type {HTMLElement|null|undefined} */ (btn);
+  if (!b?.isConnected || !b.getClientRects().length || !b.querySelector('.sv-i')) return;
+  showSaveMark(b, 'failed', 2000);
 }
 
 /** @param {Element|null} node */

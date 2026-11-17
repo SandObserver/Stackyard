@@ -230,19 +230,22 @@ test('every single-choice value goes through singleChoice', () => {
   assert.doesNotMatch(src, /=== '' \? \[\] :/);
 });
 
-/* A menu opened from the keyboard shows at once. A pointer open grows from the
-   trigger's corner, which flips with the side the menu is anchored to. */
-test('only a pointer open animates, from the trigger side', () => {
+/* A menu opened from the keyboard shows at once. A pointer open grows out of
+   the trigger button and shrinks back into it. */
+test('only a pointer open animates, out of the trigger', () => {
   assert.match(src, /open\(\{ animate: e\.detail > 0 \}\)/);
   assert.match(
     src,
-    /if \(animate && !leaving\) \{\s*list\.classList\.add\('dd-pre'\);\s*void list\.offsetWidth;\s*list\.classList\.remove\('dd-pre'\);/,
+    /if \(animate && !leaving\) \{\s*list\.classList\.add\('dd-pre'\);\s*void list\.offsetWidth;\s*list\.classList\.replace\('dd-pre', 'dd-grow'\);/,
   );
-  assert.match(src, /transformOrigin = `\$\{above \? 'bottom' : 'top'\} \$\{rtl \? 'left' : 'right'\}`/);
+  assert.match(src, /fromButton\(r, top, left, pr\)/, 'the closed shape is taken where the list lands');
   assert.match(src, /width: list\.offsetWidth, height: list\.offsetHeight/, 'the scaled rect would misplace the list');
-  assert.match(css, /\.row-dd-list\.dd-pre\{opacity:0;transform:scale\(\.97\);transition:none\}/);
+  assert.match(css, /\.row-dd-list\.dd-pre\{clip-path:var\(--dd-from,inset\(0 round 34px\)\);transition:none\}/);
   assert.doesNotMatch(css, /dd-out\{animation/, 'a keyframe cannot be caught mid-way');
-  assert.match(css, /\.row-dd-list\.dd-out\{[^}]*transition-duration:calc\(var\(--t-reveal\) \* \.6\)/);
+  assert.match(
+    css,
+    /\.row-dd-list\.dd-out\{clip-path:var\(--dd-from,inset\(0 round 34px\)\);[^}]*transition-duration:\.14s/,
+  );
 });
 
 test('a keyboard close does not animate', () => {
