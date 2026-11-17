@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { register } from 'node:module';
 import {
   DAMAGE_CODES,
   fillNames,
@@ -116,4 +117,61 @@ test('a refused request that came through a proxy says so, and names the same ho
   assert.equal(proxied.why.key, 'hostBlock.whyProxied');
   assert.deepEqual(proxied.why.vars, { host: '10.0.0.5' });
   assert.equal(screenFor({ code: 'blocked.host', detail: { host: 'x', proxied: 'yes' } }).why.key, 'hostBlock.why');
+});
+
+function fakePage() {
+  const written = [];
+  class El {
+    children = [];
+    classList = { add() {} };
+    elements = { namedItem: () => new El() };
+    set innerHTML(v) {
+      written.push(v);
+    }
+    querySelector() {
+      return new El();
+    }
+    querySelectorAll() {
+      return [];
+    }
+    addEventListener() {}
+    setAttribute() {}
+    focus() {}
+  }
+  const body = new El();
+  body.replaceChildren = (...nodes) => {
+    body.children = nodes;
+  };
+  body.prepend = node => body.children.unshift(node);
+  globalThis.document = {
+    body,
+    title: '',
+    documentElement: { setAttribute() {} },
+    createElement: () => new El(),
+    getElementById: id => body.children.find(c => c.id === id) || null,
+    importNode: n => n,
+  };
+  globalThis.DOMParser = class {
+    parseFromString(src) {
+      return { documentElement: { id: src.match(/ id="([^"]+)"/)[1], src } };
+    }
+  };
+  globalThis.location = { host: 'x.example', hostname: 'x.example', search: '' };
+  Object.defineProperty(globalThis, 'navigator', { value: { languages: ['en'] }, configurable: true });
+  globalThis.fetch = async () => ({ ok: true, json: async () => en });
+  return { body, written };
+}
+
+test('every icon on the setup screen, and the one the reveal swaps to, is in the page after it shows', async () => {
+  register('./js-root-hooks.mjs', import.meta.url);
+  const page = fakePage();
+  const { ensureSprite } = await import('../js/icon-set.js');
+  const { showBlockingScreen } = await import('../js/config-recovery.js');
+  ensureSprite();
+  await showBlockingScreen(screenFor({ code: 'blocked.host', detail: { host: 'x.example' } }));
+  const refs = [...page.written.join('').matchAll(/<use href="#([^"]+)"/g)].map(m => m[1]);
+  assert.ok(refs.includes('sy-solid-eye'), 'the setup form draws no eye');
+  const defined = page.body.children.map(c => c.src || '').join('');
+  for (const id of [...refs, 'sy-solid-eye-slash'])
+    assert.ok(defined.includes(` id="${id}"`), `#${id} points at nothing`);
 });

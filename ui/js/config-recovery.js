@@ -20,7 +20,6 @@ export const blockingScreenFor = body => screenFor(body, location.host);
     @param {NonNullable<ReturnType<typeof screenFor>>} screenText */
 export async function showBlockingScreen(screenText) {
   _shown = true;
-  ensureSprite();
   await initI18n(
     pickLanguage(
       navigator.languages || [navigator.language],
@@ -76,6 +75,7 @@ export async function showBlockingScreen(screenText) {
     }
   });
   document.body.replaceChildren(screen);
+  ensureSprite();
   document.body.classList.add('ready');
   /** @type {HTMLElement | null} */ (body.querySelector('h1'))?.focus();
 }
