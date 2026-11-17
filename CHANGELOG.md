@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Report a service reply too large to read as a service error, not "Something
   went wrong".
 
+- Keep a new secret typed into a widget's settings when the Size or View changes
+  before Save.
+
+- Keep each source's stored key with the right source after one is removed and
+  the Size or View changes.
+
 ## [1.23.0] - 2026-11-15
 
 ### Added
