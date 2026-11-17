@@ -3,7 +3,9 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'backup', 'data.js'));
-const { WidgetError, KIND } = require('../src/api-error');
+const { KIND } = require('../src/api-error');
+const { errorParts } = require('../test-support/widget-ctx');
+const { normalizeBase } = require('../src/widget-data');
 const log = require('../src/log');
 const { remember } = require('../src/bounded-cache');
 const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
@@ -18,10 +20,8 @@ function ctxFor(config, endpoint, routes, row = null) {
       config,
       endpoint,
       row,
-      fail: (message, opts) => {
-        throw new WidgetError(message, opts);
-      },
-      KIND,
+      ...errorParts(),
+      normalizeBase,
       serviceBase,
       serviceLink,
       remember,
@@ -88,6 +88,26 @@ test('kopia-sources sends basic auth only when a username is present', async () 
   );
   await dataFn(anon.ctx);
   assert.equal(anon.calls[0].opts.headers.Authorization, undefined);
+});
+
+test('a Kopia address without a scheme is reached over http', async () => {
+  const sources = ctxFor(
+    {},
+    'kopia-sources',
+    { '/api/v1/sources': { status: 200, data: { sources: [] } } },
+    {
+      provider: 'kopia',
+      kopiaUrl: 'nas.lan:51515',
+    },
+  );
+  await dataFn(sources.ctx);
+  assert.equal(sources.calls[0].url, 'http://nas.lan:51515/api/v1/sources');
+
+  const slots = ctxFor({ slots: [{ provider: 'kopia', kopiaUrl: 'nas.lan:51515', jobId: 'h@u:/a' }] }, 'slots', {
+    '/api/v1/sources': { status: 200, data: { sources: [] } },
+  });
+  await dataFn(slots.ctx);
+  assert.equal(slots.calls[0].url, 'http://nas.lan:51515/api/v1/sources');
 });
 
 test('kopia-sources surfaces an auth failure', async () => {
@@ -164,7 +184,7 @@ test('slots collapses same-instance slots into one round of upstream calls', asy
 test('an unreachable instance marks its slots failed instead of failing the request', async () => {
   const { ctx } = ctxFor({ slots: [{ provider: 'duplicati', dupUrl: 'http://d:8200', jobId: '1' }] }, 'slots', {
     '/api/v1/auth/login': () => {
-      throw new Error('ECONNREFUSED');
+      throw Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' });
     },
   });
   assert.deepEqual(await dataFn(ctx), [{ error: KIND.NETWORK }]);
@@ -199,7 +219,7 @@ test('a failing Kopia instance marks only its own slots failed', async () => {
       data: { sources: [{ source: { host: 'h', userName: 'u', path: '/data' }, status: 'IDLE' }] },
     },
     'gone:51515/api/v1/sources': () => {
-      throw new Error('ECONNREFUSED');
+      throw Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' });
     },
   });
   const out = await dataFn(ctx);

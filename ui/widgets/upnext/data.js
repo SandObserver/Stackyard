@@ -17,18 +17,6 @@ const SERIES_TYPES = new Set(['standard', 'daily', 'anime']);
 const NAMES = Object.freeze({ sonarr: 'Sonarr', radarr: 'Radarr', lidarr: 'Lidarr' });
 
 const HEADER_SAFE = /^[\x21-\x7e]+$/;
-const TIMEOUT_CODES = new Set(['ETIMEDOUT', 'ESOCKETTIMEDOUT', 'UND_ERR_HEADERS_TIMEOUT']);
-
-function kindOf(e, ctx) {
-  if (e && typeof e.kind === 'string') return e.kind;
-  if (e && e.name === 'SsrfBlockedError') return ctx.KIND.BLOCKED;
-  if (e && e.message === 'Timed out') return ctx.KIND.TIMEOUT;
-  const code = e && e.code;
-  if (TIMEOUT_CODES.has(code)) return ctx.KIND.TIMEOUT;
-  if (typeof code === 'string' && code) return ctx.KIND.NETWORK;
-  return ctx.KIND.UPSTREAM;
-}
-
 function sourcesOf(ctx) {
   const rows = Array.isArray(ctx.config.sources) ? ctx.config.sources.slice(0, MAX_SOURCES) : [];
   const out = rows
@@ -158,7 +146,7 @@ module.exports = async function (ctx) {
       results.filter(r => !r.error).map(r => r.found),
       now,
     ),
-    missing: results.filter(r => r.error).map(r => ({ app: r.row.app, kind: kindOf(r.error, ctx) })),
+    missing: results.filter(r => r.error).map(r => ({ app: r.row.app, kind: ctx.classify(r.error).kind })),
     days,
     calendar: first ? ctx.serviceLink(first.href, first.url, '/calendar') : '',
   };

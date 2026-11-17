@@ -5,7 +5,7 @@ process.env.CONFIG_PATH = path.join(tmpDir('werr'), 'apps.json');
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { WidgetError, errorBody, hasVouchedMessage, KIND } = require('../src/api-error');
+const { WidgetError, errorBody, hasVouchedMessage, KIND, classify } = require('../src/api-error');
 const { dataFnContext } = require('../src/widget-data');
 
 test('a WidgetError message reaches the browser intact', () => {
@@ -215,4 +215,69 @@ test('no widget writes a caught message into a successful result', () => {
     [],
     `A caught message reaches the browser in a 200 body. Map it to a phrase first:\n${offenders.join('\n')}`,
   );
+});
+
+function invalidUrlError() {
+  try {
+    new URL('http://nas:99999');
+  } catch (e) {
+    return e;
+  }
+  throw new Error('the URL parsed');
+}
+
+const THROWN = [
+  ['ERR_INVALID_URL', invalidUrlError],
+  ['ETIMEDOUT', () => Object.assign(new Error('connect ETIMEDOUT 10.0.0.5:80'), { code: 'ETIMEDOUT' })],
+  ['ECONNREFUSED', () => Object.assign(new Error('connect ECONNREFUSED 10.0.0.5:80'), { code: 'ECONNREFUSED' })],
+  ['SsrfBlockedError', () => new (require('../src/proxy').SsrfBlockedError)('Blocked: 10.0.0.5', 'private_address')],
+  ['a plain TypeError', () => new TypeError("Cannot read properties of undefined (reading 'x')")],
+];
+
+const throwing = (make, okHost) => async url => {
+  if (okHost && url.includes(okHost)) return { status: 200, data: [], format: 'json' };
+  throw make();
+};
+
+const WIDGET_KINDS = {
+  async backup(make) {
+    const config = { slots: [{ provider: 'kopia', kopiaUrl: 'nas.lan:51515', jobId: 'h@u:/a' }] };
+    const out = await require(path.join(WIDGETS, 'backup', 'data.js'))(
+      dataFnContext(config, 'slots', new URLSearchParams(), throwing(make)),
+    );
+    return out[0].error;
+  },
+  async upnext(make) {
+    const config = {
+      sources: [
+        { app: 'radarr', url: 'ok.lan', apiKey: 'k' },
+        { app: 'sonarr', url: 'down.lan', apiKey: 'k' },
+      ],
+    };
+    const out = await require(path.join(WIDGETS, 'upnext', 'data.js'))(
+      dataFnContext(config, '', new URLSearchParams(), throwing(make, 'ok.lan')),
+    );
+    return out.missing[0].kind;
+  },
+  async connections(make) {
+    const config = { vpn: { service: 'gluetun', url: 'http://10.0.0.5:8000' } };
+    const out = await require(path.join(WIDGETS, 'connections', 'data.js'))(
+      dataFnContext(config, 'vpn', new URLSearchParams(), throwing(make)),
+    );
+    return out.errorKind;
+  },
+};
+
+test('a thrown error gets the same kind in every widget row as in the API', async () => {
+  for (const [label, make] of THROWN) {
+    const api = classify(make()).kind;
+    assert.equal(errorBody(make()).kind, api, label);
+    for (const [widget, kindOf] of Object.entries(WIDGET_KINDS)) {
+      assert.equal(await kindOf(make), api, `${widget}: ${label}`);
+    }
+  }
+});
+
+test('ERR_INVALID_URL reads as not set up, not as unreachable', () => {
+  assert.equal(classify(invalidUrlError()).kind, KIND.INVALID);
 });

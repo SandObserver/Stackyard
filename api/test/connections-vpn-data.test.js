@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'connections', 'data.js'));
-const { KIND, WidgetError } = require('../src/api-error');
+const { errorParts } = require('../test-support/widget-ctx');
 
 function ctxFor(vpn) {
   return {
@@ -13,10 +13,7 @@ function ctxFor(vpn) {
       if (url.endsWith('/v1/publicip/ip')) return { status: 200, data: { public_ip: '203.0.113.9', city: 'Oslo' } };
       return { status: 200, data: { status: 'running' } };
     },
-    KIND,
-    fail(msg, opts) {
-      throw new WidgetError(msg, opts);
-    },
+    ...errorParts(),
   };
 }
 

@@ -15,7 +15,7 @@ const { IS_DEMO } = require('./demo');
 const demoData = require('./demo-data');
 const log = require('./log');
 const failureLog = require('./failure-log');
-const { fail, KIND, WidgetError } = require('./api-error');
+const { classify, fail, KIND, WidgetError } = require('./api-error');
 const { rateLimit } = require('./auth');
 const LIMITS = require('./poll-limits');
 const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
@@ -94,6 +94,7 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
       throw new WidgetError(message, opts);
     },
     KIND,
+    classify,
     log,
   };
   ctx.dispatchProvider = (handlers, opts) => dispatchProvider(ctx, handlers, opts);
