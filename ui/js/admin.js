@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=0864084c';
+} from '/js/admin-list.js?v=9df1c6f2';
 import { filterActive, folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=06da6a19';
 import {
   afterImport,
@@ -67,7 +67,7 @@ import {
   withheldText,
 } from '/js/admin-shared.js?v=495be496';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=93bb034e';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=88d0e4be';
 import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=eca5642a';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
 import { recoveryShown } from '/js/config-recovery.js?v=da14e1c7';
