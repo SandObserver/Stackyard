@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show the whole Unraid array in a System Summary disk slot that is blank or set
   to /.
 
+- Show "Not set up yet", not "Out of reach", when a Backup slot, an Up Next
+  source or a Connections service has an address that is not valid.
+
+- Reach a Kopia backup server whose address has no http:// or https://.
+
 ## [1.23.0] - 2026-11-15
 
 ### Added
