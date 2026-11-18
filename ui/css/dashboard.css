@@ -558,7 +558,7 @@
       backdrop-filter:none;
     }
     :is(.folder-overlay, .folder-overlay-mobile)[data-glass-drawn] .glass-surface { background:transparent }
-    :is(.folder-overlay, .folder-overlay-mobile) .glass-surface::before {
+    :is(.folder-box-desktop, .dyn-box-mob).glass-surface::before {
       background:linear-gradient(to bottom, rgb(255 255 255 / .4), rgb(255 255 255 / .1) 18%, rgb(255 255 255 / .1) 82%, rgb(255 255 255 / .65));
     }
 

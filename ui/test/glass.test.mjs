@@ -73,6 +73,12 @@ test('the GPU glass list and the CSS rim list name the same elements', () => {
   );
 });
 
+test('the folder rim lights the folder panel, not the clear icons inside it', () => {
+  const css = read('css/dashboard.css');
+  assert.match(css, /:is\(\.folder-box-desktop, \.dyn-box-mob\)\.glass-surface::before \{/);
+  assert.doesNotMatch(css, /:is\(\.folder-overlay, \.folder-overlay-mobile\) \.glass-surface::before/);
+});
+
 test('the GPU layer stays out of reach of the pointer', () => {
   assert.match(read('css/dashboard.css'), /\.glass-canvas, \.glass-folder-canvas \{[^}]*pointer-events:none/);
 });
