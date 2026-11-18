@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Drop the unneeded temperature mount from the example `docker-compose.yml`.
 
+- Require Safari 26.2 or newer on macOS and iOS.
+
 ### Removed
 
 - Remove the `WIDGETS_PATH` setting from the Compose example. Mount a custom
