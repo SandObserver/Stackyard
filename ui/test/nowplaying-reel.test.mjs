@@ -16,6 +16,7 @@ import {
   strandPath,
   transitionKind,
   Winding,
+  withKeys,
 } from '../widgets/nowplaying/reel-logic.js';
 
 const film = (over = {}) => ({ id: 'a', title: 'Heat', player: 'TV', state: 'playing', progress: 0.2, ...over });
@@ -79,6 +80,23 @@ test('an update keeps the shown session even when the list reorders', () => {
   assert.equal(pickIndex(null, [], 2), 0);
 });
 
+test('sessions the server cannot tell apart still get keys of their own', () => {
+  const twin = over => film({ id: '', player: 'Chrome', title: 'Dune', ...over });
+  const poll = (a, b) => withKeys([twin({ progress: a }), twin({ progress: b })]);
+  const first = poll(0.6, 0.2);
+  assert.notEqual(sessionKey(first[0]), sessionKey(first[1]));
+  assert.deepEqual(poll(0.6, 0.2).map(sessionKey), first.map(sessionKey), 'the same keys on the next poll');
+  assert.equal(sessionKey(withKeys([film()])[0]), 'a', 'a unique session keeps its own key');
+
+  const w = new Winding();
+  w.observe(first, 0);
+  const next = poll(0.601, 0.201);
+  w.observe(next, 10000);
+  assert.ok(Math.abs(w.progress(next[0], 25000) - 0.6025) < 0.001, 'each winds at its own rate');
+  assert.ok(Math.abs(w.progress(next[1], 25000) - 0.2025) < 0.001);
+  assert.equal(pickIndex(sessionKey(first[1]), next, 1), 1, 'a paged session stays shown');
+});
+
 test('two players with the same name are two sessions', () => {
   const list = [film({ id: 'x', player: 'Chrome' }), film({ id: 'y', player: 'Chrome' })];
   assert.equal(pickIndex('y', list, 0), 1);
@@ -89,7 +107,8 @@ test('each change between views has its own label motion', () => {
   assert.equal(transitionKind(null, v('idle')), 'none');
   assert.equal(transitionKind(v('idle'), v('active', 'a', 'Heat')), 'arrive');
   assert.equal(transitionKind(v('active', 'a', 'Heat'), v('idle')), 'leave');
-  assert.equal(transitionKind(v('active', 'a', 'Heat'), v('active', 'b', 'Heat')), 'page');
+  assert.equal(transitionKind(v('active', 'a', 'Heat'), v('active', 'b', 'Heat'), true), 'page');
+  assert.equal(transitionKind(v('active', 'a', 'Heat'), v('active', 'b', 'Ronin')), 'fade', 'a new session in place');
   assert.equal(transitionKind(v('active', 'a', 'Heat'), v('active', 'a', 'Ronin')), 'fade');
   assert.equal(transitionKind(v('active', 'a', 'Heat'), v('active', 'a', 'Heat')), 'none');
   assert.equal(transitionKind(v('loading'), v('idle')), 'fade');

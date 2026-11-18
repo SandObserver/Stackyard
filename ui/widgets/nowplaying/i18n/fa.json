@@ -31,6 +31,7 @@
   "ui.describePaused": "{text} (مکث)",
   "ui.describeSessions_one": "{text}. {count} مورد در حال پخش",
   "ui.describeSessions_other": "{text}. {count} مورد در حال پخش",
+  "ui.describeFailure": "{text}، {since}",
   "ui.previous": "مورد قبلی",
   "ui.next": "مورد بعدی",
   "ui.linkName": "{text}. برای بازکردن پیوند، آن را انتخاب کنید."

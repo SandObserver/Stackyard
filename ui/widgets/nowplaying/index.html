@@ -135,7 +135,7 @@
 </div>
 <script type="module">
 import { poll, fetchData, getConfig, reducedMotion, softwareRendering, linkTo, loadStrings, wt, wtCount, errorState, errorLine, localiseDigits, placeholder, whileOnScreen } from '/js/widget-toolbox.js?v=559371c9';
-import { CENTRE, FLANGE_R, HUB_TURN_MS, LEADER_R, PACK_MAX, REEL_BOX, Winding, packRadius, pickIndex, reelMarkup, reelRate, sessionKey, shouldAnnounce, spokenKey, stepsPerTurn, strandPath, transitionKind } from './reel-logic.js';
+import { CENTRE, FLANGE_R, HUB_TURN_MS, LEADER_R, PACK_MAX, REEL_BOX, Winding, packRadius, pickIndex, reelMarkup, reelRate, sessionKey, shouldAnnounce, spokenKey, stepsPerTurn, strandPath, transitionKind, withKeys } from './reel-logic.js';
 
 await loadStrings();
 const $ = id => document.getElementById(id);
@@ -310,14 +310,18 @@ function name(text) {
   wEl.setAttribute('aria-label', text);
   if (linked) linkEl.setAttribute('aria-label', wt('ui.linkName', '{text}. Activate to open link.', { text }));
 }
+function failureLine() {
+  const text = errorLine(failure.error);
+  return failure.since ? wt('ui.describeFailure', '{text}, {since}', { text, since: failure.since }) : text;
+}
 function showText(on) {
   for (const el of [titleEl, subEl]) el.hidden = !on;
 }
 
-function show(mode, { instant = false, dir = 1 } = {}) {
+function show(mode, { instant = false, dir = 1, paged = false } = {}) {
   const session = mode === 'active' || mode === 'error' ? sessions[index] || null : null;
   const next = { mode, key: session ? sessionKey(session) : null, title: session ? session.title : null };
-  const kind = instant ? 'none' : transitionKind(shown, next);
+  const kind = instant ? 'none' : transitionKind(shown, next, paged);
   const failed = mode === 'error' || mode === 'error0';
   const tint = COLORS[provider] || '#8E8E93';
   wEl.style.setProperty('--tint', tint);
@@ -364,7 +368,7 @@ function show(mode, { instant = false, dir = 1 } = {}) {
   }
 
   linked = linkTo(linkEl, (session && session.link) || baseLink || href);
-  const line = failed ? errorLine(failure.error) : mode === 'loading' ? wt('widget.label', 'Now Playing') : describe(session);
+  const line = failed ? failureLine() : mode === 'loading' ? wt('widget.label', 'Now Playing') : describe(session);
   name(line);
 
   next.said = spokenKey(mode, session, sessions.length);
@@ -394,7 +398,7 @@ function scheduleRedraw() {
 function apply(d) {
   provider = d.provider || provider;
   baseLink = d.link || '';
-  const list = Array.isArray(d.sessions) ? d.sessions : [];
+  const list = withKeys(Array.isArray(d.sessions) ? d.sessions : []);
   if (d !== lastData) winding.observe(list, performance.now());
   lastData = d;
   index = pickIndex(shown && shown.key, list, index);
@@ -405,7 +409,7 @@ function apply(d) {
 function go(step) {
   if (sessions.length < 2 || !shown || shown.mode !== 'active') return;
   index = (index + step + sessions.length) % sessions.length;
-  show('active', { dir: step });
+  show('active', { dir: step, paged: true });
 }
 $('prev').addEventListener('click', e => { e.stopPropagation(); go(-1); });
 $('next').addEventListener('click', e => { e.stopPropagation(); go(1); });
@@ -425,6 +429,7 @@ async function boot() {
     fetch: () => fetchData(),
     interval: TICK_MS,
     render: d => {
+      if (failure && d === lastData) return;
       failure = null;
       apply(d);
     },

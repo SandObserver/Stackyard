@@ -14,6 +14,15 @@ test('Now Playing does not rewrite its live region with the same words', () => {
   assert.match(nowplaying, /if \(announce && srEl\.textContent !== spoken\) srEl\.textContent = spoken;/);
 });
 
+test('Now Playing does not replay its last session over a failure on a theme change', () => {
+  assert.match(nowplaying, /render: d => \{\n\s+if \(failure && d === lastData\) return;/);
+});
+
+test('Now Playing names the time since a failure, which its hidden caption shows', () => {
+  assert.match(nowplaying, /failure\.since \? wt\('ui\.describeFailure'/);
+  assert.match(nowplaying, /const line = failed \? failureLine\(\)/);
+});
+
 function liftAddEvents() {
   const src = read('disk-health/index.html');
   const fn = src.match(/function addEvents\(bay, i\) \{[\s\S]*?\n\}/);

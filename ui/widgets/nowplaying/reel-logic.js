@@ -1,7 +1,7 @@
 // @ts-check
 
 /** @typedef {{ x: number, y: number }} Point */
-/** @typedef {{ id?: string, title: string, subtitle?: string, progress: number|null,
+/** @typedef {{ id?: string, key?: string, title: string, subtitle?: string, progress: number|null,
     state: 'playing'|'paused', player?: string }} Session */
 /** @typedef {'loading'|'idle'|'active'|'error'|'error0'} Mode */
 /** @typedef {'none'|'arrive'|'leave'|'page'|'fade'} Transition */
@@ -124,7 +124,19 @@ export function reelMarkup() {
 /** What tells two sessions apart. Older servers send no id.
     @param {Session} s @returns {string} */
 export function sessionKey(s) {
-  return s.id || `${s.player || ''}\u0000${s.title}`;
+  return s.key || s.id || `${s.player || ''}\u0000${s.title}`;
+}
+
+/** The sessions of one poll, each with a key no other session in it shares.
+    @param {Session[]} sessions @returns {Session[]} */
+export function withKeys(sessions) {
+  const seen = new Map();
+  return sessions.map(s => {
+    const base = sessionKey({ ...s, key: undefined });
+    const n = seen.get(base) || 0;
+    seen.set(base, n + 1);
+    return { ...s, key: n ? `${base}\u0000${n}` : base };
+  });
 }
 
 /** The session to show after an update: the same one if it is still playing,
@@ -139,9 +151,9 @@ export function pickIndex(shownKey, sessions, index) {
 
 /** @typedef {{ mode: Mode, key: string|null, title: string|null }} Shown */
 
-/** The label animation between two views.
-    @param {Shown|null} from @param {Shown} to @returns {Transition} */
-export function transitionKind(from, to) {
+/** The label animation between two views. Only paging by hand slides sideways.
+    @param {Shown|null} from @param {Shown} to @param {boolean} [paged] @returns {Transition} */
+export function transitionKind(from, to, paged = false) {
   if (!from) return 'none';
   if (from.mode !== to.mode) {
     if (from.mode === 'idle' && to.mode === 'active') return 'arrive';
@@ -149,7 +161,7 @@ export function transitionKind(from, to) {
     return 'fade';
   }
   if (to.mode !== 'active') return 'none';
-  if (to.key !== from.key) return 'page';
+  if (to.key !== from.key) return paged ? 'page' : 'fade';
   if (to.title !== from.title) return 'fade';
   return 'none';
 }

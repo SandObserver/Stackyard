@@ -32,6 +32,7 @@
   "ui.describeSessions_one": "{text}. {count} lecture en cours",
   "ui.describeSessions_many": "{text}. {count} lectures en cours",
   "ui.describeSessions_other": "{text}. {count} lectures en cours",
+  "ui.describeFailure": "{text}, {since}",
   "ui.previous": "Élément précédent",
   "ui.next": "Élément suivant",
   "ui.linkName": "{text}. Activez pour ouvrir le lien."
