@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Glass switches, sliders and segmented controls in the admin, and a glass tab
+  bar on phones.
+
 ### Changed
 
 - Pick a local System Summary temperature by sensor name, starting on the CPU.
@@ -16,6 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Require Safari 26.2 or newer on macOS and iOS.
 
 - Bend the open folder's glass more and frost it less.
+
+- Show a check or a cross on the Save button after a save.
+
+- Open drop-downs out of their button, and pick an option by sliding a finger
+  over the list.
+
+- Show "Sign out all" and the dashboard Delete confirm as destructive actions.
 
 ### Removed
 
