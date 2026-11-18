@@ -1,6 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const { normalizeBase } = require('../src/widget-data');
 const { KIND, WidgetError } = require('../src/api-error');
 
@@ -258,12 +259,12 @@ const SAME_NAME = {
         nowPlaying: {
           entry: [
             { title: 'Time', username: 'ann', playerId: 1, playerName: 'Browser' },
-            { title: 'Home', username: 'bob', playerId: 1, playerName: 'Browser' },
+            { title: 'Home', username: 'bob', playerId: 2, playerName: 'Browser' },
           ],
         },
       },
     },
-    'ann/1',
+    'ann\u0000Browser',
   ],
 };
 
@@ -281,8 +282,60 @@ for (const [provider, [config, payload, raw]] of Object.entries(SAME_NAME)) {
       'the id is the same on the next poll',
     );
     assert.ok(!ids[0].includes(raw), 'the server session id is not passed through');
+    assert.notEqual(ids[0], plainHash(raw), 'the id cannot be found by hashing a guess');
   });
 }
+
+const plainHash = raw => crypto.createHash('sha256').update(raw).digest('base64url').slice(0, 16);
+const NAVIDROME = {
+  provider: 'navidrome',
+  navidromeUrl: 'https://nd.example.com',
+  navidromeUser: 'u',
+  navidromePassword: 'p',
+};
+const nowPlaying = entry => ({ 'subsonic-response': { status: 'ok', nowPlaying: { entry } } });
+
+test('a navidrome session keeps its id when a new track reorders the list', async () => {
+  const kitchen = { title: 'Time', username: 'ann', playerName: 'Kitchen' };
+  const office = { title: 'Home', username: 'ann', playerName: 'Office' };
+  const before = await dataFn(
+    ctxFor(
+      NAVIDROME,
+      nowPlaying([
+        { ...kitchen, playerId: 1 },
+        { ...office, playerId: 2 },
+      ]),
+    ),
+  );
+  const after = await dataFn(
+    ctxFor(
+      NAVIDROME,
+      nowPlaying([
+        { ...office, title: 'Away', playerId: 1 },
+        { ...kitchen, playerId: 2 },
+      ]),
+    ),
+  );
+  const idOf = (r, player) => r.sessions.find(s => s.player === player).id;
+  assert.equal(idOf(after, 'Kitchen'), idOf(before, 'Kitchen'));
+  assert.equal(idOf(after, 'Office'), idOf(before, 'Office'));
+  assert.notEqual(idOf(after, 'Kitchen'), idOf(after, 'Office'));
+});
+
+test('sessions the source cannot tell apart still get different ids', async () => {
+  const r = await dataFn(
+    ctxFor(
+      NAVIDROME,
+      nowPlaying([
+        { title: 'Time', username: 'ann', playerId: 1, playerName: 'Browser' },
+        { title: 'Home', username: 'ann', playerId: 2, playerName: 'Browser' },
+      ]),
+    ),
+  );
+  const ids = r.sessions.map(s => s.id);
+  assert.ok(ids.every(Boolean));
+  assert.notEqual(ids[0], ids[1]);
+});
 
 test('a session the source does not identify has an empty id', async () => {
   const r = await dataFn(

@@ -1,6 +1,7 @@
 /* Returns { provider, link, sessions: [{ id, title, subtitle, progress, state,
    type, player, link }] }. progress is 0..1, or null when the source has no
-   duration. id is '' when the source names no session. */
+   duration. id is '' when the source names no session, and unique within one
+   reply. */
 
 const crypto = require('crypto');
 
@@ -10,8 +11,22 @@ const plexMachineIds = new Map();
 
 const linkFor = (ctx, url, path) => ctx.serviceLink(ctx.config.href, url, path);
 
+/* Keep the key. Without it any viewer can recover a Navidrome username from its id by guessing. */
+const ID_KEY = crypto.randomBytes(32);
 const sessionId = raw =>
-  raw == null || raw === '' ? '' : crypto.createHash('sha256').update(String(raw)).digest('base64url').slice(0, 16);
+  raw == null || raw === ''
+    ? ''
+    : crypto.createHmac('sha256', ID_KEY).update(String(raw)).digest('base64url').slice(0, 16);
+
+const uniqueIds = sessions => {
+  const seen = new Map();
+  return sessions.map(s => {
+    if (!s.id) return s;
+    const n = seen.get(s.id) || 0;
+    seen.set(s.id, n + 1);
+    return n ? { ...s, id: `${s.id}.${n}` } : s;
+  });
+};
 
 async function plexMachineId(ctx, base, token) {
   if (plexMachineIds.has(base)) return plexMachineIds.get(base);
@@ -152,7 +167,8 @@ async function navidrome(ctx) {
     const progress = pos != null && dur > 0 ? Math.min(1, Math.max(0, pos / (dur * 1000))) : null;
     const state = e.state === 'paused' ? 'paused' : 'playing'; // starting/playing -> playing
     return {
-      id: e.playerId == null ? '' : sessionId(`${e.username || ''}/${e.playerId}`),
+      /* Not playerId. Navidrome numbers entries by list position, which changes on every new track. */
+      id: e.username || e.playerName ? sessionId(`${e.username || ''}\u0000${e.playerName || ''}`) : '',
       title: e.title || '',
       subtitle: e.artist || e.album || '',
       progress,
@@ -174,5 +190,9 @@ module.exports = async function (ctx) {
   else if (provider === 'navidrome') sessions = await navidrome(ctx);
   else ctx.fail('No media server configured', { kind: ctx.KIND.INVALID });
   const base = { plex: 'plexUrl', jellyfin: 'jellyfinUrl', emby: 'embyUrl', navidrome: 'navidromeUrl' }[provider];
-  return { provider, sessions: sessions.filter(s => s.title).slice(0, MAX), link: linkFor(ctx, ctx.config[base]) };
+  return {
+    provider,
+    sessions: uniqueIds(sessions.filter(s => s.title).slice(0, MAX)),
+    link: linkFor(ctx, ctx.config[base]),
+  };
 };
