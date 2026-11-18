@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show "Sign out all" and the dashboard Delete confirm as destructive actions.
 
+- Redraw Now Playing as a turning VHS take-up reel whose tape grows with
+  progress.
+
 ### Removed
 
 - Remove the `WIDGETS_PATH` setting from the Compose example. Mount a custom
@@ -74,6 +77,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on a phone.
 
 - Remove the light diamond in the open folder's glass.
+
+- Now Playing no longer reads its error twice to screen readers.
+
+- Now Playing tells screen readers how long ago its server stopped answering.
+
+- Now Playing pauses its reel in a background tab.
+
+- Now Playing's time since a failure meets 4.5:1 contrast.
 
 ### Security
 
