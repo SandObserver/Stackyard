@@ -35,7 +35,7 @@ export function easing(text) {
   return cubicBezier(c[0], c[1], c[2], c[3]);
 }
 
-/** @typedef {{ step: (now: number) => boolean }} Track */
+/** @typedef {{ step: (now: number) => boolean, fail?: (err: unknown) => void }} Track */
 
 /** @type {Set<Track>} */
 const tracks = new Set();
@@ -61,7 +61,15 @@ export function onFrame(fn) {
 
 function tick(/** @type {number} */ now) {
   pending = false;
-  for (const t of tracks) if (!t.step(now)) tracks.delete(t);
+  for (const t of tracks) {
+    try {
+      if (!t.step(now)) tracks.delete(t);
+    } catch (err) {
+      tracks.delete(t);
+      t.fail?.(err);
+      console.warn('[motion]', err);
+    }
+  }
   for (const fn of afterFrame) fn();
   if (tracks.size) schedule();
 }
@@ -114,4 +122,83 @@ export function glide(el, duration, ease, fn, done) {
 export function stopGlide(el) {
   glides.get(el)?.cancel();
   glides.delete(el);
+}
+
+/** A damped spring. `response` is its period in seconds; `damping` is the
+    fraction of critical damping. */
+export class Spring {
+  /** @param {number} v @param {number} [response] @param {number} [damping] */
+  constructor(v, response = 0.3, damping = 0.8) {
+    this.v = v;
+    this.t = v;
+    this.vel = 0;
+    this.r = response;
+    this.k = 0;
+    this.c = 0;
+    this.set(response, damping);
+  }
+  /** @param {number} response @param {number} damping */
+  set(response, damping) {
+    this.r = response;
+    this.k = ((2 * Math.PI) / response) ** 2;
+    this.c = (4 * Math.PI * damping) / response;
+    return this;
+  }
+  /** @param {number} t @param {readonly [number, number]} [rd] response and damping */
+  to(t, rd) {
+    this.t = t;
+    if (rd) this.set(rd[0], rd[1]);
+    return this;
+  }
+  /** @param {number} v */
+  snap(v) {
+    this.v = v;
+    this.t = v;
+    this.vel = 0;
+  }
+  /** @param {number} dt seconds */
+  step(dt) {
+    if (this.r < SPRING_JUMP) {
+      this.snap(this.t);
+      return;
+    }
+    /* Fewer substeps let a stiff spring diverge to Infinity. */
+    const n = Math.min(400, Math.max(Math.ceil(dt / 0.004), Math.ceil((dt * Math.sqrt(this.k)) / 0.3)));
+    const h = dt / n;
+    for (let i = 0; i < n; i++) {
+      this.vel += (-this.k * (this.v - this.t) - this.c * this.vel) * h;
+      this.v += this.vel * h;
+    }
+    if (Math.abs(this.v - this.t) < 5e-4 && Math.abs(this.vel) < 5e-3) this.snap(this.t);
+  }
+  get idle() {
+    return this.v === this.t && this.vel === 0;
+  }
+}
+/** A response below this many seconds is a jump. */
+const SPRING_JUMP = 0.02;
+
+/** Past an end, movement shrinks the further it goes.
+    @param {number} x @param {number} lo @param {number} hi @param {number} k */
+export const rubber = (x, lo, hi, k) =>
+  x < lo ? lo - (1 - 1 / ((lo - x) * k + 1)) / k : x > hi ? hi + (1 - 1 / ((x - hi) * k + 1)) / k : x;
+
+/** Calls `fn(dt)` every frame, dt in seconds and at most 50 ms, until it returns
+    false. A throw ends it and calls `fail`.
+    @param {(dt: number) => boolean} fn @param {(err: unknown) => void} [fail]
+    @returns {() => void} stops it */
+export function everyFrame(fn, fail) {
+  let last = -1;
+  /** @type {Track} */
+  const entry = {
+    step(now) {
+      const dt = last < 0 ? 1 / 60 : Math.min(0.05, (now - last) / 1000);
+      last = now;
+      return fn(dt);
+    },
+    fail,
+  };
+  tracks.add(entry);
+  schedule();
+  return () => tracks.delete(entry);
 }

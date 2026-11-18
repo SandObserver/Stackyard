@@ -158,6 +158,35 @@ test('a switch save keeps the shared settings in step with the server', async ()
   assert.deepEqual(state._settings, server.config.settings);
 });
 
+test('a switch save leaves the Save mark to a save in flight or a failed save', async () => {
+  globalThis.matchMedia ??= /** @type {any} */ (() => ({ matches: true }));
+  const awake = nodes['set-awake'];
+  const save = mkEl({
+    isConnected: true,
+    getClientRects: () => [{}],
+    querySelector: () => ({ querySelectorAll: () => [] }),
+  });
+  awake.closest = () => ({ querySelector: () => save });
+  try {
+    save.setAttribute('aria-busy', 'true');
+    awake.checked = true;
+    await awake.fire('change');
+    assert.equal(save.classList.contains('saved'), false, 'no check while the Save press is running');
+    save.removeAttribute('aria-busy');
+    save.classList.add('failed');
+    awake.checked = false;
+    await awake.fire('change');
+    assert.equal(save.classList.contains('saved'), false, 'a failed save keeps its cross');
+    assert.equal(save.classList.contains('failed'), true);
+    save.classList.remove('failed');
+    awake.checked = true;
+    await awake.fire('change');
+    assert.equal(save.classList.contains('saved'), true, 'a free Save button still shows the switch save');
+  } finally {
+    awake.closest = () => null;
+  }
+});
+
 const admin = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
 
 test('every list write in admin.js runs on the shared queue', () => {

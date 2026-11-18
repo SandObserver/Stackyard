@@ -3,9 +3,9 @@
 
 import { t } from '/js/i18n.js?v=99563c71';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { apiPost, fadeIn, PE_SVG, reveal, wireInlineEdit } from '/js/admin-shared.js?v=2ad2dc2f';
-import { createListbox } from '/js/listbox.js?v=c24cf643';
-import { renderColorControl } from '/js/admin-color-control.js?v=e8a56e19';
+import { apiPost, fadeIn, PE_SVG, reveal, wireInlineEdit } from '/js/admin-shared.js?v=14e96406';
+import { createListbox } from '/js/listbox.js?v=1214e150';
+import { renderColorControl } from '/js/admin-color-control.js?v=cb49b830';
 import {
   seedCarried,
   applyOptionSet,

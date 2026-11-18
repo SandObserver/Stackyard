@@ -13,7 +13,7 @@
   <script src="/js/boot-hints.js?v=6ffdbc2d"></script>
   <script src="/js/page-zoom.js?v=01ccc9cf"></script>
   <link rel="stylesheet" href="/css/tokens.css?v=7ce70145">
-  <link rel="stylesheet" href="/css/admin.css?v=3c17a32f">
+  <link rel="stylesheet" href="/css/admin.css?v=f88583ee">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=53b91d5f">
   <link rel="stylesheet" href="/css/config-recovery.css?v=9f8ca0ab">
 </head>
@@ -59,7 +59,7 @@
       <div class="sec-hdr">
         <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-back"/></svg></a><h1 class="sec-title" data-i18n="nav.general">General</h1>
         <div class="sec-hdr-actions">
-          <button class="btn bp sm sv-btn" id="srv-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><span class="sv-busy" aria-hidden="true" data-i18n="common.saving">Saving…</span><span class="sv-done" aria-hidden="true"><svg class="sy-icon" width="16" height="16" aria-hidden="true" focusable="false"><use href="#sy-solid-check"/></svg><span data-i18n="toast.saved">Saved</span></span></button>
+          <button class="btn bp sm sv-btn" id="srv-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><svg class="sv-i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle class="sv-c" cx="6" cy="12.5" r="1.3"/><circle class="sv-c" cx="12" cy="12.5" r="1.3"/><circle class="sv-c" cx="18" cy="12.5" r="1.3"/><path class="sv-k" pathLength="1" d="M6 12.5L10.5 17L18.5 8"/><path class="sv-x" pathLength="1" d="M12 12.5L7.5 8"/><path class="sv-x" pathLength="1" d="M12 12.5L16.5 17"/><path class="sv-x" pathLength="1" d="M12 12.5L16.5 8"/><path class="sv-x" pathLength="1" d="M12 12.5L7.5 17"/></svg></button>
         </div>
       </div>
       <div class="grp">
@@ -114,7 +114,7 @@
         <div class="row"><span class="rl" id="rl-sec-en" data-i18n="general.passwordProtection">Password Protection</span><label class="tog"><input type="checkbox" role="switch" id="sec-en" aria-labelledby="rl-sec-en"><div class="tr"></div></label></div>
         <div class="row-wrap reveal" id="ie-pw-wrap"><div class="reveal-in"><div class="row ie-row" id="ie-pw"><span class="rl" data-i18n="general.password">Password</span><span class="rv is-ph" id="ie-pw-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button><button class="pw-reveal" type="button" aria-pressed="false" aria-label="Show password" title="Show password" data-i18n-al="common.showPassword" data-i18n-title="common.showPassword"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-eye"/></svg></button></div></div></div>
         <div class="row-wrap reveal" id="ie-pw2-wrap"><div class="reveal-in"><div class="row ie-row" id="ie-pw2"><span class="rl" data-i18n="general.confirmPassword">Confirm Password</span><span class="rv is-ph" id="ie-pw2-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button><button class="pw-reveal" type="button" aria-pressed="false" aria-label="Show password" title="Show password" data-i18n-al="common.showPassword" data-i18n-title="common.showPassword"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-eye"/></svg></button></div></div></div>
-        <div class="row-wrap reveal" id="sec-revoke-wrap"><div class="reveal-in"><div class="row" id="sec-revoke-row"><span class="rl" data-i18n="general.signOutEverywhere">Sign Out All Devices</span><div class="row-btns"><button class="btn bg sm" id="sec-revoke" type="button" data-i18n="general.signOutEverywhereBtn">Sign out all</button></div></div></div></div>
+        <div class="row-wrap reveal" id="sec-revoke-wrap"><div class="reveal-in"><div class="row" id="sec-revoke-row"><span class="rl" data-i18n="general.signOutEverywhere">Sign Out All Devices</span><div class="row-btns"><button class="btn bd-btn sm" id="sec-revoke" type="button" data-i18n="general.signOutEverywhereBtn">Sign out all</button></div></div></div></div>
       </div>
       <div id="sec-pw-bars" class="pw-bars d-none" aria-hidden="true"><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div><div class="pwbar"></div></div>
       <div id="sec-pw-hint" class="pw-hint d-none" role="status"></div>
@@ -141,7 +141,7 @@
     <section class="sec" id="sec-appearance" hidden>
       <div class="sec-hdr">
         <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-back"/></svg></a><h1 class="sec-title" data-i18n="nav.appearance">Appearance</h1>
-        <div class="sec-hdr-actions"><button class="btn bp sm sv-btn" id="bg-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><span class="sv-busy" aria-hidden="true" data-i18n="common.saving">Saving…</span><span class="sv-done" aria-hidden="true"><svg class="sy-icon" width="16" height="16" aria-hidden="true" focusable="false"><use href="#sy-solid-check"/></svg><span data-i18n="toast.saved">Saved</span></span></button></div>
+        <div class="sec-hdr-actions"><button class="btn bp sm sv-btn" id="bg-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><svg class="sv-i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle class="sv-c" cx="6" cy="12.5" r="1.3"/><circle class="sv-c" cx="12" cy="12.5" r="1.3"/><circle class="sv-c" cx="18" cy="12.5" r="1.3"/><path class="sv-k" pathLength="1" d="M6 12.5L10.5 17L18.5 8"/><path class="sv-x" pathLength="1" d="M12 12.5L7.5 8"/><path class="sv-x" pathLength="1" d="M12 12.5L16.5 17"/><path class="sv-x" pathLength="1" d="M12 12.5L16.5 8"/><path class="sv-x" pathLength="1" d="M12 12.5L7.5 17"/></svg></button></div>
       </div>
       <h2 class="grp-hdr" data-i18n="appearance.appTitle">App Title</h2>
       <div class="grp">
@@ -218,7 +218,7 @@
           <div class="sec-hdr-actions">
             <button class="btn sm al-reorder" id="btn-reorder" type="button"><span data-i18n="list.reorder">Reorder</span><span data-i18n="list.reorderDone">Done</span></button>
             <button class="btn bp sm al-add" id="btn-add" type="button" aria-label="Add" title="Add" data-i18n-al="common.addLabel" data-i18n-title="common.addLabel"><svg class="sy-icon" width="20" height="20" aria-hidden="true" focusable="false"><use href="#sy-solid-plus"/></svg></button>
-            <button class="btn bp sm sv-btn" id="dash-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><span class="sv-done" aria-hidden="true"><svg class="sy-icon" width="16" height="16" aria-hidden="true" focusable="false"><use href="#sy-solid-check"/></svg><span data-i18n="toast.saved">Saved</span></span></button>
+            <button class="btn bp sm sv-btn" id="dash-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><svg class="sv-i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle class="sv-c" cx="6" cy="12.5" r="1.3"/><circle class="sv-c" cx="12" cy="12.5" r="1.3"/><circle class="sv-c" cx="18" cy="12.5" r="1.3"/><path class="sv-k" pathLength="1" d="M6 12.5L10.5 17L18.5 8"/><path class="sv-x" pathLength="1" d="M12 12.5L7.5 8"/><path class="sv-x" pathLength="1" d="M12 12.5L16.5 17"/><path class="sv-x" pathLength="1" d="M12 12.5L16.5 8"/><path class="sv-x" pathLength="1" d="M12 12.5L7.5 17"/></svg></button>
           </div>
         </div>
         <div class="al-filter d-none" id="al-filter">
@@ -243,7 +243,7 @@
           <h1 class="sec-title" id="ev-title">General</h1>
           <div class="sec-hdr-actions">
             <button class="btn bd-btn sm d-none" id="ev-delete" type="button" data-i18n="common.delete">Delete</button>
-            <button class="btn bp sm sv-btn" id="ev-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><span class="sv-busy" aria-hidden="true" data-i18n="common.saving">Saving…</span></button>
+            <button class="btn bp sm sv-btn" id="ev-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><svg class="sv-i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle class="sv-c" cx="6" cy="12.5" r="1.3"/><circle class="sv-c" cx="12" cy="12.5" r="1.3"/><circle class="sv-c" cx="18" cy="12.5" r="1.3"/><path class="sv-k" pathLength="1" d="M6 12.5L10.5 17L18.5 8"/><path class="sv-x" pathLength="1" d="M12 12.5L7.5 8"/><path class="sv-x" pathLength="1" d="M12 12.5L16.5 17"/><path class="sv-x" pathLength="1" d="M12 12.5L16.5 8"/><path class="sv-x" pathLength="1" d="M12 12.5L7.5 17"/></svg></button>
           </div>
         </div>
         <!-- Add New selector + form render here -->
@@ -325,6 +325,6 @@
     </form>
   </div>
 </dialog>
-<script type="module" src="/js/admin.js?v=2c8d3cd6"></script>
+<script type="module" src="/js/admin.js?v=7f7b95b7"></script>
 </body>
 </html>

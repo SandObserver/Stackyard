@@ -10,9 +10,8 @@ globalThis.document = {
   documentElement: { toggleAttribute: (name, on) => (on ? attrs.add(name) : attrs.delete(name)) },
 };
 
-const { animate, cubicBezier, easing, glide, onFrame, setScripted, isScripted, stopGlide } = await import(
-  '../js/frame-motion.js'
-);
+const { animate, cubicBezier, easing, everyFrame, glide, onFrame, rubber, setScripted, isScripted, Spring, stopGlide } =
+  await import('../js/frame-motion.js');
 
 /** Runs queued frames at the given timestamps. */
 const run = (...times) => {
@@ -100,4 +99,92 @@ test('scripted motion is marked on the root for the CSS that hands it over', () 
   assert.ok(attrs.has('data-glass-live'));
   setScripted(false);
   assert.ok(!attrs.has('data-glass-live'));
+});
+
+test('a spring settles on its target and goes idle', () => {
+  for (const [r, d] of [
+    [0.3, 0.8],
+    [0.18, 1],
+    [0.12, 0.9],
+  ]) {
+    const s = new Spring(0, r, d).to(1);
+    for (let i = 0; i < 240; i++) s.step(1 / 60);
+    assert.equal(s.v, 1, `response ${r} did not land`);
+    assert.ok(s.idle);
+  }
+});
+
+test('a very fast spring jumps, and a stiff one with long frames still converges', () => {
+  const s = new Spring(0, 0.001, 1).to(1);
+  s.step(1 / 60);
+  assert.equal(s.v, 1);
+  const stiff = new Spring(0, 0.03, 0.3).to(1);
+  for (let i = 0; i < 120; i++) stiff.step(0.05);
+  assert.ok(Number.isFinite(stiff.v) && Math.abs(stiff.v - 1) < 1e-3, `stiff spring ended at ${stiff.v}`);
+});
+
+test('a spring retargeted mid-flight keeps its speed', () => {
+  const s = new Spring(0, 0.3, 1).to(1);
+  for (let i = 0; i < 6; i++) s.step(1 / 60);
+  const vel = s.vel;
+  s.to(0);
+  assert.equal(s.vel, vel, 'retargeting does not reset velocity');
+});
+
+test('rubber band: free inside the range, shrinking and bounded past it', () => {
+  assert.equal(rubber(0.4, 0, 1, 2), 0.4);
+  const a = rubber(1.5, 0, 1, 2);
+  const b = rubber(3, 0, 1, 2);
+  assert.ok(a > 1 && b > a && b < 1 + 1 / 2, `${a} ${b}`);
+  assert.ok(rubber(-1, 0, 1, 2) < 0 && rubber(-1, 0, 1, 2) > -1 / 2);
+});
+
+test('everyFrame passes seconds, caps a long gap, and stops when asked or on false', () => {
+  /** @type {number[]} */
+  const seen = [];
+  everyFrame(dt => {
+    seen.push(dt);
+    return seen.length < 3;
+  });
+  run(1000, 1016, 1500, 1516);
+  assert.equal(seen.length, 3);
+  assert.ok(Math.abs(seen[0] - 1 / 60) < 1e-9, 'the first frame is one frame long');
+  assert.ok(Math.abs(seen[1] - 0.016) < 1e-9);
+  assert.equal(seen[2], 0.05, 'a long gap counts as 50 ms');
+  let n = 0;
+  const stop = everyFrame(() => {
+    n++;
+    return true;
+  });
+  run(2000);
+  stop();
+  run(2016, 2032);
+  assert.equal(n, 1);
+});
+
+test('one animation throwing ends only itself; the others keep their frames', () => {
+  const warn = console.warn;
+  console.warn = () => {};
+  try {
+    let failed = null;
+    let other = 0;
+    everyFrame(
+      () => {
+        throw new Error('boom');
+      },
+      err => {
+        failed = err;
+      },
+    );
+    const stop = everyFrame(() => {
+      other++;
+      return true;
+    });
+    run(3000, 3016);
+    stop();
+    assert.ok(failed instanceof Error);
+    assert.equal(other, 2);
+  } finally {
+    console.warn = warn;
+  }
 });

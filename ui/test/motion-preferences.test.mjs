@@ -24,6 +24,9 @@ function stylesheetsOf(page) {
   return [...read(page).matchAll(/href="\/css\/([a-z-]+\.css)/g)].map(m => m[1]);
 }
 
+/* The contrast block that raises the colour tokens, not one that only adds marks. */
+const RAISED = '@media (prefers-contrast: more) {\n  :root';
+
 test('both pages load tokens.css', () => {
   /* The whole approach rests on this. */
   for (const page of ['index.html', 'admin/index.html']) {
@@ -199,7 +202,7 @@ test('the universal rules are not duplicated', () => {
 /* ── admin contrast ───────────────────────────────────────────────────────── */
 
 test('admin raises its own tokens for increased contrast', () => {
-  const block = admin.slice(admin.indexOf('@media (prefers-contrast: more)'));
+  const block = admin.slice(admin.indexOf(RAISED));
   for (const token of ['--dm', '--bd', '--tx']) {
     assert.ok(block.slice(0, block.indexOf('\n  }')).includes(`${token}:`), `${token} is not raised`);
   }
@@ -226,7 +229,7 @@ test('the raised colours meet the contrast they are raised for', () => {
      inside it, from either file, are layered on top; then var() is followed to a
      hex. This is what the page actually computes in increased-contrast mode. */
   const contrastBlock = src => {
-    const i = src.indexOf('@media (prefers-contrast: more)');
+    const i = src.indexOf(RAISED);
     return i === -1 ? '' : src.slice(i, src.indexOf('\n}', i));
   };
   const declarations = src => {
@@ -268,7 +271,7 @@ test('the raised colours meet the contrast they are raised for', () => {
 /* The custom controls draw their own focus ring, so a generic rule would miss
    exactly the ones a keyboard user relies on. */
 test('increased contrast widens every focus ring, including the custom ones', () => {
-  const block = admin.slice(admin.indexOf('@media (prefers-contrast: more)'));
+  const block = admin.slice(admin.indexOf(RAISED));
   for (const sel of ['button:focus-visible', '.tog input:focus-visible+.tr', '.row-dd-list li:focus-visible']) {
     assert.ok(block.includes(sel), `${sel} keeps a thin ring in high contrast`);
   }

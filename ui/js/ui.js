@@ -36,8 +36,8 @@ import {
   dockFit,
   WIDEST_PHONE,
 } from '/js/mobile-metrics.js?v=ae661544';
-import { animate, easing, glide, isScripted, requestFrame, stopGlide } from '/js/frame-motion.js?v=1d86154d';
-import { openFolderGlass } from '/js/glass.js?v=2045f95b';
+import { animate, easing, glide, isScripted, requestFrame, stopGlide } from '/js/frame-motion.js?v=911f7c03';
+import { openFolderGlass } from '/js/glass.js?v=ccd1be6f';
 import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=b4828b62';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';

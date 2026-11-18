@@ -55,7 +55,7 @@ function makeParts(values) {
   const text = { textContent: '', classList: { toggle() {} }, removeAttribute() {} };
   const list = {
     hidden: true,
-    style: {},
+    style: { setProperty() {} },
     addEventListener: on('list'),
     querySelectorAll: () => options,
     setAttribute() {},

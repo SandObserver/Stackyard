@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=e8a56e19';
+import { renderColorControl } from '/js/admin-color-control.js?v=cb49b830';
 import { passwordRefusalKey, socketProbeAdvice } from '/js/admin-error.js?v=5abd7438';
 import {
   BLOCK,
@@ -19,6 +19,7 @@ import {
   planFieldSave,
 } from '/js/admin-save-logic.js?v=4a332c56';
 import {
+  announce,
   apiGet,
   apiPost,
   busyPress,
@@ -27,6 +28,7 @@ import {
   confirmSaved,
   errorAction,
   errorText,
+  failedSave,
   reveal,
   sectionSave,
   setStatus,
@@ -34,7 +36,7 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=2ad2dc2f';
+} from '/js/admin-shared.js?v=14e96406';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { BACKDROP } from '/js/background.js?v=eca5642a';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
@@ -368,6 +370,7 @@ export function loadSettings(c, page) {
       text: t('confirm.revokeSessions'),
       confirmLabel: t('confirm.revokeBtn'),
       cancelLabel: t('common.cancel'),
+      destructive: true,
       irreversible: true,
     });
     if (!ok) return;
@@ -541,16 +544,21 @@ function saveSwitchChange(e, apply) {
   const toggled = /** @type {HTMLInputElement} */ (e.target);
   const value = toggled.checked;
   return configWrites.run(async () => {
+    const own = sectionSave(toggled);
+    /* A Save press in flight or just failed owns the mark. */
+    const taken = () => own?.getAttribute('aria-busy') === 'true' || !!own?.classList.contains('failed');
     try {
       const c = await apiGet('/api/config');
       c.settings = c.settings || {};
       apply(c.settings);
       await apiPost('/api/config', c);
       state._settings = c.settings;
-      confirmSaved(sectionSave(toggled));
+      if (taken()) announce(t('toast.saved'));
+      else confirmSaved(own);
     } catch (err) {
       /* Assigning `checked` fires no event, so this does not loop. */
       if (toggled.checked === value) toggled.checked = !value;
+      if (!taken()) failedSave(own);
       toast(t('toast.saveFailed', { err: errorText(err) }), 'err', errorAction(err));
     }
   });
@@ -612,6 +620,7 @@ async function writeWallpaper(sent, form) {
     _bgTrack?.reset(true, JSON.stringify(sent.with(-1, _val('bg-apikey-inp'))));
     confirmSaved(el('bg-save'));
   } catch (e) {
+    failedSave(el('bg-save'));
     toast(staleText(e) || t('toast.saveFailed', { err: errorText(e) }), 'err', errorAction(e));
   }
 }
@@ -675,6 +684,7 @@ async function saveServer() {
     try {
       probe = await apiPost('/api/docker/test', { url });
     } catch (e) {
+      failedSave(el('srv-save'));
       toast(t('toast.saveFailed', { err: errorText(e) }), 'err', errorAction(e));
       return;
     }
@@ -758,6 +768,7 @@ async function saveServer() {
 
   if (failure || !done) {
     const key = passwordRefusalKey(failure);
+    failedSave(el('srv-save'));
     if (/** @type {any} */ (failure)?.protectionOff)
       toast(
         t('toast.protectionOffOthersNot', { err: staleText(failure) || errorText(failure) }),

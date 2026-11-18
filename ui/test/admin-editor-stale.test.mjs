@@ -26,7 +26,7 @@ test('a save that lands after the editor changed leaves the new editor open', ()
   const save = fn('async function doSave(');
   assert.match(
     save,
-    /const session = state\._evSession;[\s\S]*if \(!\(await saveOrRevert\(before\)\)\) return;\s*if \(session === state\._evSession\) closeModal\(item\.id\);\s*toast\(t\(replaced \? 'toast\.updated' : 'toast\.added'\)\);/,
+    /const session = state\._evSession;[\s\S]*if \(!\(await saveOrRevert\(before\)\)\) \{\s*failedSave\(el\('ev-save'\)\);\s*return;\s*\}\s*if \(session === state\._evSession\) closeModal\(item\.id\);\s*toast\(t\(replaced \? 'toast\.updated' : 'toast\.added'\)\);/,
   );
   assert.doesNotMatch(save, /^\s*closeModal\(item\.id\);/m);
 });

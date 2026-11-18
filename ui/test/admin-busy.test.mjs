@@ -17,7 +17,13 @@ function mkEl() {
       this.focused++;
     },
     closest: () => null,
-    classList: { has: c => classes.has(c), add: c => classes.add(c), remove: c => classes.delete(c) },
+    querySelectorAll: () => [],
+    classList: {
+      has: c => classes.has(c),
+      contains: c => classes.has(c),
+      add: c => classes.add(c),
+      remove: (...c) => c.forEach(x => classes.delete(x)),
+    },
     getAttribute: k => attrs[k] ?? null,
     setAttribute: (k, v) => {
       attrs[k] = String(v);
@@ -64,6 +70,28 @@ test('a second press during the write is ignored', async () => {
   await first;
   assert.equal(btn.getAttribute('aria-busy'), null);
   assert.equal(btn.disabled, false);
+});
+
+test('a new save clears the check or cross left from the last one', async () => {
+  for (const mark of ['saved', 'failed']) {
+    const btn = mkEl();
+    btn.classList.add(mark);
+    const { done, open } = gate();
+    const press = busyPress(btn, () => done);
+    const running = press();
+    assert.equal(btn.classList.has(mark), false, `${mark} is gone as soon as the save starts`);
+    open();
+    await running;
+  }
+});
+
+test('a new save cancels a mark still drawn after its class has faded', async () => {
+  const btn = mkEl();
+  let cancelled = 0;
+  const drawn = { getAnimations: () => [{ cancel: () => cancelled++ }] };
+  btn.querySelectorAll = () => [drawn];
+  await busyPress(btn, async () => {})();
+  assert.equal(cancelled, 1);
 });
 
 test('a fast write never shows the saving label', async () => {
