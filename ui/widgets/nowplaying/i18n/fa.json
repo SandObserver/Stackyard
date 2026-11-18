@@ -29,6 +29,8 @@
   "ui.describePlayer": "{text} روی {player}",
   "ui.describeProvider": "{text}، {provider}",
   "ui.describePaused": "{text} (مکث)",
+  "ui.describeSessions_one": "{text}. {count} مورد در حال پخش",
+  "ui.describeSessions_other": "{text}. {count} مورد در حال پخش",
   "ui.previous": "مورد قبلی",
   "ui.next": "مورد بعدی",
   "ui.linkName": "{text}. برای بازکردن پیوند، آن را انتخاب کنید."

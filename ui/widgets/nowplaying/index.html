@@ -10,65 +10,46 @@
   html,body{width:100%;height:100%;overflow:hidden;background:transparent;
     font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif}
   html{-webkit-tap-highlight-color:transparent}
-
-  .widget{width:100%;height:100%;position:relative;border-radius:inherit;overflow:hidden;
+  .widget{width:100%;height:100%;position:relative;border-radius:inherit;overflow:hidden;contain:strict;
     background:#2C2C2E}
   .np-link{position:absolute;inset:0;z-index:2;border-radius:inherit}
   .np-link.clickable{cursor:pointer}
   .np-link.clickable:focus-visible{outline:2px solid #00D2E0;outline-offset:-3px}
 
-  .stage{position:absolute;inset:0}
-
-  .sticker{position:absolute;left:14px;right:14px;top:14px;height:76px;
+  .sticker{position:absolute;left:14px;top:14px;width:142px;height:78px;
     background:linear-gradient(180deg,#FFFFFF,#d2d2d2);border-radius:14px;
     border:1px solid rgba(0,0,0,.18);box-shadow:0 1px 2px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6);
-    padding:8px 12px 22px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+    padding:8px 12px 22px;display:flex;flex-direction:column;overflow:hidden;
+    --wt-cap-color:#1C1C1E;--wt-ph:rgba(60,60,67,0.14)}
+  .lbl{flex:1;min-height:0;display:flex;flex-direction:column;gap:2px}
   .title{font-size:13px;font-weight:700;line-height:1.16;color:#1C1C1E;overflow-wrap:anywhere;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .sub{flex:none;font-size:11px;font-weight:600;line-height:1.12;letter-spacing:.02em;color:#48484A;margin-top:auto;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
   .idle .title{color:#636366;font-weight:600}
-  .sticker{--wt-cap-color:#1C1C1E;--wt-ph:rgba(60,60,67,0.14)}
   .np-cap{flex:none;flex-wrap:wrap;row-gap:3px}
   .sticker .np-cap b{font-size:12.5px;font-weight:600;line-height:1.2}
   .sticker .np-cap svg{width:14px;height:14px}
   .sticker .np-cap i{flex-basis:100%;padding-inline-start:19px;font-size:11px;font-weight:600;
-    letter-spacing:.03em;text-transform:uppercase;color:#8E8E93}
+    letter-spacing:.03em;text-transform:uppercase;color:#545458}
   /* .title sets display. Without this rule the hidden attribute does nothing. */
   .sticker [hidden],.band [hidden]{display:none}
 
-  .band{position:absolute;left:14px;right:14px;top:71px;height:19px;z-index:3;pointer-events:none;
+  .band{position:absolute;left:14px;top:73px;width:142px;height:19px;z-index:3;pointer-events:none;
     display:flex;align-items:center;justify-content:space-between;gap:4px;padding-inline:12px 4px;
     border-radius:0 0 14px 14px;box-shadow:inset 0 .5px 0 rgba(0,0,0,.2);
-    background:var(--band,#8E8E93);color:var(--band-ink,#FFFFFF)}
+    background:var(--band,#8E8E93);color:var(--band-ink,#FFFFFF);
+    transition:background-color .2s ease,color .2s ease}
   .err .band{background:#636366;color:#FFFFFF}
   .player{min-width:0;font-size:11px;font-weight:600;line-height:1;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ctl{flex:none;display:flex;align-items:center;pointer-events:auto}
+  .ctl{flex:none;display:flex;align-items:center;pointer-events:auto;opacity:1;scale:1;
+    transition-property:opacity,scale,display;transition-duration:.2s;
+    transition-timing-function:cubic-bezier(.32,.72,0,1);transition-behavior:allow-discrete}
+  .ctl.off{display:none;opacity:0;scale:.9;transition-duration:.16s}
+  @starting-style{.ctl{opacity:0;scale:.9}}
   .count{min-width:14px;font-size:11px;font-weight:600;line-height:1;text-align:center;opacity:.8;
     font-variant-numeric:tabular-nums}
-
-  .window{position:absolute;left:14px;right:14px;top:97px;bottom:14px;
-    background:radial-gradient(135% 135% at 50% 20%,#636366,#48484A 58%,#48484A);
-    border-radius:5px 5px 38px 38px;overflow:hidden;
-    box-shadow:inset 0 2px 5px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.28)}
-
-  .tape{position:absolute;left:71px;top:-8px;width:126px;height:126px;border-radius:50%;
-    transform:translate(-50%,-50%) scale(var(--wound,0));
-    background:radial-gradient(circle at 50% 46%,#1C1C1E,#1C1C1E 80%)}
-  .tape.wound{transition:transform .6s ease}
-  .strand{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-  .spinwrap{position:absolute;left:71px;top:-8px;width:88px;height:88px;margin:-44px 0 0 -44px;color:#8E8E93;
-    animation:spin 3.6s linear infinite}
-  .spinwrap .reel{width:100%;height:100%;display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
-  .spinwrap.paused,.spinwrap.off{animation-play-state:paused}
-  @keyframes spin{to{transform:rotate(360deg)}}
-
-  .glass{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-  .ticks{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
-    display:flex;flex-direction:column;gap:6px;opacity:.5}
-  .ticks i{display:block;width:12px;height:2px;background:#FFFFFF;border-radius:1px}
-
   .nav{position:relative;width:19px;height:19px;border:0;border-radius:6px;background:transparent;color:inherit;cursor:pointer;
     display:flex;align-items:center;justify-content:center}
   .nav::after{content:"";position:absolute;inset:-7px -3px}
@@ -79,209 +60,382 @@
   /* A chevron is a drawing: no logical property points it the other way. */
   [dir="rtl"] .nav svg{transform:scaleX(-1)}
 
-  .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);border:0}
+  .window{position:absolute;left:14px;top:99px;width:142px;height:57px;
+    background:radial-gradient(135% 135% at 50% 20%,#636366,#48484A 58%,#48484A);
+    border-radius:5px 5px 38px 38px;overflow:hidden;
+    box-shadow:inset 0 2px 5px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.28)}
+  .inner{position:absolute;left:-14px;top:-99px;width:170px;height:170px}
+  .strand{position:absolute;inset:0;width:170px;height:170px;overflow:visible}
+  .strand path{fill:none;stroke-linecap:round;stroke:#0B0B0C;stroke-width:1.3;transition:stroke .2s ease,stroke-width .2s ease}
+  .leader .strand path{stroke:rgba(255,255,255,.45);stroke-width:.9}
+  .pack{position:absolute;border-radius:50%;transition:opacity .2s ease}
+  .tape{background:
+    conic-gradient(from 300deg,rgba(255,255,255,0) 0deg,rgba(255,255,255,.10) 28deg,rgba(255,255,255,0) 64deg,
+      rgba(255,255,255,0) 176deg,rgba(255,255,255,.05) 208deg,rgba(255,255,255,0) 246deg),
+    repeating-radial-gradient(circle,#1D1A19 0 1.3px,#25211F 1.3px 2.3px)}
+  .clear{background:radial-gradient(circle,rgba(255,255,255,.06),rgba(255,255,255,.18));opacity:0}
+  .leader .clear{opacity:1}
+  .leader .tape{opacity:0}
+  .ring{position:absolute;pointer-events:none}
+  .ring svg{display:block;overflow:visible}
+  .ring circle{fill:none;stroke:rgba(0,0,0,.7);stroke-width:.5;transition:stroke .2s ease}
+  .leader .ring circle{stroke:rgba(255,255,255,.4);stroke-width:.75}
+  .reel{position:absolute;rotate:0deg;will-change:rotate}
+  .reel svg{display:block}
+  .ticks{position:absolute;left:65px;top:31px;display:flex;flex-direction:column;gap:6px;opacity:.5}
+  .ticks i{display:block;width:12px;height:2px;background:#FFFFFF;border-radius:1px}
+  .glass{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 
+  .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);border:0}
   @media(prefers-reduced-motion:reduce){
-    .spinwrap{animation:none!important}
-    .tape{transition:none!important}
+    .ctl{scale:1}
+    .band,.pack,.strand path,.ring circle{transition:none}
   }
 </style>
 </head>
 <body>
-<div class="widget idle" id="w" role="group" aria-label="Now Playing">
+<div class="widget idle leader" id="w" role="group" aria-label="Now Playing">
   <div class="np-link" id="np-link"></div>
-  <div class="stage">
-    <div class="sticker" id="sticker">
+  <div class="window" id="window">
+    <div class="inner">
+      <svg class="strand" viewBox="0 0 170 170" aria-hidden="true"><path id="strand"/></svg>
+      <div class="pack tape" id="tape"></div>
+      <div class="pack clear" id="clear"></div>
+      <div class="ring" id="ring"><svg aria-hidden="true"><circle vector-effect="non-scaling-stroke"/></svg></div>
+      <div class="reel" id="reel"></div>
+    </div>
+    <div class="ticks" aria-hidden="true"><i></i><i></i><i></i></div>
+    <svg class="glass" viewBox="0 0 142 56" preserveAspectRatio="none" aria-hidden="true">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0.17"/>
+        <stop offset="1" stop-color="#ffffff" stop-opacity="0.04"/></linearGradient></defs>
+      <path transform="translate(-177,-27.8) scale(0.415)" d=" M 577.29 67.02 C 609.06 66.98 640.82 67.00 672.59 67.01 C 683.76 98.92 695.07 130.78 706.19 162.71 C 709.02 170.59 704.38 179.96 696.51 182.67 C 678.35 189.17 660.14 195.56 641.96 202.01 C 635.92 204.29 628.64 202.47 624.43 197.58 C 620.94 193.44 620.07 187.90 618.08 183.00 C 611.55 183.02 605.01 182.95 598.48 183.06 C 598.32 182.00 597.54 180.65 598.97 180.13 C 604.97 179.76 611.01 180.12 617.03 179.99 C 614.45 172.66 611.86 165.33 609.30 157.99 C 612.48 157.99 615.66 157.94 618.84 157.84 C 618.84 157.17 618.83 155.84 618.82 155.17 C 615.35 155.04 611.88 154.98 608.42 154.95 C 608.52 155.71 608.72 157.23 608.82 157.98 C 605.52 157.96 602.20 158.20 598.92 157.88 C 597.58 157.29 598.30 155.94 598.51 154.91 C 601.75 155.01 604.99 155.00 608.24 154.99 C 597.93 125.67 587.62 96.34 577.29 67.02 Z" fill="url(#g)"/>
+    </svg>
+  </div>
+  <div class="sticker">
+    <div class="lbl" id="lbl">
       <div class="title" id="title" dir="auto"></div>
       <div class="sub" id="sub" dir="auto"></div>
       <div class="np-cap" id="np-cap" hidden></div>
     </div>
-    <div class="band">
-      <div class="player" id="player" dir="auto"></div>
-      <div class="ctl" id="ctl" hidden>
-        <button class="nav" id="prev" type="button" aria-label="Previous item">
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.4 5.4 9 12l6.4 6.6-1.6 1.6L5.8 12l8-8.2z"/></svg>
-        </button>
-        <span class="count" id="count" aria-hidden="true"></span>
-        <button class="nav" id="next" type="button" aria-label="Next item">
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8.6 5.4 15 12l-6.4 6.6 1.6 1.6 8-8.2-8-8.2z"/></svg>
-        </button>
-      </div>
-    </div>
-    <div class="window">
-      <!-- Strand first. The tape spool paints over its left end, so the join
-           stays hidden at every wound diameter. -->
-      <svg class="strand" viewBox="0 0 142 56" preserveAspectRatio="none" aria-hidden="true">
-        <path id="strandpath" d="M142 19 L74 30 L74 36 L142 25 Z" fill="#1C1C1E"/>
-      </svg>
-      <div class="tape" id="tape"></div>
-      <div class="spinwrap paused" id="spin">
-        <svg class="reel" id="reel" viewBox="792.54 31.97 196.00 196.00" aria-hidden="true">
-          <path d=" M 846.60 73.75 C 854.03 68.08 862.02 62.68 871.03 59.93 C 874.09 61.75 874.96 65.71 876.95 68.50 C 892.30 65.15 908.90 67.45 922.50 75.43 C 937.55 84.03 948.62 99.11 952.49 116.00 C 955.24 116.03 958.01 115.80 960.75 116.23 C 962.00 117.17 961.96 118.87 962.22 120.27 C 963.09 128.08 963.35 136.01 962.34 143.82 C 962.05 145.18 962.11 146.88 960.82 147.75 C 957.72 148.25 954.56 147.94 951.45 148.00 C 948.55 157.32 943.64 166.03 936.92 173.13 C 934.33 175.85 931.53 178.37 928.55 180.66 C 920.28 186.68 910.62 190.77 900.51 192.31 C 896.71 192.85 892.86 193.06 889.04 192.98 C 879.06 192.71 869.26 189.91 860.49 185.20 C 858.09 187.02 856.43 190.79 853.17 190.93 C 845.90 186.06 839.57 179.78 834.09 172.98 C 833.23 171.59 831.37 170.15 832.25 168.34 C 833.67 166.36 835.55 164.76 837.25 163.02 C 830.03 151.08 826.76 136.78 828.39 122.90 C 830.00 107.77 837.50 93.53 848.67 83.26 C 847.60 80.37 842.78 76.39 846.60 73.75 M 881.51 78.71 C 871.25 80.65 861.64 85.89 854.17 93.16 C 844.71 102.91 838.56 116.27 839.00 130.00 C 838.56 143.26 844.32 156.18 853.20 165.82 C 860.20 173.20 869.44 178.33 879.26 180.88 C 890.56 182.97 902.80 182.48 913.15 177.04 C 927.73 170.49 938.35 156.61 942.00 141.18 C 943.32 133.86 943.33 126.31 942.03 118.99 C 938.39 103.26 927.46 89.17 912.54 82.67 C 903.03 77.76 891.93 77.25 881.51 78.71 Z" fill="#FFFFFF"/>
-          <path d=" M 882.57 83.76 C 893.71 81.75 905.58 83.83 915.25 89.75 C 927.33 96.96 935.83 109.85 937.59 123.81 C 939.03 134.51 936.65 145.68 930.91 154.83 C 923.43 166.90 910.26 175.30 896.11 176.72 C 883.13 178.20 869.63 173.95 859.91 165.21 C 848.02 154.96 842.06 138.44 844.53 122.96 C 847.21 103.57 863.25 87.00 882.57 83.76 Z" fill="#FFFFFF"/>
-          <path d=" M 928.55 180.66 C 931.53 178.37 934.33 175.85 936.92 173.13 C 941.69 177.90 945.38 183.59 949.66 188.79 C 951.57 191.20 953.50 193.63 955.01 196.34 C 955.18 198.10 954.89 200.15 953.27 201.18 C 938.14 212.82 920.17 221.31 901.10 223.60 C 898.01 223.83 894.19 224.86 891.98 221.99 C 891.00 219.11 890.72 216.06 890.49 213.05 C 890.07 206.35 889.16 199.69 889.04 192.98 C 892.86 193.06 896.71 192.85 900.51 192.31 C 901.86 195.99 902.85 199.85 904.75 203.29 C 905.08 203.49 905.73 203.89 906.06 204.08 C 915.44 202.77 924.32 198.89 932.63 194.46 C 935.61 193.27 933.57 189.96 932.97 187.86 C 931.74 185.36 931.56 181.65 928.55 180.66 Z" fill="currentColor" transform="translate(890.54 129.97) scale(0.86) translate(-890.54 -129.97)"/>
-        </svg>
-      </div>
-      <svg class="glass" viewBox="0 0 142 56" preserveAspectRatio="none" aria-hidden="true">
-        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#ffffff" stop-opacity="0.17"/>
-          <stop offset="1" stop-color="#ffffff" stop-opacity="0.04"/></linearGradient></defs>
-        <path transform="translate(-177,-27.8) scale(0.415)" d=" M 577.29 67.02 C 609.06 66.98 640.82 67.00 672.59 67.01 C 683.76 98.92 695.07 130.78 706.19 162.71 C 709.02 170.59 704.38 179.96 696.51 182.67 C 678.35 189.17 660.14 195.56 641.96 202.01 C 635.92 204.29 628.64 202.47 624.43 197.58 C 620.94 193.44 620.07 187.90 618.08 183.00 C 611.55 183.02 605.01 182.95 598.48 183.06 C 598.32 182.00 597.54 180.65 598.97 180.13 C 604.97 179.76 611.01 180.12 617.03 179.99 C 614.45 172.66 611.86 165.33 609.30 157.99 C 612.48 157.99 615.66 157.94 618.84 157.84 C 618.84 157.17 618.83 155.84 618.82 155.17 C 615.35 155.04 611.88 154.98 608.42 154.95 C 608.52 155.71 608.72 157.23 608.82 157.98 C 605.52 157.96 602.20 158.20 598.92 157.88 C 597.58 157.29 598.30 155.94 598.51 154.91 C 601.75 155.01 604.99 155.00 608.24 154.99 C 597.93 125.67 587.62 96.34 577.29 67.02 Z" fill="url(#g)"/>
-      </svg>
-      <div class="ticks" aria-hidden="true"><i></i><i></i><i></i></div>
+  </div>
+  <div class="band">
+    <div class="player" id="player" dir="auto"></div>
+    <div class="ctl off" id="ctl">
+      <button class="nav" id="prev" type="button" aria-label="Previous item">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.4 5.4 9 12l6.4 6.6-1.6 1.6L5.8 12l8-8.2z"/></svg>
+      </button>
+      <span class="count" id="count" aria-hidden="true"></span>
+      <button class="nav" id="next" type="button" aria-label="Next item">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8.6 5.4 15 12l-6.4 6.6 1.6 1.6 8-8.2-8-8.2z"/></svg>
+      </button>
     </div>
   </div>
   <span class="sr" id="sr" aria-live="polite"></span>
 </div>
 <script type="module">
-import { poll, fetchData, getConfig, reducedMotion, linkTo, loadStrings, wt, errorState, localiseDigits, placeholder, whileOnScreen } from '/js/widget-toolbox.js?v=34efa245';
+import { poll, fetchData, getConfig, reducedMotion, softwareRendering, linkTo, loadStrings, wt, wtCount, errorState, errorLine, localiseDigits, placeholder, whileOnScreen } from '/js/widget-toolbox.js?v=559371c9';
+import { CENTRE, FLANGE_R, HUB_TURN_MS, LEADER_R, PACK_MAX, REEL_BOX, Winding, packRadius, pickIndex, reelMarkup, reelRate, sessionKey, shouldAnnounce, spokenKey, stepsPerTurn, strandPath, transitionKind } from './reel-logic.js';
+
 await loadStrings();
-document.getElementById('w').setAttribute('aria-label', wt('widget.label', 'Now Playing'));
-document.getElementById('prev').setAttribute('aria-label', wt('ui.previous', 'Previous item'));
-document.getElementById('next').setAttribute('aria-label', wt('ui.next', 'Next item'));
-  const TICK_MS=10000;
-  const COLORS={plex:'#e5a00d',jellyfin:'#007ca6',emby:'#4caf50',navidrome:'#0091FF'};
-  const PROVIDER_NAME={plex:'Plex',jellyfin:'Jellyfin',emby:'Emby',navidrome:'Navidrome'};
-  /* White on Plex, Emby and Navidrome is below 4.5:1. */
-  const INK={plex:'#1C1C1E',jellyfin:'#FFFFFF',emby:'#1C1C1E',navidrome:'#1C1C1E'};
-  const TAPE_MIN=64, TAPE_MAX=126, TAPE_NOPROG=92;
+const $ = id => document.getElementById(id);
+const wEl = $('w'), linkEl = $('np-link'), windowEl = $('window');
+const lblEl = $('lbl'), titleEl = $('title'), subEl = $('sub'), capEl = $('np-cap');
+const playerEl = $('player'), ctlEl = $('ctl'), countEl = $('count'), srEl = $('sr');
+const strandEl = $('strand'), tapeEl = $('tape'), clearEl = $('clear'), ringEl = $('ring'), reelEl = $('reel');
+wEl.setAttribute('aria-label', wt('widget.label', 'Now Playing'));
+$('prev').setAttribute('aria-label', wt('ui.previous', 'Previous item'));
+$('next').setAttribute('aria-label', wt('ui.next', 'Next item'));
 
-  const wEl=document.getElementById('w'), linkEl=document.getElementById('np-link');
-  const titleEl=document.getElementById('title'), subEl=document.getElementById('sub'), playerEl=document.getElementById('player');
-  const tapeEl=document.getElementById('tape'), spinEl=document.getElementById('spin'), reelEl=document.getElementById('reel');
-  const prevB=document.getElementById('prev'), nextB=document.getElementById('next'), srEl=document.getElementById('sr');
-  const ctlEl=document.getElementById('ctl'), countEl=document.getElementById('count');
-  const strandEl=document.getElementById('strandpath');
+const TICK_MS = 10000;
+const COLORS = { plex: '#e5a00d', jellyfin: '#007ca6', emby: '#4caf50', navidrome: '#0091FF' };
+const PROVIDER_NAME = { plex: 'Plex', jellyfin: 'Jellyfin', emby: 'Emby', navidrome: 'Navidrome' };
+/* White on Plex, Emby and Navidrome is below 4.5:1. */
+const INK = { plex: '#1C1C1E', jellyfin: '#FFFFFF', emby: '#1C1C1E', navidrome: '#1C1C1E' };
 
-  let sessions=[], provider='', idx=0, href='', baseLink='', linked=false;
+const box = (el, x, y, size) => Object.assign(el.style, { left: `${x}px`, top: `${y}px`, width: `${size}px`, height: `${size}px` });
+for (const el of [tapeEl, clearEl, ringEl]) box(el, CENTRE.x - PACK_MAX, CENTRE.y - PACK_MAX, 2 * PACK_MAX);
+const ringSvg = ringEl.firstElementChild, ringCircle = ringSvg.firstElementChild;
+ringSvg.setAttribute('viewBox', `0 0 ${2 * PACK_MAX} ${2 * PACK_MAX}`);
+ringSvg.setAttribute('width', 2 * PACK_MAX);
+ringSvg.setAttribute('height', 2 * PACK_MAX);
+for (const [k, v] of [['cx', PACK_MAX], ['cy', PACK_MAX], ['r', PACK_MAX - 0.25]]) ringCircle.setAttribute(k, v);
+box(reelEl, CENTRE.x - FLANGE_R - 1, CENTRE.y - FLANGE_R - 1, REEL_BOX);
+reelEl.append(document.importNode(new DOMParser().parseFromString(reelMarkup(), 'image/svg+xml').documentElement, true));
 
-  function tapeSize(s){
-    if(!s) return TAPE_MIN;
-    if(s.progress==null) return TAPE_NOPROG;
-    return TAPE_MIN+(TAPE_MAX-TAPE_MIN)*Math.min(1,Math.max(0,s.progress));
+let calm = reducedMotion(on => {
+  calm = on;
+  if (on) stopReel();
+  else if (spinning) {
+    spinning = false;
+    spin(true);
   }
-  function describe(s){
-    if(!s) return wt('ui.nothingPlaying','Nothing playing');
-    let t=wt('ui.describeTitle','Now playing: {title}',{title:s.title||''});
-    if(s.subtitle) t=wt('ui.describeSubtitle','{text}, {subtitle}',{text:t,subtitle:s.subtitle});
-    if(s.player) t=wt('ui.describePlayer','{text} on {player}',{text:t,player:s.player});
-    if(PROVIDER_NAME[provider]) t=wt('ui.describeProvider','{text}, {provider}',{text:t,provider:PROVIDER_NAME[provider]});
-    if(s.state==='paused') t=wt('ui.describePaused','{text} (paused)',{text:t});
-    return t;
-  }
-  function showText(on){
-    for(const el of [titleEl,subEl]) el.hidden=!on;
-  }
+});
+const soft = softwareRendering();
+let onScreen = true;
 
-  function paint(announce){
-    const s=sessions[idx];
-    const tint=COLORS[provider]||'#8E8E93';
-    reelEl.parentElement.style.color=tint;
-    wEl.style.setProperty('--band',tint);
-    wEl.style.setProperty('--band-ink',INK[provider]||'#FFFFFF');
-    const d = s ? tapeSize(s) : TAPE_MIN;
-    if(!s){
-      wEl.classList.add('idle');
-      titleEl.textContent=wt('ui.nothingPlaying','Nothing playing'); subEl.textContent='';
-      playerEl.textContent=PROVIDER_NAME[provider]||'';
-      spinEl.classList.add('paused');
-    }else{
-      wEl.classList.remove('idle');
-      titleEl.textContent=s.title||''; subEl.textContent=s.subtitle||'';
-      playerEl.textContent=s.player||PROVIDER_NAME[provider]||'';
-      spinEl.classList.toggle('paused', s.state==='paused');
+const PACK_MS = 450, PACK_EASE = 'cubic-bezier(.33,1,.68,1)', JUMP_PX = 1.5;
+const STRAND_OUT = 0.2, STRAND_IN = 0.75;
+let packR = null, packAnims = [], strandTimer = 0;
+const clipAt = r => `circle(${r.toFixed(2)}px at 50% 50%)`;
+const scaleAt = r => `scale(${(r / PACK_MAX).toFixed(4)})`;
+function packTo(r, animate, bothLayers) {
+  if (packR !== null && Math.abs(r - packR) < 0.05) return;
+  const from = packR;
+  packR = r;
+  for (const a of packAnims) a.cancel();
+  packAnims = [];
+  clearTimeout(strandTimer);
+  const clip = clipAt(r);
+  tapeEl.style.clipPath = clip;
+  clearEl.style.clipPath = clip;
+  ringEl.style.transform = scaleAt(r);
+  if (from === null || !animate || calm || Math.abs(r - from) < JUMP_PX) {
+    strandEl.setAttribute('d', strandPath(r));
+    return;
+  }
+  const timing = { duration: PACK_MS, easing: PACK_EASE };
+  const layers = bothLayers ? [tapeEl, clearEl] : [wEl.classList.contains('leader') ? clearEl : tapeEl];
+  for (const el of layers) packAnims.push(el.animate({ clipPath: [clipAt(from), clip] }, timing));
+  packAnims.push(ringEl.animate({ transform: [scaleAt(from), scaleAt(r)] }, timing));
+  packAnims.push(strandEl.animate([{ opacity: 1 }, { opacity: 0, offset: STRAND_OUT }, { opacity: 0, offset: STRAND_IN }, { opacity: 1 }], { duration: PACK_MS }));
+  strandTimer = setTimeout(() => strandEl.setAttribute('d', strandPath(r)), (PACK_MS * (STRAND_OUT + STRAND_IN)) / 2);
+}
+
+/* Each /3 below matches its curve's end slope of 3. Change them together or the reel jumps. */
+const DEG_PER_MS = 360 / HUB_TURN_MS;
+const SPIN_UP_MS = 600, SPIN_UP_EASE = 'cubic-bezier(.32,0,.67,0)';
+const SPIN_DOWN_MS = 350, SPIN_DOWN_EASE = 'cubic-bezier(.33,1,.68,1)';
+let loop = null, segment = null, spinning = false, rate = 1, loopSteps = 0;
+const turn = deg => ({ rotate: `${deg.toFixed(2)}deg` });
+function stopReel() {
+  const now = Number.parseFloat(getComputedStyle(reelEl).rotate);
+  const angle = Number.isFinite(now) ? now : 0;
+  loop?.cancel();
+  segment?.cancel();
+  loop = segment = null;
+  reelEl.style.rotate = `${angle.toFixed(2)}deg`;
+  return angle;
+}
+function startLoop(from) {
+  const timing = { duration: HUB_TURN_MS, iterations: Infinity };
+  loopSteps = soft ? stepsPerTurn(rate) : 0;
+  if (loopSteps) timing.easing = `steps(${loopSteps})`;
+  loop = reelEl.animate([turn(from), turn(from + 360)], timing);
+  loop.playbackRate = rate;
+  if (!onScreen) loop.pause();
+}
+function runSegment(from, to, duration, easing, then) {
+  const anim = reelEl.animate([turn(from), turn(to)], { duration, easing, fill: 'forwards' });
+  segment = anim;
+  anim.onfinish = () => {
+    if (segment !== anim) return;
+    reelEl.style.rotate = `${to.toFixed(2)}deg`;
+    anim.cancel();
+    segment = null;
+    then?.(to);
+  };
+  if (!onScreen) anim.pause();
+}
+function spin(want) {
+  if (calm) {
+    if (loop || segment) stopReel();
+  } else if (want && !spinning) {
+    const from = stopReel();
+    runSegment(from, from + (DEG_PER_MS * rate * SPIN_UP_MS) / 3, SPIN_UP_MS, SPIN_UP_EASE, startLoop);
+  } else if (!want && spinning && (loop || segment)) {
+    const speed = DEG_PER_MS * (loop ? loop.playbackRate : rate);
+    const from = stopReel();
+    runSegment(from, from + (speed * SPIN_DOWN_MS) / 3, SPIN_DOWN_MS, SPIN_DOWN_EASE, null);
+  } else if (want && loop && Math.abs(loop.playbackRate - rate) > rate * 0.005) {
+    if (soft && Math.abs(stepsPerTurn(rate) - loopSteps) > loopSteps * 0.08) startLoop(stopReel());
+    else loop.updatePlaybackRate(rate);
+  }
+  spinning = want;
+}
+
+const EASE_EXIT = 'cubic-bezier(.23,1,.32,1)', EASE_ENTER = 'cubic-bezier(.32,.72,0,1)';
+const MOVES = {
+  page: d => [`${-6 * d}px 0`, `${6 * d}px 0`],
+  arrive: () => ['0 -4px', '0 4px'],
+  leave: () => ['0 4px', '0 -4px'],
+  fade: () => ['0 0', '0 0'],
+};
+let swapId = 0, running = [];
+function swapLabel(kind, dir, apply) {
+  if (kind === 'none') {
+    apply();
+    return;
+  }
+  const rtl = getComputedStyle(wEl).direction === 'rtl' ? -1 : 1;
+  const [outTo, inFrom] = MOVES[calm ? 'fade' : kind](dir * rtl);
+  const mine = ++swapId, busy = running.length > 0;
+  for (const a of running) a.cancel();
+  running = [];
+  const els = [lblEl, playerEl];
+  const enter = () => {
+    apply();
+    running = els.map(el => el.animate([{ opacity: 0, translate: inFrom }, { opacity: 1, translate: '0 0' }], { duration: 200, easing: EASE_ENTER }));
+    Promise.all(running.map(a => a.finished)).then(() => { if (mine === swapId) running = []; }).catch(() => {});
+  };
+  if (busy) {
+    enter();
+    return;
+  }
+  const outs = els.map(el => el.animate([{ opacity: 1, translate: '0 0' }, { opacity: 0, translate: outTo }], { duration: 160, easing: EASE_EXIT, fill: 'forwards' }));
+  running = outs;
+  Promise.all(outs.map(a => a.finished)).then(() => {
+    if (mine !== swapId) return;
+    enter();
+    for (const a of outs) a.cancel();
+  }).catch(() => {});
+}
+const setText = (el, text) => { if (el.firstElementChild || el.textContent !== text) el.textContent = text; };
+
+let sessions = [], index = 0, provider = '', href = '', baseLink = '', linked = false;
+let lastData = null, failure = null, shown = null, redrawTimer = 0;
+const winding = new Winding();
+const errorUi = errorState({ root: wEl, content: [windowEl], caption: capEl });
+
+function describe(s) {
+  if (!s) return wt('ui.nothingPlaying', 'Nothing playing');
+  let t = wt('ui.describeTitle', 'Now playing: {title}', { title: s.title || '' });
+  if (s.subtitle) t = wt('ui.describeSubtitle', '{text}, {subtitle}', { text: t, subtitle: s.subtitle });
+  if (s.player) t = wt('ui.describePlayer', '{text} on {player}', { text: t, player: s.player });
+  if (PROVIDER_NAME[provider]) t = wt('ui.describeProvider', '{text}, {provider}', { text: t, provider: PROVIDER_NAME[provider] });
+  if (s.state === 'paused') t = wt('ui.describePaused', '{text} (paused)', { text: t });
+  return t;
+}
+function name(text) {
+  wEl.setAttribute('aria-label', text);
+  if (linked) linkEl.setAttribute('aria-label', wt('ui.linkName', '{text}. Activate to open link.', { text }));
+}
+function showText(on) {
+  for (const el of [titleEl, subEl]) el.hidden = !on;
+}
+
+function show(mode, { instant = false, dir = 1 } = {}) {
+  const session = mode === 'active' || mode === 'error' ? sessions[index] || null : null;
+  const next = { mode, key: session ? sessionKey(session) : null, title: session ? session.title : null };
+  const kind = instant ? 'none' : transitionKind(shown, next);
+  const failed = mode === 'error' || mode === 'error0';
+  const tint = COLORS[provider] || '#8E8E93';
+  wEl.style.setProperty('--tint', tint);
+  wEl.style.setProperty('--band', tint);
+  wEl.style.setProperty('--band-ink', INK[provider] || '#FFFFFF');
+  wEl.classList.toggle('err', failed);
+
+  swapLabel(kind, dir, () => {
+    wEl.classList.toggle('idle', mode !== 'active' && mode !== 'error');
+    if (failed) {
+      showText(false);
+      errorUi.fail(failure.error, { since: failure.since, inert: mode === 'error' });
+      capEl.setAttribute('aria-hidden', 'true');
+    } else {
+      errorUi.ok();
+      capEl.removeAttribute('aria-hidden');
+      showText(true);
+      if (mode === 'loading') {
+        titleEl.replaceChildren(placeholder(96, 12));
+        subEl.replaceChildren(placeholder(58, 9));
+      } else {
+        setText(titleEl, session ? session.title || '' : wt('ui.nothingPlaying', 'Nothing playing'));
+        setText(subEl, session ? session.subtitle || '' : '');
+      }
     }
-    tapeEl.style.setProperty('--wound', String(d/TAPE_MAX));
-    if(!tapeEl.classList.contains('wound')){ getComputedStyle(tapeEl).transform; tapeEl.classList.add('wound'); }
-    /* The offset seats the strand's full 6px thickness inside the spool. Its
-       lower edge otherwise shows as a detached stub. */
-    let ly=-8+d/2-6; if(ly>50)ly=50; if(ly<18)ly=18;
-    strandEl.setAttribute('d', `M142 19 L74 ${(ly-3).toFixed(1)} L74 ${(ly+3).toFixed(1)} L142 25 Z`);
-    linked=linkTo(linkEl, (s&&s.link)||baseLink||href);
-    const label=describe(s);
-    name(label);
-    if(announce&&srEl.textContent!==label) srEl.textContent=label;
-    const many=sessions.length>1;
-    ctlEl.hidden=!many;
-    countEl.textContent=many ? localiseDigits(`${idx+1}/${sessions.length}`) : '';
-  }
-  const EASE_EXIT='cubic-bezier(.23,1,.32,1)', EASE_ENTER='cubic-bezier(.32,.72,0,1)';
-  let swap=0, running=[];
-  function nav(dir){
-    if(sessions.length<2) return;
-    idx=(idx+dir+sessions.length)%sessions.length;
-    if(reducedMotion()){ paint(true); return; }
-    const mine=++swap, busy=running.length>0;
-    for(const a of running) a.cancel();
-    running=[];
-    const shift=6*dir*(getComputedStyle(wEl).direction==='rtl'?-1:1);
-    const els=[titleEl,subEl,playerEl,countEl];
-    const enter=()=>{
-      paint(true);
-      running=els.map(el=>el.animate([{opacity:0,transform:`translateX(${shift}px)`},{opacity:1,transform:'none'}],
-        {duration:200,easing:EASE_ENTER}));
-      Promise.all(running.map(a=>a.finished)).then(()=>{ if(mine===swap) running=[]; }).catch(()=>{});
-    };
-    if(busy){ enter(); return; }
-    const outs=els.map(el=>el.animate([{opacity:1,transform:'none'},{opacity:0,transform:`translateX(${-shift}px)`}],
-      {duration:160,easing:EASE_EXIT,fill:'forwards'}));
-    running=outs;
-    Promise.all(outs.map(a=>a.finished)).then(()=>{
-      if(mine!==swap) return;
-      enter();
-      for(const a of outs) a.cancel();
-    }).catch(()=>{});
-  }
-  prevB.addEventListener('click',e=>{e.stopPropagation();nav(-1);});
-  nextB.addEventListener('click',e=>{e.stopPropagation();nav(1);});
+    setText(playerEl, (session && session.player) || PROVIDER_NAME[provider] || '');
+  });
 
+  const many = mode === 'active' && sessions.length > 1;
+  ctlEl.classList.toggle('off', !many);
+  if (many) setText(countEl, localiseDigits(`${index + 1}/${sessions.length}`));
 
-  async function npFetch(){
-    return fetchData();
+  const wasLeader = wEl.classList.contains('leader');
+  if (session) {
+    wEl.classList.remove('leader');
+    const r = packRadius(winding.progress(session, performance.now()));
+    packTo(r, !instant && packR !== null && Math.abs(r - packR) >= JUMP_PX, wasLeader);
+    rate = reelRate(r);
+    spin(mode === 'active' && session.state === 'playing');
+  } else {
+    wEl.classList.add('leader');
+    packTo(LEADER_R, !instant, !wasLeader);
+    spin(false);
   }
-  const spokenKey=list=>JSON.stringify(list.map(s=>[s.title,s.subtitle,s.player,s.state]));
-  function apply(d){
-    provider=d.provider||provider;
-    baseLink=d.link||'';
-    const next=Array.isArray(d.sessions)?d.sessions:[];
-    const changed=spokenKey(next)!==spokenKey(sessions);
-    sessions=next;
-    if(idx>=sessions.length) idx=0;
-    paint(changed);
-  }
-  function name(text){
-    wEl.setAttribute('aria-label', text);
-    if(linked) linkEl.setAttribute('aria-label', wt('ui.linkName','{text}. Activate to open link.',{text}));
-  }
-  async function boot(){
-    const c=await getConfig().catch(()=>null);
-    href=c?.widgetConfig?.href||''; provider=c?.widgetConfig?.provider||'';
-    const tint=COLORS[provider]||'#8E8E93';
-    reelEl.parentElement.style.color=tint;
-    wEl.style.setProperty('--band',tint);
-    wEl.style.setProperty('--band-ink',INK[provider]||'#FFFFFF');
-    playerEl.textContent=PROVIDER_NAME[provider]||'';
-    titleEl.replaceChildren(placeholder(96,12));
-    subEl.replaceChildren(placeholder(58,9));
-    linked=linkTo(linkEl,href);
-    whileOnScreen(spinEl,v=>spinEl.classList.toggle('off',!v));
-    const state=errorState({ root:wEl, content:[document.querySelector('.window')],
-      caption:document.getElementById('np-cap') });
 
-    poll({ fetch:npFetch, interval:TICK_MS,
-      render:d=>{ wEl.classList.remove('err'); showText(true); document.getElementById('np-cap').removeAttribute('aria-hidden'); state.ok(); apply(d); },
-      onError:({error,everOk,stale,since})=>{
-        if(!everOk||stale){
-          sessions=[]; idx=0; paint(false);
-          wEl.classList.add('err');
-          showText(false);
-          const line=state.fail(error,{since,inert:everOk});
-          name(line);
-          document.getElementById('np-cap').setAttribute('aria-hidden','true');
-        }
-      } });
-  }
-  boot();
+  linked = linkTo(linkEl, (session && session.link) || baseLink || href);
+  const line = failed ? errorLine(failure.error) : mode === 'loading' ? wt('widget.label', 'Now Playing') : describe(session);
+  name(line);
+
+  next.said = spokenKey(mode, session, sessions.length);
+  const announce = !instant && shouldAnnounce(shown, next);
+  const spoken = many && (!shown || shown.count !== sessions.length)
+    ? wtCount('ui.describeSessions', sessions.length, { one: '{text}. {count} session playing', other: '{text}. {count} sessions playing' }, { text: line })
+    : line;
+  if (announce && srEl.textContent !== spoken) srEl.textContent = spoken;
+  shown = { ...next, count: sessions.length };
+  scheduleRedraw();
+}
+
+function scheduleRedraw() {
+  clearTimeout(redrawTimer);
+  const session = shown && shown.mode === 'active' && onScreen ? sessions[index] : null;
+  const wait = session ? winding.nextRedraw(session, performance.now()) : null;
+  if (wait == null) return;
+  redrawTimer = setTimeout(() => {
+    const r = packRadius(winding.progress(session, performance.now()));
+    packTo(r, false, false);
+    rate = reelRate(r);
+    spin(true);
+    scheduleRedraw();
+  }, wait);
+}
+
+function apply(d) {
+  provider = d.provider || provider;
+  baseLink = d.link || '';
+  const list = Array.isArray(d.sessions) ? d.sessions : [];
+  if (d !== lastData) winding.observe(list, performance.now());
+  lastData = d;
+  index = pickIndex(shown && shown.key, list, index);
+  sessions = list;
+  show(sessions.length ? 'active' : 'idle');
+}
+
+function go(step) {
+  if (sessions.length < 2 || !shown || shown.mode !== 'active') return;
+  index = (index + step + sessions.length) % sessions.length;
+  show('active', { dir: step });
+}
+$('prev').addEventListener('click', e => { e.stopPropagation(); go(-1); });
+$('next').addEventListener('click', e => { e.stopPropagation(); go(1); });
+
+async function boot() {
+  const c = await getConfig().catch(() => null);
+  href = c?.widgetConfig?.href || '';
+  provider = c?.widgetConfig?.provider || '';
+  linked = linkTo(linkEl, href);
+  show('loading', { instant: true });
+  whileOnScreen(wEl, visible => {
+    onScreen = visible;
+    for (const a of [loop, segment]) if (a) visible ? a.play() : a.pause();
+    scheduleRedraw();
+  });
+  poll({
+    fetch: () => fetchData(),
+    interval: TICK_MS,
+    render: d => {
+      failure = null;
+      apply(d);
+    },
+    onError: ({ error, everOk, stale, since }) => {
+      if (everOk && !stale) return;
+      failure = { error, since: everOk ? since : '' };
+      show(everOk ? 'error' : 'error0');
+    },
+  });
+}
+boot();
 </script>
 </body>
 </html>

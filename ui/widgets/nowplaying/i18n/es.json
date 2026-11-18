@@ -29,6 +29,9 @@
   "ui.describePlayer": "{text} en {player}",
   "ui.describeProvider": "{text}, {provider}",
   "ui.describePaused": "{text} (en pausa)",
+  "ui.describeSessions_one": "{text}. {count} reproducción en curso",
+  "ui.describeSessions_many": "{text}. {count} reproducciones en curso",
+  "ui.describeSessions_other": "{text}. {count} reproducciones en curso",
   "ui.previous": "Elemento anterior",
   "ui.next": "Elemento siguiente",
   "ui.linkName": "{text}. Actívalo para abrir el enlace."

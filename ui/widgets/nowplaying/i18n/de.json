@@ -29,6 +29,8 @@
   "ui.describePlayer": "{text} auf {player}",
   "ui.describeProvider": "{text}, {provider}",
   "ui.describePaused": "{text} (pausiert)",
+  "ui.describeSessions_one": "{text}. {count} Wiedergabe läuft",
+  "ui.describeSessions_other": "{text}. {count} Wiedergaben laufen",
   "ui.previous": "Vorheriges Element",
   "ui.next": "Nächstes Element",
   "ui.linkName": "{text}. Aktivieren, um den Link zu öffnen."

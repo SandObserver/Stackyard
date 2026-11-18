@@ -29,6 +29,7 @@
   "ui.describePlayer": "{text}（{player}）",
   "ui.describeProvider": "{text}，{provider}",
   "ui.describePaused": "{text}（已暂停）",
+  "ui.describeSessions_other": "{text}。{count} 个正在播放",
   "ui.previous": "上一项",
   "ui.next": "下一项",
   "ui.linkName": "{text}。轻点以打开链接。"

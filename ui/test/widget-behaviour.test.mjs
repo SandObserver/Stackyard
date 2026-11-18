@@ -6,25 +6,12 @@ const read = f => fs.readFileSync(new URL(`../widgets/${f}`, import.meta.url), '
 
 const nowplaying = read('nowplaying/index.html');
 
-function liftApply() {
-  const fn = nowplaying.match(/const spokenKey=[\s\S]*?function apply\(d\)\{[\s\S]*?\n {2}\}/);
-  assert.ok(fn, 'apply and spokenKey are defined in the widget');
-  return new Function('paint', `let provider='',baseLink='',sessions=[],idx=0;${fn[0]};return apply;`);
-}
-
-test('Now Playing announces a track change, never a progress tick', () => {
-  const calls = [];
-  const apply = liftApply()(changed => calls.push(changed));
-  const session = (title, progress, state = 'playing') => ({ title, subtitle: '', player: 'TV', state, progress });
-  apply({ sessions: [session('Heat', 0.1)] });
-  apply({ sessions: [session('Heat', 0.2)] });
-  apply({ sessions: [session('Heat', 0.3, 'paused')] });
-  apply({ sessions: [session('Ronin', 0.3, 'paused')] });
-  assert.deepEqual(calls, [true, false, true, true]);
+test('Now Playing announces through the shared rule, which skips progress ticks', () => {
+  assert.match(nowplaying, /const announce = !instant && shouldAnnounce\(shown, next\);/);
 });
 
 test('Now Playing does not rewrite its live region with the same words', () => {
-  assert.match(nowplaying, /if\(announce&&srEl\.textContent!==label\) srEl\.textContent=label;/);
+  assert.match(nowplaying, /if \(announce && srEl\.textContent !== spoken\) srEl\.textContent = spoken;/);
 });
 
 function liftAddEvents() {

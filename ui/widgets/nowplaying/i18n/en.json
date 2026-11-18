@@ -29,6 +29,8 @@
   "ui.describePlayer": "{text} on {player}",
   "ui.describeProvider": "{text}, {provider}",
   "ui.describePaused": "{text} (paused)",
+  "ui.describeSessions_one": "{text}. {count} session playing",
+  "ui.describeSessions_other": "{text}. {count} sessions playing",
   "ui.previous": "Previous item",
   "ui.next": "Next item",
   "ui.linkName": "{text}. Activate to open link."
