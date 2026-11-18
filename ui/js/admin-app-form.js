@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=8a3cc51c';
+import { renderColorControl } from '/js/admin-color-control.js?v=cb49b830';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=5abd7438';
 import {
   clearsStoredSecret,
@@ -27,7 +27,7 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=889fe8d5';
+} from '/js/admin-shared.js?v=14e96406';
 import { activityAuth, activityHasAuth } from '/js/admin-save-logic.js?v=4a332c56';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=7112fd10';
@@ -45,7 +45,7 @@ import {
   throughServer,
 } from '/js/icons.js?v=76c29d43';
 import { DOCK_MAX } from '/js/limits.js?v=ff61256e';
-import { createListbox } from '/js/listbox.js?v=8efac8a4';
+import { createListbox } from '/js/listbox.js?v=1214e150';
 import { slideBlock } from '/js/modal.js?v=84ba5279';
 import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=c1d4e76c';
 

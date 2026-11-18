@@ -1,6 +1,6 @@
 // @ts-check
 import { rubber, Spring } from '/js/frame-motion.js?v=911f7c03';
-import { AT_REST, GlassControl, lensLook } from '/js/glass-control.js?v=dc5a4c3d';
+import { AT_REST, GlassControl, lensLook } from '/js/glass-control.js?v=4e46a6cc';
 import { lensClaim, lensFrame, lensPicture, lensRelease, RIM_CURVE } from '/js/glass-gpu.js?v=ca6a65f5';
 import { behind, clamp, colour, css, dpr, isDark, over, pill, sized, unit } from '/js/glass-paint.js?v=800e4865';
 import { prefersReducedMotion } from '/js/glass-prefs.js?v=511e01c7';
@@ -45,7 +45,7 @@ const TINT_RAMP = 1.6;
 
 /** @typedef {{ l: number, w: number, c: number, t: number, h: number }} ItemRect left, width, centre, top, height in bar px */
 /** @typedef {{ items: () => HTMLElement[], selected: () => number, choose: (i: number) => void,
-               pill: () => HTMLElement|null, pillColour: string, P: typeof SEGMENTED, css?: boolean }} BarKind */
+               pill: () => HTMLElement|null, pillColour: string, P: typeof SEGMENTED, css?: boolean, reselect?: boolean }} BarKind */
 
 /** Fractional item index at bar x `px`. Works for either direction of items.
     @param {ItemRect[]} r @param {number} px */
@@ -101,6 +101,7 @@ export class GlassBar extends GlassControl {
     super(el);
     this.kind = kind;
     this.P = kind.P;
+    this.stopsClick = !!kind.reselect;
     this.cv = document.createElement('canvas');
     this.cv.className = 'glass-lens';
     this.cv.setAttribute('aria-hidden', 'true');
@@ -207,7 +208,7 @@ export class GlassBar extends GlassControl {
     this.lift();
     this.pos.to(i, this.P.land);
     this.landing = true;
-    if (!cancelled && i !== this.kind.selected()) this.kind.choose(i);
+    if (!cancelled && (i !== this.kind.selected() || (this.kind.reselect && !p.moved))) this.kind.choose(i);
     this.swallowClick();
     this.wake();
   }
@@ -443,7 +444,8 @@ export const tabBar = bar => {
   return {
     items: tabs,
     selected: () => tabs().findIndex(n => n.classList.contains('active')),
-    choose: i => tabs()[i]?.click(),
+    choose: i => tabs()[i]?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 })),
+    reselect: true,
     pill: () => bar.querySelector(':scope > .gs-pill'),
     pillColour: '--tab-pill',
     P: TAB_BAR,

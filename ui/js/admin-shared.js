@@ -317,7 +317,6 @@ function playSaveMark(b, ok) {
 function clearSaveMark(b) {
   clearTimeout(_savedTimers.get(b));
   _savedTimers.delete(b);
-  if (!b.classList.contains('saved') && !b.classList.contains('failed')) return;
   b.classList.remove('saved', 'failed');
   resetSaveMark(b);
 }

@@ -1,6 +1,6 @@
 // @ts-check
 import { rubber, Spring } from '/js/frame-motion.js?v=911f7c03';
-import { AT_REST, GlassControl, lensLook } from '/js/glass-control.js?v=dc5a4c3d';
+import { AT_REST, GlassControl, lensLook } from '/js/glass-control.js?v=4e46a6cc';
 import { lensClaim, lensFrame, lensPicture, lensRelease } from '/js/glass-gpu.js?v=ca6a65f5';
 import { behind, clamp, dpr, isDark, over, sized, token, unit } from '/js/glass-paint.js?v=800e4865';
 
@@ -86,6 +86,15 @@ export class GlassSlider extends GlassControl {
     this.stops = [];
     /** The rail's width, left and middle, read once per press. */
     this.geo = { W: 0, L: 0, M: 0 };
+    /* The native range follows a touch even after pointerdown preventDefault, so
+       both would write the value. */
+    input.addEventListener(
+      'touchstart',
+      e => {
+        if (this.pointer) e.preventDefault();
+      },
+      { passive: false },
+    );
     input.addEventListener('pointermove', e => this.move(e));
     input.addEventListener('pointerup', e => this.up(e));
     input.addEventListener('pointercancel', e => this.up(e));

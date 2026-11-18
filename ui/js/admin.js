@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=53f31532';
-import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=a5593abf';
+} from '/js/admin-app-form.js?v=b83b91d4';
+import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=44b293fb';
 import {
   applyFilter,
   filterMatchCount,
@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=f5008d9a';
+} from '/js/admin-list.js?v=6a6c4b3e';
 import { filterActive, folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=81fd47cf';
 import {
   afterImport,
@@ -40,7 +40,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=d1311093';
+} from '/js/admin-settings.js?v=cb259d27';
 import {
   announce,
   apiGet,
@@ -66,9 +66,9 @@ import {
   swapContent,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=889fe8d5';
+} from '/js/admin-shared.js?v=14e96406';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=8a7a8640';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=602ba4c2';
 import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=eca5642a';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
 import { recoveryShown } from '/js/config-recovery.js?v=797944ce';
@@ -93,7 +93,7 @@ import {
 } from '/js/import-foreign.js?v=dd1dd0e8';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=ff61256e';
-import { createListbox } from '/js/listbox.js?v=8efac8a4';
+import { createListbox } from '/js/listbox.js?v=1214e150';
 import { confirmModal, confirmText, openModal as openDialog } from '/js/modal.js?v=84ba5279';
 import { passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
@@ -127,7 +127,7 @@ import {
 } from '/js/utils.js?v=c1d4e76c';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=39538b71';
-import { initGlassControls } from '/js/glass-controls.js?v=18f0a51c';
+import { initGlassControls } from '/js/glass-controls.js?v=bdff13f7';
 
 ensureSprite();
 for (const b of document.querySelectorAll('.nl[data-sec], .mtab[data-sec]')) {

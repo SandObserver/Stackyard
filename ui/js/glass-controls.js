@@ -1,10 +1,10 @@
 // @ts-check
-import { GlassBar, segmented, tabBar } from '/js/glass-bar.js?v=9a0dd726';
-import { cancelAll, releasePointer } from '/js/glass-control.js?v=dc5a4c3d';
+import { GlassBar, segmented, tabBar } from '/js/glass-bar.js?v=50ca4619';
+import { cancelAll, releasePointer } from '/js/glass-control.js?v=4e46a6cc';
 import { lensSupported } from '/js/glass-gpu.js?v=ca6a65f5';
 import { wantsPlain } from '/js/glass-prefs.js?v=511e01c7';
-import { GlassSlider } from '/js/glass-slider.js?v=8e9bb3b9';
-import { GlassSwitch } from '/js/glass-switch.js?v=55e7589c';
+import { GlassSlider } from '/js/glass-slider.js?v=eb8deaee';
+import { GlassSwitch } from '/js/glass-switch.js?v=b3edb40a';
 
 /** Glass needs WebGL2 and none of the settings that ask for plain controls. */
 export function glassAllowed() {
@@ -27,16 +27,28 @@ function once(el, make) {
 /** @param {HTMLElement} el */
 function segmentedFor(el) {
   return once(el, () => {
-    if (!el.querySelector(':scope > .segr-pill')) {
-      const pillEl = document.createElement('span');
+    let pillEl = el.querySelector(':scope > .segr-pill');
+    const added = !pillEl;
+    if (!pillEl) {
+      pillEl = document.createElement('span');
       pillEl.className = 'segr-pill';
-      pillEl.style.left = '0';
+      /** @type {HTMLElement} */ (pillEl).style.left = '0';
       pillEl.setAttribute('aria-hidden', 'true');
       el.prepend(pillEl);
     }
     const bar = new GlassBar(el, segmented(el));
-    el.addEventListener('change', () => bar.follow());
-    new ResizeObserver(() => bar.resettle()).observe(el);
+    const sized = new ResizeObserver(() => bar.resettle());
+    const onChange = () => {
+      if (glassAllowed()) return bar.follow();
+      bar.stop();
+      bar.cv.remove();
+      sized.disconnect();
+      el.removeEventListener('change', onChange);
+      if (added) pillEl?.remove();
+      made.delete(el);
+    };
+    el.addEventListener('change', onChange);
+    sized.observe(el);
     bar.resettle();
     return bar;
   });

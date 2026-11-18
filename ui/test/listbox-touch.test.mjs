@@ -18,9 +18,11 @@ globalThis.matchMedia = /** @type {any} */ (() => ({ matches: false, addEventLis
 
 const { dropNextClick } = await import('../js/listbox.js');
 
-/** @param {number} detail @param {number} timeStamp */
-const click = (detail, timeStamp) => {
-  const e = { detail, timeStamp, dropped: false, preventDefault() {}, stopPropagation() {} };
+const area = /** @type {DOMRect} */ ({ left: 100, right: 300, top: 100, bottom: 400 });
+
+/** @param {number} detail @param {number} timeStamp @param {number} [x] @param {number} [y] */
+const click = (detail, timeStamp, x = 200, y = 200) => {
+  const e = { detail, timeStamp, clientX: x, clientY: y, dropped: false, preventDefault() {}, stopPropagation() {} };
   e.preventDefault = () => {
     e.dropped = true;
   };
@@ -29,16 +31,23 @@ const click = (detail, timeStamp) => {
 };
 
 test('the click after a press-and-slide pick never reaches what lies under the closing list', () => {
-  dropNextClick();
+  dropNextClick(area);
   const now = performance.now();
   assert.equal(click(1, now), true);
   assert.equal(click(1, now), false, 'only that one click is dropped');
 });
 
+test('a tap outside the list right after a slide pick is a new press', () => {
+  dropNextClick(area);
+  const now = performance.now();
+  assert.equal(click(1, now, 20, 500), false);
+  assert.equal(click(1, now), true, 'the list click that follows is still dropped');
+});
+
 test('a keyboard click or a much later tap is never dropped', () => {
-  dropNextClick();
+  dropNextClick(area);
   assert.equal(click(0, performance.now()), false);
-  dropNextClick();
+  dropNextClick(area);
   assert.equal(click(1, performance.now() + 1000), false);
   assert.equal(capture.size, 0, 'the blocker removes itself');
 });

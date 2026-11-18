@@ -19,6 +19,24 @@ globalThis.matchMedia = /** @type {any} */ (
     },
   })
 );
+/** A WebGL2 stand-in where every call succeeds. */
+const fakeGl = () =>
+  new Proxy(
+    {},
+    {
+      get: (_t, key) =>
+        key === 'getProgramParameter' || key === 'getShaderParameter'
+          ? () => true
+          : key === 'getActiveUniform'
+            ? () => null
+            : () => ({}),
+    },
+  );
+/** @type {object|null} */
+let webgl = null;
+const realNow = performance.now.bind(performance);
+let skew = 0;
+performance.now = () => realNow() + skew;
 const fakeEl = (/** @type {string} */ tag) => ({
   tagName: tag.toUpperCase(),
   className: '',
@@ -30,7 +48,7 @@ const fakeEl = (/** @type {string} */ tag) => ({
   addEventListener(/** @type {string} */ type, /** @type {Function} */ fn) {
     this.listeners[type] = fn;
   },
-  getContext: () => null,
+  getContext: () => webgl,
   append() {},
   prepend() {},
 });
@@ -44,11 +62,15 @@ const { glassAllowed } = await import('../js/glass-controls.js');
 const { ownClick, GlassControl, CLICK_WINDOW_MS } = await import('../js/glass-control.js');
 const { switchNext } = await import('../js/glass-switch.js');
 const { fillEnd } = await import('../js/glass-slider.js');
-const { indexAt, rectAt, capPath, GlassBar } = await import('../js/glass-bar.js');
+const { indexAt, rectAt, capPath, GlassBar, tabBar } = await import('../js/glass-bar.js');
 const { parseColour, over } = await import('../js/glass-paint.js');
 const { lensPicture } = await import('../js/glass-gpu.js');
 
-test('glass stays off for Reduce Transparency, Reduce Motion, forced colours and no WebGL2', () => {
+test('glass is on only with WebGL2 and none of Reduce Transparency, Reduce Motion or forced colours', () => {
+  assert.equal(glassAllowed(), false, 'no WebGL2 means no glass');
+  webgl = fakeGl();
+  skew += 60_000;
+  assert.equal(glassAllowed(), true, 'WebGL2 is tried again later');
   document.documentElement.dataset.transparency = 'reduce';
   assert.equal(glassAllowed(), false);
   delete document.documentElement.dataset.transparency;
@@ -57,7 +79,7 @@ test('glass stays off for Reduce Transparency, Reduce Motion, forced colours and
   media = ['forced-colors'];
   assert.equal(glassAllowed(), false);
   media = [];
-  assert.equal(glassAllowed(), false, 'no WebGL2 means no glass');
+  assert.equal(glassAllowed(), true);
 });
 
 test('a switch decides from where the finger ended, not where the knob has got to', () => {
@@ -147,6 +169,54 @@ test('a control drops only the browser click of its own gesture', () => {
   assert.equal(click(1, now), false, 'only one click is dropped');
   c.swallowClick();
   assert.equal(click(1, now + CLICK_WINDOW_MS + 50), false, 'no gesture blocks a click that comes much later');
+});
+
+test('a dropped switch click still reaches outside listeners; a dropped tab bar click does not', () => {
+  const stops = (/** @type {GlassControl} */ c, /** @type {any} */ el) => {
+    let stopped = false;
+    c.swallowClick();
+    el.listeners.click({
+      detail: 1,
+      timeStamp: performance.now(),
+      preventDefault() {},
+      stopPropagation: () => (stopped = true),
+    });
+    return stopped;
+  };
+  const sw = fakeEl('label');
+  assert.equal(stops(new GlassControl(/** @type {any} */ (sw)), sw), false, 'an open drop-down still closes');
+  const nav = Object.assign(fakeEl('nav'), { querySelector: () => null, querySelectorAll: () => [] });
+  const bar = new GlassBar(/** @type {any} */ (nav), {
+    ...tabBar(/** @type {any} */ (nav)),
+    P: /** @type {any} */ ({}),
+  });
+  assert.equal(stops(bar, nav), true, 'a tab never gets a second click');
+});
+
+test('a tab bar pick arrives as a pointer click, and the current tab can be picked again', () => {
+  globalThis.MouseEvent ??= /** @type {any} */ (
+    class {
+      /** @param {string} type @param {object} init */
+      constructor(type, init) {
+        Object.assign(this, { type, ...init });
+      }
+    }
+  );
+  /** @type {any[]} */
+  const got = [];
+  const tabs = [0, 1].map(n => ({
+    n,
+    classList: { contains: () => n === 0 },
+    dispatchEvent: (/** @type {any} */ e) => got.push([n, e]),
+  }));
+  const nav = Object.assign(fakeEl('nav'), { querySelector: () => null, querySelectorAll: () => tabs });
+  const kind = tabBar(/** @type {any} */ (nav));
+  assert.equal(kind.reselect, true);
+  kind.choose(1);
+  assert.equal(got[0][0], 1);
+  assert.equal(got[0][1].type, 'click');
+  assert.equal(got[0][1].detail, 1, 'detail 0 reads as a key press and skips the section fade');
+  assert.equal(got[0][1].bubbles, true);
 });
 
 test('colours read from computed styles, including color() and translucent layers', () => {

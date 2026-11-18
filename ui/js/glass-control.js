@@ -64,6 +64,7 @@ export class GlassControl {
     this.flip = false;
     this.dark = false;
     this.swallowUntil = 0;
+    this.stopsClick = false;
     /** @type {Map<string, number>} */
     this.timers = new Map();
     /** @type {(() => void) | null} */
@@ -74,7 +75,7 @@ export class GlassControl {
         if (!ownClick(e, this.swallowUntil)) return;
         this.swallowUntil = 0;
         e.preventDefault();
-        e.stopPropagation();
+        if (this.stopsClick) e.stopPropagation();
       },
       true,
     );

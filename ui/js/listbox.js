@@ -55,6 +55,28 @@ function focusBeside(from, step) {
 
     @typedef {{ value?: string, label?: string, group?: string, lang?: string }} ListboxOption */
 
+/** How long after a touch the browser's own click for it can still arrive. */
+const CLICK_WINDOW_MS = 400;
+
+/** Drops the browser's click for a touch already acted on. Only a click inside
+    `area` is that click; a tap elsewhere is a new press.
+    @param {DOMRect} area */
+export function dropNextClick(area) {
+  const until = performance.now() + CLICK_WINDOW_MS;
+  const stop = () => document.removeEventListener('click', block, true);
+  const block = (/** @type {MouseEvent} */ e) => {
+    if (e.detail === 0 || e.timeStamp > until) return stop();
+    const inside =
+      e.clientX >= area.left && e.clientX <= area.right && e.clientY >= area.top && e.clientY <= area.bottom;
+    if (!inside) return;
+    stop();
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  document.addEventListener('click', block, true);
+  setTimeout(stop, CLICK_WINDOW_MS);
+}
+
 /** Builds a picker and returns it with its own small API.
 
     @param {{ options?: ListboxOption[], value?: string|string[],
@@ -67,22 +89,6 @@ function focusBeside(from, step) {
                 setOptions: (o: ListboxOption[], v?: any) => void,
                 setLabel: (l: string) => void,
                 close: () => void }} */
-/** How long after a touch the browser's own click for it can still arrive. */
-const CLICK_WINDOW_MS = 400;
-
-/** Drops the browser's click for a touch already acted on. */
-export function dropNextClick() {
-  const until = performance.now() + CLICK_WINDOW_MS;
-  const block = (/** @type {MouseEvent} */ e) => {
-    document.removeEventListener('click', block, true);
-    if (e.detail === 0 || e.timeStamp > until) return;
-    e.preventDefault();
-    e.stopPropagation();
-  };
-  document.addEventListener('click', block, true);
-  setTimeout(() => document.removeEventListener('click', block, true), CLICK_WINDOW_MS);
-}
-
 export function createListbox(
   {
     options = [],
@@ -188,6 +194,7 @@ export function createListbox(
     list.style.top = `${Math.round(top)}px`;
     list.style.left = `${Math.round(left)}px`;
     fromButton(r, top, left, pr);
+    list.style.touchAction = list.scrollHeight > list.clientHeight + 1 ? '' : 'none';
   }
   function fromButton(r, top, left, pr) {
     const rad = Math.min(r.height / 2, 22);
@@ -222,7 +229,6 @@ export function createListbox(
     open_ = true;
     btn.setAttribute('aria-expanded', 'true');
     place();
-    list.style.touchAction = list.scrollHeight > list.clientHeight + 1 ? '' : 'none';
     outside = new AbortController();
     /* The visible area resizes a frame after the menu opens. */
     visualViewport?.addEventListener('resize', place, { signal: outside.signal });
@@ -385,7 +391,7 @@ export function createListbox(
       mark(items()[active] ?? null);
       return;
     }
-    dropNextClick();
+    dropNextClick(list.getBoundingClientRect());
     commit(li);
   });
   list.addEventListener('pointercancel', () => {
@@ -455,6 +461,7 @@ export function createListbox(
         chosen = new Set(still);
       }
       paint();
+      if (open_) place();
     },
     setLabel(next) {
       list.setAttribute('aria-label', next);

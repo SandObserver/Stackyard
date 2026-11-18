@@ -85,6 +85,15 @@ test('a new save clears the check or cross left from the last one', async () => 
   }
 });
 
+test('a new save cancels a mark still drawn after its class has faded', async () => {
+  const btn = mkEl();
+  let cancelled = 0;
+  const drawn = { getAnimations: () => [{ cancel: () => cancelled++ }] };
+  btn.querySelectorAll = () => [drawn];
+  await busyPress(btn, async () => {})();
+  assert.equal(cancelled, 1);
+});
+
 test('a fast write never shows the saving label', async () => {
   const btn = mkEl();
   await busyPress(btn, async () => {})();

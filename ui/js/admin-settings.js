@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=8a3cc51c';
+import { renderColorControl } from '/js/admin-color-control.js?v=cb49b830';
 import { passwordRefusalKey, socketProbeAdvice } from '/js/admin-error.js?v=5abd7438';
 import {
   BLOCK,
@@ -19,6 +19,7 @@ import {
   planFieldSave,
 } from '/js/admin-save-logic.js?v=4a332c56';
 import {
+  announce,
   apiGet,
   apiPost,
   busyPress,
@@ -35,7 +36,7 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=889fe8d5';
+} from '/js/admin-shared.js?v=14e96406';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { BACKDROP } from '/js/background.js?v=eca5642a';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
@@ -543,17 +544,21 @@ function saveSwitchChange(e, apply) {
   const toggled = /** @type {HTMLInputElement} */ (e.target);
   const value = toggled.checked;
   return configWrites.run(async () => {
+    const own = sectionSave(toggled);
+    /* A Save press in flight or just failed owns the mark. */
+    const taken = () => own?.getAttribute('aria-busy') === 'true' || !!own?.classList.contains('failed');
     try {
       const c = await apiGet('/api/config');
       c.settings = c.settings || {};
       apply(c.settings);
       await apiPost('/api/config', c);
       state._settings = c.settings;
-      confirmSaved(sectionSave(toggled));
+      if (taken()) announce(t('toast.saved'));
+      else confirmSaved(own);
     } catch (err) {
       /* Assigning `checked` fires no event, so this does not loop. */
       if (toggled.checked === value) toggled.checked = !value;
-      failedSave(sectionSave(toggled));
+      if (!taken()) failedSave(own);
       toast(t('toast.saveFailed', { err: errorText(err) }), 'err', errorAction(err));
     }
   });

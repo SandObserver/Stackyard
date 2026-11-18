@@ -684,7 +684,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 @media (prefers-reduced-motion: reduce){.sv-btn.busy .sv-c{animation:none;opacity:.7}}
 .sv-btn.saved:disabled{color:var(--tx)}
 .sv-btn.saved .sv-k{stroke:var(--gn)}
-.sv-btn.failed,.sv-btn.failed:disabled{color:var(--rd)}
+.sv-btn.failed .sv-x{stroke:var(--rd)}
 .sm{padding:5px 12px;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);min-height:28px}
 .sec-hdr-actions .btn{min-height:36px;padding:7px 16px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);position:relative;background:var(--glass-control);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-control-shadow)}
 .sec-hdr-actions .btn.bp{color:var(--ac)}
