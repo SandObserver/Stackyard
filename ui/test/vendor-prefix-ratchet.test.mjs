@@ -7,15 +7,12 @@ import { fileURLToPath } from 'node:url';
 /* Vendor prefixes are hand-written here: no build step, no autoprefixer, so
    they accumulate past the support floor at the top of tokens.css.
 
-   Do not derive the list from "an unprefixed equivalent sits beside it". That
-   removes -webkit-backdrop-filter, which Safari still needs at the floor and
-   which is paired with the unprefixed property in all 26 places. Membership is
-   a per-property judgement, so the list is explicit.
+   Do not derive the list from "an unprefixed equivalent sits beside it".
+   Membership is a per-property judgement, so the list is explicit.
 
    Adding a prefix that is not here fails. If it belongs, add it with a reason
    in tokens.css and a line here. */
 const ALLOWED = new Set([
-  '-webkit-backdrop-filter' /* Safari has no unprefixed form until 18.0 */,
   '-webkit-text-size-adjust' /* WebKit supports only the prefixed form */,
   '-webkit-line-clamp' /* the line-clamp idiom, with the two below */,
   '-webkit-box-orient',
@@ -33,6 +30,7 @@ const ALLOWED = new Set([
 /* Named so a reintroduction is reported as a regression rather than only as an
    unlisted prefix. */
 const REMOVED = [
+  '-webkit-backdrop-filter',
   '-webkit-flex',
   '-webkit-align-items',
   '-webkit-justify-content',
@@ -73,7 +71,7 @@ for (const f of styleFiles(uiDir)) {
 
 test('the scan finds the prefixes that are supposed to still be here', () => {
   assert.ok(found.size > 5, `found only ${found.size} distinct prefixes, the scan is probably broken`);
-  assert.ok(found.has('-webkit-backdrop-filter'), 'the glass effect must still be prefixed');
+  assert.ok(found.has('-webkit-tap-highlight-color'), 'the WebKit-only properties must still be found');
 });
 
 test('no vendor prefix outside the allowed list', () => {
@@ -108,17 +106,4 @@ test('-webkit-box appears only alongside line clamping', () => {
       );
     }
   }
-});
-
-test('every backdrop-filter has its -webkit- form beside it', () => {
-  const bare = [];
-  for (const f of styleFiles(uiDir).filter(p => /\.(css|html)$/.test(p))) {
-    const src = fs.readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-    for (const block of src.split(/[{}]/)) {
-      if (/(?<!-webkit-)backdrop-filter\s*:/.test(block) && !/-webkit-backdrop-filter\s*:/.test(block)) {
-        bare.push(`${path.relative(uiDir, f)}: ${block.trim().slice(0, 60)}`);
-      }
-    }
-  }
-  assert.deepEqual(bare, [], 'Safari before 18 reads only the prefixed form');
 });

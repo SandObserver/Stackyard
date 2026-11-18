@@ -99,7 +99,6 @@ test('the outside-press listener is scoped to the open state', () => {
   assert.match(src, /outside\?\.abort\(\)/);
 });
 
-/* Anchor positioning is above the support floor, so the placement is by hand. */
 test('the anchored list is placed inside the viewport', () => {
   assert.match(src, /if \(top \+ pr\.height > vh - 8\)/, 'it must flip up when there is no room below');
   assert.match(src, /vw - pr\.width - 8/, 'it must not run off the side');

@@ -47,10 +47,7 @@ test('reduced motion is handled in the shared stylesheet', () => {
 /* Safari does not report the system setting, so each device also has its own
    switch. The boot script turns either into one attribute. */
 test('reduced transparency is handled in the shared stylesheet', () => {
-  assert.match(
-    tokens,
-    /:where\(html\[data-transparency="reduce"\] \*\) \{ -webkit-backdrop-filter: none !important; backdrop-filter: none !important; \}/,
-  );
+  assert.match(tokens, /:where\(html\[data-transparency="reduce"\] \*\) \{ backdrop-filter: none !important; \}/);
   const boot = read('js/admin-theme.js');
   assert.match(
     boot,

@@ -187,7 +187,7 @@ test('a translucent card is glass, and solid with increased contrast', () => {
   assert.match(rule('.widget[data-card="translucent"],'), /background: var\(--glass-card\)/);
   assert.match(
     contrast,
-    /\.mob-widget-card\[data-card="translucent"\] \{\s*background:var\(--glass-card-solid\);\s*-webkit-backdrop-filter:none; backdrop-filter:none;/,
+    /\.mob-widget-card\[data-card="translucent"\] \{\s*background:var\(--glass-card-solid\);\s*backdrop-filter:none;/,
   );
 });
 
@@ -210,7 +210,7 @@ test('no blur is stacked on a blurred parent, and the phone search blur is halve
   assert.doesNotMatch(rule('body:not(.is-mob) #sres {'), /backdrop-filter/);
   assert.match(
     css,
-    /:is\(\.folder-overlay, \.folder-overlay-mobile\) \.glass-surface \{\s*background:var\(--glass-folder\);\s*-webkit-backdrop-filter:none; backdrop-filter:none;\s*\}/,
+    /:is\(\.folder-overlay, \.folder-overlay-mobile\) \.glass-surface \{\s*background:var\(--glass-folder\);\s*backdrop-filter:none;\s*\}/,
   );
   assert.doesNotMatch(css, /blur\(40px\)/);
 });

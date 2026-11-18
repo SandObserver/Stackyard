@@ -69,8 +69,8 @@
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   #map-link{position:absolute;inset:0;pointer-events:none;border-radius:inherit}
   #map-link:focus-visible{outline:2px solid #0091FF;outline-offset:-3px}
-  #tt{-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%)}
-  html[data-transparency="reduce"] #tt{-webkit-backdrop-filter:none;backdrop-filter:none}
+  #tt{backdrop-filter:blur(18px) saturate(160%)}
+  html[data-transparency="reduce"] #tt{backdrop-filter:none}
 </style>
 </head>
 <body>

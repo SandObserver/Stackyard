@@ -185,22 +185,22 @@
     .widget[data-card="dark"],
     .mob-widget-card[data-card="dark"] {
       background: var(--card-dark);
-      -webkit-backdrop-filter: none; backdrop-filter: none;
+      backdrop-filter: none;
     }
     .widget[data-card="light"],
     .mob-widget-card[data-card="light"] {
       background: var(--bg-primary-light); border-color: rgba(0,0,0,.12);
-      -webkit-backdrop-filter: none; backdrop-filter: none;
+      backdrop-filter: none;
     }
     .widget[data-card="graphite"],
     .mob-widget-card[data-card="graphite"] {
       background: var(--card-graphite);
-      -webkit-backdrop-filter: none; backdrop-filter: none;
+      backdrop-filter: none;
     }
     .widget[data-card="translucent"],
     .mob-widget-card[data-card="translucent"] {
       background: var(--glass-card); border-color: transparent;
-      -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur);
     }
     /* Shared by an app's link and a folder's button, so it carries the reset a
        button needs to look like the tile beside it. */
@@ -353,7 +353,6 @@
       background:rgba(30,30,32,.94);
       border:.5px solid rgba(255,255,255,.12);
       box-shadow:0 8px 48px rgba(0,0,0,.45);
-      -webkit-backdrop-filter:blur(32px) saturate(180%) brightness(.72);
       backdrop-filter:blur(32px) saturate(180%) brightness(.72);
       color:#fff;
       /* SC 1.4.13 asks that hover content be hoverable. pointer-events:none put
@@ -390,7 +389,7 @@
       /* Keep 24px between centres. Less fails the WCAG 2.5.8 target size. */
       display:flex; gap:16px; z-index:500;
       background:var(--dots-fill,var(--glass-clear)); border:.5px solid var(--dots-rim,transparent);
-      -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+      backdrop-filter:var(--glass-blur);
       border-radius:999px; padding:8px 12px;
       align-items:center;
     }
@@ -465,7 +464,7 @@
       align-items:center;
       justify-content:center;
       background:var(--glass-clear);
-      -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+      backdrop-filter:var(--glass-blur);
       border-radius:999px;
       border:0.5px solid transparent;
       clip-path:inset(0 var(--pill-inset) round 999px);
@@ -530,7 +529,7 @@
       isolation:isolate;
       border-radius:38px;
       background:var(--glass-clear);
-      -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+      backdrop-filter:var(--glass-blur);
     }
     #dock.mdock {
       position:fixed; left:50%;
@@ -543,7 +542,7 @@
     }
     .glass-surface {
       background:var(--glass-clear);
-      -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+      backdrop-filter:var(--glass-blur);
     }
     /* Keep in step with GLASS in ui/js/glass.js. */
     .glass-surface::before, #dock::before, #dots::before, #mob-search-pill::before,
@@ -556,7 +555,7 @@
     #mob-search-pill::before { inset:0 var(--pill-inset) }
     :is(.folder-overlay, .folder-overlay-mobile) .glass-surface {
       background:var(--glass-folder);
-      -webkit-backdrop-filter:none; backdrop-filter:none;
+      backdrop-filter:none;
     }
     :is(.folder-overlay, .folder-overlay-mobile)[data-glass-drawn] .glass-surface { background:transparent }
 
@@ -597,7 +596,6 @@
     /* ── Spotlight — mobile layout (default, overridden for desktop below) ── */
     #spot {
       background:rgba(0,0,0,.62);
-      -webkit-backdrop-filter:blur(20px) saturate(180%) brightness(.76);
       backdrop-filter:blur(20px) saturate(180%) brightness(.76);
       align-items:stretch;
       justify-content:flex-end;
@@ -620,7 +618,6 @@
     /* ── Spotlight — desktop overrides ── */
     body:not(.is-mob) #spot {
       background:rgba(0,0,0,.45);
-      -webkit-backdrop-filter:blur(20px) saturate(160%);
       backdrop-filter:blur(20px) saturate(160%);
       align-items:center;
       justify-content:flex-start;
@@ -814,13 +811,12 @@
     :is(.folder-overlay, .folder-overlay-mobile):not([open]),
     :is(.folder-overlay, .folder-overlay-mobile):not([open]) * { pointer-events:none !important }
     :is(.folder-overlay, .folder-overlay-mobile):not([open]) {
-      background:none !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important;
+      background:none !important; backdrop-filter:none !important;
     }
     /* ui/js/glass.js reads these from body. Keep the names. */
     body { --folder-blur:22px; --folder-dim:.72 }
     body:not(.is-mob) { --folder-blur:24px; --folder-dim:1 }
     .folder-overlay, .folder-overlay-mobile {
-      -webkit-backdrop-filter:blur(var(--folder-blur)) brightness(var(--folder-dim));
       backdrop-filter:blur(var(--folder-blur)) brightness(var(--folder-dim));
     }
     .folder-overlay-mobile {
@@ -982,7 +978,7 @@
   border-radius: 999px; min-height: 52px;
   position: relative;
   background: var(--glass-fill-dark); border: .5px solid transparent;
-  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
   color: var(--label-color); text-decoration: none; font-weight: 500;
   font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);
 }
@@ -1023,7 +1019,7 @@
   margin-top: 8px; padding: 13px 24px; border-radius: 999px; min-height: 48px;
   display: inline-flex; align-items: center; justify-content: center; text-decoration: none; position: relative;
   background: var(--glass-fill); border: .5px solid transparent;
-  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); font-weight: 500;
+  backdrop-filter: var(--glass-blur); font-weight: 500;
   color: var(--label-primary); font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); cursor: pointer; font-family: inherit;
 }
 
@@ -1085,7 +1081,7 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
   /* A translucent card cannot honour a contrast request and stay translucent. */
   .widget[data-card="translucent"], .mob-widget-card[data-card="translucent"] {
     background:var(--glass-card-solid);
-    -webkit-backdrop-filter:none; backdrop-filter:none;
+    backdrop-filter:none;
   }
   .widget[data-card="light"], .mob-widget-card[data-card="light"] { border-color:rgba(0,0,0,.45); }
   .dot { border-width:2px; }
@@ -1126,7 +1122,7 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
   width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 10px;
   padding: 22px 14px 14px; border-radius: 34px;
   background: rgba(30,30,32,.9); border: .5px solid rgba(255,255,255,.12);
-  -webkit-backdrop-filter: blur(32px) saturate(180%); backdrop-filter: blur(32px) saturate(180%);
+  backdrop-filter: blur(32px) saturate(180%);
   box-shadow: 0 8px 48px rgba(0,0,0,.45);
   color: var(--label-primary);
 }
@@ -1249,7 +1245,7 @@ html[data-theme="light"] {
 html[data-theme="light"] #spot { background:rgba(242,242,247,.9) }
 html[data-theme="light"] body:not(.is-mob) #spot { background:rgba(242,242,247,.5) }
 html[data-theme="light"] body.is-mob #spot {
-  -webkit-backdrop-filter:blur(20px) saturate(180%); backdrop-filter:blur(20px) saturate(180%);
+  backdrop-filter:blur(20px) saturate(180%);
 }
 html[data-theme="light"] body:not(.is-mob) #sbox,
 html[data-theme="light"] body:not(.is-mob) #sres {
@@ -1334,7 +1330,7 @@ html[data-transparency="reduce"][data-theme="light"] #mob-search-pill {
 html[data-transparency="reduce"] #dots { --dots-fill:var(--glass-clear); --dots-rim:transparent; --dots-ink:initial; --dots-ring:initial }
 html[data-transparency="reduce"][data-theme="light"] #dots { --dots-ink:rgba(0,0,0,.85); --dots-ring:rgba(0,0,0,.55) }
 html[data-transparency="reduce"] :is(.widget, .mob-widget-card)[data-card="translucent"] {
-  background:var(--glass-card-solid); -webkit-backdrop-filter:none; backdrop-filter:none;
+  background:var(--glass-card-solid); backdrop-filter:none;
 }
 
 /* Registered, so a transition can animate it. */

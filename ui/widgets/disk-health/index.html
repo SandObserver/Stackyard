@@ -129,7 +129,7 @@
   #tip {
     position:absolute; z-index:20;
     background:rgba(20,20,22,0.96);
-    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    backdrop-filter:blur(8px); 
     border-radius:8px; padding:7px 10px;
     box-shadow:0 6px 18px rgba(0,0,0,0.55), inset 0 0 0 0.5px rgba(255,255,255,0.1);
     display:flex; flex-direction:column; gap:3px;
@@ -149,7 +149,7 @@
     .bay,#tip{transition:none !important}
     .bay.assigned:hover,.bay.assigned.touch-active{transform:none}
   }
-  html[data-transparency="reduce"] #tip{-webkit-backdrop-filter:none;backdrop-filter:none}
+  html[data-transparency="reduce"] #tip{backdrop-filter:none}
   @media (prefers-contrast: more){
     .bay-name,.bay.unread .bay-name,#nums span,#tip .meta{color:#EBEBF5}
   }

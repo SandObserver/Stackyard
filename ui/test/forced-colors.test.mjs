@@ -71,7 +71,6 @@ test('the wallpaper is suppressed for both pages', () => {
 test('every blurred surface loses its blur, including ones added later', () => {
   assert.match(shared, /\*,\s*\*::before,\s*\*::after/, 'the blur override is not universal');
   assert.match(shared, /backdrop-filter:\s*none\s*!important/);
-  assert.match(shared, /-webkit-backdrop-filter:\s*none\s*!important/);
 });
 
 /* The two dots must not paint the same colour. */
