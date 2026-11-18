@@ -1,6 +1,6 @@
 // @ts-check
 import { everyFrame } from '/js/frame-motion.js?v=911f7c03';
-import { lensRelease } from '/js/glass-gpu.js?v=ca6a65f5';
+import { lensRelease } from '/js/glass-gpu.js?v=eab726bc';
 
 /** How long after a gesture the browser's own click for it can still arrive. */
 export const CLICK_WINDOW_MS = 400;

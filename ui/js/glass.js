@@ -1,10 +1,10 @@
 // @ts-check
-import { onFrame, requestFrame, setScripted } from '/js/frame-motion.js?v=1d86154d';
-import { createGlassRenderer } from '/js/glass-gpu.js?v=9733cf9b';
+import { onFrame, requestFrame, setScripted } from '/js/frame-motion.js?v=911f7c03';
+import { createGlassRenderer } from '/js/glass-gpu.js?v=eab726bc';
 import { loadSamplingImage } from '/js/label-contrast.js?v=a160c6d1';
 
-/** @typedef {import('/js/glass-gpu.js?v=9733cf9b').GlassLook} GlassLook */
-/** @typedef {import('/js/glass-gpu.js?v=9733cf9b').GlassItem} GlassItem */
+/** @typedef {import('/js/glass-gpu.js?v=eab726bc').GlassLook} GlassLook */
+/** @typedef {import('/js/glass-gpu.js?v=eab726bc').GlassItem} GlassItem */
 /** @typedef {ReturnType<typeof createGlassRenderer>} Renderer */
 
 /* Keep in step with the rim list in dashboard.css. */

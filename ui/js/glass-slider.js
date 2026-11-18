@@ -1,7 +1,7 @@
 // @ts-check
 import { rubber, Spring } from '/js/frame-motion.js?v=911f7c03';
-import { AT_REST, GlassControl, lensLook } from '/js/glass-control.js?v=4e46a6cc';
-import { lensClaim, lensFrame, lensPicture, lensRelease } from '/js/glass-gpu.js?v=ca6a65f5';
+import { AT_REST, GlassControl, lensLook } from '/js/glass-control.js?v=8dd25c42';
+import { lensClaim, lensFrame, lensPicture, lensRelease } from '/js/glass-gpu.js?v=eab726bc';
 import { behind, clamp, dpr, isDark, over, sized, token, unit } from '/js/glass-paint.js?v=800e4865';
 
 /** Thumb, lens and the rail's box, CSS px. */
