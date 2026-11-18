@@ -30,8 +30,7 @@ function ensurePop() {
   pop.id = 'badge-pop';
   pop.setAttribute('role', 'tooltip');
   /* auto, so the browser gives the top layer, dismissal on a click outside and
-     Escape. It cannot position it: anchor positioning is Safari 26, well above
-     the support floor, so place() stays. */
+     Escape. */
   pop.setAttribute('popover', 'auto');
   /* Interactive now, so a click on it must not reach the tile underneath. */
   pop.addEventListener('pointerenter', cancelClose);

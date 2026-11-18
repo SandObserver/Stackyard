@@ -15,7 +15,7 @@ import {
   folderLabelName,
   readBadgeUpdate,
 } from '/js/badge-logic.js?v=7112fd10';
-import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=b2c35c27';
+import { closeBadgePopover, wireBadgePopover } from '/js/badge-popover.js?v=a7b62808';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=797944ce';
 import {
   clampPage,

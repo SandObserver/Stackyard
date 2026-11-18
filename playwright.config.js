@@ -8,9 +8,9 @@
    reordering, the mobile layout and the Persian mirroring are
    not covered here yet.
 
-   Two browsers on purpose. WebKit is not decoration: the documented support
-   floor is WebKit 16.2, and the last two layout and keyboard problems found by
-   hand were WebKit-specific.
+   Two browsers on purpose. WebKit is not decoration: the support floor is
+   Safari 26.2 (header of ui/css/tokens.css), and the last two layout and
+   keyboard problems found by hand were WebKit-specific.
 
    BASE_URL points at a running Stackyard. The workflow starts the built image;
    nothing is started here, because the thing worth testing is the image that
