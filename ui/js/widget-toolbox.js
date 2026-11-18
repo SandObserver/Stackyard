@@ -391,6 +391,47 @@ export function reducedMotion(onChange) {
   return !!query?.matches;
 }
 
+const SOFTWARE_KEY = 'sy-software-render';
+const SOFTWARE_RENDERER = /swiftshader|llvmpipe|softpipe|software/i;
+/** @type {boolean|null} */
+let _software = null;
+
+/** True when the browser draws without a graphics chip, so every animation
+    frame costs CPU. Checked once per tab.
+    @returns {boolean} */
+export function softwareRendering() {
+  if (_software !== null) return _software;
+  try {
+    const kept = sessionStorage.getItem(SOFTWARE_KEY);
+    if (kept === '0' || kept === '1') {
+      _software = kept === '1';
+      return _software;
+    }
+  } catch {
+    /* Storage blocked: check below. */
+  }
+  let soft = true;
+  try {
+    const gl = /** @type {WebGLRenderingContext|null} */ (
+      document.createElement('canvas').getContext('webgl', { failIfMajorPerformanceCaveat: true })
+    );
+    if (gl) {
+      const info = gl.getExtension('WEBGL_debug_renderer_info');
+      soft = SOFTWARE_RENDERER.test(info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : '');
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+    }
+  } catch {
+    soft = true;
+  }
+  _software = soft;
+  try {
+    sessionStorage.setItem(SOFTWARE_KEY, soft ? '1' : '0');
+  } catch {
+    /* Storage blocked: each widget checks for itself. */
+  }
+  return soft;
+}
+
 const _fitted = new Map();
 function refit() {
   for (const [el, min] of _fitted) el.isConnected ? fit(el, min) : _fitted.delete(el);

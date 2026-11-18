@@ -107,7 +107,7 @@ test('every widget with a configurable link uses the shared link', () => {
 test('the Now Playing link holds no controls', () => {
   const src = widget('nowplaying/index.html');
   assert.match(src, /<div class="np-link" id="np-link"><\/div>/);
-  assert.match(src, /linkTo\(linkEl,href\)/);
+  assert.match(src, /linkTo\(linkEl, ?href\)/);
 });
 
 test('the Books link holds no spines and is not their container', () => {
