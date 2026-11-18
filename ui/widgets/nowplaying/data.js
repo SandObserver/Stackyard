@@ -1,5 +1,6 @@
-/* Returns { provider, link, sessions: [{ title, subtitle, progress, state, type,
-   player, link }] }. progress is 0..1, or null when the source has no duration. */
+/* Returns { provider, link, sessions: [{ id, title, subtitle, progress, state,
+   type, player, link }] }. progress is 0..1, or null when the source has no
+   duration. id is '' when the source names no session. */
 
 const crypto = require('crypto');
 
@@ -8,6 +9,9 @@ const MAX = 5;
 const plexMachineIds = new Map();
 
 const linkFor = (ctx, url, path) => ctx.serviceLink(ctx.config.href, url, path);
+
+const sessionId = raw =>
+  raw == null || raw === '' ? '' : crypto.createHash('sha256').update(String(raw)).digest('base64url').slice(0, 16);
 
 async function plexMachineId(ctx, base, token) {
   if (plexMachineIds.has(base)) return plexMachineIds.get(base);
@@ -58,7 +62,16 @@ async function plex(ctx) {
             `/web/index.html#!/server/${machine}/details?key=${encodeURIComponent(`/library/metadata/${m.ratingKey}`)}`,
           )
         : linkFor(ctx, ctx.config.plexUrl);
-    return { title, subtitle, progress, state: pstate === 'paused' ? 'paused' : 'playing', type, player, link };
+    return {
+      id: sessionId(m.Session?.id || m.sessionKey),
+      title,
+      subtitle,
+      progress,
+      state: pstate === 'paused' ? 'paused' : 'playing',
+      type,
+      player,
+      link,
+    };
   });
 }
 
@@ -98,6 +111,7 @@ async function jellyfinLike(ctx, provider) {
     const run = +np.RunTimeTicks || 0,
       pos = +ps.PositionTicks || 0;
     out.push({
+      id: sessionId(s.Id),
       title,
       subtitle,
       progress: run > 0 ? Math.min(1, pos / run) : null,
@@ -138,6 +152,7 @@ async function navidrome(ctx) {
     const progress = pos != null && dur > 0 ? Math.min(1, Math.max(0, pos / (dur * 1000))) : null;
     const state = e.state === 'paused' ? 'paused' : 'playing'; // starting/playing -> playing
     return {
+      id: e.playerId == null ? '' : sessionId(`${e.username || ''}/${e.playerId}`),
       title: e.title || '',
       subtitle: e.artist || e.album || '',
       progress,

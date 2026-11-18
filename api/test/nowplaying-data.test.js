@@ -228,3 +228,68 @@ for (const provider of ['jellyfin', 'emby']) {
     });
   }
 }
+
+const SAME_NAME = {
+  plex: [
+    { provider: 'plex', plexUrl: 'https://plex.example.com', plexToken: 't' },
+    {
+      MediaContainer: {
+        Metadata: [
+          { type: 'movie', title: 'Arrival', sessionKey: '7', Session: { id: 'abc' }, Player: { title: 'Chrome' } },
+          { type: 'movie', title: 'Dune', sessionKey: '8', Session: { id: 'def' }, Player: { title: 'Chrome' } },
+        ],
+      },
+    },
+    'abc',
+  ],
+  jellyfin: [
+    { provider: 'jellyfin', jellyfinUrl: 'https://jf.example.com', jellyfinKey: 'k' },
+    [
+      { Id: 's1', DeviceName: 'iPhone', NowPlayingItem: { Type: 'Movie', Name: 'Arrival' } },
+      { Id: 's2', DeviceName: 'iPhone', NowPlayingItem: { Type: 'Movie', Name: 'Dune' } },
+    ],
+    's1',
+  ],
+  navidrome: [
+    { provider: 'navidrome', navidromeUrl: 'https://nd.example.com', navidromeUser: 'u', navidromePassword: 'p' },
+    {
+      'subsonic-response': {
+        status: 'ok',
+        nowPlaying: {
+          entry: [
+            { title: 'Time', username: 'ann', playerId: 1, playerName: 'Browser' },
+            { title: 'Home', username: 'bob', playerId: 1, playerName: 'Browser' },
+          ],
+        },
+      },
+    },
+    'ann/1',
+  ],
+};
+
+for (const [provider, [config, payload, raw]] of Object.entries(SAME_NAME)) {
+  test(`${provider} sessions on players with the same name get different ids`, async () => {
+    const a = await dataFn(ctxFor(config, payload));
+    const b = await dataFn(ctxFor(config, payload));
+    const ids = a.sessions.map(s => s.id);
+    assert.equal(ids.length, 2);
+    assert.ok(ids.every(Boolean), 'every session has an id');
+    assert.notEqual(ids[0], ids[1]);
+    assert.deepEqual(
+      b.sessions.map(s => s.id),
+      ids,
+      'the id is the same on the next poll',
+    );
+    assert.ok(!ids[0].includes(raw), 'the server session id is not passed through');
+  });
+}
+
+test('a session the source does not identify has an empty id', async () => {
+  const r = await dataFn(
+    ctxFor(
+      { provider: 'plex', plexUrl: 'https://plex.example.com', plexToken: 't' },
+      { MediaContainer: { Metadata: [{ type: 'movie', title: 'Arrival' }] } },
+    ),
+  );
+  assert.equal(r.sessions[0].id, '');
+});
