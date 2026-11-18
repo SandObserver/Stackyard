@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Require Safari 26.2 or newer on macOS and iOS.
 
+- Bend the open folder's glass more and frost it less.
+
 ### Removed
 
 - Remove the `WIDGETS_PATH` setting from the Compose example. Mount a custom
@@ -58,6 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Open the link for the selected Disk Health provider when the widget is tapped
   on a phone.
+
+- Remove the light diamond in the open folder's glass.
 
 ### Security
 
