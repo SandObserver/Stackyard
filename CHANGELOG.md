@@ -32,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Redraw Now Playing as a turning VHS take-up reel whose tape grows with
   progress.
 
+- Log how long a failed widget request took and the HTTP status the service
+  returned.
+
 ### Removed
 
 - Remove the `WIDGETS_PATH` setting from the Compose example. Mount a custom
@@ -94,6 +97,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A swipe that starts on a switch or segmented control and ends off it no longer
   changes the setting.
+
+- Apply the log level set in Settings to the first lines logged at startup.
 
 ### Security
 
