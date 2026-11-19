@@ -31,8 +31,9 @@ function ciCommands() {
     if (typeof step?.if === 'string' && step.if.includes("inputs.mode == 'release'")) continue;
     if (typeof step?.run !== 'string') continue; /* uses:, not run: */
     /* A multi-line run is a script, not a command a contributor types. The
-       test path has none; if one appears, it needs a decision rather than
-       being folded into one line. */
+       test path has one, the arm64 start check, which needs QEMU and runs in
+       CI only. Any other needs a decision rather than being folded into one
+       line. */
     const command = step.run.trim();
     if (command.includes('\n')) continue;
     out.push([command, step['working-directory'] || null]);

@@ -130,8 +130,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ steps.image.outputs.os }}-${{ matrix.project }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: playwright-${{ steps.image.outputs.os }}-${{ matrix.project }}-
+          key: playwright-${{ steps.image.outputs.os }}-${{ matrix.project }}-${{ steps.image.outputs.playwright }}
 
       # No restore-keys, and one key per browser. A partial hit, or another
       # browser's package set, skips --with-deps, and the browser fails to launch.
