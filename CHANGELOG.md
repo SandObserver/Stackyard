@@ -91,6 +91,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refuse an unsafe link in the Disk Health TrueNAS and Unraid, DNS, GitHub and
   Backup link fields on save, as the Scrutiny link already was.
 
+- Update nginx to 1.30.7.
+
 ## [1.23.0] - 2026-11-15
 
 ### Added
