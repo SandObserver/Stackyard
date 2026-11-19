@@ -38,10 +38,11 @@ runs:
 
     # A release must also agree with itself: the newest dated section and the
     # package version name one version, and nothing is left under [Unreleased].
+    # A prerelease tag keeps [Unreleased] and must be newer than that version.
     - name: Check the changelog describes this release
       if: inputs.mode == 'release'
       shell: bash
-      run: node scripts/changelog-check.js --release "$(node -p "require('./api/package.json').version")"
+      run: node scripts/changelog-check.js --release "$(node -p "require('./api/package.json').version")" --tag "$GITHUB_REF_NAME"
 
     - name: Check asset cache-busting
       shell: bash
