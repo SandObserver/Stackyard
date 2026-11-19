@@ -86,6 +86,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Now Playing's time since a failure meets 4.5:1 contrast.
 
+- GitHub contributions, System Summary and Backup tell screen readers how long
+  ago their service stopped answering.
+
 ### Security
 
 - Refuse an unsafe link in the Disk Health TrueNAS and Unraid, DNS, GitHub and
