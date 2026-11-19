@@ -1,6 +1,6 @@
 // @ts-check
 import { rubber, Spring } from '/js/frame-motion.js?v=911f7c03';
-import { AT_REST, GlassControl, lensLook } from '/js/glass-control.js?v=8dd25c42';
+import { AT_REST, GlassControl, lensLook } from '/js/glass-control.js?v=0ce42d7b';
 import { lensClaim, lensFrame, lensPicture, lensRelease } from '/js/glass-gpu.js?v=eab726bc';
 import { behind, clamp, dpr, isDark, over, sized, token, unit } from '/js/glass-paint.js?v=800e4865';
 
@@ -96,8 +96,8 @@ export class GlassSlider extends GlassControl {
       { passive: false },
     );
     input.addEventListener('pointermove', e => this.move(e));
-    input.addEventListener('pointerup', e => this.up(e));
-    input.addEventListener('pointercancel', e => this.up(e));
+    input.addEventListener('pointerup', e => this.release(e));
+    input.addEventListener('pointercancel', e => this.release(e));
   }
   range() {
     const i = this.input;
@@ -170,10 +170,6 @@ export class GlassSlider extends GlassControl {
     const before = this.input.value;
     this.input.value = String(lo + f * (hi - lo));
     if (this.input.value !== before) this.input.dispatchEvent(new Event('input', { bubbles: true }));
-  }
-  /** @param {PointerEvent} e */
-  up(e) {
-    if (this.pointer?.id === e.pointerId) this.end(e.type === 'pointercancel');
   }
   /** @param {boolean} cancelled */
   end(cancelled) {

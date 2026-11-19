@@ -59,7 +59,7 @@ globalThis.document = /** @type {any} */ ({
 globalThis.window = /** @type {any} */ (globalThis);
 
 const { glassAllowed } = await import('../js/glass-controls.js');
-const { ownClick, GlassControl, CLICK_WINDOW_MS } = await import('../js/glass-control.js');
+const { ownClick, GlassControl, CLICK_WINDOW_MS, pointOver, releasePointer } = await import('../js/glass-control.js');
 const { switchNext } = await import('../js/glass-switch.js');
 const { fillEnd } = await import('../js/glass-slider.js');
 const { indexAt, rectAt, capPath, GlassBar, tabBar } = await import('../js/glass-bar.js');
@@ -169,6 +169,50 @@ test('a control drops only the browser click of its own gesture', () => {
   assert.equal(click(1, now), false, 'only one click is dropped');
   c.swallowClick();
   assert.equal(click(1, now + CLICK_WINDOW_MS + 50), false, 'no gesture blocks a click that comes much later');
+});
+
+test('a contact counts as over a box when its area overlaps it', () => {
+  const box = { left: 100, top: 100, right: 164, bottom: 144 };
+  assert.equal(pointOver({ clientX: 130, clientY: 120 }, box), true);
+  assert.equal(pointOver({ clientX: 130, clientY: 220 }, box), false);
+  assert.equal(pointOver({ clientX: 130, clientY: 150, width: 20, height: 20 }, box), true, 'a fingertip at the edge');
+  assert.equal(pointOver({ clientX: 130, clientY: 160, width: 20, height: 20 }, box), false);
+});
+
+test('a tap that lifts off the control is cancelled; a drag or a tap on it is not', () => {
+  const el = Object.assign(fakeEl('label'), {
+    getBoundingClientRect: () => ({ left: 0, top: 100, right: 64, bottom: 144 }),
+  });
+  /** @type {boolean[]} */
+  const ends = [];
+  const c = new GlassControl(/** @type {any} */ (el));
+  c.end = cancelled => {
+    c.pointer = null;
+    ends.push(cancelled);
+  };
+  const lift = (/** @type {boolean} */ moved, /** @type {number} */ y, type = 'pointerup') => {
+    c.pointer = { id: 7, x0: 30, moved };
+    c.release(/** @type {any} */ ({ type, pointerId: 7, clientX: 30, clientY: y }));
+  };
+  lift(false, 120);
+  lift(false, 10);
+  lift(true, 10);
+  lift(false, 120, 'pointercancel');
+  assert.deepEqual(ends, [false, true, false, true]);
+  c.pointer = { id: 7, x0: 30, moved: false };
+  c.release(/** @type {any} */ ({ type: 'pointerup', pointerId: 8, clientX: 30, clientY: 120 }));
+  assert.equal(ends.length, 4, 'another finger does not end it');
+
+  const realStyle = globalThis.getComputedStyle;
+  globalThis.getComputedStyle = /** @type {any} */ (() => ({ direction: 'ltr' }));
+  try {
+    c.pointer = { id: 9, x0: 30, moved: false };
+    c.hold(/** @type {any} */ ({ pointerId: 9 }), /** @type {any} */ ({ setPointerCapture() {} }));
+    releasePointer(/** @type {any} */ ({ type: 'pointerup', pointerId: 9, clientX: 30, clientY: 400 }));
+    assert.deepEqual(ends.at(-1), true, 'a release the page catches is judged the same way');
+  } finally {
+    globalThis.getComputedStyle = realStyle;
+  }
 });
 
 test('a dropped switch click still reaches outside listeners; a dropped tab bar click does not', () => {

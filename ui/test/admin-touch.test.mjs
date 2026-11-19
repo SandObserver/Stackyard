@@ -135,9 +135,12 @@ test('a finger on a switch, slider or segmented control never scrolls the page a
   assert.ok(rule, 'no touch rule for the switch');
   assert.deepEqual(rule.sels, ['label.tog', '.adm-range', '.hsb-range', '.segr', '.segr-opt']);
   assert.match(rule.body, /^touch-action:pinch-zoom$/);
-  for (const r of cssRules(css))
-    if (r.sels.some(s => /^(label\.tog|\.adm-range|\.hsb-range|\.segr|\.segr-opt)$/.test(s)))
-      assert.doesNotMatch(r.body, /touch-action:(?!pinch-zoom)/, `${r.sels.join(',')} lets the page pan`);
+  const control = /\.(tog|adm-range|hsb-range|segr|segr-opt)(?![\w-])/;
+  for (const r of cssRules(css)) {
+    const value = r.body.match(/touch-action:([^;]+)/)?.[1].trim();
+    if (value && r.sels.some(s => control.test(s.split(/[\s>+~]+/).at(-1) ?? '')))
+      assert.equal(value, 'pinch-zoom', `${r.sels.join(',')} lets the page pan`);
+  }
 });
 
 test('the tap highlight is cleared once, on the document', () => {

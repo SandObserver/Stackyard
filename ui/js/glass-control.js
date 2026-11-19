@@ -32,6 +32,14 @@ export function lensLook(dark, g, f) {
     @param {{ detail: number, timeStamp: number }} e @param {number} until */
 export const ownClick = (e, until) => e.detail > 0 && e.timeStamp <= until;
 
+/** @param {{ clientX: number, clientY: number, width?: number, height?: number }} e
+    @param {{ left: number, top: number, right: number, bottom: number }} r */
+export function pointOver(e, r) {
+  const rx = (e.width || 0) / 2;
+  const ry = (e.height || 0) / 2;
+  return e.clientX + rx >= r.left && e.clientX - rx <= r.right && e.clientY + ry >= r.top && e.clientY - ry <= r.bottom;
+}
+
 /** Controls with a finger or pointer down.
     @type {Set<GlassControl>} */
 const held = new Set();
@@ -43,7 +51,7 @@ export function releasePointer(e) {
     if (!c.pointer) held.delete(c);
     else if (c.pointer.id === e.pointerId) {
       held.delete(c);
-      c.end(e.type === 'pointercancel');
+      c.release(e);
     }
   }
 }
@@ -90,6 +98,12 @@ export class GlassControl {
     } catch {
       /* Pointer already gone. */
     }
+  }
+  /** A tap that lifts off the control is cancelled. @param {PointerEvent} e */
+  release(e) {
+    const p = this.pointer;
+    if (p?.id !== e.pointerId) return;
+    this.end(e.type === 'pointercancel' || (!p.moved && !pointOver(e, this.el.getBoundingClientRect())));
   }
   /** The browser's own click for this gesture is dropped. */
   swallowClick() {

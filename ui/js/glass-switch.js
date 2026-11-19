@@ -1,6 +1,6 @@
 // @ts-check
 import { rubber, Spring } from '/js/frame-motion.js?v=911f7c03';
-import { AT_REST, GlassControl, lensLook } from '/js/glass-control.js?v=8dd25c42';
+import { AT_REST, GlassControl, lensLook } from '/js/glass-control.js?v=0ce42d7b';
 import { lensClaim, lensFrame, lensPicture, lensRelease } from '/js/glass-gpu.js?v=eab726bc';
 import { behind, clamp, css, dpr, isDark, mix, over, pill, sized, token, unit } from '/js/glass-paint.js?v=800e4865';
 import { contrastMore } from '/js/glass-prefs.js?v=511e01c7';
@@ -68,8 +68,8 @@ export class GlassSwitch extends GlassControl {
       markOn: /** @type {number[]} */ ([255, 255, 255]),
     };
     label.addEventListener('pointermove', e => this.move(e));
-    label.addEventListener('pointerup', e => this.up(e));
-    label.addEventListener('pointercancel', e => this.up(e));
+    label.addEventListener('pointerup', e => this.release(e));
+    label.addEventListener('pointercancel', e => this.release(e));
   }
   colours() {
     const key = `${document.documentElement.dataset.theme}|${contrastMore()}`;
@@ -113,10 +113,6 @@ export class GlassSwitch extends GlassControl {
     p.moved = true;
     this.x.to(rubber(this.v0 + dx / TRAVEL, 0, 1, P.rubber), P.follow);
     this.wake();
-  }
-  /** @param {PointerEvent} e */
-  up(e) {
-    if (this.pointer?.id === e.pointerId) this.end(e.type === 'pointercancel');
   }
   /** @param {boolean} cancelled */
   end(cancelled) {
