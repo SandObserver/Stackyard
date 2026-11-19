@@ -39,8 +39,9 @@ async function getLatest() {
 }
 
 on('GET', '/api/version', async (_, res) => {
-  let latest = null,
-    updateAvailable = false;
+  /** @type {string | null} */
+  let latest = null;
+  let updateAvailable = false;
   try {
     latest = await getLatest();
     if (latest) updateAvailable = isNewer(latest, CURRENT);

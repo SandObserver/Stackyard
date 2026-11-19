@@ -185,8 +185,10 @@ on('GET', '/api/icons/cdn', async (req, res) => {
     if (hit && Date.now() - hit.at < ICON_CACHE_TTL && hit.status === 200) return sendIcon(req, res, hit);
   }
 
+  /** @type {CdnIconEntry | null} */
   let missed = null;
   for (const ext of exts) {
+    /** @type {CdnIconEntry | null} */
     let entry = null;
     try {
       entry = await fetchIconFile(source, name, ext);

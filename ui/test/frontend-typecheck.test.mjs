@@ -61,5 +61,5 @@ test('the shared checks action runs the frontend typecheck', () => {
   const action = fs.readFileSync(path.join(root, '.github', 'actions', 'checks', 'action.yml'), 'utf8');
   assert.match(action, /npm run typecheck:ui/);
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-  assert.equal(pkg.scripts['typecheck:ui'], 'tsc -p tsconfig.frontend.json');
+  assert.equal(pkg.scripts['typecheck:ui'], 'node node_modules/typescript/bin/tsc -p tsconfig.frontend.json');
 });

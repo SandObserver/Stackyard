@@ -12,6 +12,7 @@ const GROUP_LEN = 4;
    client shares one address, and anyone could then lock the owner out. */
 const CODE_LEN = 24;
 
+/** @type {string | null} */
 let _code = null;
 let _printed = false;
 

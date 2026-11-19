@@ -335,8 +335,9 @@ function fetchJSON(raw, opts = {}) {
     }
     const policy = urlPolicyError(u);
     if (policy) return reject(Object.assign(new Error(policy), { kind: 'blocked', status: 403 }));
+    /** @type {ReturnType<typeof withDeadline> | null} */
     let dl = null;
-    const done = (fn, arg) => dl.settle(fn, arg);
+    const done = (fn, arg) => /** @type {ReturnType<typeof withDeadline>} */ (dl).settle(fn, arg);
     const lib = u.protocol === 'https:' ? https : http;
     const port = u.port || (u.protocol === 'https:' ? 443 : 80);
     const { skip: skipTls, ignored: skipIgnored } = resolveSkipTls(u.hostname, opts.skipTls);
@@ -546,6 +547,7 @@ async function jsonRpc(raw, opts, fn) {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(new Error('Timed out')), opts.timeout || FETCH_MS);
   timer.unref();
+  /** @type {Awaited<ReturnType<typeof openWebSocket>> | null} */
   let conn = null;
   try {
     conn = await openWebSocket(raw, { ...opts, signal: ac.signal });
@@ -674,6 +676,7 @@ function pingUrl(raw, ms = PING_MS, skipTls, pinIp, lookup) {
 
     /* One deadline for the whole ping. The 405 retry below would otherwise let a
        stalled host take the budget twice over. */
+    /** @type {import('http').ClientRequest | null} */
     let current = null;
     const dl = withDeadline(ms, () => {
       if (current) current.destroy();

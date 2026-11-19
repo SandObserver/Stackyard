@@ -297,6 +297,7 @@ const LEGACY_ZONE = /^thermal_zone(\d+)$/;
     zone number in either legacy form. Keys with no reading are left out.
     @param {(string|number)[]} keys @returns {Record<string, number>} */
 function sensorTemps(keys, root = SYS_CLASS) {
+  /** @type {ReturnType<typeof tempSensors> | null} */
   let sensors = null;
   const all = () => {
     sensors ??= tempSensors(root);
@@ -305,6 +306,7 @@ function sensorTemps(keys, root = SYS_CLASS) {
   /** @type {Record<string, number>} */
   const out = {};
   for (const key of new Set(keys)) {
+    /** @type {number | null} */
     let value = null;
     const legacy = Number.isInteger(key) ? key : LEGACY_ZONE.exec(String(key))?.[1];
     if (legacy !== undefined) value = zoneTemp(legacy, root);

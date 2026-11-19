@@ -38,6 +38,7 @@ const VALID_FIELDTYPES = new Set([
   'object',
 ]);
 
+/** @type {Record<string, any> | null} */
 let _registry = null;
 /* Kept beside the registry, never in it. A lookup by widgetType must not
    resolve to a rejected widget. */
@@ -295,8 +296,7 @@ function getRejected() {
 }
 
 function getRegistry() {
-  if (!_registry) loadRegistry();
-  return _registry;
+  return _registry ?? loadRegistry();
 }
 
 module.exports = { getRegistry, getRejected, loadRegistry, validateManifest, WIDGETS_PATH };

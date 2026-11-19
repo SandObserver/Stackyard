@@ -38,6 +38,7 @@ const setupCode = require('../setup-code');
 
 const CURRENT_PASSWORD_CODE = 'invalid.current-password';
 /* The last hash this process rewrote at login. It holds the same password. */
+/** @type {{ from: string, to: string } | null} */
 let lastUpgrade = null;
 const LANGUAGE_TAG = /^[a-z]{2,3}(-[A-Za-z]{2,4})?$/;
 
@@ -184,7 +185,7 @@ on('POST', '/api/auth/login', async (req, res) => {
           current = upgraded;
           lastUpgrade = { from: hash, to: upgraded };
           log.info('password hash upgraded to the current format', {});
-        } else if (lastUpgrade?.from === hash && stored === lastUpgrade.to) {
+        } else if (lastUpgrade && lastUpgrade.from === hash && stored === lastUpgrade.to) {
           current = stored;
         }
       } catch (e) {

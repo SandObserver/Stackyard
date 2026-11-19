@@ -6,6 +6,7 @@ const { getRegistry } = require('../widget-registry');
 const { DEFAULT_WIDGET_SIZE } = require('../../../ui/js/limits.js');
 
 let _netCache = { rx: 0, tx: 0 };
+/** @type {ReturnType<typeof _sampleNet>} */
 let _netPrev = null;
 
 /* Split on the colon, not on whitespace. The kernel pads the name to a fixed

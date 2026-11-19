@@ -844,6 +844,7 @@ async function pollHealth() {
 
 const EYE = iconSvg('eye', 18);
 
+/** @returns {Promise<void>} */
 function showSetupPrompt() {
   return new Promise(resolve => {
     const ov = /** @type {HTMLDialogElement} */ (document.createElement('dialog'));

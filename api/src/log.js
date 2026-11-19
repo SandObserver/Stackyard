@@ -113,7 +113,7 @@ const log = {
   setLevel(name) {
     return _apply(name);
   },
+  reason,
 };
 
 module.exports = log;
-module.exports.reason = reason;
