@@ -1,6 +1,6 @@
 // @ts-check
 import { rubber, Spring } from '/js/frame-motion.js?v=911f7c03';
-import { AT_REST, GlassControl, lensLook } from '/js/glass-control.js?v=8dd25c42';
+import { AT_REST, GlassControl, lensLook } from '/js/glass-control.js?v=0ce42d7b';
 import { lensClaim, lensFrame, lensPicture, lensRelease, RIM_CURVE } from '/js/glass-gpu.js?v=eab726bc';
 import { behind, clamp, colour, css, dpr, isDark, over, pill, sized, unit } from '/js/glass-paint.js?v=800e4865';
 import { prefersReducedMotion } from '/js/glass-prefs.js?v=511e01c7';
@@ -137,8 +137,8 @@ export class GlassBar extends GlassControl {
       pill: /** @type {number[]} */ ([255, 255, 255]),
     };
     el.addEventListener('pointermove', e => this.move(e));
-    el.addEventListener('pointerup', e => this.up(e));
-    el.addEventListener('pointercancel', e => this.up(e));
+    el.addEventListener('pointerup', e => this.release(e));
+    el.addEventListener('pointercancel', e => this.release(e));
   }
   measure() {
     const b = this.el.getBoundingClientRect();
@@ -187,10 +187,6 @@ export class GlassBar extends GlassControl {
     const raw = indexAt(this.rects, e.clientX - this.box.left);
     this.pos.to(rubber(raw, 0, this.rects.length - 1, 1 / this.P.rubber), this.P.follow);
     this.wake();
-  }
-  /** @param {PointerEvent} e */
-  up(e) {
-    if (this.pointer?.id === e.pointerId) this.end(e.type === 'pointercancel');
   }
   /** @param {boolean} cancelled */
   end(cancelled) {

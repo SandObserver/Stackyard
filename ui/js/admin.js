@@ -127,7 +127,7 @@ import {
 } from '/js/utils.js?v=c1d4e76c';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=39538b71';
-import { initGlassControls } from '/js/glass-controls.js?v=7132894f';
+import { initGlassControls } from '/js/glass-controls.js?v=4d8214ad';
 
 ensureSprite();
 for (const b of document.querySelectorAll('.nl[data-sec], .mtab[data-sec]')) {
