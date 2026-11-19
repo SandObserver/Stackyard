@@ -227,6 +227,16 @@ function fillWidgetSizes(cfg) {
 
 let _demoCfg = null;
 /* Never read from disk. Nothing a demo visitor does may persist. */
+function storedLogLevel() {
+  const file = IS_DEMO ? path.join(__dirname, '..', 'demo', 'demo-config.json') : CONFIG_PATH;
+  try {
+    const level = JSON.parse(fs.readFileSync(file, 'utf8'))?.settings?.logLevel;
+    return typeof level === 'string' ? level : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function loadDemoConfig() {
   if (!_demoCfg) {
     const raw = fs.readFileSync(path.join(__dirname, '..', 'demo', 'demo-config.json'), 'utf8');
@@ -559,6 +569,7 @@ module.exports = {
   SCHEMA_VERSION,
   loadConfig,
   loadConfigForUpdate,
+  storedLogLevel,
   configDamage,
   configFileIsMount,
   saveConfig,

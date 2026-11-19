@@ -135,6 +135,13 @@ test('the widget registry inventory is still available at debug', async () => {
   assert.ok(out.includes('alpha'), 'the names are the reason to turn debug on');
 });
 
+test('a log level saved in Settings applies to the first boot logs', async () => {
+  const config = path.join(tmpDir('boot-stored-level'), 'apps.json');
+  fs.writeFileSync(config, JSON.stringify({ items: [], settings: { logLevel: 'debug' } }));
+  const out = await boot({ CONFIG_PATH: config });
+  assert.match(out, /DBG msg="widget registry loaded"/);
+});
+
 test('TRUST_PROXY with TRUSTED_PROXY set warns exactly once', async () => {
   const out = await boot({ TRUST_PROXY: 'true', TRUSTED_PROXY: '10.0.0.0/8' });
   const w = trustWarnings(out);

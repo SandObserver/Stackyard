@@ -58,6 +58,22 @@ const refuseUnreadable =
     return r;
   };
 
+/** @typedef {{ status: number | undefined }} StatusTrace */
+
+/** @param {Function} fetch @param {StatusTrace | null} trace */
+const recordStatus = (fetch, trace) => async (url, opts) => {
+  const r = await fetch(url, opts);
+  if (trace && typeof r?.status === 'number' && r.status > (trace.status ?? 0)) trace.status = r.status;
+  return r;
+};
+
+/** @param {any} e @param {StatusTrace} trace @param {number} started */
+function failureTiming(e, trace, started) {
+  const own = e?.detail?.status ?? (e?.kind === KIND.UPSTREAM ? e.status : undefined);
+  const status = typeof own === 'number' ? own : trace.status;
+  return status === undefined ? { ms: Date.now() - started } : { ms: Date.now() - started, upstreamStatus: status };
+}
+
 const withinBudget =
   (fetch, deadline) =>
   (url, opts = {}, ...rest) => {
@@ -66,7 +82,8 @@ const withinBudget =
     return fetch(url, { ...opts, timeout: Math.min(opts.timeout || FETCH_MS, left) }, ...rest);
   };
 
-function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
+/** @param {StatusTrace | null} [trace] */
+function dataFnContext(wc, endpoint, searchParams, fetch, row = null, trace = null) {
   const deadline = Date.now() + WIDGET_BUDGET_MS;
   const ctx = {
     config: wc /* full widgetConfig, including secrets (server-side only) */,
@@ -78,7 +95,7 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null) {
     params: searchParams,
     /* The caller supplies the fetcher to match the URL's provenance: unchecked
        for saved config, checked for a request-supplied preview config. */
-    fetchJSON: refuseUnreadable(limitPerOrigin(withinBudget(fetch, deadline), PER_ORIGIN)),
+    fetchJSON: refuseUnreadable(recordStatus(limitPerOrigin(withinBudget(fetch, deadline), PER_ORIGIN), trace)),
     /* Follows the fetcher's provenance. Anything but saved config is checked. */
     jsonRpc: withinBudget(fetch === fetchUnchecked ? jsonRpcUnchecked : jsonRpcChecked, deadline),
     parsePrometheus,
@@ -136,16 +153,26 @@ function widgetParams(searchParams, manifest) {
    fill the heap. */
 const KEPT_PER_WIDGET = 16;
 
-async function getWidgetData(item, entry, endpointName, searchParams, fetch, row = null, isOptions = false) {
+/** @param {StatusTrace | null} [trace] */
+async function getWidgetData(
+  item,
+  entry,
+  endpointName,
+  searchParams,
+  fetch,
+  row = null,
+  isOptions = false,
+  trace = null,
+) {
   const wc = withManifestDefaults(item.widgetConfig, entry);
   /* An options fetch must run the real path, or the editor shows fabricated
      options. */
   if (IS_DEMO && !isOptions && entry.hasDemoFn) {
-    const body = await runDemoFn(entry.manifest.name, dataFnContext(wc, endpointName, searchParams, fetch, row));
+    const body = await runDemoFn(entry.manifest.name, dataFnContext(wc, endpointName, searchParams, fetch, row, trace));
     if (body) return { status: 200, body };
   }
   if (!entry.hasDataFn) return { status: 503, body: { error: 'widget declares no data source', kind: KIND.INVALID } };
-  const result = await runDataFn(entry.manifest.name, dataFnContext(wc, endpointName, searchParams, fetch, row));
+  const result = await runDataFn(entry.manifest.name, dataFnContext(wc, endpointName, searchParams, fetch, row, trace));
   return { status: 200, body: result };
 }
 
@@ -166,20 +193,25 @@ on('GET', '/api/widget-data/:id', async (req, res) => {
 
   const logKey = `${item.id}\n${endpointName}`;
   const logFields = { widget: item.widgetType, id: item.id };
-  const refresh = () =>
-    getWidgetData(item, entry, endpointName, params, fetchUnchecked).then(
+  const refresh = () => {
+    /** @type {StatusTrace} */
+    const trace = { status: undefined };
+    const started = Date.now();
+    return getWidgetData(item, entry, endpointName, params, fetchUnchecked, null, false, trace).then(
       out => {
         failureLog.recovered(logKey, 'widget-data recovered', logFields);
         return out;
       },
       e => {
-        failureLog.failed(logKey, 'widget-data failed', logFields, log.reason(e), {
+        const fields = { ...logFields, ...failureTiming(e, trace, started) };
+        failureLog.failed(logKey, 'widget-data failed', fields, log.reason(e), {
           group: item.id,
           maxPerGroup: KEPT_PER_WIDGET,
         });
         throw e;
       },
     );
+  };
   const outcome = await latest(`${cfg._rev}:${item.id}?${params}`, refresh, {
     holdMs: WIDGET_HOLD_MS,
     keepMs: WIDGET_KEEP_MS,
@@ -245,6 +277,9 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
     : !!saved && leavesStoredSecretBlank(item.widgetConfig, saved.widgetConfig, entry);
   if (aligned) preserveWidgetSecrets(item, { ...saved, widgetConfig: aligned.config }, entry);
 
+  /** @type {StatusTrace} */
+  const trace = { status: undefined };
+  const started = Date.now();
   try {
     const out = await getWidgetData(
       item,
@@ -254,13 +289,18 @@ on('POST', '/api/widget-options/:id', async (req, res) => {
       fetchChecked,
       body.row,
       true,
+      trace,
     );
     json(res, out.status, labelOptions(out.body, entry, body.widgetType));
   } catch (e) {
     if (e instanceof SsrfBlockedError) return fail(res, e, { status: e.status });
     if (withheld)
       return fail(res, e, { status: 502, kind: KIND.INVALID, code: 'invalid.retype', error: RETYPE_MESSAGE });
-    log.error('widget-options failed', { widget: body.widgetType, error: log.reason(e) });
+    log.error('widget-options failed', {
+      widget: body.widgetType,
+      ...failureTiming(e, trace, started),
+      error: log.reason(e),
+    });
     fail(res, e, { status: 502 });
   }
 });

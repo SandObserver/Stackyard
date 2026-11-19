@@ -342,6 +342,72 @@ test('a widget whose service stays down logs one line, not one per request', asy
   }
 });
 
+async function failureLogFor(t, answer) {
+  const failureLog = require('../src/failure-log');
+  const log = require('../src/log');
+  failureLog.reset();
+  const errors = [];
+  t.mock.method(log, 'error', (msg, data) => errors.push({ msg, data }));
+  const dataFn = path.join(_fx, 'data.js');
+  const savedData = fs.readFileSync(dataFn, 'utf8');
+  fs.writeFileSync(
+    dataFn,
+    "module.exports = async ctx => { const r = await ctx.fetchJSON(ctx.config.url, {}); if (r.status >= 400) ctx.fail('HTTP ' + r.status); return r.data; };\n",
+  );
+  delete require.cache[require.resolve(dataFn)];
+  let upstream = null;
+  let url = 'http://127.0.0.1:1/';
+  if (answer) {
+    upstream = http.createServer(answer);
+    await new Promise(r => upstream.listen(0, '127.0.0.1', r));
+    url = `http://127.0.0.1:${upstream.address().port}/`;
+  }
+  const cfg = loadConfig();
+  saveConfig({
+    ...cfg,
+    items: [...(cfg.items || []), { id: 'timed-w', type: 'widget', widgetType: 'fixture', widgetConfig: { url } }],
+  });
+  try {
+    const r = await req('GET', '/api/widget-data/timed-w', { cookie: validCookie });
+    assert.equal(r.status, 502);
+    const lines = errors.filter(e => e.msg === 'widget-data failed');
+    assert.equal(lines.length, 1);
+    return lines[0].data;
+  } finally {
+    saveConfig(cfg);
+    fs.writeFileSync(dataFn, savedData);
+    delete require.cache[require.resolve(dataFn)];
+    if (upstream) {
+      upstream.closeAllConnections?.();
+      await new Promise(r => upstream.close(r));
+    }
+  }
+}
+
+test('a widget failure logs how long it took and the status the service returned', async t => {
+  const data = await failureLogFor(t, (_, res) => {
+    res.writeHead(503, { 'Content-Type': 'application/json' });
+    res.end('{}');
+  });
+  assert.equal(data.upstreamStatus, 503);
+  assert.equal(typeof data.ms, 'number');
+  assert.ok(data.ms >= 0);
+});
+
+test('a widget failure on a redirect logs the redirect status', async t => {
+  const data = await failureLogFor(t, (_, res) => {
+    res.writeHead(302, { Location: 'http://example.invalid/' });
+    res.end();
+  });
+  assert.equal(data.upstreamStatus, 302);
+});
+
+test('a widget failure with no answer logs the time and no status', async t => {
+  const data = await failureLogFor(t, null);
+  assert.equal(typeof data.ms, 'number');
+  assert.ok(!('upstreamStatus' in data));
+});
+
 test('a client cannot grow the failure log with endpoint values', async t => {
   const failureLog = require('../src/failure-log');
   const log = require('../src/log');
