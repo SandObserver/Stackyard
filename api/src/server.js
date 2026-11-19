@@ -20,6 +20,8 @@ process.on('uncaughtException', fatal('uncaughtException'));
 process.on('unhandledRejection', fatal('unhandledRejection'));
 for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => process.exit(0));
 
+log.setLevel(require('./config').storedLogLevel());
+
 require('./routes');
 require('./widget-data');
 
@@ -55,10 +57,6 @@ function onListening() {
     row('Icons', ICONS_PATH),
     row('Widgets', `${widgets.length} loaded`),
   ];
-  try {
-    const ll = require('./config').loadConfig().settings.logLevel;
-    if (ll) log.setLevel(ll);
-  } catch {}
   log.print(lines.join('\n'));
 
   log.info('server ready', {
