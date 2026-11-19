@@ -89,6 +89,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub contributions, System Summary and Backup tell screen readers how long
   ago their service stopped answering.
 
+- A finger held on a switch, slider or segmented control in Settings no longer
+  scrolls the page.
+
+- A swipe that starts on a switch or segmented control and ends off it no longer
+  changes the setting.
+
 ### Security
 
 - Refuse an unsafe link in the Disk Health TrueNAS and Unraid, DNS, GitHub and
