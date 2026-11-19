@@ -65,9 +65,11 @@ jobs:
       - name: Install dev tooling
         run: npm ci --ignore-scripts
 
-      - name: Read the runner OS release
+      - name: Read the runner OS release and the Playwright version
         id: os
-        run: echo "name=$ImageOS" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "name=$ImageOS" >> "$GITHUB_OUTPUT"
+          echo "playwright=$(node -p "require('./package-lock.json').packages['node_modules/playwright-core'].version")" >> "$GITHUB_OUTPUT"
 
       # Keep the runner OS release in the key. Playwright skips a browser whose
       # folder exists, so a build for another Ubuntu release fails to launch.
@@ -75,8 +77,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ steps.os.outputs.name }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: playwright-${{ steps.os.outputs.name }}-
+          key: playwright-${{ steps.os.outputs.name }}-chromium-${{ steps.os.outputs.playwright }}
 
       - name: Install the browser
         run: npx playwright install --with-deps chromium
@@ -284,9 +285,11 @@ jobs:
       - name: Install dev tooling
         run: npm ci --ignore-scripts
 
-      - name: Read the runner OS release
+      - name: Read the runner OS release and the Playwright version
         id: os
-        run: echo "name=$ImageOS" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "name=$ImageOS" >> "$GITHUB_OUTPUT"
+          echo "playwright=$(node -p "require('./package-lock.json').packages['node_modules/playwright-core'].version")" >> "$GITHUB_OUTPUT"
 
       # Keep the runner OS release in the key. Playwright skips a browser whose
       # folder exists, so a build for another Ubuntu release fails to launch.
@@ -294,8 +297,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ steps.os.outputs.name }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: playwright-${{ steps.os.outputs.name }}-
+          key: playwright-${{ steps.os.outputs.name }}-chromium-${{ steps.os.outputs.playwright }}
 
       - name: Install the browser
         run: npx playwright install --with-deps chromium

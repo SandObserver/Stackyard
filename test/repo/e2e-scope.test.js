@@ -165,6 +165,28 @@ test('each browser keeps its own caches', () => {
   }
 });
 
+/* Repo caches are capped at 10 GB. A key that changes without the browsers
+   changing stores another copy on every branch that misses main's entry. */
+test('browser caches change only with the OS, the browser and Playwright', () => {
+  const demo = yaml.load(read('.github/workflows/demo.yml'));
+  const caches = [
+    ['e2e', steps],
+    ...Object.entries(demo.jobs).map(([name, job]) => [`demo ${name}`, job.steps]),
+  ].flatMap(([where, list]) => list.filter(s => s.with?.path === '~/.cache/ms-playwright').map(s => [where, s, list]));
+  assert.ok(caches.length >= 3, 'a browser cache step is gone');
+  for (const [where, step, list] of caches) {
+    assert.doesNotMatch(step.with.key, /hashFiles/, `${where} keys on files that do not decide the browsers`);
+    assert.ok(!step.with['restore-keys'], `${where} restores and saves again an older browser set`);
+    const id = step.with.key.match(/steps\.(\w+)\.outputs\.playwright/)?.[1];
+    assert.ok(id, `${where} does not key on the Playwright version`);
+    const reader = list.find(s => s.id === id);
+    assert.match(reader.run, /\$ImageOS/, `${where} does not key on the OS release`);
+    assert.match(reader.run, /packages\['node_modules\/playwright-core'\]\.version/, where);
+  }
+  const demoKeys = caches.filter(([w]) => w.startsWith('demo')).map(([, s]) => s.with.key);
+  for (const key of demoKeys) assert.match(key, /-chromium-/, 'the demo should share the e2e Chromium entry');
+});
+
 test('the required e2e check fails unless every shard passed', () => {
   assert.equal(final.needs, 'shards');
   assert.equal(final.if, 'always()', 'a skipped job counts as a pass on a required check');

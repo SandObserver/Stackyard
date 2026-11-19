@@ -116,6 +116,60 @@ runs:
         ignore-unfixed: true
         exit-code: '1'
 
+    # Keep these after the amd64 build. Buildx becomes the default builder, and
+    # the amd64 image then never reaches the local daemon for its scan.
+    - name: Set up QEMU
+      if: inputs.mode == 'test'
+      uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      with:
+        image: docker.io/tonistiigi/binfmt:qemu-v10.2.3@sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0
+
+    - name: Set up Docker Buildx
+      if: inputs.mode == 'test'
+      uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      with:
+        driver-opts: image=moby/buildkit:v0.33.1@sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea
+
+    - name: Build arm64
+      if: inputs.mode == 'test'
+      uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+      with:
+        context: .
+        platforms: linux/arm64
+        load: true
+        push: false
+        tags: stackyard:ci-arm64
+
+    - name: Scan the arm64 image
+      if: inputs.mode == 'test'
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+      with:
+        image-ref: stackyard:ci-arm64
+        format: table
+        severity: HIGH,CRITICAL
+        ignore-unfixed: true
+        exit-code: '1'
+
+    - name: Start the arm64 image
+      if: inputs.mode == 'test'
+      shell: bash
+      run: |
+        mkdir -p "$RUNNER_TEMP/arm64-data" "$RUNNER_TEMP/arm64-icons"
+        chmod 777 "$RUNNER_TEMP/arm64-data" "$RUNNER_TEMP/arm64-icons"
+        docker run -d --name stackyard-arm64 --platform linux/arm64 \
+          -p 8733:80 \
+          -v "$RUNNER_TEMP/arm64-data:/data" \
+          -v "$RUNNER_TEMP/arm64-icons:/icons" \
+          stackyard:ci-arm64
+        status=1
+        for i in $(seq 1 120); do
+          if curl -fsS http://127.0.0.1:8733/health >/dev/null 2>&1; then echo "healthy after ${i}s"; status=0; break; fi
+          sleep 1
+        done
+        [ "$status" = 0 ] || { echo "::error::the arm64 image never became healthy"; docker logs stackyard-arm64; }
+        docker rm -f stackyard-arm64 >/dev/null
+        exit "$status"
+
     # Release only, and last: this rewrites files. --check above proves every
     # asset reference carries a stamp, but not that the stamp is current, so
     # this pass is what makes the shipped stamps correct.

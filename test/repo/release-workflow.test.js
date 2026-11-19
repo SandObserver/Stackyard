@@ -287,3 +287,41 @@ test('the identity pattern matches the identity the release signs with', () => {
     assert.match(identity, new RegExp(pattern), `no signature can satisfy ${pattern}`);
   }
 });
+
+/* A pull request must build and scan arm64 the way a release does. */
+test('the test path builds and scans arm64 with the release pins', () => {
+  const checks = yaml.load(fs.readFileSync(path.join(root, '.github/actions/checks/action.yml'), 'utf8')).runs.steps;
+  const at = name => checks.findIndex(s => s.name === name);
+  const step = name => checks[at(name)];
+  for (const name of ['Set up QEMU', 'Set up Docker Buildx', 'Build arm64', 'Scan the arm64 image']) {
+    assert.ok(at(name) !== -1, `${name} is gone from the checks action`);
+    assert.equal(step(name).if, "inputs.mode == 'test'", `${name} must run on the test path only`);
+  }
+  assert.ok(at('Docker build smoke test') < at('Set up Docker Buildx'), 'buildx would take over the amd64 build');
+  assert.ok(at('Set up QEMU') < at('Build arm64') && at('Set up Docker Buildx') < at('Build arm64'));
+  assert.ok(at('Build arm64') < at('Scan the arm64 image'));
+  const start = step('Start the arm64 image');
+  assert.ok(
+    start && at('Build arm64') < at('Start the arm64 image'),
+    'nothing starts the arm64 image before a release',
+  );
+  assert.equal(start.if, "inputs.mode == 'test'");
+  assert.match(start.run, /--platform linux\/arm64\b[\s\S]*stackyard:ci-arm64/);
+  assert.match(start.run, /curl -fsS http:\/\/127\.0\.0\.1:8733\/health/);
+  assert.match(start.run, /exit "\$status"/, 'an unhealthy image must fail the job');
+  assert.equal(step('Set up QEMU').uses, byName('Set up QEMU').uses);
+  assert.equal(step('Set up QEMU').with?.image, byName('Set up QEMU').with?.image);
+  assert.equal(step('Set up Docker Buildx').uses, byName('Set up Docker Buildx').uses);
+  assert.equal(
+    step('Set up Docker Buildx').with?.['driver-opts'],
+    byName('Set up Docker Buildx').with?.['driver-opts'],
+  );
+  assert.equal(step('Build arm64').with?.platforms, 'linux/arm64');
+  assert.equal(step('Build arm64').with?.load, true);
+  assert.equal(step('Build arm64').with?.push, false);
+  assert.equal(step('Scan the arm64 image').with?.['image-ref'], step('Build arm64').with?.tags);
+  const gate = byName('Scan the arm64 image').with;
+  for (const key of ['severity', 'ignore-unfixed', 'exit-code']) {
+    assert.equal(step('Scan the arm64 image').with?.[key], gate[key], `${key} differs from the release gate`);
+  }
+});
