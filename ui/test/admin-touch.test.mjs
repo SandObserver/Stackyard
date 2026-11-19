@@ -130,6 +130,16 @@ test('the press scan tells a control of its own from a descendant', () => {
   assert.equal(pressRuleFor(all, '.g'), true);
 });
 
+test('a finger on a switch, slider or segmented control never scrolls the page and still zooms', () => {
+  const rule = cssRules(css).find(r => r.sels.includes('label.tog'));
+  assert.ok(rule, 'no touch rule for the switch');
+  assert.deepEqual(rule.sels, ['label.tog', '.adm-range', '.hsb-range', '.segr', '.segr-opt']);
+  assert.match(rule.body, /^touch-action:pinch-zoom$/);
+  for (const r of cssRules(css))
+    if (r.sels.some(s => /^(label\.tog|\.adm-range|\.hsb-range|\.segr|\.segr-opt)$/.test(s)))
+      assert.doesNotMatch(r.body, /touch-action:(?!pinch-zoom)/, `${r.sels.join(',')} lets the page pan`);
+});
+
 test('the tap highlight is cleared once, on the document', () => {
   assert.match(css, /(^|\n)html\{[^}]*-webkit-tap-highlight-color:transparent/);
   assert.equal(css.match(/-webkit-tap-highlight-color/g).length, 1, 'it inherits; a second copy is redundant');

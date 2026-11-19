@@ -155,7 +155,7 @@ html,body{min-height:100vh;min-height:100dvh;color:var(--tx);font-family:var(--f
    canvas is this background; a different value here is a visible band. */
 html{background:var(--bg-color,var(--bg-base));scrollbar-gutter:stable;-webkit-tap-highlight-color:transparent}
 html:has(dialog:modal){overflow:hidden}
-button,a,[role="button"],label.tog,.segr-opt{touch-action:manipulation}
+button,a,[role="button"]{touch-action:manipulation}
 
 /* ── Outer: wallpaper shows here, panel centered ── */
 .nl,.mtab,.btn,.chip,.row-btn,.row-dd-btn,.tile-opt,.rord,.segr-opt,.tog,.fp-row,.rmove-btn,.ract-edit,.ev-back,.m-back,.row-link,.row.drow{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -483,7 +483,7 @@ html[data-theme="light"] .mtab-lens::after{background:rgba(255,255,255,.06);box-
 .mtab-bend-in{position:absolute;inset:0;transform-origin:0 0}
 .mtabbar.glass-on .mtab.active{background:transparent}
 .mtabbar,.mtabbar > .mtab{touch-action:none}
-label.tog,.adm-range,.hsb-range,.segr,.segr-opt{touch-action:pan-y pinch-zoom}
+label.tog,.adm-range,.hsb-range,.segr,.segr-opt{touch-action:pinch-zoom}
 @media (max-width:360px){
   .row:has(>.segr){flex-wrap:wrap;padding-block:8px}
   .row:has(>.segr) .rl{flex:0 0 100%}
