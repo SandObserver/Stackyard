@@ -254,7 +254,9 @@ const { HELP_URL } = require('../../ui/js/config-recovery-logic.js');
 
 /* Set while the file on disk cannot be used. Do not save then: the blank
    config has sign-in off and replaces the owner's settings and password. */
+/** @type {{ reason: 'unreadable' | 'corrupt', file: string, backup?: string } | null} */
 let _damage = null;
+/** @type {string | null} */
 let _damageLogged = null;
 
 function _markDamaged(reason, error, backup) {
@@ -286,6 +288,7 @@ function configDamage() {
 
 /* Written with wx. One corruption must not overwrite an earlier backup. */
 let _lastCorruptRaw = null;
+/** @type {string | null} */
 let _lastBackup = null;
 function _backupCorrupt(raw) {
   if (raw === _lastCorruptRaw) return _lastBackup;

@@ -7,9 +7,10 @@ function parseMultipartFile(buf, boundary) {
   const delim = Buffer.from('--' + boundary),
     CRLFCRLF = Buffer.from('\r\n\r\n');
   let filename = '',
-    data = null,
     searchFrom = 0,
     fileParts = 0;
+  /** @type {Buffer | null} */
+  let data = null;
   while (true) {
     const delimPos = buf.indexOf(delim, searchFrom);
     if (delimPos === -1) break;

@@ -7,17 +7,18 @@
     "format:check": "biome format .",
     "lint": "biome lint --error-on-warnings .",
     "paths:check": "node scripts/check-frontend-paths.js",
-    "typecheck": "tsc -p tsconfig.json",
-    "typecheck:ui": "tsc -p tsconfig.frontend.json"
+    "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json",
+    "typecheck:ui": "node node_modules/typescript/bin/tsc -p tsconfig.frontend.json"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
     "@biomejs/biome": "2.6.6",
     "@playwright/test": "^1.65.0",
     "@types/node": "26.6.6",
+    "@typescript/typescript6": "6.0.2",
     "c8": "12.0.0",
     "js-yaml": "^5.5.0",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   },
   "overrides": {
     "minimatch": "^11.0.3",
