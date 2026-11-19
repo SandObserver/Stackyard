@@ -10,7 +10,7 @@
    English is a review call, and rewriting a shipped entry would falsify the
    record.
 
-   Usage: node scripts/changelog-check.js [--release <version>] [--file <path>] */
+   Usage: node scripts/changelog-check.js [--release <version> [--tag <tag>]] [--file <path>] */
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -161,14 +161,23 @@ const short = text => (text.length > 60 ? `${text.slice(0, 57)}...` : text);
 
 /** The release-time half: the changelog and the package version must name the
     same release. */
-function checkRelease(doc, version) {
+function checkRelease(doc, version, tag) {
   const releases = cl.released(doc);
   const newest = releases[0];
   if (!newest || newest.name !== version) {
     fail(newest ? newest.line : 1, `the newest dated section is [${newest ? newest.name : 'none'}], not [${version}]`);
   }
   const unreleased = cl.unreleased(doc);
-  if (unreleased && unreleased.sections.length) {
+  const pending = Boolean(unreleased && unreleased.sections.length);
+  const parsed = tag === null ? null : cl.parseTagName(tag);
+  if (tag !== null && !parsed) fail(1, `the tag ${tag} is not a valid version`);
+  if (parsed?.prerelease) {
+    const base = `${parsed.major}.${parsed.minor}.${parsed.patch}`;
+    if (cl.compareVersions(version, base) <= 0) {
+      fail(1, `the prerelease ${tag} must be of a version newer than the released ${version}`);
+    }
+    if (!pending) fail(unreleased ? unreleased.line : 1, `[Unreleased] is empty, so ${tag} has no release notes`);
+  } else if (pending) {
     fail(unreleased.line, '[Unreleased] still holds entries; they belong in the release being cut');
   }
 
@@ -206,6 +215,12 @@ function main(argv) {
     console.error('changelog-check: --release needs a version');
     return false;
   }
+  const tagAt = argv.indexOf('--tag');
+  const tag = tagAt === -1 ? null : argv[tagAt + 1];
+  if (tagAt !== -1 && (!tag || !version)) {
+    console.error('changelog-check: --tag needs a tag and --release');
+    return false;
+  }
   const fileAt = argv.indexOf('--file');
   if (fileAt !== -1) {
     if (!argv[fileAt + 1]) {
@@ -222,7 +237,7 @@ function main(argv) {
   checkStyle(cl.unreleased(doc));
   if (version) {
     checkStyle(cl.released(doc)[0]);
-    checkRelease(doc, version);
+    checkRelease(doc, version, tag);
   }
   return report();
 }

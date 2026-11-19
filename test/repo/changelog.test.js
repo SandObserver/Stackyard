@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
+const yaml = require('js-yaml');
 const { tmpDir } = require('../../api/test-support/tmp.js');
 
 /* The changelog is the release record and the source of the release notes. A
@@ -138,6 +139,37 @@ test('the gate refuses to cut a release that leaves entries behind', () => {
     'utf8',
   );
   assert.equal(check(['--file', file, '--release', version]), 1);
+});
+
+/* A beta is tagged off main. Its notes are the pending entries, and the
+   stable release dates them later. */
+test('a prerelease tag keeps [Unreleased], and only above the released version', () => {
+  const version = JSON.parse(fs.readFileSync(path.join(ROOT, 'api', 'package.json'), 'utf8')).version;
+  const [major, minor] = version.split('.').map(Number);
+  const next = `${major}.${minor + 1}.0`;
+  const empty = atReleaseTime();
+  const pending = path.join(tmpDir('changelog'), 'pending.md');
+  fs.writeFileSync(
+    pending,
+    fs.readFileSync(empty, 'utf8').replace('## [Unreleased]\n', '## [Unreleased]\n\n### Fixed\n\n- A late fix.\n'),
+    'utf8',
+  );
+  const run = (file, tag) => check(['--file', file, '--release', version, '--tag', tag]);
+  assert.equal(run(pending, `v${next}-beta.1`), 0);
+  assert.equal(run(pending, `v${version}-beta.1`), 1, 'a prerelease of the version already released');
+  assert.equal(run(pending, 'v0.1.0-beta.1'), 1, 'a prerelease older than the released version');
+  assert.equal(run(empty, `v${next}-beta.1`), 1, 'a prerelease with no notes');
+  assert.equal(run(pending, `v${version}`), 1, 'a stable tag that leaves entries behind');
+  assert.equal(run(empty, `v${version}`), 0);
+  assert.equal(run(pending, 'v1.5'), 1, 'a tag that is not a version');
+  assert.equal(check(['--file', pending, '--tag', `v${next}-beta.1`]), 1, '--tag without --release');
+});
+
+test('the release checks pass the tag to the changelog gate', () => {
+  const steps = yaml.load(fs.readFileSync(path.join(ROOT, '.github/actions/checks/action.yml'), 'utf8')).runs.steps;
+  const step = steps.find(s => s.name === 'Check the changelog describes this release');
+  assert.equal(step.if, "inputs.mode == 'release'");
+  assert.match(step.run, /changelog-check\.js --release ".+" --tag "\$GITHUB_REF_NAME"\s*$/);
 });
 
 /* Each mutation is one rule. A gate that has never been seen to fail is a
