@@ -521,6 +521,7 @@
     "loading": "در حال بارگذاری",
     "noData": "داده‌ای نیست",
     "justNow": "همین حالا",
+    "describeFailure": "{text}، {since}",
     "errNetwork": "در دسترس نیست",
     "errTimeout": "زمان تمام شد",
     "errAuth": "کلید رد شد",

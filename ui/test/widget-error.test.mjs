@@ -113,7 +113,11 @@ test('a widget that toggles hidden on a styled element says so in its own CSS', 
 test('a widget naming its root with the line hides the caption from readers', () => {
   for (const f of ['nowplaying/index.html', 'github/contributions.html']) {
     const src = fs.readFileSync(path.join(root, 'widgets', f), 'utf8');
-    assert.match(src, /aria-label['"]?,\s*line\)|\bname\(line\)/, `${f} does not name its root`);
+    assert.match(
+      src,
+      /aria-label['"]?,\s*line\)|\bname\((?:line|failureName\(line, since\))\)/,
+      `${f} does not name its root`,
+    );
     assert.match(src, /setAttribute\(\s*['"]aria-hidden['"]\s*,\s*['"]true['"]\s*\)/, `${f} reads the line twice`);
     assert.match(src, /removeAttribute\(\s*['"]aria-hidden['"]\s*\)/, `${f} never restores the caption`);
   }
@@ -121,7 +125,11 @@ test('a widget naming its root with the line hides the caption from readers', ()
 
 test('system summary reports its failure to the summary paragraph', () => {
   const src = fs.readFileSync(path.join(root, 'widgets/system-summary/index.html'), 'utf8');
-  assert.match(src, /sr-sum[\s\S]{0,200}sum\.textContent = line/, 'the failure never reaches the summary');
+  assert.match(
+    src,
+    /sr-sum[\s\S]{0,200}sum\.textContent = failureName\(line, since\)/,
+    'the failure never reaches the summary',
+  );
 });
 
 test('every widget surfaces a failure on the same terms', () => {

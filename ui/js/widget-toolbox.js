@@ -892,6 +892,12 @@ export function errorLine(err) {
   return _t(key, text);
 }
 
+/** A failure line with the time since the last good data, for a screen reader.
+    @param {string} line @param {string} [since] @returns {string} */
+export function failureName(line, since) {
+  return since ? _fill(_t('describeFailure', '{text}, {since}'), { text: line, since }) : line;
+}
+
 /** The glyph the shared error caption draws for a failure.
     @param {unknown} err a caught error, or { kind } from a response
     @returns {Element} */

@@ -72,8 +72,8 @@ function backupCards(jobSlots) {
     lift(/function fitName\([\s\S]*?\n\}/),
     lift(/function applyCard\(idx, job\) \{[\s\S]*?\n\}/),
     lift(/function applyCardIdle\(idx\) \{[\s\S]*?\n\}/),
-    lift(/function applyError\(line\) \{[\s\S]*?\n\}/),
-    lift(/function applyCardError\(idx, line\) \{[\s\S]*?\n\}/),
+    lift(/function applyError\(line, label = line\) \{[\s\S]*?\n\}/),
+    lift(/function applyCardError\(idx, line, label = line\) \{[\s\S]*?\n\}/),
   ].join('\n');
   const api = new Function(
     'document',

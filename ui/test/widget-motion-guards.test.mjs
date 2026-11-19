@@ -61,7 +61,7 @@ test('backup loops pause off screen and times refresh between polls', () => {
   assert.match(page, /whileOnScreen\(w, v => w\.classList\.toggle\('off', !v\)\)/);
   assert.match(page, /\.off \.sync-icon \{ animation-play-state: paused/);
   assert.match(page, /setInterval\(refreshTimes, 60000\)/);
-  assert.match(page, /function applyError\(line\) \{\n {2}_shownJobs=null;/);
+  assert.match(page, /function applyError\(line, label = line\) \{\n {2}_shownJobs=null;/);
 });
 
 test('rolled and clock figures use tabular digits', () => {

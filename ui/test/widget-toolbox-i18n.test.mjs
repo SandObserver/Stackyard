@@ -4,7 +4,7 @@ import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
-const CORE = { widget: { justNow: 'à l’instant' } };
+const CORE = { widget: { justNow: 'à l’instant', describeFailure: '{since} : {text}' } };
 const OWN = {
   'ui.items_one': '{count} élément',
   'ui.items_many': '{count} d’éléments',
@@ -22,7 +22,7 @@ globalThis.fetch = async url => {
   return { ok: !!body, json: async () => body };
 };
 
-const { loadStrings, wt, wtCount, relativeTime, sinceLabel, formatNumber, readerHourCycle } = await import(
+const { loadStrings, wt, wtCount, relativeTime, sinceLabel, formatNumber, readerHourCycle, failureName } = await import(
   '../js/widget-toolbox.js'
 );
 
@@ -36,6 +36,12 @@ test('loadStrings waits for the shared strings as well as the widget catalog', a
   releaseCore();
   await loading;
   assert.equal(sinceLabel(Date.now()), 'à l’instant');
+});
+
+test('a failure name adds the time since the last data in the reader language', () => {
+  assert.equal(failureName('Hors de portée', 'il y a 5 min'), 'il y a 5 min : Hors de portée');
+  assert.equal(failureName('Hors de portée', ''), 'Hors de portée', 'no data yet, so no time');
+  assert.equal(failureName('Hors de portée'), 'Hors de portée');
 });
 
 test('a counted message takes the category of the widget language', () => {

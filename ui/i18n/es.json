@@ -534,6 +534,7 @@
     "loading": "Cargando",
     "noData": "Sin datos",
     "justNow": "ahora mismo",
+    "describeFailure": "{text}, {since}",
     "errNetwork": "Fuera de alcance",
     "errTimeout": "Tardó demasiado",
     "errAuth": "Clave rechazada",

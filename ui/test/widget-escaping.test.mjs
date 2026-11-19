@@ -100,7 +100,7 @@ test('the upstream users value is escaped, not concatenated', () => {
 test('the backup failure draws no upstream text', () => {
   const src = read(BACKUP);
   assert.ok(!/err\?\.error/.test(src), 'the upstream error is back on the card');
-  assert.match(src, /applyError\(state\.fail\(/);
+  assert.match(src, /const line = state\.fail\([^)]*\);\s*applyError\(line, failureName\(line, since\)\)/);
 });
 
 test('the system-stats label is written as text, never as markup', () => {
