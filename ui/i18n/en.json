@@ -521,6 +521,7 @@
     "loading": "Loading",
     "noData": "No data",
     "justNow": "just now",
+    "describeFailure": "{text}, {since}",
     "errNetwork": "Out of reach",
     "errTimeout": "Took too long",
     "errAuth": "Key rejected",

@@ -534,6 +534,7 @@
     "loading": "Chargement",
     "noData": "Aucune donnée",
     "justNow": "à l’instant",
+    "describeFailure": "{text}, {since}",
     "errNetwork": "Injoignable",
     "errTimeout": "Trop lent à répondre",
     "errAuth": "Clé refusée",

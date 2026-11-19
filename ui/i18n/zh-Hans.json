@@ -508,6 +508,7 @@
     "loading": "加载中",
     "noData": "无数据",
     "justNow": "刚刚",
+    "describeFailure": "{text}，{since}",
     "errNetwork": "无法连接",
     "errTimeout": "响应超时",
     "errAuth": "密钥被拒绝",

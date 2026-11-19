@@ -19,7 +19,7 @@ test('Now Playing does not replay its last session over a failure on a theme cha
 });
 
 test('Now Playing names the time since a failure, which its hidden caption shows', () => {
-  assert.match(nowplaying, /failure\.since \? wt\('ui\.describeFailure'/);
+  assert.match(nowplaying, /failureName\(errorLine\(failure\.error\), failure\.since\)/);
   assert.match(nowplaying, /const line = failed \? failureLine\(\)/);
 });
 

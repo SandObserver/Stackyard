@@ -521,6 +521,7 @@
     "loading": "Wird geladen",
     "noData": "Keine Daten",
     "justNow": "gerade eben",
+    "describeFailure": "{text}, {since}",
     "errNetwork": "Nicht erreichbar",
     "errTimeout": "Zeitüberschreitung",
     "errAuth": "Schlüssel abgelehnt",

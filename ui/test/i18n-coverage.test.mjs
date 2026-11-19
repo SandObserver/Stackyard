@@ -19,6 +19,8 @@ const flat = (o, p = '') =>
 /* Keys whose English value is correct in that language too. */
 const SAME_ON_PURPOSE = {
   'de.json': new Set([
+    /* Two placeholders and a comma. */
+    'widget.describeFailure',
     /* Debug, Info and the version line are written the same way in German. */
     'general.logDebug',
     'general.logInfo',
@@ -60,6 +62,8 @@ const SAME_ON_PURPOSE = {
     'status.proxmoxFailed',
   ]),
   'es.json': new Set([
+    /* Two placeholders and a comma. */
+    'widget.describeFailure',
     'appearance.sourceUnsplash',
     'nav.general',
     'common.color',
@@ -75,6 +79,8 @@ const SAME_ON_PURPOSE = {
     'status.proxmoxFailed',
   ]),
   'fr.json': new Set([
+    /* Two placeholders and a comma. */
+    'widget.describeFailure',
     /* Colour and role names French writes the same way. */
     'color.accent',
     'color.danger',
