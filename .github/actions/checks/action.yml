@@ -27,12 +27,17 @@ runs:
       with:
         node-version-file: .nvmrc
 
+    # Each check below runs even after an earlier one failed, so one run
+    # reports every failure. The release stamp steps keep the default
+    # condition and stop at the first failure.
     - name: Install dev tooling
+      id: install
       shell: bash
       run: npm ci --ignore-scripts
 
     # Structure fails here; style prints warnings on the pull request.
     - name: Check the changelog
+      if: ${{ !cancelled() && steps.install.outcome == 'success' }}
       shell: bash
       run: node scripts/changelog-check.js
 
@@ -40,75 +45,94 @@ runs:
     # package version name one version, and nothing is left under [Unreleased].
     # A prerelease tag keeps [Unreleased] and must be newer than that version.
     - name: Check the changelog describes this release
-      if: inputs.mode == 'release'
+      if: ${{ !cancelled() && steps.install.outcome == 'success' && inputs.mode == 'release' }}
       shell: bash
       run: node scripts/changelog-check.js --release "$(node -p "require('./api/package.json').version")" --tag "$GITHUB_REF_NAME"
 
     - name: Check asset cache-busting
+      if: ${{ !cancelled() && steps.install.outcome == 'success' }}
       shell: bash
       run: node scripts/bump-cache-busting.js --check
 
     # Both entries per module, plain and cache-busted. See the script's header:
     # a missing one leaves that module silently unchecked by typecheck:ui.
     - name: Check frontend path map
+      if: ${{ !cancelled() && steps.install.outcome == 'success' }}
       shell: bash
       run: npm run paths:check
 
-    - name: Run backend tests
-      shell: bash
-      working-directory: api
-      run: npm test
-
-    # Reads the run above. The floor sits a few points under the real figure so
-    # ordinary movement does not fail a PR; raise it when coverage rises, never
-    # to meet a number a change happens to hit.
-    - name: Check backend coverage
-      shell: bash
-      working-directory: api
-      run: npx c8 check-coverage --lines 92
-
-    - name: Run frontend tests
-      shell: bash
-      working-directory: ui/test
-      run: node --test
-
-    - name: Run repository tests
-      shell: bash
-      working-directory: test/repo
-      run: node --test
-
     - name: Lint
+      if: ${{ !cancelled() && steps.install.outcome == 'success' }}
       shell: bash
       run: npm run lint
 
     - name: Check formatting
+      if: ${{ !cancelled() && steps.install.outcome == 'success' }}
       shell: bash
       run: npm run format:check
 
     - name: Audit the workflows
+      if: ${{ !cancelled() && steps.install.outcome == 'success' }}
       uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
       with:
         version: 1.32.0
         advanced-security: false
 
     - name: Typecheck (backend)
+      if: ${{ !cancelled() && steps.install.outcome == 'success' }}
       shell: bash
       run: npm run typecheck
 
     - name: Typecheck (frontend)
+      if: ${{ !cancelled() && steps.install.outcome == 'success' }}
       shell: bash
       run: npm run typecheck:ui
+
+    - name: Run backend tests
+      id: backend-tests
+      if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+      shell: bash
+      working-directory: api
+      env:
+        NODE_OPTIONS: --test-reporter=${{ github.workspace }}/scripts/test-reporter-github.js --test-reporter-destination=stdout
+      run: npm test
+
+    # Reads the run above. The floor sits a few points under the real figure so
+    # ordinary movement does not fail a PR; raise it when coverage rises, never
+    # to meet a number a change happens to hit.
+    - name: Check backend coverage
+      if: ${{ !cancelled() && steps.backend-tests.outcome == 'success' }}
+      shell: bash
+      working-directory: api
+      run: npx c8 check-coverage --lines 92
+
+    - name: Run frontend tests
+      if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+      shell: bash
+      working-directory: ui/test
+      env:
+        NODE_OPTIONS: --test-reporter=${{ github.workspace }}/scripts/test-reporter-github.js --test-reporter-destination=stdout
+      run: node --test
+
+    - name: Run repository tests
+      if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+      shell: bash
+      working-directory: test/repo
+      env:
+        NODE_OPTIONS: --test-reporter=${{ github.workspace }}/scripts/test-reporter-github.js --test-reporter-destination=stdout
+      run: node --test
 
     # Only on the test path. A release runs the real build right after this, so
     # building twice would just double a slow multi-platform step.
     - name: Docker build smoke test
-      if: inputs.mode == 'test'
+      id: docker-build
+      if: ${{ !cancelled() && steps.install.outcome == 'success' && inputs.mode == 'test' }}
       shell: bash
       run: docker build -t stackyard:ci .
 
     # Keep the severity and ignore-unfixed the same as the release gate.
     - name: Scan the image
-      if: inputs.mode == 'test'
+      if: ${{ !cancelled() && steps.docker-build.outcome == 'success' && inputs.mode == 'test' }}
       uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
         image-ref: stackyard:ci
@@ -120,19 +144,22 @@ runs:
     # Keep these after the amd64 build. Buildx becomes the default builder, and
     # the amd64 image then never reaches the local daemon for its scan.
     - name: Set up QEMU
-      if: inputs.mode == 'test'
+      id: qemu
+      if: ${{ !cancelled() && steps.install.outcome == 'success' && inputs.mode == 'test' }}
       uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
       with:
         image: docker.io/tonistiigi/binfmt:qemu-v10.2.3@sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0
 
     - name: Set up Docker Buildx
-      if: inputs.mode == 'test'
+      id: buildx
+      if: ${{ !cancelled() && steps.qemu.outcome == 'success' && inputs.mode == 'test' }}
       uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       with:
         driver-opts: image=moby/buildkit:v0.33.1@sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea
 
     - name: Build arm64
-      if: inputs.mode == 'test'
+      id: arm64-build
+      if: ${{ !cancelled() && steps.buildx.outcome == 'success' && inputs.mode == 'test' }}
       uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
       with:
         context: .
@@ -142,7 +169,7 @@ runs:
         tags: stackyard:ci-arm64
 
     - name: Scan the arm64 image
-      if: inputs.mode == 'test'
+      if: ${{ !cancelled() && steps.arm64-build.outcome == 'success' && inputs.mode == 'test' }}
       uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
         image-ref: stackyard:ci-arm64
@@ -152,7 +179,7 @@ runs:
         exit-code: '1'
 
     - name: Start the arm64 image
-      if: inputs.mode == 'test'
+      if: ${{ !cancelled() && steps.arm64-build.outcome == 'success' && inputs.mode == 'test' }}
       shell: bash
       run: |
         mkdir -p "$RUNNER_TEMP/arm64-data" "$RUNNER_TEMP/arm64-icons"

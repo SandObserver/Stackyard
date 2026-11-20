@@ -168,7 +168,7 @@ test('a prerelease tag keeps [Unreleased], and only above the released version',
 test('the release checks pass the tag to the changelog gate', () => {
   const steps = yaml.load(fs.readFileSync(path.join(ROOT, '.github/actions/checks/action.yml'), 'utf8')).runs.steps;
   const step = steps.find(s => s.name === 'Check the changelog describes this release');
-  assert.equal(step.if, "inputs.mode == 'release'");
+  assert.match(step.if, / && inputs\.mode == 'release' \}\}$/);
   assert.match(step.run, /changelog-check\.js --release ".+" --tag "\$GITHUB_REF_NAME"\s*$/);
 });
 
