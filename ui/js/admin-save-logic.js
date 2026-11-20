@@ -1,6 +1,7 @@
 // @ts-check
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
 import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=7112fd10';
+import { generalKeysIn, SERVER, TOP } from '/js/settings-schema.js?v=b9da9301';
 
 /* Keep this module free of the DOM. The DOM reads stay in doSave. */
 
@@ -188,15 +189,8 @@ export function restoreBody(file, live, keepBackground = false) {
   };
 }
 
-const GENERAL_SERVER_FIELDS = [
-  'hostIp',
-  'healthChecks',
-  'socketProxyUrl',
-  'hideHealthyBadge',
-  'proxmox',
-  'allowedHosts',
-];
-const GENERAL_TOP_FIELDS = ['logLevel', 'language'];
+export const GENERAL_SERVER_FIELDS = generalKeysIn(SERVER);
+export const GENERAL_TOP_FIELDS = generalKeysIn(TOP);
 
 /** The General values as the server holds them, one entry per field.
     @param {any} settings @returns {Record<string, unknown>} */

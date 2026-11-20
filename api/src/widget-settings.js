@@ -1,6 +1,8 @@
+const { widgetKeys } = require('../../ui/js/settings-schema.js');
+
 /* The slice of global settings a widget's data function may see. Keep it an
    allowlist. settings holds the session signing key and the password hash. */
-const SHARED_KEYS = ['stats'];
+const SHARED_KEYS = Object.freeze(widgetKeys());
 
 function deepFreeze(v) {
   if (v && typeof v === 'object' && !Object.isFrozen(v)) {
