@@ -24,10 +24,6 @@ shares with the frontend, restarts the container. A change to the Dockerfile,
 nginx or supervisord config rebuilds the image. Data is kept in the
 `stackyard-dev_data` and `stackyard-dev_icons` volumes.
 
-Unit tests use Node's
-built-in runner and need nothing installed; coverage and the browser tests use
-the dev tooling in the root `package.json`.
-
 An export whose name starts with `_` exists for the tests and is not part of
 what the module offers: `_internals` for functions reached directly, `_reset*`
 for the hooks that clear state between tests. Anything else exported is API, and
@@ -40,21 +36,36 @@ functionality needs tests for that functionality. A bug fix needs a test that
 fails without the fix. The coverage floor below enforces part of this rule; it
 is not the whole of it.
 
+Run `npm ci --ignore-scripts` in the repository root first. The tests use
+Node's built-in runner, plus `c8` and `js-yaml` from the root `package.json`.
+
+```
+npm test
+(cd api && node --test test/link-url.test.js)
+(cd api && node --test --test-name-pattern="Node floor")
+```
+
+`npm test` runs the backend, frontend and repository suites in CI's order and
+stops at the first failure. The second line runs one file. The third runs every
+test whose name matches the pattern.
+
 ## Before opening a PR
 
 These are the checks CI runs, in the order it runs them. They are defined once,
-in `.github/actions/checks/action.yml`, so the list here is the whole of that
-action. Use the Node.js major version in `.nvmrc`.
+in `.github/actions/checks/action.yml`. The block below lists every command
+step of that action. In CI the action also runs the Trivy scans, the zizmor
+audit, and the arm64 build and start check. Use the Node.js major version in
+`.nvmrc`.
 
 ```
 npm ci --ignore-scripts
 node scripts/changelog-check.js
 node scripts/bump-cache-busting.js --check
 npm run paths:check
-cd api && npm test
-cd api && npx c8 check-coverage --lines 92
-cd ui/test && node --test
-cd test/repo && node --test
+(cd api && npm test)
+(cd api && npx c8 check-coverage --lines 92)
+(cd ui/test && node --test)
+(cd test/repo && node --test)
 npm run lint
 npm run format:check
 npm run typecheck
@@ -63,13 +74,22 @@ docker build -t stackyard:ci .
 ```
 
 The end-to-end suite is a separate required check, in
-`.github/workflows/e2e.yml`. It starts the image on a local port and runs the
-browser specs against it:
+`.github/workflows/e2e.yml`. It starts the image on port 8730 and runs the
+browser specs against it. To run one spec in one browser the same way:
 
 ```
+docker build -t stackyard:e2e .
+dir=$(mktemp -d) && mkdir "$dir/data" "$dir/icons" && chmod 777 "$dir/data" "$dir/icons"
+docker run -d --name stackyard-e2e -p 8730:80 -v "$dir/data:/data" -v "$dir/icons:/icons" stackyard:e2e
 npx playwright install chromium webkit
-BASE_URL=http://127.0.0.1:<port> npx playwright test
+npx playwright test --project=chromium e2e/admin.spec.js
+docker rm -f stackyard-e2e
 ```
+
+Start the specs once `http://127.0.0.1:8730/health` answers. `BASE_URL` points
+them at another address. The specs replace the whole config. They refuse a
+server that holds items they did not write, such as the dev stack on port 8701,
+unless `E2E_ALLOW_WIPE=1` is set.
 
 CI runs it on four machines: Chromium on one, WebKit split over three. Every
 test must pass when run alone.
@@ -97,7 +117,9 @@ run. Run it locally with `zizmor .github`.
   **Changelog**, as `- ` lines below a `### Fixed`, `### Added` or other Keep a
   Changelog heading. Do not edit `CHANGELOG.md` in a pull request. On merge, a
   workflow adds the entries to `[Unreleased]`. A pull request with no
-  user-visible change leaves the section empty.
+  user-visible change leaves the section empty. The `Changelog / check` job
+  validates the section. Run it locally with
+  `PR_BODY="$(gh pr view --json body -q .body)" node scripts/changelog-pr.js --check`.
 - **`bump-cache-busting.js --check`** verifies that every `/css/` and `/js/`
   reference carries a `?v=` stamp that matches the file's content. After
   editing `ui/js` or `ui/css`, run `node scripts/bump-cache-busting.js` and
@@ -112,9 +134,8 @@ run. Run it locally with `zizmor .github`.
   parameter, a scanner keeps `while ((m = re.exec(s)))`, and `'use strict'`
   stays where a test depends on strict-mode semantics.
 
-  They are **not** typechecked. `checkJs` over `api/test` reports 131 errors,
-  almost all narrowing around Node's `server.address()` in test harnesses.
-  Changing that is its own piece of work, not a side effect of something else.
+  They are **not** typechecked. Changing that is its own piece of work, not a
+  side effect of something else.
 
 - **`npm run lint`** is Biome, from `node_modules`. Run it through npm: a bare
   `npx biome` resolves to an unrelated package that exits 0 without checking
