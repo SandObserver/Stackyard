@@ -139,4 +139,3 @@ module.exports.escapeData = escapeData;
 module.exports.escapeProperty = escapeProperty;
 module.exports.annotation = annotation;
 module.exports.failingLine = failingLine;
-const unusedProbe = 1;
