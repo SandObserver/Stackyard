@@ -1,23 +1,20 @@
 const path = require('node:path');
 const fs = require('node:fs');
-const { tmpDir } = require('../test-support/tmp');
-const DIR = tmpDir('setup-code');
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'setup-code' });
+const DIR = app.dir;
 const CFG = path.join(DIR, 'apps.json');
-process.env.CONFIG_PATH = CFG;
 
-const { test, before, after, beforeEach, mock } = require('node:test');
+const { test, before, beforeEach, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { saveConfig, loadConfig } = require('../src/config');
 const { hashPassword, verifyPassword, authActive } = require('../src/auth');
 const setupCode = require('../src/setup-code');
 const log = require('../src/log');
 
 const LAN_ADDR = { host: '192.168.1.10', origin: 'http://192.168.1.10' };
-let server, port;
 const HOST = 'stackyard-production.up.railway.app';
 
 function request(pathName, body, { host = HOST, origin = `https://${host}` } = {}) {
@@ -26,7 +23,7 @@ function request(pathName, body, { host = HOST, origin = `https://${host}` } = {
     const req = http.request(
       {
         host: '127.0.0.1',
-        port,
+        port: app.port,
         path: pathName,
         method: body === undefined ? 'GET' : 'POST',
         headers: {
@@ -71,12 +68,7 @@ const expireCache = () => (clock += 60_000);
 
 before(async () => {
   mock.method(Date, 'now', () => clock);
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  port = server.address().port;
 });
-
-after(() => new Promise(r => server.close(r)));
 
 beforeEach(() => {
   for (const f of fs.readdirSync(DIR)) fs.rmSync(path.join(DIR, f), { recursive: true, force: true });
@@ -202,7 +194,7 @@ test('a code printed before a password was set and removed no longer works', asy
     const req = http.request(
       {
         host: '127.0.0.1',
-        port,
+        port: app.port,
         path: '/api/auth/toggle',
         method: 'POST',
         headers: {
@@ -435,7 +427,7 @@ function rawPost(pathName, payload, { host = HOST, origin = `https://${host}` } 
     const req = http.request(
       {
         host: '127.0.0.1',
-        port,
+        port: app.port,
         path: pathName,
         method: 'POST',
         headers: {

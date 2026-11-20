@@ -2,24 +2,19 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { tmpDir } = require('../test-support/tmp');
-const DATA = tmpDir('savefail');
-process.env.CONFIG_PATH = path.join(DATA, 'apps.json');
-process.env.ICONS_PATH = tmpDir('savefail-icons');
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'savefail', env: { ICONS_PATH: tmpDir('savefail-icons') } });
 
-const { test, before, after, afterEach, mock } = require('node:test');
+const { test, before, afterEach, mock } = require('node:test');
 const assert = require('node:assert/strict');
-const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { saveConfig, configFileIsMount, CONFIG_PATH, SCHEMA_VERSION } = require('../src/config');
 const { BODY_LIMIT } = require('../src/router');
 
-let server, base;
 const post = raw =>
-  fetch(`${base}/api/config`, {
+  fetch(`${app.base}/api/config`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Origin: base },
+    headers: { 'Content-Type': 'application/json', Origin: app.base },
     body: raw,
   });
 const save = () => post(JSON.stringify({ items: [{ id: 'a', type: 'app' }], settings: {} }));
@@ -30,19 +25,9 @@ const failWrite = code =>
 
 before(async () => {
   saveConfig({ items: [], settings: {} });
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
 });
 
 afterEach(() => mock.restoreAll());
-
-after(async () => {
-  await new Promise(r => {
-    server.closeAllConnections?.();
-    server.close(r);
-  });
-});
 
 for (const [code, status, apiCode] of [
   ['ENOSPC', 507, 'internal.disk-full'],
@@ -98,7 +83,7 @@ test('a single-file mount of the config is detected', () => {
 test('a route with no error handling still reports why the write failed', async () => {
   saveConfig({ items: [], settings: {} });
   failWrite('ENOSPC');
-  const r = await fetch(`${base}/api/auth/dismiss-setup`, { method: 'POST', headers: { Origin: base } });
+  const r = await fetch(`${app.base}/api/auth/dismiss-setup`, { method: 'POST', headers: { Origin: app.base } });
   assert.equal(r.status, 507);
   const body = await r.json();
   assert.equal(body.code, 'internal.disk-full');

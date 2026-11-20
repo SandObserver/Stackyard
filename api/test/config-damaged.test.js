@@ -1,30 +1,28 @@
 const path = require('node:path');
 const fs = require('node:fs');
-const { tmpDir } = require('../test-support/tmp');
-const DIR = tmpDir('config-damaged');
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'config-damaged' });
+const DIR = app.dir;
 const CFG = path.join(DIR, 'apps.json');
-process.env.CONFIG_PATH = CFG;
 
-const { test, before, after, beforeEach, mock } = require('node:test');
+const { test, before, beforeEach, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { saveConfig, loadConfig } = require('../src/config');
 const { hashPassword, clearAttempts } = require('../src/auth');
 
-let server, base, original;
+let original;
 
 function request(method, pathName, body) {
   return new Promise((resolve, reject) => {
     const payload = body === undefined ? null : JSON.stringify(body);
     const req = http.request(
-      base + pathName,
+      app.base + pathName,
       {
         method,
         headers: {
-          Origin: base,
+          Origin: app.base,
           ...(payload ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {}),
         },
       },
@@ -57,12 +55,7 @@ before(async () => {
     items: [{ id: 'a', type: 'app', label: 'Keep me' }],
     settings: { auth: { enabled: true, passwordHash } },
   };
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
 });
-
-after(() => new Promise(r => server.close(r)));
 
 beforeEach(() => {
   reset();

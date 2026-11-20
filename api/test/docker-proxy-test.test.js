@@ -2,20 +2,15 @@
    address that is wrong from one that is merely not answering yet. Only the
    first refuses the save. */
 
-const path = require('node:path');
-
-const { tmpDir } = require('../test-support/tmp');
+const { startApp, fakeUpstream } = require('../test-support/app');
+const app = startApp({ label: 'docker-test' });
 const { noSuchHost } = require('../test-support/no-such-host');
-process.env.CONFIG_PATH = path.join(tmpDir('docker-test'), 'apps.json');
 
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
-
-let server, base, proxy, proxyBase, dead, deadBase, hang, hangPort;
+let proxyBase, dead, deadBase, hang, hangPort;
 let reply = { status: 200, body: JSON.stringify({ ApiVersion: '1.43' }) };
 
 const listen = s => new Promise(r => s.listen(0, '127.0.0.1', () => r(`http://127.0.0.1:${s.address().port}`)));
@@ -26,11 +21,10 @@ const close = s =>
   });
 
 before(async () => {
-  proxy = http.createServer((_, res) => {
+  ({ url: proxyBase } = await fakeUpstream((_, res) => {
     res.writeHead(reply.status, { 'Content-Type': 'application/json' });
     res.end(reply.body);
-  });
-  proxyBase = await listen(proxy);
+  }));
 
   /* Bound only to learn a port nothing is listening on, then closed. */
   dead = http.createServer(() => {});
@@ -41,21 +35,16 @@ before(async () => {
      looks to the prober. */
   hang = http.createServer(() => {});
   hangPort = new URL(await listen(hang)).port;
-
-  server = http.createServer(dispatch);
-  base = await listen(server);
 });
 after(async () => {
-  await close(server);
-  await close(proxy);
   await close(hang);
 });
 
 function probe(url, { origin = true } = {}) {
-  const u = new URL(base + '/api/docker/test');
+  const u = new URL(app.base + '/api/docker/test');
   const body = JSON.stringify({ url });
   const headers = { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) };
-  if (origin) headers.Origin = base;
+  if (origin) headers.Origin = app.base;
   return new Promise((resolve, reject) => {
     const req = http.request({ hostname: u.hostname, port: u.port, path: u.pathname, method: 'POST', headers }, res => {
       let b = '';

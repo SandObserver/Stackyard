@@ -1,33 +1,16 @@
-const path = require('node:path');
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'lockout' });
 
-const { tmpDir } = require('../test-support/tmp');
-const _tmp = tmpDir('lockout');
-process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
-
-const { test, before, after, beforeEach } = require('node:test');
+const { test, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { loadConfig, loadConfigForUpdate, saveConfig } = require('../src/config');
 const { hashPassword, authActive, makeToken, clearAttempts } = require('../src/auth');
 const { firstPasswordCode } = require('../test-support/setup-code');
 
 const SECRET = 'a'.repeat(64);
-let server, base;
 
-before(async () => {
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
-});
-after(async () => {
-  await new Promise(r => {
-    server.closeAllConnections?.();
-    server.close(r);
-  });
-});
 beforeEach(() => {
   saveConfig({ items: [], settings: {} });
   clearAttempts('127.0.0.1');
@@ -35,7 +18,7 @@ beforeEach(() => {
 
 function req(method, pathname, body, cookie) {
   const data = body ? JSON.stringify(body) : '';
-  const u = new URL(base + pathname);
+  const u = new URL(app.base + pathname);
   return new Promise((resolve, reject) => {
     const r = http.request(
       {
@@ -46,7 +29,7 @@ function req(method, pathname, body, cookie) {
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(data),
-          Origin: base,
+          Origin: app.base,
           Cookie: cookie || '',
         },
       },
@@ -168,7 +151,7 @@ test('wrong current passwords count against the sign-in lockout', async () => {
 
 function setPasswordWithWriteMidway(body, midway) {
   const data = JSON.stringify(body);
-  const u = new URL(base + '/api/auth/set-password');
+  const u = new URL(app.base + '/api/auth/set-password');
   return new Promise((resolve, reject) => {
     const q = http.request(
       {
@@ -179,7 +162,7 @@ function setPasswordWithWriteMidway(body, midway) {
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(data),
-          Origin: base,
+          Origin: app.base,
           Cookie: 'ds=' + makeToken('s1', SECRET),
         },
       },

@@ -1,32 +1,20 @@
-const path = require('node:path');
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'namelimit' });
 
-const { tmpDir } = require('../test-support/tmp');
-process.env.CONFIG_PATH = path.join(tmpDir('namelimit'), 'apps.json');
-
-const { test, before, after } = require('node:test');
+const { test, before } = require('node:test');
 const assert = require('node:assert/strict');
-const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { loadConfig, saveConfig } = require('../src/config');
 const { NAME_MAX } = require('../../ui/js/limits.js');
 
-let server, base;
-
 before(async () => {
   saveConfig({ items: [], settings: {} });
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
 });
-after(() => server.close());
-
 test('a saved name is cut to the name limit', async () => {
   const long = 'N'.repeat(2000);
-  const r = await fetch(`${base}/api/config`, {
+  const r = await fetch(`${app.base}/api/config`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Origin: base },
+    headers: { 'Content-Type': 'application/json', Origin: app.base },
     body: JSON.stringify({
       items: [
         { id: 'a', type: 'app', label: long, href: 'http://a.lan' },

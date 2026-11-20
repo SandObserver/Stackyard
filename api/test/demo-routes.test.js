@@ -1,36 +1,14 @@
-process.env.DEMO_MODE = 'true';
 const fs = require('node:fs');
-const path = require('node:path');
 const { tmpDir } = require('../test-support/tmp');
-const dir = tmpDir('demo-routes');
-process.env.CONFIG_PATH = path.join(dir, 'apps.json');
-process.env.ICONS_PATH = path.join(dir, 'icons');
-fs.mkdirSync(process.env.ICONS_PATH);
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'demo-routes', env: { DEMO_MODE: 'true', ICONS_PATH: tmpDir('demo-routes-icons') } });
 
-const { test, before, after } = require('node:test');
+const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
-
-let server, base;
-
-before(async () => {
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
-});
-
-after(async () => {
-  await new Promise(r => {
-    server.closeAllConnections?.();
-    server.close(r);
-  });
-});
-
 function post(pathname, body, contentType = 'application/json') {
-  const u = new URL(base + pathname);
+  const u = new URL(app.base + pathname);
   return new Promise((resolve, reject) => {
     const r = http.request(
       {
@@ -38,7 +16,7 @@ function post(pathname, body, contentType = 'application/json') {
         port: u.port,
         path: u.pathname,
         method: 'POST',
-        headers: { 'Content-Type': contentType, 'Content-Length': Buffer.byteLength(body), Origin: base },
+        headers: { 'Content-Type': contentType, 'Content-Length': Buffer.byteLength(body), Origin: app.base },
       },
       res => {
         let b = '';
@@ -102,7 +80,7 @@ test('no demo write reached the disk', () => {
 test('icon search answers the demo refusal instead of failing on the blocked catalogues', async () => {
   const r = await new Promise((resolve, reject) => {
     http
-      .get(`${base}/api/icons/search?q=plex`, res => {
+      .get(`${app.base}/api/icons/search?q=plex`, res => {
         let raw = '';
         res.on('data', c => (raw += c));
         res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(raw) }));

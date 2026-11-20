@@ -1,0 +1,286 @@
+{
+  "_schemaVersion": 4,
+  "settings": {
+    "background": {
+      "type": "url",
+      "url": "/demo-wallpaper.jpg",
+      "brightness": 0.4
+    },
+    "auth": {
+      "enabled": false,
+      "setupPrompted": true
+    },
+    "logLevel": "info",
+    "language": "en"
+  },
+  "items": [
+    {
+      "id": "w-clock",
+      "type": "widget",
+      "widgetType": "clock",
+      "label": "Clock",
+      "widgetSize": "small",
+      "widgetConfig": {
+        "clockStyle": "analog",
+        "clockMode": "dark",
+        "clockTimezone": "America/Los_Angeles",
+        "clockShowDate": true
+      }
+    },
+    {
+      "id": "w-weather",
+      "type": "widget",
+      "widgetType": "weather",
+      "label": "Weather",
+      "widgetSize": "small",
+      "widgetConfig": {
+        "city": "San Francisco, California, USA",
+        "lat": 37.7749,
+        "lon": -122.4194,
+        "units": "c",
+        "feelsLike": true
+      }
+    },
+    {
+      "id": "w-stats",
+      "type": "widget",
+      "widgetType": "system-summary",
+      "label": "System",
+      "widgetSize": "medium",
+      "widgetConfig": {
+        "slots": [
+          {
+            "type": "cpu"
+          },
+          {
+            "type": "ram"
+          },
+          {
+            "type": "disk",
+            "primary": "/",
+            "secondary": "/mnt/media"
+          }
+        ],
+        "network": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "w-dns",
+      "type": "widget",
+      "widgetType": "dns",
+      "label": "Pi-hole",
+      "widgetSize": "small",
+      "widgetConfig": {
+        "provider": "pihole",
+        "dnsUrl": "https://dns.example.com"
+      }
+    },
+    {
+      "id": "w-nowplaying",
+      "type": "widget",
+      "widgetType": "nowplaying",
+      "label": "Now Playing",
+      "widgetSize": "small",
+      "widgetConfig": {
+        "provider": "jellyfin",
+        "jellyfinUrl": "https://media.example.com",
+        "href": "https://media.example.com"
+      }
+    },
+    {
+      "id": "w-backup",
+      "type": "widget",
+      "widgetType": "backup",
+      "label": "Backup",
+      "widgetSize": "small",
+      "widgetConfig": {
+        "slots": [
+          {
+            "provider": "duplicati",
+            "customName": "Offsite",
+            "jobId": "1",
+            "dupUrl": "https://backup.example.com"
+          }
+        ]
+      }
+    },
+    {
+      "id": "w-books",
+      "type": "widget",
+      "widgetType": "books",
+      "label": "Books",
+      "widgetSize": "small",
+      "widgetConfig": {
+        "provider": "audiobookshelf",
+        "absUrl": "https://books.example.com",
+        "source": "unread",
+        "href": "https://books.example.com"
+      }
+    },
+    {
+      "id": "app-jellyfin",
+      "type": "app",
+      "label": "Jellyfin",
+      "href": "https://media.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/jellyfin-light.svg",
+      "dock": true,
+      "monitoring": {
+        "activity": {
+          "enabled": true,
+          "interval": 30
+        }
+      }
+    },
+    {
+      "id": "app-portainer",
+      "type": "app",
+      "label": "Portainer",
+      "href": "https://containers.example.com",
+      "iconUrl": "portainer-dark",
+      "dock": true,
+      "monitoring": {
+        "activity": {
+          "enabled": true,
+          "interval": 30
+        }
+      }
+    },
+    {
+      "id": "app-hass",
+      "type": "app",
+      "label": "Home Assistant",
+      "href": "https://home.example.com",
+      "iconUrl": "home-assistant",
+      "dock": true
+    },
+    {
+      "id": "app-vaultwarden",
+      "type": "app",
+      "label": "Vaultwarden",
+      "href": "https://vault.example.com",
+      "iconUrl": "vaultwarden",
+      "dock": true,
+      "color": "light"
+    },
+    {
+      "id": "folder-media",
+      "type": "folder",
+      "label": "Media",
+      "children": [
+        "app-sonarr",
+        "app-radarr"
+      ]
+    },
+    {
+      "id": "app-sonarr",
+      "type": "app",
+      "label": "Sonarr",
+      "href": "https://sonarr.example.com",
+      "iconUrl": "sonarr"
+    },
+    {
+      "id": "app-radarr",
+      "type": "app",
+      "label": "Radarr",
+      "href": "https://radarr.example.com",
+      "iconUrl": "radarr"
+    },
+    {
+      "id": "app-immich",
+      "type": "app",
+      "label": "Immich",
+      "href": "https://photos.example.com",
+      "iconUrl": "immich"
+    },
+    {
+      "id": "app-grafana",
+      "type": "app",
+      "label": "Grafana",
+      "href": "https://metrics.example.com",
+      "iconUrl": "grafana",
+      "monitoring": {
+        "healthcheck": {
+          "enabled": true,
+          "pingUrl": "https://metrics.example.com"
+        }
+      }
+    },
+    {
+      "id": "app-uptimekuma",
+      "type": "app",
+      "label": "Uptime Kuma",
+      "href": "https://status.example.com",
+      "iconUrl": "uptime-kuma"
+    },
+    {
+      "id": "app-nextcloud",
+      "type": "app",
+      "label": "Nextcloud",
+      "href": "https://cloud.example.com",
+      "iconUrl": "nextcloud"
+    },
+    {
+      "id": "app-paperless",
+      "type": "app",
+      "label": "Paperless",
+      "href": "https://docs.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/paperless-ngx-light.svg"
+    },
+    {
+      "id": "app-gitea",
+      "type": "app",
+      "label": "Gitea",
+      "href": "https://git.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/gitea-light.svg"
+    },
+    {
+      "id": "app-pihole",
+      "type": "app",
+      "label": "Pi-hole",
+      "href": "https://dns.example.com",
+      "iconUrl": "pi-hole"
+    },
+    {
+      "id": "app-npm",
+      "type": "app",
+      "label": "Proxy Manager",
+      "href": "https://proxy.example.com",
+      "iconUrl": "npm"
+    },
+    {
+      "id": "folder-downloads",
+      "type": "folder",
+      "label": "Downloads",
+      "children": [
+        "app-qbittorrent",
+        "app-prowlarr",
+        "app-bazarr"
+      ]
+    },
+    {
+      "id": "app-qbittorrent",
+      "type": "app",
+      "label": "qBittorrent",
+      "href": "https://dl.example.com",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/qbittorrent-light.svg"
+    },
+    {
+      "id": "app-prowlarr",
+      "type": "app",
+      "label": "Prowlarr",
+      "href": "https://prowlarr.example.com",
+      "iconUrl": "prowlarr",
+      "color": "#e66000"
+    },
+    {
+      "id": "app-bazarr",
+      "type": "app",
+      "label": "Bazarr",
+      "href": "https://bazarr.example.com",
+      "iconUrl": "bazarr-dark"
+    }
+  ],
+  "_rev": 1
+}

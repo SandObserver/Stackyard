@@ -1,26 +1,23 @@
 const path = require('node:path');
 const fs = require('node:fs');
-const { tmpDir } = require('../test-support/tmp');
-process.env.CONFIG_PATH = path.join(tmpDir('new-password'), 'apps.json');
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'new-password' });
 
-const { test, before, after, beforeEach, mock } = require('node:test');
+const { test, before, beforeEach, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { loadConfig, saveConfig } = require('../src/config');
 const { hashPassword } = require('../src/auth');
 const { newPasswordError, isCommonPassword } = require('../src/new-password');
 const setupCode = require('../src/setup-code');
 
-let server, base;
 let clock = Date.now();
 
 function request(method, p, { body, cookie, host } = {}) {
   return new Promise((resolve, reject) => {
     const data = body === undefined ? '' : JSON.stringify(body);
-    const u = new URL(base + p);
+    const u = new URL(app.base + p);
     const headers = { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) };
     headers.Host = host || u.host;
     headers.Origin = `http://${headers.Host}`;
@@ -50,11 +47,7 @@ async function signedInWith(password) {
 
 before(async () => {
   mock.method(Date, 'now', () => clock);
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
 });
-after(() => new Promise(r => server.close(r)));
 beforeEach(() => {
   clock += 16 * 60 * 1000;
   delete process.env.INITIAL_PASSWORD;

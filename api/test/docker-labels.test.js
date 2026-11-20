@@ -1,42 +1,23 @@
-const path = require('node:path');
-
-const { tmpDir } = require('../test-support/tmp');
-process.env.CONFIG_PATH = path.join(tmpDir('docker-labels'), 'apps.json');
+const { startApp, fakeUpstream } = require('../test-support/app');
 delete process.env.SOCKET_PROXY_URL;
+const app = startApp({ label: 'docker-labels' });
 
-const { test, before, after } = require('node:test');
+const { test, before } = require('node:test');
 const assert = require('node:assert/strict');
-const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { loadConfig, saveConfig } = require('../src/config');
 const { homepageLabels } = require('../src/docker-labels');
 
-let server, base, proxy, proxyBase;
+let proxyBase;
 let reply = { status: 200, body: '[]' };
 let lastPath = '';
 
-const listen = s => new Promise(r => s.listen(0, '127.0.0.1', () => r(`http://127.0.0.1:${s.address().port}`)));
-const close = s =>
-  new Promise(r => {
-    s.closeAllConnections?.();
-    s.close(r);
-  });
-
 before(async () => {
-  proxy = http.createServer((req, res) => {
+  ({ url: proxyBase } = await fakeUpstream((req, res) => {
     lastPath = req.url;
     res.writeHead(reply.status, { 'Content-Type': 'application/json' });
     res.end(reply.body);
-  });
-  proxyBase = await listen(proxy);
-  server = http.createServer(dispatch);
-  base = await listen(server);
-});
-after(async () => {
-  await close(server);
-  await close(proxy);
+  }));
 });
 
 function setSocket(url) {
@@ -46,7 +27,7 @@ function setSocket(url) {
 }
 
 async function labels() {
-  const r = await fetch(`${base}/api/docker/labels`);
+  const r = await fetch(`${app.base}/api/docker/labels`);
   return { status: r.status, body: await r.json() };
 }
 

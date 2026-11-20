@@ -1,20 +1,16 @@
 const path = require('node:path');
 const fs = require('node:fs');
-const { tmpDir } = require('../test-support/tmp');
-const DIR = tmpDir('host-check');
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'host-check' });
+const DIR = app.dir;
 const CFG = path.join(DIR, 'apps.json');
-process.env.CONFIG_PATH = CFG;
 
-const { test, before, after, beforeEach, mock } = require('node:test');
+const { test, before, beforeEach, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { saveConfig, loadConfig } = require('../src/config');
 const { hashPassword } = require('../src/auth');
-
-let server, port;
 
 /* Host and Origin both name the attacker's site, as a browser sends them after
    DNS rebinding. */
@@ -24,7 +20,7 @@ function request(method, pathName, host, body, cookie) {
     const req = http.request(
       {
         host: '127.0.0.1',
-        port,
+        port: app.port,
         path: pathName,
         method,
         headers: {
@@ -58,12 +54,7 @@ const stored = () => JSON.parse(fs.readFileSync(CFG, 'utf8')).settings?.server?.
 
 before(async () => {
   mock.method(Date, 'now', () => clock);
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  port = server.address().port;
 });
-
-after(() => new Promise(r => server.close(r)));
 
 beforeEach(() => {
   for (const f of fs.readdirSync(DIR)) fs.rmSync(path.join(DIR, f), { recursive: true, force: true });

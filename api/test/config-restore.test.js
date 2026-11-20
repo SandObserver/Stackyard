@@ -1,36 +1,19 @@
-const path = require('node:path');
+const { startApp } = require('../test-support/app');
+const api = startApp({ label: 'restore' });
 
-const { tmpDir } = require('../test-support/tmp');
-process.env.CONFIG_PATH = path.join(tmpDir('restore'), 'apps.json');
-
-const { test, before, after } = require('node:test');
+const { test, before } = require('node:test');
 const assert = require('node:assert/strict');
-const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { saveConfig, loadConfig, migrate } = require('../src/config');
-
-let server, base;
 
 before(async () => {
   saveConfig(migrate({ items: [], settings: { theme: 'light' } }));
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
-});
-
-after(async () => {
-  await new Promise(r => {
-    server.closeAllConnections?.();
-    server.close(r);
-  });
 });
 
 test('a write carrying an older schema version is migrated', async () => {
-  const res = await fetch(`${base}/api/config`, {
+  const res = await fetch(`${api.base}/api/config`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Origin: base },
+    headers: { 'Content-Type': 'application/json', Origin: api.base },
     body: JSON.stringify({
       _schemaVersion: 6,
       items: [

@@ -1,35 +1,24 @@
-const path = require('node:path');
-
-const { tmpDir } = require('../test-support/tmp');
-process.env.CONFIG_PATH = path.join(tmpDir('proxmox-health'), 'apps.json');
+const { startApp, fakeUpstream } = require('../test-support/app');
 delete process.env.SOCKET_PROXY_URL;
+const api = startApp({ label: 'proxmox-health' });
 
-const { test, before, after, beforeEach } = require('node:test');
+const { test, before, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { saveConfig, loadConfig } = require('../src/config');
 const latest = require('../src/latest');
 
 const TOKEN = 'stackyard@pve!dash';
 const SECRET = '0b5f7c2e-1d3a-4c6b-9e8f-2a7d4b1c0e9f';
 
-let server, base, pve, pveBase;
+let pveBase;
 let guests = [];
 let pveStatus = 200;
 const seen = [];
 
-const listen = s => new Promise(r => s.listen(0, '127.0.0.1', () => r(`http://127.0.0.1:${s.address().port}`)));
-const close = s =>
-  new Promise(r => {
-    s.closeAllConnections?.();
-    s.close(r);
-  });
-
 before(async () => {
-  pve = http.createServer((req, res) => {
+  ({ url: pveBase } = await fakeUpstream((req, res) => {
     seen.push({ url: req.url, auth: req.headers.authorization });
     if (req.headers.authorization !== `PVEAPIToken=${TOKEN}=${SECRET}`) {
       res.writeHead(401);
@@ -37,14 +26,7 @@ before(async () => {
     }
     res.writeHead(pveStatus, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ data: guests }));
-  });
-  pveBase = await listen(pve);
-  server = http.createServer(dispatch);
-  base = await listen(server);
-});
-after(async () => {
-  await close(server);
-  await close(pve);
+  }));
 });
 beforeEach(() => {
   latest.reset();
@@ -58,10 +40,10 @@ beforeEach(() => {
 });
 
 function request(method, pathname, body) {
-  const u = new URL(base + pathname);
+  const u = new URL(api.base + pathname);
   const data = body == null ? null : JSON.stringify(body);
   const headers = data
-    ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: base }
+    ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), Origin: api.base }
     : {};
   return new Promise((resolve, reject) => {
     const req = http.request({ hostname: u.hostname, port: u.port, path: u.pathname, method, headers }, res => {

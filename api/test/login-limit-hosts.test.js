@@ -1,18 +1,13 @@
-const path = require('node:path');
-const { tmpDir } = require('../test-support/tmp');
-const DIR = tmpDir('login-limit-hosts');
-process.env.CONFIG_PATH = path.join(DIR, 'apps.json');
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'login-limit-hosts' });
 
-const { test, before, after, beforeEach, mock } = require('node:test');
+const { test, before, beforeEach, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { saveConfig } = require('../src/config');
 const { hashPassword } = require('../src/auth');
 
-let server, port;
 let clock = Date.now();
 
 /* Host and Origin name the same site, as a browser sends them after DNS
@@ -23,7 +18,7 @@ function login(host, password) {
     const req = http.request(
       {
         host: '127.0.0.1',
-        port,
+        port: app.port,
         path: '/api/auth/login',
         method: 'POST',
         headers: {
@@ -45,12 +40,7 @@ function login(host, password) {
 
 before(async () => {
   mock.method(Date, 'now', () => clock);
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  port = server.address().port;
 });
-
-after(() => new Promise(r => server.close(r)));
 
 beforeEach(async () => {
   /* Past the 15-minute window, so each test starts with no attempts counted. */

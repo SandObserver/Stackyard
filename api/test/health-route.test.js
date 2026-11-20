@@ -1,18 +1,14 @@
-const path = require('node:path');
-
-const { tmpDir } = require('../test-support/tmp');
-process.env.CONFIG_PATH = path.join(tmpDir('health'), 'apps.json');
+const { startApp, fakeUpstream } = require('../test-support/app');
 delete process.env.SOCKET_PROXY_URL;
+const app = startApp({ label: 'health' });
 
-const { test, before, after } = require('node:test');
+const { test, before } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { saveConfig } = require('../src/config');
 
-let server, base, socket, socketBase, target, targetBase;
+let socketBase, targetBase;
 let containers = [];
 let targetStatus = 200;
 
@@ -25,30 +21,20 @@ const close = s =>
 
 before(async () => {
   /* Stands in for the Docker socket proxy. */
-  socket = http.createServer((_, res) => {
+  ({ url: socketBase } = await fakeUpstream((_, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(containers));
-  });
-  socketBase = await listen(socket);
+  }));
 
   /* Stands in for the app being pinged. */
-  target = http.createServer((_, res) => {
+  ({ url: targetBase } = await fakeUpstream((_, res) => {
     res.writeHead(targetStatus);
     res.end();
-  });
-  targetBase = await listen(target);
-
-  server = http.createServer(dispatch);
-  base = await listen(server);
-});
-after(async () => {
-  await close(server);
-  await close(socket);
-  await close(target);
+  }));
 });
 
 function health() {
-  const u = new URL(base + '/api/health');
+  const u = new URL(app.base + '/api/health');
   return new Promise((resolve, reject) => {
     http
       .request({ hostname: u.hostname, port: u.port, path: u.pathname, method: 'GET' }, res => {

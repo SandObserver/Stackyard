@@ -1,15 +1,10 @@
-const path = require('node:path');
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'auth' });
 
-const { tmpDir } = require('../test-support/tmp');
-const _tmp = tmpDir('auth');
-process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
-
-const { test, before, after, beforeEach } = require('node:test');
+const { test, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { loadConfig, saveConfig } = require('../src/config');
 const { hashPassword, verifyPassword, makeToken } = require('../src/auth');
 
@@ -63,21 +58,6 @@ test('a malformed hash raises no uncaught exception', async () => {
 
 /* ── the config write path ────────────────────────────────────────────────── */
 
-let server, base;
-
-before(async () => {
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
-});
-
-after(async () => {
-  await new Promise(r => {
-    server.closeAllConnections?.();
-    server.close(r);
-  });
-});
-
 beforeEach(() => {
   saveConfig({ items: [], settings: {} });
 });
@@ -92,7 +72,7 @@ function sessionCookie() {
 
 function post(pathname, body, opts = {}) {
   const data = JSON.stringify(body);
-  const u = new URL(base + pathname);
+  const u = new URL(app.base + pathname);
   return new Promise((resolve, reject) => {
     const r = http.request(
       {
@@ -103,7 +83,7 @@ function post(pathname, body, opts = {}) {
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(data),
-          Origin: base,
+          Origin: app.base,
           Cookie: opts.cookie || '',
         },
       },

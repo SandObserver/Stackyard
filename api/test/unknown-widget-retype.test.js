@@ -5,15 +5,12 @@ const { tmpDir } = require('../test-support/tmp');
 const root = tmpDir('retype');
 const widgetsDir = path.join(root, 'widgets');
 fs.mkdirSync(widgetsDir, { recursive: true });
-process.env.WIDGETS_PATH = widgetsDir;
-process.env.CONFIG_PATH = path.join(root, 'apps.json');
 
-const { test, before, after, beforeEach } = require('node:test');
+const { test, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
-const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
+const { startApp } = require('../test-support/app');
+const app = startApp({ env: { WIDGETS_PATH: widgetsDir, CONFIG_PATH: path.join(root, 'apps.json') } });
 const { saveConfig, loadConfig, HELD_PATH } = require('../src/config');
 const { loadRegistry } = require('../src/widget-registry');
 const log = require('../src/log');
@@ -64,21 +61,6 @@ const freshLoad = t => {
   return loadConfig();
 };
 
-let server, base;
-
-before(async () => {
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
-});
-
-after(async () => {
-  await new Promise(r => {
-    server.closeAllConnections?.();
-    server.close(r);
-  });
-});
-
 beforeEach(() => {
   removeManifest();
   fs.rmSync(HELD_PATH, { force: true });
@@ -86,9 +68,9 @@ beforeEach(() => {
 });
 
 async function request(method, route, body) {
-  return fetch(`${base}${route}`, {
+  return fetch(`${app.base}${route}`, {
     method,
-    headers: body ? { 'Content-Type': 'application/json', Origin: base } : {},
+    headers: body ? { 'Content-Type': 'application/json', Origin: app.base } : {},
     body: body ? JSON.stringify(body) : undefined,
   });
 }

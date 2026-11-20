@@ -1,27 +1,30 @@
 const path = require('node:path');
 const fs = require('node:fs');
 
-process.env.ALLOW_PRIVATE_IPS = 'true';
 const { tmpDir } = require('../test-support/tmp');
+const { startApp, fakeUpstream } = require('../test-support/app');
 const _tmp = tmpDir('apierr');
-process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
-process.env.WIDGETS_PATH = path.join(_tmp, 'widgets');
-fs.mkdirSync(process.env.WIDGETS_PATH, { recursive: true });
+fs.mkdirSync(path.join(_tmp, 'widgets'), { recursive: true });
+const app = startApp({
+  env: {
+    ALLOW_PRIVATE_IPS: 'true',
+    CONFIG_PATH: path.join(_tmp, 'apps.json'),
+    WIDGETS_PATH: path.join(_tmp, 'widgets'),
+  },
+});
 
-const { test, before, after } = require('node:test');
+const { test, before } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { saveConfig, loadConfig } = require('../src/config');
 const { hashPassword, makeToken } = require('../src/auth');
 const { KIND } = require('../src/api-error');
 const log = require('../src/log');
 
 const SECRET = 'b'.repeat(64);
-let server, base, cookie;
-let upstream, upstreamBase;
+let cookie;
+let upstreamBase;
 let upstreamStatus = 200,
   upstreamBody = '{"count":3}';
 
@@ -31,32 +34,15 @@ before(async () => {
   cookie = 'ds=' + makeToken('session-abc', SECRET);
 
   /* Stub upstream, so we control the status the badge proxy sees. */
-  upstream = http.createServer((_, res) => {
+  ({ url: upstreamBase } = await fakeUpstream((_, res) => {
     res.writeHead(upstreamStatus, { 'Content-Type': 'application/json' });
     res.end(upstreamBody);
-  });
-  await new Promise(r => upstream.listen(0, '127.0.0.1', r));
-  upstreamBase = `http://127.0.0.1:${upstream.address().port}`;
-
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
-});
-
-after(async () => {
-  await new Promise(r => {
-    server.closeAllConnections?.();
-    server.close(r);
-  });
-  await new Promise(r => {
-    upstream.closeAllConnections?.();
-    upstream.close(r);
-  });
+  }));
 });
 
 function post(pathname, body, opts = {}) {
   const data = opts.raw ? body : JSON.stringify(body);
-  const u = new URL(base + pathname);
+  const u = new URL(app.base + pathname);
   return new Promise((resolve, reject) => {
     const r = http.request(
       {
@@ -67,7 +53,7 @@ function post(pathname, body, opts = {}) {
         headers: Object.assign({
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(data),
-          Origin: base,
+          Origin: app.base,
           Cookie: opts.cookie === null ? '' : opts.cookie || cookie,
         }),
       },
@@ -102,7 +88,7 @@ test('an unauthenticated request is tagged as an auth failure', async () => {
 
 test('a cross-origin write keeps its 403 and gains a kind', async () => {
   const data = JSON.stringify({ url: upstreamBase });
-  const u = new URL(base + '/api/ping');
+  const u = new URL(app.base + '/api/ping');
   const r = await new Promise((resolve, reject) => {
     const q = http.request(
       {

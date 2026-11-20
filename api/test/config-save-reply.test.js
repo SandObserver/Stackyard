@@ -1,18 +1,12 @@
-const path = require('node:path');
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'savereply' });
 
-const { tmpDir } = require('../test-support/tmp');
-process.env.CONFIG_PATH = path.join(tmpDir('savereply'), 'apps.json');
-
-const { test, before, after } = require('node:test');
+const { test, before } = require('node:test');
 const assert = require('node:assert/strict');
-const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { saveConfig } = require('../src/config');
 
 const SECRET = 'STORED-HEADER-VALUE';
-let server, base;
 
 before(async () => {
   saveConfig({
@@ -31,22 +25,12 @@ before(async () => {
     ],
     settings: {},
   });
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
-});
-
-after(async () => {
-  await new Promise(r => {
-    server.closeAllConnections?.();
-    server.close(r);
-  });
 });
 
 async function call(method, body) {
-  const res = await fetch(`${base}/api/config`, {
+  const res = await fetch(`${app.base}/api/config`, {
     method,
-    headers: body ? { 'Content-Type': 'application/json', Origin: base } : {},
+    headers: body ? { 'Content-Type': 'application/json', Origin: app.base } : {},
     body: body ? JSON.stringify(body) : undefined,
   });
   assert.equal(res.status, 200);
