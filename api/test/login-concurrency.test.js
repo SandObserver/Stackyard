@@ -1,27 +1,18 @@
-const path = require('node:path');
-
-const { tmpDir } = require('../test-support/tmp');
 require('../test-support/cheap-scrypt').useCheapScrypt();
-const _tmp = tmpDir('login-concurrency');
-process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'login-concurrency' });
 
-const { test, before, after } = require('node:test');
+const { test, before } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { saveConfig } = require('../src/config');
 const { hashPassword } = require('../src/auth');
 
 const PASSWORD = 'correct-horse-battery-staple';
 const LOGIN_MAX = 5; /* mirrors LOGIN_MAX in api/src/auth.js */
-let server, base;
 
 before(async () => {
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
   saveConfig({
     items: [],
     settings: {
@@ -34,19 +25,12 @@ before(async () => {
   });
 });
 
-after(async () => {
-  await new Promise(r => {
-    server.closeAllConnections?.();
-    server.close(r);
-  });
-});
-
 let _ip = 0;
 const nextIp = () => `10.9.${Math.floor(_ip / 250)}.${(_ip++ % 250) + 1}`;
 
 function login(password, ip) {
   const data = JSON.stringify({ password });
-  const u = new URL(base + '/api/auth/login');
+  const u = new URL(app.base + '/api/auth/login');
   return new Promise((resolve, reject) => {
     const r = http.request(
       {
@@ -57,7 +41,7 @@ function login(password, ip) {
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(data),
-          Origin: base,
+          Origin: app.base,
           'X-Real-IP': ip,
         },
       },

@@ -1,45 +1,27 @@
-const path = require('node:path');
-
-process.env.ALLOW_PRIVATE_IPS = 'true';
-const { tmpDir } = require('../test-support/tmp');
-process.env.CONFIG_PATH = path.join(tmpDir('badge-interval'), 'apps.json');
+const { startApp, fakeUpstream } = require('../test-support/app');
+const app = startApp({ label: 'badge-interval', env: { ALLOW_PRIVATE_IPS: 'true' } });
 
 const { test, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
-const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { saveConfig } = require('../src/config');
 
-let server, base, upstream, upstreamBase;
+let upstreamBase;
 let hits = 0;
 let n = 1;
 let drop = false;
 const realNow = Date.now;
 
-const listen = s => new Promise(r => s.listen(0, '127.0.0.1', () => r(`http://127.0.0.1:${s.address().port}`)));
-const close = s =>
-  new Promise(r => {
-    s.closeAllConnections?.();
-    s.close(r);
-  });
-
 before(async () => {
-  upstream = http.createServer((req, res) => {
+  ({ url: upstreamBase } = await fakeUpstream((req, res) => {
     hits++;
     if (drop) return req.socket.destroy();
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ n }));
-  });
-  upstreamBase = await listen(upstream);
-  server = http.createServer(dispatch);
-  base = await listen(server);
+  }));
 });
 after(async () => {
   Date.now = realNow;
-  await close(server);
-  await close(upstream);
 });
 
 let run = 0;
@@ -66,7 +48,7 @@ beforeEach(() => {
   drop = false;
 });
 
-const badges = () => fetch(`${base}/api/badges`).then(r => r.json());
+const badges = () => fetch(`${app.base}/api/badges`).then(r => r.json());
 
 test('polls inside the interval reuse the last reading', async () => {
   configure({ interval: 3600 });

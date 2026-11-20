@@ -1,13 +1,9 @@
 /* Boots the real request pipeline (router.dispatch + all registered routes)
-   against a temp config, and exercises it over real HTTP. Env must be set
-   before the app modules are required, since config/widget paths are read at
-   load time. */
+   against a temp config, and exercises it over real HTTP. */
 const path = require('node:path');
 const fs = require('node:fs');
 const { tmpDir } = require('../test-support/tmp');
 const _tmp = tmpDir('http');
-process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
-process.env.WIDGETS_PATH = path.join(_tmp, 'widgets');
 
 /* One throwaway widget, so the request-body-URL path (/api/widget-options) has
    something to dispatch to. Its data function fetches whatever URL the request
@@ -27,14 +23,17 @@ fs.writeFileSync(
 fs.writeFileSync(path.join(_fx, 'index.html'), '');
 fs.writeFileSync(path.join(_fx, 'data.js'), 'module.exports = async ctx => ctx.fetchJSON(ctx.config.url, {});\n');
 
-const { test, before, after } = require('node:test');
+const { test, before } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 const { unfinishedUpload } = require('../test-support/unfinished-upload');
 
-require('../src/routes'); // registers auth/config/health/badges/... + OPTIONS
-require('../src/widget-data'); // registers /api/widget-data/:id (pulls in widgets)
-const { dispatch, on } = require('../src/router');
+const { startApp } = require('../test-support/app');
+const api = startApp({
+  widgetData: true,
+  env: { CONFIG_PATH: path.join(_tmp, 'apps.json'), WIDGETS_PATH: path.join(_tmp, 'widgets') },
+});
+const { on } = require('../src/router');
 const { saveConfig, loadConfig, loadConfigForUpdate } = require('../src/config');
 const { hashPassword, makeToken, verifyToken, clearAttempts, RENEW_AFTER_MS } = require('../src/auth');
 
@@ -48,32 +47,21 @@ on('GET', '/api/_boom_async', async () => {
 });
 
 const SECRET = 'a'.repeat(64);
-let server, base, validCookie;
+let validCookie;
 
 before(async () => {
   const passwordHash = await hashPassword('correct-horse');
   saveConfig({ items: [], settings: { auth: { enabled: true, secret: SECRET, passwordHash } } });
   validCookie = 'ds=' + makeToken('session-abc', SECRET);
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
 });
-
-after(
-  () =>
-    new Promise(r => {
-      server.closeAllConnections?.();
-      server.close(r);
-    }),
-);
 
 /* Origin defaults to this server's own, which is what a browser sends on a
    same-origin write and what the origin check now requires. Pass `origin: null`
    for the case of a request that states none. */
 function req(method, pathname, opts = {}) {
-  const { cookie, body, origin = base, host } = opts;
+  const { cookie, body, origin = api.base, host } = opts;
   const data = body != null ? JSON.stringify(body) : null;
-  const u = new URL(base + pathname);
+  const u = new URL(api.base + pathname);
   return new Promise((resolve, reject) => {
     const r = http.request(
       {
@@ -966,7 +954,7 @@ for (const [route, body] of [
 
 test('a JSON body past the 2 MB limit is answered before it ends', { timeout: 10_000 }, async () => {
   const was = JSON.stringify(loadConfig());
-  const r = await unfinishedUpload(base + '/api/config', 8 * 1024 * 1024, 3 * 1024 * 1024, {
+  const r = await unfinishedUpload(api.base + '/api/config', 8 * 1024 * 1024, 3 * 1024 * 1024, {
     'Content-Type': 'application/json',
     Cookie: validCookie,
   });

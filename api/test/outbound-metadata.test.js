@@ -6,7 +6,7 @@ fs.writeFileSync(process.env.CONFIG_PATH, JSON.stringify({ items: [], settings: 
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const http = require('node:http');
+const { fakeUpstream } = require('../test-support/app');
 const resolver = require('../src/resolve');
 const localNetworks = require('../src/local-networks');
 const proxmox = require('../src/proxmox');
@@ -37,10 +37,9 @@ function answer(t, addresses) {
 
 /** A server that fails the test if anything connects to it. */
 async function untouched(t) {
-  const server = http.createServer(() => assert.fail('connected to a refused address'));
-  await new Promise(done => server.listen(0, '127.0.0.1', done));
+  const server = await fakeUpstream(() => assert.fail('connected to a refused address'));
   t.after(() => server.close());
-  return server.address().port;
+  return server.port;
 }
 
 test('isMetadataAddress covers link-local and the cloud metadata addresses only', () => {
@@ -74,11 +73,10 @@ test('fetchUnchecked refuses a name with one metadata address among others', asy
 });
 
 test('fetchUnchecked still reaches a private address', async t => {
-  const server = http.createServer((_, res) => res.end('{"ok":true}'));
-  await new Promise(done => server.listen(0, '127.0.0.1', done));
+  const server = await fakeUpstream((_, res) => res.end('{"ok":true}'));
   t.after(() => server.close());
   answer(t, [{ address: '127.0.0.1', family: 4 }]);
-  const r = await fetchUnchecked(`http://nas.example:${server.address().port}/`, { timeout: 2000 });
+  const r = await fetchUnchecked(`http://nas.example:${server.port}/`, { timeout: 2000 });
   assert.deepEqual(r.data, { ok: true });
 });
 

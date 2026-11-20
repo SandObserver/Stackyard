@@ -128,6 +128,16 @@ run. Run it locally with `zizmor .github`.
   JSDoc, with no build step and nothing emitted. It has to stay clean. A new
   module needs two entries in `tsconfig.frontend.json`, the plain path and the
   `?v=*` form, because TypeScript allows one wildcard per pattern.
+- **API tests that need the HTTP app** call `startApp()` from
+  `api/test-support/app.js` at the top of the file, before anything requires
+  `api/src`. `fakeUpstream()` from the same file gives a stand-in server. Both
+  close themselves when the file ends. `test/repo/api-test-boot.test.js` fails a
+  new test file that calls `createServer(dispatch)`.
+- **`api/test/config-old-releases.test.js`** loads configs saved by old releases
+  and compares the result with a committed snapshot. After an intended change to
+  a migration, run
+  `cd api && node --test --test-update-snapshots test/config-old-releases.test.js`
+  and commit the snapshot.
 - **Test code is linted and formatted** along with everything else, with a few
   rules relaxed for `api/test`, `api/test-support`, `ui/test` and `test/repo` in
   `biome.json`: a stub whose signature has to match a real one keeps its unused

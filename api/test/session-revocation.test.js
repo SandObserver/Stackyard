@@ -1,14 +1,12 @@
 const path = require('node:path');
 
-const { tmpDir } = require('../test-support/tmp');
-process.env.CONFIG_PATH = path.join(tmpDir('revoke'), 'apps.json');
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'revoke' });
 
-const { test, before, after, beforeEach } = require('node:test');
+const { test, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { loadConfig, saveConfig } = require('../src/config');
 const fs = require('node:fs');
 const {
@@ -21,20 +19,6 @@ const {
 } = require('../src/auth');
 const crypto = require('node:crypto');
 
-let server, base;
-
-before(async () => {
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
-});
-after(async () => {
-  await new Promise(r => {
-    server.closeAllConnections?.();
-    server.close(r);
-  });
-});
-
 async function enableAuth() {
   saveConfig({
     items: [],
@@ -44,7 +28,7 @@ async function enableAuth() {
 beforeEach(() => saveConfig({ items: [], settings: {} }));
 
 function req(method, pathname, cookie) {
-  const u = new URL(base + pathname);
+  const u = new URL(app.base + pathname);
   return new Promise((resolve, reject) => {
     const r = http.request(
       {
@@ -52,7 +36,7 @@ function req(method, pathname, cookie) {
         port: u.port,
         path: u.pathname,
         method,
-        headers: { 'Content-Type': 'application/json', 'Content-Length': 2, Origin: base, Cookie: cookie || '' },
+        headers: { 'Content-Type': 'application/json', 'Content-Length': 2, Origin: app.base, Cookie: cookie || '' },
       },
       res => {
         let b = '';
@@ -156,7 +140,7 @@ test('an unauthenticated caller cannot revoke', async () => {
 test('a cross-origin request cannot revoke', async () => {
   await enableAuth();
   const oldSecret = secret();
-  const u = new URL(base + '/api/auth/revoke-sessions');
+  const u = new URL(app.base + '/api/auth/revoke-sessions');
   const r = await new Promise((resolve, reject) => {
     const q = http.request(
       {
@@ -203,7 +187,7 @@ test('revoking is refused when auth is on but no password is set', async () => {
 test('changing the password still signs other devices out', async () => {
   await enableAuth();
   const old = cookieFor(secret());
-  const u = new URL(base + '/api/auth/set-password');
+  const u = new URL(app.base + '/api/auth/set-password');
   const data = JSON.stringify({ password: 'a-new-password-here', currentPassword: 'correct-horse' });
   const status = await new Promise((resolve, reject) => {
     const q = http.request(
@@ -215,7 +199,7 @@ test('changing the password still signs other devices out', async () => {
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(data),
-          Origin: base,
+          Origin: app.base,
           Cookie: old,
         },
       },

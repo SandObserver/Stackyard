@@ -1,24 +1,22 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-process.env.ALLOW_PRIVATE_IPS = 'true';
-process.env.WIDGETS_PATH = path.join(__dirname, '../../ui/widgets');
-const { tmpDir } = require('../test-support/tmp');
-const _tmp = tmpDir('scope');
-process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
+const { startApp } = require('../test-support/app');
+const api = startApp({
+  label: 'scope',
+  widgetData: true,
+  env: { ALLOW_PRIVATE_IPS: 'true', WIDGETS_PATH: path.join(__dirname, '../../ui/widgets') },
+});
 
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-require('../src/widget-data'); /* registers /api/widget-options, loaded by server.js in production */
-const { dispatch } = require('../src/router');
 const { saveConfig, loadConfig } = require('../src/config');
 
 const SECRET_VALUE = 'STORED-CREDENTIAL-DO-NOT-LEAK';
 
-let server, base, realSrv, realBase, evilSrv, evilBase;
+let realSrv, realBase, evilSrv, evilBase;
 const realSeen = [];
 const evilSeen = [];
 
@@ -87,20 +85,16 @@ before(async () => {
     ],
     settings: { background: { apiKey: SECRET_VALUE } },
   });
-
-  server = http.createServer(dispatch);
-  base = await listen(server);
 });
 
 after(async () => {
-  await close(server);
   await close(realSrv);
   await close(evilSrv);
 });
 
-function request(method, pathname, body, { origin = base } = {}) {
+function request(method, pathname, body, { origin = api.base } = {}) {
   const data = body == null ? '' : JSON.stringify(body);
-  const u = new URL(base + pathname);
+  const u = new URL(api.base + pathname);
   const headers = { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) };
   if (origin) headers.Origin = origin;
   return new Promise((resolve, reject) => {

@@ -1,4 +1,4 @@
-import { test, after } from 'node:test';
+import { test, after, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { slotWeeks } from '../js/contribution-calendar.js';
 
@@ -45,15 +45,27 @@ test("a slot counts on the viewer's day, not the server's", () => {
   assert.equal(utc.find(d => d.contributionCount).date, '2026-10-24');
 });
 
-for (const zone of ['America/Santiago', 'Asia/Beirut', 'America/Havana']) {
-  test(`today stays on the grid in ${zone}, where daylight saving starts at midnight`, () => {
-    process.env.TZ = zone;
-    const now = new Date();
-    const cal = slotWeeks([[Math.floor(now.getTime() / 1000), 4]], now);
-    const all = days(cal);
-    assert.equal(all.length, 52 * 7 + now.getDay() + 1);
-    assert.equal(new Set(all.map(d => d.date)).size, all.length);
-    assert.equal(all.at(-1).contributionCount, 4);
-    assert.equal(cal.totalContributions, 4);
-  });
+const DST_STARTS_AT_MIDNIGHT = {
+  'America/Santiago': [2025, 9, 7],
+  'Asia/Beirut': [2026, 3, 29],
+  'America/Havana': [2027, 3, 14],
+};
+
+for (const [zone, [y, m, day]] of Object.entries(DST_STARTS_AT_MIDNIGHT)) {
+  for (const hour of [1, 12, 23]) {
+    test(`today stays on the grid in ${zone} at ${hour}:00 on ${y}-${m}-${day}, where daylight saving starts at midnight`, t => {
+      process.env.TZ = zone;
+      assert.equal(new Date(y, m - 1, day, 0).getHours(), 1, 'midnight is skipped on this day');
+      mock.timers.enable({ apis: ['Date'], now: new Date(y, m - 1, day, hour) });
+      t.after(() => mock.timers.reset());
+      const now = new Date();
+      const cal = slotWeeks([[Math.floor(now.getTime() / 1000), 4]], now);
+      const all = days(cal);
+      assert.equal(all.length, 52 * 7 + now.getDay() + 1);
+      assert.equal(new Set(all.map(d => d.date)).size, all.length);
+      assert.equal(all.at(-1).date, `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
+      assert.equal(all.at(-1).contributionCount, 4);
+      assert.equal(cal.totalContributions, 4);
+    });
+  }
 }

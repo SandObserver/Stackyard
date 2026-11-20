@@ -1,17 +1,18 @@
 const path = require('node:path');
 
-process.env.WIDGETS_PATH = path.join(__dirname, '../../ui/widgets');
-const { tmpDir } = require('../test-support/tmp');
-process.env.CONFIG_PATH = path.join(tmpDir('guards'), 'apps.json');
+const { startApp } = require('../test-support/app');
+const app = startApp({
+  label: 'guards',
+  widgetData: true,
+  env: { WIDGETS_PATH: path.join(__dirname, '../../ui/widgets') },
+});
 
-const { test, before, after } = require('node:test');
+const { test, before } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 const fs = require('node:fs');
 
-require('../src/routes');
-require('../src/widget-data');
-const { dispatch, _routeTable } = require('../src/router');
+const { _routeTable } = require('../src/router');
 const { saveConfig } = require('../src/config');
 const { hashPassword, makeToken } = require('../src/auth');
 
@@ -21,30 +22,21 @@ const routes = _routeTable();
 const writes = routes.filter(r => r.method !== 'GET');
 const concrete = p => p.replace(/:[^/]+/g, 'x');
 
-let server, host;
+let host;
 
 before(async () => {
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  host = `127.0.0.1:${server.address().port}`;
+  host = `127.0.0.1:${app.port}`;
   saveConfig({
     items: [],
     settings: { auth: { enabled: true, secret: SECRET, passwordHash: await hashPassword('correct-horse') } },
   });
 });
-after(async () => {
-  await new Promise(r => {
-    server.closeAllConnections?.();
-    server.close(r);
-  });
-});
-
 function send(method, pathname, headers) {
   return new Promise((resolve, reject) => {
     const r = http.request(
       {
         host: '127.0.0.1',
-        port: server.address().port,
+        port: app.port,
         path: pathname,
         method,
         headers: { 'Content-Type': 'application/json', 'Content-Length': 2, ...headers },

@@ -1,19 +1,17 @@
 const path = require('node:path');
 const fs = require('node:fs');
-const { tmpDir } = require('../test-support/tmp');
-const DIR = tmpDir('auth-body-cap');
-process.env.CONFIG_PATH = path.join(DIR, 'apps.json');
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'auth-body-cap' });
+const DIR = app.dir;
 
-const { test, before, after, beforeEach, mock } = require('node:test');
+const { test, before, beforeEach, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch, AUTH_BODY_LIMIT } = require('../src/router');
+const { AUTH_BODY_LIMIT } = require('../src/router');
 const { saveConfig } = require('../src/config');
 const { hashPassword } = require('../src/auth');
 
-let server, port;
 const HOST = '192.168.1.10';
 
 function post(pathName, payload) {
@@ -21,7 +19,7 @@ function post(pathName, payload) {
     const req = http.request(
       {
         host: '127.0.0.1',
-        port,
+        port: app.port,
         path: pathName,
         method: 'POST',
         headers: {
@@ -44,11 +42,7 @@ function post(pathName, payload) {
 let clock = Date.now();
 before(async () => {
   mock.method(Date, 'now', () => clock);
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  port = server.address().port;
 });
-after(() => new Promise(r => server.close(r)));
 beforeEach(() => {
   for (const f of fs.readdirSync(DIR)) fs.rmSync(path.join(DIR, f), { recursive: true, force: true });
   clock += 60_000;

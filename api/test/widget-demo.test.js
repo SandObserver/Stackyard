@@ -1,4 +1,4 @@
-const { test } = require('node:test');
+const { test, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { helpers } = require('../src/demo-data');
@@ -59,7 +59,9 @@ test('weather body matches the widget contract', () => {
   assert.equal(typeof b.isDay, 'boolean');
 });
 
-test('github calendar runs Sunday-first weeks up to today and is stable across calls', () => {
+test('github calendar runs Sunday-first weeks up to today and is stable across calls', t => {
+  mock.timers.enable({ apis: ['Date'], now: new Date(2026, 10, 19, 23, 59, 59) });
+  t.after(() => mock.timers.reset());
   const fn = demoFn('github');
   const a = fn(ctx()),
     b = fn(ctx());

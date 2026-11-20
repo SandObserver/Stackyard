@@ -2,8 +2,6 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { tmpDir } = require('../test-support/tmp');
 const _tmp = tmpDir('secret-type');
-process.env.CONFIG_PATH = path.join(_tmp, 'apps.json');
-process.env.WIDGETS_PATH = path.join(_tmp, 'widgets');
 
 /* Two widgets that declare the same secret key. The second one returns its key,
    so a refill across types shows up in the response. */
@@ -30,13 +28,14 @@ for (const [name, data] of [
   fs.writeFileSync(path.join(dir, 'data.js'), data);
 }
 
-const { test, before, after, beforeEach } = require('node:test');
+const { test, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
-const http = require('node:http');
 
-require('../src/routes');
-require('../src/widget-data');
-const { dispatch } = require('../src/router');
+const { startApp } = require('../test-support/app');
+const app = startApp({
+  widgetData: true,
+  env: { CONFIG_PATH: path.join(_tmp, 'apps.json'), WIDGETS_PATH: path.join(_tmp, 'widgets') },
+});
 const { saveConfig } = require('../src/config');
 const { preserveAllSecrets } = require('../src/config-secrets');
 
@@ -44,20 +43,7 @@ const SECRET = 'ALPHA-SECRET';
 const stored = () => ({
   items: [{ id: 'w1', type: 'widget', widgetType: 'alpha', widgetConfig: { url: 'http://a.test', key: SECRET } }],
 });
-let server, base;
 
-before(async () => {
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
-});
-after(
-  () =>
-    new Promise(r => {
-      server.closeAllConnections?.();
-      server.close(r);
-    }),
-);
 beforeEach(() => saveConfig(stored()));
 
 test('a save that changes the widget type does not refill its secret', () => {
@@ -78,9 +64,9 @@ test('a save that keeps the widget type still refills its secret', () => {
 });
 
 const options = widgetType =>
-  fetch(`${base}/api/widget-options/w1`, {
+  fetch(`${app.base}/api/widget-options/w1`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Origin: base },
+    headers: { 'Content-Type': 'application/json', Origin: app.base },
     body: JSON.stringify({ widgetType, endpoint: 'any', widgetConfig: { url: 'http://a.test' } }),
   }).then(r => r.text());
 

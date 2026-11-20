@@ -1,15 +1,13 @@
 const path = require('node:path');
-const { tmpDir } = require('../test-support/tmp');
 require('../test-support/cheap-scrypt').useCheapScrypt();
-process.env.CONFIG_PATH = path.join(tmpDir('password-check-queue'), 'apps.json');
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'password-check-queue' });
 
-const { test, before, after, beforeEach, mock } = require('node:test');
+const { test, before, beforeEach, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 const crypto = require('node:crypto');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { saveConfig } = require('../src/config');
 const fs = require('node:fs');
 const {
@@ -23,9 +21,7 @@ const {
 const log = require('../src/log');
 
 const PASSWORD = 'quiet otter lantern 42';
-let server,
-  port,
-  nextAddr = 1;
+let nextAddr = 1;
 const freshIp = () => `10.20.${Math.floor(nextAddr / 250)}.${(nextAddr++ % 250) + 1}`;
 
 function login(password, ip) {
@@ -34,7 +30,7 @@ function login(password, ip) {
     const req = http.request(
       {
         host: '127.0.0.1',
-        port,
+        port: app.port,
         path: '/api/auth/login',
         method: 'POST',
         headers: {
@@ -98,12 +94,8 @@ async function until(check, what) {
 }
 
 before(async () => {
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  port = server.address().port;
   saveConfig({ items: [], settings: { auth: { enabled: true, passwordHash: await hashPassword(PASSWORD) } } });
 });
-after(() => server.close());
 beforeEach(() => mock.restoreAll());
 
 test('password hashes run one at a time', async () => {

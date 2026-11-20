@@ -1,24 +1,18 @@
 const fs = require('node:fs');
-const path = require('node:path');
 const { tmpDir } = require('../test-support/tmp');
-const DATA = tmpDir('health-data');
+const { startApp } = require('../test-support/app');
 const ICONS = tmpDir('health-icons');
-process.env.CONFIG_PATH = path.join(DATA, 'apps.json');
-process.env.ICONS_PATH = ICONS;
+const app = startApp({ label: 'health-data', env: { ICONS_PATH: ICONS } });
+const DATA = app.dir;
 
-const { test, before, after } = require('node:test');
+const { test, after } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
-
-require('../src/routes');
-const { dispatch } = require('../src/router');
-
-let server, base;
 
 const health = () =>
   new Promise((resolve, reject) => {
     http
-      .get(`${base}/health`, res => {
+      .get(`${app.base}/health`, res => {
         let data = '';
         res.on('data', c => (data += c));
         res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(data) }));
@@ -26,16 +20,9 @@ const health = () =>
       .on('error', reject);
   });
 
-before(async () => {
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
-});
-
 after(() => {
   fs.chmodSync(DATA, 0o700);
   fs.chmodSync(ICONS, 0o700);
-  server.close();
 });
 
 test('health is ok when both data folders are writable', async () => {

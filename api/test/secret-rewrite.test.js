@@ -1,43 +1,27 @@
 const path = require('node:path');
 
-process.env.ALLOW_PRIVATE_IPS = 'true';
-process.env.WIDGETS_PATH = path.join(__dirname, '../../ui/widgets');
-const { tmpDir } = require('../test-support/tmp');
-process.env.CONFIG_PATH = path.join(tmpDir('rewrite'), 'apps.json');
+const { startApp, fakeUpstream } = require('../test-support/app');
+const app = startApp({
+  label: 'rewrite',
+  env: { ALLOW_PRIVATE_IPS: 'true', WIDGETS_PATH: path.join(__dirname, '../../ui/widgets') },
+});
 
-const { test, before, after, beforeEach } = require('node:test');
+const { test, before, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
-const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { saveConfig, loadConfig } = require('../src/config');
 const { rewriteChanged } = require('../src/secret-scope');
 
 const SECRET = 'STORED-CREDENTIAL-DO-NOT-LEAK';
-let server, base, catcher, catcherPort;
+let catcherPort;
 const seen = [];
 
-const listen = s => new Promise(r => s.listen(0, '127.0.0.1', () => r(s.address().port)));
-const close = s =>
-  new Promise(r => {
-    s.closeAllConnections?.();
-    s.close(r);
-  });
-
 before(async () => {
-  catcher = http.createServer((req, res) => {
+  ({ port: catcherPort } = await fakeUpstream((req, res) => {
     seen.push(req.headers['x-api-key']);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end('{"n":1}');
-  });
-  catcherPort = await listen(catcher);
-  server = http.createServer(dispatch);
-  base = `http://127.0.0.1:${await listen(server)}`;
-});
-after(async () => {
-  await close(server);
-  await close(catcher);
+  }));
 });
 
 beforeEach(() => {
@@ -70,11 +54,11 @@ beforeEach(() => {
 });
 
 async function saveServer(serverSettings) {
-  const cfg = await fetch(`${base}/api/config`).then(r => r.json());
+  const cfg = await fetch(`${app.base}/api/config`).then(r => r.json());
   cfg.settings = { ...cfg.settings, server: { ...cfg.settings?.server, ...serverSettings } };
-  const res = await fetch(`${base}/api/config`, {
+  const res = await fetch(`${app.base}/api/config`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Origin: base },
+    headers: { 'Content-Type': 'application/json', Origin: app.base },
     body: JSON.stringify(cfg),
   });
   assert.equal(res.status, 200);
@@ -89,7 +73,7 @@ test('a new port map withholds every stored credential', async () => {
   assert.deepEqual(body.withheld.map(w => w.id).sort(), ['app1', 'background', 'w1']);
   const saved = loadConfig();
   assert.ok(!JSON.stringify(saved).includes(SECRET));
-  await fetch(`${base}/api/badges`);
+  await fetch(`${app.base}/api/badges`);
   assert.deepEqual(seen, [undefined]);
 });
 
@@ -109,11 +93,11 @@ test('a host address change with no port map keeps stored credentials', async ()
 });
 
 test('turning off certificate checking on an app withholds its stored credential', async () => {
-  const cfg = await fetch(`${base}/api/config`).then(r => r.json());
+  const cfg = await fetch(`${app.base}/api/config`).then(r => r.json());
   cfg.items[0].skipTlsVerify = true;
-  const res = await fetch(`${base}/api/config`, {
+  const res = await fetch(`${app.base}/api/config`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Origin: base },
+    headers: { 'Content-Type': 'application/json', Origin: app.base },
     body: JSON.stringify(cfg),
   });
   const body = await res.json();
@@ -124,9 +108,9 @@ test('turning off certificate checking on an app withholds its stored credential
 });
 
 async function post(cfg) {
-  const res = await fetch(`${base}/api/config`, {
+  const res = await fetch(`${app.base}/api/config`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Origin: base },
+    headers: { 'Content-Type': 'application/json', Origin: app.base },
     body: JSON.stringify(cfg),
   });
   assert.equal(res.status, 200);
@@ -142,7 +126,7 @@ for (const [name, serverSettings] of [
   test(`${name} the port map withholds every stored credential`, async () => {
     const cfg = loadConfig();
     saveConfig({ ...cfg, settings: { ...cfg.settings, server: MAP } });
-    const sent = await fetch(`${base}/api/config`).then(r => r.json());
+    const sent = await fetch(`${app.base}/api/config`).then(r => r.json());
     sent.settings.server = serverSettings;
     const body = await post(sent);
     assert.deepEqual(body.withheld.map(w => w.id).sort(), ['app1', 'background', 'w1']);
@@ -160,14 +144,14 @@ test('turning on certificate skipping for widgets withholds stored widget creden
 });
 
 test('a widget sent under a type a migration renames does not get its secret back', async () => {
-  const sent = await fetch(`${base}/api/config`).then(r => r.json());
+  const sent = await fetch(`${app.base}/api/config`).then(r => r.json());
   delete sent._schemaVersion;
   const w1 = sent.items.find(i => i.id === 'w1');
   w1.widgetType = 'stats';
   w1.widgetConfig = {};
   const body = await post(sent);
   assert.ok(!JSON.stringify(body).includes(SECRET));
-  assert.ok(!JSON.stringify(await fetch(`${base}/api/config`).then(r => r.text())).includes(SECRET));
+  assert.ok(!JSON.stringify(await fetch(`${app.base}/api/config`).then(r => r.text())).includes(SECRET));
   assert.ok(body.withheld.some(w => w.id === 'w1'));
 });
 
@@ -180,7 +164,7 @@ test('an old backup of the same widget keeps its secret through the migration', 
     widgetConfig: { statProvider: 'glances', glancesUrl: 'http://g.test', glancesPass: SECRET },
   });
   saveConfig(cfg);
-  const sent = await fetch(`${base}/api/config`).then(r => r.json());
+  const sent = await fetch(`${app.base}/api/config`).then(r => r.json());
   delete sent._schemaVersion;
   const y1 = sent.items.find(i => i.id === 'y1');
   y1.widgetType = 'stats';

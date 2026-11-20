@@ -1,14 +1,10 @@
-const path = require('node:path');
-
-const { tmpDir } = require('../test-support/tmp');
-process.env.CONFIG_PATH = path.join(tmpDir('docker-api'), 'apps.json');
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'docker-api' });
 
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { dockerGet } = require('../src/docker-api');
 
 const LIST = [{ Names: ['/emby'], Labels: { 'homepage.name': 'Emby', 'homepage.group': 'Media' } }];
@@ -38,7 +34,7 @@ function noContainers(req, res) {
   res.end('{"ApiVersion":"1.53"}');
 }
 
-let versioned, versionedBase, blocked, blockedBase, api, apiBase;
+let versioned, versionedBase, blocked, blockedBase;
 const listen = s => new Promise(r => s.listen(0, '127.0.0.1', () => r(`http://127.0.0.1:${s.address().port}`)));
 
 before(async () => {
@@ -46,11 +42,9 @@ before(async () => {
   versionedBase = await listen(versioned);
   blocked = http.createServer(noContainers);
   blockedBase = await listen(blocked);
-  api = http.createServer(dispatch);
-  apiBase = await listen(api);
 });
 after(() => {
-  for (const s of [versioned, blocked, api]) {
+  for (const s of [versioned, blocked]) {
     s.closeAllConnections?.();
     s.close();
   }
@@ -81,9 +75,9 @@ test('a refusal that a versioned path does not lift is returned as it is', async
 
 test('the socket proxy test passes on a proxy that allows only versioned paths', async () => {
   const body = JSON.stringify({ url: `${versionedBase}/` });
-  const r = await fetch(`${apiBase}/api/docker/test`, {
+  const r = await fetch(`${app.base}/api/docker/test`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Origin: apiBase },
+    headers: { 'Content-Type': 'application/json', Origin: app.base },
     body,
   });
   const out = await r.json();

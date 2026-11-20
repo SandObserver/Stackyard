@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const http = require('node:http');
+const { fakeUpstream } = require('../test-support/app');
 
 const resolver = require('../src/resolve');
 const { pingUnchecked } = require('../src/proxy');
@@ -45,10 +45,9 @@ test('a failed lookup is never retried with an unchecked one', async t => {
 });
 
 test('a private address is still pinged', async () => {
-  const server = http.createServer((_, res) => res.end('ok'));
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const server = await fakeUpstream((_, res) => res.end('ok'));
   try {
-    const r = await pingUnchecked(`http://127.0.0.1:${server.address().port}/`, 2000);
+    const r = await pingUnchecked(`http://127.0.0.1:${server.port}/`, 2000);
     assert.equal(r.ok, true);
   } finally {
     server.close();
@@ -56,11 +55,10 @@ test('a private address is still pinged', async () => {
 });
 
 test('a name that resolves to a private address is pinged at that address', async t => {
-  const server = http.createServer((_, res) => res.end('ok'));
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const server = await fakeUpstream((_, res) => res.end('ok'));
   t.mock.method(resolver, 'resolveAll', async () => [{ address: '127.0.0.1', family: 4 }]);
   try {
-    const r = await pingUnchecked(`http://nas.example:${server.address().port}/`, 2000);
+    const r = await pingUnchecked(`http://nas.example:${server.port}/`, 2000);
     assert.equal(r.ok, true);
   } finally {
     server.close();
@@ -68,14 +66,13 @@ test('a name that resolves to a private address is pinged at that address', asyn
 });
 
 test('a name is pinged at its next address when the first does not answer', async t => {
-  const server = http.createServer((_, res) => res.end('ok'));
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const server = await fakeUpstream((_, res) => res.end('ok'));
   t.mock.method(resolver, 'resolveAll', async () => [
     { address: '127.0.0.2', family: 4 },
     { address: '127.0.0.1', family: 4 },
   ]);
   try {
-    const r = await pingUnchecked(`http://nas.example:${server.address().port}/`, 3000);
+    const r = await pingUnchecked(`http://nas.example:${server.port}/`, 3000);
     assert.equal(r.ok, true);
   } finally {
     server.close();

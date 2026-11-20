@@ -1,14 +1,10 @@
-const path = require('node:path');
-const { tmpDir } = require('../test-support/tmp');
-const DIR = tmpDir('first-password');
-process.env.CONFIG_PATH = path.join(DIR, 'apps.json');
+const { startApp } = require('../test-support/app');
+const app = startApp({ label: 'first-password' });
 
-const { test, before, after, beforeEach, mock } = require('node:test');
+const { test, beforeEach, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-const { dispatch } = require('../src/router');
 const { saveConfig, loadConfig } = require('../src/config');
 const { hashPassword } = require('../src/auth');
 const setupCode = require('../src/setup-code');
@@ -17,7 +13,6 @@ const { firstPasswordCode } = require('../test-support/setup-code');
 
 const PASSWORD = 'quiet otter lantern 42';
 const LAN = '192.168.1.10';
-let server, port;
 
 function request(method, pathName, { host = LAN, origin = `http://${host}`, body, headers = {} } = {}) {
   return new Promise((resolve, reject) => {
@@ -25,7 +20,7 @@ function request(method, pathName, { host = LAN, origin = `http://${host}`, body
     const req = http.request(
       {
         host: '127.0.0.1',
-        port,
+        port: app.port,
         path: pathName,
         method,
         headers: {
@@ -50,12 +45,6 @@ function request(method, pathName, { host = LAN, origin = `http://${host}`, body
 const setPassword = (body, opts) => request('POST', '/api/auth/set-password', { ...opts, body });
 const PROXIED = { 'X-Stackyard-Proxied': '1' };
 
-before(async () => {
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  port = server.address().port;
-});
-after(() => server.close());
 beforeEach(() => {
   setupCode._reset();
   saveConfig({ items: [], settings: {} });
@@ -117,7 +106,7 @@ test('changing an existing password needs no setup code', async () => {
     const req = http.request(
       {
         host: '127.0.0.1',
-        port,
+        port: app.port,
         path: '/api/auth/set-password',
         method: 'POST',
         headers: {

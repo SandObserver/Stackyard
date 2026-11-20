@@ -15,20 +15,17 @@ function writeWidget(name, dataSrc) {
 writeWidget('vouched', "module.exports = ctx => ctx.fail('Set a Pi-hole password', { kind: ctx.KIND.AUTH });\n");
 writeWidget('raw', "module.exports = () => { throw new Error('connect ECONNREFUSED 172.17.0.2:8181'); };\n");
 
-process.env.WIDGETS_PATH = widgetsDir;
-process.env.CONFIG_PATH = path.join(root, 'apps.json');
-
-const { test, before, after } = require('node:test');
+const { test, before } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-require('../src/widget-data');
-const { dispatch } = require('../src/router');
+const { startApp } = require('../test-support/app');
+const app = startApp({
+  widgetData: true,
+  env: { WIDGETS_PATH: widgetsDir, CONFIG_PATH: path.join(root, 'apps.json') },
+});
 const { saveConfig } = require('../src/config');
 const { KIND } = require('../src/api-error');
-
-let server, port;
 
 before(async () => {
   saveConfig({
@@ -38,22 +35,11 @@ before(async () => {
     ],
     settings: {},
   });
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  port = server.address().port;
 });
-after(
-  () =>
-    new Promise(r => {
-      server.closeAllConnections?.();
-      server.close(r);
-    }),
-);
-
 function get(id) {
   return new Promise((resolve, reject) => {
     http
-      .get({ hostname: '127.0.0.1', port, path: `/api/widget-data/${id}` }, res => {
+      .get({ hostname: '127.0.0.1', port: app.port, path: `/api/widget-data/${id}` }, res => {
         let b = '';
         res.on('data', c => {
           b += c;

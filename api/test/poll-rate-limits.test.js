@@ -1,33 +1,23 @@
-const path = require('node:path');
+const { startApp, fakeUpstream } = require('../test-support/app');
+const app = startApp({ label: 'polllimit', widgetData: true, env: { ALLOW_PRIVATE_IPS: 'true' } });
 
-const { tmpDir } = require('../test-support/tmp');
-process.env.CONFIG_PATH = path.join(tmpDir('polllimit'), 'apps.json');
-process.env.ALLOW_PRIVATE_IPS = 'true';
-
-const { test, before, after, beforeEach } = require('node:test');
+const { test, before, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-require('../src/routes');
-require('../src/widget-data');
-const { dispatch } = require('../src/router');
 const { saveConfig } = require('../src/config');
 const { _resetRateLimits, _rateBucketCount } = require('../src/auth');
 const LIMITS = require('../src/poll-limits');
 
-let server,
-  base,
-  upstream,
-  upstreamHits = 0;
+let upstreamHits = 0;
 
 before(async () => {
-  upstream = http.createServer((_, res) => {
+  const upstream = await fakeUpstream((_, res) => {
     upstreamHits++;
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end('{"count":1}');
   });
-  await new Promise(r => upstream.listen(0, '127.0.0.1', r));
-  const upUrl = `http://127.0.0.1:${upstream.address().port}/api`;
+  const upUrl = `${upstream.url}/api`;
 
   saveConfig({
     items: [
@@ -37,21 +27,6 @@ before(async () => {
     ],
     settings: {},
   });
-
-  server = http.createServer(dispatch);
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
-});
-
-after(async () => {
-  await new Promise(r => {
-    server.closeAllConnections?.();
-    server.close(r);
-  });
-  await new Promise(r => {
-    upstream.closeAllConnections?.();
-    upstream.close(r);
-  });
 });
 
 beforeEach(() => {
@@ -60,12 +35,12 @@ beforeEach(() => {
 });
 
 function req(method, pathname) {
-  const u = new URL(base + pathname);
+  const u = new URL(app.base + pathname);
   const body = method === 'POST' ? '{}' : null;
   return new Promise((resolve, reject) => {
     /* Content-Length only when there is a body: declaring one on a GET leaves
        the server waiting for bytes that never arrive. */
-    const headers = { Origin: base };
+    const headers = { Origin: app.base };
     if (body) {
       headers['Content-Type'] = 'application/json';
       headers['Content-Length'] = Buffer.byteLength(body);
