@@ -11,12 +11,25 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { app, bootDashboard } from './dashboard-page.mjs';
+import { fire } from './fake-dom.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 
 const html = read('index.html');
-const dashboard = read('js/dashboard.js');
+
+const apps = Array.from({ length: 40 }, (_, i) => app(`a${i}`));
+const page = await bootDashboard({
+  config: { items: [...apps, app('d', { dock: true })], settings: { language: 'en' } },
+  storage: { dash_page: '1' },
+});
+const doc = page.dom.document;
+const live = () => doc.getElementById('page-live').textContent;
+const total = () => page.dash.totalPages;
+const said = n => `Page ${n} of ${total()}`;
+const key = k => fire(doc, 'keydown', { key: k });
+const dot = i => fire(doc.querySelectorAll('#dots .dot')[i], 'click', { bubbles: false });
 
 /* ── the region ───────────────────────────────────────────────────────────── */
 
@@ -49,47 +62,40 @@ test('visually-hidden keeps the element rendered', () => {
 
 /* ── what gets announced ──────────────────────────────────────────────────── */
 
-test('the announcement is made where the page changes', () => {
-  const goTo = dashboard.slice(
-    dashboard.indexOf('function goTo('),
-    dashboard.indexOf('\n}', dashboard.indexOf('function goTo(')),
-  );
-  assert.match(goTo, /announcePage\(pg, totalPages\)/);
+/* The page restored on load was not chosen by the user, so it is not spoken.
+   Neither is the health poll the boot runs. */
+test('restoring the page on load announces nothing', () => {
+  assert.ok(total() >= 3, `only ${total()} pages`);
+  assert.equal(page.dash.pg, 1, 'the stored page was not restored');
+  assert.equal(live(), '');
 });
 
-/* Every route to another page, arrow keys, swipes, and the dots, goes through
-   goTo, so one announcement covers all of them. */
-test('every way of changing page goes through goTo', () => {
-  for (const route of [
-    /ArrowRight'\) goTo/,
-    /ArrowLeft'\)\s+goTo/,
-    /swipePager\(document,[\s\S]{0,300}turn: \(n, ms\) => goTo\(n, true, true, ms\)/,
-  ]) {
-    assert.match(dashboard, route, 'a page change that bypasses goTo would be silent');
-  }
-  assert.match(read('js/ui.js'), /swipe: \(\) => CB\(\)\.homeSwipe/);
-  assert.match(dashboard, /CB\.homeSwipe = swipePager\(document,/);
+test('a dot announces the page it turns to', () => {
+  dot(2);
+  assert.equal(page.dash.pg, 2);
+  assert.equal(live(), said(3));
+});
+
+test('the arrow keys announce through the same path', () => {
+  key('ArrowLeft');
+  assert.equal(live(), said(2));
+  key('ArrowRight');
+  assert.equal(live(), said(3));
 });
 
 /* Repeating the same page would otherwise announce it again on every click. */
 test('nothing is announced when the page did not change', () => {
-  const goTo = dashboard.slice(
-    dashboard.indexOf('function goTo('),
-    dashboard.indexOf('\n}', dashboard.indexOf('function goTo(')),
-  );
-  assert.match(goTo, /const was = pg/);
-  assert.match(goTo, /if \(pg !== was( |\))/);
+  doc.getElementById('page-live').textContent = '';
+  dot(2);
+  assert.equal(live(), '');
 });
 
-/* The page restored on load was not chosen by the user, so it is not spoken. */
-test('restoring the page on load announces nothing', () => {
-  const calls = dashboard.split('\n').filter(l => l.includes('goTo(restorePage('));
-  assert.ok(calls.length > 0, 'the page is restored on load');
-  for (const line of calls) assert.match(line, /,\s*false\);$/, line.trim());
+test('a swipe pages through the same path', () => {
+  assert.ok(page.dash.CB.homeSwipe, 'the swipe pager is not handed to the phone layout');
+  assert.match(read('js/ui.js'), /swipe: \(\) => CB\(\)\.homeSwipe/);
 });
 
 test('the announcement is translated', () => {
-  assert.match(dashboard, /t\('home\.pageAnnounce'/);
   for (const file of fs.readdirSync(path.join(root, 'i18n')).filter(f => f.endsWith('.json'))) {
     const cat = JSON.parse(read(`i18n/${file}`));
     assert.ok(cat.home?.pageAnnounce, `${file} is missing home.pageAnnounce`);
@@ -99,16 +105,18 @@ test('the announcement is translated', () => {
 });
 
 test('a missing region does not break paging', () => {
-  const fn = dashboard.slice(dashboard.indexOf('function announcePage('));
-  assert.match(fn.slice(0, 200), /if \(!live\) return/);
+  doc.getElementById('page-live').remove();
+  key('ArrowLeft');
+  assert.equal(page.dash.pg, 1);
 });
 
-/* ── health is left alone ─────────────────────────────────────────────────── */
-
-test('health polling does not announce', () => {
-  /* Polled rather than user-initiated: announcing it would interrupt. */
-  const poll = dashboard.slice(dashboard.indexOf("fetch('/api/health'"));
-  assert.doesNotMatch(poll.slice(0, 400), /announcePage|page-live/);
+/* Recomposing a badge into the tile name needs the tile's own name, or the
+   badge text would accumulate. The paint itself is in dashboard-badges.test.mjs. */
+test('every desktop tile records its own name', () => {
+  const tiles = doc.querySelectorAll('#pages .icon, #dock .di');
+  assert.equal(tiles.length, 41);
+  for (const a of tiles) assert.equal(a.dataset.tileName, a.getAttribute('aria-label').split(', ')[0]);
+  page.stop();
 });
 
 /* ── the hidden dots ──────────────────────────────────────────────────────── */
@@ -129,70 +137,12 @@ test('mobile no longer builds dots into a hidden container', () => {
 
 /* ── W-12: the badge belongs to its tile's name ───────────────────────────── */
 
-/* An explicit aria-label on the anchor wins over everything inside it, so a
-   badge that labels itself is never reached by a reader moving from tile to
-   tile. A badge is also not a live region: ACCESSIBILITY.md says a polled
-   change is not announced. */
-
-const dash = read('js/dashboard.js');
-
-/* The body of the loop that paints one badge. Anchored from the loop, because
-   wireBadgePopover also names the import at the top of the file. */
-function badgePaint() {
-  const from = dash.indexOf('els.forEach(badge =>');
-  return dash.slice(from, dash.indexOf('wireBadgePopover', from));
-}
-
-test('a badge is not a live region', () => {
-  const paint = badgePaint();
-  assert.doesNotMatch(paint, /setAttribute\('role', 'status'\)/, 'every badge announces on the poll');
-  assert.match(paint, /removeAttribute\('role'\)/);
-});
-
-/* The selector is exercised rather than spelled out. A tile is an app's link, a
-   folder's button, or anything carrying the role, and any selector that reaches
-   all three passes. Pinning the string breaks on a correct change. */
-const tileSelector = () => {
-  const m = /closest\((['"])(.+?)\1\)/.exec(badgePaint());
-  assert.ok(m, 'the paint no longer looks for an ancestor tile');
-  return m[2];
-};
-
-const reaches = (selector, node) =>
-  selector
-    .split(',')
-    .map(part => part.trim())
-    .some(part => {
-      const m = /^([a-z]*)(?:\[role="([^"]+)"\])?$/.exec(part);
-      if (!m) return false;
-      const [, tag, role] = m;
-      if (tag && tag !== node.tag) return false;
-      if (role && role !== node.role) return false;
-      return Boolean(tag || role);
-    });
-
-test('the badge is composed into the tile name instead', () => {
-  const paint = badgePaint();
-  const selector = tileSelector();
-  assert.ok(reaches(selector, { tag: 'a' }), `${selector} misses an app tile`);
-  assert.ok(reaches(selector, { tag: 'button' }), `${selector} misses a folder tile`);
-  assert.ok(reaches(selector, { tag: 'div', role: 'button' }), `${selector} misses a tile carrying the role`);
-  assert.ok(!reaches(selector, { tag: 'span' }), `${selector} would climb past the tile`);
-  assert.match(paint, /tile\.setAttribute\('aria-label'/, 'the tile name is never recomposed');
-  assert.match(paint, /aria-hidden/, 'the badge still speaks for itself as well');
-});
-
-/* Recomposing needs the tile's own name, or the badge text would accumulate. */
-test('every tile records its own name', () => {
-  for (const [file, src] of [
-    ['js/dashboard.js', dash],
-    ['js/ui.js', read('js/ui.js')],
-  ]) {
-    const labelled = src.match(/\ba\.setAttribute\('aria-label', [^)]+\);\n\s*(?:a\.dataset\.tileName = )?/g) || [];
-    assert.ok(labelled.length >= 2, `${file}: the scan found no tiles`);
-    const unnamed = labelled.filter(m => !m.endsWith('a.dataset.tileName = '));
-    assert.deepEqual(unnamed, [], `${file}: a tile is labelled without recording its name`);
-  }
+test('every phone tile records its own name', () => {
+  const ui = read('js/ui.js');
+  const labelled = ui.match(/\ba\.setAttribute\('aria-label', [^)]+\);\n\s*(?:a\.dataset\.tileName = )?/g) || [];
+  assert.ok(labelled.length >= 2, 'the scan found no tiles');
+  const unnamed = labelled.filter(m => !m.endsWith('a.dataset.tileName = '));
+  assert.deepEqual(unnamed, [], 'a tile is labelled without recording its name');
 });
 
 /* Two, both user-initiated: the page change and the search results. A badge is

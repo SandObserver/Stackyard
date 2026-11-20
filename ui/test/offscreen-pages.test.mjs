@@ -15,13 +15,15 @@ import path from 'node:path';
 import { register } from 'node:module';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { installDom, pageBody } from './fake-dom.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
-const dashboard = read('js/dashboard.js');
 const ui = read('js/ui.js');
 register('./js-root-hooks.mjs', import.meta.url);
 const { inertAllBut } = await import('../js/utils.js');
+const { createDashboardState } = await import('../js/dashboard-state.js');
+const { createPager } = await import('../js/dashboard-pager.js');
 
 function strip(n) {
   const children = Array.from({ length: n }, () => {
@@ -50,18 +52,29 @@ test('every page but the current one is inert', () => {
   );
 });
 
-test('the home pager uses it', () => {
-  const fn = dashboard.slice(dashboard.indexOf('function syncPageInert'));
-  assert.match(fn.slice(0, fn.indexOf('\n}\n')), /inertAllBut\(strip, current\)/);
-});
-
-/* Both layouts build into the same strip, so one call covers them. */
-test('the pager applies it on every page change', () => {
-  const goTo = dashboard.slice(dashboard.indexOf('function goTo('));
-  const call = goTo.indexOf('syncPageInert(pg)');
-  const move = goTo.indexOf('slidePages(strip');
-  assert.ok(call > -1, 'goTo moves the strip without updating what is reachable');
-  assert.ok(call < move, 'the pages have to be marked before the strip moves');
+test('a home page turn marks the other pages inert before the strip moves', () => {
+  const dom = installDom({ markup: pageBody('index.html') });
+  const pages = dom.document.getElementById('pages');
+  pages.innerHTML = '<div class="page"></div><div class="page"></div><div class="page"></div>';
+  const dash = createDashboardState();
+  dash.totalPages = 3;
+  const inertAt = () => pages.children.map(c => c.hasAttribute('inert'));
+  let atMove = null;
+  let shift = '';
+  Object.defineProperty(pages.style, 'transform', {
+    configurable: true,
+    get: () => shift,
+    set: v => {
+      atMove = inertAt();
+      shift = v;
+    },
+  });
+  const { goTo } = createPager(dash);
+  goTo(1, false);
+  assert.deepEqual(atMove, [true, false, true], 'the pages have to be marked before the strip moves');
+  goTo(2, false);
+  assert.deepEqual(inertAt(), [true, true, false]);
+  dom.restore();
 });
 
 test('the folder overlay pages the same way', () => {

@@ -1,18 +1,11 @@
 /* Each request the dashboard waits on before showing tiles adds a round trip on
-   a remote link. Only the sign-in gate and the language depend on an earlier
-   answer. */
+   a remote link. The boot's own order is checked in dashboard-boot.test.mjs. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
-
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const dashboard = fs.readFileSync(path.join(root, 'js/dashboard.js'), 'utf8');
 
 test('the English and selected catalogs are requested together', async () => {
   const i18n = await import(`../js/i18n.js?fresh=${Date.now()}`);
@@ -34,79 +27,3 @@ test('the English and selected catalogs are requested together', async () => {
   await done;
   assert.equal(i18n.currentLang(), 'fa');
 });
-
-test('boot starts the config, widget and icon requests before the sign-in check answers', () => {
-  const start = dashboard.indexOf('async function boot()');
-  const boot = dashboard.slice(start, dashboard.indexOf('\n}\n', start));
-  const authAwait = boot.search(/await \(early\?\.auth \?\?\s*fetch\('\/api\/auth\/check'/);
-  assert.ok(authAwait !== -1, 'the sign-in check moved');
-  const head = boot.slice(0, authAwait);
-  for (const started of ["fetch('/api/config'", "fetch('/api/widgets'", 'loadLocalIcons()']) {
-    assert.ok(head.includes(started), `${started} waits for the sign-in check`);
-  }
-  assert.doesNotMatch(head, /\bawait\b/, 'something before the sign-in check is awaited');
-  const rest = boot.slice(authAwait);
-  for (const read of ['await configReq', 'await widgetsReq', 'await iconsReq']) {
-    assert.ok(rest.includes(read), `the early request is not the one boot reads: ${read}`);
-  }
-});
-
-test('a widget list refused while the first-run password was set is requested again', () => {
-  const start = dashboard.indexOf('async function boot()');
-  const boot = dashboard.slice(start, dashboard.indexOf('\n}\n', start));
-  assert.match(boot, /if \(!r\.ok\) throw /, 'an error reply is read as the widget list');
-  const prompt = boot.slice(boot.indexOf('await showSetupPrompt()'));
-  assert.match(prompt.slice(0, 200), /if \(\(await widgetsReq\)\.e\) widgetsReq = loadWidgets\(\);/);
-});
-
-for (const failures of [1, 2]) {
-  test(`a widget list that fails ${failures === 1 ? 'once is asked for again' : 'twice shows the API-down screen'}`, async () => {
-    const start = dashboard.indexOf('async function boot()');
-    const src = dashboard.slice(start, dashboard.indexOf('\n}\n', start) + 2);
-    const sent = [];
-    let left = failures;
-    const reply = (status, body) => ({ ok: status < 300, status, json: async () => body });
-    const fetch = async url => {
-      sent.push(url);
-      if (url === '/api/auth/check') return reply(200, { enabled: false, passwordSet: false, setupPrompted: false });
-      if (url === '/api/widgets' && left-- > 0) throw new TypeError('Failed to fetch');
-      return reply(200, url === '/api/config' ? { items: [], settings: {}, _rev: 1 } : { widgets: [], files: [] });
-    };
-    const shown = [];
-    const stop = new Error('reached the first-run prompt');
-    const boot = new Function(
-      'fetch, loadLocalIcons, document, initI18n, sanitizeItemLinks, showSetupPrompt, setHtml, html, t, BOOT_TIMEOUT_MS, blockingScreenFor, showBlockingScreen, console, storeGet, storeSet, LANG_STORE, isSupported, liftVeil, saveBootHint, currentLang, showApiDown, window, applyBg',
-      `let items, S, _rev, widgetReg; const withKnownSizes = x => x, WIDGET_COLS = { desktop: {} }; ${src} return boot;`,
-    )(
-      fetch,
-      async () => (await fetch('/api/icons/local')).status,
-      { body: { classList: { add() {} } } },
-      async () => {},
-      x => x,
-      async () => {
-        throw stop;
-      },
-      () => {},
-      () => '',
-      k => k,
-      1000,
-      () => null,
-      async () => {},
-      { error() {} },
-      () => null,
-      () => {},
-      'dash_lang',
-      () => false,
-      () => {},
-      () => {},
-      () => 'en',
-      () => shown.push('api-error-screen'),
-      {},
-      async () => {},
-    );
-    if (failures === 1) await assert.rejects(boot(), stop);
-    else await boot();
-    assert.equal(sent.filter(u => u === '/api/widgets').length, 2);
-    assert.deepEqual(shown, failures === 1 ? [] : ['api-error-screen']);
-  });
-}

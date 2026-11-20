@@ -210,17 +210,89 @@
       "/js/config-recovery.js?v=*": [
         "./ui/js/config-recovery.js"
       ],
+      "/js/dashboard-badges.js": [
+        "./ui/js/dashboard-badges.js"
+      ],
+      "/js/dashboard-badges.js?v=*": [
+        "./ui/js/dashboard-badges.js"
+      ],
+      "/js/dashboard-boot.js": [
+        "./ui/js/dashboard-boot.js"
+      ],
+      "/js/dashboard-boot.js?v=*": [
+        "./ui/js/dashboard-boot.js"
+      ],
+      "/js/dashboard-grid.js": [
+        "./ui/js/dashboard-grid.js"
+      ],
+      "/js/dashboard-grid.js?v=*": [
+        "./ui/js/dashboard-grid.js"
+      ],
+      "/js/dashboard-input.js": [
+        "./ui/js/dashboard-input.js"
+      ],
+      "/js/dashboard-input.js?v=*": [
+        "./ui/js/dashboard-input.js"
+      ],
+      "/js/dashboard-layout.js": [
+        "./ui/js/dashboard-layout.js"
+      ],
+      "/js/dashboard-layout.js?v=*": [
+        "./ui/js/dashboard-layout.js"
+      ],
       "/js/dashboard-logic.js": [
         "./ui/js/dashboard-logic.js"
       ],
       "/js/dashboard-logic.js?v=*": [
         "./ui/js/dashboard-logic.js"
       ],
+      "/js/dashboard-pager.js": [
+        "./ui/js/dashboard-pager.js"
+      ],
+      "/js/dashboard-pager.js?v=*": [
+        "./ui/js/dashboard-pager.js"
+      ],
+      "/js/dashboard-polling.js": [
+        "./ui/js/dashboard-polling.js"
+      ],
+      "/js/dashboard-polling.js?v=*": [
+        "./ui/js/dashboard-polling.js"
+      ],
+      "/js/dashboard-screens.js": [
+        "./ui/js/dashboard-screens.js"
+      ],
+      "/js/dashboard-screens.js?v=*": [
+        "./ui/js/dashboard-screens.js"
+      ],
+      "/js/dashboard-setup.js": [
+        "./ui/js/dashboard-setup.js"
+      ],
+      "/js/dashboard-setup.js?v=*": [
+        "./ui/js/dashboard-setup.js"
+      ],
+      "/js/dashboard-state.js": [
+        "./ui/js/dashboard-state.js"
+      ],
+      "/js/dashboard-state.js?v=*": [
+        "./ui/js/dashboard-state.js"
+      ],
       "/js/dashboard-switch-model.js": [
         "./ui/js/dashboard-switch-model.js"
       ],
       "/js/dashboard-switch-model.js?v=*": [
         "./ui/js/dashboard-switch-model.js"
+      ],
+      "/js/dashboard-theme.js": [
+        "./ui/js/dashboard-theme.js"
+      ],
+      "/js/dashboard-theme.js?v=*": [
+        "./ui/js/dashboard-theme.js"
+      ],
+      "/js/dashboard-wallpaper.js": [
+        "./ui/js/dashboard-wallpaper.js"
+      ],
+      "/js/dashboard-wallpaper.js?v=*": [
+        "./ui/js/dashboard-wallpaper.js"
       ],
       "/js/dashboard.js": [
         "./ui/js/dashboard.js"
@@ -251,6 +323,12 @@
       ],
       "/js/fluid-hover.js?v=*": [
         "./ui/js/fluid-hover.js"
+      ],
+      "/js/widget-frame.js": [
+        "./ui/js/widget-frame.js"
+      ],
+      "/js/widget-frame.js?v=*": [
+        "./ui/js/widget-frame.js"
       ],
       "/js/widget-glyphs.js": [
         "./ui/js/widget-glyphs.js"

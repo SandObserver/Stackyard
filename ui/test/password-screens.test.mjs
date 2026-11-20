@@ -61,11 +61,6 @@ test('every password screen is a form with a submit button and a username for pa
   assert.match(login, /id="login-pw"[^>]*autocomplete="current-password"/);
   assert.match(login, /id="login-btn" type="submit"/);
 
-  const dashboard = await read('../js/dashboard.js');
-  const setup = dashboard.match(/<form class="setup-card"[^>]*>(.*?)<\/form>/)?.[1] || '';
-  assert.match(setup, /autocomplete="username"/);
-  assert.match(setup, /id="setup-set" type="submit"/);
-
   const recovery = await read('../js/config-recovery.js');
   const code = recovery.match(/<form class="cfg-recovery-form"[^>]*>([\s\S]*?)<\/form>/)?.[1] || '';
   assert.match(code, /autocomplete="username"/);

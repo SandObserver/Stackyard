@@ -11,7 +11,10 @@ import {
   BASE_CELL_W,
   BASE_CELL_H,
 } from '../js/mobile-metrics.js';
+import { register } from 'node:module';
+import { installDom, pageBody } from './fake-dom.mjs';
 
+register('./js-root-hooks.mjs', import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 
@@ -97,18 +100,64 @@ test('a full dock sits the same distance from the bottom as from the sides', () 
 
 /* ── The rebuild trigger ──────────────────────────────────────────────────── */
 
-test('a probe sized by the insets drives the rebuild', () => {
+/** The layout on the phone, with the safe-area probe watched and builds counted. */
+async function watchedLayout(mob = true) {
+  const dom = installDom({ markup: pageBody('index.html') });
+  const { createDashboardState } = await import('../js/dashboard-state.js');
+  const { createPager } = await import('../js/dashboard-pager.js');
+  const { createLayout } = await import('../js/dashboard-layout.js');
+  const dash = createDashboardState({ mob });
+  const grid = { buildDesktop: () => 1, measure() {}, slots: () => 1 };
+  const lay = createLayout({ dash, grid, pager: createPager(dash), wallpaper: { retone() {}, resampleBg() {} } });
+  const builds = { n: 0 };
+  globalThis.requestAnimationFrame = () => {
+    builds.n++;
+  };
+  lay.buildLayout();
+  builds.n = 0;
+  lay.watchSafeArea();
+  const probe = dom.document.querySelector('.sa-probe');
+  return { dom, dash, builds, probe };
+}
+
+test('a probe sized by the insets drives the rebuild', async t => {
   const css = read('css/dashboard.css');
   const probe = css.match(/\.sa-probe\s*{[^}]*}/)[0];
   assert.match(probe, /height:calc\(var\(--safe-top\) \+ var\(--safe-bottom\)\)/);
-  const dash = read('js/dashboard.js');
-  assert.match(dash, /new ResizeObserver\([\s\S]{0,600}?\)\.observe\(probe\)/);
-  assert.match(dash, /if \(MOB && spaceMoved\(\)\) buildLayout\(\)/);
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { dom, builds, probe: el } = await watchedLayout();
+  try {
+    assert.ok(el, 'no probe in the page');
+    dom.flushFrames();
+    t.mock.timers.tick(100);
+    assert.equal(builds.n, 0, 'the first observation rebuilt what is being built');
+    dom.resize(el, { width: 0, height: 34 });
+    dom.flushFrames();
+    assert.equal(builds.n, 0, 'the rebuild is not debounced');
+    t.mock.timers.tick(100);
+    assert.equal(builds.n, 1);
+    dom.resize(el, { width: 0, height: 34 });
+    dom.flushFrames();
+    t.mock.timers.tick(100);
+    assert.equal(builds.n, 1, 'an unchanged size rebuilt');
+  } finally {
+    dom.restore();
+  }
 });
 
-test('the first observation does not rebuild what is being built', () => {
-  const dash = read('js/dashboard.js');
-  assert.match(dash, /_saFirst/, 'observing delivers the current size at once');
+test('the probe rebuilds nothing on the desktop layout', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { dom, builds, probe } = await watchedLayout(false);
+  try {
+    dom.flushFrames();
+    dom.resize(probe, { width: 0, height: 34 });
+    dom.flushFrames();
+    t.mock.timers.tick(100);
+    assert.equal(builds.n, 0);
+    assert.equal(dom.document.body.classList.contains('is-mob'), false);
+  } finally {
+    dom.restore();
+  }
 });
 
 test('admin reserves the top inset too', () => {
@@ -365,7 +414,17 @@ test('the safe-area probe is sized by both axes', () => {
   const probe = read('css/dashboard.css').match(/\.sa-probe\s*{[^}]*}/)[0];
   assert.match(probe, /width:calc\([^;]*--sa-left[^;]*--sa-right/);
   assert.match(probe, /height:calc\([^)]*--safe-top[^;]*--safe-bottom/);
-  assert.match(read('js/dashboard.js'), /const \{ width: w, height: h \} = entries\[0\]\.contentRect;/);
+});
+
+test('a side inset appearing rebuilds the phone layout', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { dom, builds, probe } = await watchedLayout();
+  dom.flushFrames();
+  dom.resize(probe, { width: 59, height: 0 });
+  dom.flushFrames();
+  t.mock.timers.tick(100);
+  assert.equal(builds.n, 1, 'only the height is watched');
+  dom.restore();
 });
 
 /* The grid is sized by --mgw and is also the box the rebuild measures. Left

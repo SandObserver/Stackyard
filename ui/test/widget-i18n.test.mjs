@@ -55,8 +55,29 @@ test('the language does not disturb the other parameters', () => {
   }
 });
 
-test('both mount sites pass the language', () => {
-  assert.match(read('js/dashboard.js'), /widgetSrc\(item, widgetReg, \{ lang: currentLang\(\) \}\)/);
+test('both mount sites pass the language', async () => {
+  const { catalogRoutes, fakeFetch, installDom, pageBody } = await import('./fake-dom.mjs');
+  const fr = JSON.parse(read('i18n/fr.json'));
+  const fetch = fakeFetch({ ...catalogRoutes(), '/i18n/fr.json': fr });
+  const dom = installDom({ markup: pageBody('index.html'), fetch, location: 'http://nas.local/' });
+  try {
+    const { createDashboardState } = await import('../js/dashboard-state.js');
+    const { createDesktopGrid } = await import('../js/dashboard-grid.js');
+    const { initUI } = await import('../js/ui.js');
+    const i18n = await import('../js/i18n.js');
+    await i18n.initI18n('fr');
+    const dash = createDashboardState();
+    dash.items = [{ ...ITEM, type: 'widget' }];
+    dash.widgetReg = REG;
+    const badges = /** @type {any} */ ({ BEL: new Map(), breg() {} });
+    initUI({ ...dash, ...badges });
+    createDesktopGrid({ dash, badges, goTo() {} }).buildDesktop();
+    const src = dom.document.querySelector('#pages iframe').getAttribute('src');
+    assert.match(src, /[?&]lang=fr(&|$)/);
+    assert.equal(src, widgetSrc({ ...ITEM, type: 'widget' }, REG, { lang: 'fr' }));
+  } finally {
+    dom.restore();
+  }
   assert.match(read('js/ui.js'), /widgetSrc\(item, widgetReg\(\), \{ mobile: true, lang: currentLang\(\) \}\)/);
 });
 

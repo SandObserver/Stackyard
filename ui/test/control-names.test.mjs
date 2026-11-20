@@ -148,10 +148,28 @@ test('a numbered title does not collide with a generated one', () => {
   assert.equal(uniqueTitle('Clock', used), 'Clock 3');
 });
 
-test('both dashboard builders number their frames', () => {
-  for (const f of ['js/dashboard.js', 'js/ui.js']) {
-    assert.match(read(f), /uniqueTitle\(/, `${f} builds widget frames without numbering them`);
+test('the desktop build numbers frames that share a name', async () => {
+  const { installDom, pageBody } = await import('./fake-dom.mjs');
+  const dom = installDom({ markup: pageBody('index.html'), location: 'http://nas.local/' });
+  try {
+    const { createDashboardState } = await import('../js/dashboard-state.js');
+    const { createDesktopGrid } = await import('../js/dashboard-grid.js');
+    const dash = createDashboardState();
+    const clock = id => ({ id, type: 'widget', widgetType: 'clock', label: 'Clock', widgetSize: 'small' });
+    dash.items = [clock('w1'), clock('w2')];
+    const badges = /** @type {any} */ ({ BEL: new Map(), breg() {} });
+    const { initUI } = await import('../js/ui.js');
+    initUI({ ...dash, ...badges });
+    const grid = createDesktopGrid({ dash, badges, goTo() {} });
+    const names = () => dom.document.querySelectorAll('#pages iframe').map(f => f.getAttribute('aria-label'));
+    grid.buildDesktop();
+    assert.deepEqual(names(), ['Clock', 'Clock 2']);
+    grid.buildDesktop();
+    assert.deepEqual(names(), ['Clock', 'Clock 2'], 'a rebuild must not keep counting');
+  } finally {
+    dom.restore();
   }
+  assert.match(read('js/ui.js'), /uniqueTitle\(/, 'the phone build does not number its frames');
 });
 
 /* ── The top-right control is gone, not hidden ────────────────────────────── */
@@ -167,14 +185,22 @@ test('no styling is kept for a control that is not drawn', () => {
   assert.doesNotMatch(dashCss2, /#ctrls\b/, 'the container rule outlived the container');
 });
 
+const pageFiles = () => [
+  'index.html',
+  ...fs
+    .readdirSync(path.join(root, 'js'))
+    .filter(f => f.endsWith('.js'))
+    .map(f => `js/${f}`),
+];
+
 test('the markup and its clearing are gone too', () => {
   assert.doesNotMatch(read('index.html'), /id="ctrls"/);
-  assert.doesNotMatch(read('js/dashboard.js'), /el\('ctrls'\)/);
+  for (const f of pageFiles()) assert.doesNotMatch(read(f), /el\('ctrls'\)/, f);
 });
 
 /* Deleting styles is only safe if nothing references the class. */
 test('nothing references the control any more', () => {
-  for (const f of ['js/dashboard.js', 'js/ui.js', 'js/spotlight.js', 'index.html']) {
+  for (const f of pageFiles()) {
     assert.doesNotMatch(read(f), /\bctrls?\b(?!-)/, `${f} still names the control`);
   }
 });

@@ -10,6 +10,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { register } from 'node:module';
+import { createDocument, fire, installDom } from './fake-dom.mjs';
+
+register('./js-root-hooks.mjs', import.meta.url);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
@@ -164,16 +168,36 @@ test('no widget page spaces text by screen side', () => {
 
 /* The dashboard sets the direction when it mounts the frame. A widget folder
    needs no code of its own to follow the page. */
-test('the dashboard gives each widget frame the page direction', () => {
-  const utils = read('js/utils.js');
-  assert.match(utils, /doc\.documentElement\.setAttribute\('dir'/, 'nothing sets the direction inside a widget frame');
-  const onLoad = utils.slice(utils.indexOf('function onLoad('), utils.indexOf('const wire = frame =>'));
-  assert.match(
-    utils,
-    /addEventListener\('load', onLoad\)/,
-    'a reload replaces the document, so this has to run on every load',
-  );
-  assert.match(onLoad, /applyDir\(frame\)/, 'a reload replaces the document, so this has to run on every load');
+test('the dashboard gives each widget frame the page direction, on every load', async () => {
+  const dom = installDom();
+  const page = dom.document.documentElement;
+  page.setAttribute('dir', 'rtl');
+  page.setAttribute('lang', 'fa');
+  const make = dom.document.createElement.bind(dom.document);
+  dom.document.createElement = tag => {
+    const node = make(tag);
+    if (tag === 'iframe') node.contentDocument = createDocument();
+    return node;
+  };
+  try {
+    const { mountScaledWidget, teardownWidgets } = await import('../js/widget-frame.js');
+    const card = make('div');
+    mountScaledWidget(card, { src: '/widgets/clock/index.html?id=c', title: 'Clock', design: [170, 170] });
+    const frame = card.querySelector('iframe');
+    fire(frame, 'load', { bubbles: false });
+    assert.equal(frame.contentDocument.documentElement.getAttribute('dir'), 'rtl', 'nothing sets the frame direction');
+    assert.equal(frame.contentDocument.documentElement.getAttribute('lang'), 'fa');
+    frame.contentDocument = createDocument();
+    fire(frame, 'load', { bubbles: false });
+    assert.equal(
+      frame.contentDocument.documentElement.getAttribute('dir'),
+      'rtl',
+      'a reload replaces the document, so this has to run on every load',
+    );
+    teardownWidgets();
+  } finally {
+    dom.restore();
+  }
 });
 
 /* A widget may pin the direction of a fragment: an IP address table or a log

@@ -266,9 +266,12 @@ test('every password screen reads a refused password from one table', () => {
 
   const read = file => fs.readFileSync(new URL(`../js/${file}`, import.meta.url), 'utf8');
   assert.match(read('config-recovery.js'), /setupErrorKey\(/);
-  assert.match(read('dashboard.js'), /setupErrorKey\(/);
+  assert.match(read('dashboard-setup.js'), /setupErrorKey\(/);
   assert.match(read('admin-settings.js'), /passwordRefusalKey\(failure\)/);
-  for (const file of ['config-recovery.js', 'config-recovery-logic.js', 'dashboard.js', 'admin-settings.js']) {
+  const files = fs
+    .readdirSync(new URL('../js/', import.meta.url))
+    .filter(f => f.endsWith('.js') && f !== 'admin-error.js');
+  for (const file of files) {
     const src = read(file);
     assert.doesNotMatch(src, /'invalid\.(setup-code|password-[a-z]+|current-password)'\s*:/, file);
     assert.doesNotMatch(

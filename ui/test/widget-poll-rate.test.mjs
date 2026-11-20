@@ -1,36 +1,69 @@
-/* dashboard.js runs boot() at import, so the wiring is asserted against the
-   source. The behaviour it drives is covered in widget-toolbox-poll.test.mjs. */
+/* The behaviour the rate drives inside a widget is covered in
+   widget-toolbox-poll.test.mjs. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { register } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { installDom, pageBody } from './fake-dom.mjs';
 
+register('./js-root-hooks.mjs', import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+const toolbox = fs.readFileSync(path.join(root, 'js/widget-toolbox.js'), 'utf8');
 
-const dashboard = read('js/dashboard.js');
-const toolbox = read('js/widget-toolbox.js');
+const dom = installDom({ markup: pageBody('index.html') });
+const { createDashboardState } = await import('../js/dashboard-state.js');
+const { createPager } = await import('../js/dashboard-pager.js');
+const strip = dom.document.getElementById('pages');
+strip.innerHTML = '<div class="page"></div><div class="page"></div><div class="page"></div>';
+
+/** A widget frame on page `n` that records the rates it is told. */
+function frame(n) {
+  const ifr = dom.document.createElement('iframe');
+  const rates = [];
+  ifr.contentWindow = { __setPollRate: r => rates.push(r) };
+  strip.children[n].appendChild(ifr);
+  return { ifr, rates };
+}
+const frames = [frame(0), frame(1), frame(2)];
+const dash = createDashboardState();
+dash.totalPages = 3;
+const { goTo } = createPager(dash);
 
 test('the toolbox exposes the rate hook the dashboard calls', () => {
   assert.match(toolbox, /window\)\.__setPollRate = setPollRate/);
-  assert.match(dashboard, /__setPollRate\?\.\(rate\)/);
 });
 
-test('every page change reapplies the rates', () => {
-  const goTo = dashboard.slice(dashboard.indexOf('function goTo('));
-  assert.match(goTo.slice(0, goTo.indexOf('\n}')), /applyPollRates\(\)/);
+test('a page change runs the shown page at full rate and slows the others', () => {
+  goTo(1, false);
+  assert.deepEqual(
+    frames.map(f => f.rates.at(-1)),
+    [4, 1, 4],
+  );
+  goTo(0, false);
+  assert.deepEqual(
+    frames.map(f => f.rates.at(-1)),
+    [1, 4, 4],
+  );
 });
 
-test('off-screen pages are slowed rather than left at full rate', () => {
-  const m = /const OFF_PAGE_RATE = (\d+)/.exec(dashboard);
-  assert.ok(m, 'no off-page rate defined');
-  assert.ok(Number(m[1]) > 1, 'an off-page rate of 1 slows nothing');
-});
-
-/* A frame that loads after the page change would otherwise keep the rate it
-   started with, which is the normal one. */
 test('a frame that loads later is told its rate', () => {
-  assert.match(dashboard, /strip\.addEventListener\('load', onFrameLoad, true\)/);
+  const late = frame(2);
+  assert.deepEqual(late.rates, []);
+  late.ifr.dispatchEvent({ type: 'load' });
+  assert.deepEqual(late.rates, [4]);
+});
+
+test('a frame with no reachable window does not stop the others', () => {
+  const ifr = dom.document.createElement('iframe');
+  Object.defineProperty(ifr, 'contentWindow', {
+    get() {
+      throw new Error('navigating');
+    },
+  });
+  strip.children[0].prepend(ifr);
+  goTo(2, false);
+  assert.equal(frames[2].rates.at(-1), 1);
 });

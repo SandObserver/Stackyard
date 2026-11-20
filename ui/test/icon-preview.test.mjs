@@ -16,22 +16,14 @@ import { fileURLToPath } from 'node:url';
    half-typed names fail last. Each failed attempt reset the tile to the letter
    placeholder, including attempts belonging to a name already typed past, so a
    name like "adguard home" never appeared until the value had been saved and
-   redrawn once on its own. */
+   redrawn once on its own.
+
+   The redraw itself is tested in icon-picker.test.mjs. */
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
-const form = read('js/admin-app-form.js');
 const css = read('css/admin.css');
 
 test('the preview image is sized by the stylesheet, not by a fixed pixel value', () => {
-  const updPrev = form.slice(form.indexOf('function updPrev('));
-  assert.doesNotMatch(updPrev, /width:\s*\d+px/, 'the redraw pins a pixel width, so the tile has no inset');
   assert.match(css, /\.icon-prev img\{width:62%;height:62%/, 'the proportional rule is gone');
-});
-
-test('a stale attempt cannot overwrite the preview of a newer one', () => {
-  const updPrev = form.slice(form.indexOf('function updPrev('));
-  const onerror = updPrev.slice(updPrev.indexOf('img.onerror'));
-  assert.match(onerror, /if \(run !== prevRun\) return;/, 'a late failure is not checked against the current attempt');
-  assert.match(updPrev, /const run = \+\+prevRun;/, 'attempts are not numbered');
 });

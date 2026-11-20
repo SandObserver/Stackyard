@@ -9,8 +9,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { register } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { fakeFetch, installDom, pageBody } from './fake-dom.mjs';
 
+register('./js-root-hooks.mjs', import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 
@@ -111,7 +114,32 @@ test('code that waits on transitionend has a way out under reduced motion', () =
     dashboard.slice(dashboard.indexOf('@media (prefers-reduced-motion')),
     /#pages \{ transition: none !important; \}/,
   );
-  assert.match(read('js/dashboard.js'), /_willChangeTimer = window\.setTimeout\(/, 'will-change would stay on');
+});
+
+test('a page turn drops will-change once the move is over, unless a drag holds it', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const dom = installDom({ markup: pageBody('index.html') });
+  const { createDashboardState } = await import('../js/dashboard-state.js');
+  const { createPager } = await import('../js/dashboard-pager.js');
+  const { PAGE_TURN_MS } = await import('../js/dashboard-logic.js');
+  const strip = dom.document.getElementById('pages');
+  strip.innerHTML = '<div></div><div></div>';
+  const dash = createDashboardState();
+  dash.totalPages = 2;
+  const { goTo } = createPager(dash);
+  goTo(1, false);
+  assert.equal(strip.style.willChange, 'transform');
+  t.mock.timers.tick(PAGE_TURN_MS + 50);
+  assert.equal(strip.style.willChange, 'auto', 'will-change would stay on');
+  goTo(0, false);
+  t.mock.timers.tick(PAGE_TURN_MS);
+  goTo(1, false);
+  t.mock.timers.tick(PAGE_TURN_MS);
+  assert.equal(strip.style.willChange, 'transform', 'an earlier turn ended the later one early');
+  strip.classList.add('dragging');
+  t.mock.timers.tick(100);
+  assert.equal(strip.style.willChange, 'transform', 'a drag lost its layer');
+  dom.restore();
 });
 
 test('reduced motion keeps the wallpaper crossfade', () => {
@@ -143,10 +171,46 @@ test('reduced motion keeps every keyframe fade at its own duration', () => {
   );
 });
 
-test('reduced motion keeps the theme crossfade and fades a new badge', () => {
-  const js = read('js/dashboard.js');
-  assert.match(js, /if \(typeof doc\.startViewTransition === 'function'\) doc\.startViewTransition\(retheme\);/);
-  assert.match(js, /still\s*\? \[\{ opacity: 0 \}, \{ opacity: 1 \}\]/);
+test('reduced motion keeps the theme crossfade and fades a new badge', async () => {
+  const api = { a: { value: 1 } };
+  const dom = installDom({
+    markup: pageBody('index.html'),
+    reduceMotion: true,
+    fetch: fakeFetch({ '/api/badges': () => api }),
+  });
+  const { createDashboardState } = await import('../js/dashboard-state.js');
+  const { createBadges } = await import('../js/dashboard-badges.js');
+  const { wireThemeChanges } = await import('../js/dashboard-theme.js');
+  const { THEME_KEY } = await import('../js/theme.js');
+  let views = 0;
+  dom.document.startViewTransition = fn => {
+    views++;
+    fn();
+  };
+  wireThemeChanges({ refreshBadges() {}, applyBg() {} });
+  dom.window.dispatchEvent({ type: 'storage', key: THEME_KEY });
+  assert.equal(views, 1, 'reduced motion lost the theme crossfade');
+  const dash = createDashboardState();
+  dash.items = [{ id: 'a', type: 'app', label: 'A', monitoring: { activity: { enabled: true } } }];
+  const badges = createBadges(dash);
+  const tile = dom.document.createElement('a');
+  const badge = dom.document.createElement('div');
+  tile.appendChild(badge);
+  dom.document.body.appendChild(tile);
+  const anims = [];
+  badge.animate = (frames, opts) => {
+    anims.push({ frames, opts });
+    return { cancel() {}, onfinish: null };
+  };
+  badges.breg('a', badge);
+  api.a.value = 0;
+  await badges.pollBadges();
+  await badges.pollBadges();
+  api.a.value = 2;
+  await badges.pollBadges();
+  assert.deepEqual(anims.at(-1)?.frames, [{ opacity: 0 }, { opacity: 1 }], 'a new badge must still fade in');
+  assert.equal(anims.at(-1).opts.duration, 150);
+  dom.restore();
 });
 
 test('every page ends up honouring all three preferences', () => {

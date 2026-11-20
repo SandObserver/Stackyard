@@ -9,15 +9,9 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
-
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 
 /* A DOM only as real as mountScaledWidget touches, with counters for the things
    that leaked. Counting them is the point: asserting the functions were called
@@ -143,7 +137,7 @@ const OPTS = { src: 'http://svc/w', title: 'w', design: [400, 300], iframeOpts: 
 test('teardown releases what a mount started', async () => {
   const h = harness();
   try {
-    const { mountScaledWidget, teardownWidgets } = await import('../js/utils.js');
+    const { mountScaledWidget, teardownWidgets } = await import('../js/widget-frame.js');
     mountScaledWidget(h.card(), OPTS);
     assert.equal(h.counts.observers, 1, 'the card is observed while mounted');
     assert.equal(h.counts.timers, 1, 'and the reload timer is running');
@@ -161,7 +155,7 @@ test('teardown releases what a mount started', async () => {
 test('repeated rebuilds do not accumulate observers or timers', async () => {
   const h = harness();
   try {
-    const { mountScaledWidget, teardownWidgets } = await import('../js/utils.js');
+    const { mountScaledWidget, teardownWidgets } = await import('../js/widget-frame.js');
     const mountSix = () => {
       for (let i = 0; i < 6; i++) mountScaledWidget(h.card(), OPTS);
     };
@@ -186,7 +180,7 @@ test('repeated rebuilds do not accumulate observers or timers', async () => {
 test('teardown removes the Escape hand-off of a bundled widget', async () => {
   const h = harness();
   try {
-    const { mountScaledWidget, teardownWidgets } = await import('../js/utils.js');
+    const { mountScaledWidget, teardownWidgets } = await import('../js/widget-frame.js');
     mountScaledWidget(h.card(), { ...OPTS, src: '/widgets/weather/index.html?id=w' });
     assert.equal(h.keyListeners.size, 1, 'a bundled widget listens for Escape on the dashboard');
     teardownWidgets();
@@ -199,7 +193,7 @@ test('teardown removes the Escape hand-off of a bundled widget', async () => {
 test('teardown with nothing mounted is safe', async () => {
   const h = harness();
   try {
-    const { teardownWidgets } = await import('../js/utils.js');
+    const { teardownWidgets } = await import('../js/widget-frame.js');
     assert.doesNotThrow(() => teardownWidgets());
     assert.doesNotThrow(() => {
       teardownWidgets();
@@ -213,7 +207,7 @@ test('teardown with nothing mounted is safe', async () => {
 test('a widget with no refresh interval starts no timer to leak', async () => {
   const h = harness();
   try {
-    const { mountScaledWidget, teardownWidgets } = await import('../js/utils.js');
+    const { mountScaledWidget, teardownWidgets } = await import('../js/widget-frame.js');
     mountScaledWidget(h.card(), { ...OPTS, iframeOpts: {} });
     assert.equal(h.counts.timers, 0);
     teardownWidgets();
@@ -221,54 +215,6 @@ test('a widget with no refresh interval starts no timer to leak', async () => {
   } finally {
     h.done();
   }
-});
-
-/* ── the wiring, checked as source ────────────────────────────────────────── */
-
-test('both build paths tear down before replacing the DOM', () => {
-  for (const [file, fn] of [
-    ['js/dashboard.js', 'buildDesktop'],
-    ['js/ui.js', 'buildMobile'],
-  ]) {
-    const src = read(file);
-    const at = src.indexOf(`function ${fn}(`);
-    assert.ok(at !== -1, `${fn} not found in ${file}`);
-    const head = src.slice(at, at + 400);
-    assert.match(head, /teardownWidgets\(\)/, `${fn} must tear down before rebuilding`);
-    /* Before the clear, or the previous widgets are already unreachable. */
-    assert.ok(
-      head.indexOf('teardownWidgets()') < head.search(/BEL(\(\))?\.clear\(\)/),
-      `${fn} tears down after clearing, which is too late`,
-    );
-  }
-});
-
-/* A rebuild discards every widget iframe, so it must happen only when the
-   layout actually changes. The keyboard opening on a phone resizes the visual
-   viewport, and rebuilding on that throws the dashboard away mid-typing.
-
-   The desktop tile size follows the viewport, so that layout does repaginate on
-   a resize. Three things bound it: mobile leaves before the timer is armed, the
-   timer debounces, and a resize that does not change the slot count returns
-   without rebuilding. */
-test('a resize rebuilds only when the desktop slot count changes', () => {
-  const src = read('js/dashboard.js');
-  assert.doesNotMatch(src, /visualViewport\?\.addEventListener/, 'the phone keyboard resizes this one');
-  const at = src.indexOf("addEventListener('resize'");
-  assert.ok(at !== -1, 'the desktop layout needs a resize listener to repaginate');
-  assert.equal(src.indexOf("addEventListener('resize'", at + 1), -1, 'one resize listener only');
-  const body = src.slice(at, at + 500);
-  assert.match(body, /if \(MOB\) return;[\s\S]*clearTimeout/, 'mobile must leave before the debounce is armed');
-  assert.match(body, /setTimeout\(/, 'an undebounced resize rebuilds on every pixel');
-  assert.match(body, /if \(slots === _slots\) return;/, 'a resize that changes nothing must not rebuild');
-});
-
-/* A media query reports the crossing itself, once, rather than every resize
-   that happens to be on the same side of the breakpoint. */
-test('the rebuild is driven by the shared layout rule', () => {
-  const src = read('js/dashboard.js');
-  assert.match(src, /import \{[^}]*onLayoutChange[^}]*\} from '\/js\/layout\.js/);
-  assert.match(src, /onLayoutChange\(\s*mobile => \{/, 'the layout change is what triggers a rebuild');
 });
 
 /* A refresh mounts a new frame. Navigating the old one adds a Back entry
@@ -298,7 +244,7 @@ async function refreshing(h, run, { loadWait } = {}) {
   globalThis.document.hidden = false;
   globalThis.location = { href: 'http://dash.local/', origin: 'http://dash.local' };
   const card = h.card();
-  const { mountScaledWidget, teardownWidgets } = await import('../js/utils.js');
+  const { mountScaledWidget, teardownWidgets } = await import('../js/widget-frame.js');
   try {
     mountScaledWidget(card, { ...OPTS, iframeOpts: { refreshInterval: 250 } });
     await run({ frames, clip: card.children[0], wait: ms => new Promise(r => h.realSetTimeout(r, ms)) });
@@ -350,7 +296,7 @@ test('a refresh frame that never loads is dropped and the next tick tries again'
 
 test('teardown removes a refresh frame that is still loading', async () => {
   const h = harness();
-  const { teardownWidgets } = await import('../js/utils.js');
+  const { teardownWidgets } = await import('../js/widget-frame.js');
   await refreshing(h, async ({ frames, clip, wait }) => {
     await wait(800);
     teardownWidgets();
@@ -366,7 +312,7 @@ test('teardown removes a refresh frame that is still loading', async () => {
 
 test('teardown after a refresh releases the new frame', async () => {
   const h = harness();
-  const { teardownWidgets } = await import('../js/utils.js');
+  const { teardownWidgets } = await import('../js/widget-frame.js');
   await refreshing(h, async ({ frames, wait }) => {
     await wait(800);
     frames[1].fire('load');
@@ -388,7 +334,7 @@ test('a hidden tab does not reload its widgets, and catches up on return', async
   };
   globalThis.document.hidden = true;
   const wait = ms => new Promise(r => h.realSetTimeout(r, ms));
-  const { mountScaledWidget, teardownWidgets } = await import('../js/utils.js');
+  const { mountScaledWidget, teardownWidgets } = await import('../js/widget-frame.js');
   try {
     mountScaledWidget(h.card(), { ...OPTS, iframeOpts: { refreshInterval: 250 } });
     await wait(800);

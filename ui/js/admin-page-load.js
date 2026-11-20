@@ -1,14 +1,14 @@
-import { initAboutLogo, initVersion } from '/js/admin-about.js?v=8f825115';
-import { render } from '/js/admin-list.js?v=39f4ceb6';
-import { loadSettings } from '/js/admin-settings.js?v=ba74012e';
-import { syncPickerLabels } from '/js/admin-settings-controls.js?v=abbaa296';
-import { apiGet, errorText, nameEditPen, toast } from '/js/admin-shared.js?v=14e96406';
+import { initAboutLogo, initVersion } from '/js/admin-about.js?v=35df83ae';
+import { render } from '/js/admin-list.js?v=ff4caac6';
+import { loadSettings } from '/js/admin-settings.js?v=bdee547c';
+import { syncPickerLabels } from '/js/admin-settings-controls.js?v=57176a15';
+import { apiGet, errorText, nameEditPen, toast } from '/js/admin-shared.js?v=d78607eb';
 import { collapsedFolders, state } from '/js/admin-state.js?v=064b9b85';
-import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=eca5642a';
+import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=e1076c9c';
 import { html, setHtml } from '/js/html.js?v=c71f8903';
 import { initI18n, t } from '/js/i18n.js?v=99563c71';
 import { loadLocalIcons } from '/js/icons.js?v=76c29d43';
-import { el, q, qa, within } from '/js/utils.js?v=c1d4e76c';
+import { el, q, qa, within } from '/js/utils.js?v=9ed2b298';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 
 /** Load the config into the admin page, and show the wallpaper behind it.

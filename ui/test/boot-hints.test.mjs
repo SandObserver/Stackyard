@@ -49,18 +49,43 @@ test('Settings loads the same script and sends nothing early', () => {
   assert.match(html, /<script src="\/js\/boot-hints\.js\?v=[0-9a-f]+"><\/script>/);
 });
 
-test('dashboard.js takes the early requests once, and falls back to its own', () => {
-  const js = fs.readFileSync(path.join(root, 'js/dashboard.js'), 'utf8');
-  assert.match(
-    js,
-    /const early = \/\*\* @type \{any\} \*\/ \(window\)\.__early;\s*\/\*\* @type \{any\} \*\/ \(window\)\.__early = null;/,
-  );
-  assert.match(js, /early\?\.config \?\? fetch\('\/api\/config'/);
-  assert.match(js, /loadWidgets\(early\?\.widgets\)/);
+test('the dashboard takes the early requests once, with the boot script timeout', async () => {
+  const { installDashboard } = await import('./dashboard-page.mjs');
+  const { settle } = await import('./fake-dom.mjs');
+  const { dom, fetch } = installDashboard();
+  const send = url => fetch(url, { cache: 'no-store' });
+  const early = { config: send('/api/config'), widgets: send('/api/widgets') };
+  Object.assign(globalThis, { __early: early, __bootTimeoutMs: 12345 });
+  const timeouts = [];
+  const real = AbortSignal.timeout;
+  AbortSignal.timeout = ms => {
+    timeouts.push(ms);
+    return real.call(AbortSignal, ms);
+  };
+  const random = Math.random;
+  Math.random = () => 0.99;
+  try {
+    await import('../js/dashboard.js');
+    for (let i = 0; i < 6; i++) {
+      await settle();
+      dom.flushFrames();
+    }
+  } finally {
+    AbortSignal.timeout = real;
+    Math.random = random;
+  }
+  assert.equal(/** @type {any} */ (globalThis).__early, null, 'a second boot would reuse spent requests');
+  for (const url of ['/api/auth/check', '/api/config', '/api/widgets'])
+    assert.equal(fetch.calls.filter(c => c.url === url).length, 1, `${url} was sent twice`);
+  assert.ok(dom.document.body.classList.contains('ready'));
+  assert.equal(dom.document.querySelectorAll('#pages .icon').length, 1);
+  assert.deepEqual(timeouts, [12345], 'only the sign-in check was sent by the dashboard');
+  assert.ok(fetch.calls.find(c => c.url === '/api/auth/check').opts.signal instanceof AbortSignal);
 });
 
-test("the dashboard times out its boot requests with the boot script's value", () => {
-  const js = fs.readFileSync(path.join(root, 'js/dashboard.js'), 'utf8');
-  assert.match(js, /const BOOT_TIMEOUT_MS = \/\*\* @type \{any\} \*\/ \(window\)\.__bootTimeoutMs;/);
-  assert.doesNotMatch(js, /AbortSignal\.timeout\(\d/, 'a second literal timeout');
+test('no page module writes its own literal timeout', () => {
+  const dir = path.join(root, 'js');
+  for (const f of fs.readdirSync(dir).filter(n => n.endsWith('.js'))) {
+    assert.doesNotMatch(fs.readFileSync(path.join(dir, f), 'utf8'), /AbortSignal\.timeout\(\d/, f);
+  }
 });

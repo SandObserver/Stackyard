@@ -192,7 +192,7 @@ test('a second finger on the page springs the strip back', () => {
 });
 
 test('a second finger in a widget frame springs the strip back', async () => {
-  const { mountScaledWidget } = await import('../js/utils.js');
+  const { mountScaledWidget } = await import('../js/widget-frame.js');
   const frameDoc = new EventTarget();
   Object.assign(frameDoc, {
     readyState: 'complete',

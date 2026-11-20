@@ -2,16 +2,50 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { register } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { fakeFetch, fire, installDom, pageBody } from './fake-dom.mjs';
 
+register('./js-root-hooks.mjs', import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 const css = read('css/dashboard.css').replace(/\/\*[\s\S]*?\*\//g, '');
-const dashboard = read('js/dashboard.js');
 const ui = read('js/ui.js');
-const spotlight = read('js/spotlight.js');
 const popover = read('js/badge-popover.js');
-const labels = read('js/label-contrast.js');
+
+const fetch = fakeFetch({ '/api/config': { items: [], settings: {} }, '/api/badges': {}, '/api/health': {} });
+const dom = installDom({ markup: pageBody('index.html'), fetch, location: 'http://nas.local/' });
+const doc = dom.document;
+const { createDashboardState } = await import('../js/dashboard-state.js');
+const { createPager } = await import('../js/dashboard-pager.js');
+const { createLayout } = await import('../js/dashboard-layout.js');
+const { createBadges } = await import('../js/dashboard-badges.js');
+const { createPolling } = await import('../js/dashboard-polling.js');
+const { wirePageInput } = await import('../js/dashboard-input.js');
+const { initUI, buildMobile, mkFolderGlyph, openFolderDesktop, openFolderMobile } = await import('../js/ui.js');
+const { createDesktopGrid } = await import('../js/dashboard-grid.js');
+const { initSpotlight } = await import('../js/spotlight.js');
+const { applyLabelTones } = await import('../js/label-contrast.js');
+const { iconChain } = await import('../js/icons.js');
+
+const apps = n =>
+  Array.from({ length: n }, (_, i) => ({ id: `p${i}`, type: 'app', label: `P${i}`, href: `http://p${i}.local` }));
+/** Build the phone layout for these items on a vw by 852 screen. */
+function phone(items, vw = 393) {
+  const dash = createDashboardState({ mob: true });
+  dash.items = items;
+  const badges = createBadges(dash);
+  initUI({ items, S: dash.S, CB: dash.CB, ...badges, widgetReg: dash.widgetReg });
+  const size = [globalThis.innerWidth, globalThis.innerHeight];
+  Object.assign(globalThis, { innerWidth: vw, innerHeight: 852 });
+  try {
+    dash.totalPages = buildMobile();
+  } finally {
+    [globalThis.innerWidth, globalThis.innerHeight] = size;
+  }
+  return { dash, badges };
+}
+const pillEl = () => doc.getElementById('mob-search-pill');
 
 const rule = selector => {
   const at = css.indexOf(selector);
@@ -19,48 +53,172 @@ const rule = selector => {
   return css.slice(at, css.indexOf('}', at));
 };
 
-test('a layout build leaves the Search pill alone and marks the restored page', () => {
-  assert.match(dashboard, /function goTo\(n, announce = true, bump = true, ms = PAGE_TURN_MS\)/);
-  assert.match(dashboard, /if \(MOB && bump && CB\.mobPillBump\) CB\.mobPillBump\(pg\);/);
-  assert.match(
-    dashboard,
-    /totalPages = buildMobile\(\);\s*goTo\(restorePage\(storeGet\(PAGE_STORE\), totalPages\), false, false\);\s*CB\.mobPillSync\?\.\(pg\);/,
-  );
+test('a page turn moves the Search pill only on the phone layout and when asked', () => {
+  const dash = createDashboardState({ mob: true });
+  dash.totalPages = 3;
+  const bumps = [];
+  dash.CB.mobPillBump = n => bumps.push(n);
+  const { goTo } = createPager(dash);
+  goTo(1);
+  goTo(2, true, false);
+  dash.mob = false;
+  goTo(0);
+  assert.deepEqual(bumps, [1]);
 });
 
-test('the pill stays on Search on a one-page dashboard', () => {
-  assert.match(ui, /function pillBump\(newPg\) \{\s*if \(pillNewDots\.children\.length < 2\) return;/);
+test('a phone build restores the page without moving the pill, then syncs it', () => {
+  const dash = createDashboardState({ mob: true });
+  dash.items = Array.from({ length: 60 }, (_, i) => ({
+    id: `a${i}`,
+    type: 'app',
+    label: `A${i}`,
+    href: 'http://a.local',
+  }));
+  const badges = createBadges(dash);
+  initUI({ items: dash.items, S: dash.S, CB: dash.CB, ...badges, widgetReg: dash.widgetReg });
+  dom.storage.set('dash_page', '1');
+  const pager = createPager(dash);
+  const lay = createLayout({ dash, grid: {}, pager, wallpaper: { retone() {}, resampleBg() {} } });
+  const calls = [];
+  for (const [key, name] of [
+    ['mobPillBump', 'bump'],
+    ['mobPillSync', 'sync'],
+  ]) {
+    let fn = null;
+    Object.defineProperty(dash.CB, key, {
+      get: () => fn && (n => (calls.push([name, n]), fn(n))),
+      set: v => {
+        fn = v;
+      },
+    });
+  }
+  lay.buildLayout();
+  dom.flushFrames();
+  dom.flushFrames();
+  assert.ok(dash.totalPages >= 2, `the phone build made ${dash.totalPages} page`);
+  assert.equal(dash.pg, 1);
+  assert.deepEqual(calls, [['sync', 1]]);
+});
+
+test('the pill stays on Search on a one-page dashboard', t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const one = phone(apps(1));
+  assert.equal(one.dash.totalPages, 1);
+  one.dash.CB.mobPillBump(0);
+  assert.equal(pillEl().classList.contains('paging'), false);
+  const many = phone(apps(60));
+  assert.ok(many.dash.totalPages > 1, `${many.dash.totalPages} page`);
+  many.dash.CB.mobPillBump(1);
+  assert.equal(pillEl().classList.contains('paging'), true, 'a page turn does not show the dots');
+  t.mock.timers.tick(1500);
+  assert.equal(pillEl().classList.contains('paging'), false, 'the dots stay up');
 });
 
 test('the desktop build stops the mobile pill sync', () => {
-  const reset = ui.slice(ui.indexOf('export function resetMobileChrome('));
-  assert.match(reset, /CB\(\)\.mobPillSync = null;/);
+  const { dash, badges } = phone(apps(60));
+  assert.equal(typeof dash.CB.mobPillSync, 'function');
+  createDesktopGrid({ dash, badges, goTo() {} }).buildDesktop();
+  assert.equal(dash.CB.mobPillSync, null);
+  assert.equal(dash.CB.mobPillBump, null);
+  assert.equal(pillEl().style.cssText, '');
 });
 
-test('a config change does not reload over Search, a folder or a swipe', () => {
-  assert.match(
-    dashboard,
-    /if \(differs\(await res\.json\(\)\) && !overlayOpen\(\) && !strip\.classList\.contains\('dragging'\)\) location\.reload\(\);/,
+test('a config change does not reload over Search, a folder or a swipe', async () => {
+  const badges = { pollBadges() {}, pollHealth() {} };
+  const polling = createPolling({ badges, differs: () => true });
+  const strip = doc.getElementById('pages');
+  const spot = doc.getElementById('spot');
+  const folder = doc.createElement('dialog');
+  folder.className = 'folder-overlay';
+  const blocked = [
+    [() => spot.setAttribute('open', ''), () => spot.removeAttribute('open')],
+    [
+      () => {
+        folder.setAttribute('open', '');
+        doc.body.appendChild(folder);
+      },
+      () => folder.remove(),
+    ],
+    [() => strip.classList.add('dragging'), () => strip.classList.remove('dragging')],
+  ];
+  for (const [on, off] of blocked) {
+    on();
+    await polling.pollConfig();
+    off();
+  }
+  assert.equal(dom.location.reloads, 0);
+  await polling.pollConfig();
+  assert.equal(dom.location.reloads, 1);
+  dom.location.reloads = 0;
+});
+
+test('an unchanged config never reloads', async () => {
+  const polling = createPolling({ badges: { pollBadges() {}, pollHealth() {} }, differs: () => false });
+  await polling.pollConfig();
+  assert.equal(dom.location.reloads, 0);
+});
+
+test('a returning tab polls the config at once', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const polled = [];
+  const badges = { pollBadges: () => polled.push('badges'), pollHealth: () => polled.push('health') };
+  const polling = createPolling({ badges, differs: () => false });
+  polling.watchVisibility();
+  fetch.calls.length = 0;
+  doc.hidden = false;
+  doc.dispatchEvent({ type: 'visibilitychange' });
+  for (let i = 0; i < 5; i++) await Promise.resolve();
+  assert.deepEqual(polled, ['badges', 'health']);
+  assert.deepEqual(
+    fetch.calls.map(c => c.url),
+    ['/api/config'],
   );
-  assert.match(dashboard, /const overlayOpen = \(\) =>\s*el\('spot'\)\.hasAttribute\('open'\)/);
-});
-
-test('a returning tab polls the config at once', () => {
-  assert.match(dashboard, /pollBadges\(\);\s*pollHealth\(\);\s*pollConfig\(\);\s*startPolling\(\);/);
+  doc.hidden = true;
+  doc.dispatchEvent({ type: 'visibilitychange' });
+  t.mock.timers.tick(120_000);
+  assert.deepEqual(polled, ['badges', 'health'], 'a hidden tab keeps polling');
 });
 
 test('a mouse drag inside an open overlay turns no page', () => {
-  assert.match(
-    dashboard,
-    /addEventListener\('mouseup', e => \{\s*if \(overlayOpen\(\)\) \{\s*_dDragging = false;\s*return;/,
-  );
+  const dash = createDashboardState();
+  const turns = [];
+  wirePageInput({ dash, goTo: n => turns.push(n) });
+  const ov = doc.createElement('dialog');
+  ov.className = 'folder-overlay-mobile';
+  ov.setAttribute('open', '');
+  doc.body.appendChild(ov);
+  fire(ov, 'mousedown', { clientX: 300 });
+  fire(ov, 'mousemove', { clientX: 100 });
+  fire(ov, 'mouseup', { clientX: 100 });
+  ov.remove();
+  fire(doc.body, 'mouseup', { clientX: 100 });
+  assert.deepEqual(turns, []);
 });
 
+const spotItems = [{ id: 'nas', type: 'app', label: 'NAS', href: 'https://nas.example.org/' }];
+initSpotlight({
+  getItems: () => spotItems,
+  isMob: () => false,
+  typeToOpen: () => true,
+  CB: createDashboardState().CB,
+  iconChain,
+  openFolderDesktop,
+  openFolderMobile,
+  folderGlyph: mkFolderGlyph,
+});
+const spot = doc.getElementById('spot');
+
 test('typing inside an open folder does not open Search over it', () => {
-  assert.match(
-    spotlight,
-    /e => \{\s*if \(document\.querySelector\('dialog\[open\]:not\(#spot\)'\)\) return;\s*if \(ov\.open/,
-  );
+  const folder = doc.createElement('dialog');
+  folder.className = 'folder-overlay';
+  doc.body.appendChild(folder);
+  folder.showModal();
+  fire(doc.body, 'keydown', { key: 'n' });
+  assert.equal(spot.open, false);
+  folder.close();
+  folder.remove();
+  fire(doc.body, 'keydown', { key: 'n' });
+  assert.equal(spot.open, true, 'typing on the bare page does not open Search');
 });
 
 test('a folder tile uses the shared tap handling and can show its press', () => {
@@ -91,11 +249,18 @@ test('the phone folder title cannot leave the top edge', () => {
 
 test('the Search pill keeps a readable label on a small phone', () => {
   assert.match(css, /#mob-search-pill \.msp-label \{\s*font-size:max\(11px, calc\(12px \* var\(--sc,1\)\)\)/);
-  assert.match(ui, /const pillSearchW = Math\.max\(Math\.round\(96 \* sc\), 92\);/);
+  for (const vw of [320, 360, 393, 440]) {
+    phone(apps(3), vw);
+    const width = Number(/width:(\d+)px/.exec(pillEl().style.cssText)[1]);
+    assert.ok(width >= 92, `${vw}: the pill is ${width}px`);
+  }
 });
 
 test('the Search pill is toned from the wallpaper in both themes', () => {
-  assert.match(labels, /const LABEL_SELECTOR =[^;]*#mob-search-pill/);
+  for (const tone of ['dark', 'light']) {
+    applyLabelTones({ grid: null, tone });
+    assert.equal(pillEl().getAttribute('data-tone'), tone);
+  }
   assert.match(css, /\n#mob-search-pill\[data-tone="dark"\] \{\s*--pill-ink:var\(--pill-ink-light\);/);
   assert.match(css, /#mob-search-pill \.msp-label \{[^}]*color:var\(--pill-ink,#FFFFFF\)/);
   assert.doesNotMatch(
@@ -106,8 +271,13 @@ test('the Search pill is toned from the wallpaper in both themes', () => {
 });
 
 test('a search address is isolated from a right-to-left page', () => {
-  assert.match(spotlight, /setUserText\(ht, \(app\.href \|\| ''\)/);
-  assert.doesNotMatch(spotlight, /a\.style\.cssText =\s*'[^']*padding/, 'an inline padding hides the phone row size');
+  const input = doc.getElementById('sin');
+  input.value = 'nas';
+  fire(input, 'input');
+  const row = doc.querySelector('#sres .sr');
+  assert.ok(row, 'no result for the query');
+  assert.equal(row.querySelector('.srh').innerHTML, '<bdi>nas.example.org</bdi>');
+  assert.doesNotMatch(row.style.cssText || '', /padding/, 'an inline padding hides the phone row size');
   assert.match(css, /\n\s*\.sr \{[^}]*gap:18px; padding:14px 20px/);
 });
 

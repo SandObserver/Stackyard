@@ -6,12 +6,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { register } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { FakeElement, fire, installDom } from './fake-dom.mjs';
 
+register('./js-root-hooks.mjs', import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 const css = read('css/dashboard.css');
-const dashboard = read('js/dashboard.js');
 
 const TILES = [
   '.icon:active .iwrap',
@@ -35,12 +37,37 @@ test('the desktop folder lifts on hover like an app tile', () => {
   assert.match(rule, /transform:scale\(1\.03\)/);
 });
 
+/* fake-dom reads no :is(). A compound with one expands to a list. */
+const matches = FakeElement.prototype.matches;
+FakeElement.prototype.matches = function (sel) {
+  const m = /^(.*):is\(([^()]*)\)(.*)$/.exec(sel);
+  if (!m) return matches.call(this, sel);
+  return m[2].split(',').some(part => this.matches(`${m[1]}${part.trim()}${m[3]}`));
+};
+
+const PHONE_TILES = ['dyn-mob-icon', 'dyn-dock-icon', 'dyn-fold-anchor'];
+const DESKTOP_TILES = ['icon', 'di', 'folder-icon-link'];
+
 /* Keep. Without it Safari leaves the tile scaled after a new tab opens. */
-test('a phone tile that opens a new tab resets its press', () => {
-  for (const cls of ['dyn-mob-icon', 'dyn-dock-icon', 'dyn-fold-anchor']) {
+test('a phone tile that opens a new tab resets its press', async () => {
+  for (const cls of PHONE_TILES)
     assert.match(css, new RegExp(`\\.${cls}\\.settled > \\.plate`), `${cls} has no .settled reset`);
-    assert.match(dashboard, new RegExp(`a\\[target="_blank"\\]:is\\([^)]*\\.${cls}`), `${cls} is never settled`);
-  }
+  const tiles = [...PHONE_TILES, ...DESKTOP_TILES];
+  const dom = installDom({
+    markup:
+      tiles.map(c => `<a class="${c}" target="_blank" href="http://x.local"><span class="plate"></span></a>`).join('') +
+      '<a class="dyn-mob-icon" href="/admin/"><span class="plate"></span></a>',
+  });
+  const { wireTileSettle } = await import('../js/dashboard-input.js');
+  wireTileSettle();
+  const links = dom.document.querySelectorAll('a');
+  for (const a of links) fire(a.firstElementChild, 'click');
+  for (const a of links.slice(0, tiles.length))
+    assert.ok(a.classList.contains('settled'), `${a.className} is never settled`);
+  assert.ok(!links.at(-1).classList.contains('settled'), 'a tile that stays in this tab keeps its press');
+  fire(links[0], 'pointerleave', { bubbles: false });
+  assert.ok(!links[0].classList.contains('settled'), 'the press never comes back');
+  dom.restore();
 });
 
 /* [ids, classes, types]. Pseudo-classes count as classes; :is() counts as its
