@@ -46,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Open the Link URL when you tap the Weather, Now Playing or Downloads widget on
   a phone.
 
+- Wait at least 3 seconds between widget polls, whatever interval a widget asks
+  for.
+
 ### Removed
 
 - Remove the `WIDGETS_PATH` setting from the Compose example. Mount a custom
