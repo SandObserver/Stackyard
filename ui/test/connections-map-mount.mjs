@@ -293,6 +293,7 @@ export async function mount({ theme = 'dark', onScreen = true } = {}) {
   const AsyncFunction = (async () => {}).constructor;
   await new AsyncFunction(worldName, ...toolboxNames, body)(world, ...toolboxNames.map(n => toolbox[n]));
 
+  let clock = performance.now();
   return {
     frames,
     key: byId.key,
@@ -305,10 +306,14 @@ export async function mount({ theme = 'dark', onScreen = true } = {}) {
     render: data => render(data),
     resize: () => resizeCallbacks.forEach(fn => fn()),
     setOnScreen: v => screenChanged(v),
-    runFrames() {
+    /** Run the pending frames. The frame clock moves only by `advanceMs`, so
+        a slow machine never looks like time has passed.
+        @param {number} [advanceMs] */
+    runFrames(advanceMs = 0) {
+      clock += advanceMs;
       const due = [...frames.entries()];
       frames.clear();
-      for (const [, fn] of due) fn(performance.now());
+      for (const [, fn] of due) fn(clock);
     },
     restore() {
       for (const k of Object.keys(globals)) {
