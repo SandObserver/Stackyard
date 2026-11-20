@@ -181,7 +181,9 @@ test('each wallpaper hint is toggled where the source is applied', async () => {
   const { fileURLToPath } = await import('node:url');
   const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
   const settings = fs.readFileSync(path.join(root, 'js/admin-settings.js'), 'utf8');
-  const admin = ['admin.js', 'admin-settings-controls.js', 'admin-page-load.js']
+  const admin = fs
+    .readdirSync(path.join(root, 'js'))
+    .filter(f => /^admin.*\.js$/.test(f) && f !== 'admin-settings.js')
     .map(f => fs.readFileSync(path.join(root, 'js', f), 'utf8'))
     .join('\n');
 

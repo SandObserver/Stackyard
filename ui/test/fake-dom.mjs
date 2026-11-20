@@ -1,9 +1,11 @@
 /* A small DOM for tests that import page modules. No dependency.
 
    installDom() puts a document, window globals and a recording fetch on
-   globalThis. Elements support the tree, attributes, classes, dataset, style,
-   simple selectors, innerHTML, focus and bubbling events. A selector it cannot
-   read throws, so a test never passes on a query it silently ignored. */
+   globalThis. Elements support the tree with text nodes, attributes, classes,
+   dataset, style, simple selectors, innerHTML, focus, and events with capture
+   and bubble phases. createElement returns the element class the tag has in a
+   browser, so instanceof checks behave. A selector it cannot read throws, so a
+   test never passes on a query it silently ignored. */
 
 import { readFileSync } from 'node:fs';
 
@@ -29,6 +31,10 @@ const decode = s =>
     .replace(/&#39;/g, "'")
     .replace(/&middot;/g, '·')
     .replace(/&amp;/g, '&');
+const encode = (s, attr) => {
+  const out = String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return attr ? out.replace(/"/g, '&quot;') : out;
+};
 const dataAttr = k => 'data-' + String(k).replace(/[A-Z]/g, c => '-' + c.toLowerCase());
 
 class FakeEventTarget {
@@ -37,11 +43,15 @@ class FakeEventTarget {
   }
   addEventListener(type, fn, opts) {
     if (!fn) return;
+    const capture = opts === true || (typeof opts === 'object' && !!opts?.capture);
     const once = typeof opts === 'object' && !!opts?.once;
-    (this.listeners[type] ||= []).push({ fn, once });
+    const list = (this.listeners[type] ||= []);
+    if (list.some(l => l.fn === fn && l.capture === capture)) return;
+    list.push({ fn, once, capture });
   }
-  removeEventListener(type, fn) {
-    this.listeners[type] = (this.listeners[type] || []).filter(l => l.fn !== fn);
+  removeEventListener(type, fn, opts) {
+    const capture = opts === true || (typeof opts === 'object' && !!opts?.capture);
+    this.listeners[type] = (this.listeners[type] || []).filter(l => l.fn !== fn || l.capture !== capture);
   }
   /** The listeners registered for one event type. */
   listenersOf(type) {
@@ -50,17 +60,30 @@ class FakeEventTarget {
   get eventParent() {
     return null;
   }
+  /* Capture listeners run from the top down to the target. Then the other
+     listeners and the on<type> property run at the target, and on the way back
+     up when the event bubbles. */
   dispatchEvent(ev) {
     const e = wrapEvent(ev, this);
-    for (let at = this; at; at = e.bubbles && !e.stopped ? at.eventParent : null) {
+    const path = [];
+    for (let at = this; at; at = at.eventParent) path.push(at);
+    const run = (at, phase, capture) => {
+      if (e.stopped) return;
       e.currentTarget = at;
+      e.eventPhase = phase;
       for (const l of [...(at.listeners[e.type] || [])]) {
-        if (l.once) at.removeEventListener(e.type, l.fn);
+        if (e.stoppedNow) break;
+        if (l.capture !== capture) continue;
+        if (l.once) at.removeEventListener(e.type, l.fn, l.capture);
         l.fn.call(at, e);
       }
-      const prop = at[`on${e.type}`];
-      if (typeof prop === 'function') prop.call(at, e);
-    }
+      const prop = !capture && at[`on${e.type}`];
+      if (typeof prop === 'function' && !e.stoppedNow) prop.call(at, e);
+    };
+    for (let i = path.length - 1; i > 0; i--) run(path[i], 1, true);
+    run(this, 2, true);
+    run(this, 2, false);
+    if (e.bubbles) for (let i = 1; i < path.length; i++) run(path[i], 3, false);
     if (e.defaultPrevented && typeof ev?.preventDefault === 'function') ev.preventDefault();
     return !e.defaultPrevented;
   }
@@ -79,7 +102,11 @@ function wrapEvent(ev, target) {
   e.stopPropagation = () => {
     e.stopped = true;
   };
-  e.stopImmediatePropagation = e.stopPropagation;
+  e.stoppedNow = false;
+  e.stopImmediatePropagation = () => {
+    e.stopped = true;
+    e.stoppedNow = true;
+  };
   e.composedPath = () => [];
   return e;
 }
@@ -90,13 +117,10 @@ export class FakeElement extends FakeEventTarget {
     this.tagName = String(tag).toUpperCase();
     this.ownerDocument = owner;
     this.attrs = new Map();
-    this.children = [];
+    this.childNodes = [];
     this.parentElement = null;
-    this._text = '';
     this.value = '';
     this.checked = false;
-    this.disabled = false;
-    this.hidden = false;
     this.inert = false;
     this.type = '';
     this.files = null;
@@ -138,8 +162,26 @@ export class FakeElement extends FakeEventTarget {
       },
     };
   }
+  get nodeType() {
+    return 1;
+  }
   get eventParent() {
     return this.parentElement ?? (this === this.ownerDocument?.documentElement ? this.ownerDocument : null);
+  }
+  get children() {
+    return this.childNodes.filter(c => c.nodeType === 1);
+  }
+  get hidden() {
+    return this.attrs.has('hidden');
+  }
+  set hidden(v) {
+    this.toggleAttribute('hidden', !!v);
+  }
+  get disabled() {
+    return this.attrs.has('disabled');
+  }
+  set disabled(v) {
+    this.toggleAttribute('disabled', !!v);
   }
   get id() {
     return this.attrs.get('id') || '';
@@ -177,7 +219,7 @@ export class FakeElement extends FakeEventTarget {
     return false;
   }
   get firstChild() {
-    return this.children[0] || null;
+    return this.childNodes[0] || null;
   }
   get firstElementChild() {
     return this.children[0] || null;
@@ -225,37 +267,40 @@ export class FakeElement extends FakeEventTarget {
     return want;
   }
   get textContent() {
-    return this._text + this.children.map(c => c.textContent).join('');
+    return this.childNodes.map(c => c.textContent).join('');
   }
   set textContent(v) {
     this.replaceChildren();
-    this._text = v == null ? '' : String(v);
+    if (v != null && v !== '') this.appendChild(this.ownerDocument.createTextNode(v));
+  }
+  get outerHTML() {
+    const tag = this.tagName.toLowerCase();
+    const attrs = [...this.attrs].map(([k, v]) => ` ${k}="${encode(v, true)}"`).join('');
+    return VOID.has(tag) ? `<${tag}${attrs}>` : `<${tag}${attrs}>${this.innerHTML}</${tag}>`;
   }
   get innerHTML() {
-    return this._html ?? this.textContent;
+    return this.childNodes.map(c => (c.nodeType === 3 ? encode(c.data) : c.outerHTML)).join('');
   }
   set innerHTML(markup) {
     this.replaceChildren();
-    this._html = String(markup);
     const stack = [this];
     for (const m of String(markup).matchAll(/<!--[\s\S]*?-->|<\/?([a-zA-Z][\w-]*)([^>]*?)(\/?)>|([^<]+)/g)) {
       const top = stack[stack.length - 1];
       if (m[0].startsWith('<!--')) continue;
       if (m[4] !== undefined) {
-        if (m[4].trim()) top._text += decode(m[4]);
+        if (m[4].trim()) top.appendChild(this.ownerDocument.createTextNode(decode(m[4])));
         continue;
       }
       if (m[0][1] === '/') {
         if (stack.length > 1) stack.pop();
         continue;
       }
-      const node = this.ownerDocument.createElement(m[1]);
+      const inSvg = m[1].toLowerCase() === 'svg' || top.namespaceURI === SVG_NS;
+      const node = inSvg ? this.ownerDocument.createElementNS(SVG_NS, m[1]) : this.ownerDocument.createElement(m[1]);
       for (const a of m[2].matchAll(/([\w:-]+)(?:="([^"]*)")?/g)) node.attrs.set(a[1], decode(a[2] ?? ''));
       if (node.attrs.has('value')) node.value = node.attrs.get('value');
       if (node.attrs.has('type')) node.type = node.attrs.get('type');
       node.checked = node.attrs.has('checked');
-      node.disabled = node.attrs.has('disabled');
-      node.hidden = node.attrs.has('hidden');
       top.appendChild(node);
       if (!m[3] && !VOID.has(m[1].toLowerCase())) stack.push(node);
     }
@@ -263,39 +308,38 @@ export class FakeElement extends FakeEventTarget {
   appendChild(c) {
     c.parentElement?.removeChild(c);
     c.parentElement = this;
-    this.children.push(c);
+    this.childNodes.push(c);
     return c;
   }
   append(...kids) {
     for (const k of kids) this.appendChild(typeof k === 'string' ? this.ownerDocument.createTextNode(k) : k);
   }
   prepend(...kids) {
-    for (const k of kids.reverse()) this.insertBefore(k, this.firstChild);
+    for (const k of kids.reverse())
+      this.insertBefore(typeof k === 'string' ? this.ownerDocument.createTextNode(k) : k, this.firstChild);
   }
   removeChild(c) {
-    this.children = this.children.filter(x => x !== c);
+    this.childNodes = this.childNodes.filter(x => x !== c);
     c.parentElement = null;
     return c;
   }
   insertBefore(c, ref) {
     this.appendChild(c);
-    this.children.pop();
-    const at = ref ? this.children.indexOf(ref) : -1;
-    this.children.splice(at < 0 ? this.children.length : at, 0, c);
+    this.childNodes.pop();
+    const at = ref ? this.childNodes.indexOf(ref) : -1;
+    this.childNodes.splice(at < 0 ? this.childNodes.length : at, 0, c);
     return c;
   }
   replaceChildren(...kids) {
-    for (const c of this.children) c.parentElement = null;
-    this.children = [];
-    this._text = '';
-    this._html = undefined;
-    for (const k of kids) this.appendChild(k);
+    for (const c of this.childNodes) c.parentElement = null;
+    this.childNodes = [];
+    for (const k of kids) this.appendChild(typeof k === 'string' ? this.ownerDocument.createTextNode(k) : k);
   }
   replaceWith(other) {
     const p = this.parentElement;
     if (!p) return;
     other.parentElement?.removeChild(other);
-    p.children[p.children.indexOf(this)] = other;
+    p.childNodes[p.childNodes.indexOf(this)] = other;
     other.parentElement = p;
     this.parentElement = null;
   }
@@ -340,10 +384,14 @@ export class FakeElement extends FakeEventTarget {
     return this.tagName === 'TEMPLATE' ? this : undefined;
   }
   cloneNode(deep = false) {
-    const copy = this.ownerDocument.createElement(this.tagName.toLowerCase());
+    const tag = this.tagName.toLowerCase();
+    const copy =
+      this.namespaceURI === SVG_NS
+        ? this.ownerDocument.createElementNS(SVG_NS, tag)
+        : this.ownerDocument.createElement(tag);
     for (const [k, v] of this.attrs) copy.attrs.set(k, v);
-    for (const k of ['value', 'checked', 'disabled', 'hidden', 'type', '_text']) copy[k] = this[k];
-    if (deep) for (const c of this.children) copy.appendChild(c.cloneNode(true));
+    for (const k of ['value', 'checked', 'type']) copy[k] = this[k];
+    if (deep) for (const c of this.childNodes) copy.appendChild(c.cloneNode(true));
     return copy;
   }
   getAnimations() {
@@ -373,15 +421,60 @@ export class FakeElement extends FakeEventTarget {
   }
 }
 
-class FakeText extends FakeElement {
+class FakeText extends FakeEventTarget {
   constructor(text, owner) {
-    super('#text', owner);
-    this._text = String(text);
+    super();
+    this.ownerDocument = owner;
+    this.parentElement = null;
+    this.data = String(text);
   }
-  matches() {
-    return false;
+  get nodeType() {
+    return 3;
+  }
+  get eventParent() {
+    return this.parentElement;
+  }
+  get textContent() {
+    return this.data;
+  }
+  set textContent(v) {
+    this.data = v == null ? '' : String(v);
+  }
+  get nextSibling() {
+    const sibs = this.parentElement ? this.parentElement.childNodes : [];
+    return sibs[sibs.indexOf(this) + 1] || null;
+  }
+  remove() {
+    this.parentElement?.removeChild(this);
+  }
+  cloneNode() {
+    return new FakeText(this.data, this.ownerDocument);
   }
 }
+
+class FakeHTMLElement extends FakeElement {
+  get namespaceURI() {
+    return 'http://www.w3.org/1999/xhtml';
+  }
+}
+class FakeHTMLInputElement extends FakeHTMLElement {}
+class FakeHTMLButtonElement extends FakeHTMLElement {}
+class FakeHTMLDialogElement extends FakeHTMLElement {}
+class FakeHTMLIFrameElement extends FakeHTMLElement {}
+class FakeSVGElement extends FakeElement {
+  get namespaceURI() {
+    return SVG_NS;
+  }
+}
+class FakeSVGSVGElement extends FakeSVGElement {}
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const HTML_CLASS = {
+  input: FakeHTMLInputElement,
+  button: FakeHTMLButtonElement,
+  dialog: FakeHTMLDialogElement,
+  iframe: FakeHTMLIFrameElement,
+};
 
 /* Compound selectors joined by descendant or child combinators. */
 function matchesComplex(el, sel, scope) {
@@ -431,19 +524,26 @@ function matchCompound(el, simple, scope) {
 export class FakeDocument extends FakeEventTarget {
   constructor() {
     super();
-    this.documentElement = new FakeElement('html', this);
-    this.head = new FakeElement('head', this);
-    this.body = new FakeElement('body', this);
+    this.documentElement = this.createElement('html');
+    this.head = this.createElement('head');
+    this.body = this.createElement('body');
     this.documentElement.append(this.head, this.body);
     this.activeElement = this.body;
     this.title = '';
     this.hidden = false;
   }
-  createElement(tag) {
-    return new FakeElement(tag, this);
+  get eventParent() {
+    return this.defaultView ?? null;
   }
-  createElementNS(_ns, tag) {
-    return new FakeElement(tag, this);
+  createElement(tag) {
+    const Kind = HTML_CLASS[String(tag).toLowerCase()] || FakeHTMLElement;
+    return new Kind(tag, this);
+  }
+  createElementNS(ns, tag) {
+    if (ns !== SVG_NS) return this.createElement(tag);
+    const el = String(tag).toLowerCase() === 'svg' ? new FakeSVGSVGElement(tag, this) : new FakeSVGElement(tag, this);
+    el.tagName = String(tag);
+    return el;
   }
   createTextNode(text) {
     return new FakeText(text, this);
@@ -557,10 +657,15 @@ export function installDom(opts = {}) {
   });
   put(saved, 'screen', { orientation: new FakeEventTarget() });
   put(saved, 'CSS', { escape: s => s, supports: () => false });
-  put(saved, 'SVGSVGElement', class SVGSVGElement {});
-  for (const name of ['HTMLElement', 'HTMLInputElement', 'HTMLButtonElement', 'HTMLDialogElement', 'HTMLIFrameElement'])
-    put(saved, name, FakeElement);
+  doc.defaultView = win;
   put(saved, 'Element', FakeElement);
+  put(saved, 'HTMLElement', FakeHTMLElement);
+  put(saved, 'HTMLInputElement', FakeHTMLInputElement);
+  put(saved, 'HTMLButtonElement', FakeHTMLButtonElement);
+  put(saved, 'HTMLDialogElement', FakeHTMLDialogElement);
+  put(saved, 'HTMLIFrameElement', FakeHTMLIFrameElement);
+  put(saved, 'SVGElement', FakeSVGElement);
+  put(saved, 'SVGSVGElement', FakeSVGSVGElement);
   if (opts.fetch !== undefined) put(saved, 'fetch', opts.fetch);
   return {
     document: doc,

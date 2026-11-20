@@ -50,7 +50,7 @@ export const syncPickerLabels = () => {
 
 /* A typed password never shows in the row.
    @param {Element} valEl @param {string} value */
-export function renderSecret(valEl, value) {
+function renderSecret(valEl, value) {
   const saved = /** @type {HTMLElement} */ (valEl).dataset.saved;
   valEl.textContent = value ? t('widgetCfg.newValueSet') : saved || t('common.notSet');
   valEl.classList.toggle('is-ph', !value && !saved);
@@ -253,7 +253,7 @@ function initWallpaperUpload() {
     image from any other origin.
 
     @param {string} url @returns {Promise<void>} */
-export async function fetchWallpaperLink(url) {
+async function fetchWallpaperLink(url) {
   if (!url || url.startsWith('/icons/')) return;
   try {
     const r = await fetch('/api/wallpaper/fetch', {

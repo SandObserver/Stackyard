@@ -1,11 +1,11 @@
 import { checkAuth, requireLogin } from '/js/admin-auth.js?v=44b293fb';
-import { initEditor, openEditor, openFolderPicker, wireListButtons } from '/js/admin-editor.js?v=79ad4e13';
+import { initEditor, openEditor, openFolderPicker, wireListButtons } from '/js/admin-editor.js?v=fe75aa3b';
 import { initList, render, wireFilter } from '/js/admin-list.js?v=39f4ceb6';
-import { createListWrites } from '/js/admin-list-writes.js?v=5f76b6a3';
+import { createListWrites } from '/js/admin-list-writes.js?v=d01b1e73';
 import { animateNavIcons, initNav } from '/js/admin-nav.js?v=7411f13b';
-import { createPageLoad } from '/js/admin-page-load.js?v=41c2eeb6';
+import { createPageLoad } from '/js/admin-page-load.js?v=0613095e';
 import { settingsDirty } from '/js/admin-settings.js?v=ba74012e';
-import { initSettingsControls } from '/js/admin-settings-controls.js?v=ccb61d28';
+import { initSettingsControls } from '/js/admin-settings-controls.js?v=abbaa296';
 import { setReauthHandler } from '/js/admin-shared.js?v=14e96406';
 import { wireTransfer } from '/js/admin-transfer.js?v=44da8f4b';
 import { recoveryShown } from '/js/config-recovery.js?v=797944ce';

@@ -23,7 +23,7 @@ import { t } from '/js/i18n.js?v=99563c71';
 import { isolate } from '/js/utils.js?v=c1d4e76c';
 
 /** @param {unknown} url @returns {Promise<boolean>} whether `url` names an uploaded wallpaper the server answers 404 for */
-export async function wallpaperMissing(url) {
+async function wallpaperMissing(url) {
   if (typeof url !== 'string' || !url.startsWith('/icons/wallpaper/')) return false;
   try {
     return (await fetch(url, { method: 'HEAD', cache: 'no-store' })).status === 404;

@@ -46,8 +46,8 @@ let _page = { saveOrRevert: async () => false };
 
 let _keyboardPress = false;
 
-/** Wire the list buttons that open the editor, and track whether the last
-    click came from a keyboard.
+/** Track whether the last click came from a keyboard. The listener runs in
+    the capture phase, before the click handler that opens the editor.
     @param {EditorPage} page */
 export function initEditor(page) {
   _page = page;
@@ -85,7 +85,7 @@ function showEditView() {
 /* Read at draw time. The catalog is not loaded when this module evaluates. */
 const typeLabels = () => ({ app: t('type.app'), widget: t('type.widget'), folder: t('type.folder') });
 
-export function buildAddNewCard() {
+function buildAddNewCard() {
   const grp = document.createElement('div');
   grp.className = 'grp add-new-card';
   const row = document.createElement('div');
@@ -227,7 +227,7 @@ export function openEditor(id) {
 }
 
 /** @param {any} item the item the editor was opened on */
-export async function deleteItem(item) {
+async function deleteItem(item) {
   if (!item) return;
   const isFolder = item.type === 'folder';
   const ok = await confirmText({
@@ -249,7 +249,7 @@ export async function deleteItem(item) {
 }
 
 /** @param {string|null} [focusId] the item whose row takes focus */
-export function closeEditor(focusId = state.eid) {
+function closeEditor(focusId = state.eid) {
   showListView(focusId);
   state.eid = null;
   state._wtype = 'custom';
@@ -438,7 +438,7 @@ export function readItem(orig) {
 }
 
 /** @param {any} orig the item the editor was opened on, or null for a new one */
-export async function saveItem(orig) {
+async function saveItem(orig) {
   clearFieldErrors(el('ev-body'));
   try {
     const item = readItem(orig);

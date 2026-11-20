@@ -50,11 +50,12 @@ const { initI18n, t } = await import('../js/i18n.js');
 await initI18n('en');
 const { filter, state } = await import('../js/admin-state.js');
 const listMod = await import('../js/admin-list.js');
-const { initEditor, openEditor } = await import('../js/admin-editor.js');
+const { initEditor, wireListButtons } = await import('../js/admin-editor.js');
 const { initNav } = await import('../js/admin-nav.js');
 listMod.initList({ openModal: () => {}, openFolderPicker: () => {}, save: async () => true });
 listMod.wireFilter();
 initEditor({ saveOrRevert: async () => true });
+wireListButtons();
 initNav();
 
 const byId = id => dom.document.getElementById(id);
@@ -135,12 +136,11 @@ test('a keyboard press switches sections and pushes the editor without animation
   assert.equal(general.length, 1, 'a pointer switch did not fade the section in');
 
   const edit = animations(byId('dash-edit-view'));
-  dom.document.dispatchEvent({ type: 'click', detail: 0 });
-  openEditor(null);
-  assert.equal(edit.length, 0, 'a keyboard press animated the editor in');
-  dom.document.dispatchEvent({ type: 'click', detail: 1 });
-  openEditor(null);
-  assert.equal(edit.length, 1, 'a pointer press did not animate the editor in');
+  byId('btn-add').dispatchEvent({ type: 'click', bubbles: true, detail: 0 });
+  assert.equal(byId('dash-edit-view').classList.contains('d-none'), false, 'Add did not open the editor');
+  assert.equal(edit.length, 0, 'a keyboard press on Add animated the editor in');
+  byId('btn-add').dispatchEvent({ type: 'click', bubbles: true, detail: 1 });
+  assert.equal(edit.length, 1, 'a pointer press on Add did not animate the editor in');
 
   const glide = read('../js/glide-select.js');
   assert.match(glide, /pill\.classList\.add\('mp-snap'\)/);

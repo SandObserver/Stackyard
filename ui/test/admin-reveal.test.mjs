@@ -17,14 +17,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 const css = read('css/admin.css');
 const html = read('admin/index.html');
-const js = [
-  'js/admin.js',
-  'js/admin-settings-controls.js',
-  'js/admin-settings.js',
-  'js/admin-color-control.js',
-  'js/admin-shared.js',
-]
-  .map(f => read(f))
+const js = fs
+  .readdirSync(path.join(root, 'js'))
+  .filter(f => /^admin.*\.js$/.test(f))
+  .map(f => read(`js/${f}`))
   .join('\n');
 
 test('every disclosure wrapper holds an inner element', () => {
