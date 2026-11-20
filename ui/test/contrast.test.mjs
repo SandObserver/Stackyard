@@ -200,6 +200,7 @@ const TINTED = [
   ['--chip-sy-fg', '--chip-sy-bg', 'the system-item pill'],
   ['--chip-hd-fg', '--chip-hd-bg', 'the hidden pill'],
   ['--chip-text', '--btn-fill', 'an unselected filter chip'],
+  ['--btn-danger-ink', '--btn-danger-fill', 'a destructive button'],
 ];
 
 const TINT_BACKDROPS = ['--pane', '--cp'];
