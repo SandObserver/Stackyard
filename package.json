@@ -2,11 +2,19 @@
   "name": "stackyard-dev",
   "private": true,
   "description": "Dev-only tooling (lint, backend typecheck, frontend path resolution). Not shipped: the Docker image copies only api/ and ui/, never the repo root.",
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=26",
+      "onFail": "warn"
+    }
+  },
   "scripts": {
     "format": "biome format --write .",
     "format:check": "biome format .",
     "lint": "biome lint --error-on-warnings .",
     "paths:check": "node scripts/check-frontend-paths.js",
+    "test": "(cd api && npm test) && (cd ui/test && node --test) && (cd test/repo && node --test)",
     "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json",
     "typecheck:ui": "node node_modules/typescript/bin/tsc -p tsconfig.frontend.json"
   },

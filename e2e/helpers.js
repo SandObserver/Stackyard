@@ -4,10 +4,19 @@
 
 const { expect } = require('@playwright/test');
 const { BASE_URL } = require('./base-url');
+const { SEED_MARK, mayReplace } = require('./seed-guard');
 
 /** Replace the whole config. @param {import('@playwright/test').APIRequestContext} request */
 async function seedConfig(request, config) {
-  const body = { _schemaVersion: 3, items: [], settings: {}, ...config };
+  const stored = await request.get('/api/config');
+  expect(stored.ok(), `reading config before seeding failed: ${stored.status()}`).toBeTruthy();
+  if (!mayReplace(await stored.json())) {
+    throw new Error(
+      `${BASE_URL} holds items the suite did not write. Seeding replaces the whole config. ` +
+        'Point BASE_URL at a throwaway container, or set E2E_ALLOW_WIPE=1.',
+    );
+  }
+  const body = { _schemaVersion: 3, items: [], settings: {}, ...config, [SEED_MARK]: true };
   /* A write must state its origin. This request context is not a page. */
   const res = await request.post('/api/config', { data: body, headers: { Origin: BASE_URL } });
   expect(res.ok(), `seeding failed: ${res.status()} ${await res.text()}`).toBeTruthy();
