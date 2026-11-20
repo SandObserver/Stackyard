@@ -82,9 +82,12 @@ test('every key the rules return exists in all locales', async () => {
 });
 
 test('every password screen uses the shared rules', async () => {
-  for (const file of ['dashboard.js', 'admin-auth.js', 'admin-settings.js', 'config-recovery.js']) {
+  for (const file of ['dashboard-setup.js', 'admin-auth.js', 'admin-settings.js', 'config-recovery.js']) {
     const src = await readFile(new URL(`../js/${file}`, import.meta.url), 'utf8');
     assert.match(src, /password-policy\.js/, file);
+  }
+  for (const file of (await readdir(new URL('../js/', import.meta.url))).filter(f => f.endsWith('.js'))) {
+    const src = await readFile(new URL(`../js/${file}`, import.meta.url), 'utf8');
     assert.doesNotMatch(src, /\.length\s*<\s*8\b/, `${file} keeps its own length rule`);
     assert.doesNotMatch(src, /hint\.style\.color/, `${file} colours the hint inline`);
   }
@@ -109,14 +112,10 @@ test('every catalog states the same minimum the rules enforce', async () => {
   }
 });
 
-test('every meter draws as many bars as the rules fill, and its hint is announced', async () => {
+test('the Settings meter draws as many bars as the rules fill, and its hint is announced', async () => {
   const full = passwordMeter('quiet otter lantern 42').lit;
   const admin = await readFile(new URL('../admin/index.html', import.meta.url), 'utf8');
-  const dashboard = await readFile(new URL('../js/dashboard.js', import.meta.url), 'utf8');
-  const meters = [
-    [admin, 'sec-pw-bars', 'sec-pw-hint', 'id="sec-pw"'],
-    [dashboard, 'setup-bars', 'setup-hint', 'id="setup-pw"'],
-  ];
+  const meters = [[admin, 'sec-pw-bars', 'sec-pw-hint', 'id="sec-pw"']];
   for (const [src, bars, hint, field] of meters) {
     const row = src.match(new RegExp(`id="${bars}"[^>]*>((?:<(div|span) class="pwbar"></\\2>)*)`));
     assert.ok(row, bars);

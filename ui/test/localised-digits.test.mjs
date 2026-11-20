@@ -107,7 +107,6 @@ test('the badge takes its formatter by injection, not by import', () => {
   assert.doesNotMatch(logic, /^import /m, 'the file must stay import-free');
   assert.match(logic, /format\?: \(value: number\) => string/, 'the option is undeclared');
   assert.match(logic, /typeof format === 'function' \? format : v => String\(v\)/, 'no Latin-digit fallback');
-  assert.match(read('js/dashboard.js'), /format: formatNumber/, 'the dashboard passes nothing in');
 });
 
 test('widgets take it from the toolbox rather than each inventing one', () => {

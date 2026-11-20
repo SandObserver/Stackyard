@@ -22,7 +22,7 @@
      dashboard.js takes it from window. */
   const timeoutMs = 15000;
   /** @type {any} */ (window).__bootTimeoutMs = timeoutMs;
-  /* dashboard.js reads window.__early once and clears it. */
+  /* dashboard-boot.js reads window.__early once and clears it. */
   const script = document.currentScript;
   if (script && 'early' in script.dataset) {
     const get = (url, timed) => {

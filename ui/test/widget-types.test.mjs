@@ -99,19 +99,21 @@ test('the frame URL and every layout reader agree on the size of an item with no
   const size = new URL(widgetSrc({ id: 'a', widgetType: 'system-summary' }, REG), 'http://x').searchParams.get('size');
   assert.equal(size, DEFAULT_WIDGET_SIZE);
   const readers = [
-    'js/dashboard.js',
-    'js/ui.js',
-    'js/admin-list.js',
-    'js/admin-widget-form.js',
-    'js/widget-types.js',
+    ...fs
+      .readdirSync(new URL('../js/', import.meta.url))
+      .filter(f => f.endsWith('.js'))
+      .map(f => `js/${f}`),
     '../api/src/routes/system.js',
   ];
+  const reading = [];
   for (const file of readers) {
     const src = fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
     const fallbacks = src.match(/widgetSize \|\| [^\s,;)]+/g) || [];
-    assert.ok(fallbacks.length, `${file} reads no widget size`);
+    if (fallbacks.length) reading.push(file);
     for (const f of fallbacks) assert.equal(f.split('|| ')[1], 'DEFAULT_WIDGET_SIZE', `${file}: ${f}`);
   }
+  for (const file of ['js/dashboard-grid.js', 'js/ui.js', 'js/admin-list.js', 'js/admin-widget-form.js'])
+    assert.ok(reading.includes(file), `${file} reads no widget size`);
 });
 
 test('opts.mobile appends the mobile flag', () => {

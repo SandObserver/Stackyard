@@ -41,7 +41,7 @@ globalThis.document = {
   createElement: el,
 };
 
-const { mountScaledWidget } = await import('../js/utils.js');
+const { mountScaledWidget } = await import('../js/widget-frame.js');
 
 const mount = iframeOpts => {
   mountScaledWidget(el('div'), { src: 'https://media.example/embed', title: 'w', design: [200, 100], iframeOpts });

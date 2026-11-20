@@ -1,4 +1,4 @@
-import { wirePasswordStrength } from '/js/admin-auth.js?v=44b293fb';
+import { wirePasswordStrength } from '/js/admin-auth.js?v=3a0626ee';
 import {
   applyHealthChecks,
   savedWallpaperUrl,
@@ -6,7 +6,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=ba74012e';
+} from '/js/admin-settings.js?v=bdee547c';
 import {
   clearFieldError,
   errorText,
@@ -15,9 +15,9 @@ import {
   reveal,
   showFieldError,
   toast,
-} from '/js/admin-shared.js?v=14e96406';
+} from '/js/admin-shared.js?v=d78607eb';
 import { LANGUAGES, t } from '/js/i18n.js?v=99563c71';
-import { createListbox } from '/js/listbox.js?v=1214e150';
+import { createListbox } from '/js/listbox.js?v=5f208483';
 import { passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
 import {
@@ -33,7 +33,7 @@ import {
   writeMode,
   writeReduceTransparency,
 } from '/js/theme.js?v=0bbd81e8';
-import { el, inp, qa, setUserText } from '/js/utils.js?v=c1d4e76c';
+import { el, inp, qa, setUserText } from '/js/utils.js?v=9ed2b298';
 
 /* The pickers are built before the catalog loads, so each registers how to
    relabel itself. Without this their options read as raw keys. */

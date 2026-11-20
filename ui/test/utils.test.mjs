@@ -1,9 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
+import { installDom } from './fake-dom.mjs';
 
 /* utils.js imports a peer by its served path ('/js/icons.js?v=69c2b9bd...'), which Node
    cannot resolve from disk. Register the mapping hook in THIS process, then load
@@ -11,7 +9,8 @@ import { register } from 'node:module';
    here (rather than via --import) keeps it working under the test runner's
    per-file child processes. */
 register('./js-root-hooks.mjs', import.meta.url);
-const { clr, esc, initial, isolate, sanitizeCssUrl, safeAllow } = await import('../js/utils.js');
+const { clr, esc, initial, isolate, sanitizeCssUrl } = await import('../js/utils.js');
+const { safeAllow } = await import('../js/widget-frame.js');
 
 test('clr maps the sentinel color names to concrete hex', () => {
   assert.equal(clr('dark'), '#1C1C1E');
@@ -121,20 +120,27 @@ test('safeAllow withholds fullscreen when the frame may not go fullscreen', () =
   assert.equal(safeAllow(undefined, false), '');
 });
 
-const uiRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const read = f => fs.readFileSync(path.join(uiRoot, f), 'utf8');
-
 /* ── A card can never clip the widget it holds ────────────────────────────── */
 
 /* Desktop widget heights are fixed while their widths follow the grid, so a
    card's aspect drifts from the widget's design aspect. Cover crops the
    difference and the card clips what it crops. Contain is identical wherever
    the aspects match. */
-test('the widget is contained by its card, not cropped to it', () => {
-  const src = read('js/utils.js');
-  const fit = src.slice(src.indexOf('const place = frame =>'), src.indexOf('const fit = () =>'));
-  assert.match(fit, /Math\.min\(w \/ dw, h \/ dh\)/, 'cover lets a card clip its own widget');
-  assert.doesNotMatch(fit, /Math\.max\(w \/ dw, h \/ dh\)/);
+test('the widget is contained by its card, not cropped to it', async () => {
+  const dom = installDom({ location: 'http://nas.local/' });
+  try {
+    const { mountScaledWidget, teardownWidgets } = await import('../js/widget-frame.js');
+    const card = dom.document.createElement('div');
+    Object.defineProperties(card, { clientWidth: { value: 330 }, clientHeight: { value: 150 } });
+    mountScaledWidget(card, { src: '/grafana/d/abc', title: 'Grafana', design: [360, 170] });
+    const frame = card.querySelector('iframe');
+    const scale = Number(/scale\(([\d.]+)\)/.exec(frame.style.transform)?.[1]);
+    assert.equal(scale, Math.min(330 / 360, 150 / 170), 'cover lets a card clip its own widget');
+    assert.ok(170 * scale <= 150, `the widget renders ${170 * scale} tall in a 150 card`);
+    teardownWidgets();
+  } finally {
+    dom.restore();
+  }
 });
 
 test('a drifting aspect letterboxes instead of clipping', () => {
@@ -194,10 +200,20 @@ test('a title it did not set is left alone', async () => {
   assert.equal(tile.title, 'Something else');
 });
 
-test('the layout runs the pass when it tones the labels', () => {
-  const dash = read('js/dashboard.js');
-  const retone = dash.slice(dash.indexOf('function retone()'), dash.indexOf('function retone()') + 320);
-  assert.match(retone, /titleWhenTruncated\(\)/, 'nothing re-runs it on a rebuild or a resize');
+test('the layout runs the pass when it tones the labels', async () => {
+  const dom = installDom({ markup: '<a id="t"><div class="ilabel">Backup and Storage</div></a>' });
+  try {
+    const { createWallpaper } = await import('../js/dashboard-wallpaper.js');
+    const { createDashboardState } = await import('../js/dashboard-state.js');
+    const label = dom.document.querySelector('.ilabel');
+    Object.defineProperties(label, { scrollWidth: { value: 180 }, clientWidth: { value: 72 } });
+    createWallpaper(createDashboardState()).retone();
+    assert.equal(dom.document.getElementById('t').title, '', 'set before the layout is drawn');
+    dom.flushFrames();
+    assert.equal(dom.document.getElementById('t').title, 'Backup and Storage', 'nothing re-runs it on a rebuild');
+  } finally {
+    dom.restore();
+  }
 });
 
 test('clr resolves palette names and tile keywords for the page theme', () => {

@@ -5,33 +5,128 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
 
+import { fakeFetch, installDom, pageBody } from './fake-dom.mjs';
+
 register('./js-root-hooks.mjs', import.meta.url);
-globalThis.location = { search: '?id=test' };
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
-const dashboard = read('js/dashboard.js');
 const css = read('css/dashboard.css');
 
+globalThis.location = { search: '?id=test' };
+globalThis.window = { matchMedia: () => ({ matches: false }) };
+globalThis.document = { createElement: () => ({}), getElementById: () => null, head: { appendChild() {} } };
+const { rollDirection, rollText } = await import('../js/widget-toolbox.js');
+const { formatNumber, setNumberLanguage } = await import('../js/format-number.js');
+
+const api = { '/api/badges': {}, '/api/health': {} };
+const fetch = fakeFetch({ '/api/badges': () => api['/api/badges'], '/api/health': () => api['/api/health'] });
+const dom = installDom({ markup: pageBody('index.html'), fetch, location: 'http://nas.local/?id=test' });
+const doc = dom.document;
+/* A 2d context that reads #rrggbb, so a plate colour has a measurable tone. */
+const createElement = doc.createElement.bind(doc);
+doc.createElement = tag => {
+  const node = createElement(tag);
+  if (tag !== 'canvas') return node;
+  let fill = '#000000';
+  const ctx = {
+    set fillStyle(v) {
+      if (/^#[0-9a-f]{6}$/i.test(v)) fill = v;
+    },
+    get fillStyle() {
+      return fill;
+    },
+    clearRect() {},
+    fillRect() {},
+    getImageData: () => ({ data: [1, 3, 5].map(i => parseInt(fill.slice(i, i + 2), 16)) }),
+  };
+  node.getContext = () => ctx;
+  return node;
+};
+const { createDashboardState } = await import('../js/dashboard-state.js');
+const { createPager } = await import('../js/dashboard-pager.js');
+const { createBadges } = await import('../js/dashboard-badges.js');
+const { createWallpaper } = await import('../js/dashboard-wallpaper.js');
+const { wireThemeChanges } = await import('../js/dashboard-theme.js');
+const { THEME_KEY } = await import('../js/theme.js');
+const { mkWrap } = await import('../js/utils.js');
+const popover = await import('../js/badge-popover.js');
+/* fake-dom reads no :popover-open. The popover tracks its own open state. */
+popover.wireBadgePopover(doc.createElement('div'), [{ name: 'x', value: 1, unit: '', color: '' }]);
+const pop = doc.getElementById('badge-pop');
+const popMatches = pop.matches.bind(pop);
+pop.matches = sel => (sel === ':popover-open' ? pop.hasAttribute('data-open') : popMatches(sel));
+pop.showPopover = () => pop.setAttribute('data-open', '');
+pop.hidePopover = () => pop.removeAttribute('data-open');
+const ticks = async (n = 8) => {
+  for (let i = 0; i < n; i++) await Promise.resolve();
+};
+
+const themeCalls = [];
+wireThemeChanges({ refreshBadges: () => themeCalls.push('badges'), applyBg: () => themeCalls.push('wallpaper') });
+const themeChange = mode => {
+  dom.storage.set(THEME_KEY, mode);
+  dom.window.dispatchEvent({ type: 'storage', key: THEME_KEY });
+};
+
 test('a theme change repaints in place and never rebuilds the widgets', () => {
-  const body = dashboard.slice(
-    dashboard.indexOf('const retheme = () => {'),
-    dashboard.indexOf('try {\n    matchMedia'),
-  );
-  assert.ok(body.length > 0, 'the theme handler moved');
-  assert.doesNotMatch(body, /buildLayout\(|buildDesktop\(|buildMobile\(/);
-  assert.match(body, /rethemeTiles\(\)/);
-  assert.match(body, /rethemeFrames\(\)/);
-  assert.match(dashboard, /const rethemeFrames = \(\) => \{[\s\S]{0,200}__applyHostTheme/);
-  assert.match(body, /startViewTransition/);
+  const strip = doc.getElementById('pages');
+  strip.innerHTML = '<div class="page"><div class="plate" data-color="auto"></div><iframe></iframe></div>';
+  const page = strip.firstElementChild;
+  const frame = doc.querySelector('iframe');
+  let framed = 0;
+  frame.contentWindow = { __applyHostTheme: () => framed++ };
+  const views = [];
+  doc.startViewTransition = fn => {
+    views.push(fn);
+    fn();
+  };
+  themeCalls.length = 0;
+  themeChange('light');
+  assert.equal(views.length, 1, 'the change does not crossfade');
+  assert.equal(doc.documentElement.getAttribute('data-theme'), 'light');
+  assert.equal(doc.querySelector('.plate').style.getPropertyValue('--tc'), '#F2F2F7', 'a tile kept its old colour');
+  assert.equal(framed, 1, 'a widget frame kept its old theme');
+  assert.deepEqual(themeCalls, ['badges', 'wallpaper']);
+  assert.equal(strip.firstElementChild, page, 'the theme change rebuilt the page');
+  assert.equal(doc.querySelector('iframe'), frame);
+  themeChange('other tab');
+  dom.window.dispatchEvent({ type: 'storage', key: 'other' });
+  assert.equal(views.length, 2, 'an unrelated storage key ran the theme change');
+  delete doc.startViewTransition;
+  themeChange('dark');
+  assert.equal(doc.documentElement.getAttribute('data-theme'), 'dark', 'no view transition, no theme change');
+});
+
+test('a widget frame is told when reduced transparency changes', async () => {
+  const frame = doc.querySelector('iframe');
+  let framed = 0;
+  frame.contentWindow = { __applyHostTheme: () => framed++ };
+  doc.documentElement.setAttribute('data-transparency', 'reduce');
+  await ticks();
+  assert.equal(framed, 1);
+  doc.documentElement.setAttribute('data-other', 'x');
+  await ticks();
+  assert.equal(framed, 1);
 });
 
 /* The tile outlives a theme change now, so a colour read when it was built is stale. */
 test('a letter drawn after an icon fails reads the plate colour of the current theme', () => {
-  const utils = read('js/utils.js');
-  const failures = utils.match(/img\.replaceWith\(letterTile\([^)]*\)+/g) ?? [];
-  assert.equal(failures.length, 2, 'the icon failure paths moved');
-  for (const call of failures) assert.match(call, /letterTile\(item\.label, sz, clr\(colour\)\)/);
+  for (const item of [
+    { id: 'a', label: 'Alpha', color: 'auto', iconUrl: 'http://icons.local/a.png' },
+    { id: 's', label: 'Settings', system: 'settings' },
+  ]) {
+    doc.documentElement.setAttribute('data-theme', 'dark');
+    const plate = mkWrap(item, 72, 19, 50, 'iwrap');
+    const img = plate.querySelector('img');
+    doc.documentElement.setAttribute('data-theme', 'light');
+    while (plate.querySelector('img')) plate.querySelector('img').onerror();
+    const letter = plate.querySelector('.fb');
+    assert.ok(letter, `${item.id} drew no letter`);
+    assert.ok(letter.classList.contains('fb-on-light'), `${item.id} took the dark plate it was built on`);
+    assert.ok(img);
+  }
+  doc.documentElement.setAttribute('data-theme', 'dark');
 });
 
 test('a widget frame can take a new theme without reloading', () => {
@@ -52,48 +147,143 @@ test('a running poll draws its last data again when the theme changes', () => {
   assert.match(src, /_themed\.delete\(onTheme\)/, 'a stopped poll would keep drawing');
 });
 
-test('a badge scales in only on a live change, scales out and crossfades its colour', () => {
+test('a badge scales in only on a live change, scales out and crossfades its colour', async () => {
   assert.doesNotMatch(css, /animation:badge-in/, 'every rebuild would pop every badge');
-  assert.match(dashboard, /const entering = !_firstPolls && painted && !badge\.classList\.contains\('on'\)/);
-  assert.match(dashboard, /transform: 'translateZ\(0\) scale\(\.8\)'/);
   assert.match(css, /\.badge \{[^}]*transition:background-color \.2s ease;/);
-  assert.match(dashboard, /BEXIT\.get\(badge\)\?\.cancel\(\);/, 'a late exit would paint over a newer value');
+  const dash = createDashboardState();
+  dash.items = [{ id: 'a', type: 'app', label: 'A', monitoring: { activity: { enabled: true } } }];
+  const badges = createBadges(dash);
+  const tile = doc.createElement('a');
+  tile.dataset.tileName = 'A';
+  const badge = doc.createElement('div');
+  tile.appendChild(badge);
+  doc.body.appendChild(tile);
+  const anims = [];
+  badge.animate = (frames, opts) => {
+    const a = { frames, opts, cancelled: false, onfinish: null };
+    a.cancel = () => {
+      a.cancelled = true;
+    };
+    anims.push(a);
+    return a;
+  };
+  const poll = async value => {
+    api['/api/badges'] = { a: { value } };
+    await badges.pollBadges();
+  };
+  badges.breg('a', badge);
+  await poll(3);
+  await poll(4);
+  assert.ok(badge.classList.contains('on'));
+  assert.equal(anims.length, 0, 'a badge the first polls find popped in');
+  await poll(0);
+  const exit = anims.at(-1);
+  assert.deepEqual(exit.frames.at(-1), { opacity: 0, transform: 'translateZ(0) scale(.6)' });
+  assert.ok(badge.classList.contains('on'), 'the badge vanished before it scaled out');
+  await poll(5);
+  assert.equal(exit.cancelled, true, 'a late exit would paint over a newer value');
+  assert.equal(badge.textContent, '5');
+  await poll(0);
+  anims.at(-1).onfinish();
+  assert.ok(!badge.classList.contains('on'));
+  await poll(7);
+  assert.deepEqual(
+    anims.at(-1).frames[0],
+    { opacity: 0, transform: 'translateZ(0) scale(.8)' },
+    'a live change does not scale in',
+  );
+  tile.remove();
 });
 
-test('the wallpaper appears with the first view, and fades in only when it arrives late', () => {
+/** An Image whose decode the test settles. */
+const decodes = [];
+globalThis.Image = class {
+  constructor() {
+    this.naturalWidth = 0;
+    this.complete = false;
+  }
+  decode() {
+    return new Promise((resolve, reject) => decodes.push({ src: this.src, resolve, reject }));
+  }
+};
+const settleDecode = async src => {
+  decodes.find(d => d.src.endsWith(src)).resolve();
+  await ticks(20);
+};
+
+test('the wallpaper paints once decoded, and fades in only when it arrives late', async () => {
   const tokens = fs.readFileSync(new URL('../css/tokens.css', import.meta.url), 'utf8');
   assert.match(tokens, /html\.wall-in::before \{ animation:wall-in \.4s ease-out \}/);
   assert.match(css, /html\.wall-swap::after \{[^}]*background-image:var\(--bg-prev-image,none\)/);
-  const show = dashboard.slice(dashboard.indexOf('async function showWallpaper('));
-  const decode = show.indexOf('await decoded(bg.url)');
-  const paint = show.indexOf('applyBackground(root, bg)');
-  const veil = show.indexOf("if (!prev && !document.body.classList.contains('ready')) return;");
-  const fade = show.indexOf("const cls = prev ? 'wall-swap' : 'wall-in';");
-  assert.ok(decode > 0 && decode < paint && paint < veil && veil < fade, 'a fade under the veil is never seen');
-  assert.match(dashboard, /await within\(\s*firstBuild\.then[\s\S]{0,160}firstViewWait\(\),\s*\);\s*liftVeil\(\);/);
+  const html = doc.documentElement;
+  const dash = createDashboardState();
+  const wall = createWallpaper(dash);
+  dash.S = { background: { type: 'url', url: '/wall/one.jpg' } };
+  doc.body.classList.remove('ready');
+  const first = wall.applyBg();
+  await ticks();
+  assert.equal(html.style.getPropertyValue('--bg-image'), '', 'the wallpaper painted before it decoded');
+  await settleDecode('/wall/one.jpg');
+  await first;
+  assert.match(html.style.getPropertyValue('--bg-image'), /one\.jpg/);
+  assert.ok(!html.classList.contains('wall-in'), 'a fade under the veil is never seen');
+  doc.body.classList.add('ready');
+  dash.S = { background: { type: 'url', url: '/wall/two.jpg' } };
+  const second = wall.applyBg();
+  await ticks();
+  await settleDecode('/wall/two.jpg');
+  await second;
+  assert.match(html.style.getPropertyValue('--bg-prev-image'), /one\.jpg/);
+  assert.match(html.style.getPropertyValue('--bg-image'), /two\.jpg/);
+  assert.ok(html.classList.contains('wall-swap'));
+  html.classList.remove('wall-swap');
 });
 
-test('the theme crossfade lasts 300 ms and waits for a hidden page', () => {
+test('a newer wallpaper wins over one still decoding', async () => {
+  const html = doc.documentElement;
+  const dash = createDashboardState();
+  const wall = createWallpaper(dash);
+  dash.S = { background: { type: 'url', url: '/wall/slow.jpg' } };
+  const slow = wall.applyBg();
+  await ticks();
+  dash.S = { background: { type: 'color', color: '#203040' } };
+  await wall.applyBg();
+  await settleDecode('/wall/slow.jpg');
+  await slow;
+  assert.doesNotMatch(html.style.getPropertyValue('--bg-image'), /slow/);
+});
+
+test('the theme crossfade lasts 300 ms and waits for a hidden page', async () => {
   assert.match(css, /::view-transition-old\(root\), ::view-transition-new\(root\) \{ animation-duration:\.3s/);
-  assert.match(
-    dashboard,
-    /if \(document\.hidden\) \{[\s\S]{0,200}addEventListener\(\s*'visibilitychange'/,
-    'a theme set from another tab would switch unseen',
-  );
+  doc.hidden = true;
+  themeCalls.length = 0;
+  themeChange('light');
+  themeChange('dark');
+  assert.deepEqual(themeCalls, [], 'a theme set from another tab would switch unseen');
+  doc.hidden = false;
+  doc.dispatchEvent({ type: 'visibilitychange' });
+  assert.deepEqual(themeCalls, ['badges', 'wallpaper'], 'the waiting change ran more than once');
+  doc.dispatchEvent({ type: 'visibilitychange' });
+  assert.equal(themeCalls.length, 2);
 });
 
 test('the phone page control is an input a screen reader can adjust', () => {
   const page = read('index.html');
   assert.match(page, /<input id="mob-pager" class="visually-hidden" type="range"[^>]*data-i18n-al="home\.pageControl"/);
   assert.match(page, /<input id="mob-pager"[^>]*tabindex="-1"/, 'Tab would land on a control no one can see');
-  assert.match(
-    dashboard,
-    /if \(e\.key === 'ArrowRight'\) goTo\(pg \+ pageDir\(\)\);/,
-    'the keyboard pages without the control',
-  );
-  assert.match(dashboard, /pager\.setAttribute\(\s*'aria-valuetext',\s*t\('home\.pageAnnounce'/);
-  assert.match(dashboard, /pager\.addEventListener\('input', \(\) => goTo\(Number\(pager\.value\) - 1, false\)\)/);
-  assert.match(dashboard, /if \(e\.target === pager\) return;/, 'an arrow key would turn two pages');
+  const dash = createDashboardState({ mob: true });
+  dash.totalPages = 3;
+  const strip = doc.getElementById('pages');
+  strip.innerHTML = '<div></div><div></div><div></div>';
+  createPager(dash).goTo(1);
+  const pager = doc.getElementById('mob-pager');
+  assert.equal(pager.hidden, false);
+  assert.equal(pager.max, '3');
+  assert.equal(pager.value, '2');
+  assert.equal(pager.getAttribute('aria-valuetext'), 'home.pageAnnounce');
+  dash.mob = false;
+  createPager(dash).goTo(1);
+  assert.equal(pager.hidden, true, 'the desktop layout shows the phone control');
 });
 
 test('search shows the real Settings icon', () => {
@@ -115,9 +305,6 @@ test('widgets with a large live figure roll it', () => {
 });
 
 /* Enough of a DOM for rollText's first write. */
-globalThis.window = { matchMedia: () => ({ matches: false }) };
-globalThis.document = { createElement: () => ({}), getElementById: () => null, head: { appendChild() {} } };
-const { rollDirection, rollText } = await import('../js/widget-toolbox.js');
 
 test('a figure that grows rolls up, one that shrinks rolls down', () => {
   assert.equal(rollDirection('11%', '14%'), true);
@@ -131,8 +318,6 @@ test('a Persian figure rolls in the direction its digits moved', () => {
   assert.equal(rollDirection('٤٢٪', '٤١٪'), false, 'Arabic-Indic digits read the same');
   assert.equal(rollDirection('۴۲٫۵', '۴۲٫۱'), false, 'the Persian decimal separator keeps the fraction');
 });
-
-const { formatNumber, setNumberLanguage } = await import('../js/format-number.js');
 
 /** @param {string} tag the reader's locale @param {string} language the interface language */
 function inLocale(tag, language, fn) {
@@ -287,14 +472,35 @@ test('folder pages are reachable without touch', () => {
   assert.match(ui, /const d = mk\('button'\);\s*d\.type = 'button';\s*d\.className = 'folder-dot dyn-dot';/);
   assert.match(ui, /e\.key !== 'ArrowRight' && e\.key !== 'ArrowLeft'/);
   assert.match(ui, /focus\(\{ preventScroll: true \}\)/, 'a focus scroll knocks the clipped strip off its page');
-  assert.match(
-    dashboard,
-    /if \(document\.querySelector\('\.folder-overlay\[open\], \.folder-overlay-mobile\[open\]'\)\) return;\s*if \(e\.key === 'ArrowRight'\)/,
-  );
 });
 
-test('a page turn closes the badge popover', () => {
-  assert.match(dashboard, /if \(pg !== was\) closeBadgePopover\(\);/);
+test('a page turn closes the badge popover', t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { wireBadgePopover } = popover;
+  const tile = doc.createElement('a');
+  const badge = doc.createElement('div');
+  badge.className = 'badge';
+  tile.appendChild(badge);
+  doc.getElementById('pages').firstElementChild.appendChild(tile);
+  wireBadgePopover(badge, [{ name: 'Queue', value: 3, unit: '', color: '' }]);
+  const dash = createDashboardState();
+  dash.totalPages = 3;
+  const { goTo } = createPager(dash);
+  const hover = () => {
+    badge.dispatchEvent({ type: 'pointerenter', pointerType: 'mouse' });
+    t.mock.timers.tick(400);
+  };
+  hover();
+  assert.equal(tile.getAttribute('aria-describedby'), 'badge-pop');
+  goTo(0, false);
+  assert.equal(tile.getAttribute('aria-describedby'), 'badge-pop', 'staying on the page closed it');
+  goTo(1, false);
+  assert.equal(tile.getAttribute('aria-describedby'), null);
+  badge.dispatchEvent({ type: 'pointerenter', pointerType: 'mouse' });
+  goTo(2, false);
+  t.mock.timers.tick(400);
+  assert.equal(tile.getAttribute('aria-describedby'), null, 'a hover from the old page opened it on the new one');
+  tile.remove();
 });
 
 test('a widget frame takes reduced transparency from the dashboard and glass from its card', async () => {
@@ -392,5 +598,28 @@ test('widget styles key reduced transparency on the attribute the frame copies',
       assert.doesNotMatch(html, /prefers-reduced-transparency/, `${name}/${file}`);
       if (/data-transparency/.test(html)) assert.match(html, /widget-theme\.js/, `${name}/${file}`);
     }
+  }
+});
+
+test('the veil lifts once the first view and its wallpaper are both in', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { bootDashboard } = await import('./dashboard-page.mjs');
+  globalThis.__wallpaperHint = { src: 'http://nas.local/other.jpg' };
+  const page = await bootDashboard({
+    config: {
+      items: [{ id: 'a', type: 'app', label: 'A' }],
+      settings: { background: { type: 'url', url: '/wall/boot.jpg' } },
+    },
+  });
+  try {
+    const body = page.dom.document.body;
+    assert.ok(page.dom.document.querySelector('#pages .page'), 'the first view was not built');
+    assert.ok(!body.classList.contains('ready'), 'the veil lifted before the wallpaper decoded');
+    await settleDecode('/wall/boot.jpg');
+    await page.booted;
+    assert.ok(body.classList.contains('ready'));
+  } finally {
+    delete globalThis.__wallpaperHint;
+    page.stop();
   }
 });

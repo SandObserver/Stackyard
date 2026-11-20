@@ -76,7 +76,7 @@ function harness() {
 
 async function mount(src, iframeOpts) {
   const h = harness();
-  const { mountScaledWidget } = await import('../js/utils.js');
+  const { mountScaledWidget } = await import('../js/widget-frame.js');
   try {
     mountScaledWidget(h.card, { src, title: 'A widget', design: [200, 100], iframeOpts });
   } finally {

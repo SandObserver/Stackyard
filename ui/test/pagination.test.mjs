@@ -1,60 +1,117 @@
 /* The page dots must be real buttons. A div with a click handler leaves a
    keyboard user stuck on page one, and role="button" with a tabindex means
-   reimplementing the key handling by hand.
-
-   The dots are built in JavaScript, so these read the source. */
+   reimplementing the key handling by hand. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { register } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { createDocument, fire, installDom, pageBody } from './fake-dom.mjs';
 
+register('./js-root-hooks.mjs', import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+const ui = read('js/ui.js');
 
-const dashboard = read('js/dashboard.js');
+const dom = installDom({ markup: pageBody('index.html'), location: 'http://nas.local/' });
+const doc = dom.document;
+const { createDashboardState } = await import('../js/dashboard-state.js');
+const { createPager } = await import('../js/dashboard-pager.js');
+const { createDesktopGrid } = await import('../js/dashboard-grid.js');
+const { createBadges } = await import('../js/dashboard-badges.js');
+const { wirePageInput } = await import('../js/dashboard-input.js');
+const { initUI } = await import('../js/ui.js');
+const { pageDir } = await import('../js/utils.js');
+const { setScripted } = await import('../js/frame-motion.js');
+const { mountScaledWidget } = await import('../js/widget-frame.js');
 
-/* The helper both call sites use. */
-const mkDot = dashboard.slice(dashboard.indexOf('function mkDot('), dashboard.indexOf('function buildDesktop('));
+const dash = createDashboardState();
+dash.items = Array.from({ length: 40 }, (_, i) => ({
+  id: `a${i}`,
+  type: 'app',
+  label: `A${i}`,
+  href: 'http://a.local',
+}));
+const badges = createBadges(dash);
+initUI({ items: dash.items, S: dash.S, CB: dash.CB, ...badges, widgetReg: dash.widgetReg });
+const pager = createPager(dash);
+const turns = [];
+const goTo = (n, ...rest) => {
+  turns.push([n, ...rest]);
+  pager.goTo(n, ...rest);
+};
+const grid = createDesktopGrid({ dash, badges, goTo });
+dash.totalPages = grid.buildDesktop();
+wirePageInput({ dash, goTo });
+const dotButtons = () => doc.querySelectorAll('#dots .dot');
+const strip = doc.getElementById('pages');
+const turned = fn => {
+  turns.length = 0;
+  fn();
+  return turns.map(t => t[0]);
+};
+const realNow = Date.now;
+let skew = 0;
+Date.now = () => realNow() + skew;
+/** Move the clock past the window a touch blocks the mouse for. */
+const later = () => {
+  skew += 1000;
+};
+const rtl = on => {
+  globalThis.getComputedStyle = () => ({
+    direction: on ? 'rtl' : 'ltr',
+    transform: 'none',
+    getPropertyValue: () => '',
+  });
+};
 
-test('a dot is a button, not a div', () => {
-  assert.match(mkDot, /mk\('button'\)/, 'a div cannot be reached by Tab or operated by Enter');
-  assert.doesNotMatch(mkDot, /mk\('div'\)/);
+test('the desktop build has more than one page to page through', () => {
+  assert.ok(dash.totalPages >= 2, `only ${dash.totalPages} page`);
+  assert.equal(strip.children.length, dash.totalPages);
 });
 
-/* Inside a form a button defaults to submit; type is set so it never does
-   anything but what its handler says. */
-test('the button declares its type', () => {
-  assert.match(mkDot, /\.type = 'button'/);
+test('a dot is a button that declares its type', () => {
+  assert.equal(dotButtons().length, dash.totalPages);
+  for (const d of dotButtons()) {
+    assert.ok(d instanceof HTMLButtonElement, 'a div cannot be reached by Tab or operated by Enter');
+    assert.equal(d.type, 'button');
+  }
 });
 
-/* A row of unlabelled buttons tells a screen reader nothing about where each
-   one goes. */
-test('each dot says which page it goes to', () => {
-  assert.match(mkDot, /setAttribute\('aria-label'/);
-  assert.match(mkDot, /home\.goToPage/, 'the label must be translated, not hardcoded English');
+test('each dot says which page it goes to, in the catalog wording', () => {
+  assert.deepEqual(
+    dotButtons().map(d => d.getAttribute('aria-label')),
+    dotButtons().map(() => 'home.goToPage'),
+  );
+  assert.equal(doc.getElementById('dots').hidden, false);
 });
 
-/* The `on` class conveys the current page by appearance alone. */
-test('the current page is marked for a screen reader', () => {
-  assert.match(mkDot, /setAttribute\('aria-current', 'true'\)/);
+test('the current page is marked for a screen reader, and moves with the class', () => {
+  assert.deepEqual(
+    dotButtons().map(d => [d.classList.contains('on'), d.getAttribute('aria-current')]),
+    dotButtons().map((_, i) => (i === 0 ? [true, 'true'] : [false, null])),
+  );
+  assert.deepEqual(
+    turned(() => dotButtons()[1].click()),
+    [1],
+  );
+  assert.deepEqual(
+    dotButtons().map(d => [d.classList.contains('on'), d.getAttribute('aria-current')]),
+    dotButtons().map((_, i) => (i === 1 ? [true, 'true'] : [false, null])),
+  );
+  pager.goTo(0, false);
 });
 
-test('the dots are built by the one helper', () => {
-  const calls = dashboard.match(/mkDot\(/g) || [];
-  assert.equal(calls.length, 2, `expected the definition and one call site, found ${calls.length}`);
-  assert.doesNotMatch(dashboard, /const d = mk\('div'\); d\.className = 'dot'/, 'a call site still builds its own div');
-});
-
-/* Paging updates the dots in place, so the attribute has to be updated too, or
-   a screen reader keeps announcing the page the dashboard loaded on. */
-test('changing page moves aria-current with the class', () => {
-  const upd = dashboard.slice(dashboard.indexOf("document.querySelectorAll('.dot').forEach("));
-  const block = upd.slice(0, upd.indexOf('\n}'));
-  assert.match(block, /classList\.toggle\('on', i === pg\)/);
-  assert.match(block, /setAttribute\('aria-current', 'true'\)/);
-  assert.match(block, /removeAttribute\('aria-current'\)/);
+test('the pager is hidden when there is one page', () => {
+  const one = createDashboardState();
+  one.items = [dash.items[0]];
+  initUI({ items: one.items, S: one.S, CB: one.CB, ...badges, widgetReg: one.widgetReg });
+  createDesktopGrid({ dash: one, badges, goTo() {} }).buildDesktop();
+  assert.equal(doc.getElementById('dots').hidden, true);
+  initUI({ items: dash.items, S: dash.S, CB: dash.CB, ...badges, widgetReg: dash.widgetReg });
+  dash.totalPages = grid.buildDesktop();
 });
 
 test('the dots are a named landmark', () => {
@@ -115,103 +172,336 @@ test('every locale carries the new strings', () => {
 /* The phone layout is what a narrow window gets. Without the key and mouse
    handlers a second page is visible in the dots and unreachable without a
    touchscreen. */
+const drag = (from, to) => {
+  fire(doc.body, 'mousedown', { clientX: from });
+  fire(doc.body, 'mousemove', { clientX: to });
+  fire(doc.body, 'mouseup', { clientX: to });
+};
 
-const keydown = dashboard.slice(
-  dashboard.indexOf("document.addEventListener('keydown'"),
-  dashboard.indexOf('let _dMx'),
-);
-const mouseup = dashboard.slice(
-  dashboard.indexOf("document.addEventListener('mouseup'"),
-  dashboard.indexOf("'touchstart'", dashboard.indexOf("document.addEventListener('mouseup'")),
-);
-
-test('arrow keys page on the phone layout too', () => {
-  assert.match(keydown, /ArrowRight/);
-  assert.doesNotMatch(keydown, /if \(MOB\) return/, 'the phone layout has no keyboard pager of its own');
+test('arrow keys page on both layouts', () => {
+  for (const mob of [false, true]) {
+    dash.mob = mob;
+    pager.goTo(0, false);
+    assert.deepEqual(
+      turned(() => fire(doc.body, 'keydown', { key: 'ArrowRight' })),
+      [1],
+    );
+    assert.deepEqual(
+      turned(() => fire(doc.body, 'keydown', { key: 'ArrowLeft' })),
+      [0],
+    );
+  }
+  dash.mob = false;
 });
 
-test('a mouse drag pages on the phone layout too', () => {
-  assert.match(mouseup, /goTo\(/);
-  assert.doesNotMatch(mouseup, /if \(MOB\b/, 'a narrow window is driven by a mouse');
+test('an arrow key on the phone page control turns one page, not two', () => {
+  assert.deepEqual(
+    turned(() => fire(doc.getElementById('mob-pager'), 'keydown', { key: 'ArrowRight' })),
+    [],
+  );
+  const input = doc.getElementById('mob-pager');
+  input.value = '2';
+  assert.deepEqual(
+    turned(() => fire(input, 'input')),
+    [1],
+  );
+  pager.goTo(0, false);
+});
+
+test('a mouse drag pages on both layouts', () => {
+  for (const mob of [false, true]) {
+    dash.mob = mob;
+    pager.goTo(0, false);
+    assert.deepEqual(
+      turned(() => drag(300, 200)),
+      [1],
+    );
+    assert.deepEqual(
+      turned(() => drag(200, 300)),
+      [0],
+    );
+    assert.deepEqual(
+      turned(() => drag(200, 250)),
+      [],
+      'a short drag is a click',
+    );
+  }
+  dash.mob = false;
 });
 
 /* One swipe must not advance two pages. */
 test('the mouse pager ignores the compatibility event a touch produces', () => {
-  assert.match(mouseup, /_lastTouch/);
-  assert.match(dashboard, /const COMPAT_POINTER_MS = \d+/);
-  for (const handler of ['touchstart', 'touchend']) {
-    const block = dashboard.slice(
-      dashboard.indexOf(`'${handler}'`),
-      dashboard.indexOf('{ passive: true }', dashboard.indexOf(`'${handler}'`)),
+  const t = { identifier: 9, clientX: 10, clientY: 10 };
+  for (const type of ['touchstart', 'touchend']) {
+    later();
+    fire(doc.body, type, { touches: type === 'touchstart' ? [t] : [], changedTouches: [t] });
+    assert.deepEqual(
+      turned(() => drag(300, 200)),
+      [],
+      `${type} does not record the touch`,
     );
-    assert.match(block, /_lastTouch = Date\.now\(\)/, `${handler} does not record the touch`);
   }
+  later();
+  assert.deepEqual(
+    turned(() => drag(300, 200)),
+    [1],
+    'the mouse stays blocked long after the touch',
+  );
+  pager.goTo(0, false);
 });
 
 /* The mobile folder overlay covers the whole page, and the key handler is on
    the document. */
-test('an open folder overlay stops the keyboard pager', () => {
-  assert.match(keydown, /folder-overlay/);
+test('an open folder or search stops the keyboard and the mouse pager', () => {
+  for (const markup of [
+    '<dialog class="folder-overlay" open></dialog>',
+    '<dialog class="folder-overlay-mobile" open></dialog>',
+  ]) {
+    const holder = doc.createElement('div');
+    holder.innerHTML = markup;
+    doc.body.appendChild(holder);
+    assert.deepEqual(
+      turned(() => fire(doc.body, 'keydown', { key: 'ArrowRight' })),
+      [],
+    );
+    assert.deepEqual(
+      turned(() => drag(300, 200)),
+      [],
+    );
+    holder.remove();
+    fire(doc.body, 'mousedown', { clientX: 300 });
+    fire(doc.body, 'mousemove', { clientX: 200 });
+    doc.body.appendChild(holder);
+    fire(doc.body, 'mouseup', { clientX: 200 });
+    holder.remove();
+    assert.deepEqual(
+      turned(() => fire(doc.body, 'mouseup', { clientX: 200 })),
+      [],
+      'a drag that ended over the overlay pages once it closes',
+    );
+  }
+  doc.getElementById('spot').setAttribute('open', '');
+  assert.deepEqual(
+    turned(() => fire(doc.body, 'keydown', { key: 'ArrowRight' })),
+    [],
+  );
+  doc.getElementById('spot').removeAttribute('open');
+});
+
+const swipe = (from, to) => {
+  const t = (x, id = 1) => ({ identifier: id, clientX: x, clientY: 100 });
+  fire(doc.body, 'touchstart', { touches: [t(from)], changedTouches: [t(from)], timeStamp: 0 });
+  fire(doc.body, 'touchmove', { touches: [t(from - 20)], changedTouches: [t(from - 20)], timeStamp: 25 });
+  fire(doc.body, 'touchmove', { touches: [t(to)], changedTouches: [t(to)], timeStamp: 50 });
+  fire(doc.body, 'touchend', { touches: [], changedTouches: [t(to)], timeStamp: 100 });
+  later();
+};
+
+/* Two touch pagers would advance two pages for one gesture. */
+test('one swipe on the page turns one page', () => {
+  pager.goTo(0, false);
+  assert.deepEqual(
+    turned(() => swipe(1200, 100)),
+    [1],
+  );
+  pager.goTo(0, false);
+  assert.ok(dash.CB.homeSwipe, 'the phone widgets have no pager to feed');
+});
+
+test('an open folder or search keeps the home pager still', () => {
+  for (const open of [
+    () => doc.getElementById('spot').setAttribute('open', ''),
+    () => {
+      const ov = doc.createElement('dialog');
+      ov.className = 'folder-overlay-mobile';
+      ov.setAttribute('open', '');
+      doc.body.appendChild(ov);
+    },
+  ]) {
+    open();
+    assert.deepEqual(
+      turned(() => swipe(1200, 100)),
+      [],
+    );
+    doc.getElementById('spot').removeAttribute('open');
+    for (const ov of doc.querySelectorAll('.folder-overlay-mobile')) ov.remove();
+  }
+});
+
+test('the home pager hands its settle to the frame clock when scripted', () => {
+  setScripted(false);
+  swipe(1200, 100);
+  assert.match(strip.style.transition, /^transform \d+ms var\(--page-ease\)$/);
+  pager.goTo(0, false);
+  setScripted(true);
+  try {
+    swipe(1200, 100);
+    assert.equal(strip.style.transition, '');
+  } finally {
+    setScripted(false);
+    pager.goTo(0, false);
+  }
+});
+
+/* A strip is laid out in the page's direction, so the next page is on the left
+   in one direction and on the right in the other. translateX has no logical
+   form. A fixed sign moves page two further off a Persian dashboard instead of
+   onto it, leaving every page after the first unreachable. */
+test('the home strip moves by the direction of the page', () => {
+  pager.goTo(1, false);
+  assert.equal(strip.style.transform, 'translateX(-100%)');
+  rtl(true);
+  try {
+    pager.goTo(1, false);
+    assert.equal(strip.style.transform, 'translateX(100%)', 'the dashboard strip is fixed to one direction');
+  } finally {
+    rtl(false);
+    pager.goTo(0, false);
+  }
+});
+
+/* The arrows and a drag name a side of the screen, not a page number, so they
+   mirror with the layout. */
+test('the arrow keys and the mouse drag mirror in a right-to-left page', () => {
+  rtl(true);
+  try {
+    assert.deepEqual(
+      turned(() => fire(doc.body, 'keydown', { key: 'ArrowLeft' })),
+      [1],
+    );
+    assert.deepEqual(
+      turned(() => fire(doc.body, 'keydown', { key: 'ArrowRight' })),
+      [0],
+    );
+    assert.deepEqual(
+      turned(() => drag(200, 300)),
+      [1],
+    );
+  } finally {
+    rtl(false);
+    pager.goTo(0, false);
+  }
+});
+
+/* One reading of the document, so a right-to-left page cannot take a
+   left-to-right number from a stale copy. */
+test('the direction is read from the document at every call', () => {
+  assert.equal(pageDir(), 1);
+  rtl(true);
+  assert.equal(pageDir(), -1);
+  rtl(false);
+  assert.equal(pageDir(), 1);
+});
+
+/* A widget frame swallows touches, so it hands them to the same pager. Its
+   points are in the frame's own pixels, and the frame moves with the strip. */
+test('a swipe on a phone widget drives the home pager', () => {
+  const fed = [];
+  const feed = {
+    down: (id, x, y) => fed.push(['down', id, x, y]),
+    move: (id, x, y) => fed.push(['move', id, x, y]),
+    up: (id, _t, fling) => fed.push(['up', id, fling]),
+    cancel: () => fed.push(['cancel']),
+  };
+  const opened = [];
+  globalThis.open = (...a) => opened.push(a);
+  const card = doc.createElement('div');
+  doc.body.appendChild(card);
+  mountScaledWidget(card, {
+    src: '/widgets/clock/index.html',
+    title: 'Clock',
+    design: [170, 170],
+    mobile: true,
+    swipe: () => feed,
+    overlayHref: 'http://clock.local',
+  });
+  const ifr = card.querySelector('iframe');
+  const inner = createDocument('<p id="p"></p><div id="scrub"></div>');
+  inner.defaultView = {
+    listeners: Object.create(null),
+    performance,
+    getComputedStyle: n => ({ touchAction: n.id === 'scrub' ? 'none' : 'auto', overflowX: 'visible' }),
+  };
+  ifr.contentDocument = inner;
+  let left = 100;
+  ifr.getBoundingClientRect = () => ({ left, top: 50, width: 200, height: 200 });
+  Object.defineProperty(ifr, 'offsetWidth', { value: 100 });
+  ifr.dispatchEvent({ type: 'load' });
+  const p = inner.getElementById('p');
+  const touch = (x, y) => ({ identifier: 3, clientX: x, clientY: y });
+  fire(p, 'touchstart', { touches: [touch(10, 10)], changedTouches: [touch(10, 10)], timeStamp: 0 });
+  left = 40;
+  fire(p, 'touchmove', { touches: [touch(30, 10)], changedTouches: [touch(30, 10)], timeStamp: 10 });
+  fire(p, 'touchend', { touches: [], changedTouches: [touch(30, 10)], timeStamp: 20 });
+  assert.deepEqual(fed, [
+    ['down', 'f3', 120, 70],
+    ['move', 'f3', 100, 70],
+    ['up', 'f3', true],
+  ]);
+  assert.deepEqual(opened, [], 'a swipe opened the link');
+  fed.length = 0;
+  fire(p, 'touchstart', { touches: [touch(10, 10)], changedTouches: [touch(10, 10)], timeStamp: 30 });
+  fire(p, 'touchend', { touches: [], changedTouches: [touch(10, 10)], timeStamp: 40 });
+  assert.deepEqual(opened, [['http://clock.local', '_blank', 'noopener,noreferrer']], 'a tap must still open the link');
+  fed.length = 0;
+  const scrub = inner.getElementById('scrub');
+  fire(scrub, 'touchstart', { touches: [touch(10, 10)], changedTouches: [touch(10, 10)], timeStamp: 50 });
+  fire(scrub, 'touchmove', { touches: [touch(60, 10)], changedTouches: [touch(60, 10)], timeStamp: 60 });
+  assert.deepEqual(fed, [], 'a widget scrubber would page');
 });
 
 /* Two touch pagers would advance two pages for one gesture. */
-test('one touch pager serves both layouts', () => {
-  assert.equal(dashboard.match(/swipePager\(document,/g)?.length, 1);
-  const ui = read('js/ui.js');
+test('the phone build pages through the shared touch pager only', () => {
   const build = ui.slice(ui.indexOf('export function buildMobile('), ui.indexOf('export function resetMobileChrome('));
   assert.doesNotMatch(build, /swipePager\(document|goTo\(st\(\)\.pg \+ \(dx/, 'the phone build pages on its own');
 });
 
 /* The swipe follows the finger and settles from where the finger left it. */
-const ui = read('js/ui.js');
-const pager = ui.slice(ui.indexOf('export function swipePager('), ui.indexOf('function folderMotion('));
+const swipeSrc = ui.slice(ui.indexOf('export function swipePager('), ui.indexOf('function folderMotion('));
 
 test('the strip follows the finger while it is down', () => {
-  assert.match(pager, /move\(pid, px, py, ts\) \{[\s\S]*strip\.style\.transform = [^;]*translateX\(\$\{x\}px\)/);
-  assert.match(pager, /strip\.style\.transition = 'none'/);
+  assert.match(swipeSrc, /move\(pid, px, py, ts\) \{[\s\S]*strip\.style\.transform = [^;]*translateX\(\$\{x\}px\)/);
+  assert.match(swipeSrc, /strip\.style\.transition = 'none'/);
 });
 
 test('the release settles from the finger, at the finger speed', () => {
-  assert.match(pager, /swipeSettle\(\{/);
-  assert.match(pager, /settleMs\(/);
-  assert.match(pager, /strip\.style\.transition = `transform \$\{ms\}ms var\(--page-ease\)`;\s*o\.turn\(n, ms\)/);
-  assert.match(pager, /if \(o\.scripted\?\.\(\)\) \{\s*strip\.style\.transition = '';\s*o\.turn\(n, ms\);/);
+  assert.match(swipeSrc, /swipeSettle\(\{/);
+  assert.match(swipeSrc, /settleMs\(/);
+  assert.match(swipeSrc, /strip\.style\.transition = `transform \$\{ms\}ms var\(--page-ease\)`;\s*o\.turn\(n, ms\)/);
+  assert.match(swipeSrc, /if \(o\.scripted\?\.\(\)\) \{\s*strip\.style\.transition = '';\s*o\.turn\(n, ms\);/);
 });
 
 test('only the first finger drags, and a vertical drag is left alone', () => {
-  assert.match(pager, /if \(id !== null \|\| /);
-  assert.match(pager, /p\.identifier === id/);
-  assert.match(pager, /axis = Math\.abs\(dx\) > Math\.abs\(dy\) \? 'x' : 'y'/);
+  assert.match(swipeSrc, /if \(id !== null \|\| /);
+  assert.match(swipeSrc, /p\.identifier === id/);
+  assert.match(swipeSrc, /axis = Math\.abs\(dx\) > Math\.abs\(dy\) \? 'x' : 'y'/);
 });
 
 test('a finger whose touchend never arrived does not lock the pager', () => {
   assert.match(
-    pager,
+    swipeSrc,
     /'touchstart',[\s\S]{0,200}if \(id !== null && e\.touches\.length === e\.changedTouches\.length\) feed\.up\(id, e\.timeStamp, false\);/,
   );
 });
 
 test('the page strip has no touch listener that blocks scrolling', () => {
-  assert.doesNotMatch(pager, /passive: false/);
-  assert.doesNotMatch(pager, /preventDefault/);
+  assert.doesNotMatch(swipeSrc, /passive: false/);
+  assert.doesNotMatch(swipeSrc, /preventDefault/);
 });
 
-test('an open folder or search keeps the home pager still', () => {
-  const call = dashboard.slice(dashboard.indexOf('swipePager(document,'));
-  assert.match(
-    call.slice(0, 400),
-    /enabled: \(\) =>[\s\S]*spot[\s\S]*folder-overlay\[open\], \.folder-overlay-mobile\[open\]/,
-  );
-});
-
-test('only the home pager hands its settle to the frame clock', () => {
-  assert.match(dashboard.slice(dashboard.indexOf('swipePager(document,')).slice(0, 400), /scripted: isScripted,/);
+test('the folder pager settles on its own clock and mirrors with the page', () => {
   const folderCall = ui.slice(ui.indexOf('swipePager(box, strip,'));
   assert.doesNotMatch(folderCall.slice(0, folderCall.indexOf(');')), /scripted/);
+  assert.match(
+    ui,
+    /translateX\(\$\{-pageDir\(\) \* curPage \* pageW\}px\)/,
+    'the folder strip is fixed to one direction',
+  );
+  for (const m of ui.matchAll(/\(dx < 0 \? 1 : -1\)(.{0,12})/g)) {
+    assert.match(m[1], /^ \* pageDir\(\)/, 'a folder drag still assumes one direction');
+  }
 });
 
-/* An ease-in-out barely moves for the first 100ms, and a keyboard page turn
-   reads as stuck. */
 test('a page turns in 280ms on an ease-out curve', () => {
   const css = read('css/dashboard.css');
   assert.match(css, /--page-ease:\s+cubic-bezier\(\.32,\.72,0,1\);/);
@@ -231,49 +521,6 @@ test('the scripted page turn and search pill take the CSS durations', () => {
   for (const v of pillCss) assert.equal(pill, v);
 });
 
-/* A strip is laid out in the page's direction, so the next page is on the left
-   in one direction and on the right in the other. translateX has no logical
-   form. A fixed sign moves page two further off a Persian dashboard instead of
-   onto it, leaving every page after the first unreachable. */
-test('both page strips move by the direction of the page', () => {
-  assert.match(
-    dashboard,
-    /translateX\(\$\{-pageDir\(\) \* n \* 100\}%\)[\s\S]{0,400}const to = -pageDir\(\) \* n \* strip\.offsetWidth;/,
-    'the dashboard strip is fixed to one direction',
-  );
-  assert.match(
-    read('js/ui.js'),
-    /translateX\(\$\{-pageDir\(\) \* curPage \* pageW\}px\)/,
-    'the folder strip is fixed to one direction',
-  );
-});
-
-/* The arrows and a drag name a side of the screen, not a page number, so they
-   mirror with the layout. */
-test('the arrow keys and every drag mirror too', () => {
-  assert.match(dashboard, /ArrowRight'\) goTo\(pg \+ pageDir\(\)\)/);
-  assert.match(dashboard, /ArrowLeft'\) goTo\(pg - pageDir\(\)\)/);
-  for (const src of [dashboard, read('js/ui.js')]) {
-    for (const m of src.matchAll(/\(dx < 0 \? 1 : -1\)(.{0,12})/g)) {
-      assert.match(m[1], /^ \* pageDir\(\)/, 'a drag still assumes one direction');
-    }
-  }
-});
-
-/* One reading of the document, so a right-to-left page cannot take a
-   left-to-right number from a stale copy. */
-test('the direction is read from the document, not stored', () => {
-  const utils = read('js/utils.js');
-  assert.match(
-    utils,
-    /export const pageDir = \(\) => \(?getComputedStyle\(document\.documentElement\)\.direction === 'rtl' \? -1 : 1\)?;/,
-  );
-});
-
-test('the pager is hidden when there is one page', () => {
-  assert.match(dashboard, /dots\.hidden = pages\.length < 2/);
-});
-
 test('the hidden pager is not painted', () => {
   const css = read('css/dashboard.css');
   assert.match(css, /#dots\[hidden\] \{ display:none \}/, 'display:flex on #dots beats the hidden attribute');
@@ -282,19 +529,4 @@ test('the hidden pager is not painted', () => {
     /<nav id="dots"[^>]*\shidden>/,
     'the bar must start hidden, or the error screen shows it empty',
   );
-});
-
-/* A widget frame swallows touches, so it hands them to the same pager. Its
-   points are in the frame's own pixels, and the frame moves with the strip. */
-test('a swipe on a phone widget drives the home pager', () => {
-  const utils = read('js/utils.js');
-  const gesture = utils.slice(utils.indexOf('An iframe swallows touches'), utils.indexOf('const place = frame =>'));
-  assert.match(gesture, /const r = frame\.getBoundingClientRect\(\);/, 'the point must be mapped at every event');
-  assert.match(gesture, /r\.left \+ touch\.clientX \* k/);
-  assert.match(gesture, /owned = ownsSidewaysTouch\(e\.target\)/, 'a widget scrubber would page');
-  assert.match(gesture, /feed\(\)\?\.down\(/);
-  assert.match(gesture, /feed\(\)\?\.move\(/);
-  assert.match(gesture, /feed\(\)\?\.up\(/);
-  assert.match(gesture, /if \(!fling \|\| moved \|\| !overlayHref\) return;/, 'a tap must still open the link');
-  assert.doesNotMatch(gesture, /onSwipe/);
 });

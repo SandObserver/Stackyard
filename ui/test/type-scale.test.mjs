@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { register } from 'node:module';
+import { installDom, pageBody } from './fake-dom.mjs';
 
 /* The eleven text styles, at every Dynamic Type step the project declares.
 
@@ -158,15 +160,46 @@ test('a rule using a size token takes its leading from the scale', () => {
    A widget tile's corner is 28 at design size, and WIDGET_DESIGN's small is 170
    square against the reference's 165, so it is the reference value unchanged.
    Desktop tiles keep one size at every width, so the corner does too. */
-test('icon and tile radii are derived, not literal', () => {
-  const dash = fs.readFileSync(path.join(cssDir, '..', 'js', 'dashboard.js'), 'utf8');
-  const utils = fs.readFileSync(path.join(cssDir, '..', 'js', 'utils.js'), 'utf8');
-  assert.match(utils, /export const ICON_R = 0\.26;/);
+test('icon and tile radii are derived, not literal', async () => {
+  register('./js-root-hooks.mjs', import.meta.url);
+  const dom = installDom({ markup: pageBody('index.html') });
+  const { ICON_R } = await import('../js/utils.js');
+  const { createDashboardState } = await import('../js/dashboard-state.js');
+  const { createBadges } = await import('../js/dashboard-badges.js');
+  const { createDesktopGrid } = await import('../js/dashboard-grid.js');
+  const { initUI } = await import('../js/ui.js');
+  assert.equal(ICON_R, 0.26);
   const ui = fs.readFileSync(path.join(cssDir, '..', 'js', 'ui.js'), 'utf8');
   assert.doesNotMatch(ui, /\* 0\.22\d?\)/, 'a phone icon corner is a literal again');
-  assert.match(dash, /mkWrap\(item, iw, Math\.round\(iw \* ICON_R\)/, 'the grid icon derives its corner');
-  assert.match(dash, /mkWrap\(item, 78, Math\.round\(78 \* ICON_R\)/, 'the dock icon derives its corner');
-  assert.match(dash, /const WIDGET_R = 28;/);
-  assert.match(dash, /borderRadius = WIDGET_R \+ 'px'/, 'a tile corner comes from the design value');
-  assert.doesNotMatch(dash, /gm\.scale/, 'desktop tiles must not scale with the window');
+  const dash = createDashboardState();
+  dash.items = [
+    { id: 'a', type: 'app', label: 'A', href: 'http://a.local' },
+    { id: 'd', type: 'app', label: 'D', href: 'http://d.local', dock: true },
+    { id: 'w', type: 'widget', label: 'W', widgetType: 'clock', widgetSize: 'small' },
+  ];
+  const badges = createBadges(dash);
+  initUI({ items: dash.items, S: dash.S, CB: dash.CB, ...badges, widgetReg: dash.widgetReg });
+  const grid = createDesktopGrid({ dash, badges, goTo() {} });
+  const radius = sel => dom.document.querySelector(sel).style.cssText.match(/border-radius:(\d+)px/)?.[1];
+  const corners = () => ({
+    grid: radius('#pages .iwrap'),
+    dock: radius('#dock .dwrap'),
+    widget: dom.document.querySelector('#pages .widget').style.borderRadius,
+  });
+  grid.buildDesktop();
+  assert.deepEqual(corners(), {
+    grid: String(Math.round(72 * ICON_R)),
+    dock: String(Math.round(78 * ICON_R)),
+    widget: '28px',
+  });
+  dash.S = { showLabels: { desktop: false } };
+  globalThis.innerWidth = 2560;
+  globalThis.innerHeight = 1440;
+  grid.buildDesktop();
+  assert.deepEqual(
+    corners(),
+    { grid: String(Math.round(78 * ICON_R)), dock: String(Math.round(78 * ICON_R)), widget: '28px' },
+    'desktop tiles must not scale with the window',
+  );
+  dom.restore();
 });

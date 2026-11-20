@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
-const { scrollsSideways, ownsSidewaysTouch } = await import('../js/utils.js');
+const { scrollsSideways, ownsSidewaysTouch } = await import('../js/widget-frame.js');
 
 const view = { getComputedStyle: n => ({ overflowX: n.ox, touchAction: n.ta ?? 'auto' }) };
 const node = (props, parent = null) => ({

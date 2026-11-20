@@ -15,6 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
+import { installDom, pageBody } from './fake-dom.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
@@ -86,16 +87,30 @@ test('no translated sentence takes a user-supplied name without isolating it', (
 test('setUserText or setCentredText is what the dashboard, folders, search and admin all use', () => {
   /* Named individually so removing the call from one of them fails here rather
      than only showing up as a truncated name in a right-to-left language. */
-  for (const file of [
-    'ui.js',
-    'dashboard.js',
-    'spotlight.js',
-    'admin-editor.js',
-    'admin-transfer.js',
-    'admin-settings.js',
-  ]) {
+  for (const file of ['ui.js', 'spotlight.js', 'admin-editor.js', 'admin-transfer.js', 'admin-settings.js']) {
     const src = fs.readFileSync(path.join(JS_DIR, file), 'utf8');
     assert.match(src, /set(?:User|Centred)Text\(/, `${file} should render user-supplied names through setUserText`);
+  }
+});
+
+test('a desktop tile label and a Dock name keep their own direction', async () => {
+  const dom = installDom({ markup: pageBody('index.html') });
+  try {
+    const { createDashboardState } = await import('../js/dashboard-state.js');
+    const { createBadges } = await import('../js/dashboard-badges.js');
+    const { createDesktopGrid } = await import('../js/dashboard-grid.js');
+    const { initUI } = await import('../js/ui.js');
+    const dash = createDashboardState();
+    const name = 'مدیریت سرورهای خانگی';
+    dash.items = [{ id: 'a', type: 'app', label: name, href: 'http://a.local' }];
+    const badges = createBadges(dash);
+    initUI({ items: dash.items, S: dash.S, CB: dash.CB, ...badges, widgetReg: dash.widgetReg });
+    createDesktopGrid({ dash, badges, goTo: () => {} }).buildDesktop();
+    const label = dom.document.querySelector('#pages .ilabel');
+    assert.equal(label.textContent, name);
+    assert.equal(label.dir, 'auto', 'the tile name inherits the page direction');
+  } finally {
+    dom.restore();
   }
 });
 
@@ -159,10 +174,16 @@ test('setUserText isolates the name in a bdi and leaves the block alone', async 
 });
 
 /* A right-to-left page mirrors a lone bracket, so "<Admin" showed ">". */
-test('an initial on a letter plate is laid out left to right', () => {
-  const utils = fs.readFileSync(path.join(JS_DIR, 'utils.js'), 'utf8');
-  const plate = utils.slice(utils.indexOf('export const letterTile'));
-  assert.match(plate.slice(0, plate.indexOf('\n};')), /e\.dir = 'ltr';/);
+test('an initial on a letter plate is laid out left to right', async () => {
+  const dom = installDom();
+  try {
+    const { letterTile } = await import('../js/utils.js');
+    const fb = letterTile('<Admin', 50, '#1C1C1E');
+    assert.equal(fb.textContent, '<');
+    assert.equal(fb.dir, 'ltr', 'a right-to-left page draws "<" as ">"');
+  } finally {
+    dom.restore();
+  }
   const spot = fs.readFileSync(path.join(JS_DIR, 'spotlight.js'), 'utf8');
   assert.match(spot, /ic\.className = 'sri';\s*ic\.dir = 'ltr';/);
 });

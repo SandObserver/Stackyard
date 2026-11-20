@@ -1,10 +1,7 @@
 /* The icon picker is a combobox over four catalogues. The parts that are easy
    to lose are the ones a pointer never exercises: the keyboard cursor, the
    announcement of how many icons were found, and the fallback when no
-   catalogue has the name.
-
-   The module owns a live DOM, so these are assertions about the source, in the
-   same shape as the other tests for this file. */
+   catalogue has the name. */
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -12,167 +9,277 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
+import { catalogRoutes, fakeFetch, fire, installDom, pageBody, settle } from './fake-dom.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
-const form = read('js/admin-app-form.js');
 const css = read('css/admin.css');
 const en = JSON.parse(read('i18n/en.json'));
 const LOCALES = (await import('../js/i18n.js')).LANGUAGES.map(l => l.code);
 
-/* The group header above it is not tied to the field, so without this the
-   placeholder is the only label and it disappears as soon as you type. */
-test('the search field has a name of its own', () => {
-  assert.match(form, /id="ip-in"[^>]*aria-label="\$\{t\('app\.icon'\)\}"/);
-});
+const PLEX = { ref: 'plex', name: 'plex', source: 'di', urls: ['https://cdn.example/di/plex.webp'] };
+const SPRING = {
+  ref: 'si:springboot',
+  name: 'Spring Boot',
+  source: 'simple',
+  urls: ['https://cdn.example/si/springboot.svg'],
+};
+const search = {
+  '/api/icons/search?q=pl': { results: [PLEX, SPRING] },
+  '/api/icons/search?q=plex': { results: [PLEX, SPRING] },
+  '/api/icons/search?q=spring%20boot': { results: [SPRING] },
+  '/api/icons/search?q=myapp': { results: [] },
+  '/api/icons/search?q=down': { status: 502, body: { error: 'down' } },
+  '/api/icons/search?q=demo': { status: 400, body: { error: 'demo', code: 'blocked.demo' } },
+  '/api/icons/variants?ref=plex': {
+    variants: [
+      { key: 'light', ref: 'plex-light', urls: [] },
+      { key: 'dark', ref: 'plex-dark', urls: [] },
+    ],
+  },
+  '/api/icons/variants?ref=si%3Aspringboot': { variants: [] },
+};
+const fetch = fakeFetch({ ...catalogRoutes(), '/api/icons/local': [], ...search });
+const dom = installDom({ markup: pageBody('admin/index.html'), fetch });
+const { document } = dom;
+globalThis.Element.prototype.scrollIntoView = () => {};
+const { initI18n, t } = await import('../js/i18n.js');
+await initI18n('en');
+const { state } = await import('../js/admin-state.js');
+const { buildAppForm } = await import('../js/admin-app-form.js');
 
-test('the input and the results are a combobox and its listbox', () => {
-  assert.match(form, /id="ip-in"[^>]*role="combobox"/, 'the input is not a combobox');
-  assert.match(form, /id="ip-in"[^>]*aria-controls="iprs"/);
-  assert.match(form, /id="ip-in"[^>]*aria-autocomplete="list"/);
-  assert.match(form, /id="iprs"[^>]*role="listbox"/, 'the results are not a listbox');
-  assert.match(form, /id="iprs"[^>]*aria-label=/, 'the listbox has no name');
-  assert.match(form, /r\.setAttribute\('role', 'option'\)/, 'the rows are not options');
-});
-
-/* A listbox with no active option and no way to say which one is active tells
-   a screen reader nothing about where the cursor is. */
-test('the active option is published, not only styled', () => {
-  const start = form.indexOf('function ipSetActive');
-  const body = form.slice(start, form.indexOf('\n}\n', start));
-  assert.match(body, /setAttribute\('aria-activedescendant', act\.id\)/, 'the cursor is never announced');
-  assert.match(form, /r\.id = /, 'the options have no ids to point at');
-  assert.match(
+/** A fresh app form. */
+function form(iconUrl = '') {
+  state.items = [];
+  state.siurl = iconUrl;
+  state.scol = '';
+  const body = document.createElement('div');
+  document.body.appendChild(body);
+  buildAppForm(body, null);
+  return {
     body,
-    /setAttribute\('aria-selected', on \? 'true' : 'false'\)/,
-    'the active option is not marked selected',
+    inp: document.getElementById('ip-in'),
+    rs: document.getElementById('iprs'),
+    status: document.getElementById('ip-status'),
+    prev: document.getElementById('ipv'),
+    rows: () => document.getElementById('iprs').querySelectorAll('.ipr'),
+    done() {
+      body.remove();
+    },
+  };
+}
+
+/** Type into the field and wait for the search. */
+async function type(f, value, wait = 340) {
+  f.inp.value = value;
+  fire(f.inp, 'input');
+  if (wait) await settle(wait);
+}
+const searches = () => fetch.calls.filter(c => c.url.startsWith('/api/icons/search')).map(c => c.url);
+
+test('the search field is a named combobox tied to its results and its status line', () => {
+  const f = form();
+  assert.equal(f.inp.getAttribute('aria-label'), t('app.icon'), 'the placeholder is the only label');
+  assert.equal(f.inp.getAttribute('role'), 'combobox');
+  assert.equal(f.inp.getAttribute('aria-controls'), 'iprs');
+  assert.equal(f.inp.getAttribute('aria-autocomplete'), 'list');
+  assert.equal(f.inp.getAttribute('aria-describedby'), 'ip-status');
+  assert.equal(f.rs.getAttribute('role'), 'listbox');
+  assert.ok(f.rs.getAttribute('aria-label'), 'the listbox has no name');
+  assert.equal(f.status.getAttribute('role'), 'status');
+  assert.equal(f.status.getAttribute('aria-live'), 'polite');
+  f.done();
+});
+
+/* Each miss is remembered for a day in a cache of 300 entries. */
+test('a half-typed name is never requested, and the results are announced', async () => {
+  const f = form();
+  const before = searches().length;
+  const glyph = f.prev.firstChild;
+  for (const v of ['p', 'pl', 'ple']) await type(f, v, 0);
+  assert.equal(f.prev.firstChild, glyph, 'the tile redraws per keystroke');
+  await type(f, 'plex');
+  assert.deepEqual(searches().slice(before), ['/api/icons/search?q=plex']);
+  assert.equal(f.inp.getAttribute('aria-expanded'), 'true');
+  assert.equal(f.status.textContent, t('app.iconResultCount', { count: 2 }));
+  const rows = f.rows();
+  assert.deepEqual(
+    rows.map(r => [r.id, r.getAttribute('role'), r.getAttribute('aria-selected')]),
+    [
+      ['ipr-0', 'option', 'false'],
+      ['ipr-1', 'option', 'false'],
+    ],
   );
+  f.done();
 });
 
-test('every open and close of the results is announced', () => {
-  const lines = form.split('\n');
-  const changes = lines.flatMap((l, i) => {
-    const m = /\brs\.classList\.(add|remove)\('open'\)/.exec(l);
-    return m ? [{ i, open: m[1] === 'add' }] : [];
+test('each result names its catalogue, reads in its own direction and loads the declared file', async () => {
+  const f = form();
+  await type(f, 'pl');
+  const [plex, spring] = f.rows();
+  assert.equal(spring.querySelector('.ipr-src').textContent, t('app.iconFrom', { source: 'simple-icons' }));
+  assert.equal(plex.querySelector('.ipr-src').textContent, t('app.iconFrom', { source: 'dashboardicons' }));
+  assert.equal(plex.querySelector('.ipr-name').dir, 'auto');
+  assert.equal(plex.querySelector('img').src, PLEX.urls[0], 'the row picks a format itself');
+  f.done();
+});
+
+/* nextActiveIndex also answers Home and End. Focus here is in a text field,
+   where they move the caret. */
+test('the arrows move a published cursor, and Home, End and an input method are left alone', async () => {
+  const f = form();
+  await type(f, 'pl');
+  assert.equal(fire(f.inp, 'keydown', { key: 'ArrowDown' }), false);
+  assert.equal(f.inp.getAttribute('aria-activedescendant'), 'ipr-0', 'the cursor is never announced');
+  assert.deepEqual(
+    f.rows().map(r => r.getAttribute('aria-selected')),
+    ['true', 'false'],
+  );
+  fire(f.inp, 'keydown', { key: 'ArrowDown' });
+  fire(f.inp, 'keydown', { key: 'ArrowDown' });
+  assert.equal(f.inp.getAttribute('aria-activedescendant'), 'ipr-1');
+  for (const key of ['Home', 'End']) assert.equal(fire(f.inp, 'keydown', { key }), true, `${key} is intercepted`);
+  assert.equal(f.inp.getAttribute('aria-activedescendant'), 'ipr-1');
+  fire(f.inp, 'keydown', { key: 'ArrowUp', isComposing: true });
+  fire(f.inp, 'keydown', { key: 'ArrowUp', keyCode: 229 });
+  assert.equal(f.inp.getAttribute('aria-activedescendant'), 'ipr-1', 'a key for the input method moved the cursor');
+  f.done();
+});
+
+test('Escape closes the list without closing the form behind it, and Tab closes it too', async () => {
+  const f = form();
+  await type(f, 'pl');
+  let reached = false;
+  f.body.addEventListener('keydown', () => {
+    reached = true;
   });
-  assert.ok(changes.length >= 3, 'the results no longer open and close');
-  for (const { i, open } of changes) {
-    const after = lines.slice(i + 1, i + 4).join('\n');
-    assert.ok(
-      after.includes(`setAttribute('aria-expanded', '${open}')`),
-      `line ${i + 1} ${open ? 'opens' : 'closes'} the results without saying so`,
-    );
-  }
+  fire(f.inp, 'keydown', { key: 'Escape' });
+  assert.equal(reached, false, 'Escape reaches the dialog and closes the whole form');
+  assert.equal(f.inp.getAttribute('aria-expanded'), 'false');
+  assert.equal(f.rs.classList.contains('open'), false);
+  await type(f, 'plex');
+  fire(f.inp, 'keydown', { key: 'Tab' });
+  assert.equal(f.inp.getAttribute('aria-expanded'), 'false');
+  f.done();
 });
 
-/* The cursor itself is nextActiveIndex, which admin-logic.test covers. What
-   this file has to keep true is that the picker uses it rather than a second
-   implementation that behaves differently in the same admin. */
-test('the cursor is the one the admin already has', () => {
-  const kd = form.slice(form.indexOf('inp.onkeydown'), form.indexOf('const upInput'));
-  assert.match(kd, /nextActiveIndex\(e\.key, ipActive, ipList\.length\)/);
-  for (const key of ['Enter', 'Escape', 'Tab']) assert.ok(kd.includes(`'${key}'`), `${key} does nothing`);
+/* Enter acts on the cursor. */
+test('the pointer moves the whole cursor, and Enter stores a catalogue reference', async () => {
+  const f = form();
+  await type(f, 'pl');
+  fire(f.rows()[1], 'pointerenter', { bubbles: false });
+  assert.equal(f.inp.getAttribute('aria-activedescendant'), 'ipr-1');
+  assert.deepEqual(
+    f.rows().map(r => r.getAttribute('aria-selected')),
+    ['false', 'true'],
+    'the pointer sets the index behind the markers',
+  );
+  fire(f.inp, 'keydown', { key: 'Enter' });
+  assert.equal(state.siurl, SPRING.ref, 'the stored value is not the catalogue reference');
+  assert.equal(f.inp.value, SPRING.ref);
+  assert.equal(f.inp.getAttribute('aria-expanded'), 'false');
+  f.done();
 });
 
-test('keys typed into an input method are left to it', () => {
-  const kd = form.slice(form.indexOf('inp.onkeydown'), form.indexOf('const upInput'));
-  const first = kd.slice(0, kd.indexOf('const open'));
-  assert.match(first, /if \(e\.isComposing \|\| e\.keyCode === 229\) return;/);
+/* A catalogue lists names it holds no file for. */
+test('a chosen name with no file of its own lands on a variant, and the user picks light or dark', async () => {
+  const f = form();
+  await type(f, 'pl');
+  f.rows()[0].click();
+  await settle();
+  assert.ok(
+    fetch.calls.some(c => c.url === '/api/icons/variants?ref=plex'),
+    'the variants are guessed',
+  );
+  assert.equal(state.siurl, 'plex-light', 'a missing base file is left selected');
+  const group = document.querySelector('#icon-variant-slot [role="group"]');
+  assert.ok(group, 'no chooser for the variants');
+  const radios = group.querySelectorAll('input[type="radio"]');
+  assert.deepEqual(
+    radios.map(r => r.value),
+    ['plex-light', 'plex-dark'],
+  );
+  radios[1].checked = true;
+  fire(radios[1], 'change');
+  assert.equal(state.siurl, 'plex-dark');
+  await type(f, 'spring boot');
+  f.rows()[0].click();
+  await settle();
+  assert.equal(document.querySelector('#icon-variant-slot').children.length, 0, 'one file still shows a chooser');
+  f.done();
 });
 
-/* nextActiveIndex also answers Home and End, which is right for a listbox that
-   holds focus. Focus here is in a text field, where they move the caret. */
-test('Home and End are left to the caret', () => {
-  const kd = form.slice(form.indexOf('inp.onkeydown'), form.indexOf('const upInput'));
-  const guard = kd.slice(0, kd.indexOf('const moved'));
-  assert.match(guard, /e\.key === 'ArrowDown' \|\| e\.key === 'ArrowUp'/, 'every key it answers is intercepted');
-  assert.doesNotMatch(kd, /'Home'|'End'/);
+test('a name nothing matched is still offered, with a hint and an announcement', async () => {
+  const f = form();
+  await type(f, 'myapp');
+  const rows = f.rows();
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].querySelector('.ipr-name').textContent, 'myapp', 'the typed name is not offered');
+  assert.equal(f.rs.querySelector('.ipr-msg').textContent, t('app.iconTryUpload'));
+  assert.equal(f.status.textContent, t('app.iconNoMatch', { q: 'myapp' }));
+  assert.ok(en.app.iconNoMatch.includes('{q}'), 'the failed query is not shown back');
+  assert.ok(f.prev.querySelector('img'), 'an unlisted name is never tried');
+  f.done();
 });
 
-/* Enter acts on the cursor, so a row that is announced as active while another
-   is marked selected sends Enter somewhere nothing is pointing at. */
-test('the pointer moves the whole cursor, not only what is announced', () => {
-  const row = form.slice(form.indexOf('function ipRow'), form.indexOf('function showIPRes'));
-  assert.match(row, /onpointerenter = \(\) => ipSetActive\(i, \{ scroll: false \}\)/);
-  assert.doesNotMatch(row, /ipActive = i/, 'the pointer sets the index behind the markers');
+test('a failed search says so and still previews the typed name', async () => {
+  const f = form();
+  await type(f, 'down');
+  assert.equal(f.status.textContent, t('app.iconSearchFailed'), 'a failed search is not announced');
+  assert.match(f.rs.textContent, new RegExp(t('app.iconTryUpload').slice(0, 20)));
+  assert.ok(f.prev.querySelector('img'), 'the field goes quiet while the catalogues are down');
+  await type(f, 'demo');
+  assert.equal(f.status.textContent, t('app.iconSearchDemo'));
+  f.done();
 });
 
-test('Escape closes the list without closing the form behind it', () => {
-  const kd = form.slice(form.indexOf('inp.onkeydown'), form.indexOf('const upInput'));
-  const esc = kd.slice(kd.indexOf("'Escape'"));
-  assert.match(esc, /stopPropagation/, 'Escape reaches the dialog and closes the whole form');
+/* "Spring Boot" matches simple-icons, and saving the typed text resolves to
+   dashboardicons and loads nothing. */
+test('what the tile shows is what gets saved', async () => {
+  const f = form();
+  await type(f, 'spring boot');
+  assert.equal(state.siurl, SPRING.ref, 'the typed text stays saved');
+  assert.equal(f.prev.querySelector('img').src, SPRING.urls[0], 'the preview does not use the confirmed file');
+  f.done();
 });
 
-test('the count and the empty result are announced', () => {
-  assert.match(form, /role="status" aria-live="polite"/, 'nothing is announced');
-  assert.match(form, /ipSay\(t\('app\.iconResultCount'/);
-  assert.match(form, /ipSay\(t\('app\.iconNoMatch'/);
-  assert.match(form, /const why = t\(demo \? 'app\.iconSearchDemo' : 'app\.iconSearchFailed'\)/);
-  assert.match(form, /ipSay\(why\)/, 'a failed search is not announced');
-  assert.match(form, /aria-describedby="ip-status"/, 'the input is not tied to the status line');
+test('a pasted address and a local file preview immediately, with no search', async () => {
+  const f = form();
+  const before = searches().length;
+  await type(f, 'https://cdn.example/own.png', 0);
+  assert.equal(f.prev.querySelector('img').src, 'https://cdn.example/own.png');
+  assert.equal(f.rs.classList.contains('open'), false);
+  await settle(340);
+  assert.equal(searches().length, before);
+  f.done();
 });
 
-/* Which catalogue an icon came from decides whether it is a colour logo or a
-   silhouette, so the row says. */
-test('each result names its catalogue', () => {
-  assert.match(form, /src\.className = 'ipr-src'/);
-  assert.match(form, /t\('app\.iconFrom', \{ source: SOURCE_LABEL\[source\] \|\| source \}\)/);
-  for (const id of ['di', 'selfhst', 'simple', 'lobe']) {
-    assert.match(form, new RegExp(`${id}: '[^']+'`), `${id} has no readable name`);
-  }
+/* Several attempts are in flight at once and the half-typed ones finish last. */
+test('a stale preview attempt cannot overwrite a newer one', async () => {
+  const f = form();
+  await type(f, 'https://cdn.example/one.png', 0);
+  const first = f.prev.querySelector('img');
+  await type(f, 'https://cdn.example/two.png', 0);
+  const second = f.prev.querySelector('img');
+  first.onerror();
+  assert.equal(f.prev.firstChild, second, 'a late failure reset the tile');
+  assert.equal(second.style.width, undefined, 'the redraw pins a pixel width');
+  second.onerror();
+  assert.equal(f.prev.querySelector('img'), null, 'the current failure keeps a broken image');
+  f.done();
+});
+
+test('the source label and the result rows are styled', () => {
   assert.match(css, /\.ipr-src\{/, 'the source label is unstyled');
-});
-
-/* A name no catalogue lists may still be a file one of them holds, so the
-   typed name stays selectable instead of the list just closing. */
-test('a name nothing matched is still offered', () => {
-  const branch = form.slice(form.indexOf('if (!list.length)'), form.indexOf('ipList = list;'));
-  assert.match(branch, /ipRow\(0, typed, typed/, 'the typed name is not offered');
-  assert.match(branch, /t\('app\.iconTryUpload'\)/, 'no hint about uploading or leaving it empty');
-});
-
-/* Storing the catalogue URL pinned the config to one CDN path and skipped the
-   caching proxy on every dashboard load. */
-test('a chosen icon is stored as a catalogue reference, not a URL', () => {
-  const choose = form.slice(form.indexOf('function ipChoose'), form.indexOf('/* The light and dark files'));
-  assert.match(choose, /setIconRef\(pick\.ref\)/);
-  assert.match(form, /function setIconRef\(ref\) \{[\s\S]*?state\.siurl = ref/);
-  assert.doesNotMatch(choose, /svgUrl/, 'the stored value is a CDN URL again');
-});
-
-/* A catalogue lists names it holds no file for, so the row and the stored
-   value must land on a file that is really there. */
-test('a name the catalogue holds no file for resolves to one of its variants', () => {
-  const load = form.slice(form.indexOf('async function loadIconVariants'), form.indexOf('function wireIcon'));
-  assert.match(load, /!variants\.some\(v => v\.ref === ref\)/, 'a missing base file is left selected');
-  assert.match(load, /setIconRef\(variants\[0\]\.ref\)/);
-  const row = form.slice(form.indexOf('function ipRow'), form.indexOf('function showIPRes'));
-  assert.match(row, /variants\.flatMap\(v => v\.urls \|\| \[\]\)/, 'the row cannot fall back to a variant');
-});
-
-test('the variant control comes from the catalogue, not from a guess', () => {
-  const choose = form.slice(form.indexOf('function ipChoose'), form.indexOf('function setIconRef'));
-  assert.match(choose, /loadIconVariants\(pick\.ref\)/);
-});
-
-/* The variant is a design choice about the dashboard, not the admin theme, so
-   it is a control and never follows prefers-color-scheme. */
-test('the light and dark choice is the user’s, not the theme’s', () => {
-  const vr = form.slice(form.indexOf('function renderIconVariants'), form.indexOf('async function loadIconVariants'));
-  assert.match(vr, /role="group"/);
-  assert.match(vr, /type="radio"/);
-  assert.doesNotMatch(form, /prefers-color-scheme[^)]*\)\s*\.matches/, 'the variant follows the theme');
-  assert.match(vr, /if \(!variants\.length\) return void slot\.replaceChildren\(\)/, 'one file still shows a chooser');
+  assert.match(css, /\.ipr-name\{[^}]*text-align:match-parent/);
 });
 
 /* The list draws its own hover background only where the glide highlight is
    not available, or a pointer shows two highlights at once. */
 test('the results list uses the shared highlight', () => {
   assert.match(read('js/fluid-hover.js'), /container: '#iprs', item: '\.ipr'/);
-  assert.match(form, /fluidHoverKb\(act\)/, 'the keyboard cursor does not move the highlight');
-  assert.match(form, /fluidHoverClear\(rs\)/, 'the highlight outlives the closed list');
   assert.doesNotMatch(
     css,
     /@media not \(\(hover:hover\) and \(pointer:fine\)\)\{\.ipr:hover/,
@@ -203,87 +310,18 @@ test('every string the picker shows is translated', () => {
   assert.ok(en.app.iconNoMatch.includes('{q}'), 'the failed query is not shown back');
 });
 
-/* The catalogue names are product names and stay in Latin in every language. */
-test('the catalogue names are not translated', () => {
-  const labels = form.slice(form.indexOf('const SOURCE_LABEL'), form.indexOf('const VARIANT_LABEL'));
-  assert.doesNotMatch(labels, /\bt\(/, 'a catalogue name goes through translation');
-});
-
 /* The Icon group also holds the colour controls, so a list measured from the
    group opened below the sliders instead of below the field, and moved further
    down when the custom colour picker was open. */
 test('the list is measured from the field, not from the panel', () => {
-  const markup = form.slice(form.indexOf('<div class="grp" id="ipw">'), form.indexOf('icon-variant-slot'));
-  const anchor = markup.indexOf('icon-src-anchor');
-  assert.ok(anchor >= 0, 'the field row has no positioned anchor');
-  assert.ok(anchor < markup.indexOf('id="iprs"'), 'the list is outside the anchor');
+  const f = form();
+  const anchor = document.querySelector('#ipw .icon-src-anchor');
+  assert.ok(anchor, 'the field row has no positioned anchor');
+  assert.ok(anchor.contains(f.rs), 'the list is outside the anchor');
+  assert.ok(anchor.contains(f.inp));
   assert.match(css, /\.icon-src-anchor\{position:relative\}/);
   assert.match(css, /\.iprs\{position:absolute;top:calc\(100% \+ 4px\)/);
   assert.doesNotMatch(css, /\.ipw\{/, 'the rule for the old markup is still there');
   assert.doesNotMatch(css, /\.iprs\.open\{display:block;padding/, 'the in-flow rule can still win');
-});
-
-/* Asking for a format the catalogue does not hold logs a failed request for
-   every one of those icons. The catalogue's declared order arrives with the
-   result, so the row does not guess. */
-test('a result row asks for the format its catalogue declares', () => {
-  const row = form.slice(form.indexOf('function ipRow'), form.indexOf('function showIPRes'));
-  assert.doesNotMatch(row, /svgUrl|pngUrl|'\.svg'|'\.png'/, 'the row picks a format itself');
-});
-
-/* Every keystroke used to redraw the tile with the half-typed name, so typing
-   "stackyard" asked the server for "st", "sta" and the rest. Each miss is
-   remembered for a day in a cache of 300 entries, which evicts icons that do
-   exist. */
-test('a half-typed name is never requested', () => {
-  const oninput = form.slice(form.indexOf('inp.oninput'), form.indexOf('inp.onkeydown'));
-  const guard = oninput.slice(0, oninput.indexOf('ipMessage'));
-  assert.match(guard, /updPrev\(\)/, 'the tile never redraws, not even for an address');
-  const afterGuard = oninput.slice(oninput.indexOf('ipMessage'));
-  assert.doesNotMatch(afterGuard, /updPrev/, 'the tile still redraws per keystroke');
-});
-
-/* An address, an upload and an empty field need no catalogue, so those still
-   redraw at once. */
-test('a pasted address and a local file still preview immediately', () => {
-  const oninput = form.slice(form.indexOf('inp.oninput'), form.indexOf('inp.onkeydown'));
-  assert.match(oninput, /resolveIcon\(v\)/, 'an uploaded file waits for a catalogue that will not list it');
-  assert.match(oninput, /v\.startsWith\('https:\/\/'\)/);
-});
-
-test('the tile follows the result that matches what was typed', () => {
-  const show = form.slice(form.indexOf('function showIPRes'), form.length);
-  assert.match(show, /updPrev\(match\.urls\)/, 'the preview does not use the confirmed file');
-  assert.match(show, /else if \(!list\.length\) updPrev\(\)/, 'an unlisted name is never tried');
-  assert.match(show, /sameIconName\(/, 'the typed name is compared exactly');
-});
-
-/* With no catalogue to confirm against, the typed name is the only thing left
-   to try, or the field would go quiet whenever the catalogues are down. */
-test('a search that fails still previews the typed name', () => {
-  const search = form.slice(form.indexOf('const search = async'), form.indexOf('inp.oninput'));
-  const fail = search.slice(search.indexOf('} catch (e) {'));
-  assert.ok(fail.length > 1, 'the failure branch is gone');
-  assert.match(fail, /updPrev\(\)/);
-});
-
-/* A Latin icon name in a right-to-left locale truncates at the wrong end
-   without this, and the CSS-only route does not work in WebKit. */
-test('a truncated icon name reads correctly right to left', () => {
-  const row = form.slice(form.indexOf('function ipRow'), form.indexOf('function showIPRes'));
-  assert.match(row, /sp\.dir = 'auto'/);
-  assert.match(css, /\.ipr-name\{[^}]*text-align:match-parent/);
-});
-
-/* The tile draws the matched catalogue's file, so the saved value has to be
-   that catalogue's reference: "Spring Boot" matches simple-icons, and saving
-   the typed text resolves to dashboardicons and loads nothing. */
-test('what the tile shows is what gets saved', () => {
-  const show = form.slice(form.indexOf('function showIPRes'), form.length);
-  const branch = show.slice(show.indexOf('if (match)'), show.indexOf('if (!list.length)'));
-  assert.match(branch, /state\.siurl = match\.ref/, 'the typed text stays saved');
-  assert.ok(
-    branch.indexOf('state.siurl = match.ref') < branch.indexOf('updPrev(match.urls)'),
-    'the preview is painted before the value it belongs to is stored',
-  );
+  f.done();
 });

@@ -10,6 +10,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
 
+import { installDom } from './fake-dom.mjs';
+
 register('./js-root-hooks.mjs', import.meta.url);
 const { relativeLuminance, contrastRatio, toneForLuminances } = await import('../js/label-contrast.js');
 
@@ -83,9 +85,37 @@ test('the ink pair is opaque', () => {
   }
 });
 
-test('the renderer measures the plate instead of assuming it', () => {
-  const utils = read('js/utils.js');
-  assert.match(utils, /toneForColor\(/, 'the initial does not read its plate');
+/* A canvas that parses hex the way a browser canvas does: an unreadable value
+   leaves the previous fill in place. */
+function hexCanvas() {
+  let fill = [0, 0, 0];
+  const ctx = {
+    set fillStyle(v) {
+      if (/^#[0-9a-f]{6}$/i.test(v)) fill = hex(v);
+    },
+    clearRect() {},
+    fillRect() {},
+    getImageData: () => ({ data: [...fill, 255] }),
+  };
+  return { getContext: () => ctx };
+}
+
+test('the initial takes its ink from the plate it sits on', async () => {
+  const dom = installDom();
+  const make = dom.document.createElement.bind(dom.document);
+  dom.document.createElement = tag => (tag === 'canvas' ? hexCanvas() : make(tag));
+  try {
+    const { letterTile } = await import('../js/utils.js');
+    assert.ok(letterTile('Gitea', 50, '#F2F2F7').classList.contains('fb-on-light'), 'dark ink on a light plate');
+    assert.ok(!letterTile('Gitea', 50, '#1C1C1E').classList.contains('fb-on-light'), 'light ink on a dark plate');
+    dom.document.documentElement.setAttribute('data-theme', 'light');
+    assert.ok(!letterTile('Gitea', 50, '#1C1C1E').classList.contains('fb-on-light'), 'the page theme decided');
+  } finally {
+    dom.restore();
+  }
+});
+
+test('the plate ink rule is in the stylesheet', () => {
   const css = read('css/dashboard.css');
   assert.doesNotMatch(css, /\.fb[^{]*\{[^}]*color:rgba\(255,255,255,\.85\)/, 'the translucent white ink is back');
   assert.match(css, /\.fb\.fb-on-light\s*\{\s*color:var\(--on-tint-dark\)/);
@@ -101,7 +131,8 @@ test('the folder preview initial is measured too', () => {
 });
 
 test('the tone rule is not duplicated', () => {
-  const dashboard = read('js/dashboard.js');
-  assert.doesNotMatch(dashboard, /function toneForColor\(/, 'dashboard.js declares its own copy');
-  assert.match(dashboard, /toneForColor/, 'dashboard.js should use the shared one');
+  const copies = fs
+    .readdirSync(path.join(root, 'js'))
+    .filter(f => f.endsWith('.js') && /(function\s+|const\s+)toneForColor\b/.test(read(`js/${f}`)));
+  assert.deepEqual(copies, ['label-contrast.js']);
 });

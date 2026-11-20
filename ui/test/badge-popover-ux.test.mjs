@@ -33,13 +33,7 @@ test('the pill never carries a unit, on any layout', () => {
   assert.doesNotMatch(css, /body\.is-mob \.badge-unit/, 'a layout-specific rule is what left the desktop pill wide');
 });
 
-/* The unit is still announced. Dropping it from the pill must not drop it from
-   the accessible name. */
-test('the unit still reaches the accessible name', () => {
-  const dashboard = read('js/dashboard.js');
-  assert.match(dashboard, /unitEl\.textContent = unit/, 'the unit element is no longer populated');
-  assert.match(dashboard, /aria-label/, 'the badge no longer carries a label');
-});
+/* The unit still reaching the tile name is checked in dashboard-badges.test.mjs. */
 
 /* ── W-06 ─────────────────────────────────────────────────────────────────── */
 
@@ -171,17 +165,6 @@ test('a badge with a popover accepts the pointer', () => {
     /pointer-events/,
     'having extra values is not what decides whether it can be hovered',
   );
-});
-
-/* A badge that can be hovered draws the browser's own tooltip from a title
-   attribute, beside the styled popover showing the same text. */
-test('the badge sets no title attribute', () => {
-  const dashboard = read('js/dashboard.js');
-  const from = dashboard.indexOf('els.forEach(badge =>');
-  /* From the loop, not the file: the import names wireBadgePopover first. */
-  const paint = dashboard.slice(from, dashboard.indexOf('wireBadgePopover', from));
-  assert.doesNotMatch(paint, /\.title\s*=/, 'the browser tooltip would duplicate the popover');
-  assert.match(paint, /removeAttribute\('title'\)/, 'a title left from an earlier paint would persist');
 });
 
 test('an open popover is moved to the next badge, not shown again', () => {

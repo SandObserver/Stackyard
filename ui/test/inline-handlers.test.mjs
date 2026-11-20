@@ -143,7 +143,7 @@ test('an unterminated comment does not hide or reveal a handler', () => {
 /* The buttons themselves still exist and are still wired, just not inline. */
 test('both retry buttons attach their handler in code', () => {
   for (const [file, selector] of [
-    ['js/dashboard.js', '.api-error-btn'],
+    ['js/dashboard-screens.js', '.api-error-btn'],
     ['js/admin-page-load.js', '.retry-btn'],
   ]) {
     const src = fs.readFileSync(path.join(root, file), 'utf8');

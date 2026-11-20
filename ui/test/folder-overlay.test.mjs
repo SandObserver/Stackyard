@@ -19,6 +19,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
+import { fire, installDom, pageBody } from './fake-dom.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
@@ -156,22 +157,61 @@ test('a closing folder takes no input and shrinks from where it is', () => {
     'a fading blur darkens the top edge of the screen',
   );
   assert.match(motion, /stop = playFolder\(\s*parts\.flatMap/, 'only the panel animates the close');
-  const dash = read('js/dashboard.js');
-  assert.doesNotMatch(
-    dash,
-    /querySelector\('\.folder-overlay'\)|'\.folder-overlay, \.folder-overlay-mobile'/,
-    'a closing folder would block the pager',
-  );
+});
+
+test('a closing folder does not block the home pager', async () => {
+  register('./js-root-hooks.mjs', import.meta.url);
+  const dom = installDom({ markup: pageBody('index.html') });
+  const { createDashboardState } = await import('../js/dashboard-state.js');
+  const { wirePageInput } = await import('../js/dashboard-input.js');
+  const turns = [];
+  wirePageInput({ dash: createDashboardState(), goTo: n => turns.push(n) });
+  for (const cls of ['folder-overlay', 'folder-overlay-mobile']) {
+    const ov = dom.document.createElement('dialog');
+    ov.className = cls;
+    dom.document.body.appendChild(ov);
+  }
+  fire(dom.document.body, 'keydown', { key: 'ArrowRight' });
+  fire(dom.document.body, 'mousedown', { clientX: 300 });
+  fire(dom.document.body, 'mousemove', { clientX: 100 });
+  fire(dom.document.body, 'mouseup', { clientX: 100 });
+  assert.deepEqual(turns, [1, 1], 'a closing folder would block the pager');
+  dom.restore();
 });
 
 /* A rebuild removes the tile a folder shrinks into and drops the badges its
    apps registered. */
-test('every rebuild closes an open folder first', () => {
-  const dash = read('js/dashboard.js');
-  const desktop = dash.slice(dash.indexOf('function buildDesktop('), dash.indexOf('const OFF_PAGE_RATE'));
-  assert.match(desktop, /^function buildDesktop\(\) \{[\s\S]{0,200}closeFolders\(\);/);
+test('every rebuild closes an open folder first', async () => {
+  register('./js-root-hooks.mjs', import.meta.url);
+  const dom = installDom({ markup: pageBody('index.html') });
+  /* fake-dom has no DOMMatrixReadOnly. Identity only. */
+  globalThis.DOMMatrixReadOnly ??= class {
+    a = 1;
+    b = 0;
+    c = 0;
+    d = 1;
+    e = 0;
+    f = 0;
+    m41 = 0;
+    m42 = 0;
+  };
+  const { createDashboardState } = await import('../js/dashboard-state.js');
+  const { createBadges } = await import('../js/dashboard-badges.js');
+  const { createDesktopGrid } = await import('../js/dashboard-grid.js');
+  const { initUI, openFolderDesktop } = await import('../js/ui.js');
+  const dash = createDashboardState();
+  dash.items = [{ id: 'f', type: 'folder', label: 'F', children: [] }];
+  const badges = createBadges(dash);
+  initUI({ items: dash.items, S: dash.S, CB: dash.CB, ...badges, widgetReg: dash.widgetReg });
+  const grid = createDesktopGrid({ dash, badges, goTo() {} });
+  grid.buildDesktop();
+  openFolderDesktop(dash.items[0], dom.document.querySelector('#pages a, #pages button'));
+  assert.ok(dom.document.querySelector('.folder-overlay[open]'), 'the folder did not open');
+  grid.buildDesktop();
+  assert.equal(dom.document.querySelector('.folder-overlay'), null, 'the folder is left over the new page');
   const mobile = ui.slice(ui.indexOf('export function buildMobile('), ui.indexOf('export function resetMobileChrome('));
   assert.match(mobile, /^export function buildMobile\(\) \{\s*closeFolders\(\);/);
+  dom.restore();
 });
 
 function fakeDom() {
@@ -291,5 +331,5 @@ test('search opens a phone folder with the same sizes as its tile', () => {
 test('an icon in a desktop folder has the same corner as on the home grid', () => {
   const desktop = ui.slice(ui.indexOf('export function openFolderDesktop('), ui.indexOf('function mFolder('));
   assert.match(desktop, /mkWrap\(child, iw, Math\.round\(iw \* ICON_R\), isz, 'iwrap'\)/);
-  assert.match(read('js/dashboard.js'), /mkWrap\(item, iw, Math\.round\(iw \* ICON_R\), isz, 'iwrap'\)/);
+  /* The home grid's corner is checked by building it in type-scale.test.mjs. */
 });

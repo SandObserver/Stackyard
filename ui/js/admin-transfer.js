@@ -1,6 +1,6 @@
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
 import { importCounts, restoresSettings } from '/js/admin-save-logic.js?v=7de2f6fd';
-import { apiGet, errorAction, errorText, rowBusy, ShownError, toast } from '/js/admin-shared.js?v=14e96406';
+import { apiGet, errorAction, errorText, rowBusy, ShownError, toast } from '/js/admin-shared.js?v=d78607eb';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { t } from '/js/i18n.js?v=99563c71';
@@ -17,7 +17,7 @@ import {
 } from '/js/import-foreign.js?v=348618f4';
 import { CONFIG_MAX_BYTES } from '/js/limits.js?v=ff61256e';
 import { confirmModal } from '/js/modal.js?v=84ba5279';
-import { el, isolate, setUserText, tgt } from '/js/utils.js?v=c1d4e76c';
+import { el, isolate, setUserText, tgt } from '/js/utils.js?v=9ed2b298';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=39538b71';
 
 /** @typedef {{ restoreBackup: (file: any) => Promise<boolean>, appendAndSave: (items: any[]) => Promise<void> }} TransferPage */

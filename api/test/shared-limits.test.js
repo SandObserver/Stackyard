@@ -14,18 +14,17 @@ test('the dock limit is a positive whole number', () => {
 });
 
 test('no second copy of the dock limit is declared anywhere', () => {
-  for (const f of [
-    'api/src/routes/config.js',
-    'ui/js/admin-logic.js',
-    'ui/js/admin-app-form.js',
-    'ui/js/dashboard.js',
-  ]) {
+  const ui = fs
+    .readdirSync(path.join(ROOT, 'ui/js'))
+    .filter(f => f.endsWith('.js') && f !== 'limits.js')
+    .map(f => `ui/js/${f}`);
+  for (const f of ['api/src/routes/config.js', ...ui]) {
     assert.equal(/(const|let)\s+DOCK_MAX\s*=/.test(read(f)), false, `${f} declares its own DOCK_MAX`);
   }
 });
 
 test('the dock renderer and the save check both read the shared limit', () => {
-  assert.match(read('ui/js/dashboard.js'), /slice\(0,\s*DOCK_MAX\)/);
+  assert.match(read('ui/js/dashboard-grid.js'), /slice\(0,\s*DOCK_MAX\)/);
   assert.match(read('api/src/routes/config.js'), /length > DOCK_MAX/);
 });
 

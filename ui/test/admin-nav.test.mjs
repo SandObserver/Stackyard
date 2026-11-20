@@ -44,11 +44,15 @@ test('a first visit with no remembered section does not warn', async () => {
 });
 
 test('the import link opens the settings section that holds import', async () => {
-  assert.match(
-    fs.readFileSync(new URL('../js/utils.js', import.meta.url), 'utf8'),
-    /href: '\/admin\/#general'/,
-    'it lands wherever settings was left',
-  );
+  const empty = installDom({ markup: pageBody('index.html') });
+  try {
+    const { renderEmptyState } = await import('../js/utils.js');
+    renderEmptyState([]);
+    const link = empty.document.querySelector('.empty-state .empty-state-hint');
+    assert.equal(link?.getAttribute('href'), '/admin/#general', 'it lands wherever settings was left');
+  } finally {
+    empty.restore();
+  }
   const page = await openSettings({ hash: '#general', stored: 'about' });
   assert.deepEqual(page.shown, ['sec-general'], 'admin ignores the hash on load');
   page.dom.location.hash = '#about';

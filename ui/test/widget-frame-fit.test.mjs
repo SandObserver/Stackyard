@@ -56,7 +56,7 @@ async function mount(src) {
     globalThis[k] = fakes[k];
   }
   try {
-    const { mountScaledWidget } = await import('../js/utils.js');
+    const { mountScaledWidget } = await import('../js/widget-frame.js');
     mountScaledWidget(el('div'), { src, title: 'A widget', design: [360, 170] });
   } finally {
     Object.assign(globalThis, saved);

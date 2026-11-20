@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
+import { fakeFetch, installDom, pageBody, settle } from './fake-dom.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
@@ -199,10 +200,34 @@ test('closing puts both edges back', () => {
   assert.match(fn[1], /classList\.remove\('kb'\)/);
 });
 
-test('the browser is asked to resize the page for the keyboard, except where the key is unknown', () => {
+test('the browser is asked to resize the page for the keyboard, except where the key is unknown', async () => {
   assert.doesNotMatch(html, /interactive-widget/, 'Safari logs an error for the key in the page');
-  const dash = read('js/dashboard.js');
-  assert.match(dash, /if \(!\('GestureEvent' in window\)\) \{[\s\S]{0,200}interactive-widget=resizes-content/);
+  const content = /<meta name="viewport" content="([^"]+)"/.exec(html)?.[1];
+  assert.ok(content, 'the page has no viewport');
+  const start = async (safari, n) => {
+    const dom = installDom({
+      markup: pageBody('index.html'),
+      fetch: fakeFetch({ '/api/auth/check': { status: 401 } }),
+      location: 'http://nas.local/',
+    });
+    const meta = dom.document.createElement('meta');
+    meta.setAttribute('name', 'viewport');
+    meta.setAttribute('content', content);
+    dom.document.head.appendChild(meta);
+    if (safari) globalThis.GestureEvent = class {};
+    globalThis.__bootTimeoutMs = 1000;
+    try {
+      await import(`../js/dashboard.js?start=${n}`);
+      await settle();
+      return meta.getAttribute('content');
+    } finally {
+      delete globalThis.GestureEvent;
+      delete globalThis.__bootTimeoutMs;
+      dom.restore();
+    }
+  };
+  assert.equal(await start(false, 1), `${content},interactive-widget=resizes-content`);
+  assert.equal(await start(true, 2), content, 'Safari logs an error for the key');
 });
 
 test('the list drops the status-bar inset once the keyboard has moved it', () => {

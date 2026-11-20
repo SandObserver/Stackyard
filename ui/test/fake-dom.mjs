@@ -35,6 +35,79 @@ const encode = (s, attr) => {
   const out = String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return attr ? out.replace(/"/g, '&quot;') : out;
 };
+/* Attribute writes all pass through here, so a MutationObserver sees them. */
+class AttrMap extends Map {
+  constructor(owner) {
+    super();
+    this.owner = owner;
+  }
+  set(k, v) {
+    const old = this.has(k) ? this.get(k) : null;
+    super.set(k, v);
+    attributeChanged(this.owner, k, old);
+    return this;
+  }
+  delete(k) {
+    if (!this.has(k)) return false;
+    const old = this.get(k);
+    super.delete(k);
+    attributeChanged(this.owner, k, old);
+    return true;
+  }
+}
+
+/** @type {Set<FakeMutationObserver>} */
+const mutationObservers = new Set();
+function attributeChanged(el, name, oldValue) {
+  for (const mo of mutationObservers) mo.attributeChanged(el, name, oldValue);
+}
+
+/* Attribute records only, delivered in a microtask. Every write is recorded,
+   also one of the same value. observe() throws for childList and characterData,
+   which this fake does not record. */
+class FakeMutationObserver {
+  constructor(callback) {
+    this.callback = callback;
+    this.targets = new Map();
+    this.records = [];
+  }
+  observe(target, opts = {}) {
+    const attributes = opts.attributes ?? (opts.attributeFilter !== undefined || opts.attributeOldValue !== undefined);
+    if (opts.childList || opts.characterData || opts.characterDataOldValue)
+      throw new Error('fake-dom MutationObserver records attributes only');
+    if (!attributes) throw new TypeError('MutationObserver.observe needs attributes, childList or characterData');
+    this.targets.set(target, { ...opts, attributes });
+    mutationObservers.add(this);
+  }
+  attributeChanged(el, name, oldValue) {
+    for (const [target, o] of this.targets) {
+      if (!o.attributes) continue;
+      if (el !== target && !(o.subtree && target.contains?.(el))) continue;
+      if (o.attributeFilter && !o.attributeFilter.includes(name)) continue;
+      if (!this.records.length)
+        queueMicrotask(() => {
+          const recs = this.takeRecords();
+          if (recs.length) this.callback(recs, this);
+        });
+      this.records.push({
+        type: 'attributes',
+        target: el,
+        attributeName: name,
+        oldValue: o.attributeOldValue ? oldValue : null,
+      });
+      return;
+    }
+  }
+  takeRecords() {
+    return this.records.splice(0);
+  }
+  disconnect() {
+    this.targets.clear();
+    this.records = [];
+    mutationObservers.delete(this);
+  }
+}
+
 const dataAttr = k => 'data-' + String(k).replace(/[A-Z]/g, c => '-' + c.toLowerCase());
 
 class FakeEventTarget {
@@ -116,7 +189,7 @@ export class FakeElement extends FakeEventTarget {
     super();
     this.tagName = String(tag).toUpperCase();
     this.ownerDocument = owner;
-    this.attrs = new Map();
+    this.attrs = new AttrMap(this);
     this.childNodes = [];
     this.parentElement = null;
     this.value = '';
@@ -175,13 +248,15 @@ export class FakeElement extends FakeEventTarget {
     return this.attrs.has('hidden');
   }
   set hidden(v) {
-    this.toggleAttribute('hidden', !!v);
+    if (v) this.attrs.set('hidden', '');
+    else this.attrs.delete('hidden');
   }
   get disabled() {
     return this.attrs.has('disabled');
   }
   set disabled(v) {
-    this.toggleAttribute('disabled', !!v);
+    if (v) this.attrs.set('disabled', '');
+    else this.attrs.delete('disabled');
   }
   get id() {
     return this.attrs.get('id') || '';
@@ -201,6 +276,24 @@ export class FakeElement extends FakeEventTarget {
   set href(v) {
     this.attrs.set('href', String(v));
   }
+  get target() {
+    return this.attrs.get('target') || '';
+  }
+  set target(v) {
+    this.attrs.set('target', String(v));
+  }
+  get rel() {
+    return this.attrs.get('rel') || '';
+  }
+  set rel(v) {
+    this.attrs.set('rel', String(v));
+  }
+  get src() {
+    return this.attrs.get('src') || '';
+  }
+  set src(v) {
+    this.attrs.set('src', String(v));
+  }
   get download() {
     return this.attrs.get('download') || '';
   }
@@ -217,6 +310,9 @@ export class FakeElement extends FakeEventTarget {
     const doc = this.ownerDocument;
     for (let x = this; x; x = x.parentElement) if (x === doc?.documentElement) return true;
     return false;
+  }
+  get parentNode() {
+    return this.parentElement ?? (this === this.ownerDocument?.documentElement ? this.ownerDocument : null);
   }
   get firstChild() {
     return this.childNodes[0] || null;
@@ -243,7 +339,8 @@ export class FakeElement extends FakeEventTarget {
     return 0;
   }
   getBoundingClientRect() {
-    return { top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 };
+    const r = this.layoutBox || { width: 0, height: 0 };
+    return { top: 0, left: 0, x: 0, y: 0, right: r.width, bottom: r.height, width: r.width, height: r.height };
   }
   getClientRects() {
     return this.isConnected && !this.hidden ? [this.getBoundingClientRect()] : [];
@@ -262,8 +359,8 @@ export class FakeElement extends FakeEventTarget {
   }
   toggleAttribute(n, on) {
     const want = on === undefined ? !this.attrs.has(n) : !!on;
-    if (want) this.attrs.set(n, '');
-    else this.attrs.delete(n);
+    if (want && !this.attrs.has(n)) this.attrs.set(n, '');
+    else if (!want) this.attrs.delete(n);
     return want;
   }
   get textContent() {
@@ -306,6 +403,10 @@ export class FakeElement extends FakeEventTarget {
     }
   }
   appendChild(c) {
+    if (c.nodeType === 11) {
+      for (const k of [...c.childNodes]) this.appendChild(k);
+      return c;
+    }
     c.parentElement?.removeChild(c);
     c.parentElement = this;
     this.childNodes.push(c);
@@ -324,6 +425,10 @@ export class FakeElement extends FakeEventTarget {
     return c;
   }
   insertBefore(c, ref) {
+    if (c.nodeType === 11) {
+      for (const k of [...c.childNodes]) this.insertBefore(k, ref);
+      return c;
+    }
     this.appendChild(c);
     this.childNodes.pop();
     const at = ref ? this.childNodes.indexOf(ref) : -1;
@@ -334,6 +439,11 @@ export class FakeElement extends FakeEventTarget {
     for (const c of this.childNodes) c.parentElement = null;
     this.childNodes = [];
     for (const k of kids) this.appendChild(typeof k === 'string' ? this.ownerDocument.createTextNode(k) : k);
+  }
+  replaceChild(next, old) {
+    if (old.parentElement !== this) throw new Error('replaceChild: not a child');
+    old.replaceWith(next);
+    return old;
   }
   replaceWith(other) {
     const p = this.parentElement;
@@ -361,7 +471,8 @@ export class FakeElement extends FakeEventTarget {
     return this.attrs.has('open');
   }
   set open(v) {
-    this.toggleAttribute('open', !!v);
+    if (v) this.attrs.set('open', '');
+    else this.attrs.delete('open');
   }
   showModal() {
     this.setAttribute('open', '');
@@ -391,6 +502,7 @@ export class FakeElement extends FakeEventTarget {
         : this.ownerDocument.createElement(tag);
     for (const [k, v] of this.attrs) copy.attrs.set(k, v);
     for (const k of ['value', 'checked', 'type']) copy[k] = this[k];
+    Object.assign(copy.style, this.style);
     if (deep) for (const c of this.childNodes) copy.appendChild(c.cloneNode(true));
     return copy;
   }
@@ -398,14 +510,14 @@ export class FakeElement extends FakeEventTarget {
     return [];
   }
   matches(sel) {
-    return sel.split(',').some(s => matchesComplex(this, s.trim(), null));
+    return splitTop(sel, ',').some(s => matchesComplex(this, s, null));
   }
   closest(sel) {
     for (let x = this; x; x = x.parentElement) if (x.matches(sel)) return x;
     return null;
   }
   querySelectorAll(sel) {
-    const parts = sel.split(',').map(s => s.trim());
+    const parts = splitTop(sel, ',');
     const out = [];
     const walk = n => {
       for (const c of n.children) {
@@ -452,6 +564,13 @@ class FakeText extends FakeEventTarget {
   }
 }
 
+/* Inserting a fragment moves its children and leaves it empty. */
+class FakeDocumentFragment extends FakeElement {
+  get nodeType() {
+    return 11;
+  }
+}
+
 class FakeHTMLElement extends FakeElement {
   get namespaceURI() {
     return 'http://www.w3.org/1999/xhtml';
@@ -461,6 +580,11 @@ class FakeHTMLInputElement extends FakeHTMLElement {}
 class FakeHTMLButtonElement extends FakeHTMLElement {}
 class FakeHTMLDialogElement extends FakeHTMLElement {}
 class FakeHTMLIFrameElement extends FakeHTMLElement {}
+class FakeHTMLCanvasElement extends FakeHTMLElement {
+  getContext() {
+    return null;
+  }
+}
 class FakeSVGElement extends FakeElement {
   get namespaceURI() {
     return SVG_NS;
@@ -474,14 +598,29 @@ const HTML_CLASS = {
   button: FakeHTMLButtonElement,
   dialog: FakeHTMLDialogElement,
   iframe: FakeHTMLIFrameElement,
+  canvas: FakeHTMLCanvasElement,
 };
+
+/* Split on a separator outside parentheses and brackets. */
+function splitTop(sel, sep) {
+  const out = [];
+  let depth = 0;
+  let cur = '';
+  for (const c of sel) {
+    if (c === '(' || c === '[') depth++;
+    else if (c === ')' || c === ']') depth--;
+    if (depth === 0 && (sep === ' ' ? /\s/.test(c) : c === sep)) {
+      if (cur.trim()) out.push(cur.trim());
+      cur = '';
+    } else cur += c;
+  }
+  if (cur.trim()) out.push(cur.trim());
+  return out;
+}
 
 /* Compound selectors joined by descendant or child combinators. */
 function matchesComplex(el, sel, scope) {
-  const tokens = sel
-    .replace(/\s*>\s*/g, ' > ')
-    .split(/\s+/)
-    .filter(Boolean);
+  const tokens = splitTop(sel.replace(/\s*>\s*/g, ' > '), ' ');
   return matchFrom(el, tokens, tokens.length - 1, scope);
 }
 
@@ -498,11 +637,13 @@ function matchFrom(el, tokens, i, scope) {
 
 function matchCompound(el, simple, scope) {
   if (simple === ':scope') return el === scope;
-  const m = simple.match(/^(\*|[a-z][\w-]*)?((?:[#.][\w-]+|\[[^\]]+\]|:not\([^)]*\))*)$/i);
+  const m = simple.match(/^(\*|[a-z][\w-]*)?((?:[#.][\w-]+|\[[^\]]+\]|:(?:not|is)\([^)]*\))*)$/i);
   if (!m) throw new Error(`fake-dom cannot read the selector "${simple}"`);
-  if (m[1] && m[1] !== '*' && el.tagName !== m[1].toUpperCase()) return false;
-  for (const part of m[2].match(/[#.][\w-]+|\[[^\]]+\]|:not\([^)]*\)/g) || []) {
-    if (part.startsWith(':not(')) {
+  if (m[1] && m[1] !== '*' && el.tagName.toUpperCase() !== m[1].toUpperCase()) return false;
+  for (const part of m[2].match(/[#.][\w-]+|\[[^\]]+\]|:(?:not|is)\([^)]*\)/g) || []) {
+    if (part.startsWith(':is(')) {
+      if (!splitTop(part.slice(4, -1), ',').some(x => matchCompound(el, x, scope))) return false;
+    } else if (part.startsWith(':not(')) {
       if (matchCompound(el, part.slice(5, -1), scope)) return false;
     } else if (part[0] === '#') {
       if (el.id !== part.slice(1)) return false;
@@ -545,17 +686,44 @@ export class FakeDocument extends FakeEventTarget {
     el.tagName = String(tag);
     return el;
   }
+  createDocumentFragment() {
+    return new FakeDocumentFragment('#document-fragment', this);
+  }
   createTextNode(text) {
     return new FakeText(text, this);
   }
   getElementById(id) {
     return this.documentElement.querySelector(`#${id}`);
   }
+  importNode(node, deep = false) {
+    if (node.nodeType === 3) return this.createTextNode(node.data);
+    const copy =
+      node.namespaceURI === SVG_NS ? this.createElementNS(SVG_NS, node.tagName) : this.createElement(node.tagName);
+    for (const [k, v] of node.attrs) copy.attrs.set(k, v);
+    for (const k of ['value', 'checked', 'type']) copy[k] = node[k];
+    if (deep) for (const c of node.childNodes) copy.appendChild(this.importNode(c, true));
+    return copy;
+  }
   querySelector(sel) {
     return this.documentElement.matches(sel) ? this.documentElement : this.documentElement.querySelector(sel);
   }
   querySelectorAll(sel) {
     return this.documentElement.querySelectorAll(sel);
+  }
+}
+
+/* The markup's first element becomes the document element. */
+class FakeDOMParser {
+  parseFromString(markup) {
+    const doc = new FakeDocument();
+    const holder = doc.createElement('div');
+    holder.innerHTML = markup;
+    const root = holder.firstElementChild;
+    if (root) {
+      root.remove();
+      doc.documentElement = root;
+    }
+    return doc;
   }
 }
 
@@ -608,6 +776,30 @@ export function fakeFetch(routes = {}) {
   return fetch;
 }
 
+/* Width, height and orientation queries against innerWidth and innerHeight,
+   joined by "and". Reduced motion follows the option. Any other feature does
+   not match. */
+function mediaMatches(query, reduceMotion) {
+  const parts = String(query).match(/\([^)]*\)/g) || [];
+  if (!parts.length || /,|\bor\b|\bnot\b/.test(query)) return false;
+  return parts.every(part => {
+    const [name, raw = ''] = part
+      .slice(1, -1)
+      .split(':')
+      .map(x => x.trim());
+    const px = parseFloat(raw);
+    const w = globalThis.innerWidth;
+    const h = globalThis.innerHeight;
+    if (name === 'prefers-reduced-motion') return raw === 'reduce' ? reduceMotion : !reduceMotion;
+    if (name === 'max-width') return w <= px;
+    if (name === 'min-width') return w >= px;
+    if (name === 'max-height') return h <= px;
+    if (name === 'min-height') return h >= px;
+    if (name === 'orientation') return raw === (h >= w ? 'portrait' : 'landscape');
+    return false;
+  });
+}
+
 /** Install a document and the window globals page modules read.
     @param {{ markup?: string, fetch?: any, storage?: Record<string,string>, reduceMotion?: boolean, location?: string }} [opts] */
 export function installDom(opts = {}) {
@@ -640,7 +832,9 @@ export function installDom(opts = {}) {
   put(saved, 'innerHeight', 800);
   put(saved, 'scrollTo', () => {});
   put(saved, 'matchMedia', q => ({
-    matches: q.includes('reduced-motion') ? !!opts.reduceMotion : false,
+    get matches() {
+      return mediaMatches(q, !!opts.reduceMotion);
+    },
     media: q,
     addEventListener() {},
     removeEventListener() {},
@@ -648,6 +842,46 @@ export function installDom(opts = {}) {
     removeListener() {},
   }));
   put(saved, 'requestAnimationFrame', fn => frames.push(fn));
+  /* Delivered in the next frame, with the size the element has then. The first
+     delivery follows observe(). */
+  const resizeObservers = new Set();
+  class FakeResizeObserver {
+    constructor(callback) {
+      this.callback = callback;
+      this.sizes = new Map();
+      this.queued = false;
+    }
+    observe(target) {
+      this.sizes.set(target, null);
+      resizeObservers.add(this);
+      this.queue();
+    }
+    unobserve(target) {
+      this.sizes.delete(target);
+    }
+    disconnect() {
+      this.sizes.clear();
+      resizeObservers.delete(this);
+    }
+    queue() {
+      if (this.queued) return;
+      this.queued = true;
+      frames.push(() => {
+        this.queued = false;
+        const entries = [];
+        for (const [target, last] of this.sizes) {
+          const { width, height } = target.getBoundingClientRect();
+          if (last && last.width === width && last.height === height) continue;
+          this.sizes.set(target, { width, height });
+          entries.push({ target, contentRect: { width, height, top: 0, left: 0, x: 0, y: 0 } });
+        }
+        if (entries.length) this.callback(entries, this);
+      });
+    }
+  }
+  put(saved, 'ResizeObserver', FakeResizeObserver);
+  put(saved, 'MutationObserver', FakeMutationObserver);
+  put(saved, 'DOMParser', FakeDOMParser);
   put(saved, 'cancelAnimationFrame', () => {});
   put(saved, 'getComputedStyle', () => ({ direction: 'ltr', transform: 'none', getPropertyValue: () => '' }));
   put(saved, 'localStorage', {
@@ -664,6 +898,7 @@ export function installDom(opts = {}) {
   put(saved, 'HTMLButtonElement', FakeHTMLButtonElement);
   put(saved, 'HTMLDialogElement', FakeHTMLDialogElement);
   put(saved, 'HTMLIFrameElement', FakeHTMLIFrameElement);
+  put(saved, 'HTMLCanvasElement', FakeHTMLCanvasElement);
   put(saved, 'SVGElement', FakeSVGElement);
   put(saved, 'SVGSVGElement', FakeSVGSVGElement);
   if (opts.fetch !== undefined) put(saved, 'fetch', opts.fetch);
@@ -672,6 +907,12 @@ export function installDom(opts = {}) {
     window: win,
     location: loc,
     storage: store,
+    /** Give an element a laid-out size, and tell the ResizeObservers watching it.
+        @param {any} el @param {{ width: number, height: number }} box */
+    resize(el, box) {
+      el.layoutBox = { width: box.width, height: box.height };
+      for (const ro of resizeObservers) if (ro.sizes.has(el)) ro.queue();
+    },
     /** Run the animation frames queued so far. */
     flushFrames() {
       for (const fn of frames.splice(0)) fn(0);
@@ -691,8 +932,11 @@ export function fire(target, type, props = {}) {
   return target.dispatchEvent({ bubbles: true, ...props, type });
 }
 
-/** Let queued promise callbacks and zero-delay timers run. */
-export const settle = (ms = 0) => new Promise(r => setTimeout(r, ms));
+const realSetTimeout = globalThis.setTimeout;
+
+/** Let queued promise callbacks and zero-delay timers run. Under mocked timers
+    it waits on a real timer, so it never hangs. */
+export const settle = (ms = 0) => new Promise(r => realSetTimeout(r, ms));
 
 const UI_DIR = new URL('../', import.meta.url);
 

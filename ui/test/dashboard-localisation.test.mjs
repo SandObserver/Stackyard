@@ -194,24 +194,19 @@ test('badge-logic imports nothing', () => {
   assert.doesNotMatch(read('js/badge-logic.js'), /^import /m);
 });
 
-test('the dashboard hands the translator in', () => {
-  assert.match(read('js/dashboard.js'), /translate: t,/);
-});
-
 /* ── nothing user-facing is left hardcoded ────────────────────────────────── */
 
-test('the first-run prompt and API error are translated', () => {
-  const src = read('js/dashboard.js');
-  for (const gone of [
-    'Set a dashboard password?',
-    'Could not connect to dashboard API',
-    'Make sure the API container is running',
-    'Could not set password.',
-  ]) {
-    assert.ok(!src.includes(`>${gone}<`) && !src.includes(`'${gone}'`), `"${gone}" is still hardcoded`);
-  }
-  for (const key of ['setup.title', 'setup.sub', 'home.apiDownTitle', 'home.retry']) {
-    assert.ok(src.includes(key), `${key} is not used`);
+test('the first-run prompt and API error are not hardcoded anywhere', () => {
+  for (const file of fs.readdirSync(path.join(root, 'js')).filter(f => f.endsWith('.js'))) {
+    const src = read(`js/${file}`);
+    for (const gone of [
+      'Set a dashboard password?',
+      'Could not connect to dashboard API',
+      'Make sure the API container is running',
+      'Could not set password.',
+    ]) {
+      assert.ok(!src.includes(`>${gone}<`) && !src.includes(`'${gone}'`), `${file}: "${gone}" is still hardcoded`);
+    }
   }
 });
 
@@ -223,22 +218,35 @@ test('the first-run prompt and API error are translated', () => {
    unicode-bidi:plaintext does nothing in WebKit, so the label carries dir
    instead, through setCentredText. That is safe only because these labels are
    centred: dir sets alignment too, which moves a name off its own icon. */
-test('every tile label carries its own direction', () => {
+test('every tile label carries its own direction', async () => {
   const ui = read('js/ui.js');
-  const dashboard = read('js/dashboard.js');
   let sites = 0;
-  for (const [src, name] of [
-    [ui, 'ui.js'],
-    [dashboard, 'dashboard.js'],
-  ]) {
-    for (const m of src.matchAll(
-      /className = '(ilabel|dyn-mob-label|dyn-fold-label|dyn-fold-inner-label)';\n([\s\S]*?)a\.appendChild\(l\);/g,
-    )) {
-      sites++;
-      assert.match(m[2], /setCentredText\(l, /, `${name}: .${m[1]} is cut by the page direction`);
-    }
+  for (const m of ui.matchAll(
+    /className = '(ilabel|dyn-mob-label|dyn-fold-label|dyn-fold-inner-label)';\n([\s\S]*?)a\.appendChild\(l\);/g,
+  )) {
+    sites++;
+    assert.match(m[2], /setCentredText\(l, /, `ui.js: .${m[1]} is cut by the page direction`);
   }
-  assert.equal(sites, 6, 'a tile label site moved; check it still sets its direction');
+  assert.equal(sites, 5, 'a phone tile label site moved; check it still sets its direction');
+
+  const { installDom, pageBody } = await import('./fake-dom.mjs');
+  const dom = installDom({ markup: pageBody('index.html'), location: 'http://nas.local/' });
+  try {
+    const { createDashboardState } = await import('../js/dashboard-state.js');
+    const { createDesktopGrid } = await import('../js/dashboard-grid.js');
+    const { initUI } = await import('../js/ui.js');
+    const dash = createDashboardState();
+    dash.items = [{ id: 'a', type: 'app', label: 'Plex', href: 'http://plex.local' }];
+    const badges = /** @type {any} */ ({ BEL: new Map(), breg() {} });
+    initUI({ ...dash, ...badges });
+    createDesktopGrid({ dash, badges, goTo() {} }).buildDesktop();
+    const labels = dom.document.querySelectorAll('#pages .ilabel');
+    assert.equal(labels.length, 1);
+    assert.equal(labels[0].dir, 'auto', 'the desktop label is cut by the page direction');
+    assert.equal(labels[0].textContent, 'Plex');
+  } finally {
+    dom.restore();
+  }
 });
 
 test('the labels the direction is set on are centred', () => {

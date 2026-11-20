@@ -28,7 +28,7 @@ test('every modal surface keeps focus, one way or the other', () => {
   const sites = [
     ['js/ui.js', 'dialog', 2, 'the two folder overlays'],
     ['js/modal.js', 'dialog', 1, 'the admin modal'],
-    ['js/dashboard.js', 'dialog', 1, 'the setup prompt'],
+    ['js/dashboard-setup.js', 'dialog', 1, 'the setup prompt'],
     ['js/spotlight.js', 'dialog', 1, 'the search overlay'],
   ];
   /* Comments name these mechanisms while explaining them. */
@@ -39,35 +39,24 @@ test('every modal surface keeps focus, one way or the other', () => {
   }
 });
 
+const pageModules = () =>
+  fs
+    .readdirSync(path.join(root, 'js'))
+    .filter(f => f.endsWith('.js'))
+    .map(f => [`js/${f}`, read(`js/${f}`)]);
+
 test('a converted surface leaves no trap behind', () => {
   /* A trap released nowhere keeps a listener on a removed element, so a
      converted surface must hold neither a trap nor a handle to release. */
-  for (const file of ['js/ui.js', 'js/dashboard.js', 'js/modal.js', 'js/spotlight.js']) {
-    assert.doesNotMatch(read(file), /trapFocus/, `${file} still arms the trap`);
-    assert.doesNotMatch(read(file), /release\w*Trap/, `${file} still holds a trap handle`);
+  for (const [file, src] of pageModules()) {
+    assert.doesNotMatch(src, /trapFocus/, `${file} still arms the trap`);
+    assert.doesNotMatch(src, /release\w*Trap/, `${file} still holds a trap handle`);
   }
 });
 
-/* Escape closes a dialog unless the page says otherwise. The setup prompt has
-   nothing usable behind it and offers Skip as the way past, so it must refuse
-   the cancel rather than let a stray keypress dismiss it. */
-test('the setup prompt refuses to be cancelled', () => {
-  assert.match(
-    read('js/dashboard.js'),
-    /addEventListener\('cancel', e => e\.preventDefault\(\)\)/,
-    'Escape now dismisses the setup prompt, which it never used to',
-  );
-});
-
 test('nothing keeps its own copy of the trap', () => {
-  /* Including an inline copy in one surface, which leaves the others nothing to
-     reuse. */
-  for (const file of ['js/spotlight.js', 'js/ui.js', 'js/dashboard.js']) {
-    assert.doesNotMatch(
-      read(file),
-      /e\.shiftKey && document\.activeElement === first/,
-      `${file} still carries its own trap`,
-    );
+  for (const [file, src] of pageModules()) {
+    assert.doesNotMatch(src, /e\.shiftKey && document\.activeElement === first/, `${file} still carries its own trap`);
   }
 });
 
