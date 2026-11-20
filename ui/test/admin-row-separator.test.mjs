@@ -66,7 +66,8 @@ test('a row hides with the class, never with an inline style', () => {
 
 test('nothing toggles a row back to an inline display', () => {
   const offenders = [];
-  for (const file of ['js/admin.js', 'js/admin-settings.js']) {
+  const pageModules = fs.readdirSync(path.join(root, 'js')).filter(f => /^admin.*\.js$/.test(f));
+  for (const file of pageModules.map(f => `js/${f}`)) {
     const src = read(file).replace(/\/\*[\s\S]*?\*\//g, '');
     for (const m of src.matchAll(/(\w*[Rr]ow\w*)\.style\.display\s*=/g)) {
       offenders.push(`${file}: ${m[0]}`);

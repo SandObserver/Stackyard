@@ -78,6 +78,48 @@
       "/js/admin-list.js?v=*": [
         "./ui/js/admin-list.js"
       ],
+      "/js/admin-about.js": [
+        "./ui/js/admin-about.js"
+      ],
+      "/js/admin-about.js?v=*": [
+        "./ui/js/admin-about.js"
+      ],
+      "/js/admin-editor.js": [
+        "./ui/js/admin-editor.js"
+      ],
+      "/js/admin-editor.js?v=*": [
+        "./ui/js/admin-editor.js"
+      ],
+      "/js/admin-list-writes.js": [
+        "./ui/js/admin-list-writes.js"
+      ],
+      "/js/admin-list-writes.js?v=*": [
+        "./ui/js/admin-list-writes.js"
+      ],
+      "/js/admin-nav.js": [
+        "./ui/js/admin-nav.js"
+      ],
+      "/js/admin-nav.js?v=*": [
+        "./ui/js/admin-nav.js"
+      ],
+      "/js/admin-page-load.js": [
+        "./ui/js/admin-page-load.js"
+      ],
+      "/js/admin-page-load.js?v=*": [
+        "./ui/js/admin-page-load.js"
+      ],
+      "/js/admin-settings-controls.js": [
+        "./ui/js/admin-settings-controls.js"
+      ],
+      "/js/admin-settings-controls.js?v=*": [
+        "./ui/js/admin-settings-controls.js"
+      ],
+      "/js/admin-transfer.js": [
+        "./ui/js/admin-transfer.js"
+      ],
+      "/js/admin-transfer.js?v=*": [
+        "./ui/js/admin-transfer.js"
+      ],
       "/js/admin-save-logic.js": [
         "./ui/js/admin-save-logic.js"
       ],

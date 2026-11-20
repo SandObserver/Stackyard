@@ -1,15 +1,14 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { test } from 'node:test';
+import { widgetFunctions, widgetPage } from './widget-source.mjs';
 
-const page = fs.readFileSync(new URL('../widgets/books/index.html', import.meta.url), 'utf8');
-const source = /function decorate\(books\)\{[\s\S]*?\n {2}\}/.exec(page)?.[0];
+const page = widgetPage('books');
 const decorateFor = shelves =>
-  new Function('SHELVES', 'hash', 'PALETTE', `${source}; return decorate;`)(
-    shelves,
-    s => [...s].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7),
-    ['#000'],
-  );
+  widgetFunctions(page, ['decorate'], {
+    SHELVES: shelves,
+    hash: s => [...s].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7),
+    PALETTE: ['#000'],
+  }).decorate;
 const titles = Array.from({ length: 60 }, (_, i) => ({ title: `Book ${i} ${'x'.repeat(i % 13)}` }));
 const heights = shelves => decorateFor(shelves)(titles).map(b => b._h);
 
@@ -32,10 +31,7 @@ const rgbOf = c => {
   return /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(c).slice(1).map(Number);
 };
 const lumOf = c => relativeLuminance(...rgbOf(c));
-const spineInk = new Function(
-  'toneForColor',
-  `${/function spineInk\(color\)\{[^\n]*\}/.exec(page)?.[0]}; return spineInk;`,
-)(c => toneForLuminances([lumOf(c)]));
+const { spineInk } = widgetFunctions(page, ['spineInk'], { toneForColor: c => toneForLuminances([lumOf(c)]) });
 const palette = JSON.parse(/const PALETTE=(\[[^\]]*\]);/.exec(page)[1].replaceAll("'", '"'));
 
 test('spine titles reach 4.5:1 on provider colours and the built-in palette', () => {
@@ -46,8 +42,6 @@ test('spine titles reach 4.5:1 on provider colours and the built-in palette', ()
 });
 
 test('a cover colour the parser cannot read keeps the light ink', () => {
-  const ink = new Function('toneForColor', `${/function spineInk\(color\)\{[^\n]*\}/.exec(page)[0]}; return spineInk;`)(
-    () => null,
-  );
+  const ink = widgetFunctions(page, ['spineInk'], { toneForColor: () => null }).spineInk;
   assert.equal(ink('nonsense'), '#fff');
 });

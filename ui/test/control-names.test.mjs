@@ -71,21 +71,56 @@ test('an inline-edit placeholder is read when it is used, not when it is wired',
   assert.doesNotMatch(fn, /inp\.placeholder = placeholder;/);
 });
 
-test('the password placeholder is passed as a function', () => {
-  assert.match(read('js/admin.js'), /placeholder: \(\) => t\('general\.passwordPh'\)/);
+test('the password placeholder is read when the row opens, after the catalog loads', async () => {
+  const { catalogRoutes, fakeFetch, installDom, pageBody } = await import('./fake-dom.mjs');
+  const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+  try {
+    const { initPasswordRows } = await import('../js/admin-settings-controls.js');
+    const { initI18n, t } = await import('../js/i18n.js');
+    initPasswordRows();
+    await initI18n('en');
+    dom.document.querySelector('#ie-pw .pe').click();
+    const field = dom.document.getElementById('sec-pw');
+    assert.equal(field.placeholder, t('general.passwordPh'));
+    assert.notEqual(field.placeholder, 'general.passwordPh');
+  } finally {
+    dom.restore();
+  }
 });
 
 /* ── the import dialog ────────────────────────────────────────────────────── */
 
-test('every import dialog section title is a heading under the dialog title', () => {
-  const src = read('js/admin.js');
-  const titles = [...src.matchAll(/(\w+)\.className = 'dlg-sec';/g)].map(m => m[1]);
-  assert.equal(titles.length, 2, 'the section title markup changed shape');
-  for (const name of titles)
-    assert.match(
-      src,
-      new RegExp(`const ${name} = document\\.createElement\\('h3'\\);\\s*${name}\\.className = 'dlg-sec';`),
+test('every import dialog section title is a heading under the dialog title', async () => {
+  const { catalogRoutes, fakeFetch, installDom, pageBody, settle } = await import('./fake-dom.mjs');
+  const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+  try {
+    await (await import('../js/i18n.js')).initI18n('en');
+    const { reviewImport } = await import('../js/admin-transfer.js');
+    const items = [
+      { id: 'a', type: 'app', label: 'A', href: 'https://a.local', skipTlsVerify: true },
+      { id: 'f', type: 'folder', label: 'F', children: ['a'] },
+    ];
+    const answer = reviewImport(
+      items,
+      [{ name: 'B', group: 'G', reason: 'no-href' }],
+      [{ name: 'A', group: '', code: 'icon-dropped' }],
+      'toast.importForeignNothing',
     );
+    await settle();
+    const dlg = dom.document.querySelector('dialog.dlg-box');
+    assert.equal(dlg.querySelector('h2')?.tagName, 'H2', 'the dialog has no title heading');
+    const sections = dlg.querySelectorAll('.dlg-sec');
+    assert.equal(sections.length, 5, 'add, create, changed, not imported and self-signed');
+    for (const h of sections) assert.equal(h.tagName, 'H3', h.textContent);
+    dlg
+      .querySelectorAll('button')
+      .find(b => b.textContent === 'Cancel')
+      .click();
+    dlg.dispatchEvent({ type: 'animationend' });
+    await answer;
+  } finally {
+    dom.restore();
+  }
 });
 
 /* ── widget frame names ───────────────────────────────────────────────────── */

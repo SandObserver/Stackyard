@@ -108,14 +108,34 @@ test('a mouse drop redraws the list as soon as the drag ends', async () => {
 test('a row opens its editor by item id, never by its position', async () => {
   const fs = await import('node:fs');
   const list = fs.readFileSync(new URL('../js/admin-list.js', import.meta.url), 'utf8');
-  const admin = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
   const opens = list.match(/_page\.openModal\([^)]*\)/g) || [];
   assert.equal(opens.length, 2);
   for (const call of opens) assert.equal(call, '_page.openModal(item.id)');
   assert.doesNotMatch(list, /state\.items\.indexOf\(/);
-  assert.match(
-    admin,
-    /function openModal\(id\) \{\s*const editing = id != null \? state\.items\.find\(i => i\?\.id === id\) : null;/,
-  );
-  assert.doesNotMatch(admin, /state\.items\[idx\]/);
+});
+
+test('the editor opens the item with that id wherever it has moved', async () => {
+  const { catalogRoutes, fakeFetch, installDom, pageBody, settle } = await import('./fake-dom.mjs');
+  const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+  try {
+    const { initI18n, t } = await import('../js/i18n.js');
+    await initI18n('en');
+    const { openEditor } = await import('../js/admin-editor.js');
+    const { state } = await import('../js/admin-state.js');
+    state.items = [
+      { id: 'a', type: 'app', label: 'A', href: 'http://a.local' },
+      { id: 'b', type: 'app', label: 'B', href: 'http://b.local' },
+    ];
+    state.items.reverse();
+    openEditor('a');
+    assert.equal(state.eid, 'a');
+    assert.equal(dom.document.getElementById('f-lbl').value, 'A');
+    state.items = state.items.filter(i => i.id !== 'b');
+    openEditor('b');
+    assert.equal(state.eid, 'a', 'an item removed elsewhere replaced the open editor');
+    assert.equal(dom.document.getElementById('toast-msg').textContent, t('toast.dashboardChangedElsewhere'));
+  } finally {
+    await settle(100);
+    dom.restore();
+  }
 });

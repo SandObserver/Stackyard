@@ -144,7 +144,7 @@ test('an unterminated comment does not hide or reveal a handler', () => {
 test('both retry buttons attach their handler in code', () => {
   for (const [file, selector] of [
     ['js/dashboard.js', '.api-error-btn'],
-    ['js/admin.js', '.retry-btn'],
+    ['js/admin-page-load.js', '.retry-btn'],
   ]) {
     const src = fs.readFileSync(path.join(root, file), 'utf8');
     assert.ok(src.includes(selector), `${file} should still render the retry button`);

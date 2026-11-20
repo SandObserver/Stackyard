@@ -3,13 +3,14 @@
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { register } from 'node:module';
 import { test } from 'node:test';
+import { catalogRoutes, fakeFetch, fire, installDom, pageBody } from './fake-dom.mjs';
 
 import { filterActive, itemMatchesFilter } from '../js/admin-logic.js';
 
 const read = p => fs.readFileSync(new URL(p, import.meta.url), 'utf8');
 const list = read('../js/admin-list.js');
-const admin = read('../js/admin.js');
 
 test('the filter matches name, address and widget type, in any case', () => {
   const app = { type: 'app', label: 'Plex', href: 'http://media.local' };
@@ -42,25 +43,105 @@ test('a filter change hides rows and does not rebuild them', () => {
   assert.match(list, /r\.classList\.toggle\('d-none', !on\)/);
 });
 
-test('typing waits 120 ms, then filters unless Reorder began', () => {
-  assert.match(
-    admin,
-    /setTimeout\(\(\) => \{\s*if \(isReordering\(\)\) return;\s*filter\.q = s\.value\.trim\(\);\s*runFilter\(\);\s*\}, 120\)/,
-  );
+/* The page modules, on the real Settings markup. */
+register('./js-root-hooks.mjs', import.meta.url);
+const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+const { initI18n, t } = await import('../js/i18n.js');
+await initI18n('en');
+const { filter, state } = await import('../js/admin-state.js');
+const listMod = await import('../js/admin-list.js');
+const { initEditor, wireListButtons } = await import('../js/admin-editor.js');
+const { initNav } = await import('../js/admin-nav.js');
+listMod.initList({ openModal: () => {}, openFolderPicker: () => {}, save: async () => true });
+listMod.wireFilter();
+initEditor({ saveOrRevert: async () => true });
+wireListButtons();
+initNav();
+
+const byId = id => dom.document.getElementById(id);
+const search = byId('al-search');
+const chip = flt => dom.document.querySelector(`#al-filter .chip[data-flt="${flt}"]`);
+/* Six items: the filter bar only shows, and only keeps a query, from six. */
+state.items = [
+  ...['plex', 'sonarr', 'radarr', 'lidarr', 'bazarr'].map(id => ({
+    id,
+    type: 'app',
+    label: id,
+    href: `http://${id}.local`,
+  })),
+  { id: 'clock', type: 'widget', label: 'Clock', widgetType: 'analog' },
+];
+listMod.render();
+
+/* Records each animate() call on one element. */
+function animations(node) {
+  const runs = [];
+  node.animate = (...args) => {
+    runs.push(args);
+    return { cancel() {}, onfinish: null, oncancel: null };
+  };
+  return runs;
+}
+
+test('typing waits 120 ms, then filters unless Reorder began', t2 => {
+  t2.mock.timers.enable({ apis: ['setTimeout'] });
+  filter.q = '';
+  search.value = ' plex ';
+  fire(search, 'input');
+  t2.mock.timers.tick(119);
+  assert.equal(filter.q, '', 'the filter ran before the pause');
+  t2.mock.timers.tick(1);
+  assert.equal(filter.q, 'plex');
+
+  listMod.setReordering(true);
+  search.value = 'sonarr';
+  fire(search, 'input');
+  t2.mock.timers.tick(120);
+  listMod.setReordering(false);
+  assert.equal(filter.q, '', 'a query typed during Reorder was applied');
 });
 
-test('every filter change is announced with the match count', () => {
-  const run = admin.slice(admin.indexOf('function runFilter'), admin.indexOf('async function _evDelete'));
-  assert.match(run, /announce\(t\('list\.matchCount', \{ count: filterMatchCount\(\) \}\)\)/);
-  assert.match(admin, /filter\.type = c\.dataset\.flt;\s*syncFilterUI\(\);\s*runFilter\(\);/);
+test('every filter change is announced with the match count', t2 => {
+  t2.mock.timers.enable({ apis: ['setTimeout'] });
+  const region = byId('sr-announce');
+  search.value = 'plex';
+  fire(search, 'input');
+  t2.mock.timers.tick(120);
+  t2.mock.timers.tick(100);
+  assert.equal(region.textContent, t('list.matchCount', { count: 1 }));
+
+  search.value = '';
+  fire(search, 'input');
+  t2.mock.timers.tick(120);
+  t2.mock.timers.tick(100);
+  chip('widget').click();
+  assert.equal(filter.type, 'widget');
+  assert.equal(chip('widget').getAttribute('aria-pressed'), 'true');
+  assert.equal(chip('all').getAttribute('aria-pressed'), 'false');
+  t2.mock.timers.tick(100);
+  assert.equal(region.textContent, t('list.matchCount', { count: 1 }));
+  chip('all').click();
+  filter.q = '';
 });
 
 test('a keyboard press switches sections and pushes the editor without animation', () => {
-  assert.match(admin, /const keyboard = ev\?\.detail === 0;/);
-  assert.match(admin, /picked && changed && !keyboard\) fadeOpacity/);
-  assert.match(admin, /syncGlideSelect\(document, \{ snap: keyboard \}\)/);
-  assert.match(admin, /if \(!_keyboardPress\) fadeIn\(el\('dash-list-view'\)\)/);
-  assert.match(admin, /if \(!_keyboardPress\) fadeIn\(el\('dash-edit-view'\)\)/);
+  const link = dom.document.querySelector('.nl[data-sec="about"]');
+  const about = animations(byId('sec-about'));
+  link.dispatchEvent({ type: 'click', bubbles: true, detail: 0 });
+  assert.equal(byId('sec-about').hidden, false);
+  assert.equal(about.length, 0, 'a keyboard switch faded the section in');
+
+  const general = animations(byId('sec-general'));
+  dom.document.querySelector('.nl[data-sec="general"]').dispatchEvent({ type: 'click', bubbles: true, detail: 1 });
+  assert.equal(general.length, 1, 'a pointer switch did not fade the section in');
+
+  const edit = animations(byId('dash-edit-view'));
+  byId('btn-add').dispatchEvent({ type: 'click', bubbles: true, detail: 0 });
+  assert.equal(byId('dash-edit-view').classList.contains('d-none'), false, 'Add did not open the editor');
+  assert.equal(edit.length, 0, 'a keyboard press on Add animated the editor in');
+  byId('btn-add').dispatchEvent({ type: 'click', bubbles: true, detail: 1 });
+  assert.equal(edit.length, 1, 'a pointer press on Add did not animate the editor in');
+
   const glide = read('../js/glide-select.js');
   assert.match(glide, /pill\.classList\.add\('mp-snap'\)/);
 });

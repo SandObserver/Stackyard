@@ -17,8 +17,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 const css = read('css/admin.css');
 const html = read('admin/index.html');
-const js = ['js/admin.js', 'js/admin-settings.js', 'js/admin-color-control.js', 'js/admin-shared.js']
-  .map(f => read(f))
+const js = fs
+  .readdirSync(path.join(root, 'js'))
+  .filter(f => /^admin.*\.js$/.test(f))
+  .map(f => read(`js/${f}`))
   .join('\n');
 
 test('every disclosure wrapper holds an inner element', () => {
@@ -170,7 +172,35 @@ test('Save and Fetch read the Authentication switch', () => {
   const fetchFn = /async function fetchBadge\([\s\S]*?\n}/.exec(appForm);
   assert.ok(fetchFn, 'fetchBadge is gone');
   assert.match(fetchFn[0], /activityAuth\(\{\s*authEn: inpById\('auth-en'\)\?\.checked/);
-  assert.match(read('js/admin.js'), /authEn: inp\('auth-en'\)\?\.checked/);
+});
+
+test('Save keeps the activity login only while the Authentication switch is on', async () => {
+  const { catalogRoutes, fakeFetch, installDom, pageBody, settle } = await import('./fake-dom.mjs');
+  const { register } = await import('node:module');
+  register('./js-root-hooks.mjs', import.meta.url);
+  const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+  try {
+    await (await import('../js/i18n.js')).initI18n('en');
+    const { state } = await import('../js/admin-state.js');
+    const { openEditor, readItem } = await import('../js/admin-editor.js');
+    const app = {
+      id: 'sab',
+      type: 'app',
+      label: 'SABnzbd',
+      href: 'http://sab.local',
+      monitoring: { activity: { enabled: true, url: 'http://sab.local/api', login: { username: 'admin' } } },
+    };
+    state.items = [app];
+    openEditor('sab');
+    const authEn = dom.document.getElementById('auth-en');
+    assert.equal(authEn.checked, true, 'a stored login does not open the Authentication rows');
+    assert.equal(readItem(app).monitoring.activity.login?.username, 'admin');
+    authEn.checked = false;
+    assert.equal(readItem(app).monitoring.activity.login, undefined, 'Save sends a login the switch turned off');
+  } finally {
+    await settle(100);
+    dom.restore();
+  }
 });
 
 /* A view switch rebuilds its form, so there is no element left to open or
