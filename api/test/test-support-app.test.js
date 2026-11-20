@@ -23,11 +23,12 @@ test('a write sends the app its own Origin unless told not to', async () => {
 });
 
 test('a fake upstream logs each request', async () => {
-  const up = await fakeUpstream((req, res) => res.end(req.url));
+  const up = await fakeUpstream((_req, res) => res.end('ok'));
   const r = await fetch(`${up.url}/x?y=1`, { headers: { 'X-Probe': 'p' } });
-  assert.equal(await r.text(), '/x?y=1');
+  assert.equal(await r.text(), 'ok');
   assert.equal(up.requests.length, 1);
   assert.equal(up.requests[0].method, 'GET');
+  assert.equal(up.requests[0].url, '/x?y=1');
   assert.equal(up.requests[0].headers['x-probe'], 'p');
   await up.close();
   assert.equal(up.server.listening, false);
