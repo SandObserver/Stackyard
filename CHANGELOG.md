@@ -35,6 +35,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Log how long a failed widget request took and the HTTP status the service
   returned.
 
+- Log a warning, and name the keys in the save reply, when a save drops settings
+  this release does not know.
+
+- Drop unknown keys inside the server settings on save, as unknown top-level
+  settings already were.
+
 ### Removed
 
 - Remove the `WIDGETS_PATH` setting from the Compose example. Mount a custom
