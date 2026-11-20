@@ -203,7 +203,12 @@ test('a widget over several desktop rows is as tall as those rows and the gaps b
 
 const manifest = name =>
   JSON.parse(fs.readFileSync(new URL(`../widgets/${name}/widget.json`, import.meta.url), 'utf8'));
-const SHIPPED = { 'disk-health': manifest('disk-health'), backup: manifest('backup') };
+const SHIPPED = Object.fromEntries(
+  ['disk-health', 'backup', 'weather', 'nowplaying', 'downloads', 'books', 'system-summary', 'connections'].map(n => [
+    n,
+    manifest(n),
+  ]),
+);
 const HREFS = {
   scrutinyHref: 'https://scrutiny.lan',
   truenasHref: 'https://truenas.lan',
@@ -232,4 +237,17 @@ test('the phone overlay prefers the item address and ignores group-row links', (
   assert.equal(overlayHref(item, SHIPPED), 'https://item');
   const backup = { widgetType: 'backup', widgetConfig: { slots: [{ provider: 'duplicati', dupHref: 'https://d' }] } };
   assert.equal(overlayHref(backup, SHIPPED), null);
+});
+
+test('the phone overlay opens the plain href of a widget that marks it as its link', () => {
+  for (const type of ['weather', 'nowplaying', 'downloads'])
+    assert.equal(
+      overlayHref({ widgetType: type, widgetConfig: { href: 'https://site.lan' } }, SHIPPED),
+      'https://site.lan',
+    );
+});
+
+test('the phone overlay leaves an unmarked href to the widget', () => {
+  for (const type of ['books', 'system-summary', 'connections'])
+    assert.equal(overlayHref({ widgetType: type, widgetConfig: { href: 'https://site.lan' } }, SHIPPED), null, type);
 });

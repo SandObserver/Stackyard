@@ -9,7 +9,7 @@ const assert = require('node:assert/strict');
 /* Required, not imported: this is the same file the browser loads, and the point
    of the test is that the server can load it. */
 const shared = require('../../ui/js/link-url.js');
-const { isSafeLinkUrl, firstUnsafeLink, sanitizeItemLinks } = shared;
+const { isSafeLinkUrl, isLinkField, firstUnsafeLink, sanitizeItemLinks } = shared;
 
 /* ── what must be refused ─────────────────────────────────────────────────── */
 
@@ -84,6 +84,10 @@ const FIELDS = {
     { key: 'siteHref', type: 'text', link: true },
     { key: 'note', type: 'text' },
     { key: 'rows', type: 'group', fields: [{ key: 'rowHref', type: 'text', link: true }] },
+    { key: 'href', type: 'text' },
+    { key: 'mapHref', type: 'text' },
+    { key: 'tokenHref', type: 'secret' },
+    { key: 'box', type: 'object', fields: [{ key: 'href', type: 'text' }] },
   ],
 };
 const fieldsFor = type => FIELDS[type];
@@ -97,8 +101,29 @@ test('an unsafe link is reported with the field that holds it', () => {
   assert.equal(firstUnsafeLink(row, fieldsFor).field, 'widgetConfig.rows.1.rowHref');
 });
 
-test('a widget field the manifest does not mark as a link is not checked', () => {
-  const item = { widgetType: 'demo', widgetConfig: { note: 'javascript:x', linkUrl: 'javascript:x' } };
+test('a text field named href or ending in Href is a link without a marker', () => {
+  for (const key of ['href', 'mapHref', 'siteHref']) assert.equal(isLinkField({ key, type: 'text' }), true, key);
+  for (const key of ['hrefs', 'myhref', 'HrefX', 'url', 'linkUrl', 'note'])
+    assert.equal(isLinkField({ key, type: 'text' }), false, key);
+  assert.equal(isLinkField({ key: 'tokenHref', type: 'secret' }), false);
+  assert.equal(isLinkField({ key: 'site', type: 'text', link: true }), true);
+  assert.equal(isLinkField(null), false);
+});
+
+test('an unmarked href field is checked, top level and inside an object', () => {
+  for (const [config, field] of [
+    [{ href: 'javascript:x' }, 'widgetConfig.href'],
+    [{ mapHref: 'javascript:x' }, 'widgetConfig.mapHref'],
+    [{ box: { href: 'javascript:x' } }, 'widgetConfig.box.href'],
+  ])
+    assert.equal(firstUnsafeLink({ widgetType: 'demo', widgetConfig: config }, fieldsFor)?.field, field);
+});
+
+test('a widget field that is not a link is not checked', () => {
+  const item = {
+    widgetType: 'demo',
+    widgetConfig: { note: 'javascript:x', linkUrl: 'javascript:x', tokenHref: 'javascript:x', box: ['javascript:x'] },
+  };
   assert.equal(firstUnsafeLink(item, fieldsFor), null);
 });
 
@@ -114,7 +139,7 @@ test('a clean item reports nothing', () => {
 /* ── the module is loadable outside a browser ─────────────────────────────── */
 
 test('the shared rule loads on the server and exports what both sides need', () => {
-  for (const name of ['isSafeLinkUrl', 'firstUnsafeLink', 'sanitizeItemLinks']) {
+  for (const name of ['isSafeLinkUrl', 'isLinkField', 'firstUnsafeLink', 'sanitizeItemLinks']) {
     assert.equal(typeof shared[name], 'function', `${name} should be exported`);
   }
   for (const name of ['UNSAFE_LINK_SCHEMES', 'LINK_FIELDS']) {
@@ -151,6 +176,8 @@ test('sanitizeItemLinks blanks an unsafe link and leaves the rest alone', () => 
       widgetType: 'demo',
       widgetConfig: {
         siteHref: 'javascript:x',
+        href: 'javascript:x',
+        box: { href: 'vbscript:x' },
         note: 'javascript:kept',
         rows: [{ rowHref: 'data:text/html,x' }, { rowHref: 'https://ok.example' }],
       },
@@ -161,6 +188,8 @@ test('sanitizeItemLinks blanks an unsafe link and leaves the rest alone', () => 
   assert.equal(items[1].href, 'https://example.com');
   assert.equal(items[2].url, '');
   assert.equal(items[3].widgetConfig.siteHref, '');
+  assert.equal(items[3].widgetConfig.href, '');
+  assert.deepEqual(items[3].widgetConfig.box, { href: '' });
   assert.deepEqual(items[3].widgetConfig.rows, [{ rowHref: '' }, { rowHref: 'https://ok.example' }]);
   assert.equal(items[3].widgetConfig.note, 'javascript:kept', 'unrelated config must not be touched');
 });
@@ -241,29 +270,40 @@ test('a config save is rejected when an item carries an unsafe link', async () =
       const file = path.join(widgetsDir, name, 'widget.json');
       if (!fs.existsSync(file)) continue;
       for (const f of JSON.parse(fs.readFileSync(file, 'utf8')).fields || []) {
-        if (f.link) shipped.push({ type: name, key: f.key, config: { [f.key]: 'javascript:alert(1)' } });
-        for (const sf of f.fields || [])
-          if (sf.link)
-            shipped.push({ type: name, key: sf.key, config: { [f.key]: [{ [sf.key]: 'javascript:alert(1)' }] } });
+        const js = 'javascript:alert(1)';
+        if (isLinkField(f)) shipped.push({ type: name, path: f.key, config: { [f.key]: js } });
+        for (const sf of f.fields || []) {
+          if (!isLinkField(sf)) continue;
+          const nested = f.type === 'object' ? { [sf.key]: js } : [{ [sf.key]: js }];
+          shipped.push({ type: name, path: `${f.key}.${sf.key}`, config: { [f.key]: nested } });
+        }
       }
     }
-    assert.deepEqual(shipped.map(s => s.key).sort(), [
-      'backrestHref',
-      'dnsHref',
-      'dupHref',
-      'githubHref',
-      'kopiaHref',
-      'pbsHref',
-      'scrutinyHref',
-      'truenasHref',
-      'unraidHref',
+    assert.deepEqual(shipped.map(s => `${s.type}.${s.path}`).sort(), [
+      'backup.slots.backrestHref',
+      'backup.slots.dupHref',
+      'backup.slots.kopiaHref',
+      'backup.slots.pbsHref',
+      'books.href',
+      'connections.href',
+      'connections.vpn.href',
+      'disk-health.scrutinyHref',
+      'disk-health.truenasHref',
+      'disk-health.unraidHref',
+      'dns.dnsHref',
+      'downloads.href',
+      'github.githubHref',
+      'nowplaying.href',
+      'system-summary.href',
+      'upnext.sources.href',
+      'weather.href',
     ]);
-    for (const { type, key, config } of shipped) {
-      const item = { id: `w-${key}`, type: 'widget', widgetType: type, widgetSize: 'small', widgetConfig: config };
+    for (const { type, path: key, config } of shipped) {
+      const item = { id: `w-${type}`, type: 'widget', widgetType: type, widgetSize: 'small', widgetConfig: config };
       const refused = await post({ items: [item], settings: {} });
       assert.equal(refused.status, 400, `${type}.${key} must be refused`);
       assert.equal(refused.body.code, 'invalid.unsafe-link', `${type}.${key}`);
-      assert.match(refused.body.error, new RegExp(key));
+      assert.match(refused.body.error, new RegExp(key.split('.').pop()));
     }
 
     const legacy = await post({

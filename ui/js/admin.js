@@ -90,7 +90,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=f82465b3';
+} from '/js/import-foreign.js?v=348618f4';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=ff61256e';
 import { createListbox } from '/js/listbox.js?v=1214e150';

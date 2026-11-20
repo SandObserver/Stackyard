@@ -2,7 +2,7 @@
    a fetch/render loop. */
 
 import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
-import { isSafeLinkUrl } from '/js/link-url.js?v=4cd593b5';
+import { isSafeLinkUrl } from '/js/link-url.js?v=0bffa1dd';
 import { jitter } from '/js/jitter.js?v=087a1fcf';
 import { errorState as _errorState, errorKind, errorCopy, kindGlyph } from '/js/widget-error.js?v=f8d3aca3';
 import { formatNumber, numberSymbols, setNumberLanguage } from '/js/format-number.js?v=263fa390';

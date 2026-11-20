@@ -48,7 +48,7 @@ import {
 } from '/js/label-contrast.js?v=a160c6d1';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=ff61256e';
-import { sanitizeItemLinks } from '/js/link-url.js?v=4cd593b5';
+import { sanitizeItemLinks } from '/js/link-url.js?v=0bffa1dd';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 import { contextWords, meterColor, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';

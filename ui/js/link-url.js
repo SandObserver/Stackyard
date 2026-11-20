@@ -43,10 +43,18 @@ export function isSafeLinkUrl(value) {
 /* The link-bearing fields on a config item. Add a new one here. */
 export const LINK_FIELDS = Object.freeze(['href', 'url']);
 
+/** A widget field that holds a link: marked `link: true`, or a text field
+    named `href` or ending in `Href`.
+    @param {any} f @returns {boolean} */
+export function isLinkField(f) {
+  if (!f || typeof f.key !== 'string') return false;
+  return f.link === true || (f.type === 'text' && /^href$|Href$/.test(f.key));
+}
+
 /** @param {unknown} fields @returns {string[]} */
 function linkFieldKeys(fields) {
   if (!Array.isArray(fields)) return [];
-  return fields.filter(f => f && f.link === true && typeof f.key === 'string').map(f => f.key);
+  return fields.filter(isLinkField).map(f => f.key);
 }
 
 /** @param {any} wc @param {unknown} fields
@@ -56,11 +64,17 @@ function widgetLinks(wc, fields) {
   if (!wc || typeof wc !== 'object' || !Array.isArray(fields)) return out;
   for (const key of linkFieldKeys(fields)) if (Object.hasOwn(wc, key)) out.push({ holder: wc, key, path: key });
   for (const group of fields) {
-    if (group?.type !== 'group' || typeof group.key !== 'string' || !Object.hasOwn(wc, group.key)) continue;
-    const rows = wc[group.key];
+    if (typeof group?.key !== 'string' || !Object.hasOwn(wc, group.key)) continue;
     const keys = linkFieldKeys(group.fields);
-    if (!Array.isArray(rows) || !keys.length) continue;
-    rows.forEach((row, i) => {
+    const value = wc[group.key];
+    if (!keys.length || !value || typeof value !== 'object') continue;
+    if (group.type === 'object' && !Array.isArray(value)) {
+      for (const key of keys)
+        if (Object.hasOwn(value, key)) out.push({ holder: value, key, path: `${group.key}.${key}` });
+      continue;
+    }
+    if (group.type !== 'group' || !Array.isArray(value)) continue;
+    value.forEach((row, i) => {
       if (!row || typeof row !== 'object') return;
       for (const key of keys)
         if (Object.hasOwn(row, key)) out.push({ holder: row, key, path: `${group.key}.${i}.${key}` });

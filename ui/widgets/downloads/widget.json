@@ -134,6 +134,7 @@
     {
       "key": "href",
       "type": "text",
+      "link": true,
       "label": "href.label",
       "hint": "href.hint",
       "optional": true,

@@ -122,6 +122,7 @@
     {
       "key": "href",
       "type": "text",
+      "link": true,
       "label": "href.label",
       "placeholder": "href.placeholder",
       "hint": "href.hint",

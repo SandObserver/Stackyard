@@ -163,11 +163,11 @@ test('validateManifest rejects a link marker that is not true', () => {
   assert.ok(errs.some(e => /may set "link" only to true/.test(e)));
 });
 
-test('validateManifest rejects a link field inside an object', () => {
+test('validateManifest rejects a link marker inside an object', () => {
   const errs = errsFor([
     { key: 'o', type: 'object', label: 'O', fields: [{ key: 'siteHref', type: 'text', label: 'L', link: true }] },
   ]);
-  assert.ok(errs.some(e => /object "o" cannot hold a link field/.test(e)));
+  assert.ok(errs.some(e => /object "o" cannot set "link" on a field inside it/.test(e)));
 });
 
 /* ── Repeated sibling keys ──────────────────────────────────────────────── */

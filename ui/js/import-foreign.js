@@ -4,7 +4,7 @@
    widget. Keep this module free of the DOM and of the network. */
 
 import { buildAppItem, newItemId } from '/js/admin-save-logic.js?v=7de2f6fd';
-import { isSafeLinkUrl } from '/js/link-url.js?v=4cd593b5';
+import { isSafeLinkUrl } from '/js/link-url.js?v=0bffa1dd';
 import { clampName } from '/js/limits.js?v=ff61256e';
 
 export const SKIP = Object.freeze({
