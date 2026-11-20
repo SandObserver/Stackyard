@@ -284,10 +284,18 @@ jobs:
       - name: Merge the reports
         if: ${{ !cancelled() && needs.shards.outputs.ran == 'true' }}
         continue-on-error: true
-        run: npx playwright merge-reports --reporter html ./all-blob-reports
+        run: npx playwright merge-reports --reporter html,json ./all-blob-reports
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_FILE: e2e-results.json
+
+      - name: List flaky tests
+        id: flaky
+        if: ${{ !cancelled() && needs.shards.outputs.ran == 'true' }}
+        continue-on-error: true
+        run: node scripts/e2e-flaky.js e2e-results.json
 
       - name: Upload the report
-        if: ${{ !cancelled() && needs.shards.outputs.ran == 'true' && needs.shards.result == 'failure' }}
+        if: ${{ !cancelled() && needs.shards.outputs.ran == 'true' && (needs.shards.result == 'failure' || steps.flaky.outputs.flaky == 'true') }}
         continue-on-error: true
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
