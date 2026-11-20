@@ -7,10 +7,9 @@ const assert = require('node:assert/strict');
 const http = require('node:http');
 
 const { saveConfig } = require('../src/config');
-const { hashPassword } = require('../src/auth');
+const { hashPassword, LOGIN_MAX } = require('../src/auth');
 
 const PASSWORD = 'correct-horse-battery-staple';
-const LOGIN_MAX = 5; /* mirrors LOGIN_MAX in api/src/auth.js */
 
 before(async () => {
   saveConfig({

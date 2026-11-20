@@ -1,6 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { seedConfig, dismissSetupPrompt, app, openDashboardList, rowByName } = require('./helpers');
+const { seedConfig, dismissSetupPrompt, asIfNoPassword, app, openDashboardList, rowByName } = require('./helpers');
 
 /** @param {import('@playwright/test').Locator} loc @param {string[]} props */
 const styleOf = (loc, props, pseudo = null) =>
@@ -107,11 +107,7 @@ test.describe('forced colors', () => {
 
   test('the first-run password field shows its edge and its focus', async ({ page, request }) => {
     await seedConfig(request, { items: [] });
-    /* Once dismissed, the server never offers the prompt again. */
-    await page.route('**/api/auth/check', async route => {
-      const res = await route.fetch();
-      await route.fulfill({ response: res, json: { ...(await res.json()), setupPrompted: false, passwordSet: false } });
-    });
+    await asIfNoPassword(page);
     await page.goto('/');
     const field = page.locator('.setup-pw').first();
     await field.waitFor({ state: 'visible' });

@@ -2,6 +2,7 @@
 
 const { test, expect } = require('@playwright/test');
 const { seedConfig, app, openDashboardList, rowByName } = require('./helpers');
+const { PASSWORD } = require('./base-url');
 
 const scrollY = page => page.evaluate(() => Math.round(window.scrollY));
 
@@ -59,7 +60,6 @@ test('a wheel over the sign-in screen shown mid-session leaves the page behind s
     refused = true;
     return route.fulfill({ status: 401, json: { error: 'Unauthorised', kind: 'auth' } });
   });
-  await page.route('**/api/auth/login', route => route.fulfill({ json: { ok: true } }));
   await page.goto('/admin/');
   await page.locator('body.authed').waitFor({ state: 'attached' });
   await page.locator('.nl[data-sec="appearance"]').click();
@@ -72,7 +72,7 @@ test('a wheel over the sign-in screen shown mid-session leaves the page behind s
     [640, 200],
   ]);
 
-  await page.locator('#login-pw').fill('anything');
+  await page.locator('#login-pw').fill(PASSWORD);
   await page.keyboard.press('Enter');
   await expect(page.locator('#login-screen')).toBeHidden();
   await expectPageScrolls(page);

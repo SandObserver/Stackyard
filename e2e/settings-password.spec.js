@@ -1,12 +1,13 @@
 // @ts-check
 
 const { test, expect } = require('@playwright/test');
-const { seedConfig, setInlineRow } = require('./helpers');
+const { seedConfig, asIfNoPassword, setInlineRow } = require('./helpers');
 
 const NEW = 'quiet otter lantern 42';
 
 test.beforeEach(async ({ request, page }) => {
   await seedConfig(request, { items: [] });
+  await asIfNoPassword(page);
   await page.goto('/admin/');
   await page.locator('body.authed').waitFor({ state: 'attached' });
   await page.locator('.nl[data-sec="general"]').click();

@@ -1,17 +1,13 @@
 // @ts-check
 
 const { test, expect } = require('@playwright/test');
-const { seedConfig } = require('./helpers');
+const { seedConfig, asIfNoPassword } = require('./helpers');
 
 const NEW = 'quiet otter lantern 42';
 
 test.beforeEach(async ({ request, page }) => {
   await seedConfig(request, { items: [] });
-  /* Once dismissed, the server never offers the prompt again. */
-  await page.route('**/api/auth/check', async route => {
-    const res = await route.fetch();
-    await route.fulfill({ response: res, json: { ...(await res.json()), setupPrompted: false, passwordSet: false } });
-  });
+  await asIfNoPassword(page);
 });
 
 test('the first-run card needs the setup code before it sets a password', async ({ page }) => {

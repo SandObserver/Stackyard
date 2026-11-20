@@ -139,8 +139,11 @@ test('the shards cover every project once and every shard of it', () => {
   assert.equal(shards.strategy['fail-fast'], false);
   const legs = shards.strategy.matrix.include;
   assert.equal(new Set(legs.map(l => l.name)).size, legs.length, 'report artifact names must be unique');
+  const dependencies = new Set(config.projects.flatMap(p => p.dependencies || []));
   for (const { name } of config.projects) {
-    const parts = legs.filter(l => l.project === name).map(l => l.shard.split('/').map(Number));
+    if (dependencies.has(name)) continue;
+    const runs = name === 'auth' ? l => l.auth === true : l => l.project === name;
+    const parts = legs.filter(runs).map(l => l.shard.split('/').map(Number));
     assert.ok(parts.length > 0, `${name} never runs`);
     const total = parts[0][1];
     assert.ok(
@@ -154,7 +157,8 @@ test('the shards cover every project once and every shard of it', () => {
     );
   }
   const run = steps.find(s => s.name === 'Run the specs');
-  assert.match(run.run, /--project="\$PROJECT" --shard="\$SHARD"/);
+  assert.match(run.run, /set -- --project="\$PROJECT"\n/);
+  assert.match(run.run, /npx playwright test "\$@" --shard="\$SHARD"/);
 });
 
 test('each browser keeps its own caches', () => {
