@@ -146,6 +146,7 @@ run. Run it locally with `zizmor .github`.
 
 - Architecture: [How Stackyard works](https://stackyard.sandobserver.com/docs/contributing/architecture/)
 - Widgets: [Build your first widget](https://stackyard.sandobserver.com/docs/create-a-widget/)
+- Widget template to copy: [docs/widget-template](docs/widget-template/)
 - Translations: [Translations](https://stackyard.sandobserver.com/docs/contributing/translations/)
 - Security model: [Security](https://stackyard.sandobserver.com/docs/security/)
 - Code of conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)

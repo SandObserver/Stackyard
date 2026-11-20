@@ -58,6 +58,7 @@ function tempKey(slot) {
 }
 
 function localSensorOptions({ metrics, row }) {
+  /** @type {{ value: string, label: string, labelKey?: string, labelVars?: Record<string, string> }[]} */
   const options = [{ value: 'cpu', label: 'CPU (automatic)', labelKey: 'slots.sensor.opt.cpu' }];
   const legacy = LEGACY_ZONE.exec(String(row?.localSensor ?? ''));
   if (legacy) {
@@ -835,6 +836,7 @@ const _netPrev = new Map();
 function rateFromTotals(ctx, key, at, rx, tx) {
   const prev = _netPrev.get(key);
   if (prev && at <= prev.at) return prev.rate;
+  /** @type {{ rx: number, tx: number } | null} */
   let rate = null;
   /* Counters that went backwards mean the interface was reset or replaced.
      Skip the window rather than report a negative rate. */

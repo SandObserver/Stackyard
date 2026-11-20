@@ -52,8 +52,9 @@ test('every module under ui/js has both path entries', () => {
   );
 });
 
-test('the project covers ui/js', () => {
-  assert.deepEqual(cfg.include, ['ui/js/**/*.js']);
+test('the project covers ui/js and the widget helpers the pages import', () => {
+  assert.deepEqual(cfg.include, ['ui/js/**/*.js', 'ui/widgets/*/*.js']);
+  assert.deepEqual(cfg.exclude, ['ui/widgets/*/data.js', 'ui/widgets/*/demo.js']);
 });
 
 /* The check is only enforced if CI runs it. */

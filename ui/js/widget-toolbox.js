@@ -974,8 +974,17 @@ function asInternal(e) {
   return Object.assign(new Error(String(e)), { kind: 'internal' });
 }
 
+export const MIN_POLL_MS = 3000;
+let _floor = MIN_POLL_MS;
+
+/** @param {number} ms the shortest interval poll() waits, MIN_POLL_MS unless set */
+export function setPollFloor(ms) {
+  _floor = Number(ms) >= 0 ? Number(ms) : MIN_POLL_MS;
+}
+
 export function poll(opts = {}) {
-  const intervalFor = d => (typeof opts.interval === 'function' ? opts.interval(d) : opts.interval) || 30000;
+  const intervalFor = d =>
+    Math.max(_floor, (typeof opts.interval === 'function' ? opts.interval(d) : opts.interval) || 30000);
   /* A slow widget that waits for a second failure shows data two intervals old
      with no sign of it. */
   const staleAfter = () => (opts.staleAfter != null ? opts.staleAfter : intervalFor(lastData) >= SLOW_POLL_MS ? 1 : 2);

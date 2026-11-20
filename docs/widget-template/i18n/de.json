@@ -1,0 +1,11 @@
+{
+  "widget.label": "Mein Widget",
+  "widget.description": "Zeigt eine Zahl aus deinem Dienst.",
+  "url.label": "Server-URL",
+  "url.placeholder": "service-host:8080",
+  "url.hint": "Containername und Port oder eine vollständige URL.",
+  "apiKey.label": "API-Schlüssel",
+  "href.label": "Link-URL",
+  "href.hint": "Die Adresse, unter der dein Browser diesen Dienst öffnet. Leer lassen, um die Adresse oben zu verwenden, sofern dein Browser sie erreicht.",
+  "ui.caption": "Gesamt"
+}

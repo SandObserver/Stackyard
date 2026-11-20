@@ -1,0 +1,11 @@
+{
+  "widget.label": "我的小组件",
+  "widget.description": "查看来自你的服务的一个数字。",
+  "url.label": "服务器地址",
+  "url.placeholder": "service-host:8080",
+  "url.hint": "容器名称和端口，或完整的 URL。",
+  "apiKey.label": "API 密钥",
+  "href.label": "链接地址",
+  "href.hint": "浏览器访问此服务所用的地址。留空则使用上方地址（前提是浏览器能访问它）。",
+  "ui.caption": "总数"
+}

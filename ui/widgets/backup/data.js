@@ -462,6 +462,7 @@ async function slots(config, ctx) {
               }
               let ref = at;
               let listError = null;
+              /** @type {any} */
               let group = null;
               try {
                 group = (await groupLists.get(`${ref.store}:${ref.ns}`)).find(pbsSameGroup(ref)) || null;

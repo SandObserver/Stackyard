@@ -39,7 +39,9 @@ const namesItsDate = (name, at) => {
 };
 
 /** One row. `at` is an ISO instant for a timed item, or null. `day` is the
-    calendar day for an item with no time. `until` is when it stops being next. */
+    calendar day for an item with no time. `until` is when it stops being next.
+    @param {{ kind: string, title: string, at?: string | null, day?: string, until: number, path?: string,
+      [key: string]: any }} item */
 function makeItem({ kind, title, at = null, day = '', until, path = '', ...rest }) {
   return { kind, title, at, day, until, path, ...rest };
 }
@@ -51,7 +53,7 @@ function sonarrSeriesIds(episodes, now, limit) {
   const coming = list(episodes)
     .map(e => ({ id: e.seriesId, t: ms(e.airDateUtc), runtime: minutes(e.runtime) || DEFAULT_RUNTIME_MIN }))
     .filter(e => Number.isSafeInteger(e.id) && e.id > 0 && e.t != null && e.t + e.runtime * 60000 > now)
-    .sort((a, b) => a.t - b.t);
+    .sort((a, b) => (a.t ?? 0) - (b.t ?? 0));
   for (const e of coming) {
     if (ids.length >= limit) break;
     if (!ids.includes(e.id)) ids.push(e.id);
@@ -182,7 +184,7 @@ function lidarrItems(albums) {
 const sortKey = i => (i.at ? Date.parse(i.at) : dayStartMs(i.day));
 
 /** Every source's rows, ended ones dropped, duplicates from a second instance
-    removed, soonest first. @param {object[][]} groups @param {number} now */
+    removed, soonest first. @param {{ until: number, key: string }[][]} groups @param {number} now */
 function mergeItems(groups, now) {
   const seen = new Set();
   const out = [];

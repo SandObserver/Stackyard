@@ -11,13 +11,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { register } from 'node:module';
+
+register('./js-root-hooks.mjs', import.meta.url);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 const form = read('js/admin-app-form.js');
 const css = read('css/admin.css');
 const en = JSON.parse(read('i18n/en.json'));
-const LOCALES = ['en', 'de', 'es', 'fr', 'fa', 'zh-Hans'];
+const LOCALES = (await import('../js/i18n.js')).LANGUAGES.map(l => l.code);
 
 /* The group header above it is not tied to the field, so without this the
    placeholder is the only label and it disappears as soon as you type. */

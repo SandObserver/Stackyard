@@ -160,6 +160,7 @@ async function vpnView(ctx) {
       const base = normBase(vpn.url);
       if (!base) ctx.fail('No control server URL configured', { kind: ctx.KIND.INVALID });
       const headers = vpn.apiKey ? { 'X-API-Key': vpn.apiKey } : {};
+      /** @type {{ status: number, data: any } | null} */
       let ipRes = null;
       try {
         ipRes = await fetchJSON(base + '/v1/publicip/ip', { headers, timeout: 7000 });
@@ -221,7 +222,7 @@ async function vpnView(ctx) {
       out.status = out.connected ? 'running' : 'stopped';
       const rep =
         connected
-          .toSorted((a, b) => new Date(b.last_seen || 0) - new Date(a.last_seen || 0))
+          .toSorted((a, b) => new Date(b.last_seen || 0).getTime() - new Date(a.last_seen || 0).getTime())
           .find(p => p.city_name || p.country_code) ||
         connected[0] ||
         null;
@@ -398,5 +399,4 @@ async function mapView(ctx) {
   return { services: results, meta: { showLegend: wc.showLegend !== false, href: wc.href || '' } };
 }
 
-module.exports = run;
-module.exports.normBase = normBase;
+module.exports = Object.assign(run, { normBase });

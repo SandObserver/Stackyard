@@ -1,18 +1,15 @@
 module.exports = async function (ctx) {
-  const { url, apiKey, showTotal } = ctx.config;
-  if (!url) ctx.fail('Not configured', { kind: ctx.KIND.INVALID });
-
+  const { url, apiKey, href } = ctx.config;
   const base = ctx.normalizeBase(url);
-  const r = await ctx.fetchJSON(`${base}/api/items`, {
+  if (!base) ctx.fail('Server URL not configured', { kind: ctx.KIND.INVALID });
+
+  const r = await ctx.fetchJSON(`${base}/api/status`, {
     headers: apiKey ? { 'X-Api-Key': apiKey } : {},
     timeout: 8000,
   });
   if (r.status === 401 || r.status === 403) ctx.fail('Auth failed (check API key)', { kind: ctx.KIND.AUTH });
   if (r.status >= 400) ctx.fail('HTTP ' + r.status);
-  if (!r.data || !Array.isArray(r.data.items)) ctx.fail('Reply has no items');
+  if (typeof r.data?.count !== 'number') ctx.fail('Reply has no count');
 
-  return {
-    items: r.data.items.slice(0, 10).map(i => ({ name: i.name })),
-    total: showTotal === false ? null : (r.data.total ?? r.data.items.length),
-  };
+  return { count: r.data.count, link: ctx.serviceLink(href, url) };
 };

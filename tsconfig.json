@@ -15,6 +15,9 @@
     "strictNullChecks": true
   },
   "include": [
-    "api/src/**/*.js"
+    "api/src/**/*.js",
+    "ui/widgets/*/data.js",
+    "ui/widgets/*/demo.js",
+    "docs/widget-template/*.js"
   ]
 }

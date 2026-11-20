@@ -1,13 +1,26 @@
 {
   "name": "mywidget",
-  "label": "My Widget",
-  "description": "See the status of your service.",
+  "label": "widget.label",
+  "description": "widget.description",
+  "glyph": "gauge",
   "sizes": ["small", "medium"],
   "fields": [
-    { "key": "url", "type": "text", "label": "Service URL",
-      "placeholder": "http://host:port" },
-    { "key": "apiKey", "type": "secret", "label": "API key", "optional": true },
-    { "key": "showTotal", "type": "toggle", "label": "Show total", "default": true,
-      "cosmetic": true }
+    {
+      "key": "url",
+      "type": "text",
+      "label": "url.label",
+      "placeholder": "url.placeholder",
+      "hint": "url.hint"
+    },
+    { "key": "apiKey", "type": "secret", "label": "apiKey.label", "optional": true },
+    {
+      "key": "href",
+      "type": "text",
+      "link": true,
+      "label": "href.label",
+      "hint": "href.hint",
+      "optional": true,
+      "cosmetic": true
+    }
   ]
 }

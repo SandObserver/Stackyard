@@ -100,6 +100,11 @@ test('the widget template manifest is valid', () => {
   assert.deepEqual(errors, [], `widget-template: ${errors.join('; ')}`);
   const extra = unknownKeys(manifest);
   assert.deepEqual(extra, [], `widget-template: unrecognised key(s) ${extra.join(', ')}`);
+  assert.equal(typeof manifest.glyph, 'string', 'widget-template: no glyph');
+  assert.ok(
+    manifest.fields.some(f => f.link === true),
+    'widget-template: no link field',
+  );
 });
 
 test('an empty description is refused', () => {
