@@ -99,8 +99,9 @@ run. Run it locally with `zizmor .github`.
   workflow adds the entries to `[Unreleased]`. A pull request with no
   user-visible change leaves the section empty.
 - **`bump-cache-busting.js --check`** verifies that every `/css/` and `/js/`
-  reference carries a `?v=` stamp. The release build recomputes the hashes, so
-  write `?v=1` and never edit a stamp by hand.
+  reference carries a `?v=` stamp that matches the file's content. After
+  editing `ui/js` or `ui/css`, run `node scripts/bump-cache-busting.js` and
+  commit the result. Never edit a stamp by hand.
 - **`npm run typecheck:ui`** typechecks every module under `ui/js` from its
   JSDoc, with no build step and nothing emitted. It has to stay clean. A new
   module needs two entries in `tsconfig.frontend.json`, the plain path and the

@@ -6,7 +6,7 @@ WORKDIR /src
 COPY ui/ ./ui/
 COPY nginx/ ./nginx/
 COPY scripts/bump-cache-busting.js ./scripts/bump-cache-busting.js
-RUN node scripts/bump-cache-busting.js
+RUN node scripts/bump-cache-busting.js --release
 
 FROM node:26-alpine@sha256:6bd9ab43c0ec0190ca7b2d193906cb8b7edf6e7f4afa43ddeccd6452710bffb5 AS base
 

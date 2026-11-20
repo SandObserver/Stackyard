@@ -3,7 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const UI_DIR = path.join(__dirname, '..', 'ui');
+const REPO_DIR = path.join(__dirname, '..');
+const UI_DIR = path.join(REPO_DIR, 'ui');
+const TEMPLATE_DIR = path.join(REPO_DIR, 'docs', 'widget-template');
 /* An asset reference, with or without a version stamp. The stamp must stay
    optional, or a reference written without one is invisible here and keeps
    being served from cache after an upgrade. */
@@ -38,7 +40,7 @@ function findUnstamped(text, file) {
   const found = [];
   const re = new RegExp(REF_RE.source, 'g');
   for (let m = re.exec(text); m !== null; m = re.exec(text)) {
-    if (!m[3]) found.push(`${path.relative(UI_DIR, file)} references ${m[2]} without ?v=`);
+    if (!m[3]) found.push(`${path.relative(REPO_DIR, file)} references ${m[2]} without ?v=`);
   }
   return found;
 }
@@ -54,7 +56,7 @@ function findStale(text, file) {
     if (!m[3]) continue; /* reported as unstamped instead */
     const want = `?v=${hashFor(m[2])}`;
     if (m[3] !== want) {
-      found.push(`${path.relative(UI_DIR, file)} references ${m[2]}${m[3]}, but its content is ${want}`);
+      found.push(`${path.relative(REPO_DIR, file)} references ${m[2]}${m[3]}, but its content is ${want}`);
     }
   }
   return found;
@@ -63,8 +65,10 @@ function findStale(text, file) {
 /* --check must not write. A check that modifies the tree makes CI pass by
    fixing the thing it reports. */
 const CHECK_ONLY = process.argv.includes('--check');
+const RELEASE = process.argv.includes('--release') && !CHECK_ONLY;
 
 const files = listFiles(UI_DIR, ['.html', '.js']);
+if (fs.existsSync(TEMPLATE_DIR)) listFiles(TEMPLATE_DIR, ['.html', '.js'], files);
 const MAX_PASSES = 10;
 let pass = 0;
 let totalChangedFiles = 0;
@@ -93,11 +97,10 @@ while (filesChangedThisPass !== 0) {
 
 console.log(`bump-cache-busting: stable after ${pass} pass(es), ${totalChangedFiles} file write(s)`);
 
-if (unstamped.length) {
+if (unstamped.length && !CHECK_ONLY) {
   const unique = [...new Set(unstamped)];
-  console.error(`bump-cache-busting: ${unique.length} reference(s) had no ?v= stamp:`);
-  for (const u of unique) console.error(`  ${u}`);
-  if (CHECK_ONLY) console.error('Add ?v=1 to each; this script keeps the value current from then on.');
+  console.log(`bump-cache-busting: added a ?v= stamp to ${unique.length} reference(s):`);
+  for (const u of unique) console.log(`  ${u.replace(/ without \?v=$/, '')}`);
 }
 
 /* The dashboard builds a widget's iframe URL from the manifest, not from a
@@ -149,14 +152,14 @@ function stampWidgetManifests() {
   console.log(`bump-cache-busting: stamped ${stamped} widget manifest(s)`);
 }
 
-stampWidgetManifests();
+if (CHECK_ONLY || RELEASE) stampWidgetManifests();
 
 if (CHECK_ONLY) {
   /* Manifests are reported but must not fail the check: the release build
      stamps them, so a working tree is expected to be out of date. An unstamped
      asset reference is written by hand and never becomes correct on its own. */
   if (staleManifests.length) {
-    console.log(`bump-cache-busting: ${staleManifests.length} widget manifest(s) will be stamped by the build`);
+    console.log(`bump-cache-busting: ${staleManifests.length} widget manifest(s) will be stamped by the release build`);
   }
   const problems = [...new Set([...unstamped, ...stale])];
   if (problems.length) {

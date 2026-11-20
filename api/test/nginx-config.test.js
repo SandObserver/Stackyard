@@ -503,9 +503,13 @@ test('hashed asset paths are immutable and their entry points are not', () => {
   }
 });
 
-test('the image stamps assets itself, so a locally built image is not pinned to ?v=1', () => {
+test('the image stamps assets and widget manifests itself', () => {
   const dockerfile = fs.readFileSync(path.join(__dirname, '../../Dockerfile'), 'utf8');
-  assert.match(dockerfile, /RUN node scripts\/bump-cache-busting\.js/);
+  assert.match(
+    dockerfile,
+    /RUN node scripts\/bump-cache-busting\.js --release\n/,
+    'without --release no widget page is stamped',
+  );
   assert.match(
     dockerfile,
     /COPY nginx\/ \.\/nginx\/\nCOPY scripts\/bump-cache-busting\.js/,
