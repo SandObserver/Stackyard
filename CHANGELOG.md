@@ -43,6 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Require Node.js 26 or later to run the API outside Docker.
 
+- Open the Link URL when you tap the Weather, Now Playing or Downloads widget on
+  a phone.
+
 ### Removed
 
 - Remove the `WIDGETS_PATH` setting from the Compose example. Mount a custom
@@ -114,6 +117,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Backup link fields on save, as the Scrutiny link already was.
 
 - Update nginx to 1.30.7.
+
+- Refuse a `javascript:` or other unsafe link in the Link URL of Books,
+  Connections, Downloads, Now Playing, System Summary, Up Next and Weather.
 
 ## [1.23.0] - 2026-11-15
 
