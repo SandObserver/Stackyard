@@ -97,7 +97,7 @@ test('two failed polls mark the badge stale, and a good one clears it', async ()
   assert.ok(!$('ba').classList.contains('stale'), 'one failure is not stale yet');
   await badges.pollBadges();
   assert.ok($('ba').classList.contains('stale'));
-  assert.match($('ta').getAttribute('aria-label'), new RegExp(t('status.stale').replace(/[()]/g, '\\$&')));
+  assert.ok($('ta').getAttribute('aria-label').includes(t('status.stale')), 'the label does not say stale');
   answers.badges = good;
   await badges.pollBadges();
   assert.ok(!$('ba').classList.contains('stale'));
