@@ -62,6 +62,9 @@ services:
         - path: ./ui/js/saved-row.js
           target: /app/ui/js/saved-row.js
           action: sync+restart
+        - path: ./ui/js/settings-schema.js
+          target: /app/ui/js/settings-schema.js
+          action: sync+restart
         - path: ./Dockerfile
           action: rebuild
         - path: ./docker-entrypoint.sh

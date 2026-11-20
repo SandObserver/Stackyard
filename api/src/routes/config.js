@@ -23,6 +23,7 @@ const backoff = require('../poll-backoff');
 const { stripDisabledCredentials } = require('../auth');
 const { pruneWallpapers } = require('./wallpaper');
 const { normalizeHostList } = require('../../../ui/js/host-names.js');
+const { normalizeSettings } = require('../../../ui/js/settings-schema.js');
 const { scrubProxmox, preserveProxmox } = require('../proxmox');
 const { badItemFields, takesReservedId, firstBadFolderChild, badSettings } = require('../config-validate');
 
@@ -218,32 +219,7 @@ on('POST', '/api/config', async (req, res) => {
         code: 'invalid.dock-full',
         detail: { max: DOCK_MAX },
       });
-    const KNOWN_SETTINGS = new Set([
-      'background',
-      'showLabels',
-      'keepAwake',
-      'typeToSearch',
-      'stats',
-      'server',
-      'auth',
-      'theme',
-      'layout',
-      'search',
-      'greeting',
-      'logLevel',
-      'language',
-    ]);
-    if (data.settings && typeof data.settings === 'object') {
-      for (const key of Object.keys(data.settings)) {
-        if (!KNOWN_SETTINGS.has(key)) delete data.settings[key];
-      }
-      if (data.settings.logLevel && !['debug', 'info', 'error'].includes(data.settings.logLevel))
-        delete data.settings.logLevel;
-      if (data.settings.language && !/^[a-z]{2,3}(-[A-Za-z]{2,4})?$/.test(data.settings.language))
-        delete data.settings.language;
-      if ('keepAwake' in data.settings) data.settings.keepAwake = data.settings.keepAwake === true;
-      if ('typeToSearch' in data.settings) data.settings.typeToSearch = data.settings.typeToSearch !== false;
-    }
+    const dropped = normalizeSettings(data.settings);
     const existing = loadConfigForUpdate();
     /* Stale-write check. A client that sends no _rev overwrites. */
     if (data._rev != null && Number(data._rev) !== (Number(existing._rev) || 0))
@@ -322,10 +298,16 @@ on('POST', '/api/config', async (req, res) => {
     backoff.reset();
     if (data.settings) log.setLevel(data.settings.logLevel);
     log.audit('config saved', {});
+    if (dropped.length) log.warn('unknown settings dropped', { keys: dropped });
     if (staleCleared) log.audit('stale password cleared', {});
     if (withheld.length) log.audit('stored credentials withheld', { items: withheld.map(w => w.id) });
     const { items } = clientConfig();
-    json(res, 200, withheld.length ? { ok: true, items, withheld } : { ok: true, items });
+    json(res, 200, {
+      ok: true,
+      items,
+      ...(withheld.length ? { withheld } : {}),
+      ...(dropped.length ? { dropped } : {}),
+    });
   } catch (e) {
     if (e.oversize)
       return json(res, 413, {

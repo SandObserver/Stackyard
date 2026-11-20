@@ -535,6 +535,102 @@ for (const [sent, stored] of [
   });
 }
 
+const SCHEMA_SAMPLES = {
+  background: { type: 'unsplash', collection: 'abc', brightness: 0.5 },
+  showLabels: { desktop: false, ios: true },
+  keepAwake: true,
+  typeToSearch: false,
+  stats: { diskMount: '/mnt/media', networkInterface: 'eth1' },
+  theme: 'dark',
+  layout: { columns: 6 },
+  search: { engine: 'duckduckgo' },
+  greeting: { name: 'Sam' },
+  logLevel: 'info',
+  language: 'de',
+  server: {
+    hostIp: '192.168.1.10',
+    healthChecks: false,
+    socketProxyUrl: 'http://socket-proxy:2375',
+    hideHealthyBadge: false,
+    proxmox: {
+      url: 'https://pve.example.com:8006',
+      tokenId: 'root@pam!dash',
+      secret: '11111111-2222-3333-4444-555555555555',
+      skipTlsVerify: true,
+    },
+    allowedHosts: ['dash.example.com'],
+    skipTlsVerify: true,
+    portMap: { 8096: { host: 'jellyfin', port: '8096' } },
+  },
+};
+
+test('every schema key has a round-trip sample', () => {
+  const { SETTINGS } = require('../../ui/js/settings-schema.js');
+  for (const { key, place } of SETTINGS) {
+    if (key === 'auth') continue;
+    const block = place === 'server' ? SCHEMA_SAMPLES.server : SCHEMA_SAMPLES;
+    assert.ok(Object.hasOwn(block, key), `${place === 'server' ? 'server.' : ''}${key} has no sample`);
+  }
+});
+
+test('a config save stores every schema key unchanged and keeps the stored auth', async () => {
+  const cfg = loadConfig();
+  try {
+    const r = await req('POST', '/api/config', {
+      cookie: validCookie,
+      body: { items: [], _rev: cfg._rev, settings: { ...structuredClone(SCHEMA_SAMPLES), auth: { enabled: false } } },
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.body.dropped, undefined);
+    const { auth, ...saved } = loadConfig().settings;
+    assert.deepEqual(auth, cfg.settings.auth);
+    assert.deepEqual(saved, SCHEMA_SAMPLES);
+  } finally {
+    saveConfig(cfg);
+  }
+});
+
+test('an unknown setting is dropped, named in the reply and logged once', async t => {
+  const log = require('../src/log');
+  const warned = [];
+  t.mock.method(log, 'warn', (msg, fields) => warned.push({ msg, fields }));
+  const cfg = loadConfig();
+  try {
+    const r = await req('POST', '/api/config', {
+      cookie: validCookie,
+      body: {
+        items: [],
+        _rev: cfg._rev,
+        settings: { theme: 'dark', notASetting: 'x', server: { hostIp: '10.0.0.2', bogus: 1 } },
+      },
+    });
+    assert.equal(r.status, 200);
+    assert.deepEqual(r.body.dropped, ['notASetting', 'server.bogus']);
+    const saved = loadConfig().settings;
+    assert.equal(saved.notASetting, undefined);
+    assert.deepEqual(saved.server, { hostIp: '10.0.0.2' });
+    assert.equal(saved.theme, 'dark');
+    const lines = warned.filter(w => w.msg === 'unknown settings dropped');
+    assert.equal(lines.length, 1);
+    assert.deepEqual(lines[0].fields, { keys: ['notASetting', 'server.bogus'] });
+  } finally {
+    saveConfig(cfg);
+  }
+});
+
+test('a refused save logs no dropped settings', async t => {
+  const log = require('../src/log');
+  const warned = [];
+  t.mock.method(log, 'warn', msg => warned.push(msg));
+  const cfg = loadConfig();
+  const r = await req('POST', '/api/config', {
+    cookie: validCookie,
+    body: { items: [], _rev: Number(cfg._rev || 0) + 99, settings: { notASetting: 'x' } },
+  });
+  assert.equal(r.status, 409);
+  assert.ok(!warned.includes('unknown settings dropped'));
+});
+
 test('saving the config clears the poll backoff, so an edited address is retried', async () => {
   const backoff = require('../src/poll-backoff');
   const cfg = loadConfig();
