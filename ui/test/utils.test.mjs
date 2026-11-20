@@ -267,16 +267,25 @@ test('isolate wraps a name in first-strong isolate marks', () => {
   assert.equal(isolate('Home Assistant (dev)'), '\u2068Home Assistant (dev)\u2069');
 });
 
-test('within settles on the work or on the time limit, and never rejects', async () => {
+test('within settles on the work or on the time limit, and never rejects', async t => {
   const { within } = await import('../js/utils.js');
+  t.mock.timers.enable({ apis: ['setTimeout'] });
   const order = [];
   await within(
     Promise.resolve().then(() => order.push('work')),
     1000,
   );
   assert.deepEqual(order, ['work']);
-  const started = Date.now();
-  await within(new Promise(() => {}), 20);
-  assert.ok(Date.now() - started < 500);
+
+  let settled = false;
+  const stuck = within(new Promise(() => {}), 20).then(() => {
+    settled = true;
+  });
+  t.mock.timers.tick(19);
+  await Promise.resolve();
+  assert.equal(settled, false, 'settled before the time limit');
+  t.mock.timers.tick(1);
+  await stuck;
+
   await within(Promise.reject(new Error('no')), 1000);
 });

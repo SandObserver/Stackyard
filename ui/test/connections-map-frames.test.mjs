@@ -92,3 +92,17 @@ test('a frame inside the pulse interval paints nothing but keeps the loop', asyn
     map.restore();
   }
 });
+
+test('a frame after the pulse interval paints again', async () => {
+  const map = await mount();
+  try {
+    map.render(PULSING);
+    map.runFrames();
+    const drawn = map.painted();
+    map.runFrames(1000);
+    assert.notEqual(map.painted(), drawn);
+    assert.equal(map.frames.size, 1);
+  } finally {
+    map.restore();
+  }
+});
