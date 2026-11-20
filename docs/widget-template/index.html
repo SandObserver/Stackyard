@@ -2,49 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="/js/widget-theme.js?v=9f9e1b99"></script>
   <style>
     *,*::before,*::after { margin:0; padding:0; box-sizing:border-box }
+    html { -webkit-tap-highlight-color:transparent }
     html,body { width:100%; height:100%; overflow:hidden; background:transparent;
       font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif; color:#e8e8ea }
     #root { width:100%; height:100%; display:flex; flex-direction:column;
-      align-items:center; justify-content:center; gap:4px }
-    .n { font-size:34px; font-weight:600; letter-spacing:-0.5px }
+      align-items:center; justify-content:center; gap:4px; padding:16px }
+    #root.clickable { cursor:pointer }
+    #root.clickable:focus-visible { outline:2px solid #0091FF; outline-offset:-3px }
+    .n { font-size:34px; font-weight:600; letter-spacing:-0.5px; font-variant-numeric:tabular-nums }
     .l { font-size:12px; color:#8e8e93 }
-    .i { max-width:100%; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
     html[data-theme="light"] body { color:#1c1c1e }
     html[data-theme="light"] .l { color:#6c6c70 }
   </style>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root" role="group">
+    <div class="n" id="value"></div>
+    <div class="l" id="caption">Total</div>
+    <div id="msg" hidden></div>
+  </div>
   <script type="module">
-    import { formatNumber, poll } from '/js/widget-toolbox.js?v=ee28d3b5';
+    import { errorState, formatNumber, linkTo, loadStrings, placeholder, poll, wt } from '/js/widget-toolbox.js?v=5121d788';
+
+    await loadStrings();
 
     const root = document.getElementById('root');
+    const valueEl = document.getElementById('value');
+    document.getElementById('caption').textContent = wt('ui.caption', 'Total');
+    root.setAttribute('aria-label', wt('widget.label', 'My Widget'));
+    valueEl.replaceChildren(placeholder(48, 26, 6));
+
+    const state = errorState({ root, content: [valueEl], caption: document.getElementById('msg') });
 
     poll({
-      render: data => {
-        root.replaceChildren();
-        if (data.total != null) {
-          const n = document.createElement('div');
-          n.className = 'n';
-          n.textContent = formatNumber(data.total);
-          const l = document.createElement('div');
-          l.className = 'l';
-          l.textContent = data.total === 1 ? 'item' : 'items';
-          root.append(n, l);
-        }
-        for (const item of data.items.slice(0, 3)) {
-          const row = document.createElement('div');
-          row.className = 'i';
-          row.textContent = item.name;
-          root.append(row);
-        }
-      },
-      isEmpty: data => !data.items?.length,
-      emptyText: 'Nothing here',
       interval: 30000,
+      render: data => {
+        state.ok();
+        linkTo(root, data.link);
+        valueEl.textContent = formatNumber(data.count);
+      },
+      onError: ({ error, everOk, stale, since }) => {
+        if (!everOk || stale) state.fail(error, { since, inert: everOk });
+      },
     });
   </script>
 </body>

@@ -7,7 +7,9 @@ import { register } from 'node:module';
    before loading it. */
 register('./js-root-hooks.mjs', import.meta.url);
 globalThis.location = { search: '?id=test' };
-const { poll, setPollRate, errorState } = await import('../js/widget-toolbox.js');
+const { poll, setPollRate, setPollFloor, MIN_POLL_MS, errorState } = await import('../js/widget-toolbox.js');
+/* Real time, so the tests poll faster than a widget may. */
+setPollFloor(0);
 const { errorKind } = await import('../js/widget-error.js');
 
 const tick = ms => new Promise(r => setTimeout(r, ms));
@@ -572,3 +574,29 @@ test('a render failure reads as the widget going wrong, and a fetch failure as o
   assert.equal(errorKind(errors[0].error), 'internal');
   assert.equal(errorKind(errors[1].error), 'network');
 });
+
+for (const [what, interval] of [
+  ['a number', 1],
+  ['a function', () => 1],
+]) {
+  test(`an interval below the floor, given as ${what}, waits the floor`, async () => {
+    const delays = [];
+    const realTimeout = globalThis.setTimeout;
+    setPollFloor(MIN_POLL_MS);
+    globalThis.setTimeout = (fn, ms, ...rest) => {
+      delays.push(ms);
+      return realTimeout(fn, ms, ...rest);
+    };
+    try {
+      await run(async (_dom, start) => {
+        start({ interval, fetch: async () => ({}) });
+        await until(() => delays.some(d => d > 100), 'the repeat to be scheduled');
+      });
+    } finally {
+      globalThis.setTimeout = realTimeout;
+      setPollFloor(0);
+    }
+    const repeat = delays.find(d => d > 100);
+    assert.ok(repeat >= MIN_POLL_MS * 0.85, `${repeat}ms is shorter than the floor`);
+  });
+}

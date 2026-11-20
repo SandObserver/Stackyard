@@ -42,7 +42,7 @@ export function startOfDay(now) {
 
 /** A finish time in the interface language, without its day period. `half` is
     'am' or 'pm' when the clock has one, so the caller names it from its catalog.
-    @param {number} ms @param {number} now @param {string} lang @param {string|undefined} hourCycle
+    @param {number} ms @param {number} now @param {string} lang @param {Intl.DateTimeFormatOptions['hourCycle']} hourCycle
     @returns {{ time: string, half: ''|'am'|'pm' }} */
 export function finishParts(ms, now, lang, hourCycle) {
   const days = (startOfDay(ms) - startOfDay(now)) / 86400000;

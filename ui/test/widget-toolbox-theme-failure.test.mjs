@@ -66,7 +66,8 @@ doc.head = node(doc, 'head');
 doc.body = node(doc, 'body');
 globalThis.document = doc;
 
-const { poll } = await import('../js/widget-toolbox.js');
+const { poll, setPollFloor } = await import('../js/widget-toolbox.js');
+setPollFloor(0);
 
 const tick = ms => new Promise(r => setTimeout(r, ms));
 

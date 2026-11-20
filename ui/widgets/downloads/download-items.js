@@ -45,8 +45,8 @@ const DISGUISE = new Set([
   0x061c, 0x200e, 0x200f, 0x202a, 0x202b, 0x202c, 0x202d, 0x202e, 0x2066, 0x2067, 0x2068, 0x2069,
 ]);
 const control = n => n < 0x20 || (n >= 0x7f && n <= 0x9f);
-const clean = name =>
-  [...String(name || '')].filter(c => !control(c.codePointAt(0)) && !DISGUISE.has(c.codePointAt(0))).join('');
+const hidden = (/** @type {number} */ n) => control(n) || DISGUISE.has(n);
+const clean = name => [...String(name || '')].filter(c => !hidden(c.codePointAt(0) ?? 0)).join('');
 
 const RANK = { run: 0, stall: 1, pause: 1, error: 2 };
 
@@ -82,7 +82,8 @@ function arrange(items, paused = false) {
     .filter(i => i.name)
     .sort((a, b) => {
       if (a.state !== b.state) return RANK[a.state] - RANK[b.state];
-      if (a.eta == null || b.eta == null) return (a.eta == null) - (b.eta == null) || b.progress - a.progress;
+      if (a.eta == null || b.eta == null)
+        return Number(a.eta == null) - Number(b.eta == null) || b.progress - a.progress;
       return a.eta - b.eta;
     });
   return { items: sorted.slice(0, MAX_ITEMS), summary: summarize(sorted, paused) };
@@ -168,7 +169,7 @@ function delugeItems(torrents) {
       size: wanted,
       left: wanted - nonNeg(t.total_done),
       speed: t.download_payload_rate,
-      eta: num(t.eta) > 0 ? t.eta : null,
+      eta: (num(t.eta) ?? 0) > 0 ? t.eta : null,
     };
     if (state === 'Error') out.push(makeItem({ ...base, state: 'error', reason: 'error' }));
     else if (state === 'Downloading') {

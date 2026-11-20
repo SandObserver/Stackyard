@@ -1,6 +1,7 @@
 /* Seeded from a fixed constant and built once, so the grid is identical on
    every poll. */
 
+/** @type {ReturnType<typeof githubCalendar> | null} */
 let _cal = null;
 
 function githubCalendar() {

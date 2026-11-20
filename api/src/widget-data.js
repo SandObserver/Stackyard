@@ -82,9 +82,43 @@ const withinBudget =
     return fetch(url, { ...opts, timeout: Math.min(opts.timeout || FETCH_MS, left) }, ...rest);
   };
 
-/** @param {StatusTrace | null} [trace] */
+/** @typedef {{
+      method?: string, headers?: Record<string, string>, body?: string | Buffer, timeout?: number,
+      raw?: boolean, binary?: boolean, withHeaders?: boolean, maxBytes?: number, skipTls?: boolean
+    }} FetchOptions */
+
+/** @typedef {{
+      status: number, data: any, format?: 'json' | 'xml' | 'metrics' | 'text',
+      headers?: import('http').IncomingHttpHeaders, contentType?: string, error?: string
+    }} FetchReply */
+
+/** The `ctx` a widget's data.js and demo.js receive.
+    @typedef {object} WidgetCtx
+    @property {Record<string, any>} config the saved widget config, secrets included
+    @property {Readonly<Record<string, any>>} settings the allowlisted, frozen slice of global settings
+    @property {string} endpoint the `endpoint` query value
+    @property {Record<string, any> | null} row the object row the request names, if any
+    @property {URLSearchParams} params `endpoint` and the manifest's declared `params`
+    @property {(url: string, opts?: FetchOptions) => Promise<FetchReply>} fetchJSON
+    @property {(url: string, opts: object, fn: (session: any) => Promise<any>) => Promise<any>} jsonRpc
+    @property {typeof parsePrometheus} parsePrometheus
+    @property {Record<string, Function>} metrics host metrics, or their demo stand-ins
+    @property {typeof demoData.helpers | null} demo `{ wave, round }` in demo mode, else null
+    @property {typeof normalizeBase} normalizeBase
+    @property {typeof serviceBase} serviceBase
+    @property {typeof serviceLink} serviceLink
+    @property {typeof remember} remember
+    @property {(message: string, opts?: { kind?: string, detail?: object }) => never} fail throws a WidgetError
+    @property {typeof KIND} KIND
+    @property {typeof classify} classify
+    @property {typeof log} log
+    @property {(handlers: Record<string, (ctx: WidgetCtx) => any>,
+      opts?: { field?: string, default?: string, onError?: (e: any, ctx: WidgetCtx) => any }) => Promise<any>} dispatchProvider */
+
+/** @param {StatusTrace | null} [trace] @returns {WidgetCtx} */
 function dataFnContext(wc, endpoint, searchParams, fetch, row = null, trace = null) {
   const deadline = Date.now() + WIDGET_BUDGET_MS;
+  /** @type {WidgetCtx} */
   const ctx = {
     config: wc /* full widgetConfig, including secrets (server-side only) */,
     /* Non-secret keys only. The full settings object carries the session signing
@@ -113,8 +147,8 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null, trace = nu
     KIND,
     classify,
     log,
+    dispatchProvider: (handlers, opts) => dispatchProvider(ctx, handlers, opts),
   };
-  ctx.dispatchProvider = (handlers, opts) => dispatchProvider(ctx, handlers, opts);
   return ctx;
 }
 

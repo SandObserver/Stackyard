@@ -131,6 +131,7 @@ function komgaBook(b) {
   const writer = authors.find(a => /writer|author/i.test(a.role || '')) || authors[0];
   const rp = b.readProgress || null;
   const pages = (b.media && b.media.pagesCount) || 0;
+  /** @type {number | null} */
   let progress = null;
   if (rp) progress = rp.completed ? 1 : pages > 0 && rp.page ? clamp01(rp.page / pages) : null;
   return {

@@ -972,9 +972,8 @@ const D = WORLD;
 const own = new Map();
 export const all = [];
 for (let k = 0; k < D.dots.length; k += 3) {
-  const d = [D.dots[k], D.dots[k + 1]],
+  const d = Object.assign([D.dots[k], D.dots[k + 1]], { k: D.dots[k] + ',' + D.dots[k + 1] }),
     cc = D.countries[D.dots[k + 2]];
-  d.k = d[0] + ',' + d[1];
   all.push(d);
   if (!own.has(cc)) own.set(cc, []);
   own.get(cc).push(d);

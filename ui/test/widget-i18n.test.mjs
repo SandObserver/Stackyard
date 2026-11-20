@@ -18,6 +18,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 
 const { widgetSrc } = await import('../js/widget-types.js');
+const { LANGUAGES } = await import('../js/i18n.js');
 
 const REG = { 'system-summary': { sizes: ['medium'], entryVersions: { 'index.html': 'abc12345' } } };
 const ITEM = { id: 'w1', widgetType: 'system-summary', widgetSize: 'medium' };
@@ -126,7 +127,7 @@ test('relative times use the browser rather than hand-written rules', () => {
 
 test('Intl produces a different string for each shipped locale', () => {
   const seen = new Set();
-  for (const lang of ['en', 'de', 'es', 'fr', 'fa', 'zh-Hans']) {
+  for (const { code: lang } of LANGUAGES) {
     const s = new Intl.RelativeTimeFormat(lang, { numeric: 'auto', style: 'short' }).format(-5, 'minute');
     assert.ok(s, `${lang} produced nothing`);
     seen.add(s);
@@ -167,14 +168,27 @@ const CATEGORIES = ['zero', 'one', 'two', 'few', 'many', 'other'];
 const PLURAL = new RegExp(`_(${CATEGORIES.join('|')})$`);
 const placeholders = v => (String(v).match(/\{\w+\}/g) || []).sort();
 
-const widgetCatalogDirs = () =>
-  fs
+const TEMPLATE = path.resolve(root, '..', 'docs', 'widget-template');
+
+/* Every widget folder plus the template, as [name, absolute path]. */
+const widgetDirs = () => [
+  ...fs
     .readdirSync(path.join(root, 'widgets'), { withFileTypes: true })
-    .filter(e => e.isDirectory() && fs.existsSync(path.join(root, 'widgets', e.name, 'i18n')))
-    .map(e => e.name);
+    .filter(e => e.isDirectory())
+    .map(e => [e.name, path.join(root, 'widgets', e.name)]),
+  ['widget-template', TEMPLATE],
+];
+
+/* Only folders that ship i18n/. A widget without one is allowed. */
+const widgetCatalogDirs = () => widgetDirs().filter(([, dir]) => fs.existsSync(path.join(dir, 'i18n')));
+const readJson = file => JSON.parse(fs.readFileSync(file, 'utf8'));
 
 test('the scan finds the widget catalogs', () => {
   assert.ok(widgetCatalogDirs().length > 5, 'expected a catalog folder for most widgets');
+  assert.ok(
+    widgetCatalogDirs().some(([name]) => name === 'widget-template'),
+    'the widget template has no catalog',
+  );
 });
 
 test('every widget catalog covers every shipped locale', () => {
@@ -182,29 +196,30 @@ test('every widget catalog covers every shipped locale', () => {
     .readdirSync(path.join(root, 'i18n'))
     .filter(f => f.endsWith('.json'))
     .sort();
-  for (const name of widgetCatalogDirs()) {
+  for (const [name, wdir] of widgetCatalogDirs()) {
     const have = fs
-      .readdirSync(path.join(root, 'widgets', name, 'i18n'))
+      .readdirSync(path.join(wdir, 'i18n'))
       .filter(f => f.endsWith('.json'))
       .sort();
-    assert.deepEqual(have, wanted, `widgets/${name}/i18n does not carry the same locales as the dashboard`);
+    assert.deepEqual(have, wanted, `${name}/i18n does not carry the same locales as the dashboard`);
   }
 });
 
 test('every widget catalog carries the English key set and its placeholders', () => {
-  for (const name of widgetCatalogDirs()) {
-    const dir = `widgets/${name}/i18n`;
-    const en = JSON.parse(read(`${dir}/en.json`));
+  for (const [name, wdir] of widgetCatalogDirs()) {
+    const dir = path.join(wdir, 'i18n');
+    const where = `${name}/i18n`;
+    const en = readJson(path.join(dir, 'en.json'));
     const enBases = [...new Set(Object.keys(en).map(k => k.replace(PLURAL, '')))].sort();
-    for (const file of fs.readdirSync(path.join(root, dir)).filter(f => f.endsWith('.json') && f !== 'en.json')) {
-      const cat = JSON.parse(read(`${dir}/${file}`));
+    for (const file of fs.readdirSync(dir).filter(f => f.endsWith('.json') && f !== 'en.json')) {
+      const cat = readJson(path.join(dir, file));
       const bases = [...new Set(Object.keys(cat).map(k => k.replace(PLURAL, '')))].sort();
-      assert.deepEqual(bases, enBases, `${dir}/${file} key set differs from en.json`);
+      assert.deepEqual(bases, enBases, `${where}/${file} key set differs from en.json`);
       for (const [k, v] of Object.entries(cat)) {
-        assert.ok(typeof v === 'string' && v.trim(), `${dir}/${file} has an empty value for ${k}`);
+        assert.ok(typeof v === 'string' && v.trim(), `${where}/${file} has an empty value for ${k}`);
         const source = en[k] ?? en[`${k.replace(PLURAL, '')}_other`];
         if (source !== undefined)
-          assert.deepEqual(placeholders(v), placeholders(source), `${dir}/${file} ${k} changed the placeholders`);
+          assert.deepEqual(placeholders(v), placeholders(source), `${where}/${file} ${k} changed the placeholders`);
       }
     }
   }
@@ -253,11 +268,8 @@ test('every locale names the reorder handle', () => {
    itself reaches the screen without a catalog unless the author remembers
    `wt`. */
 test('no widget writes display text in English', () => {
-  const dir = path.join(root, 'widgets');
   const offenders = [];
-  for (const widget of fs.readdirSync(dir)) {
-    const wdir = path.join(dir, widget);
-    if (!fs.statSync(wdir).isDirectory()) continue;
+  for (const [widget, wdir] of widgetDirs()) {
     for (const file of fs.readdirSync(wdir).filter(f => f.endsWith('.html') || f.endsWith('.js'))) {
       const src = fs.readFileSync(path.join(wdir, file), 'utf8');
       /* The assigned literal only. A lookup starts with wt( or _t( and does not
@@ -309,9 +321,10 @@ test('a books shelf label comes from the catalog, not the source key', () => {
 });
 
 test('every counted widget message carries the plural categories its language uses', () => {
-  for (const name of widgetCatalogDirs()) {
-    const dir = `widgets/${name}/i18n`;
-    const en = JSON.parse(read(`${dir}/en.json`));
+  for (const [name, wdir] of widgetCatalogDirs()) {
+    const dir = path.join(wdir, 'i18n');
+    const where = `${name}/i18n`;
+    const en = readJson(path.join(dir, 'en.json'));
     const counted = [
       ...new Set(
         Object.keys(en)
@@ -319,14 +332,14 @@ test('every counted widget message carries the plural categories its language us
           .map(k => k.replace(PLURAL, '')),
       ),
     ];
-    for (const file of fs.readdirSync(path.join(root, dir)).filter(f => f.endsWith('.json'))) {
-      const cat = JSON.parse(read(`${dir}/${file}`));
+    for (const file of fs.readdirSync(dir).filter(f => f.endsWith('.json'))) {
+      const cat = readJson(path.join(dir, file));
       const wanted = new Intl.PluralRules(file.slice(0, -5)).resolvedOptions().pluralCategories;
       for (const base of counted) {
         for (const category of wanted)
-          assert.ok(cat[`${base}_${category}`], `${dir}/${file} is missing ${base}_${category}`);
+          assert.ok(cat[`${base}_${category}`], `${where}/${file} is missing ${base}_${category}`);
         const extra = CATEGORIES.filter(c => !wanted.includes(c) && cat[`${base}_${c}`]);
-        assert.deepEqual(extra, [], `${dir}/${file} has ${base} forms its language never selects: ${extra}`);
+        assert.deepEqual(extra, [], `${where}/${file} has ${base} forms its language never selects: ${extra}`);
       }
     }
   }

@@ -81,8 +81,9 @@ test('every placeholder a step fills is in its English text', () => {
   }
 });
 
-test('picks the browser language Stackyard ships, else English', () => {
-  const supported = ['en', 'fa', 'zh-Hans', 'es', 'de', 'fr'];
+test('picks the browser language Stackyard ships, else English', async () => {
+  register('./js-root-hooks.mjs', import.meta.url);
+  const supported = (await import('../js/i18n.js')).LANGUAGES.map(l => l.code);
   assert.equal(pickLanguage(['de-AT', 'en'], supported), 'de');
   assert.equal(pickLanguage(['zh-CN'], supported), 'zh-Hans');
   assert.equal(pickLanguage(['ja', 'fr-CA'], supported), 'fr');

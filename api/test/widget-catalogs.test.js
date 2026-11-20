@@ -4,36 +4,39 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
 const { TRANSLATABLE } = require('../src/widget-i18n');
+const { LANGUAGE_CODES: LANGUAGES } = require('../test-support/ui-languages');
 
-/* The bundled widgets' own catalogs. A missing key is not an error at runtime,
-   it falls back, so nothing would fail loudly if a language drifted: the widget
-   would just quietly show English in the middle of a translated form. These
-   tests are what makes that drift visible.
+/* The widgets' own catalogs. A missing key is not an error at runtime, it falls
+   back, so nothing would fail loudly if a language drifted: the widget would
+   just quietly show English in the middle of a translated form. These tests are
+   what makes that drift visible.
 
-   Only bundled widgets are checked. A third-party widget is free to ship one
-   language, or none. */
+   Every widget that ships an i18n folder is checked, the template included. A
+   widget with no i18n folder is not: translations are optional. */
 
 const WIDGETS_DIR = path.join(__dirname, '..', '..', 'ui', 'widgets');
-/* The dashboard's own languages. A widget catalog for a language the dashboard
-   cannot select would never be read. */
-const LANGUAGES = ['en', 'fa', 'zh-Hans', 'es', 'de', 'fr'];
+const TEMPLATE_DIR = path.join(__dirname, '..', '..', 'docs', 'widget-template');
 
-const widgets = fs
-  .readdirSync(WIDGETS_DIR, { withFileTypes: true })
-  .filter(d => d.isDirectory() && fs.existsSync(path.join(WIDGETS_DIR, d.name, 'widget.json')))
-  .map(d => d.name);
+const dirOf = Object.fromEntries([
+  ...fs
+    .readdirSync(WIDGETS_DIR, { withFileTypes: true })
+    .filter(d => d.isDirectory() && fs.existsSync(path.join(WIDGETS_DIR, d.name, 'widget.json')))
+    .map(d => [d.name, path.join(WIDGETS_DIR, d.name)]),
+  ['widget-template', TEMPLATE_DIR],
+]);
+const widgets = Object.keys(dirOf);
 
 /* A counted message is one key per plural category, and each language uses its
    own categories. Keys are compared by base name. */
 const PLURAL = /_(zero|one|two|few|many|other)$/;
 const baseKeys = cat => [...new Set(Object.keys(cat).map(k => k.replace(PLURAL, '')))].sort();
 
-const hasCatalog = w => fs.existsSync(path.join(WIDGETS_DIR, w, 'i18n', 'en.json'));
-const readCatalog = (w, lang) => JSON.parse(fs.readFileSync(path.join(WIDGETS_DIR, w, 'i18n', lang + '.json'), 'utf8'));
+const hasCatalog = w => fs.existsSync(path.join(dirOf[w], 'i18n'));
+const readCatalog = (w, lang) => JSON.parse(fs.readFileSync(path.join(dirOf[w], 'i18n', lang + '.json'), 'utf8'));
 
 /* Every translatable string in a manifest, as it is written there. */
 function manifestStrings(widget) {
-  const manifest = JSON.parse(fs.readFileSync(path.join(WIDGETS_DIR, widget, 'widget.json'), 'utf8'));
+  const manifest = JSON.parse(fs.readFileSync(path.join(dirOf[widget], 'widget.json'), 'utf8'));
   const found = [];
   const walk = node => {
     if (Array.isArray(node)) return node.forEach(walk);
@@ -47,15 +50,20 @@ function manifestStrings(widget) {
   return found;
 }
 
-test('at least one bundled widget ships a catalog, or these tests prove nothing', () => {
-  assert.ok(widgets.some(hasCatalog), 'no widget has i18n/en.json');
+test('the scan finds the catalogs and the languages, or these tests prove nothing', () => {
+  assert.ok(widgets.filter(hasCatalog).length > 5, 'most widgets have an i18n folder');
+  assert.ok(LANGUAGES.includes('en') && LANGUAGES.length > 1, `languages read: ${LANGUAGES.join(', ')}`);
+});
+
+test('the widget template ships a catalog, so a widget copied from it is checked', () => {
+  assert.ok(hasCatalog('widget-template'));
 });
 
 for (const widget of widgets.filter(hasCatalog)) {
   test(`${widget}: every language has exactly the English keys`, () => {
     const en = baseKeys(readCatalog(widget, 'en'));
     for (const lang of LANGUAGES.filter(l => l !== 'en')) {
-      const file = path.join(WIDGETS_DIR, widget, 'i18n', lang + '.json');
+      const file = path.join(dirOf[widget], 'i18n', lang + '.json');
       assert.ok(fs.existsSync(file), `${widget} is missing ${lang}.json`);
       assert.deepEqual(
         baseKeys(readCatalog(widget, lang)),

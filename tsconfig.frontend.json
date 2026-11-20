@@ -516,6 +516,11 @@
     }
   },
   "include": [
-    "ui/js/**/*.js"
+    "ui/js/**/*.js",
+    "ui/widgets/*/*.js"
+  ],
+  "exclude": [
+    "ui/widgets/*/data.js",
+    "ui/widgets/*/demo.js"
   ]
 }
