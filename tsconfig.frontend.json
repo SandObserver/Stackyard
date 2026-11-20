@@ -314,6 +314,12 @@
       "/js/link-url.js?v=*": [
         "./ui/js/link-url.js"
       ],
+      "/js/settings-schema.js": [
+        "./ui/js/settings-schema.js"
+      ],
+      "/js/settings-schema.js?v=*": [
+        "./ui/js/settings-schema.js"
+      ],
       "/js/motion-curve.js": [
         "./ui/js/motion-curve.js"
       ],

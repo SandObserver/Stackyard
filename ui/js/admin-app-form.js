@@ -28,7 +28,7 @@ import {
   toast,
   wireInlineEdit,
 } from '/js/admin-shared.js?v=14e96406';
-import { activityAuth, activityHasAuth } from '/js/admin-save-logic.js?v=4a332c56';
+import { activityAuth, activityHasAuth } from '/js/admin-save-logic.js?v=7de2f6fd';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=7112fd10';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';

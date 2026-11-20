@@ -4,7 +4,7 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=b83b91d4';
+} from '/js/admin-app-form.js?v=c1a78f48';
 import { checkAuth, requireLogin, wirePasswordStrength } from '/js/admin-auth.js?v=44b293fb';
 import {
   applyFilter,
@@ -15,7 +15,7 @@ import {
   render,
   setReordering,
   syncFilterUI,
-} from '/js/admin-list.js?v=6a6c4b3e';
+} from '/js/admin-list.js?v=e62426cb';
 import { filterActive, folderChildren, resolveAdminSection, settleDock } from '/js/admin-logic.js?v=81fd47cf';
 import {
   afterImport,
@@ -30,7 +30,7 @@ import {
   restoresSettings,
   revertingSaves,
   snapshotItems,
-} from '/js/admin-save-logic.js?v=4a332c56';
+} from '/js/admin-save-logic.js?v=7de2f6fd';
 import {
   applyHealthChecks,
   loadSettings,
@@ -40,7 +40,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=cb259d27';
+} from '/js/admin-settings.js?v=ba74012e';
 import {
   announce,
   apiGet,
@@ -90,7 +90,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=a558d221';
+} from '/js/import-foreign.js?v=348618f4';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { CONFIG_MAX_BYTES, clampName } from '/js/limits.js?v=ff61256e';
 import { createListbox } from '/js/listbox.js?v=1214e150';
