@@ -41,8 +41,8 @@ function ciCommands() {
   return out;
 }
 
-/* The command as a contributor would type it from the repository root. */
-const asTyped = ([cmd, dir]) => (dir ? `cd ${dir} && ${cmd}` : cmd);
+/* The command as a contributor would paste it from the repository root. */
+const asTyped = ([cmd, dir]) => (dir ? `(cd ${dir} && ${cmd})` : cmd);
 
 function docSection() {
   const at = contributing.indexOf(SECTION);
@@ -110,6 +110,16 @@ test('the step list survives reformatting of the action', () => {
     ciCommands(),
     'the same action formatted differently produced a different list',
   );
+});
+
+test('npm test runs the test suites CI runs, in the same order', () => {
+  const suites = yaml
+    .load(action)
+    .runs.steps.filter(st => /^Run .* tests$/.test(st?.name || ''))
+    .map(st => asTyped([st.run.trim(), st['working-directory'] || null]));
+  assert.ok(suites.length >= 3, `only ${suites.length} test steps found in the action`);
+  const pkg = JSON.parse(read('package.json'));
+  assert.equal(pkg.scripts?.test, suites.join(' && '));
 });
 
 /* CodeQL blocks a merge like any other check, so a contributor should not meet

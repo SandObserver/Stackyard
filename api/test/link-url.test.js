@@ -598,14 +598,14 @@ test('a config save is rejected when a folder points at an item that is not ther
 /* require() of an ES module was behind --experimental-require-module on Node
    20.x until 20.19.0. Below that, requiring this file throws and routes/config.js
    fails to load, which takes the whole API down rather than one route. The
-   engines floor is the only place the project states what it runs on, so it has
-   to be at or above the release where that stopped being true. */
+   engines floor has to be at or above the release where that stopped being
+   true. */
 test('the declared Node floor supports requiring an ES module', () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
   const declared = String(pkg.engines?.node || '');
-  const m = declared.match(/^>=\s*(\d+)\.(\d+)/);
-  assert.ok(m, `engines.node should be a ">=major.minor" floor, got ${JSON.stringify(declared)}`);
-  const [major, minor] = [Number(m[1]), Number(m[2])];
+  const m = declared.match(/^>=\s*(\d+)(?:\.(\d+))?$/);
+  assert.ok(m, `engines.node should be a ">=major" or ">=major.minor" floor, got ${JSON.stringify(declared)}`);
+  const [major, minor] = [Number(m[1]), Number(m[2] || 0)];
   const ok = major > 20 || (major === 20 && minor >= 19);
   assert.ok(ok, `engines.node is ${declared}; require(esm) needs 20.19 or newer`);
 });
