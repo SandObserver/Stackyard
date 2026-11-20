@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Drop unknown keys inside the server settings on save, as unknown top-level
   settings already were.
 
+- Require Node.js 26 or later to run the API outside Docker.
+
 ### Removed
 
 - Remove the `WIDGETS_PATH` setting from the Compose example. Mount a custom
