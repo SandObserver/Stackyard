@@ -75,7 +75,7 @@ async function setInlineRow(page, rowId, inputId, value) {
 async function saveEditor(page) {
   const [response] = await Promise.all([
     page.waitForResponse(r => r.url().includes('/api/config') && r.request().method() === 'POST'),
-    page.locator('#ev-save').click(),
+    page.getByRole('button', { name: 'Save', exact: true }).click(),
   ]);
   expect(response.status(), `saving returned ${response.status()}: ${await response.text()}`).toBe(200);
   return response;

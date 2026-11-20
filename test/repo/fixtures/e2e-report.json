@@ -1,0 +1,143 @@
+{
+  "config": {
+    "rootDir": "/home/runner/work/Stackyard/Stackyard/e2e",
+    "version": "1.65.0"
+  },
+  "suites": [
+    {
+      "title": "scratch.spec.js",
+      "file": "scratch.spec.js",
+      "line": 0,
+      "column": 0,
+      "specs": [
+        {
+          "title": "always passes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "status": "passed",
+                  "duration": 1,
+                  "errors": [],
+                  "retry": 0,
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a40ae6a00e920a031b29-bbaa20f4db4b9d4b275f",
+          "file": "scratch.spec.js",
+          "line": 8,
+          "column": 1
+        },
+        {
+          "title": "clock and wheel timeStamp",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "status": "passed",
+                  "duration": 355,
+                  "errors": [],
+                  "retry": 0,
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a40ae6a00e920a031b29-0c21ff2be89ae2c3395d",
+          "file": "scratch.spec.js",
+          "line": 9,
+          "column": 1
+        }
+      ],
+      "suites": [
+        {
+          "title": "group",
+          "file": "scratch.spec.js",
+          "line": 2,
+          "column": 6,
+          "specs": [
+            {
+              "title": "fails once then passes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "status": "failed",
+                      "duration": 428,
+                      "errors": [
+                        {
+                          "message": "Error: expect(received).toBe(expected)"
+                        }
+                      ],
+                      "retry": 0,
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "test-results/8bee382834300f835e6d5894d739f483370953de.md"
+                        }
+                      ]
+                    },
+                    {
+                      "workerIndex": 1,
+                      "status": "passed",
+                      "duration": 409,
+                      "errors": [],
+                      "retry": 1,
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "test-results/ee36d54f34a187110b2eb4bac169ebd90ffcde6d.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "flaky"
+                }
+              ],
+              "id": "a40ae6a00e920a031b29-74dcb56c4fe6ed37a321",
+              "file": "scratch.spec.js",
+              "line": 3,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-20T12:03:09.137Z",
+    "duration": 3636.22998046875,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 1
+  }
+}

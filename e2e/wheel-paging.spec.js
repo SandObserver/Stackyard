@@ -16,11 +16,12 @@ const clock = {
   widgetConfig: {},
 };
 
-async function open(page, request) {
+async function open(page, request, { fakeClock = false } = {}) {
   await seedConfig(request, { items: [clock, ...MANY], settings: { showLabels: { desktop: false } } });
   await dismissSetupPrompt(request);
   await page.route('**/api/badges', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
   await page.route('**/api/health', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+  if (fakeClock) await page.clock.install();
   await page.goto('/');
   await page.locator('#dots .dot').nth(1).waitFor({ state: 'visible' });
   await widgetFramesLoaded(page);
@@ -30,13 +31,10 @@ const current = page => page.locator('#dots .dot').evaluateAll(ds => ds.findInde
 
 /* One step past the threshold. Headless WebKit can hold a step back longer than
    the gap that ends a gesture, so a run of small steps can count as two. */
-async function swipe(page, dx) {
-  await page.mouse.wheel(dx * 3, 0);
-  await page.waitForTimeout(400);
-}
+const swipe = (page, dx) => page.mouse.wheel(dx * 3, 0);
 
 test('a sideways swipe turns one page, a vertical one none', async ({ page, request }) => {
-  await open(page, request);
+  await open(page, request, { fakeClock: true });
   const box = await page.locator('#dots').boundingBox();
   await page.mouse.move((box?.x ?? 400) + 10, (box?.y ?? 400) - 40);
   await page.mouse.wheel(0, 200);
@@ -44,6 +42,7 @@ test('a sideways swipe turns one page, a vertical one none', async ({ page, requ
   await expect.poll(() => current(page)).toBe(0);
   await swipe(page, 20);
   await expect.poll(() => current(page)).toBe(1);
+  await page.clock.runFor(400);
   await swipe(page, -20);
   await expect.poll(() => current(page)).toBe(0);
 });
@@ -73,6 +72,7 @@ test('a sideways swipe over an open folder leaves the page alone in the phone la
   const box = await overlay.boundingBox();
   await page.mouse.move((box?.x ?? 0) + (box?.width ?? 0) / 2, (box?.y ?? 0) + (box?.height ?? 0) / 2);
   await swipe(page, 20);
+  await page.waitForTimeout(400);
   expect(await page.locator('.msp-dot').evaluateAll(ds => ds.findIndex(x => x.classList.contains('on')))).toBe(0);
 });
 

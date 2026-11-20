@@ -202,3 +202,25 @@ test('the required e2e check fails unless every shard passed', () => {
   }
   assert.equal(shards.outputs.ran, "${{ steps.changes.outputs.e2e != 'false' }}");
 });
+
+test('the merge job lists flaky tests and keeps their report', () => {
+  const byName = name => final.steps.find(s => s.name === name);
+  const merge = byName('Merge the reports');
+  assert.match(merge.run, /merge-reports --reporter html,json /);
+  const json = merge.env.PLAYWRIGHT_JSON_OUTPUT_FILE;
+  assert.ok(json, 'the JSON report must go to a file, not the log');
+  const flaky = byName('List flaky tests');
+  assert.ok(final.steps.indexOf(flaky) > final.steps.indexOf(merge));
+  assert.equal(flaky.id, 'flaky');
+  assert.equal(flaky.run, `node scripts/e2e-flaky.js ${json}`);
+  const upload = byName('Upload the report');
+  assert.ok(final.steps.indexOf(upload) > final.steps.indexOf(flaky));
+  assert.match(upload.if, /needs\.shards\.result == 'failure' \|\| steps\.flaky\.outputs\.flaky == 'true'/);
+  assert.equal(upload.with.path, 'playwright-report/');
+});
+
+test('a flaky test gets a retry, and the retry a trace', () => {
+  const config = read('playwright.config.js');
+  assert.match(config, /retries: process\.env\.CI \? 1 : 0/);
+  assert.match(config, /trace: 'on-first-retry'/);
+});
