@@ -61,6 +61,7 @@
   --row-sep:#38383A;
   --btn-fill:rgba(120,120,128,.32);
   --btn-danger-fill:rgba(255,66,69,.14);
+  --btn-danger-ink:color-mix(in srgb, var(--sy-red-hi) 82%, var(--chip-ink-boost));
   --glass-bg:rgba(30,30,32,.72);
   --glass-rim:rgba(255,255,255,.12);
   --menu-ink:#F5F5F5;
@@ -667,7 +668,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .bg{background:var(--btn-fill);color:var(--tx)}
 @media (hover:hover) and (pointer:fine){.bg:hover:not(:disabled){opacity:.8}}
 .bg:disabled{opacity:1;color:var(--dm)}
-.bd-btn{background:var(--btn-danger-fill);color:var(--rd)}
+.bd-btn{background:var(--btn-danger-fill);color:var(--btn-danger-ink)}
 @media (hover:hover) and (pointer:fine){.bd-btn:hover:not(:disabled){background:var(--rd);color:var(--on-fill)}}
 .sv-btn{display:inline-grid;place-items:center}
 .sv-btn > *{grid-area:1/1}
@@ -689,7 +690,7 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .sec-hdr-actions .btn{min-height:36px;padding:7px 16px;font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);position:relative;background:var(--glass-control);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-control-shadow)}
 .sec-hdr-actions .btn.bp{color:var(--ac)}
 .sec-hdr-actions .btn.bp:disabled{color:var(--dm)}
-.sec-hdr-actions .btn.bd-btn{color:var(--rd)}
+.sec-hdr-actions .btn.bd-btn{color:var(--btn-danger-ink)}
 @media (hover:hover) and (pointer:fine){.sec-hdr-actions .btn:is(.bp,.bd-btn):hover:not(:disabled){background:var(--glass-control);color:inherit;opacity:.8}}
 .ic{padding:6px;min-height:0}
 .cursor-ptr{cursor:pointer}
