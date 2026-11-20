@@ -561,6 +561,7 @@ module.exports = {
   stripDisabledCredentials,
   _resetRateLimits: () => _rateBuckets.clear(),
   _rateBucketCount: () => _rateBuckets.size,
+  LOGIN_MAX,
   LOGIN_WINDOW_MS,
   SESSION_MAX_AGE_MS,
   SESSION_ABSOLUTE_MS,

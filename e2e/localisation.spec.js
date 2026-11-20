@@ -50,11 +50,11 @@ test('Persian sets the direction as well as the language', async ({ page, reques
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
 });
 
-test('the sign-in screen and its errors use the saved language', async ({ page }) => {
+test('the sign-in screen and its errors use the saved language', async ({ page, request }) => {
   const fa = JSON.parse(fs.readFileSync(path.join(__dirname, '../ui/i18n/fa.json'), 'utf8'));
-  await page.route('**/api/auth/check', route =>
-    route.fulfill({ json: { enabled: true, authenticated: false, language: 'fa' } }),
-  );
+  await seed(request, { language: 'fa' });
+  await page.context().clearCookies();
+  /* A real lockout here would block every later sign-in on this container. */
   await page.route('**/api/auth/login', route =>
     route.fulfill({ status: 429, json: { error: 'Too many attempts.', kind: 'blocked', code: 'blocked.rate-limit' } }),
   );

@@ -2,8 +2,8 @@
 
 const { test, expect } = require('@playwright/test');
 const { seedConfig, app, openDashboardList, rowByName, setInlineRow } = require('./helpers');
+const { PASSWORD } = require('./base-url');
 
-const PROTECTED = { enabled: true, authenticated: true, passwordSet: true };
 const WRONG_PASSWORD = {
   status: 403,
   json: { error: 'Current password is incorrect.', kind: 'invalid', code: 'invalid.current-password' },
@@ -14,10 +14,10 @@ test.beforeEach(async ({ request }) => {
   await seedConfig(request, { items: [app('alpha', 'Alpha')] });
 });
 
-/** Open General as a protected install, switch protection off and press Save.
+/** Open General, switch protection off and press Save. Every spec shares the
+    container's password, so the toggle request is always answered here.
     @param {import('@playwright/test').Page} page */
 async function askToTurnOffProtection(page) {
-  await page.route('**/api/auth/check', route => route.fulfill({ json: PROTECTED }));
   await page.goto('/admin/');
   await page.locator('body.authed').waitFor({ state: 'attached' });
   await page.locator('.nl[data-sec="general"]').click();
@@ -65,14 +65,13 @@ test('Enter during the close animation does not confirm a cancelled dialog', asy
 test('a session that ran out mid-save asks to sign in above the dialog, then finishes the save', async ({ page }) => {
   const replies = [SIGNED_OUT, { json: { ok: true } }];
   await page.route('**/api/auth/toggle', route => route.fulfill(/** @type {any} */ (replies.shift())));
-  await page.route('**/api/auth/login', route => route.fulfill({ json: { ok: true } }));
   const prompt = await askToTurnOffProtection(page);
 
   await prompt.getByLabel('Current password').fill('right');
   await prompt.getByRole('button', { name: 'Turn Off' }).click();
   const signIn = page.locator('#login-pw');
   await expect(signIn).toBeFocused();
-  await signIn.fill('anything');
+  await signIn.fill(PASSWORD);
   await page.locator('#login-btn').click();
 
   await expect(page.locator('#login-screen')).toBeHidden();
@@ -102,7 +101,7 @@ test('a dialog the browser closes mid-save still reports the save', async ({ pag
 });
 
 test('the sign-in screen cannot be dismissed with Escape', async ({ page }) => {
-  await page.route('**/api/auth/check', route => route.fulfill({ json: { enabled: true, authenticated: false } }));
+  await page.context().clearCookies();
   await page.goto('/admin/');
   await expect(page.locator('#login-pw')).toBeFocused();
   for (let i = 0; i < 5; i++) await page.keyboard.press('Escape');

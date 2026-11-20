@@ -16,8 +16,23 @@
    nothing is started here, because the thing worth testing is the image that
    ships, nginx and its headers included. */
 
+const path = require('node:path');
 const { defineConfig, devices } = require('@playwright/test');
-const { BASE_URL: baseURL } = require('./e2e/base-url');
+const { BASE_URL: baseURL, AUTH_BASE_URL } = require('./e2e/base-url');
+
+/** @param {'chromium' | 'webkit'} name @param {string} device */
+const browser = (name, device) => {
+  const storageState = path.join(__dirname, 'test-results', '.auth', `${name}.json`);
+  return [
+    { name: `sign-in ${name}`, testMatch: /sign-in\.setup\.js$/, metadata: { storageState }, use: devices[device] },
+    {
+      name,
+      dependencies: [`sign-in ${name}`],
+      testIgnore: /auth\.spec\.js$/,
+      use: { ...devices[device], storageState },
+    },
+  ];
+};
 
 module.exports = defineConfig({
   testDir: './e2e',
@@ -41,7 +56,12 @@ module.exports = defineConfig({
     video: 'off',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+    ...browser('chromium', 'Desktop Chrome'),
+    ...browser('webkit', 'Desktop Safari'),
+    {
+      name: 'auth',
+      testMatch: /auth\.spec\.js$/,
+      use: { ...devices['Desktop Chrome'], baseURL: AUTH_BASE_URL },
+    },
   ],
 });

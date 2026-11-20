@@ -3,6 +3,7 @@
 
 const { test, expect } = require('@playwright/test');
 const { seedConfig, app, openDashboardList, rowByName } = require('./helpers');
+const { PASSWORD } = require('./base-url');
 
 const focused = page =>
   page.evaluate(() => {
@@ -220,7 +221,7 @@ test('removing the only saved activity label before a Fetch moves focus to Fetch
 });
 
 test('Tab stays inside the sign-in screen', async ({ page }) => {
-  await page.route('**/api/auth/check', route => route.fulfill({ json: { enabled: true, authenticated: false } }));
+  await page.context().clearCookies();
   await page.goto('/admin/');
   await expect(page.locator('#login-pw')).toBeFocused();
   for (let i = 0; i < 12; i++) {
@@ -240,7 +241,6 @@ test('signing in again mid-session returns focus to the control that asked', asy
     refused = true;
     return route.fulfill({ status: 401, json: { error: 'Unauthorised', kind: 'auth' } });
   });
-  await page.route('**/api/auth/login', route => route.fulfill({ json: { ok: true } }));
   await page.goto('/admin/');
   await page.locator('body.authed').waitFor({ state: 'attached' });
   await page.locator('.nl[data-sec="appearance"]').click();
@@ -248,7 +248,7 @@ test('signing in again mid-session returns focus to the control that asked', asy
   await awake.focus();
   await page.keyboard.press('Space');
   await expect(page.locator('#login-pw')).toBeFocused();
-  await page.locator('#login-pw').fill('anything');
+  await page.locator('#login-pw').fill(PASSWORD);
   await page.keyboard.press('Enter');
   await expect(page.locator('#login-screen')).toBeHidden();
   await expect(awake).toBeFocused();

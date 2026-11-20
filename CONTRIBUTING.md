@@ -80,16 +80,20 @@ browser specs against it. To run one spec in one browser the same way:
 ```
 docker build -t stackyard:e2e .
 dir=$(mktemp -d) && mkdir "$dir/data" "$dir/icons" && chmod 777 "$dir/data" "$dir/icons"
-docker run -d --name stackyard-e2e -p 8730:80 -v "$dir/data:/data" -v "$dir/icons:/icons" stackyard:e2e
+pw=$(node -p "require('./e2e/base-url').PASSWORD")
+docker run -d --name stackyard-e2e -p 8730:80 -v "$dir/data:/data" -v "$dir/icons:/icons" -e INITIAL_PASSWORD="$pw" stackyard:e2e
 npx playwright install chromium webkit
 npx playwright test --project=chromium e2e/admin.spec.js
 docker rm -f stackyard-e2e
 ```
 
 Start the specs once `http://127.0.0.1:8730/health` answers. `BASE_URL` points
-them at another address. The specs replace the whole config. They refuse a
-server that holds items they did not write, such as the dev stack on port 8701,
-unless `E2E_ALLOW_WIPE=1` is set.
+them at another address. Each browser project signs in with that password
+first. The `auth` project runs against a second container on port 8733
+(`AUTH_BASE_URL`), started as in the workflow step "Start the sign-in
+container". The specs replace the whole config. They refuse a server that holds
+items they did not write, such as the dev stack on port 8701, unless
+`E2E_ALLOW_WIPE=1` is set.
 
 CI runs it on four machines: Chromium on one, WebKit split over three. Every
 test must pass when run alone.

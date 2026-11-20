@@ -9,6 +9,9 @@ const { SEED_MARK, mayReplace } = require('./seed-guard');
 /** Replace the whole config. @param {import('@playwright/test').APIRequestContext} request */
 async function seedConfig(request, config) {
   const stored = await request.get('/api/config');
+  if (stored.status() === 401) {
+    throw new Error(`${BASE_URL} refused the saved session. Seed with a request context that carries it.`);
+  }
   expect(stored.ok(), `reading config before seeding failed: ${stored.status()}`).toBeTruthy();
   if (!mayReplace(await stored.json())) {
     throw new Error(
@@ -28,6 +31,16 @@ async function seedConfig(request, config) {
 async function dismissSetupPrompt(request) {
   const res = await request.post('/api/auth/dismiss-setup', { headers: { Origin: BASE_URL } });
   expect(res.ok(), `dismissing the setup prompt failed: ${res.status()}`).toBeTruthy();
+}
+
+/** Make the page see an install with no password yet. Setting a real first
+    password is impossible here: the container already has one, and replacing it
+    ends the session every spec shares.
+    @param {import('@playwright/test').Page} page */
+async function asIfNoPassword(page) {
+  await page.route('**/api/auth/check', route =>
+    route.fulfill({ json: { enabled: false, authenticated: true, passwordSet: false, setupPrompted: false } }),
+  );
 }
 
 /** The config as the server holds it. */
@@ -243,6 +256,7 @@ async function settledPixelAt(locator, fx, fy) {
 module.exports = {
   seedConfig,
   dismissSetupPrompt,
+  asIfNoPassword,
   readConfig,
   expectItem,
   saveEditor,
