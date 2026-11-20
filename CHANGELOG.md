@@ -114,6 +114,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Apply the log level set in Settings to the first lines logged at startup.
 
+- Raise destructive button text to WCAG AA contrast in light and dark mode.
+
 ### Security
 
 - Refuse an unsafe link in the Disk Health TrueNAS and Unraid, DNS, GitHub and
