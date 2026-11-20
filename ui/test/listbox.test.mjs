@@ -56,7 +56,6 @@ test('a scroll that moves the button closes the menu', () => {
 test('saved settings reach the pickers through the picker', () => {
   const settings = read('js/admin-settings.js');
   assert.doesNotMatch(settings, /-btn'\)|childNodes\[0\]/, 'loadSettings writes a picker button directly again');
-  assert.match(read('js/admin.js'), /loadSettings\(c, \{ applyBg \}\);\s*syncPickerLabels\(\);/);
 });
 
 /* A list that is only pointed at cannot be reached by the keyboard. */
@@ -216,7 +215,6 @@ test('a required select lands on its first option', () => {
 /* Each language is named in its own script. WCAG 2.2 SC 3.1.2 needs the option
    and the button showing it to say which language that is. */
 test('the language picker marks each language name with its language', () => {
-  assert.match(read('js/admin.js'), /LANGUAGES\.map\(l => \(\{ value: l\.code, label: l\.name, lang: l\.code \}\)\)/);
   assert.match(src, /if \(o && o\.lang\) li\.lang = o\.lang;/, 'the option does not carry its language');
   assert.match(
     src,

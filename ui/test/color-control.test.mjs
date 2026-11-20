@@ -181,15 +181,17 @@ test('each wallpaper hint is toggled where the source is applied', async () => {
   const { fileURLToPath } = await import('node:url');
   const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
   const settings = fs.readFileSync(path.join(root, 'js/admin-settings.js'), 'utf8');
-  const admin = fs.readFileSync(path.join(root, 'js/admin.js'), 'utf8');
+  const admin = ['admin.js', 'admin-settings-controls.js', 'admin-page-load.js']
+    .map(f => fs.readFileSync(path.join(root, 'js', f), 'utf8'))
+    .join('\n');
 
   const showBgFields = settings.slice(settings.indexOf('export function showBgFields'));
   assert.match(showBgFields, /bgcol-hint/, 'the Unsplash hint is not toggled with the fields');
   assert.match(showBgFields, /bg-url-hint/, 'the image hint is not toggled with the fields');
 
   /* Toggling it anywhere else reintroduces the load-order bug. */
-  assert.equal(admin.includes('bgcol-hint'), false, 'admin.js should leave the hints to showBgFields');
-  assert.equal(admin.includes('bg-url-hint'), false, 'admin.js should leave the hints to showBgFields');
+  assert.equal(admin.includes('bgcol-hint'), false, 'the admin page should leave the hints to showBgFields');
+  assert.equal(admin.includes('bg-url-hint'), false, 'the admin page should leave the hints to showBgFields');
 });
 
 test('the control writes no English of its own', async () => {

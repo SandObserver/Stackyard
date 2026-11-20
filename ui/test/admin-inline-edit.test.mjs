@@ -244,12 +244,26 @@ test('Escape from the show-password button also cancels', () => {
   assert.deepEqual(r.commits, []);
 });
 
-test('the Settings password row hides its meter when Escape restores the value', () => {
-  const admin = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
-  const rows = admin.slice(admin.indexOf('function initPasswordRows'), admin.indexOf('function initAllInlineEdits'));
-  assert.match(rows, /initInlineEdit\('ie-pw', 'sec-pw', \{[^}]*onCommit: settle,\s*onCancel: settle,/);
-  assert.match(rows, /initInlineEdit\('ie-pw2', 'sec-pw2', \{[^}]*onCancel: checkMatch,/);
-  assert.match(rows, /const settle = \(\) => \{\s*el\('sec-pw-bars'\)\?\.classList\.add\('d-none'\);/);
+test('the Settings password row hides its meter when Escape restores the value', async () => {
+  const { catalogRoutes, fakeFetch, installDom, pageBody } = await import('./fake-dom.mjs');
+  const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+  try {
+    await (await import('../js/i18n.js')).initI18n('en');
+    const { initPasswordRows } = await import('../js/admin-settings-controls.js');
+    initPasswordRows();
+    const byId = id => dom.document.getElementById(id);
+    for (const row of ['ie-pw', 'ie-pw2']) {
+      byId('sec-pw-bars').classList.remove('d-none');
+      byId('sec-pw-hint').classList.remove('d-none');
+      dom.document.querySelector(`#${row} .pe`).click();
+      byId(row).dispatchEvent({ type: 'keydown', key: 'Escape', bubbles: true });
+      const hidden = byId('sec-pw-bars').classList.contains('d-none');
+      assert.equal(hidden, row === 'ie-pw', `${row}: Escape ${hidden ? 'hid' : 'kept'} the meter`);
+      assert.equal(byId('sec-pw-hint').classList.contains('d-none'), row === 'ie-pw');
+    }
+  } finally {
+    dom.restore();
+  }
 });
 
 test('every row value in the admin page is translated', () => {

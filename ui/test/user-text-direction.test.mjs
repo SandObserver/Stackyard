@@ -86,7 +86,14 @@ test('no translated sentence takes a user-supplied name without isolating it', (
 test('setUserText or setCentredText is what the dashboard, folders, search and admin all use', () => {
   /* Named individually so removing the call from one of them fails here rather
      than only showing up as a truncated name in a right-to-left language. */
-  for (const file of ['ui.js', 'dashboard.js', 'spotlight.js', 'admin.js', 'admin-settings.js']) {
+  for (const file of [
+    'ui.js',
+    'dashboard.js',
+    'spotlight.js',
+    'admin-editor.js',
+    'admin-transfer.js',
+    'admin-settings.js',
+  ]) {
     const src = fs.readFileSync(path.join(JS_DIR, file), 'utf8');
     assert.match(src, /set(?:User|Centred)Text\(/, `${file} should render user-supplied names through setUserText`);
   }
@@ -216,7 +223,9 @@ test('no initial is taken by indexing a name', () => {
 /* Without isolation the closing bracket of "Media (old)" joins the Persian
    sentence and is drawn on the far side of the name. */
 test('a name inside a visible translated sentence is isolated', () => {
-  const admin = fs.readFileSync(path.join(JS_DIR, 'admin.js'), 'utf8');
+  const admin = ['admin-editor.js', 'admin-list-writes.js', 'admin-transfer.js']
+    .map(f => fs.readFileSync(path.join(JS_DIR, f), 'utf8'))
+    .join('\n');
   for (const key of ['common.editNamed', 'confirm.deleteTitle', 'toast.importIdTaken']) {
     const call = new RegExp(`t\\('${key.replace('.', '\\.')}', \\{ name: ([^}]+) \\}\\)`).exec(admin);
     assert.ok(call, `${key} is no longer built here`);

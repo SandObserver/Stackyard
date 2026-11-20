@@ -2,30 +2,62 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import vm from 'node:vm';
 
 const read = rel => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8');
 
 const preload = read('../js/mobile-class.js');
-const layout = read('../js/layout.js');
 const adminHtml = read('../admin/index.html');
 
-test('the preload script repeats the layout rule exactly', () => {
-  /* Read the width from layout.js rather than pin it here, so the two files
-     stay compared with each other when the cutoff moves. */
-  const width = layout.match(/MOBILE_QUERY = '(\(max-width:\d+px\))'/);
-  assert.ok(width, 'layout.js no longer declares MOBILE_QUERY as a width query');
-  for (const literal of [
-    `'${width[1]}'`,
-    "'(orientation:portrait)'",
-    '/iPhone|iPod|Android/i',
-    "'(orientation:landscape) and (max-height:500px)'",
-    "'(min-width:600px)'",
-  ]) {
-    assert.ok(layout.includes(literal), `layout.js no longer contains ${literal}`);
-    assert.ok(preload.includes(literal), `mobile-class.js no longer contains ${literal}`);
+/* Every combination of width, height, screen and device the rule reads. */
+const VIEWPORTS = [];
+for (const [w, h] of [
+  [390, 844],
+  [844, 390],
+  [768, 1024],
+  [1024, 768],
+  [700, 450],
+  [1440, 900],
+  [500, 900],
+  [800, 600],
+])
+  for (const [sw, sh] of [
+    [w, h],
+    [390, 844],
+    [1440, 900],
+  ])
+    for (const ua of ['Mozilla/5.0 (iPhone)', 'Mozilla/5.0 (Linux; Android 15)', 'Mozilla/5.0 (Macintosh)'])
+      VIEWPORTS.push({ w, h, sw, sh, ua });
+
+/** A window of one size, answering the media queries the two files ask. */
+function windowOf({ w, h, sw, sh, ua }) {
+  const answer = q => {
+    let ok = true;
+    for (const [, feature, value] of q.matchAll(/\(([\w-]+):([\w]+)\)/g)) {
+      const px = Number.parseInt(value, 10);
+      if (feature === 'max-width') ok &&= w <= px;
+      else if (feature === 'min-width') ok &&= w >= px;
+      else if (feature === 'max-height') ok &&= h <= px;
+      else if (feature === 'orientation') ok &&= (value === 'portrait') === h >= w;
+      else throw new Error(`unread media feature ${feature}`);
+    }
+    return { matches: ok };
+  };
+  return { matchMedia: answer, screen: { width: sw, height: sh }, navigator: { userAgent: ua } };
+}
+
+test('the preload script picks the layout layout.js picks, on every viewport', async () => {
+  const { isMobileLayout } = await import('../js/layout.js');
+  for (const v of VIEWPORTS) {
+    const win = windowOf(v);
+    const classes = new Set();
+    const document = { documentElement: { classList: { add: c => classes.add(c) } } };
+    vm.runInNewContext(preload, { window: win, document, ...win });
+    Object.assign(globalThis, { window: win });
+    for (const k of ['screen', 'navigator'])
+      Object.defineProperty(globalThis, k, { value: win[k], configurable: true, writable: true });
+    assert.equal(classes.has('is-mobile'), isMobileLayout(), JSON.stringify(v));
   }
-  assert.match(layout, /REGULAR_SCREEN = 600;/);
-  assert.match(preload, /Math\.min\(screen\.width, screen\.height\) >= 600/);
 });
 
 test('the preload script is not a module', () => {

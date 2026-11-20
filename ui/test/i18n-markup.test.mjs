@@ -175,7 +175,8 @@ test('the allowed set is small and deliberate', () => {
 /* ── P10-4: raw() where there was nothing to protect ──────────────────────── */
 
 test('no translated string is passed through raw()', () => {
-  for (const f of ['js/admin.js', 'js/i18n.js']) {
+  const adminModules = fs.readdirSync(path.join(root, 'js')).filter(f => /^admin.*\.js$/.test(f));
+  for (const f of [...adminModules.map(m => `js/${m}`), 'js/i18n.js']) {
     assert.doesNotMatch(read(f), /raw\(\s*t\(/, `${f} still switches escaping off for a translation`);
   }
 });

@@ -1,10 +1,9 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { test } from 'node:test';
+import { widgetFunctions, widgetPage } from './widget-source.mjs';
 
-const page = fs.readFileSync(new URL('../widgets/backup/backup.html', import.meta.url), 'utf8');
-const source = /function fitName\([\s\S]*?\n\}/.exec(page)?.[0];
-const fitNameFor = mobile => new Function('_isMobile', `${source}; return fitName;`)(mobile);
+const page = widgetPage('backup', 'backup.html');
+const fitNameFor = mobile => widgetFunctions(page, ['fitName'], { _isMobile: mobile }).fitName;
 
 /* A stand-in for the name element: its longest word is `perPx` wide per pixel of font size. */
 function nameEl(perPx, clientWidth = 80) {

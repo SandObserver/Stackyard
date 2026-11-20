@@ -521,3 +521,30 @@ export function syncFilterUI() {
     c.setAttribute('aria-pressed', String(on));
   });
 }
+
+let _filterTimer;
+function runFilter() {
+  applyFilter();
+  if (filterActive(filter)) announce(t('list.matchCount', { count: filterMatchCount() }));
+}
+
+/** Filter the list as the search box is typed in and as a type chip is picked. */
+export function wireFilter() {
+  const s = /** @type {HTMLInputElement|null} */ (el('al-search'));
+  if (s)
+    s.addEventListener('input', () => {
+      clearTimeout(_filterTimer);
+      _filterTimer = setTimeout(() => {
+        if (isReordering()) return;
+        filter.q = s.value.trim();
+        runFilter();
+      }, 120);
+    });
+  qa('#al-filter .chip').forEach(c => {
+    c.addEventListener('click', () => {
+      filter.type = c.dataset.flt;
+      syncFilterUI();
+      runFilter();
+    });
+  });
+}

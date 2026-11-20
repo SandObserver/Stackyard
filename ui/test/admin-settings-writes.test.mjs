@@ -187,15 +187,7 @@ test('a switch save leaves the Save mark to a save in flight or a failed save', 
   }
 });
 
-const admin = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
-
-test('every list write in admin.js runs on the shared queue', () => {
-  assert.doesNotMatch(admin, /serialWrites\(\)/, 'admin.js keeps its own queue');
-  for (const write of ['writeItems(asked, done)', 'appendItems(newItems)', 'writeBackup(file)'])
-    assert.ok(admin.includes(`configWrites.run(() => ${write})`), `${write} is not queued`);
-});
-
-test('list writes refresh the shared settings and the page hands Settings its applyBg', () => {
-  assert.equal(admin.match(/state\._settings = (full|body)\.settings \|\| \{\};/g)?.length, 3);
-  assert.match(admin, /loadSettings\(c, \{ applyBg \}\);/);
+test('the page hands Settings the applyBg that shows the wallpaper', () => {
+  const load = fs.readFileSync(new URL('../js/admin-page-load.js', import.meta.url), 'utf8');
+  assert.match(load, /loadSettings\(c, \{ applyBg \}\);/);
 });

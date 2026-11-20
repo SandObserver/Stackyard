@@ -1,10 +1,8 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { test } from 'node:test';
+import { widgetFunctions, widgetPage } from './widget-source.mjs';
 
-const page = fs.readFileSync(new URL('../widgets/backup/backup.html', import.meta.url), 'utf8');
-const source = /function pickHaiku\([\s\S]*?\n\}/.exec(page)?.[0];
-const pickHaiku = new Function(`${source}; return pickHaiku;`)();
+const { pickHaiku } = widgetFunctions(widgetPage('backup', 'backup.html'), ['pickHaiku']);
 
 const charW = line => line.length * 6;
 const pick = (haikus, usableW, H = 200) => pickHaiku(haikus, charW, usableW, H, 2, 8, 11, 16);

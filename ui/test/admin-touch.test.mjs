@@ -186,7 +186,15 @@ test('address, host, username and header fields take no capitals or correction',
   assert.match(shared, /spellcheck = false/);
   assert.match(shared, /if \(plain\) plainInput\(inp\)/);
   const wired = {
-    'js/admin.js': ['srv-ip', 'srv-socket', 'srv-pve-url', 'srv-pve-token', 'srv-hosts', 'bg-col-inp', 'bg-url-inp'],
+    'js/admin-settings-controls.js': [
+      'srv-ip',
+      'srv-socket',
+      'srv-pve-url',
+      'srv-pve-token',
+      'srv-hosts',
+      'bg-col-inp',
+      'bg-url-inp',
+    ],
     'js/admin-app-form.js': ['f-href', 'hc-con', 'hc-ping', 'f-burl', 'f-buser'],
     'js/admin-widget-form.js': ['f-url', 'if-allow'],
   };

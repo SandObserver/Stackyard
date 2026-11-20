@@ -1,35 +1,63 @@
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 /* The About version line is translated, so it cannot be written before the
-   catalogs are loaded.
+   catalogs are loaded. */
 
-   initVersion() ran from the module's startup block, which begins before
-   checkAuth(load) resolves. Its /api/version response arrived first, t() found
-   no catalog, and the About panel showed the key name instead of the version.
-   The call now sits inside load(), after initI18n() has awaited. */
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { register } from 'node:module';
+import { test } from 'node:test';
+import { catalogRoutes, fakeFetch, installDom, pageBody, settle } from './fake-dom.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const src = fs.readFileSync(path.join(root, 'js/admin.js'), 'utf8');
-const en = JSON.parse(fs.readFileSync(path.join(root, 'i18n/en.json'), 'utf8'));
+register('./js-root-hooks.mjs', import.meta.url);
 
-test('initVersion runs after the catalogs load, never from the startup block', () => {
-  const calls = [...src.matchAll(/^(\s*)initVersion\(\);$/gm)];
-  assert.equal(calls.length, 1, 'initVersion is called exactly once');
-  assert.notEqual(calls[0][1], '', 'a top-level call races the catalog fetch');
-  const load = src.slice(src.indexOf('async function load()'));
-  assert.ok(
-    load.indexOf('await initI18n(') < load.indexOf('initVersion()'),
-    'initVersion is called before initI18n is awaited',
-  );
+const catalog = catalogRoutes()['/i18n/en.json'];
+let catalogServed = false;
+const fetch = fakeFetch({
+  '/i18n/en.json': async () => {
+    await settle(20);
+    catalogServed = true;
+    return catalog;
+  },
+  '/api/config': { items: [], settings: { language: 'en' } },
+  '/api/widgets': { widgets: [], rejected: [] },
+  '/api/icons/local': [],
+  '/api/version': { current: 'v1.24.0', latest: 'v1.25.0', updateAvailable: true },
+});
+const dom = installDom({ markup: pageBody('admin/index.html'), fetch });
+const { initI18n, t } = await import('../js/i18n.js');
+const { createPageLoad } = await import('../js/admin-page-load.js');
+const { initVersion } = await import('../js/admin-about.js');
+
+const writes = { loaded() {}, drawn() {}, syncDashSave() {} };
+
+test('the version is asked for only after the catalog arrives', async () => {
+  let versionAskedEarly = null;
+  const route = fetch.routes['/api/version'];
+  fetch.routes['/api/version'] = () => {
+    versionAskedEarly ??= !catalogServed;
+    return route;
+  };
+  await createPageLoad({ writes }).load();
+  assert.equal(versionAskedEarly, false, 'the version line was written before the catalog loaded');
+  fetch.routes['/api/version'] = route;
+  await settle(5);
+  assert.equal(dom.document.getElementById('sidebar-version').textContent, 'v1.24.0');
 });
 
-test('both forms of the version line come from the catalog', () => {
-  assert.equal(en.about.version, 'Version v{v}');
-  assert.equal(en.about.updateTo, 'Update to v{v}');
-  const fn = src.slice(src.indexOf('async function initVersion()'), src.indexOf('function initSecToggle()'));
-  assert.doesNotMatch(fn, /html`Version |>Update to /, 'the update line is hardcoded English again');
+test('both forms of the version line come from the catalog', async () => {
+  fetch.routes['/i18n/es.json'] = JSON.parse(readFileSync(new URL('../i18n/es.json', import.meta.url), 'utf8'));
+  await initI18n('es');
+  const about = dom.document.getElementById('about-version');
+  fetch.routes['/api/version'] = { current: '1.24.0', updateAvailable: false };
+  await initVersion();
+  assert.equal(about.textContent, t('about.version', { v: '1.24.0' }));
+  assert.notEqual(about.textContent, 'about.version');
+
+  fetch.routes['/api/version'] = { current: 'v1.24.0', latest: 'v1.25.0', updateAvailable: true };
+  await initVersion();
+  const link = about.querySelector('a.upd-link');
+  assert.ok(link, 'a newer release has no link');
+  assert.equal(link.textContent.trim(), t('about.updateTo', { v: '1.25.0' }));
+  assert.ok(about.textContent.startsWith(t('about.version', { v: '1.24.0' })));
+  assert.notEqual(t('about.version', { v: '1' }), 'Version v1', 'the check needs a catalog that is not English');
+  assert.equal(dom.document.getElementById('about-update-dot').classList.contains('d-none'), false);
 });

@@ -79,8 +79,26 @@ test('an unknown code offers no action, even one named like an object key', () =
 });
 
 test('a failed Docker label import offers the way to fix it', async () => {
-  const fs = await import('node:fs');
-  const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
-  const handler = src.slice(src.indexOf("el('btn-imp-docker').onclick"), src.indexOf('async function reviewImport'));
-  assert.match(handler, /toast\(t\('toast\.importFailed', \{ err: errorText\(err\) \}\), 'err', errorAction\(err\)\)/);
+  const { catalogRoutes, fakeFetch, installDom, pageBody, settle } = await import('./fake-dom.mjs');
+  const dom = installDom({
+    markup: pageBody('admin/index.html'),
+    fetch: fakeFetch({
+      ...catalogRoutes(),
+      '/api/docker/labels': { status: 400, body: { error: 'no socket', code: 'invalid.socket-missing' } },
+    }),
+  });
+  const { initI18n, t } = await import('../js/i18n.js');
+  await initI18n('en');
+  const { wireTransfer } = await import('../js/admin-transfer.js');
+  wireTransfer({ restoreBackup: async () => true, appendAndSave: async () => {} });
+  dom.document.getElementById('btn-imp-docker').click();
+  await settle(5);
+  const act = dom.document.querySelector('#toast .toast-act');
+  assert.equal(dom.document.getElementById('toast').classList.contains('err'), true);
+  assert.match(
+    dom.document.getElementById('toast-msg').textContent,
+    new RegExp(t('toast.importFailed', { err: 'X' }).split('X')[0]),
+  );
+  assert.equal(act.hidden, false, 'the failure offers no action');
+  assert.equal(act.textContent, t('toast.openGeneral'));
 });

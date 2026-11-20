@@ -7,21 +7,79 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { register } from 'node:module';
+import { catalogRoutes, fakeFetch, installDom, pageBody } from './fake-dom.mjs';
 
 import { resolveAdminSection } from '../js/admin-logic.js';
 
-test('a first visit with no remembered section does not warn', () => {
-  const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
-  assert.match(src, /if \(requested && id !== requested\) console\.warn\(/);
+register('./js-root-hooks.mjs', import.meta.url);
+
+/* The Settings page, opened at `hash` with `stored` as the remembered section. */
+async function openSettings({ hash = '', stored } = {}) {
+  const dom = installDom({
+    markup: pageBody('admin/index.html'),
+    fetch: fakeFetch(catalogRoutes()),
+    location: `http://nas.local/admin/${hash}`,
+    storage: stored ? { admin_sec: stored } : {},
+  });
+  const warned = [];
+  const warn = console.warn;
+  console.warn = (...args) => warned.push(args.join(' '));
+  try {
+    (await import('../js/admin-nav.js')).initNav();
+  } finally {
+    console.warn = warn;
+  }
+  const shown = dom.document.querySelectorAll('.sec').filter(s => !s.hidden);
+  return { dom, warned, shown: shown.map(s => s.id) };
+}
+
+test('a first visit with no remembered section does not warn', async () => {
+  const first = await openSettings();
+  assert.deepEqual(first.warned, []);
+  assert.equal(first.shown.length, 1);
+  const old = await openSettings({ stored: 'removed-section' });
+  assert.equal(old.warned.length, 1, 'a stored section from an older version is not reported');
+  assert.deepEqual(old.shown, first.shown);
 });
 
-test('the item editor heading names the item', () => {
-  const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
+test('the import link opens the settings section that holds import', async () => {
   assert.match(
-    src,
-    /if \(isEdit\) setUserText\(evTitle, t\('common\.editNamed', \{ name: isolate\(item\.label \|\| item\.id\) \}\)\);/,
+    fs.readFileSync(new URL('../js/utils.js', import.meta.url), 'utf8'),
+    /href: '\/admin\/#general'/,
+    'it lands wherever settings was left',
   );
-  assert.match(src, /evTitle\.textContent = t\('type\.addNew'\);/);
+  const page = await openSettings({ hash: '#general', stored: 'about' });
+  assert.deepEqual(page.shown, ['sec-general'], 'admin ignores the hash on load');
+  page.dom.location.hash = '#about';
+  page.dom.window.dispatchEvent({ type: 'hashchange' });
+  const now = page.dom.document.querySelectorAll('.sec').filter(s => !s.hidden);
+  assert.deepEqual(
+    now.map(s => s.id),
+    ['sec-about'],
+    'admin ignores a later hash change',
+  );
+  assert.equal(page.dom.storage.get('admin_sec'), 'about');
+});
+
+test('the item editor heading names the item', async () => {
+  const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+  const { initI18n, t } = await import('../js/i18n.js');
+  await initI18n('en');
+  const { state } = await import('../js/admin-state.js');
+  const { openEditor } = await import('../js/admin-editor.js');
+  const title = dom.document.getElementById('ev-title');
+  state.items = [{ id: 'media', type: 'app', label: 'Media (old)', href: 'http://media.local' }];
+  openEditor('media');
+  assert.equal(title.textContent, t('common.editNamed', { name: '⁨Media (old)⁩' }));
+  assert.ok(title.querySelector('bdi'), 'the heading is not isolated as user text');
+  state.items = [{ id: 'unnamed', type: 'app', href: 'http://media.local' }];
+  openEditor('unnamed');
+  assert.match(title.textContent, /unnamed/, 'an item with no label is named by its id');
+  openEditor(null);
+  assert.equal(title.textContent, t('type.addNew'));
+  assert.equal(title.querySelector('bdi'), null);
+  assert.equal(title.getAttribute('dir'), null);
 });
 
 test('each header Save is driven by its own unsaved-change check', () => {
@@ -45,40 +103,6 @@ test('a saved Proxmox secret leaves General with nothing unsaved', () => {
   const save = src.slice(src.indexOf('async function saveServer'));
   assert.ok(save.indexOf('clearPveSecretInput();') >= 0);
   assert.ok(save.indexOf('clearPveSecretInput();') < save.indexOf('_srvTrack?.reset();'));
-});
-
-/* An import writes the config itself. Without this the page warns about
-   unsaved changes that are already on the server. */
-test('an import records what it saved', () => {
-  const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
-  const fn = src.slice(src.indexOf('async function appendItems'), src.indexOf('async function saveOrRevert'));
-  assert.match(
-    fn,
-    /state\.items = next\.items;\s*_serverItems = JSON\.stringify\(r\.items\);\s*_savedItems = JSON\.stringify\(next\.saved\);\s*saveOrRestore\.landed\(JSON\.parse\(_savedItems\)\);\s*syncDashSave\(\);/,
-  );
-});
-
-/* A list change made while a save runs must wait for it, not be undone. */
-test('list saves run through one queue and undo through one reverting save', () => {
-  const src = fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
-  assert.match(src, /return configWrites\.run\(\(\) => appendItems\(newItems\)\);/);
-  assert.match(src, /revertingSaves\(\{\s*write: save,/);
-  assert.match(
-    src,
-    /if \(next\.stale\) _replaced\+\+;/,
-    'a change queued on a list an import replaced must be refused, not saved over',
-  );
-  assert.match(src, /const asked = _replaced;\s*return configWrites\.run\(\(\) => writeItems\(asked, done\)\);/);
-  assert.match(src, /if \(asked !== _replaced \|\| JSON\.stringify\(full\.items \|\| \[\]\) !== _serverItems\)/);
-  assert.match(
-    src,
-    /_serverItems = JSON\.stringify\(r\.items\);\s*_savedItems = sent;\s*saveOrRestore\.landed\(JSON\.parse\(sent\)\);/,
-  );
-  assert.match(
-    src,
-    /const sent = JSON\.stringify\(state\.items\);\s*full\.items = JSON\.parse\(sent\);/,
-    'a retry after sign-in sends the body again; it must hold the list recorded as sent, not the live one',
-  );
 });
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');

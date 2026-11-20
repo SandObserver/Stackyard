@@ -73,6 +73,12 @@ npm run typecheck:ui
 docker build -t stackyard:ci .
 ```
 
+A frontend test imports the module it checks. `ui/test/fake-dom.mjs` builds a
+document from the real page markup, with the window globals and a fake `fetch`.
+`ui/test/widget-source.mjs` runs a function from a widget page's inline script.
+`ui/js/admin.js` only starts the Settings page. Put new admin logic in a module
+it imports, with no side effects on import.
+
 The end-to-end suite is a separate required check, in
 `.github/workflows/e2e.yml`. It starts the image on port 8730 and runs the
 browser specs against it. To run one spec in one browser the same way:

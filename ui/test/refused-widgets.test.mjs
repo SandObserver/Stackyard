@@ -1,59 +1,88 @@
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 /* A refused widget has to explain itself where it is missing from. Rendering
    the reason only in the config editor of an item already using that widget is
    the one case a new install cannot reach, so the reason stays in the container
-   log.
+   log. The wording and filtering are tested in admin-logic.test.mjs. */
 
-   The wording and filtering are pure and tested in admin-logic.test.mjs. These
-   are the wiring. Asserted as source text because the form builds DOM and there
-   is no browser here. */
+import assert from 'node:assert/strict';
+import { register } from 'node:module';
+import { test } from 'node:test';
+import { catalogRoutes, fakeFetch, installDom, pageBody } from './fake-dom.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const form = fs.readFileSync(path.join(root, 'js/admin-widget-form.js'), 'utf8');
-const en = JSON.parse(fs.readFileSync(path.join(root, 'i18n/en.json'), 'utf8'));
+register('./js-root-hooks.mjs', import.meta.url);
 
-test('the form builds its reason lines with the shared helper', () => {
-  assert.match(form, /import \{[^}]*\brejectionLines\b/, 'the helper is not imported');
-  /* One construction site, so the picker and the editor cannot diverge. */
-  const uses = [...form.matchAll(/\brejectionLines\(/g)];
-  assert.equal(uses.length, 1, `rejectionLines is called ${uses.length} times; it should be built in one place`);
-});
+const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+const { initI18n, t } = await import('../js/i18n.js');
+await initI18n('en');
+const { state } = await import('../js/admin-state.js');
+const { buildWidgetForm } = await import('../js/admin-widget-form.js');
 
-test('both places that show a refusal go through that one renderer', () => {
-  const calls = [...form.matchAll(/appendRejectionReasons\(/g)];
-  /* The definition plus the two call sites. */
-  assert.equal(calls.length, 3, `expected two call sites, found ${calls.length - 1}`);
-});
+const REFUSED = [
+  { name: 'weather', errors: ['manifest: <b>fields</b> must be a list'] },
+  { name: 'pihole', errors: ['entry: index.html is missing', 'size: "huge" is not a size'] },
+];
 
-test('the picker says how many widgets were refused', () => {
-  assert.match(form, /t\('widgetCfg\.refused', \{ count:/, 'the picker does not show the count notice');
-  for (const k of ['refused_one', 'refused_other']) {
-    assert.ok(en.widgetCfg?.[k], `widgetCfg.${k} is missing from en.json`);
-    assert.match(en.widgetCfg[k], /\{count\}/, `widgetCfg.${k} should name the count`);
-  }
-});
+/** The widget form for a new widget, or for `item`, with REFUSED on the server. */
+function form(item = null) {
+  state._widgetReg = Object.assign(Object.create(null), {
+    clock: { name: 'clock', label: 'Clock', sizes: ['small', 'medium'], fields: [] },
+  });
+  state._widgetRejected = structuredClone(REFUSED);
+  state._wtype = item?.widgetType || 'clock';
+  state._wsize = 'medium';
+  state._evSession += 1;
+  const body = dom.document.createElement('div');
+  dom.document.body.appendChild(body);
+  buildWidgetForm(body, item);
+  return body;
+}
 
-/* The notice belongs above the size and config sections, next to the list the
-   widget is missing from, not at the bottom of the form. */
-test('the notice renders next to the type list', () => {
-  const atType = form.indexOf('id="wtype-row"');
-  const atNotice = form.indexOf("t('widgetCfg.refused'");
-  const atSize = form.search(/sizeHdr\.textContent\s*=\s*t\('widgetCfg\.size'\)/);
-  assert.ok(atType !== -1 && atNotice !== -1 && atSize !== -1, 'the form no longer has these parts');
-  assert.ok(
-    atType < atNotice && atNotice < atSize,
-    'the refusal notice should sit between the type list and the size section',
+const lists = body => body.querySelectorAll('.cfg-reject-list');
+
+test('the picker says how many widgets were refused, and why each one was', () => {
+  const body = form();
+  const note = body.querySelectorAll('p.grp-tip').find(p => p.textContent === t('widgetCfg.refused', { count: 2 }));
+  assert.ok(note, 'the picker does not show the count notice');
+  assert.equal(lists(body).length, 1);
+  assert.deepEqual(
+    lists(body)[0]
+      .querySelectorAll('li')
+      .map(li => li.textContent),
+    [
+      'weather: manifest: <b>fields</b> must be a list',
+      'pihole: entry: index.html is missing',
+      'pihole: size: "huge" is not a size',
+    ],
   );
 });
 
-/* A validator message is built from names taken out of the manifest, so it is
-   text and not markup, in both places. */
-test('a reason is written as text', () => {
-  assert.match(form, /li\.textContent\s*=\s*line/);
-  assert.doesNotMatch(form, /innerHTML\s*=\s*line/);
+test('the notice renders between the type list and the size section', () => {
+  const body = form();
+  const order = [];
+  const walk = n => {
+    for (const c of n.children) {
+      if (c.id === 'wtype-row') order.push('type');
+      if (c.classList.contains('cfg-reject-list')) order.push('reasons');
+      if (c.tagName === 'H2' && c.textContent === t('widgetCfg.size')) order.push('size');
+      walk(c);
+    }
+  };
+  walk(body);
+  assert.deepEqual(order, ['type', 'reasons', 'size']);
+});
+
+test('an item whose widget was refused shows its own reasons, without its name', () => {
+  const body = form({ id: 'w', type: 'widget', widgetType: 'pihole', label: 'Pi-hole', widgetSize: 'medium' });
+  const own = lists(body)
+    .at(-1)
+    .querySelectorAll('li')
+    .map(li => li.textContent);
+  assert.deepEqual(own, ['entry: index.html is missing', 'size: "huge" is not a size']);
+});
+
+/* A validator message is built from names taken out of the manifest. */
+test('a reason is written as text, never as markup', () => {
+  const body = form();
+  const li = lists(body)[0].querySelector('li');
+  assert.equal(li.querySelector('b'), null);
+  assert.match(li.textContent, /<b>fields<\/b>/);
 });
