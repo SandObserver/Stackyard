@@ -56,7 +56,7 @@ test('every asset reference carries a version stamp', () => {
   assert.deepEqual(
     missing,
     [],
-    `these will never cache-bust:\n${missing.join('\n')}\nAdd ?v=1; the build keeps it current.`,
+    `these will never cache-bust:\n${missing.join('\n')}\nRun node scripts/bump-cache-busting.js and commit the result.`,
   );
 });
 
@@ -154,7 +154,7 @@ test('a change to the widget headers changes every widget stamp', () => {
     const script = path.join(tmp, 'scripts', 'bump-cache-busting.js');
     const manifest = path.join(tmp, 'ui', 'widgets', 'clock', 'widget.json');
     const stamp = () => {
-      assert.equal(spawnSync(process.execPath, [script], { encoding: 'utf8' }).status, 0);
+      assert.equal(spawnSync(process.execPath, [script, '--release'], { encoding: 'utf8' }).status, 0);
       return JSON.parse(fs.readFileSync(manifest, 'utf8')).entryVersions;
     };
 
@@ -168,4 +168,102 @@ test('a change to the widget headers changes every widget stamp', () => {
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
+});
+
+/* A copy of the tree, since write mode rewrites what it is pointed at. */
+function withTreeCopy(fn) {
+  const repo = path.resolve(root, '..');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sy-stamp-'));
+  try {
+    for (const dir of ['ui', 'scripts', 'nginx', 'docs/widget-template']) {
+      fs.cpSync(path.join(repo, dir), path.join(tmp, dir), { recursive: true });
+    }
+    const script = path.join(tmp, 'scripts', 'bump-cache-busting.js');
+    fn({ tmp, run: (...args) => spawnSync(process.execPath, [script, ...args], { encoding: 'utf8' }) });
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+function manifests(tmp) {
+  const dir = path.join(tmp, 'ui', 'widgets');
+  const out = {};
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const file = path.join(dir, e.name, 'widget.json');
+    if (e.isDirectory() && fs.existsSync(file)) out[e.name] = fs.readFileSync(file, 'utf8');
+  }
+  return out;
+}
+
+test('write mode stamps references and leaves the widget manifests alone', () => {
+  withTreeCopy(({ tmp, run }) => {
+    const before = manifests(tmp);
+    assert.ok(Object.keys(before).length > 5, 'no widget manifests were copied');
+
+    const index = path.join(tmp, 'ui', 'index.html');
+    const unstamped = fs.readFileSync(index, 'utf8').replace(/(\/css\/dashboard\.css)\?v=[0-9a-f]+/, '$1');
+    fs.writeFileSync(index, unstamped);
+
+    const r = run();
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(manifests(tmp), before, 'write mode changed a widget manifest');
+    assert.match(fs.readFileSync(index, 'utf8'), /\/css\/dashboard\.css\?v=[0-9a-f]{8}/);
+    assert.equal(run('--check').status, 0, 'the tree write mode leaves must pass the check');
+  });
+});
+
+test('write mode reports the stamps it added, not missing stamps', () => {
+  withTreeCopy(({ tmp, run }) => {
+    const index = path.join(tmp, 'ui', 'index.html');
+    fs.writeFileSync(index, fs.readFileSync(index, 'utf8').replace(/(\/css\/dashboard\.css)\?v=[0-9a-f]+/, '$1'));
+    const r = run();
+    assert.equal(r.status, 0, r.stderr);
+    const out = `${r.stdout}${r.stderr}`;
+    assert.doesNotMatch(out, /had no \?v= stamp/);
+    assert.match(r.stdout, /added a \?v= stamp to 1 reference\(s\)/);
+    assert.match(r.stdout, /ui\/index\.html references \/css\/dashboard\.css/);
+    assert.equal(r.stderr, '');
+  });
+});
+
+test('--release writes entryVersions into every widget manifest', () => {
+  withTreeCopy(({ tmp, run }) => {
+    const r = run('--release');
+    assert.equal(r.status, 0, r.stderr);
+    for (const [name, text] of Object.entries(manifests(tmp))) {
+      const versions = JSON.parse(text).entryVersions;
+      assert.ok(versions && Object.keys(versions).length, `${name} was not stamped`);
+      for (const v of Object.values(versions)) assert.match(v, /^[0-9a-f]{8}$/, name);
+    }
+  });
+});
+
+test('--check writes nothing, even with --release', () => {
+  withTreeCopy(({ tmp, run }) => {
+    const index = path.join(tmp, 'ui', 'index.html');
+    const broken = fs.readFileSync(index, 'utf8').replace(/(\/css\/dashboard\.css)\?v=[0-9a-f]+/, '$1');
+    fs.writeFileSync(index, broken);
+    const before = manifests(tmp);
+
+    const r = run('--check', '--release');
+    assert.equal(r.status, 1, 'an unstamped reference has to fail the check');
+    assert.doesNotMatch(`${r.stdout}${r.stderr}`, /\?v=1\b/, 'the hint must not suggest a stamp the check rejects');
+    assert.equal(fs.readFileSync(index, 'utf8'), broken);
+    assert.deepEqual(manifests(tmp), before);
+  });
+});
+
+test('the widget template carries current stamps', () => {
+  withTreeCopy(({ tmp, run }) => {
+    const page = path.join(tmp, 'docs', 'widget-template', 'index.html');
+    const src = fs.readFileSync(page, 'utf8');
+    assert.match(src, /\/js\/widget-toolbox\.js\?v=[0-9a-f]{8}/);
+    fs.writeFileSync(
+      page,
+      src.replace(/(\/js\/widget-toolbox\.js\?v=)[0-9a-f]+/, (_m, ref) => `${ref}1`),
+    );
+    const r = run('--check');
+    assert.equal(r.status, 1, 'a stale template stamp has to fail the check');
+    assert.match(r.stderr, /docs\/widget-template\/index\.html references \/js\/widget-toolbox\.js\?v=1,/);
+  });
 });

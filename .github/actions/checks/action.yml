@@ -11,10 +11,10 @@ inputs:
       smoke-build the image.
 
       "release" adds the cache-busting stamp pass a release needs, after the
-      tests rather than before. Stamping writes entryVersions into each widget
-      manifest, and widget-manifests.test.js asserts that field is never
-      committed, so the suite has to run on the committed tree. The stamp pass
-      then runs, and is checked for convergence. No smoke build in this mode:
+      tests rather than before. The --release pass writes entryVersions into
+      each widget manifest, and widget-manifests.test.js asserts that field is
+      never committed, so the suite has to run on the committed tree. The stamp
+      pass then runs, and is checked for convergence. No smoke build in this mode:
       the real multi-platform build follows immediately.
     required: false
     default: test
@@ -171,13 +171,12 @@ runs:
         docker rm -f stackyard-arm64 >/dev/null
         exit "$status"
 
-    # Release only, and last: this rewrites files. --check above proves every
-    # asset reference carries a stamp, but not that the stamp is current, so
-    # this pass is what makes the shipped stamps correct.
+    # Release only, and last: this writes entryVersions into every widget
+    # manifest.
     - name: Stamp asset cache-busting
       if: inputs.mode == 'release'
       shell: bash
-      run: node scripts/bump-cache-busting.js
+      run: node scripts/bump-cache-busting.js --release
 
     # Stamping must be reproducible. The two passes are compared with each other,
     # not against the committed tree: the stamp pass always changes files, so
@@ -187,7 +186,7 @@ runs:
       shell: bash
       run: |
         git diff > "$RUNNER_TEMP/stamped.diff"
-        node scripts/bump-cache-busting.js
+        node scripts/bump-cache-busting.js --release
         git diff > "$RUNNER_TEMP/settled.diff"
         if ! diff -q "$RUNNER_TEMP/stamped.diff" "$RUNNER_TEMP/settled.diff" >/dev/null; then
           echo "::error::Cache-busting stamps did not converge; a second pass still changed files."
