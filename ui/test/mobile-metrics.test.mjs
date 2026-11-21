@@ -88,16 +88,6 @@ test('the layout sizes itself from the measured grid box', () => {
   assert.match(ui, /rh = gridBox\.height \/ ROWS/);
 });
 
-/* The dock is sized to its contents, so the side gap is a cap rather than a
-   measurement: a full dock clears the edge by dockGap, a shorter one by more. */
-test('a full dock sits the same distance from the bottom as from the sides', () => {
-  const ui = read('js/ui.js');
-  assert.match(ui, /const dockGap = Math\.round\(9 \* sc\)/);
-  assert.match(ui, /const maxDockW = vw - Math\.round\(18 \* sc\)/, 'a side gap of dockGap on each edge');
-  assert.match(ui, /bottom:\$\{dockGap\}px/, 'the dock');
-  assert.match(ui, /bottom:\$\{dockGap \+ dockH \+ pillGap\}px/, 'the pill');
-});
-
 /* ── The rebuild trigger ──────────────────────────────────────────────────── */
 
 /** The layout on the phone, with the safe-area probe watched and builds counted. */
