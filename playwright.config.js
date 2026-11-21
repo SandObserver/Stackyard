@@ -29,7 +29,11 @@ const browser = (name, device) => {
       name,
       dependencies: [`sign-in ${name}`],
       testIgnore: /auth\.spec\.js$/,
-      use: { ...devices[device], storageState },
+      use: {
+        ...devices[device],
+        storageState,
+        ...(name === 'webkit' && { trace: { mode: 'retain-on-failure-and-retries', screenshots: false } }),
+      },
     },
   ];
 };
@@ -49,8 +53,6 @@ module.exports = defineConfig({
   reporter: process.env.CI ? [['list'], ['blob']] : [['list']],
   use: {
     baseURL,
-    /* Only on a retry: a trace for every passing test is a lot of artefact for
-       nothing. */
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'off',
