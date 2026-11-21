@@ -368,10 +368,19 @@ function _pills(field, value) {
     });
     ro.observe(row);
   }
-  if (field.hint) {
+  const hintFor = v => opts.find(o => String(o.value) === String(v))?.hint || field.hint || '';
+  if (opts.some(o => o.hint) || field.hint) {
     const h = document.createElement('p');
     h.className = 'grp-tip in-card';
-    h.textContent = field.hint;
+    h.id = uniqueId('wcf-hint');
+    const paint = () => {
+      h.textContent = hintFor(sel);
+      h.hidden = !h.textContent;
+    };
+    paint();
+    row.querySelector('.segr').setAttribute('aria-describedby', h.id);
+    wrap.addEventListener('change', paint);
+    row.addEventListener('change', paint);
     wrap.appendChild(h);
   }
   const get = () => [field.key, sel];

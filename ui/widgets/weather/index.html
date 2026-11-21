@@ -354,14 +354,23 @@ function render(d){
     temp:d.usedFeels?wt('ui.feelsLikeTemp','{temp} (feels like)',{temp}):temp,
   });
   _summary = alerts.reduce((s, a) => wt('ui.withAlert', '{summary}. {alert}', { summary: s, alert: alertText(a) }), summary);
+  _sources =
+    d.source === 'openweather'
+      ? [wt('ui.sourceOpenWeather', 'Weather data provided by OpenWeather'), ...(alerts.length ? [wt('ui.sourceAir', 'Air quality by Open-Meteo.com')] : [])]
+      : d.source === 'openmeteo'
+        ? [wt('ui.sourceOpenMeteo', 'Weather data by Open-Meteo.com')]
+        : [];
   _fetchedAt = readingTime(d);
   describe();
 }
 
-let _summary = '', _fetchedAt = 0;
+let _summary = '', _fetchedAt = 0, _sources = [];
 function describe() {
   if (!_summary) return;
-  const text = wt('ui.updated', '{summary}. Updated {time}', { summary: _summary, time: sinceLabel(_fetchedAt) });
+  const text = _sources.reduce(
+    (s, source) => wt('ui.withSource', '{text}. {source}', { text: s, source }),
+    wt('ui.updated', '{summary}. Updated {time}', { summary: _summary, time: sinceLabel(_fetchedAt) }),
+  );
   widgetEl.setAttribute('title', text);
   widgetEl.setAttribute('aria-label', text);
   srEl.textContent = text;

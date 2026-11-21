@@ -5,7 +5,7 @@ import {
   captureActLabels,
   serializeKvRows,
 } from '/js/admin-app-form.js?v=57f8180f';
-import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=ff4caac6';
+import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=6c8bcffe';
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
 import { scrollSettingsTop } from '/js/admin-nav.js?v=e66552bd';
 import {
@@ -29,7 +29,7 @@ import {
   toast,
 } from '/js/admin-shared.js?v=d78607eb';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=7d99ba6d';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=21ee8029';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=99563c71';

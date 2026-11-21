@@ -85,6 +85,7 @@ test('the default endpoint reads the forecast, not the geocoder', async () => {
   assert.equal(r.units, 'f');
   assert.equal(r.usedFeels, false);
   assert.equal(r.city, 'Ottawa');
+  assert.equal(r.source, 'openmeteo');
 });
 
 const OW = (id, icon, extra = {}) => ({
@@ -109,7 +110,15 @@ test('openweather reads current weather with the key and unit system', async () 
   assert.match(weatherCall(calls), /lat=45\.42&lon=-75\.7/);
   assert.match(weatherCall(calls), /units=imperial/);
   assert.match(weatherCall(calls), /appid=k1/);
-  assert.deepEqual(r, { temp: 22, usedFeels: false, units: 'f', code: 3, isDay: true, city: 'Ottawa' });
+  assert.deepEqual(r, {
+    temp: 22,
+    usedFeels: false,
+    units: 'f',
+    source: 'openweather',
+    code: 3,
+    isDay: true,
+    city: 'Ottawa',
+  });
 });
 
 test('openweather uses metric for celsius and honours feelsLike', async () => {

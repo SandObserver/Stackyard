@@ -117,6 +117,8 @@ function _validateField(f, where, depth = 0) {
       const value = o && typeof o === 'object' ? o.value : undefined;
       if (!(typeof value === 'string' || typeof value === 'number') || typeof o.label !== 'string' || !o.label)
         errs.push(`${where}: option ${i} of "${f.key}" must be an object with a "value" and a "label"`);
+      if (o && typeof o === 'object' && o.hint !== undefined && (typeof o.hint !== 'string' || !o.hint))
+        errs.push(`${where}: option ${i} of "${f.key}" has a "hint" that is not a non-empty string`);
     });
   if (f.link !== undefined && (f.link !== true || f.type !== 'text'))
     errs.push(`${where}: field "${f.key}" may set "link" only to true, and only on a text field`);

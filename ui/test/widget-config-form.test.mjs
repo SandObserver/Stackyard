@@ -417,3 +417,29 @@ test('a group row keeps the saved row it came from across a redraw', () => {
     [1, null],
   );
 });
+
+test('a segmented control shows the hint of the option picked', () => {
+  const box = new FakeEl('div');
+  const fields = [
+    {
+      key: 'provider',
+      label: 'Service',
+      type: 'select',
+      variant: 'pills',
+      options: [
+        { value: 'one', label: 'One', hint: 'Data by One.' },
+        { value: 'two', label: 'Two', hint: 'Data by Two.' },
+      ],
+    },
+  ];
+  renderWidgetConfigForm(box, fields, { provider: 'one' }, { size: 'small' });
+  const tip = box.querySelector('.grp-tip');
+  assert.equal(tip.textContent, 'Data by One.');
+  assert.equal(rowOf(box, 'Service').querySelector('.segr').getAttribute('aria-describedby'), tip.id);
+  const two = rowOf(box, 'Service')
+    .querySelectorAll('input')
+    .find(r => r.value === 'two');
+  two.checked = true;
+  two.fire('change');
+  assert.equal(tip.textContent, 'Data by Two.');
+});

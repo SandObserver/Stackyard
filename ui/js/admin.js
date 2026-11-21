@@ -1,9 +1,9 @@
 import { checkAuth, requireLogin } from '/js/admin-auth.js?v=3a0626ee';
-import { initEditor, openEditor, openFolderPicker, wireListButtons } from '/js/admin-editor.js?v=a57bec62';
-import { initList, render, wireFilter } from '/js/admin-list.js?v=ff4caac6';
+import { initEditor, openEditor, openFolderPicker, wireListButtons } from '/js/admin-editor.js?v=5429c3ae';
+import { initList, render, wireFilter } from '/js/admin-list.js?v=6c8bcffe';
 import { createListWrites } from '/js/admin-list-writes.js?v=08dbb466';
 import { animateNavIcons, initNav } from '/js/admin-nav.js?v=e66552bd';
-import { createPageLoad } from '/js/admin-page-load.js?v=490829fd';
+import { createPageLoad } from '/js/admin-page-load.js?v=b8472593';
 import { settingsDirty } from '/js/admin-settings.js?v=bdee547c';
 import { initSettingsControls } from '/js/admin-settings-controls.js?v=57176a15';
 import { setReauthHandler } from '/js/admin-shared.js?v=d78607eb';

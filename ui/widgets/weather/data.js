@@ -233,6 +233,7 @@ module.exports = async function (ctx) {
     temp: Math.round(temp),
     usedFeels: useFeels,
     units: units,
+    source: ow ? 'openweather' : 'openmeteo',
     code: w.code,
     ...(w.condition && { condition: w.condition }),
     isDay: w.isDay,
