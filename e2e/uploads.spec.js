@@ -1,6 +1,6 @@
 // @ts-check
-/* Every upload that reaches the API counts toward its hourly limit of 20 per
-   client address. Both browsers and retries share one address in a local run. */
+/* Uploads share an hourly limit per client address. Each test sends its own
+   address, so tests and retries never use up each other's count. */
 
 const fs = require('node:fs');
 const net = require('node:net');
@@ -15,6 +15,7 @@ const {
   rowByName,
   saveEditor,
   encodePng,
+  someClient,
 } = require('./helpers');
 const { BASE_URL } = require('./base-url');
 const { ICON_MAX_BYTES } = require('../api/src/routes/icons');
@@ -36,7 +37,8 @@ const WALLPAPER_BODY_LIMIT = bodyLimit(
 const TOO_LARGE = 'That image is too large for the server to accept.';
 const WALLPAPER = { type: 'url', url: '/icons/wallpaper/none.png', brightness: 1, fit: 'fill' };
 
-test.beforeEach(async ({ request }) => {
+test.beforeEach(async ({ page, request }) => {
+  await page.setExtraHTTPHeaders({ 'X-Forwarded-For': someClient() });
   await seedConfig(request, { items: [app('alpha', 'Alpha')], settings: { background: { ...WALLPAPER } } });
   await dismissSetupPrompt(request);
 });

@@ -2,6 +2,7 @@
 /* Seed through the API, never by writing the config file. A spec runs against a
    container it shares no filesystem with. */
 
+const { randomInt } = require('node:crypto');
 const { expect } = require('@playwright/test');
 const { BASE_URL } = require('./base-url');
 const { SEED_MARK, mayReplace } = require('./seed-guard');
@@ -291,7 +292,12 @@ async function settledPixelAt(locator, fx, fy) {
   throw new Error(`the colour at ${fx},${fy} never settled: last read rgb(${previous})`);
 }
 
+/* A fresh client address for X-Forwarded-For. Both e2e containers trust the
+   runner as their front proxy, so rate limits count each address apart. */
+const someClient = () => `198.18.${randomInt(256)}.${randomInt(1, 255)}`;
+
 module.exports = {
+  someClient,
   seedConfig,
   dismissSetupPrompt,
   asIfNoPassword,

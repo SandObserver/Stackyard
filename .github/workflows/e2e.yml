@@ -169,11 +169,13 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/data" "$RUNNER_TEMP/icons"
           chmod 777 "$RUNNER_TEMP/data" "$RUNNER_TEMP/icons"
+          bridge=$(docker network inspect bridge -f '{{(index .IPAM.Config 0).Subnet}}')
           docker run -d --name stackyard-e2e \
             -p 8730:80 \
             -v "$RUNNER_TEMP/data:/data" \
             -v "$RUNNER_TEMP/icons:/icons" \
             -e INITIAL_PASSWORD="$(node -p "require('./e2e/base-url').PASSWORD")" \
+            -e TRUSTED_PROXY="127.0.0.1 $bridge" \
             stackyard:e2e
           for i in $(seq 1 60); do
             if curl -fsS http://127.0.0.1:8730/health >/dev/null 2>&1; then echo "up after ${i}s"; exit 0; fi
