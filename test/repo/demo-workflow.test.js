@@ -33,10 +33,11 @@ test('the first-run placeholder never takes the demo address', () => {
   assert.doesNotMatch(prep.run, /cp upload\/wrangler\.jsonc placeholder/);
 });
 
-test('the web-files check lets font licences through, and nothing else in text', () => {
+test('the web-files check lets the licences through, and nothing else in text', () => {
   const check = wf.jobs.upload.steps.find(s => s.name === 'Check the site holds web files only');
   assert.ok(check, 'the web-files check is gone');
   assert.match(check.run, /! -name 'OFL-\*\.txt'/);
+  assert.match(check.run, /! -name LICENSE\.txt ! -name NOTICE\.txt/);
   const texts = execFileSync('git', ['ls-files', 'ui'], { cwd: root, encoding: 'utf8' })
     .split('\n')
     .filter(f => f.endsWith('.txt'));

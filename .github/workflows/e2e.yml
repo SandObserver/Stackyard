@@ -56,8 +56,6 @@ jobs:
             e2e:
               - '**'
               - '!*.md'
-              - '!LICENSE'
-              - '!NOTICE'
               - '!.editorconfig'
               - '!.gitignore'
               - '!.git-blame-ignore-revs'
