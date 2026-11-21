@@ -332,16 +332,25 @@ test('secret rows that share a key each keep their own stored value', () => {
   );
 });
 
-test('20,000 secret rows that share a key refill in well under a second', () => {
-  const rows = Array.from({ length: 20_000 }, (_, i) => ({ key: 'k', value: `v${i}`, secret: true }));
-  const stored = { monitoring: { activity: { enabled: true, headers: rows } } };
-  const next = structuredClone(stored);
-  scrubItemBadgeSecrets(next);
-  const start = performance.now();
-  preserveItemBadgeSecrets(next, stored);
-  const ms = performance.now() - start;
-  assert.ok(ms < 500, `took ${Math.round(ms)} ms`);
-  assert.equal(next.monitoring.activity.headers[19_999].value, 'v19999');
+test('refilling secret rows that share a key costs time in step with the row count', () => {
+  const cost = n => {
+    const rows = Array.from({ length: n }, (_, i) => ({ key: 'k', value: `v${i}`, secret: true }));
+    const stored = { monitoring: { activity: { enabled: true, headers: rows } } };
+    let best = Infinity;
+    for (let run = 0; run < 5; run++) {
+      const next = structuredClone(stored);
+      scrubItemBadgeSecrets(next);
+      const start = performance.now();
+      preserveItemBadgeSecrets(next, stored);
+      best = Math.min(best, performance.now() - start);
+      assert.equal(next.monitoring.activity.headers[n - 1].value, `v${n - 1}`);
+    }
+    return best;
+  };
+  cost(1_000);
+  const small = cost(1_000);
+  const large = cost(32_000);
+  assert.ok(large < small * 200, `32 times the rows took ${Math.round(large / small)} times as long`);
 });
 
 test('a block asks for a stored secret only through a blank secret row or a login without a password', () => {
