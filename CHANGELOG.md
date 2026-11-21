@@ -116,6 +116,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Raise destructive button text to WCAG AA contrast in light and dark mode.
 
+- The Docker image and the demo site include the Stackyard licence and notice.
+
 ### Security
 
 - Refuse an unsafe link in the Disk Health TrueNAS and Unraid, DNS, GitHub and
