@@ -867,7 +867,7 @@
     }
     .folder-box-desktop {
       position:relative; isolation:isolate;
-      border-radius:28px; padding:28px 32px 24px; width:100%;
+      border-radius:28px; padding:28px 32px 24px; width:max-content; max-width:calc(100vw - 32px);
       box-shadow:0 32px 80px rgba(0,0,0,.65);
     }
     .folder-icon-link {
