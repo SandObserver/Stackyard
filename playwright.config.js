@@ -32,7 +32,7 @@ const browser = (name, device) => {
       use: {
         ...devices[device],
         storageState,
-        ...(name === 'webkit' && { trace: 'retain-on-failure-and-retries' }),
+        ...(name === 'webkit' && { trace: { mode: 'retain-on-failure-and-retries', screenshots: false } }),
       },
     },
   ];

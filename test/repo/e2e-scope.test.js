@@ -230,5 +230,5 @@ test('a flaky test gets a retry, and the retry a trace', () => {
   assert.equal(use.trace, 'on-first-retry');
   const trace = name => projects.find(p => p.name === name).use.trace ?? use.trace;
   assert.equal(trace('chromium'), 'on-first-retry');
-  assert.equal(trace('webkit'), 'retain-on-failure-and-retries');
+  assert.deepEqual(trace('webkit'), { mode: 'retain-on-failure-and-retries', screenshots: false });
 });
