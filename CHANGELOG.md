@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Glass switches, sliders and segmented controls in the admin, and a glass tab
   bar on phones.
 
+- The Weather widget credits its data provider in Settings and in its tooltip.
+
 ### Changed
 
 - Pick a local System Summary temperature by sensor name, starting on the CPU.
