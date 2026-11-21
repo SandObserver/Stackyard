@@ -17,6 +17,7 @@ const PASSWORD_ENV = /-e INITIAL_PASSWORD="\$\(node -p "require\('\.\/e2e\/base-
 
 test('both e2e containers start with the password the specs sign in with', () => {
   assert.match(step('Start the container').run, PASSWORD_ENV);
+  assert.match(step('Start the container').run, /-e TRUSTED_PROXY=/, 'uploads.spec.js names its client address');
   const auth = step('Start the sign-in container').run;
   assert.match(auth, PASSWORD_ENV);
   assert.match(auth, /-p 8733:80/);

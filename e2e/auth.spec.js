@@ -3,14 +3,11 @@
    this runner as its front proxy, so a request can name its client address in
    X-Forwarded-For. */
 
-const { randomInt } = require('node:crypto');
 const { test, expect } = require('@playwright/test');
 const { AUTH_BASE_URL, PASSWORD } = require('./base-url');
+const { someClient } = require('./helpers');
 const { LOGIN_MAX, SESSION_MAX_AGE_MS } = require('../api/src/auth');
 const { AUTH_BODY_LIMIT } = require('../api/src/router');
-
-/* A fresh address for each call. Retries and other tests never share a count. */
-const someClient = () => `198.18.${randomInt(256)}.${randomInt(1, 255)}`;
 
 /** @param {import('@playwright/test').APIRequestContext} request @param {unknown} password
     @param {Record<string, string>} [headers] */
