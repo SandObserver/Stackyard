@@ -70,7 +70,7 @@ test('editing an app keeps its id and changes only what was edited', async ({ pa
   expect(cfg.items.filter(i => i.id === 'alpha')).toHaveLength(1);
 });
 
-test('an icon too large for the web server says so', async ({ page }) => {
+test('an icon refused by a front proxy with an HTML 413 says so', async ({ page }) => {
   await page.route('**/api/icons/upload', route =>
     route.fulfill({
       status: 413,
