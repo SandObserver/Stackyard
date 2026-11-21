@@ -283,4 +283,4 @@ on('POST', '/api/icons/upload', async (req, res) => {
   }
 });
 
-module.exports = { safeIconName };
+module.exports = { safeIconName, ICON_MAX_BYTES };

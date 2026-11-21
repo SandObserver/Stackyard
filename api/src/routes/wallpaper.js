@@ -267,6 +267,7 @@ module.exports = {
   wallpapersToDrop,
   WALLPAPER_URL_BASE,
   PENDING_MS,
+  UPLOAD_MAX_BYTES,
   _resetPhoto: () => {
     _photo = null;
     _pending = null;
