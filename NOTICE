@@ -13,3 +13,7 @@ the Open Government Licence v3.0
 (https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
 Source: UK National Cyber Security Centre, list of the 100,000 most common
 passwords from Have I Been Pwned.
+
+The Docker image also contains operating system packages from Alpine Linux,
+each under its own licence. The SBOM attached to each release lists every
+package and version. Their source is at https://gitlab.alpinelinux.org/alpine/aports.

@@ -1,5 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const os = require('node:os');
 const path = require('node:path');
 
 const {
@@ -11,6 +12,7 @@ const {
   redirectRules,
   injectScript,
   restampWidgets,
+  copyLicences,
 } = require('../../scripts/demo/build');
 const { writeRoutes, routePattern } = require('../../scripts/demo/source');
 
@@ -243,4 +245,21 @@ test('the tour finds the editor controls the admin page has', () => {
     assert.match(page, new RegExp(`id="${id}"`), `the admin page has no #${id}`);
   }
   assert.doesNotMatch(tour, /:(?:text-is|has-text)\(/, 'visible text changes with the language and the design');
+});
+
+test('the demo site carries the licence and the notice as text files', () => {
+  const fs = require('node:fs');
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'demo-licences-'));
+  try {
+    copyLicences(out);
+    const root = path.join(__dirname, '../..');
+    for (const name of ['LICENSE', 'NOTICE']) {
+      assert.equal(
+        fs.readFileSync(path.join(out, `${name}.txt`), 'utf8'),
+        fs.readFileSync(path.join(root, name), 'utf8'),
+      );
+    }
+  } finally {
+    fs.rmSync(out, { recursive: true, force: true });
+  }
 });

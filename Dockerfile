@@ -101,6 +101,7 @@ COPY ui/js/service-link.js /app/ui/js/service-link.js
 COPY ui/js/saved-row.js /app/ui/js/saved-row.js
 COPY ui/js/settings-schema.js /app/ui/js/settings-schema.js
 COPY scripts/exit-on-fatal.py /app/scripts/exit-on-fatal.py
+COPY LICENSE NOTICE /usr/share/licenses/stackyard/
 # Fails the build if python3 is no longer present. Without it the event listener
 # cannot start and no failure is reported.
 RUN /usr/bin/python3 -c "import ast,sys; ast.parse(open('/app/scripts/exit-on-fatal.py').read())"

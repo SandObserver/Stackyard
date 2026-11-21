@@ -198,9 +198,15 @@ function injectScript(html, src) {
   return out;
 }
 
+/** @param {string} out */
+function copyLicences(out, root = path.join(__dirname, '../..')) {
+  for (const name of ['LICENSE', 'NOTICE']) fs.copyFileSync(path.join(root, name), path.join(out, `${name}.txt`));
+}
+
 function build(webroot, recording, out) {
   fs.rmSync(out, { recursive: true, force: true });
   fs.cpSync(webroot, out, { recursive: true });
+  copyLicences(out);
   const files = listFiles(out);
 
   const { fixed: still, varying } = classify(recording.frames);
@@ -272,6 +278,7 @@ module.exports = {
   redirectRules,
   injectScript,
   restampWidgets,
+  copyLicences,
   build,
 };
 

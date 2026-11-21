@@ -2,6 +2,7 @@
   "name": "stackyard-api",
   "version": "1.23.0",
   "description": "Stackyard API - Self-hosted homelab dashboard backend",
+  "license": "Apache-2.0",
   "main": "src/server.js",
   "engines": {
     "node": ">=26"
