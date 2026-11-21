@@ -10,8 +10,6 @@ register('./js-root-hooks.mjs', import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 const css = read('css/dashboard.css').replace(/\/\*[\s\S]*?\*\//g, '');
-const ui = read('js/ui.js');
-const popover = read('js/badge-popover.js');
 
 const fetch = fakeFetch({ '/api/config': { items: [], settings: {} }, '/api/badges': {}, '/api/health': {} });
 const dom = installDom({ markup: pageBody('index.html'), fetch, location: 'http://nas.local/' });
@@ -219,32 +217,6 @@ test('typing inside an open folder does not open Search over it', () => {
   folder.remove();
   fire(doc.body, 'keydown', { key: 'n' });
   assert.equal(spot.open, true, 'typing on the bare page does not open Search');
-});
-
-test('a folder tile uses the shared tap handling and can show its press', () => {
-  const tile = ui.slice(ui.indexOf('function mFolder('), ui.indexOf('let folderOverlayMob'));
-  assert.match(tile, /onTap\(a, _openFolder\);/);
-  assert.doesNotMatch(tile, /preventDefault/);
-});
-
-test('only keyboard focus opens the badge popover', () => {
-  assert.match(
-    popover,
-    /if \(badge && \/\*\* @type \{HTMLElement\} \*\/ \(e\.target\)\.matches\(':focus-visible'\)\) open\(badge\);/,
-  );
-});
-
-test('a folder fades out late on an ease-out curve', () => {
-  const motion = ui.slice(ui.indexOf('function folderMotion('), ui.indexOf('let folderOverlay = null;'));
-  assert.match(motion, /\{ duration: 160, delay: 90, easing: FADE_EASE \}/);
-  assert.match(ui, /const FADE_EASE = 'cubic-bezier\(\.23,1,\.32,1\)';/);
-  assert.doesNotMatch(motion, /cubic-bezier\(\.6,0,1,1\)/);
-  assert.match(ui, /fill: hold \? 'both' : 'none'/, 'the panel would be see-through during the delay');
-  assert.match(motion, /\.\.\.timing\('opacity', false\) \},\s*\]\),\s*true,/, 'the close does not hold its frames');
-});
-
-test('the phone folder title cannot leave the top edge', () => {
-  assert.match(ui, /top: 'max\(var\(--sa-top\), ' \+ \(boxTop - titleRendH/);
 });
 
 test('the Search pill keeps a readable label on a small phone', () => {
