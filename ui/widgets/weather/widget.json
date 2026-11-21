@@ -16,11 +16,13 @@
       "options": [
         {
           "value": "openmeteo",
-          "label": "provider.opt.openmeteo"
+          "label": "provider.opt.openmeteo",
+          "hint": "provider.hint.openmeteo"
         },
         {
           "value": "openweather",
-          "label": "provider.opt.openweather"
+          "label": "provider.opt.openweather",
+          "hint": "provider.hint.openweather"
         }
       ]
     },

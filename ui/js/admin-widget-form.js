@@ -7,7 +7,7 @@ import { iconSvg } from '/js/icon-set.js?v=361e54a5';
 import { DEFAULT_WIDGET_SIZE } from '/js/limits.js?v=ff61256e';
 import { createListbox } from '/js/listbox.js?v=5f208483';
 import { focusFirst, q, qa, qi } from '/js/utils.js?v=9ed2b298';
-import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=7eb77c77';
+import { renderWidgetConfigForm } from '/js/widget-config-form.js?v=cc9dfbac';
 
 const SIZES_WITH_ICONS = new Set(['small', 'medium', 'large', 'xlarge']);
 

@@ -521,3 +521,17 @@ test('validateManifest rejects options the settings form cannot show', () => {
   }
   assert.deepEqual(errsFor([{ key: 'k', type: 'select', label: 'K', options: [{ value: 1, label: 'One' }] }]), []);
 });
+
+test('validateManifest rejects an option hint that is not text', () => {
+  for (const hint of ['', 3, null]) {
+    const errs = errsFor([{ key: 'k', type: 'select', label: 'K', options: [{ value: 'a', label: 'A', hint }] }]);
+    assert.ok(
+      errs.some(e => /option 0 of "k" has a "hint" that is not a non-empty string/.test(e)),
+      JSON.stringify(hint),
+    );
+  }
+  assert.deepEqual(
+    errsFor([{ key: 'k', type: 'select', label: 'K', options: [{ value: 'a', label: 'A', hint: 'About A.' }] }]),
+    [],
+  );
+});
