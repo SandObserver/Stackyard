@@ -2,8 +2,8 @@
 /* Catalogs are plain JSON at /i18n/<code>.json. English is the source and the
    fallback. */
 
-import { setHtml } from '/js/html.js?v=c71f8903';
-import { i18nMarkup } from '/js/i18n-markup.js?v=8c90e1dd';
+import { setHtml } from '/js/html.js?v=48f9dc21';
+import { i18nMarkup } from '/js/i18n-markup.js?v=8af955bf';
 import { formatNumber, setNumberLanguage } from '/js/format-number.js?v=263fa390';
 
 /* The locale registry: the one place a supported language is defined.

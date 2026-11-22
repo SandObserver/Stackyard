@@ -12,6 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { pageWithScripts } from './widget-source.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dir = path.join(root, 'widgets');
@@ -29,7 +30,7 @@ function widgetDocs() {
     const d = path.join(dir, w);
     if (!fs.statSync(d).isDirectory()) continue;
     for (const f of fs.readdirSync(d).filter(name => name.endsWith('.html'))) {
-      out.push([`${w}/${f}`, fs.readFileSync(path.join(d, f), 'utf8')]);
+      out.push([`${w}/${f}`, pageWithScripts(path.join(d, f))]);
     }
   }
   return out;

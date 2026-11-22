@@ -1,0 +1,145 @@
+  import { widgetId, getConfig, loadStrings, wt, errorState, raw, setHtml } from '/js/widget-toolbox.js?v=039ea657';
+  await loadStrings();
+  import { buildModel, fitName, textDirection } from '/js/dashboard-switch-model.js?v=a2176749';
+
+  const state = errorState({ root: document.body, content: () => [], place: 'center' });
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const ART = '/widgets/dashboard-switch/art/';
+  const AV = '1';
+  const META = {
+    'silver-key-a':{w:64,h:150,hx:0.490,hy:0.098},'gold-key-solid':{w:65,h:150,hx:0.489,hy:0.090},
+    'black-key-a':{w:65,h:150,hx:0.491,hy:0.105},'black-key-round':{w:64,h:150,hx:0.493,hy:0.108},
+    'skeleton-brass':{w:57,h:150,hx:0.490,hy:0.140},'silver-key-d':{w:66,h:150,hx:0.490,hy:0.103},
+    'gold-key-open':{w:66,h:150,hx:0.496,hy:0.112},'tag-rect-silver':{w:58,h:150,hx:0.483,hy:0.083},
+    'tag-long-black':{w:68,h:150,hx:0.495,hy:0.110},'ring-disc':{w:84,h:150,hx:0.501,hy:0.204},
+    'strap-blue':{w:35,h:150,hx:0.500,hy:0.110},'tag-dog-gray':{w:66,h:150,hx:0.491,hy:0.108},
+  };
+
+  const size = new URLSearchParams(location.search).get('size') === 'small' ? 'small' : 'medium';
+  const W = size === 'small' ? 170 : 360;
+  const H = 170;
+  const padX = size === 'small' ? 16 : 18;
+
+  const NAME_Y = 31, RAIL_T = 50, RAIL_B = 79;
+  const BODY_CY = 63, BODY_R = 13, TAB_TOP = 74, TAB_BOT = 81;
+  const RC = 87, RING_R = 9, PIVOT_Y = RC + RING_R, KH = 60;
+  const AMP = ['2.0deg', '2.4deg', '1.7deg'], DUR = ['1.0s', '1.1s', '0.95s'];
+
+  function arcPath(cx, cy, r, a0, a1) {
+    const p = a => [cx + r * Math.cos(a * Math.PI / 180), cy + r * Math.sin(a * Math.PI / 180)];
+    const [x0, y0] = p(a0), [x1, y1] = p(a1);
+    const large = ((a1 - a0) % 360 + 360) % 360 > 180 ? 1 : 0;
+    return `M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+  }
+  const ringPair = (cx, a0, a1) =>
+    `<path d="${arcPath(cx, RC, RING_R, a0, a1)}" fill="none" stroke="#d3d7de" stroke-width="2.4" stroke-linecap="round"/>` +
+    `<path d="${arcPath(cx, RC, RING_R - 1.5, a0, a1)}" fill="none" stroke="#8E8E93" stroke-width="0.7"/>`;
+  const fullRing = cx =>
+    `<circle cx="${cx}" cy="${RC}" r="${RING_R}" fill="none" stroke="#d3d7de" stroke-width="2.4"/>` +
+    `<circle cx="${cx}" cy="${RC}" r="${RING_R - 1.5}" fill="none" stroke="#8E8E93" stroke-width="0.7"/>`;
+
+  /* The front-left arc is redrawn over the bows, so the ring reads as woven
+     through the holes. */
+  function keyMarkup(cx, ids) {
+    const m = ids.length;
+    return ids.map((eid, k) => {
+      const a = META[eid]; if (!a) return '';
+      const sc = KH / a.h;
+      const tx = cx - a.hx * a.w * sc;
+      const ty = PIVOT_Y - a.hy * a.h * sc;
+      const fan = (k - (m - 1) / 2) * 10;
+      const style = `transform-origin:${cx}px ${PIVOT_Y}px;--amp:${AMP[k % 3]};animation-duration:${DUR[k % 3]};animation-delay:${k * 45}ms`;
+      return `<g class="key" style="${style}"><g filter="url(#ds-sh)">` +
+        `<image href="${ART}${eid}.png?v=${AV}" width="${a.w}" height="${a.h}" filter="url(#ds-rim)" ` +
+        `transform="rotate(${fan.toFixed(1)} ${cx} ${PIVOT_Y}) translate(${tx.toFixed(2)} ${ty.toFixed(2)}) scale(${sc.toFixed(4)})"/></g></g>`;
+    }).join('');
+  }
+
+  function render(model) {
+    const root = document.getElementById('root');
+    root.textContent = '';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('role', 'group');
+    svg.setAttribute('aria-label', wt('ui.switcher','Dashboard switcher'));
+    setHtml(svg, raw(
+      '<defs>' +
+      '<filter id="ds-rim" x="-25%" y="-25%" width="150%" height="150%">' +
+      '<feMorphology in="SourceAlpha" operator="dilate" radius="0.55" result="d"/>' +
+      '<feFlood flood-color="#d7dbe1" flood-opacity="0.85"/><feComposite in2="d" operator="in" result="r"/>' +
+      '<feMerge><feMergeNode in="r"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
+      '<filter id="ds-sh"><feDropShadow dx="0.5" dy="1" stdDeviation="0.5" flood-color="#000" flood-opacity="0.5"/></filter>' +
+      '</defs>' +
+      `<rect x="8" y="${RAIL_T}" width="${W - 16}" height="${RAIL_B - RAIL_T}" rx="${(RAIL_B - RAIL_T) / 2}" class="rail" stroke-width="1"/>`));
+
+    const slots = model.slots;
+    if (!slots.length) {
+      root.appendChild(svg);
+      state.empty(wt('ui.empty','Add a dashboard in settings'));
+      return;
+    }
+
+    const innerW = W - 2 * padX;
+    const cellW = innerW / slots.length;
+    const cxs = slots.map((_, i) => padX + innerW * (i + 0.5) / slots.length);
+
+    slots.forEach((s, i) => {
+      const cx = cxs[i];
+      const a = document.createElementNS(NS, 'a');
+      a.setAttribute('class', s.isCurrent ? 'kc cur' : 'kc');
+      a.setAttribute('tabindex', '0');
+      a.setAttribute('aria-label', wt('ui.switchTo', 'Switch to {name}', { name: s.name }));
+      a.setAttributeNS(null, 'href', s.href);
+      if (model.openIn === 'new') { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener noreferrer'); }
+      else { a.setAttribute('target', '_top'); }
+      if (s.isCurrent) a.setAttribute('aria-current', 'page');
+      setHtml(a, raw(
+        `<rect class="focus" x="${(cx - cellW / 2 + 2).toFixed(1)}" y="4" width="${(cellW - 4).toFixed(1)}" height="${H - 8}" rx="12" fill="none" stroke="#00D2E0" stroke-width="2"/>` +
+        '<g class="chain">' +
+        fullRing(cx) +
+        `<rect x="${cx - 3.2}" y="${TAB_TOP}" width="6.4" height="${TAB_BOT - TAB_TOP}" rx="3.2" fill="${s.colorHex}"/>` +
+        `<circle cx="${cx}" cy="${BODY_CY}" r="${BODY_R}" fill="${s.colorHex}"/>` +
+        keyMarkup(cx, s.keys.concat(s.extras)) +
+        ringPair(cx, 90, 250) +
+        '</g>'));
+
+      const title = document.createElementNS(NS, 'title');
+      title.textContent = s.name;
+      a.appendChild(title);
+
+      const label = document.createElementNS(NS, 'text');
+      label.setAttribute('x', cx.toFixed(1)); label.setAttribute('y', NAME_Y);
+      label.setAttribute('text-anchor', 'middle');
+      label.setAttribute('class', s.isCurrent ? 'nm cur' : 'nm');
+      label.setAttribute('direction', textDirection(s.name));
+      label.textContent = s.name;
+      a.appendChild(label);
+      svg.appendChild(a);
+    });
+
+    root.appendChild(svg);
+
+    /* Trim labels that overflow their cell; the full name stays in the tooltip and aria-label. */
+    const maxLabelW = cellW - 6;
+    svg.querySelectorAll('text.nm').forEach((t, i) => {
+      t.textContent = fitName(slots[i].name, text => {
+        t.textContent = text;
+        return t.getComputedTextLength() <= maxLabelW;
+      });
+    });
+  }
+
+  function currentHref() {
+    try { return window.top.location.href; } catch { return document.referrer || ''; }
+  }
+
+  async function load() {
+    try {
+      const data = await getConfig();
+      render(buildModel(data.widgetConfig || {}, { size, currentHref: currentHref() }));
+    } catch (e) {
+      state.fail(e);
+    }
+  }
+  if (widgetId()) load(); else render({ slots: [], openIn: 'same' });

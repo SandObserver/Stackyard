@@ -9,17 +9,17 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
+import { pageWithScripts } from './widget-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 globalThis.location = { search: '?id=test' };
 const { colorOrFallback } = await import('../js/widget-toolbox.js');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+const read = p => pageWithScripts(path.join(root, p));
 
 const MAP = 'widgets/connections/connections-map.html';
 const BACKUP = 'widgets/backup/backup.html';

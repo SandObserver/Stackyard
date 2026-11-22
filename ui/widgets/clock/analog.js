@@ -1,0 +1,274 @@
+const NS  = 'http://www.w3.org/2000/svg';
+
+const _lang = new URLSearchParams(location.search).get('lang') || 'en';
+let _dateLong = null, _dateShort = null, _zoneTime = null;
+function _a11yLabel(now){
+  const hh=String(now.hours).padStart(2,'0'), mm=String(now.minutes).padStart(2,'0');
+  return `${hh}:${mm}, ${_dateLong(now.date)}`;
+}
+
+let _reduceMotion = false, _theme = null;
+
+/* Every fill below is a finished colour, not a colour to blend. Browsers
+   disagree on the colour space they blend in, so the overlaps are drawn as
+   flat shapes. Recompute all seven together if a disc changes. */
+const DISC = {
+  minute: { color:'#fe3a86', r:0.345 },
+  hour:   { color:'#3fbcf2', r:0.30 },
+  second: { color:'#fda632', r:0.255 },
+};
+const OVERLAP = {
+  minuteHour:       '#633680',
+  minuteSecond:     '#f00f14',
+  hourSecond:       '#577c40',
+  minuteHourSecond: '#5f2123',
+};
+const DIAL = {
+  light: { bg:'#ffffff', fill:'#ffffff', date:'rgba(0,0,0,0.4)',  tick:'#ffffff', dot:'#1C1C1E' },
+  dark:  { bg:'#1c1c1e', fill:'#E5E5EA', date:'rgba(0,0,0,0.5)', tick:'#E5E5EA', dot:'#1C1C1E' },
+};
+
+let _mode='dark', _timezone='', _showDate=true, _zoneBad=false;
+let _groups=null, _dateTexts=[], _dateShown='', _rafId=null, _running=false, _vb=0, _faceSz=0, _drawn={}, _label='';
+
+function _now(){
+  const date = new Date();
+  return { date, ..._zoneTime(date), ms: date.getMilliseconds() };
+}
+
+function el(tag, attrs){
+  const n=document.createElementNS(NS,tag);
+  for(const k in attrs) n.setAttribute(k, attrs[k]);
+  return n;
+}
+
+function buildShell(){
+  const w=document.getElementById('widget');
+  const face=document.getElementById('face');
+  w.className='widget mode-'+_mode;
+
+  const ww=w.clientWidth||220, wh=w.clientHeight||150;
+  const sz=Math.max(40, Math.min(ww-24, wh-24));
+  _vb=200;
+  _faceSz=sz;
+  face.setAttribute('width', sz);
+  face.setAttribute('height', sz);
+  face.setAttribute('viewBox', `0 0 ${_vb} ${_vb}`);
+  face.replaceChildren();
+
+  const V=_vb, cx=V/2, cy=V/2;
+  const dial=DIAL[_mode];
+
+  if(_mode==='dark'){
+    face.appendChild(el('circle',{ cx, cy, r:V*0.49, fill:dial.fill }));
+  } else {
+    face.appendChild(el('rect',{ x:0, y:0, width:V, height:V, fill:dial.fill }));
+  }
+
+  _dateTexts=[];
+  _dateShown='';
+  _drawn={};
+  /* Two text elements, not two tspans. Safari reorders right-to-left text
+     across tspans and scrambles a Persian date. */
+  const dateOf=clip=>{
+    if(!_showDate) return;
+    const y=V-V*0.085;
+    const line=dy=>{
+      const n=el('text',{ x:cx, y:y-dy, 'text-anchor':'middle', fill:dial.date });
+      if(clip) n.setAttribute('clip-path', clip);
+      return face.appendChild(n);
+    };
+    _dateTexts.push({ date:line(0), weekday:line(V*DATE_SIZE*DATE_LINE_GAP) });
+  };
+  dateOf(null);
+
+  const dist=V*0.085;
+  _groups={ minute:{discs:[],ticks:[]}, hour:{discs:[],ticks:[]}, second:{discs:[],ticks:[]} };
+
+  const defs=el('defs');
+  face.appendChild(defs);
+
+  const discOf=(key,attrs)=>{
+    const node=el('circle', Object.assign({ cx, cy:cy-dist, r:V*DISC[key].r }, attrs));
+    _groups[key].discs.push(node);
+    return node;
+  };
+  const tickOf=key=>{
+    const rOuter=cy-dist-V*DISC[key].r;
+    const node=el('line',{ x1:cx, y1:rOuter+V*0.05, x2:cx, y2:rOuter,
+      stroke:dial.tick, 'stroke-width':V*0.014, 'stroke-linecap':'round' });
+    _groups[key].ticks.push(node);
+    return node;
+  };
+  const clipOf=(id,key,attrs)=>{
+    const c=el('clipPath',{ id });
+    c.appendChild(discOf(key, attrs));
+    defs.appendChild(c);
+    return `url(#${id})`;
+  };
+
+  const inMinute=clipOf('clip-minute','minute',{});
+  const inHour=clipOf('clip-hour','hour',{});
+  const inMinuteHour=clipOf('clip-minute-hour','hour',{ 'clip-path':inMinute });
+  const inSecond=clipOf('clip-second','second',{});
+
+  /* The date stays under the hands. Each disc repeats it, clipped to the disc,
+     so it shows through tinted like the disc overlaps. */
+  face.appendChild(discOf('minute',{ fill:DISC.minute.color }));
+  dateOf(inMinute);
+  face.appendChild(tickOf('minute'));
+
+  face.appendChild(discOf('hour',{ fill:DISC.hour.color }));
+  face.appendChild(discOf('hour',{ fill:OVERLAP.minuteHour, 'clip-path':inMinute }));
+  dateOf(inHour);
+  face.appendChild(tickOf('hour'));
+
+  face.appendChild(discOf('second',{ fill:DISC.second.color }));
+  face.appendChild(discOf('second',{ fill:OVERLAP.minuteSecond, 'clip-path':inMinute }));
+  face.appendChild(discOf('second',{ fill:OVERLAP.hourSecond, 'clip-path':inHour }));
+  face.appendChild(discOf('second',{ fill:OVERLAP.minuteHourSecond, 'clip-path':inMinuteHour }));
+  dateOf(inSecond);
+  face.appendChild(tickOf('second'));
+
+  face.appendChild(el('circle',{ cx, cy, r:V*0.022, fill:dial.dot }));
+}
+
+function render(smoothSeconds){
+  const now=_now();
+  const h=now.hours, m=now.minutes, s=now.seconds, ms=now.ms;
+  const cx=_vb/2, cy=_vb/2;
+  const angle={
+    hour:   ((h%12)+m/60)*30,
+    minute: (m+s/60)*6,
+    second: (s+(smoothSeconds?ms/1000:0))*6,
+  };
+  /* A clip path inherits the transform of the shape that references it, so the
+     discs carry their position instead of a rotation. */
+  const dist=_vb*0.085;
+  for(const key in angle){
+    if(_drawn[key]===angle[key]) continue;
+    _drawn[key]=angle[key];
+    const rad=angle[key]*Math.PI/180;
+    const dx=cx+dist*Math.sin(rad), dy=cy-dist*Math.cos(rad);
+    for(const node of _groups[key].discs){
+      node.setAttribute('cx', dx);
+      node.setAttribute('cy', dy);
+    }
+    const t=`rotate(${angle[key]} ${cx} ${cy})`;
+    for(const node of _groups[key].ticks) node.setAttribute('transform', t);
+  }
+
+  const label=_a11yLabel(now);
+  if(label!==_label){ _label=label; document.getElementById('widget').setAttribute('aria-label', label); }
+  if(_showDate && _dateTexts.length){
+    const d=_dateShort(now.date);
+    if(d.full!==_dateShown) showDate(d);
+  }
+}
+
+/* Wider than the dial chord at the date's baseline, the date runs off the face. */
+const DATE_SIZE=0.072, DATE_MAX_WIDTH=0.48, DATE_LINE_GAP=1.15, DATE_MIN_PX=11;
+function showDate(d){
+  const size=Math.max(_vb*DATE_SIZE, DATE_MIN_PX*_vb/_faceSz), max=_vb*DATE_MAX_WIDTH;
+  const set=(key, text, px)=>{
+    for(const t of _dateTexts){ t[key].textContent=text; t[key].setAttribute('font-size', px); }
+  };
+  set('weekday', '', size);
+  set('date', d.full, size);
+  const w=_dateTexts[0].date.getComputedTextLength();
+  if(!w) return;
+  _dateShown=d.full;
+  if(w<=max) return;
+  set('weekday', d.weekday, size);
+  set('date', d.date, size);
+  const widest=Math.max(_dateTexts[0].weekday.getComputedTextLength(), _dateTexts[0].date.getComputedTextLength());
+  if(widest<=max) return;
+  set('weekday', d.weekday, size*max/widest);
+  set('date', d.date, size*max/widest);
+}
+
+const SWEEP_MS=66;
+let _stepId=null;
+function _loop(){
+  _rafId=null;
+  if(!_running) return;
+  render(true);
+  _stepId=setTimeout(()=>{ _stepId=null; _rafId=requestAnimationFrame(_loop); }, SWEEP_MS);
+}
+function _step(){
+  if(!_running) return;
+  render(false);
+  _stepId=setTimeout(_step, 1000 - new Date().getMilliseconds());
+}
+function start(){
+  if(_running) return;
+  _running=true;
+  if(_reduceMotion) _step(); else _loop();
+}
+function stop(){
+  _running=false;
+  if(_rafId){ cancelAnimationFrame(_rafId); _rafId=null; }
+  if(_stepId){ clearTimeout(_stepId); _stepId=null; }
+}
+
+let _inView=true;
+document.addEventListener('visibilitychange', ()=>{
+  if(_zoneBad) return;
+  if(document.hidden || !_inView) stop();
+  else { render(!_reduceMotion); start(); }
+});
+
+let _io=null;
+function watchVisibility(){
+  if(!('IntersectionObserver' in window)) return;
+  _io=new IntersectionObserver(entries=>{
+    for(const e of entries){
+      _inView=e.isIntersecting;
+      if(_inView && !document.hidden) start();
+      else stop();
+    }
+  }, { threshold: 0 });
+  _io.observe(document.getElementById('face'));
+}
+
+let _rzId=null;
+addEventListener('resize', ()=>{
+  clearTimeout(_rzId);
+  _rzId=setTimeout(()=>{ if(_zoneBad || !_dateShort) return; const run=_running; stop(); buildShell(); render(!_reduceMotion); if(run) start(); }, 150);
+});
+
+if(typeof MutationObserver==='function') new MutationObserver(()=>{
+  if(_zoneBad || !_dateShort || _mode===_theme()) return;
+  _mode=_theme(); const run=_running; stop(); buildShell(); render(false); if(run) start();
+}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+async function boot(){
+  const [toolbox, dates] = await Promise.all([
+    import('/js/widget-toolbox.js?v=039ea657'),
+    import('/js/clock-date.js?v=91a77e74'),
+  ]);
+  _theme=toolbox.theme;
+  _mode=_theme();
+  const settings=await dates.clockSettings(toolbox.getConfig);
+  _timezone=settings.timeZone;
+  _showDate=settings.showDate;
+  const w=document.getElementById('widget');
+  if(!dates.zoneOk(_timezone)){
+    _zoneBad=true;
+    w.className='widget mode-'+_mode;
+    return dates.showUnknownZone(toolbox, w);
+  }
+  _reduceMotion=toolbox.reducedMotion(v=>{
+    _reduceMotion=v;
+    if(_running){ stop(); start(); }
+  });
+  const { clockDateFormatter, clockDateParts, zoneTime } = dates;
+  _zoneTime = zoneTime(_timezone);
+  _dateLong = clockDateFormatter(_lang, 'long', _timezone);
+  _dateShort = clockDateParts(_lang, 'short', false, _timezone);
+  buildShell();
+  render(!_reduceMotion);
+  watchVisibility();
+  start();
+}
+
+boot();

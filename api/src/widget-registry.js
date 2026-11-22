@@ -38,6 +38,76 @@ const VALID_FIELDTYPES = new Set([
   'object',
 ]);
 
+const DOCS_URL = 'https://stackyard.sandobserver.com/docs/create-a-widget/';
+const PAGE_MAX_BYTES = 2 * 1024 * 1024;
+const SCRIPT_TAG = /<script\b([^>]*)>/gi;
+const SCRIPT_TYPES = new Set([
+  '',
+  'module',
+  'importmap',
+  'application/ecmascript',
+  'application/javascript',
+  'application/x-ecmascript',
+  'application/x-javascript',
+  'text/ecmascript',
+  'text/javascript',
+  'text/javascript1.0',
+  'text/javascript1.1',
+  'text/javascript1.2',
+  'text/javascript1.3',
+  'text/javascript1.4',
+  'text/javascript1.5',
+  'text/jscript',
+  'text/livescript',
+  'text/x-ecmascript',
+  'text/x-javascript',
+]);
+const INLINE_HANDLER = /<[a-z][^>]*[\s/"']on[a-z]+\s*=/i;
+const SCRIPT_URL = /\s(?:href|src|action|formaction|xlink:href)\s*=\s*["']?\s*javascript:/i;
+
+/** @param {string} attrs @param {string} name @returns {string | undefined} */
+function attribute(attrs, name) {
+  const m = new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]*))`, 'i').exec(` ${attrs}`);
+  return m ? (m[1] ?? m[2] ?? m[3]) : undefined;
+}
+
+/** A script element's type, lowercased, without parameters. A language
+    attribute counts when there is no type attribute.
+    @param {string} attrs @returns {string} */
+function scriptType(attrs) {
+  const type = attribute(attrs, 'type');
+  const language = attribute(attrs, 'language')?.trim();
+  const value = type === undefined && language ? `text/${language}` : (type ?? '');
+  return value.split(';')[0].trim().toLowerCase();
+}
+
+/** Whether a page has script a policy without 'unsafe-inline' blocks. A rough
+    scan of the markup, not a parse. @param {string} page */
+function hasInlineScript(page) {
+  for (const [, attrs] of page.matchAll(SCRIPT_TAG)) {
+    if (/\ssrc\s*=/i.test(` ${attrs}`)) continue;
+    if (SCRIPT_TYPES.has(scriptType(attrs))) return true;
+  }
+  return INLINE_HANDLER.test(page) || SCRIPT_URL.test(page);
+}
+
+/** The entry pages of a widget that carry inline script.
+    @param {string} dir @param {Record<string, any>} manifest @returns {string[]} */
+function inlineScriptPages(dir, manifest) {
+  const entries = manifest.views ? [...new Set(Object.values(manifest.views).map(v => v.src))] : ['index.html'];
+  const base = path.resolve(dir);
+  const found = [];
+  for (const file of entries) {
+    const full = path.resolve(base, file);
+    if (!full.startsWith(base + path.sep) || !/\.html?$/i.test(file)) continue;
+    try {
+      if (fs.statSync(full).size > PAGE_MAX_BYTES) continue;
+      if (hasInlineScript(fs.readFileSync(full, 'utf8'))) found.push(file);
+    } catch {}
+  }
+  return found;
+}
+
 /** @type {Record<string, any> | null} */
 let _registry = null;
 /* Kept beside the registry, never in it. A lookup by widgetType must not
@@ -284,6 +354,14 @@ function loadRegistry() {
       hasDataFn: fs.existsSync(path.join(dir, 'data.js')),
       hasDemoFn: fs.existsSync(path.join(dir, 'demo.js')),
     };
+
+    const inline = inlineScriptPages(dir, manifest);
+    if (inline.length)
+      log.warn('widget registry: inline script found, the next release blocks it', {
+        widget: name,
+        files: inline.join(', '),
+        fix: `move the script into a file next to the page, see ${DOCS_URL}`,
+      });
   }
 
   log.debug('widget registry loaded', { count: Object.keys(reg).length, widgets: Object.keys(reg) });
@@ -301,4 +379,4 @@ function getRegistry() {
   return _registry ?? loadRegistry();
 }
 
-module.exports = { getRegistry, getRejected, loadRegistry, validateManifest, WIDGETS_PATH };
+module.exports = { getRegistry, getRejected, hasInlineScript, loadRegistry, validateManifest, WIDGETS_PATH };

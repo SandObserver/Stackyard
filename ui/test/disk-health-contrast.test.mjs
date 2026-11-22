@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
+import { pageWithScripts } from './widget-source.mjs';
 
-const page = fs.readFileSync(new URL('../widgets/disk-health/index.html', import.meta.url), 'utf8');
+const page = pageWithScripts(new URL('../widgets/disk-health/index.html', import.meta.url));
 
 const luminance = rgb =>
   rgb
