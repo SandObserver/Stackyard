@@ -29,7 +29,7 @@ Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a c
 - **Configured by clicking, not by editing files.** Everything is set up in the web UI, with config import and export.
 - **No runtime npm dependencies.** The image adds only nginx and supervisor, from Alpine, to the official Node base.
 - **Six languages, right-to-left included.** Contrast and screen-reader labels are covered by tests.
-- **Installs like an app.** A mobile layout that opens in its own window from a home screen. Chrome and Edge install it only over HTTPS. No offline mode: every tile is live.
+- **Installs like an app.** A mobile layout that opens in its own window from a home screen. Chrome and Edge install it only over HTTPS or on localhost. No offline mode: every tile is live.
 
 ## Widgets
 
