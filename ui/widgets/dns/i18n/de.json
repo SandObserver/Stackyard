@@ -24,6 +24,7 @@
   "ui.cached": "Zwischengespeichert",
   "ui.blocked": "Blockiert",
   "ui.summary": "{pct} % von {total} Anfragen blockiert. Erlaubt {allowed}, zwischengespeichert {cached}, blockiert {blocked}.",
+  "ui.summaryUncached": "{pct} % von {total} Anfragen blockiert. Erlaubt {allowed}, blockiert {blocked}.",
   "provider.opt.adguard": "AdGuard Home",
   "provider.opt.pihole": "Pi-hole",
   "provider.opt.technitium": "Technitium",
