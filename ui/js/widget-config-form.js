@@ -12,9 +12,9 @@ import {
   REQ_MARKS_CHANGED,
   reveal,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=e5bdea20';
-import { createListbox } from '/js/listbox.js?v=3e45f323';
-import { renderColorControl } from '/js/admin-color-control.js?v=13051991';
+} from '/js/admin-shared.js?v=be7712ac';
+import { createListbox } from '/js/listbox.js?v=c9cee787';
+import { renderColorControl } from '/js/admin-color-control.js?v=9f176f5e';
 import {
   seedCarried,
   applyOptionSet,
@@ -24,7 +24,7 @@ import {
   isPlainField,
 } from '/js/admin-logic.js?v=81fd47cf';
 import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=5abd7438';
-import { qi } from '/js/utils.js?v=e9e22f08';
+import { qi } from '/js/utils.js?v=457d9918';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { SAVED_ROW } from '/js/saved-row.js?v=44039df6';
 import { visibleFieldFlags } from '/js/widget-types.js?v=afec2dab';

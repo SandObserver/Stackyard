@@ -266,6 +266,112 @@ test('the Settings password row hides its meter when Escape restores the value',
   }
 });
 
+test('the Settings password rows sit in a form password managers can read', async () => {
+  const { catalogRoutes, fakeFetch, installDom, pageBody } = await import('./fake-dom.mjs');
+  const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+  try {
+    await (await import('../js/i18n.js')).initI18n('en');
+    const { initPasswordRows } = await import('../js/admin-settings-controls.js');
+    initPasswordRows();
+    const byId = id => dom.document.getElementById(id);
+    const form = byId('sec-pw-form');
+    assert.equal(form.tagName, 'FORM');
+    for (const [id, name] of [
+      ['sec-user', 'username'],
+      ['sec-pw', 'password'],
+      ['sec-pw2', 'confirm'],
+    ]) {
+      assert.equal(byId(id).closest('form'), form, `${id} is outside the form`);
+      assert.equal(byId(id).getAttribute('name'), name);
+    }
+    assert.equal(
+      form.dispatchEvent({ type: 'submit', bubbles: true, cancelable: true }),
+      false,
+      'a submit would leave the page',
+    );
+  } finally {
+    dom.restore();
+  }
+});
+
+test('the Settings mismatch goes once the passwords match, whichever row is edited', async () => {
+  const { catalogRoutes, fakeFetch, fire: send, installDom, pageBody } = await import('./fake-dom.mjs');
+  const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+  try {
+    await (await import('../js/i18n.js')).initI18n('en');
+    const { initPasswordRows } = await import('../js/admin-settings-controls.js');
+    initPasswordRows();
+    const byId = id => dom.document.getElementById(id);
+    const edit = (row, field, value, leave = true) => {
+      dom.document.querySelector(`#${row} .pe`).click();
+      byId(field).value = value;
+      send(byId(field), 'input');
+      if (leave) send(byId(field), 'keydown', { key: 'Enter' });
+    };
+    const flagged = () => byId('ie-pw2').classList.contains('row-invalid');
+    edit('ie-pw', 'sec-pw', 'amber falcon meadow 17');
+    edit('ie-pw2', 'sec-pw2', 'quiet otter lantern 42');
+    assert.equal(flagged(), true, 'leaving the confirmation did not check the match');
+    edit('ie-pw', 'sec-pw', 'quiet otter lantern 42', false);
+    assert.equal(flagged(), false, 'the error stayed after the first row was made to match');
+    send(byId('sec-pw'), 'keydown', { key: 'Enter' });
+    assert.equal(flagged(), false);
+    edit('ie-pw', 'sec-pw', 'quiet otter lantern 4', false);
+    assert.equal(flagged(), false, 'the mismatch shows while typing');
+    send(byId('sec-pw'), 'keydown', { key: 'Enter' });
+    assert.equal(flagged(), true, 'leaving the first row did not check the match');
+  } finally {
+    dom.restore();
+  }
+});
+
+test('the Settings password fields take no capitals, correction or spelling marks', async () => {
+  const { catalogRoutes, fakeFetch, installDom, pageBody } = await import('./fake-dom.mjs');
+  const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+  try {
+    await (await import('../js/i18n.js')).initI18n('en');
+    const { initPasswordRows } = await import('../js/admin-settings-controls.js');
+    initPasswordRows();
+    const byId = id => dom.document.getElementById(id);
+    dom.document.querySelector('#ie-pw .pw-reveal').click();
+    for (const id of ['sec-pw', 'sec-pw2']) {
+      assert.equal(byId(id).type, 'text', `${id} is not shown`);
+      assert.equal(byId(id).getAttribute('spellcheck'), 'false', id);
+      assert.equal(byId(id).getAttribute('autocapitalize'), 'none', id);
+      assert.equal(byId(id).getAttribute('autocorrect'), 'off', id);
+    }
+  } finally {
+    dom.restore();
+  }
+});
+
+test('the Settings strength hint is read when its band changes, not per character', async () => {
+  const { catalogRoutes, fakeFetch, installDom, pageBody, settle } = await import('./fake-dom.mjs');
+  const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+  try {
+    const { initI18n, t } = await import('../js/i18n.js');
+    await initI18n('en');
+    const { wirePasswordStrength } = await import('../js/admin-auth.js');
+    const byId = id => dom.document.getElementById(id);
+    const said = [];
+    const region = byId('sr-announce');
+    const type = async value => {
+      byId('sec-pw').value = value;
+      byId('sec-pw').dispatchEvent({ type: 'input', bubbles: true });
+      await settle(120);
+      if (region.textContent && region.textContent !== said.at(-1)) said.push(region.textContent);
+    };
+    byId('sec-pw').value = 'q';
+    wirePasswordStrength('sec-pw', 'sec-pw-bars', 'sec-pw-hint');
+    await type('q');
+    await type('qu');
+    await type('quiet otter lantern 42');
+    assert.deepEqual(said, [t('pwStrength.count', { count: 1 }), t('pwStrength.enough')]);
+  } finally {
+    dom.restore();
+  }
+});
+
 test('every row value in the admin page is translated', () => {
   const page = fs.readFileSync(new URL('../admin/index.html', import.meta.url), 'utf8');
   const bare = [...page.matchAll(/<span class="rv[^"]*"[^>]*>/g)].map(m => m[0]).filter(s => !/data-i18n=/.test(s));

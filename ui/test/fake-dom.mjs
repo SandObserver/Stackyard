@@ -233,6 +233,13 @@ export class FakeElement extends FakeEventTarget {
         write(s);
         return want;
       },
+      replace: (from, to) => {
+        const s = read();
+        if (!s.delete(from)) return false;
+        s.add(to);
+        write(s);
+        return true;
+      },
     };
   }
   get nodeType() {

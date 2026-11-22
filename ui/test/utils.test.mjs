@@ -9,7 +9,7 @@ import { installDom } from './fake-dom.mjs';
    here (rather than via --import) keeps it working under the test runner's
    per-file child processes. */
 register('./js-root-hooks.mjs', import.meta.url);
-const { clr, esc, initial, isolate, sanitizeCssUrl } = await import('../js/utils.js');
+const { clr, esc, initial, isolate, sanitizeCssUrl, setLiveText } = await import('../js/utils.js');
 const { safeAllow } = await import('../js/widget-frame.js');
 
 test('clr maps the sentinel color names to concrete hex', () => {
@@ -304,4 +304,25 @@ test('within settles on the work or on the time limit, and never rejects', async
   await stuck;
 
   await within(Promise.reject(new Error('no')), 1000);
+});
+
+test('setLiveText clears a repeated message first, so it is read again', async () => {
+  const node = { textContent: '' };
+  setLiveText(node, 'Incorrect password.');
+  assert.equal(node.textContent, 'Incorrect password.');
+  setLiveText(node, 'Incorrect password.');
+  assert.equal(node.textContent, '');
+  await new Promise(r => setTimeout(r, 60));
+  assert.equal(node.textContent, 'Incorrect password.');
+  setLiveText(node, 'Enter your password.');
+  assert.equal(node.textContent, 'Enter your password.');
+});
+
+test('setLiveText drops a pending repeat when newer text arrives', async () => {
+  const node = { textContent: 'Incorrect password.' };
+  setLiveText(node, 'Incorrect password.');
+  setLiveText(node, 'Enter your password.');
+  setLiveText(node, 'Enter your password.');
+  await new Promise(r => setTimeout(r, 60));
+  assert.equal(node.textContent, 'Enter your password.');
 });

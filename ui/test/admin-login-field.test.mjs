@@ -40,7 +40,25 @@ const els = {
   'login-pw': field(),
   'login-err': field(),
   'login-form': { querySelectorAll: () => [] },
+  'login-reveal': {
+    attrs: { 'aria-pressed': 'false' },
+    listeners: {},
+    addEventListener(type, fn) {
+      (this.listeners[type] ||= []).push(fn);
+    },
+    getAttribute(k) {
+      return this.attrs[k];
+    },
+    setAttribute(k, v) {
+      this.attrs[k] = v;
+    },
+    querySelector: () => null,
+    click() {
+      for (const fn of this.listeners.click || []) fn();
+    },
+  },
 };
+els['login-pw'].type = 'password';
 globalThis.location = { host: 'stackyard.local', hostname: 'stackyard.local' };
 globalThis.document = {
   activeElement: null,
@@ -116,7 +134,7 @@ test('an empty sign-in says what is missing and ties it to the field', async () 
   requireLogin();
   els['login-pw'].value = '';
   submit();
-  await new Promise(r => setTimeout(r, 0));
+  await new Promise(r => setTimeout(r, 60));
   assert.match(els['login-err'].textContent, /login\.empty|Enter your password/);
   assert.equal(els['login-err'].style.display, 'block');
   assert.equal(els['login-pw'].attrs['aria-invalid'], 'true');
@@ -153,3 +171,38 @@ for (const [name, setUp] of [
     assert.equal(els['login-pw'].attrs['aria-describedby'], 'login-err');
   });
 }
+
+test('the same refusal twice is read again', async () => {
+  status = 401;
+  refusal = { error: 'Wrong password', kind: 'auth' };
+  requireLogin();
+  els['login-pw'].value = 'wrong';
+  submit();
+  await new Promise(r => setTimeout(r, 0));
+  const said = els['login-err'].textContent;
+  assert.ok(said);
+  els['login-pw'].value = 'wrong';
+  submit();
+  await new Promise(r => setTimeout(r, 0));
+  assert.equal(els['login-err'].textContent, '', 'unchanged text is not read again');
+  await new Promise(r => setTimeout(r, 60));
+  assert.equal(els['login-err'].textContent, said);
+});
+
+test('the password can be shown, is wired once, and is hidden again after sign-in', async () => {
+  const rev = els['login-reveal'];
+  requireLogin();
+  requireLogin();
+  assert.equal(rev.listeners.click.length, 1, 'each sign-in box would toggle the field once more');
+  rev.click();
+  assert.equal(els['login-pw'].type, 'text');
+  for (const [k, v] of Object.entries({ spellcheck: 'false', autocapitalize: 'none', autocorrect: 'off' }))
+    assert.equal(els['login-pw'].attrs[k], v, `a shown password keeps ${k} on`);
+  assert.equal(rev.attrs['aria-pressed'], 'true');
+  status = 200;
+  els['login-pw'].value = 'quiet otter lantern 42';
+  submit();
+  await new Promise(r => setTimeout(r, 0));
+  assert.equal(els['login-pw'].type, 'password');
+  assert.equal(rev.attrs['aria-pressed'], 'false');
+});

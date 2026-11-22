@@ -1,4 +1,4 @@
-import { mk } from '/js/utils.js?v=e9e22f08';
+import { mk } from '/js/utils.js?v=457d9918';
 
 /* Live widget mounts, so a rebuild can switch off what it is about to discard.
    mountScaledWidget starts an observer, a reload timer and touch listeners that
