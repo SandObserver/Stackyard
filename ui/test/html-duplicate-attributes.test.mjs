@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { pageWithScripts } from './widget-source.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -56,7 +57,7 @@ test('every page is checked', () => {
 });
 
 for (const page of pages) {
-  const markup = markupOf(fs.readFileSync(path.join(root, page), 'utf8'));
+  const markup = markupOf(pageWithScripts(path.join(root, page)));
 
   test(`${page} sets no attribute twice on one element`, () => {
     for (const tag of tagsOf(markup)) {

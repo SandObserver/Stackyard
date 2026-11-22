@@ -41,7 +41,6 @@ async function adGuard(ctx, base, config, fetchJSON) {
     num_blocked_filtering: d.num_blocked_filtering,
     num_replaced_safebrowsing: d.num_replaced_safebrowsing,
     num_replaced_parental: d.num_replaced_parental,
-    num_cached: d.num_cached,
   };
 }
 

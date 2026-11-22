@@ -1,6 +1,7 @@
 // @ts-check
 
-import { ICONS, symbol } from '/js/icon-set.js?v=361e54a5';
+import { parseMarkup, raw } from '/js/html.js?v=48f9dc21';
+import { ICONS, symbol } from '/js/icon-set.js?v=beda3062';
 
 const IN_OUT = 'cubic-bezier(.77,0,.175,1)';
 const CUBIC = 'cubic-bezier(.65,0,.35,1)';
@@ -364,7 +365,7 @@ function inline(svg, id) {
   const { defs, sym } = symbol(id, ICONS[id], 'solid', false, 2, { motion: true });
   /* Mask and clip ids must be unique per copy. A repeated id paints every copy with the first one's mask. */
   const body = `<defs>${defs}</defs>${sym.replace(/^<symbol[^>]*>|<\/symbol>$/g, '')}`.split(sid).join(uid);
-  const doc = new DOMParser().parseFromString(`<svg xmlns="http://www.w3.org/2000/svg">${body}</svg>`, 'image/svg+xml');
+  const doc = parseMarkup(raw(`<svg xmlns="http://www.w3.org/2000/svg">${body}</svg>`), 'image/svg+xml');
   if (doc.querySelector('parsererror')) return false;
   svg.setAttribute('viewBox', '0 0 24 24');
   svg.replaceChildren(...Array.from(doc.documentElement.childNodes, n => svg.ownerDocument.importNode(n, true)));

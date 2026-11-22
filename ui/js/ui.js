@@ -22,9 +22,9 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=9ed2b298';
-import { mountScaledWidget, teardownWidgets } from '/js/widget-frame.js?v=1468e826';
-import { t, currentLang } from '/js/i18n.js?v=99563c71';
+} from '/js/utils.js?v=e9e22f08';
+import { mountScaledWidget, teardownWidgets } from '/js/widget-frame.js?v=6f5b0dc5';
+import { t, currentLang } from '/js/i18n.js?v=82ba9da2';
 import { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
 import { DEFAULT_WIDGET_SIZE } from '/js/limits.js?v=ff61256e';
 import {
@@ -36,7 +36,7 @@ import {
   WIDEST_PHONE,
 } from '/js/mobile-metrics.js?v=ae661544';
 import { animate, easing, glide, isScripted, requestFrame, stopGlide } from '/js/frame-motion.js?v=911f7c03';
-import { openFolderGlass } from '/js/glass.js?v=11000724';
+import { openFolderGlass } from '/js/glass.js?v=7c376881';
 import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=b4828b62';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';

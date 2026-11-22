@@ -433,6 +433,23 @@ export function iconSvg(id, px = 24, variant = 'solid', cls = '') {
   return `<svg class="sy-icon${cls ? ` ${cls}` : ''}" width="${px}" height="${px}" aria-hidden="true" focusable="false"><use href="#sy-${variant}-${id}"/></svg>`;
 }
 
+/* Named in trusted-types beside POLICY_NAME in html.js. This module imports
+   nothing, so it keeps its own policy. It parses only the sprite built below. */
+export const SPRITE_POLICY_NAME = 'stackyard-icons';
+let spritePolicy;
+
+function spriteMarkup(src) {
+  if (spritePolicy === undefined) {
+    try {
+      spritePolicy =
+        /** @type {any} */ (globalThis).trustedTypes?.createPolicy(SPRITE_POLICY_NAME, { createHTML: s => s }) ?? null;
+    } catch {
+      spritePolicy = null;
+    }
+  }
+  return spritePolicy ? spritePolicy.createHTML(src) : src;
+}
+
 export function ensureSprite(doc = document, variant = 'solid') {
   if (doc.getElementById('sy-sprite')) return;
   let defs = '';
@@ -443,6 +460,6 @@ export function ensureSprite(doc = document, variant = 'solid') {
     syms += s.sym;
   }
   const src = `<svg xmlns="http://www.w3.org/2000/svg" id="sy-sprite" class="sy-sprite" width="0" height="0" aria-hidden="true" focusable="false"><defs>${defs}</defs>${syms}</svg>`;
-  const svg = new DOMParser().parseFromString(src, 'image/svg+xml').documentElement;
+  const svg = new DOMParser().parseFromString(spriteMarkup(src), 'image/svg+xml').documentElement;
   doc.body.prepend(doc.importNode(svg, true));
 }

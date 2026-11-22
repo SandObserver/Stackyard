@@ -4,7 +4,7 @@
    Permitting an attribute means validating a URL, scrubbing a style and
    stripping an event handler. */
 
-import { esc, raw } from '/js/html.js?v=c71f8903';
+import { esc, raw } from '/js/html.js?v=48f9dc21';
 
 export const ALLOWED_TAGS = Object.freeze(['strong', 'em', 'code', 'br']);
 /* br is void. It never has a closing tag and never wraps anything. */

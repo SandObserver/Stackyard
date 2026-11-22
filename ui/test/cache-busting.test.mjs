@@ -255,7 +255,7 @@ test('--check writes nothing, even with --release', () => {
 
 test('the widget template carries current stamps', () => {
   withTreeCopy(({ tmp, run }) => {
-    const page = path.join(tmp, 'docs', 'widget-template', 'index.html');
+    const page = path.join(tmp, 'docs', 'widget-template', 'widget.js');
     const src = fs.readFileSync(page, 'utf8');
     assert.match(src, /\/js\/widget-toolbox\.js\?v=[0-9a-f]{8}/);
     fs.writeFileSync(
@@ -264,6 +264,57 @@ test('the widget template carries current stamps', () => {
     );
     const r = run('--check');
     assert.equal(r.status, 1, 'a stale template stamp has to fail the check');
-    assert.match(r.stderr, /docs\/widget-template\/index\.html references \/js\/widget-toolbox\.js\?v=1,/);
+    assert.match(r.stderr, /docs\/widget-template\/widget\.js references \/js\/widget-toolbox\.js\?v=1,/);
+  });
+});
+
+/* A widget page is cached for a year under a stamp of its own text. Its script
+   is a separate file, so the page has to name the script's content. */
+test('--check fails when a widget page script changes and its page does not', () => {
+  withTreeCopy(({ tmp, run }) => {
+    const script = path.join(tmp, 'ui', 'widgets', 'dns', 'widget.js');
+    fs.appendFileSync(script, '\n');
+    const r = run('--check');
+    assert.equal(r.status, 1, 'a stale page script stamp has to fail the check');
+    assert.match(r.stderr, /ui\/widgets\/dns\/index\.html references widget\.js\?v=[0-9a-f]{8}, but its content is/);
+  });
+});
+
+test('write mode stamps a widget page script and the check then passes', () => {
+  withTreeCopy(({ tmp, run }) => {
+    const page = path.join(tmp, 'ui', 'widgets', 'clock', 'analog.html');
+    fs.writeFileSync(page, fs.readFileSync(page, 'utf8').replace(/src="analog\.js\?v=[0-9a-f]+"/, 'src="analog.js"'));
+    const r = run();
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /ui\/widgets\/clock\/analog\.html references analog\.js/);
+    assert.match(fs.readFileSync(page, 'utf8'), /<script src="analog\.js\?v=[0-9a-f]{8}"><\/script>/);
+    assert.equal(run('--check').status, 0);
+  });
+});
+
+test('a change to a widget page script changes that page stamp', () => {
+  withTreeCopy(({ tmp, run }) => {
+    const manifest = path.join(tmp, 'ui', 'widgets', 'github', 'widget.json');
+    const stamp = () => {
+      assert.equal(run('--release').status, 0);
+      return JSON.parse(fs.readFileSync(manifest, 'utf8')).entryVersions;
+    };
+    const before = stamp();
+    fs.appendFileSync(path.join(tmp, 'ui', 'widgets', 'github', 'pullrequests.js'), '\n');
+    const after = stamp();
+    assert.notEqual(after['pullrequests.html'], before['pullrequests.html']);
+    assert.equal(after['contributions.html'], before['contributions.html']);
+  });
+});
+
+/* A copied template is a widget of someone's own. Its page is not stamped, so
+   a stamp on its script would only go stale. */
+test('the widget template loads its script without a stamp', () => {
+  withTreeCopy(({ tmp, run }) => {
+    const page = path.join(tmp, 'docs', 'widget-template', 'index.html');
+    const before = fs.readFileSync(page, 'utf8');
+    assert.match(before, /src="widget\.js"/);
+    assert.equal(run().status, 0);
+    assert.equal(fs.readFileSync(page, 'utf8'), before);
   });
 });

@@ -4,8 +4,8 @@ import { AT_REST, GlassControl, lensLook } from '/js/glass-control.js?v=2995d503
 import { lensClaim, lensFrame, lensPicture, lensRelease } from '/js/glass-gpu.js?v=5cefbe56';
 import { behind, clamp, colour, css, dpr, isDark, over, pill, sized, unit } from '/js/glass-paint.js?v=800e4865';
 import { prefersReducedMotion } from '/js/glass-prefs.js?v=511e01c7';
-import { drawTabInks, pillPath, tabInks } from '/js/glass-tabs.js?v=63ac407b';
-import { holdIcons } from '/js/icon-motion.js?v=0b4fc669';
+import { drawTabInks, pillPath, tabInks } from '/js/glass-tabs.js?v=cecbcf6f';
+import { holdIcons } from '/js/icon-motion.js?v=7bfd91f5';
 
 /** Pointer travel in px before a press becomes a drag. */
 const DRAG_SLOP = 4;
@@ -97,7 +97,7 @@ export class GlassBar extends GlassControl {
     this.cv.setAttribute('aria-hidden', 'true');
     /** @type {HTMLElement|null} */
     this.lensEl = null;
-    /** @type {import('/js/glass-tabs.js?v=63ac407b').TabInks|null} */
+    /** @type {import('/js/glass-tabs.js?v=cecbcf6f').TabInks|null} */
     this.ink = null;
     this.inkStale = false;
     if (kind.css) {

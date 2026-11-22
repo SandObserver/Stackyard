@@ -1,5 +1,5 @@
-import { html, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=99563c71';
+import { html, setHtml } from '/js/html.js?v=48f9dc21';
+import { t } from '/js/i18n.js?v=82ba9da2';
 
 export function liftVeil() {
   document.body.classList.add('ready');

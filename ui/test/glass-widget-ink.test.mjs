@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pageWithScripts } from './widget-source.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const widgets = path.join(root, 'widgets');
@@ -112,13 +113,13 @@ function applied(rules, key, light) {
 test('every translucent widget view is checked', () => {
   const views = glassViews();
   assert.ok(views.length >= 4, views.join(', '));
-  for (const v of views) assert.match(fs.readFileSync(path.join(widgets, v), 'utf8'), /widget-theme\.js/, v);
+  for (const v of views) assert.match(pageWithScripts(path.join(widgets, v)), /widget-theme\.js/, v);
 });
 
 test('every ink on a translucent card clears its minimum on glass', () => {
   const failures = [];
   for (const view of glassViews()) {
-    const rules = inkRules(fs.readFileSync(path.join(widgets, view), 'utf8'));
+    const rules = inkRules(pageWithScripts(path.join(widgets, view)));
     const own = OWN_SURFACE.filter(([w]) => view.startsWith(w)).map(([, s]) => s);
     for (const light of [false, true]) {
       const keys = new Set(rules.map(r => `${r.tail}|${r.prop}`));

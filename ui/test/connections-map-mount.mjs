@@ -1,5 +1,5 @@
-/* Runs the connections map page against a fake DOM and toolbox. The page's
-   script is inline, so there is no module to import. */
+/* Runs the connections map page's script against a fake DOM and toolbox. Its
+   imports are replaced, so it runs as a function body, not as a module. */
 
 import fs from 'node:fs';
 import { register } from 'node:module';
@@ -12,9 +12,7 @@ globalThis.location ??= { search: '' };
 const { rgbOf, errorLine } = await import('../js/widget-toolbox.js');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const source = fs.readFileSync(path.join(root, 'widgets/connections/connections-map.html'), 'utf8');
-const scripts = [...source.matchAll(/<script(?: type="module")?>([\s\S]*?)<\/script>/gi)].map(m => m[1]);
-const moduleScript = scripts.find(s => /^import /m.test(s));
+const moduleScript = fs.readFileSync(path.join(root, 'widgets/connections/connections-map.js'), 'utf8');
 const importLine = /^import \{([^}]+)\} from '\/js\/widget-toolbox\.js[^']*';$/m;
 const worldLine = /^import \* as (\w+) from '\.\/world-map\.js';$/m;
 const toolboxNames = moduleScript

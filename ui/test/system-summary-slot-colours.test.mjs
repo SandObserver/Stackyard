@@ -3,15 +3,15 @@
    it is validated before it reaches a style. */
 
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { register } from 'node:module';
 import { test } from 'node:test';
+import { pageWithScripts } from './widget-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 globalThis.location ??= { search: '' };
 const { colorOrFallback } = await import('../js/widget-toolbox.js');
 
-const src = fs.readFileSync(new URL('../widgets/system-summary/index.html', import.meta.url), 'utf8');
+const src = pageWithScripts(new URL('../widgets/system-summary/index.html', import.meta.url));
 
 const fn = src.match(/function slotColour\(slot, i\) \{[\s\S]*?\n\}/);
 assert.ok(fn, 'slotColour is defined in the widget');

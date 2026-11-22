@@ -647,6 +647,23 @@
   ],
   "exclude": [
     "ui/widgets/*/data.js",
-    "ui/widgets/*/demo.js"
+    "ui/widgets/*/demo.js",
+    "ui/widgets/backup/backup.js",
+    "ui/widgets/books/widget.js",
+    "ui/widgets/clock/analog.js",
+    "ui/widgets/clock/captain.js",
+    "ui/widgets/clock/digital.js",
+    "ui/widgets/connections/connections-map.js",
+    "ui/widgets/connections/connections-vpn.js",
+    "ui/widgets/dashboard-switch/widget.js",
+    "ui/widgets/disk-health/widget.js",
+    "ui/widgets/dns/widget.js",
+    "ui/widgets/downloads/widget.js",
+    "ui/widgets/github/contributions.js",
+    "ui/widgets/github/pullrequests.js",
+    "ui/widgets/nowplaying/widget.js",
+    "ui/widgets/system-summary/widget.js",
+    "ui/widgets/upnext/widget.js",
+    "ui/widgets/weather/widget.js"
   ]
 }

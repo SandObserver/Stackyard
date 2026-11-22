@@ -1,13 +1,13 @@
 /* Optional toolbox for widget authors: data access, self-contained visuals and
    a fetch/render loop. */
 
-import { esc, html, setHtml } from '/js/html.js?v=c71f8903';
+import { esc, html, parseMarkup, raw, setHtml } from '/js/html.js?v=48f9dc21';
 import { isSafeLinkUrl } from '/js/link-url.js?v=0bffa1dd';
 import { jitter } from '/js/jitter.js?v=087a1fcf';
-import { errorState as _errorState, errorKind, errorCopy, kindGlyph } from '/js/widget-error.js?v=f8d3aca3';
+import { errorState as _errorState, errorKind, errorCopy, kindGlyph } from '/js/widget-error.js?v=7af0beb3';
 import { formatNumber, numberSymbols, setNumberLanguage } from '/js/format-number.js?v=263fa390';
 
-export { esc, html, setHtml };
+export { esc, html, parseMarkup, raw, setHtml };
 export { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
 
 /* Escaping cannot make a CSS value safe. `red; background-image: url(...)`
@@ -116,7 +116,11 @@ export async function fetchData(endpoint, opts = {}) {
   const qs = query ? '?' + query : '';
   let r;
   for (let tries = 0; ; tries++) {
-    r = await fetch(`/api/widget-data/${encodeURIComponent(id)}${qs}`, { cache: 'no-store', signal: opts.signal });
+    r = await fetch(`/api/widget-data/${encodeURIComponent(id)}${qs}`, {
+      cache: 'no-store',
+      signal: opts.signal,
+      priority: _rate > 1 ? 'low' : 'auto',
+    });
     if (r.status !== 202) break;
     if (tries >= PENDING_TRIES) {
       throw Object.assign(new Error('The service did not respond in time.'), { status: 202, kind: 'timeout' });

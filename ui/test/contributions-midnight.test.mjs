@@ -1,7 +1,7 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import * as calendar from '../js/contribution-calendar.js';
+import { pageWithScripts } from './widget-source.mjs';
 
 const TZ = process.env.TZ;
 after(() => {
@@ -14,7 +14,7 @@ const CALENDAR_IMPORT = /^import \{([^}]+)\} from '\/js\/contribution-calendar\.
 const DAY_MAP = 'const dayOf = new WeakMap();';
 
 function pageScript() {
-  const src = fs.readFileSync(new URL('../widgets/github/contributions.html', import.meta.url), 'utf8');
+  const src = pageWithScripts(new URL('../widgets/github/contributions.html', import.meta.url));
   const body = src.match(/<script type="module">([\s\S]*?)<\/script>/)[1];
   assert.match(body, TOOLBOX_IMPORT);
   assert.match(body, CALENDAR_IMPORT);

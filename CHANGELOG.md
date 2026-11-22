@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Weather widget credits its data provider in Settings and in its tooltip.
 
+- Log Content Security Policy and Trusted Types violations to the container log.
+
+- Warn at startup about a widget page with inline script, which a later release
+  blocks.
+
 ### Changed
 
 - Pick a local System Summary temperature by sensor name, starting on the CPU.
@@ -50,6 +55,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Wait at least 3 seconds between widget polls, whatever interval a widget asks
   for.
+
+- Settings can be installed to the home screen as the same app as the dashboard.
+
+- The Settings shortcut of an installed app has its own icon.
+
+- Reload custom widgets less often while their page is out of view.
+
+- Start dashboard polling only when the tab is visible.
+
+- Skip downloading the whole config on every dashboard check when nothing
+  changed.
+
+- Make Settings text follow the browser's text size setting.
+
+- Draw native checkboxes and radio buttons in the accent colour.
+
+- Load each widget page's script from a file next to the page.
+
+- Serve only image types from the icons folder.
 
 ### Removed
 
@@ -119,6 +143,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Raise destructive button text to WCAG AA contrast in light and dark mode.
 
 - The Docker image and the demo site include the Stackyard licence and notice.
+
+- Show custom widgets that embed a page from another address.
+
+- The AdGuard Home DNS widget's screen-reader summary no longer reports a cached
+  count of 0.
+
+- Size-specific Apple touch icon requests, such as
+  `/apple-touch-icon-180x180.png`, return the dashboard icon instead of 404.
+
+- The admin page shows the dashboard icon in browser tabs and Home Screen
+  bookmarks.
 
 ### Security
 
