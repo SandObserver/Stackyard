@@ -23,12 +23,13 @@ test('a widget form redraw keeps the add-new type chooser', async () => {
     const body = dom.document.getElementById('ev-body');
     const card = body.firstElementChild;
     assert.equal(card.classList.contains('add-new-card'), true, 'a new item opens without the type chooser');
-    const tile = kind => card.querySelector(`.tile-opt[data-ctype="${kind}"]`);
-    assert.equal(tile('app').getAttribute('aria-pressed'), 'true');
-    tile('widget').click();
+    const radio = kind => card.querySelector(`.tile-opt[data-ctype="${kind}"] input[type="radio"]`);
+    assert.equal(radio('app').checked, true);
+    radio('widget').checked = true;
+    radio('widget').dispatchEvent({ type: 'change', bubbles: true });
     assert.equal(body.firstElementChild, card, 'switching type rebuilt or dropped the chooser');
-    assert.equal(tile('widget').getAttribute('aria-pressed'), 'true');
-    assert.equal(tile('app').getAttribute('aria-pressed'), 'false');
+    assert.equal(radio('widget').checked, true);
+    assert.equal(radio('app').checked, false);
     state.items = [{ id: 'a', type: 'app', label: 'A', href: 'http://a.local' }];
     openEditor('a');
     assert.equal(body.querySelector('.add-new-card'), null, 'an existing item offers a type change');
@@ -41,9 +42,17 @@ test('a widget form redraw keeps the add-new type chooser', async () => {
   assert.doesNotMatch(form, /body\.replaceChildren\(\);/, 'a bare clear drops the chooser');
 });
 
-test('the size chooser tells assistive technology which size is chosen', () => {
+test('the type and size choosers are radio groups', () => {
+  const form = read('js/admin-widget-form.js');
+  assert.match(form, /<fieldset class="tile-grp" aria-labelledby="wsize-hdr">/);
   assert.match(
-    read('js/admin-widget-form.js'),
-    /class="tile-opt[^"]*"[^>]*aria-pressed="\$\{String\(s === state\._wsize\)\}"/,
+    form,
+    /<input type="radio" name="wsize" value="\$\{s\}"\$\{raw\(s === state\._wsize \? ' checked' : ''\)\}>/,
   );
+  assert.doesNotMatch(form, /aria-pressed/);
+  const editor = read('js/admin-editor.js');
+  assert.match(editor, /document\.createElement\('fieldset'\)/);
+  assert.match(editor, /document\.createElement\('legend'\)/);
+  assert.match(editor, /<input type="radio" name="ev-ctype" value="\$\{kind\}">/);
+  assert.doesNotMatch(editor, /aria-pressed/);
 });

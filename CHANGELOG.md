@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.24.0] - 2026-11-22
+
 ### Added
 
 - Glass switches, sliders and segmented controls in the admin, and a glass tab
@@ -14,13 +16,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Weather widget credits its data provider in Settings and in its tooltip.
 
+- Log Content Security Policy and Trusted Types violations to the container log.
+
+- Warn at startup about a widget page with inline script, which a later release
+  blocks.
+
+- Add a Show password button to the sign-in box.
+
 ### Changed
 
 - Pick a local System Summary temperature by sensor name, starting on the CPU.
 
 - Drop the unneeded temperature mount from the example `docker-compose.yml`.
 
-- Require Safari 26.2 or newer on macOS and iOS.
+- Test on Safari 26.2 or newer on macOS and iOS.
 
 - Bend the open folder's glass more and frost it less.
 
@@ -43,13 +52,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Drop unknown keys inside the server settings on save, as unknown top-level
   settings already were.
 
-- Require Node.js 26 or later to run the API outside Docker.
+- Test the API on Node.js 26 when it runs outside Docker.
 
 - Open the Link URL when you tap the Weather, Now Playing or Downloads widget on
   a phone.
 
 - Wait at least 3 seconds between widget polls, whatever interval a widget asks
   for.
+
+- Settings can be installed to the home screen as the same app as the dashboard.
+
+- The Settings shortcut of an installed app has its own icon.
+
+- Reload custom widgets less often while their page is out of view.
+
+- Start dashboard polling only when the tab is visible.
+
+- Skip downloading the whole config on every dashboard check when nothing
+  changed.
+
+- Make Settings text follow the browser's text size setting.
+
+- Draw native checkboxes and radio buttons in the accent colour.
+
+- Load each widget page's script from a file next to the page.
+
+- Serve only image types from the icons folder.
+
+- Glass edges bend the wallpaper like the glass in iOS and stay sharp on
+  high-density screens.
+
+- Tab bar icons and labels bend smoothly under the moving lens on phones.
+
+- Keep Set available on the first-run prompt, and move focus to the first field
+  to fix.
+
+- Show visible labels on the first-run prompt's fields.
+
+- Let password managers save the password set in Settings.
+
+- Name the open Settings section in the page title.
+
+- Show the badge popover without motion when keyboard focus opens it.
 
 ### Removed
 
@@ -119,6 +163,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Raise destructive button text to WCAG AA contrast in light and dark mode.
 
 - The Docker image and the demo site include the Stackyard licence and notice.
+
+- Show custom widgets that embed a page from another address.
+
+- The AdGuard Home DNS widget's screen-reader summary no longer reports a cached
+  count of 0.
+
+- Size-specific Apple touch icon requests, such as
+  `/apple-touch-icon-180x180.png`, return the dashboard icon instead of 404.
+
+- The admin page shows the dashboard icon in browser tabs and Home Screen
+  bookmarks.
+
+- Keep the side margin in an open folder on desktop when app titles are off.
+
+- Stop the arrow keys from turning the page while you type in a field, hold a
+  modifier key, or have a dialog open.
+
+- Keep keyboard focus on the visible page after a page turn.
+
+- Stop a second tap on a badge from closing and reopening its popover.
+
+- Make the badge popover usable inside an open folder.
+
+- Let screen readers read every badge value without opening the popover.
+
+- Return focus to the button that opened a prompt after the prompt finishes.
+
+- Keep Search open when Escape cancels text being composed.
+
+- Announce the search result count once typing pauses.
+
+- Keep the Unsplash link in the photo credit fully visible.
+
+- Tell screen readers that the Search pill and folder tiles open a dialog.
+
+- Keep the first-run password prompt open when Escape is pressed twice.
+
+- Read the password strength hint only when its level changes.
+
+- Say a password mismatch on the first-run prompt only after the confirmation
+  field is left.
+
+- Announce a repeated sign-in or setup error again.
+
+- Announce required fields as required, and stop reading the required star as
+  "star".
+
+- Mark the app name, app address, folder name and custom widget URL as required.
+
+- Read each field's hint together with the field in Settings.
+
+- Show an error for a poll interval outside 10 to 3600 seconds instead of
+  silently changing it.
+
+- Announce the type and size choosers as radio groups.
+
+- Announce "Working" on slow row actions.
 
 ### Security
 
@@ -2854,7 +2955,8 @@ Everything before 1.0.0 was iterative development, condensed here:
 - **i18n**: full localization added
 - **Tooling**: linting, type-checking, test coverage, core docs added
 
-[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.23.0...HEAD
+[Unreleased]: https://github.com/SandObserver/stackyard/compare/v1.24.0...HEAD
+[1.24.0]: https://github.com/SandObserver/stackyard/compare/v1.23.0...v1.24.0
 [1.23.0]: https://github.com/SandObserver/stackyard/compare/v1.22.0...v1.23.0
 [1.22.0]: https://github.com/SandObserver/stackyard/compare/v1.21.0...v1.22.0
 [1.21.0]: https://github.com/SandObserver/stackyard/compare/v1.20.0...v1.21.0

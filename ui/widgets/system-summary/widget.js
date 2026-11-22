@@ -1,0 +1,522 @@
+import { contrastInk, cardContrast, rollText, colorOrFallback, columns, barFill, setBar, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, byteScale, formatBytes, formatByteRate, formatDuration, errorState, cssZoom, linkTo, openUrl, formatList, getConfig, failureName } from '/js/widget-toolbox.js?v=039ea657';
+await loadStrings();
+const REFRESH_SECONDS = ['5', '10', '30', '60'];
+const SPEED_MS = 60000;
+const THROUGHPUT_MS = 3000;
+/* Every tick is a call to someone else's server, so a remote source is read at
+   the same rate as the rest of the widget rather than every three seconds. */
+const REMOTE_THROUGHPUT_MS = 10000;
+const SEED_STEP_MS = 10000;
+const COLS = 24;
+const SLOT_DEFS = ['#FF375F', '#30D158', '#00D2E0'];
+const LANG = new URLSearchParams(location.search).get('lang') || 'en';
+const DEFAULT_SLOTS = [{ type: 'cpu' }, { type: 'ram' }, { type: 'disk', primary: '/' }];
+const API      = '/api';
+
+let cfg = null;      /* widget config from /api/widget-config/:id */
+const isRemote = () => (cfg?.widgetConfig?.statProvider || 'system') !== 'system';
+let tickMs = 10000;
+const ROLL_MIN_CHANGE = 5;
+function showReading(r, value) {
+  const prev = r.shownReading;
+  r.shownReading = value;
+  const large = value !== null && prev != null && Math.abs(value - prev) >= ROLL_MIN_CHANGE;
+  rollText(r.val, r.latest, { instant: !large });
+}
+let medium = true;
+let lastSampleAt = 0;
+
+const history = [{}, {}, {}];
+let stamps = Array(COLS).fill(null);
+const rows = [];
+
+const LABELS = {
+  cpu: ['slots.type.opt.cpu', 'CPU'],
+  ram: ['slots.type.opt.ram', 'RAM'],
+  temp: ['slots.type.opt.temp', 'Temperature'],
+  disk: ['row.disk', 'Disk'],
+  iowait: ['slots.type.opt.iowait', 'IO Wait'],
+  procs: ['slots.type.opt.procs', 'Processes'],
+};
+/* slot.type can arrive by import. Write it only as text. */
+function slotLabel(slot) {
+  const l = LABELS[slot?.type];
+  return l ? wt(l[0], l[1]) : String(slot?.type || '');
+}
+
+function slotColour(slot, i) {
+  return colorOrFallback(slot?.color, SLOT_DEFS[i] || SLOT_DEFS[0]);
+}
+
+function refreshSeconds(wc) {
+  const v = String(wc?.refresh ?? '10');
+  return REFRESH_SECONDS.includes(v) ? Number(v) : 10;
+}
+
+async function boot() {
+  cfg = await getConfig().catch(() => null);
+  if (!cfg) cfg = { widgetType: 'system-summary', widgetSize: 'medium', widgetConfig: {} };
+
+  const wc = cfg.widgetConfig || {};
+  tickMs = refreshSeconds(wc) * 1000;
+  medium = (cfg.widgetSize || 'medium') === 'medium';
+  buildShell();
+  new MutationObserver(applyInks).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  if (medium) startNetwork(wc.network || {});
+
+  const widgetEl = document.getElementById('widget');
+  /* Leave .net out. A stats reply would clear the network line's own failure fade. */
+  const state = errorState({ root: document.body, caption: document.getElementById('cap'),
+    content: () => [...widgetEl.querySelectorAll(medium ? '.head, .plot, .disk' : '.row')] });
+
+  const linkEl = document.getElementById('ss-link');
+  let target = '';
+  const setLink = d => {
+    target = d?.link || wc.href || '';
+    document.body.classList.toggle('linked', linkTo(linkEl, target));
+  };
+  setLink(null);
+  /* The charts and disk rows take presses for their own detail, so a press there never opens the link. */
+  document.body.addEventListener('click', e => {
+    if (target && pressOpensLink(e.target)) openUrl(target);
+  });
+
+  poll({ fetch: fetchStats, interval: tickMs,
+    render: d => { state.ok(); setLink(d); applyStats(d); },
+    onError: ({ error, everOk, stale, since }) => {
+      if (everOk && !stale) return;
+      const line = state.fail(error, { since, inert: everOk });
+      /* #widget is aria-hidden, so the summary paragraph is the only thing a
+         screen reader reads here. */
+      const sum = document.getElementById('sr-sum');
+      if (sum) sum.textContent = failureName(line, since);
+    } });
+}
+
+/* Keep the <bdi>. Without it a right-to-left name or time reads in the wrong order. */
+function setLabel(node, text) {
+  node.replaceChildren(el('bdi', null, text));
+}
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+
+function buildShell() {
+  const w = document.getElementById('widget');
+  const wc = cfg.widgetConfig || {};
+  const configured = Array.isArray(wc.slots) ? wc.slots.filter(s => s && typeof s === 'object').slice(0, 3) : [];
+  const slots = configured.length ? configured : DEFAULT_SLOTS;
+  const net = medium && wc.network?.enabled ? wc.network : null;
+
+  w.className = 'widget ' + (medium ? 'size-medium' : 'size-small');
+  if (medium) w.style.gridTemplateRows = `repeat(${slots.length + (net ? 1 : 0)}, auto)`;
+  slots.forEach((slot, i) => {
+    const label = slotLabel(slot);
+    const colour = slotColour(slot, i);
+    const row = el('div', 'row');
+    const lbl = el('span', 'lbl');
+    setLabel(lbl, label);
+    const val = el('span', 'val', '—');
+    const entry = { slot, idx: i, label, colour, el: row, lbl, val, latest: '—', sizes: '', sizeList: [], hover: null };
+    history[i].vals = Array(COLS).fill(null);
+
+    if (!medium) {
+      row.append(lbl, val);
+      if (slot.type === 'disk') {
+        entry.hit = row;
+        holdToShow(row, on => showSizes(entry, on));
+      }
+    } else {
+      const head = el('div', 'head');
+      head.append(lbl, val);
+      row.append(head);
+      if (slot.type === 'disk') {
+        const box = el('div', 'disk');
+        const bars = el('div', 'bars');
+        entry.bar = barFill(0, { height: 8, radius: 4, track: null, color: colour });
+        bars.append(entry.bar);
+        if (slot.secondary) {
+          entry.bar2 = barFill(0, { height: 4, radius: 2, track: null, color: colour });
+          entry.bar2.classList.add('second');
+          bars.append(entry.bar2);
+        }
+        entry.sizeEl = el('span', 'sizes');
+        entry.hit = box;
+        entry.box = box;
+        box.append(bars, entry.sizeEl);
+        holdToShow(box, on => showSizes(entry, on));
+        row.append(box);
+      } else {
+        entry.chart = columns({ count: COLS, color: colour, track: null });
+        const plot = el('div', 'plot');
+        entry.plot = plot;
+        plot.append(entry.chart.el);
+        const scrub = e => {
+          entry.hover = entry.chart.indexAt(e.clientX);
+          showHover(entry);
+        };
+        plot.addEventListener('pointerdown', scrub);
+        plot.addEventListener('pointermove', scrub);
+        plot.addEventListener('pointerleave', () => endHover(entry));
+        plot.addEventListener('pointercancel', () => endHover(entry));
+        plot.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') endHover(entry); });
+        row.append(plot);
+      }
+    }
+    w.append(row);
+    rows.push(entry);
+  });
+
+  if (net) {
+    const n = el('div', 'net');
+    n.id = 'net-val';
+    setHtml(n, netRowHtml(net));
+    w.append(n);
+  }
+  if (medium) {
+    const sizer = el('div', 'sizer');
+    const longest = Math.ceil(((COLS - 1) * tickMs) / 60000);
+    for (const ms of [59000, 600000, longest * 60000]) sizer.append(el('span', 'lbl', ageText(ms)));
+    w.querySelector('.head')?.append(sizer);
+  }
+  applyInks();
+  watchHoverEnd();
+}
+
+/* Never recolour a fill: the user picked it. Only the figure's ink is adjusted. */
+function applyInks() {
+  for (const r of rows) {
+    r.el.style.setProperty('--ink', contrastInk(r.colour, 4.5));
+    r.el.classList.toggle('faint', cardContrast(r.colour) < 1.5);
+  }
+}
+
+function pressOpensLink(el) { return !el.closest('.plot, .hold, #ss-link'); }
+
+function holdToShow(target, show) {
+  target.classList.add('hold');
+  target.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') show(true); });
+  target.addEventListener('pointerdown', () => show(true));
+  target.addEventListener('pointerleave', () => show(false));
+  target.addEventListener('pointercancel', () => show(false));
+  target.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') show(false); });
+}
+
+function showSizes(entry, on) {
+  const show = on && !!entry.sizes;
+  if (entry.box) {
+    entry.box.classList.toggle('show', show);
+  } else {
+    entry.val.classList.toggle('detail', show);
+    entry.val.classList.toggle('two', show && entry.sizeList.length > 1);
+    entry.val.textContent = show && entry.sizeList.length < 2 ? entry.sizes : show ? '' : entry.latest;
+    if (show && entry.sizeList.length > 1) for (const line of entry.sizeList) entry.val.append(el('span', null, line));
+  }
+  entry.showing = show;
+}
+
+/* Keep these. Safari can skip pointerleave on a quick exit from the frame and
+   leave a past reading on screen. */
+function endAllHovers() {
+  for (const r of rows) {
+    if (r.chart) endHover(r);
+    if (r.showing) showSizes(r, false);
+  }
+}
+function watchHoverEnd() {
+  document.addEventListener('pointermove', e => {
+    for (const r of rows) {
+      if (r.chart && r.hover !== null && !r.plot.contains(/** @type {Node} */ (e.target))) endHover(r);
+      if (r.showing && !r.hit.contains(/** @type {Node} */ (e.target))) showSizes(r, false);
+    }
+  });
+  document.documentElement.addEventListener('pointerleave', endAllHovers);
+  document.documentElement.addEventListener('mouseleave', endAllHovers);
+  window.addEventListener('blur', endAllHovers);
+  document.addEventListener('visibilitychange', endAllHovers);
+}
+
+const rtf = (() => {
+  try {
+    return new Intl.RelativeTimeFormat(LANG, { numeric: 'auto', style: 'short' });
+  } catch {
+    return null;
+  }
+})();
+function ageText(ms) {
+  const s = Math.max(0, Math.round(ms / 1000));
+  if (!rtf) return '';
+  return s < 60 ? rtf.format(-s, 'second') : rtf.format(-Math.round(s / 60), 'minute');
+}
+
+function holdColumns(on) {
+  const w = document.getElementById('widget');
+  if (!on) {
+    if (!rows.some(r => r.hover !== null)) w.style.gridTemplateColumns = '';
+    return;
+  }
+  if (w.style.gridTemplateColumns) return;
+  const head = w.querySelector('.head');
+  if (head) w.style.gridTemplateColumns = `${head.getBoundingClientRect().width / cssZoom()}px minmax(0, 1fr)`;
+}
+
+function showHover(entry) {
+  const i = entry.hover;
+  if (i === null) return;
+  holdColumns(true);
+  const v = history[entry.idx].vals[i];
+  entry.chart.mark(i);
+  setLabel(entry.lbl, stamps[i] ? ageText(Date.now() - stamps[i]) : entry.label);
+  entry.val.textContent = valueText(entry.slot.type, v ?? null);
+}
+
+function endHover(entry) {
+  if (entry.hover === null) return;
+  entry.hover = null;
+  holdColumns(false);
+  entry.chart.mark(null);
+  setLabel(entry.lbl, entry.label);
+  entry.val.textContent = entry.latest;
+}
+
+const ARROW_DOWN = html`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v15M6 13l6 6 6-6"/></svg>`;
+const ARROW_UP = html`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6"/></svg>`;
+
+function netRowHtml(net) {
+  if ((net.mode || 'speed') === 'uptime') {
+    return html`<span class="net-item">${wt('network.mode.opt.uptime', 'Uptime')} <span id="net-uptime" dir="auto">—</span></span>`;
+  }
+  return html`<span class="net-item">${ARROW_DOWN}<span id="net-dn" dir="auto">—</span></span><span class="net-item">${ARROW_UP}<span id="net-up" dir="auto">—</span></span>`;
+}
+
+function startNetwork(net) {
+  if (!net.enabled) return;
+  const mode = net.mode || 'speed';
+  /* Uptime mode needs no extra poll, it updates from the stats loop. */
+  const netFailed = on => {
+    const row = document.getElementById('net-val');
+    if (row) row.classList.toggle('wt-inert', on);
+    if (!on) return;
+    for (const name of ['net-dn', 'net-up', 'net-uptime']) {
+      const n = document.getElementById(name);
+      if (n) n.textContent = '—';
+    }
+  };
+  if (mode === 'speed')
+    poll({ fetch: fetchSpeed, interval: SPEED_MS,
+      render: d => { netFailed(false); applySpeed(d); },
+      onError: ({ stale }) => { if (stale) netFailed(true); } });
+  if (mode === 'throughput')
+    poll({ fetch: fetchThroughput, interval: isRemote() ? Math.max(REMOTE_THROUGHPUT_MS, tickMs) : THROUGHPUT_MS,
+      render: d => { netFailed(false); applyThroughput(d); },
+      onError: ({ stale }) => { if (stale) netFailed(true); } });
+}
+
+/* Takes the tail of a supplied past, one point per tick, and leaves room for
+   the live value the same tick appends. Runs once per slot, while the chart
+   still holds no readings. */
+function seedFromPast(slot, i, past, step = 1) {
+  const h = history[i].vals;
+  if (!past || history[i].seeded || h.some(v => v !== null)) return;
+  history[i].seeded = true;
+
+  let src = null;
+  if (slot.type === 'cpu') src = past.cpu;
+  else if (slot.type === 'ram') src = past.ram;
+  else if (slot.type === 'iowait') src = past.iowait;
+  else if (slot.type === 'procs') src = past.procs;
+  else if (slot.type === 'temp') {
+    src = past.temps?.[tempKey(slot)];
+  }
+  if (!Array.isArray(src) || !src.length) return;
+
+  const want = h.length - 1;
+  const tail = [];
+  for (let k = src.length - step; k >= 0 && tail.length < want; k -= step) tail.unshift(src[k]);
+  history[i].vals = Array(h.length - tail.length).fill(null).concat(tail);
+}
+
+/* Must match tempKey in data.js. */
+function tempKey(slot) {
+  const named = isRemote() ? slot.sensor : slot.localSensor;
+  if (named) return named;
+  return Number.isInteger(slot.thermalZone) ? slot.thermalZone : 0;
+}
+
+const reading = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
+
+function readingFor(slot, data) {
+  if (slot.type === 'cpu') return reading(data.cpu);
+  if (slot.type === 'ram') return reading(data.ram);
+  if (slot.type === 'iowait') return reading(data.iowait);
+  if (slot.type === 'procs') return reading(data.procs);
+  if (slot.type === 'temp') {
+    return reading(data.temps?.[tempKey(slot)]);
+  }
+  return null;
+}
+
+function valueText(type, v) {
+  if (v === null) return '—';
+  if (type === 'temp') return formatNumber(Math.round(v)) + '°';
+  if (type === 'procs') return formatNumber(Math.round(v));
+  return formatNumber(Math.round(Math.min(v, 100))) + '%';
+}
+
+function scaleFor(type, vals) {
+  if (type !== 'procs') return { min: 0, max: 100 };
+  const nums = vals.filter(v => v !== null);
+  if (!nums.length) return {};
+  const lo = Math.min(...nums), hi = Math.max(...nums);
+  if (hi === lo) return { min: lo - 1, max: hi + 1 };
+  const mean = nums.reduce((a, b) => a + b, 0) / nums.length;
+  return { min: lo - ((hi - lo) * 12) / 88, max: hi, dim: v => v <= mean };
+}
+
+/* totalGb counts binary gigabytes (1024 ** 3 bytes). */
+function sizeParts(d) {
+  const total = reading(d?.totalGb);
+  const pct = share(d);
+  if (!total || pct === null) return null;
+  const bytes = total * 1024 ** 3;
+  const used = (pct / 100) * bytes;
+  const { unit, digits } = byteScale(bytes, { min: 'gigabyte', digits: (_v, u) => (u === 'gigabyte' ? 0 : 1) });
+  const one = { min: unit, max: unit, digits: () => digits };
+  return {
+    used: formatNumber(byteScale(used, one).value, { maximumFractionDigits: digits }),
+    usedFull: formatBytes(used, one),
+    total: formatBytes(bytes, one),
+  };
+}
+const sizeText = p => (p ? `${p.used} / ${p.total}` : '');
+const sizeSpoken = p =>
+  p ? wt('sr.diskSize', '{used} of {total}', { used: p.usedFull, total: p.total }) : '';
+
+const share = d => { const v = reading(d?.usedPct); return v === null ? null : Math.min(v, 100); };
+
+function applyStats(raw) {
+  const data = raw && typeof raw === 'object' ? raw : {};
+  const byMount = new Map();
+  for (const d of Array.isArray(data.disks) ? data.disks : []) if (d && typeof d.mount === 'string') byMount.set(d.mount, d);
+
+  /* Clear after a gap longer than the chart, or new readings join unrelated old ones. */
+  const now = Date.now();
+  if (lastSampleAt && now - lastSampleAt > tickMs * COLS) {
+    for (const h of history) if (h.vals) h.vals = Array(COLS).fill(null);
+    stamps = Array(COLS).fill(null);
+  }
+  lastSampleAt = now;
+  stamps.push(now);
+  stamps.shift();
+
+  const step = Math.max(1, Math.round(tickMs / SEED_STEP_MS));
+  const spoken = [];
+  rows.forEach((r, i) => {
+    const slot = r.slot;
+    if (slot.type === 'disk') {
+      const first = byMount.get(slot.primary || '/');
+      const second = slot.secondary ? byMount.get(slot.secondary) : null;
+      const p = share(first);
+      const s = share(second);
+      const firstSize = sizeParts(first);
+      const secondSize = sizeParts(second);
+      r.latest = valueText('disk', p);
+      r.sizeList = [sizeText(firstSize), sizeText(secondSize)].filter(Boolean);
+      r.sizes = r.sizeList.join(' · ');
+      if (r.sizeEl) r.sizeEl.textContent = r.sizes;
+      if (!r.showing || r.box) showReading(r, p);
+      else showSizes(r, true);
+      if (r.bar) setBar(r.bar, p);
+      if (r.bar2) setBar(r.bar2, s);
+      /* #widget is aria-hidden. The summary must carry the sizes and the second disk. */
+      if (p !== null) spoken.push(`${r.label} ${r.latest}${firstSize ? ` (${sizeSpoken(firstSize)})` : ''}`);
+      if (s !== null)
+        spoken.push(`${String(slot.secondary)} ${valueText('disk', s)}${secondSize ? ` (${sizeSpoken(secondSize)})` : ''}`);
+      return;
+    }
+    /* Seeded columns are one past point apart even at a faster refresh, or hover ages are wrong. */
+    if (!r.seededStamps && data.history) {
+      r.seededStamps = true;
+      stamps = stamps.map((t, k) => t ?? now - (COLS - 1 - k) * step * SEED_STEP_MS);
+    }
+    seedFromPast(slot, i, data.history, step);
+    const v = readingFor(slot, data);
+    const h = history[i].vals;
+    h.push(v);
+    h.shift();
+    r.latest = valueText(slot.type, v);
+    if (r.chart) r.chart.update(h, scaleFor(slot.type, h));
+    if (r.hover === null) showReading(r, v);
+    else showHover(r);
+    if (v !== null) spoken.push(`${r.label} ${r.latest}`);
+  });
+
+  /* Slot 4 in Uptime mode reads from the same system poll. */
+  const netCfg = cfg.widgetConfig?.network || {};
+  if (medium && netCfg.enabled && (netCfg.mode || 'speed') === 'uptime') {
+    const up = document.getElementById('net-uptime');
+    if (up) up.textContent = reading(data.uptime) === null ? '—' : fmtUptime(data.uptime);
+  }
+
+  const sum = document.getElementById('sr-sum');
+  if (sum) sum.textContent = formatList(spoken, 'plain');
+}
+
+/* The server omits the seeded past unless this asks for it. */
+let wantSeed = true;
+async function fetchStats() {
+  const d = await fetchData('system', wantSeed ? { params: { seed: '1' } } : {});
+  wantSeed = false;
+  return d;
+}
+
+/* toFixed in the reader's digits. */
+const fixed = (v, d) => formatNumber(v, { minimumFractionDigits: d, maximumFractionDigits: d, useGrouping: false });
+
+function fmtMbps(v) {
+  if (v == null || isNaN(v)) return wt('ui.noData','No data');
+  return v >= 1000 ? wt('ui.gbps', '{value} Gbps', { value: fixed(v/1000, 1) }) : wt('ui.mbps', '{value} Mbps', { value: fixed(v, 0) });
+}
+
+function fmtRate(bytesPerSec) {
+  const v = Number(bytesPerSec);
+  if (bytesPerSec == null || isNaN(v)) return '—';
+  return formatByteRate(v, { max: 'gigabyte', fixed: true });
+}
+
+const fmtUptime = sec => formatDuration((Number(sec) || 0) / 60);
+
+async function fetchThroughput() {
+  /* A remote source answers through the widget's own data function. Only this
+     machine's traffic comes from the dashboard's cached reading. */
+  if (isRemote()) return fetchData('throughput');
+  const r = await fetch(`${API}/network-stats`, { cache: 'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const d = await r.json();
+  if (!d) throw new Error('no throughput data');
+  return d;
+}
+
+/* A source reporting totals has no rate to give until it has been read twice. */
+function applyThroughput(d) {
+  const dn = document.getElementById('net-dn'); if (dn) dn.textContent = d ? fmtRate(d.rx) : '—';
+  const up = document.getElementById('net-up'); if (up) up.textContent = d ? fmtRate(d.tx) : '—';
+}
+
+async function fetchSpeed() {
+  const d = await fetchData('speed');
+  if (!d || d.download == null) throw new Error('no speed data');
+  return d;
+}
+
+function applySpeed(d) {
+  const dn = document.getElementById('net-dn'); if (dn) dn.textContent = fmtMbps(d.download);
+  const up = document.getElementById('net-up'); if (up) up.textContent = fmtMbps(d.upload);
+}
+
+boot();

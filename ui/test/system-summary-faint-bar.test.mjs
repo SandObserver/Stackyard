@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test } from 'node:test';
+import { pageWithScripts } from './widget-source.mjs';
 
-const html = fs.readFileSync(new URL('../widgets/system-summary/index.html', import.meta.url), 'utf8');
+const html = pageWithScripts(new URL('../widgets/system-summary/index.html', import.meta.url));
 const toolbox = fs.readFileSync(new URL('../js/widget-toolbox.js', import.meta.url), 'utf8');
 const style = html.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? '';
 

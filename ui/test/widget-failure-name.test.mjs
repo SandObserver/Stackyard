@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import path from 'node:path';
+import { pageWithScripts } from './widget-source.mjs';
 
 const root = path.join(import.meta.dirname, '..', 'widgets');
-const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
+const read = rel => pageWithScripts(path.join(root, rel));
 
 test('widgets that name their own failure include the time since it', () => {
   const cases = {

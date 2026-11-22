@@ -6,11 +6,12 @@ import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
 
 import { fakeFetch, installDom, pageBody } from './fake-dom.mjs';
+import { pageWithScripts } from './widget-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+const read = p => pageWithScripts(path.join(root, p));
 const css = read('css/dashboard.css');
 
 globalThis.location = { search: '?id=test' };
@@ -490,17 +491,165 @@ test('a page turn closes the badge popover', t => {
     badge.dispatchEvent({ type: 'pointerenter', pointerType: 'mouse' });
     t.mock.timers.tick(400);
   };
+  pop.animate = undefined;
+  const shown = () => pop.hasAttribute('data-open');
   hover();
-  assert.equal(tile.getAttribute('aria-describedby'), 'badge-pop');
+  assert.equal(shown(), true);
   goTo(0, false);
-  assert.equal(tile.getAttribute('aria-describedby'), 'badge-pop', 'staying on the page closed it');
+  assert.equal(shown(), true, 'staying on the page closed it');
   goTo(1, false);
-  assert.equal(tile.getAttribute('aria-describedby'), null);
+  assert.equal(shown(), false);
   badge.dispatchEvent({ type: 'pointerenter', pointerType: 'mouse' });
   goTo(2, false);
   t.mock.timers.tick(400);
-  assert.equal(tile.getAttribute('aria-describedby'), null, 'a hover from the old page opened it on the new one');
+  assert.equal(shown(), false, 'a hover from the old page opened it on the new one');
+  delete pop.animate;
   tile.remove();
+});
+
+/* Without a source, the second tap light-dismisses it and the tap's click opens it again. */
+test('the popover is shown from the badge, and again from the next badge', t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const sources = [];
+  const show = pop.showPopover;
+  pop.showPopover = opts => {
+    sources.push(opts?.source);
+    show();
+  };
+  const tiles = [0, 1].map(() => {
+    const tile = doc.createElement('a');
+    const badge = doc.createElement('div');
+    badge.className = 'badge';
+    tile.appendChild(badge);
+    doc.body.appendChild(tile);
+    popover.wireBadgePopover(badge, [{ name: 'Queue', value: 3, unit: '', color: '' }]);
+    return { tile, badge };
+  });
+  for (const { badge } of tiles) {
+    badge.dispatchEvent({ type: 'pointerenter', pointerType: 'mouse' });
+    t.mock.timers.tick(400);
+  }
+  assert.deepEqual(
+    sources,
+    tiles.map(x => x.badge),
+  );
+  popover.closeBadgePopover();
+  pop.showPopover = show;
+  for (const { tile } of tiles) tile.remove();
+});
+
+/* The browser light-dismisses an auto popover on a pointerdown outside it and
+   outside its source. */
+test('a second tap on a badge closes its popover and does not open it again', t => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: Date.now() + 60_000 });
+  pop.animate = undefined;
+  const show = pop.showPopover;
+  const hide = pop.hidePopover;
+  const shows = [];
+  let source = null;
+  pop.showPopover = opts => {
+    source = opts?.source ?? null;
+    shows.push(source);
+    show();
+  };
+  const shown = () => pop.hasAttribute('data-open');
+  const tap = node => {
+    if (shown() && !pop.contains(node) && !source?.contains(node)) {
+      hide();
+      pop.dispatchEvent({ type: 'toggle', newState: 'closed' });
+    }
+    node.dispatchEvent({ type: 'click', bubbles: true, detail: 1 });
+    t.mock.timers.tick(1000);
+  };
+  const tile = doc.createElement('a');
+  const badge = doc.createElement('div');
+  badge.className = 'badge';
+  tile.appendChild(badge);
+  doc.body.appendChild(tile);
+  popover.wireBadgePopover(badge, [{ name: 'Queue', value: 3, unit: '', color: '' }]);
+  try {
+    tap(badge);
+    assert.equal(shown(), true, 'the first tap did not open it');
+    tap(badge);
+    assert.equal(shows.length, 1, 'the second tap closed the popover and opened it again');
+    assert.equal(shown(), false, 'the second tap left it open');
+  } finally {
+    popover.closeBadgePopover();
+    pop.showPopover = show;
+    delete pop.animate;
+    tile.remove();
+  }
+});
+
+test('keyboard focus shows the popover at once, moves it between tiles and hides it at once', t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const moves = [];
+  pop.animate = (frames, opts) => {
+    moves.push(opts.duration);
+    return { cancel() {}, onfinish: null };
+  };
+  const show = pop.showPopover;
+  const sources = [];
+  pop.showPopover = opts => {
+    sources.push(opts?.source);
+    show();
+  };
+  const shown = () => pop.hasAttribute('data-open');
+  const tiles = [0, 1].map(() => {
+    const tile = doc.createElement('a');
+    const badge = doc.createElement('div');
+    badge.className = 'badge';
+    tile.appendChild(badge);
+    doc.body.appendChild(tile);
+    const own = tile.matches.bind(tile);
+    tile.matches = sel => sel === ':focus-visible' || own(sel);
+    popover.wireBadgePopover(badge, [{ name: 'Queue', value: 3, unit: '', color: '' }]);
+    return { tile, badge };
+  });
+  const [a, b] = tiles;
+  try {
+    a.tile.dispatchEvent({ type: 'focusin', bubbles: true });
+    assert.equal(shown(), true, 'focus did not open the popover');
+    a.tile.dispatchEvent({ type: 'focusout', bubbles: true, relatedTarget: b.tile });
+    assert.equal(shown(), true, 'Tab to the next badged tile closed the popover first');
+    b.tile.dispatchEvent({ type: 'focusin', bubbles: true });
+    assert.deepEqual(sources, [a.badge, b.badge]);
+    b.tile.dispatchEvent({ type: 'focusout', bubbles: true, relatedTarget: doc.body });
+    assert.equal(shown(), false, 'leaving the tiles left the popover open');
+    assert.deepEqual(moves, [], 'keyboard focus animated the popover');
+    a.badge.dispatchEvent({ type: 'pointerenter', pointerType: 'mouse' });
+    t.mock.timers.tick(400);
+    assert.deepEqual(moves, [200], 'a hover no longer grows the popover in');
+  } finally {
+    popover.closeBadgePopover();
+    pop.hidePopover();
+    pop.showPopover = show;
+    delete pop.animate;
+    for (const { tile } of tiles) tile.remove();
+  }
+});
+
+/* A modal folder makes everything outside it inert, the top layer included. */
+test('the popover opens inside the folder that holds the badge, and leaves with it', t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  pop.animate = undefined;
+  const folder = doc.createElement('dialog');
+  const tile = doc.createElement('a');
+  const badge = doc.createElement('div');
+  badge.className = 'badge';
+  tile.appendChild(badge);
+  folder.appendChild(tile);
+  doc.body.appendChild(folder);
+  folder.showModal();
+  popover.wireBadgePopover(badge, [{ name: 'Queue', value: 3, unit: '', color: '' }]);
+  badge.dispatchEvent({ type: 'pointerenter', pointerType: 'mouse' });
+  t.mock.timers.tick(400);
+  assert.equal(pop.parentElement, folder);
+  folder.close();
+  assert.equal(pop.parentElement, doc.body, 'the folder took the popover with it');
+  assert.equal(pop.hasAttribute('data-open'), false);
+  folder.remove();
+  delete pop.animate;
 });
 
 test('a widget frame takes reduced transparency from the dashboard and glass from its card', async () => {
@@ -594,7 +743,7 @@ test('widget styles key reduced transparency on the attribute the frame copies',
   const dir = path.join(root, 'widgets');
   for (const name of fs.readdirSync(dir)) {
     for (const file of fs.readdirSync(path.join(dir, name)).filter(f => f.endsWith('.html'))) {
-      const html = fs.readFileSync(path.join(dir, name, file), 'utf8');
+      const html = pageWithScripts(path.join(dir, name, file));
       assert.doesNotMatch(html, /prefers-reduced-transparency/, `${name}/${file}`);
       if (/data-transparency/.test(html)) assert.match(html, /widget-theme\.js/, `${name}/${file}`);
     }

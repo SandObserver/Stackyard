@@ -11,11 +11,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
+import { pageWithScripts } from './widget-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+const read = p => pageWithScripts(path.join(root, p));
 
 async function withLocale(tag, fn, language) {
   const had = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
@@ -143,7 +144,7 @@ test('geometry is left in Latin digits', () => {
 /* The pill beside it is already formatted, so a Latin row reads as a mismatch. */
 test('the badge popover rows follow the locale', () => {
   const pop = read('js/badge-popover.js');
-  assert.match(pop, /import \{ formatNumber \} from '\/js\/format-number\.js/);
+  assert.match(pop, /import \{[^}]*\bformatNumber\b[^}]*\} from '\/js\/format-number\.js/);
   assert.match(pop, /typeof row\.value === 'number' \? formatNumber\(row\.value\)/);
   assert.doesNotMatch(pop, /String\(row\.value\)/);
 });

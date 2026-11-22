@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test } from 'node:test';
 import { ICONS } from '../js/icon-set.js';
+import { pageWithScripts } from './widget-source.mjs';
 
-const page = fs.readFileSync(new URL('../widgets/weather/index.html', import.meta.url), 'utf8');
+const page = pageWithScripts(new URL('../widgets/weather/index.html', import.meta.url));
 const data = fs.readFileSync(new URL('../widgets/weather/data.js', import.meta.url), 'utf8');
 const dir = new URL('../widgets/weather/i18n/', import.meta.url);
 

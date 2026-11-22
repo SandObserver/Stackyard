@@ -11,7 +11,8 @@ To start a new widget called `mywidget`:
 3. Put the text in `i18n/en.json`. The manifest's `label`, `description`,
    `hint` and `placeholder` values are keys in that file. The description is
    one line in the widget picker. Start it with a verb.
-4. Rewrite `data.js` to fetch your service, and `index.html` to draw it.
+4. Rewrite `data.js` to fetch your service, and `index.html` and `widget.js` to
+   draw it.
 5. Optionally edit `demo.js`, which is used only when `DEMO_MODE=true`, or delete
    it if you do not need one.
 
@@ -33,6 +34,15 @@ The `ctx` that `data.js` receives is typed as `WidgetCtx` in
 Keep the `widget-theme.js` script in `<head>`, before the styles. Without it no
 `html[data-theme="light"]` rule applies, and light text is unreadable on the
 light theme's white card.
+
+Keep the page's code in `widget.js`. A widget page may not run inline script:
+a `<script>` without `src`, an `on...=` attribute, or a `javascript:` URL.
+Stackyard logs a warning at startup for each widget with such a page. A later
+release blocks them. A view page such as `analog.html` loads `analog.js`.
+
+Write markup with ``setHtml(el, html`...`)`` from the toolbox, and parse it
+with `parseMarkup`. A string written straight to `innerHTML` is reported as a
+Trusted Types violation, and a later release blocks it.
 
 A widget of your own needs nothing outside its folder. It is picked up from its
 manifest at startup.

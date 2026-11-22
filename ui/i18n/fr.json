@@ -12,10 +12,12 @@
     "backToDashboard": "Retour au tableau de bord",
     "navigation": "Navigation des réglages",
     "backToDashboardList": "Retour à la liste des tableaux de bord",
-    "pageTitle": "Réglages de Stackyard"
+    "pageTitle": "Réglages de Stackyard",
+    "sectionTitle": "{section} · Réglages de Stackyard"
   },
   "common": {
     "working": "Traitement…",
+    "required": "Obligatoire",
     "save": "Enregistrer",
     "import": "Importer",
     "export": "Exporter",
@@ -142,7 +144,6 @@
   },
   "type": {
     "addNew": "Ajouter",
-    "addNewNamed": "Ajouter : {name}",
     "app": "Application",
     "widget": "Widget",
     "folder": "Dossier",
@@ -442,6 +443,7 @@
     "urlRequired": "Saisissez l’adresse de l’application, par exemple https://nas.local:8080.",
     "nameRequired": "Saisissez un nom.",
     "fieldRequired": "Saisissez une valeur pour « {field} ».",
+    "pollRange": "Saisissez un intervalle d’interrogation de {min} à {max} secondes.",
     "configLoadFailed": "Impossible de charger vos réglages. {err}",
     "uploaded": "{name} téléversé",
     "uploadFailed": "Impossible de téléverser le fichier. {err}",

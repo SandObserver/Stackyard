@@ -11,6 +11,12 @@ const TEMPLATE_DIR = path.join(REPO_DIR, 'docs', 'widget-template');
    being served from cache after an upgrade. */
 const REF_RE = /(["'])(\/(?:css|js)\/[a-zA-Z0-9_.-]+\.(?:css|js))(\?v=[0-9a-zA-Z]+)?/g;
 
+/* A widget page's own script, named relative to the page. The page is cached
+   for a year under a stamp of its own content, so this stamp is what makes a
+   change to the script change the page. */
+const PAGE_SCRIPT_RE = /(\bsrc=)(["'])([a-zA-Z0-9_-][a-zA-Z0-9_.-]*\.js)(\?v=[0-9a-zA-Z]+)?\2/g;
+const WIDGET_PAGES_DIR = path.join(UI_DIR, 'widgets') + path.sep;
+
 function listFiles(dir, exts, out = []) {
   for (const name of fs.readdirSync(dir)) {
     const full = path.join(dir, name);
@@ -21,10 +27,45 @@ function listFiles(dir, exts, out = []) {
   return out;
 }
 
-function hashFor(assetPath) {
-  const full = path.join(UI_DIR, assetPath);
-  if (!fs.existsSync(full)) throw new Error(`Referenced asset does not exist: ${assetPath}`);
+function hashOfFile(full, name) {
+  if (!fs.existsSync(full)) throw new Error(`Referenced asset does not exist: ${name}`);
   return crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex').slice(0, 8);
+}
+
+function hashFor(assetPath) {
+  return hashOfFile(path.join(UI_DIR, assetPath), assetPath);
+}
+
+function isWidgetPage(file) {
+  return file.startsWith(WIDGET_PAGES_DIR) && file.endsWith('.html');
+}
+
+function referencesIn(text, file) {
+  const found = [];
+  const re = new RegExp(REF_RE.source, 'g');
+  for (let m = re.exec(text); m !== null; m = re.exec(text)) {
+    found.push({ name: m[2], stamp: m[3], hash: () => hashFor(m[2]) });
+  }
+  if (isWidgetPage(file)) {
+    const local = new RegExp(PAGE_SCRIPT_RE.source, 'g');
+    for (let m = local.exec(text); m !== null; m = local.exec(text)) {
+      const name = m[3];
+      found.push({ name, stamp: m[4], hash: () => hashOfFile(path.join(path.dirname(file), name), name) });
+    }
+  }
+  return found;
+}
+
+function stampAll(text, file) {
+  let out = text.replace(REF_RE, (_match, quote, assetPath) => `${quote}${assetPath}?v=${hashFor(assetPath)}`);
+  if (isWidgetPage(file)) {
+    out = out.replace(
+      PAGE_SCRIPT_RE,
+      (_match, attr, quote, name) =>
+        `${attr}${quote}${name}?v=${hashOfFile(path.join(path.dirname(file), name), name)}${quote}`,
+    );
+  }
+  return out;
 }
 
 /* Each file's hash depends on the on-disk content of the files it references,
@@ -37,12 +78,9 @@ const stale = [];
 const staleManifests = [];
 
 function findUnstamped(text, file) {
-  const found = [];
-  const re = new RegExp(REF_RE.source, 'g');
-  for (let m = re.exec(text); m !== null; m = re.exec(text)) {
-    if (!m[3]) found.push(`${path.relative(REPO_DIR, file)} references ${m[2]} without ?v=`);
-  }
-  return found;
+  return referencesIn(text, file)
+    .filter(r => !r.stamp)
+    .map(r => `${path.relative(REPO_DIR, file)} references ${r.name} without ?v=`);
 }
 
 /* A stamp that names content the file no longer has. The browser keeps serving
@@ -51,12 +89,11 @@ function findUnstamped(text, file) {
    for the same reason. */
 function findStale(text, file) {
   const found = [];
-  const re = new RegExp(REF_RE.source, 'g');
-  for (let m = re.exec(text); m !== null; m = re.exec(text)) {
-    if (!m[3]) continue; /* reported as unstamped instead */
-    const want = `?v=${hashFor(m[2])}`;
-    if (m[3] !== want) {
-      found.push(`${path.relative(REPO_DIR, file)} references ${m[2]}${m[3]}, but its content is ${want}`);
+  for (const r of referencesIn(text, file)) {
+    if (!r.stamp) continue; /* reported as unstamped instead */
+    const want = `?v=${r.hash()}`;
+    if (r.stamp !== want) {
+      found.push(`${path.relative(REPO_DIR, file)} references ${r.name}${r.stamp}, but its content is ${want}`);
     }
   }
   return found;
@@ -83,10 +120,7 @@ while (filesChangedThisPass !== 0) {
     const original = fs.readFileSync(file, 'utf8');
     unstamped.push(...findUnstamped(original, file));
     if (CHECK_ONLY) stale.push(...findStale(original, file));
-    const updated = original.replace(
-      REF_RE,
-      (_match, quote, assetPath) => `${quote}${assetPath}?v=${hashFor(assetPath)}`,
-    );
+    const updated = stampAll(original, file);
     if (updated !== original) {
       if (!CHECK_ONLY) fs.writeFileSync(file, updated, 'utf8');
       filesChangedThisPass++;

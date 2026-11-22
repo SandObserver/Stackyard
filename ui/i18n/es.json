@@ -12,10 +12,12 @@
     "backToDashboard": "Volver al panel",
     "navigation": "Navegación de ajustes",
     "backToDashboardList": "Volver a la lista de paneles",
-    "pageTitle": "Ajustes de Stackyard"
+    "pageTitle": "Ajustes de Stackyard",
+    "sectionTitle": "{section} · Ajustes de Stackyard"
   },
   "common": {
     "working": "Procesando…",
+    "required": "Obligatorio",
     "save": "Guardar",
     "import": "Importar",
     "export": "Exportar",
@@ -142,7 +144,6 @@
   },
   "type": {
     "addNew": "Añadir nuevo",
-    "addNewNamed": "Añadir nuevo: {name}",
     "app": "Aplicación",
     "widget": "Widget",
     "folder": "Carpeta",
@@ -442,6 +443,7 @@
     "urlRequired": "Introduce la dirección de la aplicación, por ejemplo https://nas.local:8080.",
     "nameRequired": "Introduce un nombre.",
     "fieldRequired": "Introduce un valor para «{field}».",
+    "pollRange": "Introduce un intervalo de sondeo de {min} a {max} segundos.",
     "configLoadFailed": "No se pudo cargar tu configuración. {err}",
     "uploaded": "{name} subido",
     "uploadFailed": "No se pudo subir el archivo. {err}",

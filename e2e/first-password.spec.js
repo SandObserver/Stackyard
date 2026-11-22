@@ -26,12 +26,14 @@ test('the first-run card needs the setup code before it sets a password', async 
   await card.getByLabel('New password').fill(NEW);
   await card.getByLabel('Confirm password').fill(NEW);
   const set = card.getByRole('button', { name: 'Set' });
-  await expect(set).toBeDisabled();
-
   const code = card.getByLabel('Setup code');
+  await set.click();
+  await expect(code).toBeFocused();
+  await expect(code).toHaveAttribute('aria-invalid', 'true');
+  expect(bodies).toHaveLength(0);
+
   await expect(code).toHaveAccessibleDescription(/container log/);
   await code.fill('WRONG-CODE');
-  await expect(set).toBeEnabled();
   await set.click();
   await expect(card.locator('#setup-err')).toHaveText(
     'The setup code is incorrect. Copy it again from the container log.',

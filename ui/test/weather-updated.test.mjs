@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test } from 'node:test';
+import { pageWithScripts } from './widget-source.mjs';
 
 const dir = new URL('../widgets/weather/i18n/', import.meta.url);
-const page = fs.readFileSync(new URL('../widgets/weather/index.html', import.meta.url), 'utf8');
+const page = pageWithScripts(new URL('../widgets/weather/index.html', import.meta.url));
 
 test('every language keeps the summary and the time in the updated line', () => {
   for (const file of fs.readdirSync(dir)) {

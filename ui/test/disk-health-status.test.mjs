@@ -1,15 +1,15 @@
 /* The bay light and its words, lifted from the widget's inline module. */
 
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { test } from 'node:test';
 import { register } from 'node:module';
+import { pageWithScripts } from './widget-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 Object.defineProperty(globalThis, 'navigator', { value: { language: 'en' }, configurable: true });
 const { formatBytes } = await import('../js/format-number.js');
 
-const src = fs.readFileSync(new URL('../widgets/disk-health/index.html', import.meta.url), 'utf8');
+const src = pageWithScripts(new URL('../widgets/disk-health/index.html', import.meta.url));
 const led = src.match(/function ledClass\(s, hasSmart\) \{[\s\S]*?\n\}/);
 const text = src.match(/function statusText\(s, hasSmart\) \{[\s\S]*?\n\}/);
 assert.ok(led && text, 'ledClass and statusText are defined in the widget');

@@ -6,7 +6,7 @@ import {
   restoresSettings,
   revertingSaves,
   snapshotItems,
-} from '/js/admin-save-logic.js?v=7de2f6fd';
+} from '/js/admin-save-logic.js?v=2a82f10d';
 import {
   apiGet,
   apiPost,
@@ -17,10 +17,10 @@ import {
   ShownError,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=d78607eb';
+} from '/js/admin-shared.js?v=0f28a237';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { t } from '/js/i18n.js?v=99563c71';
-import { isolate } from '/js/utils.js?v=9ed2b298';
+import { t } from '/js/i18n.js?v=82ba9da2';
+import { isolate } from '/js/utils.js?v=457d9918';
 
 /** @param {unknown} url @returns {Promise<boolean>} whether `url` names an uploaded wallpaper the server answers 404 for */
 async function wallpaperMissing(url) {

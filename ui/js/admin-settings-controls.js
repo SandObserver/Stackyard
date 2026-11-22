@@ -1,4 +1,4 @@
-import { wirePasswordStrength } from '/js/admin-auth.js?v=3a0626ee';
+import { wirePasswordStrength } from '/js/admin-auth.js?v=08792dd8';
 import {
   applyHealthChecks,
   savedWallpaperUrl,
@@ -6,7 +6,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=bdee547c';
+} from '/js/admin-settings.js?v=48b2de2a';
 import {
   clearFieldError,
   errorText,
@@ -15,11 +15,11 @@ import {
   reveal,
   showFieldError,
   toast,
-} from '/js/admin-shared.js?v=d78607eb';
-import { LANGUAGES, t } from '/js/i18n.js?v=99563c71';
-import { createListbox } from '/js/listbox.js?v=5f208483';
+} from '/js/admin-shared.js?v=0f28a237';
+import { LANGUAGES, t } from '/js/i18n.js?v=82ba9da2';
+import { createListbox } from '/js/listbox.js?v=c9cee787';
 import { passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
-import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
+import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=bdd477f5';
 import {
   applyTheme,
   prefersDark,
@@ -33,7 +33,7 @@ import {
   writeMode,
   writeReduceTransparency,
 } from '/js/theme.js?v=0bbd81e8';
-import { el, inp, qa, setUserText } from '/js/utils.js?v=9ed2b298';
+import { el, inp, qa, setUserText } from '/js/utils.js?v=457d9918';
 
 /* The pickers are built before the catalog loads, so each registers how to
    relabel itself. Without this their options read as raw keys. */
@@ -60,10 +60,10 @@ export function initPasswordRows() {
   const pw = inp('sec-pw');
   const pw2 = inp('sec-pw2');
   if (!pw || !pw2) return;
+  const mismatched = () => pw.value !== '' && pw2.value !== '' && passwordMismatch(pw.value, pw2.value);
   const checkMatch = () => {
     clearFieldError(el('ie-pw2'));
-    if (pw.value && pw2.value && passwordMismatch(pw.value, pw2.value))
-      showFieldError(el('ie-pw2'), t('setup.mismatch'), { focus: false });
+    if (mismatched()) showFieldError(el('ie-pw2'), t('setup.mismatch'), { focus: false });
   };
   const settle = () => {
     el('sec-pw-bars')?.classList.add('d-none');
@@ -86,7 +86,11 @@ export function initPasswordRows() {
     onCommit: checkMatch,
     onCancel: checkMatch,
   });
-  pw.addEventListener('input', () => reveal(el('ie-pw2-wrap'), pw.value !== ''));
+  el('sec-pw-form')?.addEventListener('submit', e => e.preventDefault());
+  pw.addEventListener('input', () => {
+    reveal(el('ie-pw2-wrap'), pw.value !== '');
+    if (!mismatched()) clearFieldError(el('ie-pw2'));
+  });
   wireReveal(/** @type {HTMLButtonElement[]} */ (qa('#ie-pw .pw-reveal, #ie-pw2 .pw-reveal')), [pw, pw2]);
   fillUsernames();
 }

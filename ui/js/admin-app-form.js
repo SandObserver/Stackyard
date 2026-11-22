@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=9f5de136';
+import { renderColorControl } from '/js/admin-color-control.js?v=55a89c05';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=5abd7438';
 import {
   clearsStoredSecret,
@@ -11,6 +11,7 @@ import {
   urlHasLogin,
 } from '/js/admin-logic.js?v=81fd47cf';
 import {
+  addDescribedBy,
   apiGet,
   apiPost,
   clearFieldError,
@@ -19,23 +20,25 @@ import {
   fadeIn,
   initInlineEdit,
   PE_SVG,
+  REQ_MARK,
   responseError,
   reveal,
   setStatus,
   setTogDisabled,
   showFieldError,
   swapContent,
+  syncRequiredLegend,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=d78607eb';
-import { activityAuth, activityHasAuth } from '/js/admin-save-logic.js?v=7de2f6fd';
+} from '/js/admin-shared.js?v=0f28a237';
+import { activityAuth, activityHasAuth, POLL_MAX, POLL_MIN } from '/js/admin-save-logic.js?v=2a82f10d';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=7112fd10';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
-import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=99563c71';
-import { iconSvg } from '/js/icon-set.js?v=361e54a5';
+import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
+import { t } from '/js/i18n.js?v=82ba9da2';
+import { iconSvg } from '/js/icon-set.js?v=beda3062';
 import {
   cdnIconRef,
   iconChain,
@@ -45,9 +48,9 @@ import {
   throughServer,
 } from '/js/icons.js?v=76c29d43';
 import { DOCK_MAX } from '/js/limits.js?v=ff61256e';
-import { createListbox } from '/js/listbox.js?v=5f208483';
-import { slideBlock } from '/js/modal.js?v=84ba5279';
-import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=9ed2b298';
+import { createListbox } from '/js/listbox.js?v=c9cee787';
+import { slideBlock } from '/js/modal.js?v=93d3e755';
+import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=457d9918';
 
 export function buildFolderForm(body, item) {
   const children = folderChildren(item);
@@ -64,9 +67,9 @@ export function buildFolderForm(body, item) {
     html`
     <div class="grp">
       <div class="row ie-row" id="ie-fname">
-        <span class="rl">${t('folder.name')}</span>
+        <span class="rl">${t('folder.name')}${REQ_MARK}</span>
         <span class="rv${item?.label ? '' : ' is-ph'}">${item?.label || t('folder.namePh')}</span>
-        <input id="f-fname" type="text" value="${item?.label || ''}" class="d-none">
+        <input id="f-fname" type="text" value="${item?.label || ''}" class="d-none" aria-required="true">
         <button class="pe" type="button">${raw(PE_SVG)}</button>
       </div>
       <div class="row" id="folder-apps-row">
@@ -78,6 +81,7 @@ export function buildFolderForm(body, item) {
 
   initInlineEdit('ie-fname', 'f-fname', { placeholder: t('folder.namePh') });
   _wireFolderApps(apps, children);
+  syncRequiredLegend(body);
 }
 
 function _wireFolderApps(apps, children) {
@@ -162,8 +166,8 @@ export function buildAppForm(body, item) {
     body,
     html`
     <div class="grp">
-      ${ier('ie-name', t('app.name'), 'f-lbl', item?.label, t('app.namePh'))}
-      ${ier('ie-url', t('app.url'), 'f-href', item?.href, t('app.urlPh'), 'url')}
+      ${ier('ie-name', t('app.name'), 'f-lbl', item?.label, t('app.namePh'), 'text', true)}
+      ${ier('ie-url', t('app.url'), 'f-href', item?.href, t('app.urlPh'), 'url', true)}
     </div>
     <div id="href-login" class="reveal${urlHasLogin(item?.href || '') ? ' open' : ''}"><div class="reveal-in"><p class="grp-tip warn" id="href-login-tip">${t('app.hrefHasLogin')}</p></div></div>
 
@@ -228,7 +232,7 @@ export function buildAppForm(body, item) {
             <div id="bhdr-rows" class="kv-rows"></div>
           </div></div>
         </div>
-        <div id="poll-row"><div class="row"><span class="rl">${t('app.poll')}</span><div class="poll-inline">${pollBefore}<input id="f-bint" type="number" inputmode="numeric" min="10" max="3600" value="${act.interval || 30}" aria-label="${t('app.poll')}">${pollAfter}</div></div></div>
+        <div id="poll-row"><div class="row"><span class="rl">${t('app.poll')}</span><div class="poll-inline">${pollBefore}<input id="f-bint" type="number" inputmode="numeric" min="${POLL_MIN}" max="${POLL_MAX}" step="1" value="${act.interval || 30}" aria-label="${t('app.poll')}">${pollAfter}</div></div></div>
       </div></div>
     </div>
     ${globalHealthOn ? '' : html`<p class="grp-tip" id="hc-off-tip">${t('app.healthGlobalOff')}</p>`}
@@ -246,8 +250,12 @@ export function buildAppForm(body, item) {
     <div class="grp">
       <div class="row"><span class="rl">${t('app.allowSelfSigned')}</span>${tog('f-skip-tls', skipTls, t('app.allowSelfSigned'))}</div>
     </div>
-    <p class="grp-tip">${t('app.selfSignedTip')}</p>`,
+    <p class="grp-tip" id="self-signed-tip">${t('app.selfSignedTip')}</p>`,
   );
+  addDescribedBy(el('f-skip-tls'), 'self-signed-tip');
+  addDescribedBy(el('act-combine'), 'act-combine-tip');
+  if (!globalHealthOn) addDescribedBy(el('hc-en'), 'hc-off-tip');
+  syncRequiredLegend(body);
 
   initInlineEdit('ie-name', 'f-lbl', {
     placeholder: t('app.namePh'),
@@ -606,9 +614,9 @@ function wireActLabelDrag(host) {
 
 /** The inline-edit row markup. The pencil's accessible name is set by
     initInlineEdit, from the row's own label. */
-function _ieRow(rowId, label, inpId, val, ph, type = 'text') {
+function _ieRow(rowId, label, inpId, val, ph, type = 'text', required = false) {
   const has = val != null && val !== '';
-  return html`<div class="row ie-row" id="${rowId}"><span class="rl">${label}</span><span class="rv${has ? '' : ' is-ph'}">${has ? val : ph}</span><input id="${inpId}" type="${type}" value="${val || ''}" class="d-none"><button class="pe" type="button">${raw(PE_SVG)}</button></div>`;
+  return html`<div class="row ie-row" id="${rowId}"><span class="rl">${label}${required ? REQ_MARK : ''}</span><span class="rv${has ? '' : ' is-ph'}">${has ? val : ph}</span><input id="${inpId}" type="${type}" value="${val || ''}" class="d-none"${raw(required ? ' aria-required="true"' : '')}><button class="pe" type="button">${raw(PE_SVG)}</button></div>`;
 }
 
 const SOURCE_LABEL = {

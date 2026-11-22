@@ -59,7 +59,11 @@ test('a click on the popover does not reach the tile', () => {
    must be told when the browser closes it behind its back. */
 test('Escape and a click outside still close it', () => {
   assert.match(popover, /setAttribute\('popover', 'auto'\)/, 'not an auto popover, so neither dismissal exists');
-  assert.match(popover, /showPopover\(\)/, 'shown some other way, which never enters the top layer');
+  assert.match(
+    popover,
+    /showPopover\(\{ source: badge \}\)/,
+    'shown some other way, or a tap on the badge dismisses it',
+  );
   assert.match(
     popover,
     /addEventListener\('toggle'[\s\S]{0,140}closeBadgePopover\(\)/,
@@ -165,10 +169,6 @@ test('a badge with a popover accepts the pointer', () => {
     /pointer-events/,
     'having extra values is not what decides whether it can be hovered',
   );
-});
-
-test('an open popover is moved to the next badge, not shown again', () => {
-  assert.match(popover, /if \(!p\.matches\(':popover-open'\)\) p\.showPopover\(\);/);
 });
 
 test('keyboard focus finds the tile when it happens, not when the badge was wired', () => {

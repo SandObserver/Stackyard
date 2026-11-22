@@ -300,9 +300,9 @@ test('switching the type keeps the type tiles and moves the selection', async ({
     el.dataset.kept = '1';
   });
   await folder.click();
-  await expect(folder).toHaveAttribute('aria-pressed', 'true');
+  await expect(folder.locator('input')).toBeChecked();
   await expect(folder).toHaveAttribute('data-kept', '1');
-  await expect(page.locator('#ev-body .tile-opt[data-ctype="app"]')).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('#ev-body .tile-opt[data-ctype="app"] input')).not.toBeChecked();
   await expect(page.locator('#ev-body > .add-new-card')).toHaveCount(1);
 });
 

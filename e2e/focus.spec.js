@@ -98,11 +98,10 @@ test('a widget size tile and the type picker keep focus after the form redraws',
   await page.locator('#btn-add').click();
   await editorOpened(page);
   await page.locator('.tile-opt[data-ctype="widget"]').click();
-  const small = page.locator('#ev-body .tile-opt[data-size="small"]');
-  await small.focus();
-  await page.keyboard.press('Enter');
-  await expect(page.locator('#ev-body .tile-opt[data-size="small"]')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#ev-body .tile-opt[data-size="small"]')).toBeFocused();
+  await page.locator('#ev-body .tile-opt[data-size="medium"] input').focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.locator('#ev-body .tile-opt[data-size="small"] input')).toBeChecked();
+  await expect(page.locator('#ev-body .tile-opt[data-size="small"] input')).toBeFocused();
 
   await page.locator('#f-wtype-btn').click();
   await page.locator('#f-wtype-list li[role="option"]:not([aria-selected="true"])').first().click();
@@ -160,12 +159,11 @@ test('opening the editor and switching its type keep focus inside the editor', a
   await openDashboardList(page);
   await page.locator('#btn-add').focus();
   await page.keyboard.press('Enter');
-  await expect(page.locator('#ev-body .tile-opt[data-ctype="app"]')).toBeFocused();
+  await expect(page.locator('#ev-body .tile-opt[data-ctype="app"] input')).toBeFocused();
 
-  await page.locator('#ev-body .tile-opt[data-ctype="widget"]').focus();
-  await page.keyboard.press('Enter');
-  await expect(page.locator('#ev-body .tile-opt[data-ctype="widget"]')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#ev-body .tile-opt[data-ctype="widget"]')).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('#ev-body .tile-opt[data-ctype="widget"] input')).toBeChecked();
+  await expect(page.locator('#ev-body .tile-opt[data-ctype="widget"] input')).toBeFocused();
 
   await page.locator('#ev-back').click();
   await rowByName(page, 'Alpha').getByRole('button', { name: /^Edit/ }).press('Enter');

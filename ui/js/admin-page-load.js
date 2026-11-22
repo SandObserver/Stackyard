@@ -1,14 +1,15 @@
-import { initAboutLogo, initVersion } from '/js/admin-about.js?v=35df83ae';
-import { render } from '/js/admin-list.js?v=6c8bcffe';
-import { loadSettings } from '/js/admin-settings.js?v=bdee547c';
-import { syncPickerLabels } from '/js/admin-settings-controls.js?v=57176a15';
-import { apiGet, errorText, nameEditPen, toast } from '/js/admin-shared.js?v=d78607eb';
+import { initAboutLogo, initVersion } from '/js/admin-about.js?v=50860c17';
+import { render } from '/js/admin-list.js?v=d1cefe2a';
+import { titleSettingsPage } from '/js/admin-nav.js?v=465fb192';
+import { loadSettings } from '/js/admin-settings.js?v=48b2de2a';
+import { syncPickerLabels } from '/js/admin-settings-controls.js?v=4b3a87ea';
+import { apiGet, errorText, nameEditPen, toast } from '/js/admin-shared.js?v=0f28a237';
 import { collapsedFolders, state } from '/js/admin-state.js?v=064b9b85';
-import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=e1076c9c';
-import { html, setHtml } from '/js/html.js?v=c71f8903';
-import { initI18n, t } from '/js/i18n.js?v=99563c71';
+import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=51e46417';
+import { html, setHtml } from '/js/html.js?v=48f9dc21';
+import { initI18n, t } from '/js/i18n.js?v=82ba9da2';
 import { loadLocalIcons } from '/js/icons.js?v=76c29d43';
-import { el, q, qa, within } from '/js/utils.js?v=9ed2b298';
+import { el, q, qa, within } from '/js/utils.js?v=457d9918';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 
 /** Load the config into the admin page, and show the wallpaper behind it.
@@ -48,7 +49,7 @@ export function createPageLoad({ writes }) {
     saveBootHint({ lang: await initI18n(c.settings?.language || 'en') });
     document.documentElement.classList.remove('lang-pending');
     qa('.ie-row').forEach(nameEditPen);
-    document.title = t('nav.pageTitle');
+    titleSettingsPage();
     initVersion();
     initAboutLogo();
     syncPickerLabels();

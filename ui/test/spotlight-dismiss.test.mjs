@@ -16,7 +16,7 @@ const css = read('css/dashboard.css');
 const js = read('js/spotlight.js');
 
 test('the Search pill is a button that cannot be text-selected', () => {
-  assert.match(html, /<button id="mob-search-pill" type="button">/);
+  assert.match(html, /<button id="mob-search-pill" type="button" aria-haspopup="dialog">/);
   const rule = css.match(/#mob-search-pill \{([^}]*)\}/)[1];
   assert.match(rule, /user-select:none/);
   assert.match(rule, /-webkit-touch-callout:none/);

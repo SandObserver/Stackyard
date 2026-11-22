@@ -1,11 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { register } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { esc } from '../js/html.js';
+import { esc, raw, setHtml } from '../js/html.js';
 import * as worldMap from '../widgets/connections/world-map.js';
+import { pageWithScripts } from './widget-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 globalThis.location ??= { search: '' };
@@ -13,7 +13,7 @@ const { rgbOf } = await import('../js/widget-toolbox.js');
 const world = { ...worldMap };
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const read = f => fs.readFileSync(path.join(root, 'widgets/connections', f), 'utf8');
+const read = f => pageWithScripts(path.join(root, 'widgets/connections', f));
 const source = read('connections-vpn.html');
 const scripts = [...source.matchAll(/<script(?: type="module")?>([\s\S]*?)<\/script>/gi)].map(m => m[1]);
 const moduleScript = scripts.find(s => /^import /m.test(s));
@@ -90,6 +90,8 @@ async function mountVpn() {
     fetchData: async () => ({}),
     linkTo() {},
     esc,
+    raw,
+    setHtml,
     loadStrings: async () => {},
     wt: (_key, fallback) => fallback,
     wtCount: (_key, count) => String(count),

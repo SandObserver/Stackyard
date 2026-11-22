@@ -12,11 +12,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
 import { createDocument, fire, installDom } from './fake-dom.mjs';
+import { pageWithScripts } from './widget-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+const read = p => pageWithScripts(path.join(root, p));
 
 const SHEETS = fs
   .readdirSync(path.join(root, 'css'))

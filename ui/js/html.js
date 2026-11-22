@@ -36,11 +36,37 @@ export function html(strings, ...values) {
   return new RawHtml(out);
 }
 
+/* The page's Content-Security-Policy names this policy in trusted-types. A
+   rename here without the same rename in nginx/dashboard.conf blocks every
+   markup write once that rule is enforced. */
+export const POLICY_NAME = 'stackyard-html';
+
+/** @type {{ createHTML: (s: string) => unknown } | null} */
+let policy = null;
+try {
+  policy = /** @type {any} */ (globalThis).trustedTypes?.createPolicy(POLICY_NAME, { createHTML: s => s }) ?? null;
+} catch {
+  policy = null;
+}
+
+/** @param {RawHtml} tpl @param {string} caller @returns {string} */
+function trusted(tpl, caller) {
+  if (!(tpl instanceof RawHtml)) {
+    throw new TypeError(`${caller} expects an html\`\` or raw() result, not a string`);
+  }
+  return /** @type {string} */ (policy ? policy.createHTML(tpl.value) : tpl.value);
+}
+
 /* The only sanctioned innerHTML write in the codebase. Plain strings are
    rejected at runtime, so the value must have come from html`` or raw(). */
 export function setHtml(el, tpl) {
-  if (!(tpl instanceof RawHtml)) {
-    throw new TypeError('setHtml expects an html`` or raw() result, not a string');
-  }
-  el.innerHTML = tpl.value;
+  el.innerHTML = trusted(tpl, 'setHtml');
+}
+
+/** Parse markup built in code. Like setHtml, it takes only an html`` or raw()
+    result. `Parser` is the DOMParser of the document the result is for.
+    @param {RawHtml} tpl @param {DOMParserSupportedType} type
+    @param {typeof DOMParser} [Parser] @returns {Document} */
+export function parseMarkup(tpl, type, Parser = globalThis.DOMParser) {
+  return new Parser().parseFromString(trusted(tpl, 'parseMarkup'), type);
 }

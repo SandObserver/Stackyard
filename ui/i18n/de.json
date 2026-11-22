@@ -12,10 +12,12 @@
     "backToDashboard": "Zurück zum Dashboard",
     "navigation": "Einstellungsnavigation",
     "backToDashboardList": "Zurück zur Dashboard-Liste",
-    "pageTitle": "Stackyard-Einstellungen"
+    "pageTitle": "Stackyard-Einstellungen",
+    "sectionTitle": "{section} · Stackyard-Einstellungen"
   },
   "common": {
     "working": "Wird bearbeitet…",
+    "required": "Pflichtfeld",
     "save": "Speichern",
     "import": "Importieren",
     "export": "Exportieren",
@@ -141,7 +143,6 @@
   },
   "type": {
     "addNew": "Neu hinzufügen",
-    "addNewNamed": "Neu hinzufügen: {name}",
     "app": "App",
     "widget": "Widget",
     "folder": "Ordner",
@@ -434,6 +435,7 @@
     "urlRequired": "Gib die Adresse der App ein, zum Beispiel https://nas.local:8080.",
     "nameRequired": "Gib einen Namen ein.",
     "fieldRequired": "Gib einen Wert für {field} ein.",
+    "pollRange": "Gib ein Abfrageintervall von {min} bis {max} Sekunden ein.",
     "configLoadFailed": "Deine Einstellungen konnten nicht geladen werden. {err}",
     "uploaded": "{name} hochgeladen",
     "uploadFailed": "Hochladen nicht möglich. {err}",

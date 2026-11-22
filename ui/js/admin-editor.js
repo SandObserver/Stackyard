@@ -4,18 +4,20 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=57f8180f';
-import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=6c8bcffe';
+} from '/js/admin-app-form.js?v=b37bb1ab';
+import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=d1cefe2a';
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
-import { scrollSettingsTop } from '/js/admin-nav.js?v=e66552bd';
+import { scrollSettingsTop } from '/js/admin-nav.js?v=465fb192';
 import {
   applyEdit,
   buildAppItem,
   keptWidget,
   newItemId,
+  POLL_MAX,
+  POLL_MIN,
   removeItem,
   snapshotItems,
-} from '/js/admin-save-logic.js?v=7de2f6fd';
+} from '/js/admin-save-logic.js?v=2a82f10d';
 import {
   busyPress,
   clearFieldErrors,
@@ -27,17 +29,18 @@ import {
   showFieldError,
   swapContent,
   toast,
-} from '/js/admin-shared.js?v=d78607eb';
+} from '/js/admin-shared.js?v=0f28a237';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=21ee8029';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=30b500f1';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
-import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=99563c71';
-import { animateIcon } from '/js/icon-motion.js?v=0b4fc669';
-import { iconSvg } from '/js/icon-set.js?v=361e54a5';
+import { formatNumber } from '/js/format-number.js?v=263fa390';
+import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
+import { t } from '/js/i18n.js?v=82ba9da2';
+import { animateIcon } from '/js/icon-motion.js?v=7bfd91f5';
+import { iconSvg } from '/js/icon-set.js?v=beda3062';
 import { clampName } from '/js/limits.js?v=ff61256e';
-import { confirmText, openModal as openDialog } from '/js/modal.js?v=84ba5279';
-import { clr, el, focusFirst, initial, inp, isolate, q, qa, setUserText } from '/js/utils.js?v=9ed2b298';
+import { confirmText, openModal as openDialog } from '/js/modal.js?v=93d3e755';
+import { clr, el, focusFirst, initial, inp, isolate, q, qa, setUserText } from '/js/utils.js?v=457d9918';
 
 /** @typedef {{ saveOrRevert: (before: any[], done?: string|false) => Promise<boolean> }} EditorPage */
 
@@ -90,25 +93,31 @@ function buildAddNewCard() {
   grp.className = 'grp add-new-card';
   const row = document.createElement('div');
   row.className = 'row tile-row';
-  const grpTiles = document.createElement('div');
+  const grpTiles = document.createElement('fieldset');
   grpTiles.className = 'tile-grp';
+  const legend = document.createElement('legend');
+  legend.className = 'visually-hidden';
+  legend.textContent = t('app.type');
+  grpTiles.appendChild(legend);
   const labels = typeLabels();
   ['app', 'widget', 'folder'].forEach(kind => {
     const label = labels[kind];
-    const b = document.createElement('button');
-    b.type = 'button';
+    const b = document.createElement('label');
     b.className = 'tile-opt' + (kind === state.ctype ? ' on' : '');
     b.dataset.ctype = kind;
-    b.setAttribute('aria-pressed', String(kind === state.ctype));
-    b.setAttribute('aria-label', t('type.addNewNamed', { name: label }));
-    setHtml(b, html`<span class="tile-ico">${raw(iconSvg(kind, 38))}</span><span class="tile-cap">${label}</span>`);
+    setHtml(
+      b,
+      html`<input type="radio" name="ev-ctype" value="${kind}"><span class="tile-ico">${raw(iconSvg(kind, 38))}</span><span class="tile-cap">${label}</span>`,
+    );
+    const radio = /** @type {HTMLInputElement} */ (b.querySelector('input'));
+    radio.checked = kind === state.ctype;
     const ico = b.querySelector('svg');
     if (ico instanceof SVGSVGElement) animateIcon(ico, kind, b);
-    b.onclick = () => {
+    radio.addEventListener('change', () => {
       if (state.ctype === kind) return;
       state.ctype = kind;
       swapContent(el('ev-body'), () => renderEditBody(kind));
-    };
+    });
     grpTiles.appendChild(b);
   });
   row.appendChild(grpTiles);
@@ -121,7 +130,8 @@ function syncAddNewCard(card) {
   for (const b of qa('.tile-opt', card)) {
     const on = /** @type {HTMLElement} */ (b).dataset.ctype === state.ctype;
     b.classList.toggle('on', on);
-    b.setAttribute('aria-pressed', String(on));
+    const radio = /** @type {HTMLInputElement|null} */ (b.querySelector('input'));
+    if (radio) radio.checked = on;
   }
   return card;
 }
@@ -139,7 +149,7 @@ function renderEditBody(focusKind) {
   if (!state._evIsEdit) body.insertBefore(card ? syncAddNewCard(card) : buildAddNewCard(), body.firstChild);
   setTimeout(() => {
     if (el('dash-edit-view').contains(document.activeElement)) return;
-    const tile = focusKind ? qa('.tile-opt', body).find(b => b.dataset.ctype === focusKind) : null;
+    const tile = focusKind ? q(`.tile-opt[data-ctype="${focusKind}"] input`, body) : null;
     focusFirst(tile, ...qa('input,select,textarea,button', body));
   }, 50);
 }
@@ -410,7 +420,7 @@ export function readItem(orig) {
     skipTlsVerify: inp('f-skip-tls')?.checked || false,
     actEn: inp('act-en')?.checked,
     actUrl: inp('f-burl')?.value?.trim() || '',
-    actInt: Math.min(3600, Math.max(10, parseInt(inp('f-bint')?.value || '30', 10))),
+    actInt: inp('f-bint')?.value ?? '',
     authEn: inp('auth-en')?.checked || false,
     actParams: serializeKvRows(state._bpar),
     actHeaders: serializeKvRows(state._bhdr),
@@ -430,6 +440,13 @@ export function readItem(orig) {
     orig,
     state.items.map(i => i.id),
   );
+  if (res.errorKey === 'toast.pollRange') {
+    showFieldError(
+      q('#poll-row > .row'),
+      t('toast.pollRange', { min: formatNumber(POLL_MIN), max: formatNumber(POLL_MAX) }),
+    );
+    return;
+  }
   if (res.errorKey) {
     showFieldError(el(res.errorKey === 'toast.urlRequired' ? 'ie-url' : 'ie-name'), t(res.errorKey));
     return;

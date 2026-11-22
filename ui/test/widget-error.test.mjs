@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire, register } from 'node:module';
+import { pageWithScripts } from './widget-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
@@ -62,7 +63,7 @@ test('no widget renders a response error message', () => {
     const d = path.join(dir, w);
     if (!fs.statSync(d).isDirectory()) continue;
     for (const f of fs.readdirSync(d).filter(name => name.endsWith('.html'))) {
-      const src = fs.readFileSync(path.join(d, f), 'utf8');
+      const src = pageWithScripts(path.join(d, f));
       if (/(?:textContent|setHtml|metricRow)[^\n]*\berror\.message\b/.test(src)) offenders.push(`${w}/${f}`);
       if (/\berror\.message\b/.test(src)) offenders.push(`${w}/${f}`);
     }
@@ -77,7 +78,7 @@ test('every polling widget declares an empty state or draws its own', () => {
     const d = path.join(dir, w);
     if (!fs.statSync(d).isDirectory()) continue;
     for (const f of fs.readdirSync(d).filter(name => name.endsWith('.html'))) {
-      const src = fs.readFileSync(path.join(d, f), 'utf8');
+      const src = pageWithScripts(path.join(d, f));
       if (!/\bpoll\(\{/.test(src)) continue;
       const handled = /isEmpty\s*:/.test(src) || /errorState\(/.test(src) || /errorLine\(/.test(src);
       if (!handled) missing.push(`${w}/${f}`);
@@ -87,7 +88,7 @@ test('every polling widget declares an empty state or draws its own', () => {
 });
 
 test('a disk bay that reports an error is drawn as neither healthy nor empty', () => {
-  const src = fs.readFileSync(path.join(root, 'widgets/disk-health/index.html'), 'utf8');
+  const src = pageWithScripts(path.join(root, 'widgets/disk-health/index.html'));
   assert.match(src, /const unread = d => !!\(d && d\.error\)/, 'no unread test');
   assert.match(src, /if \(unread\(d\)\) \{\s*\n\s*bay\.classList\.add\('unread'\)/, 'update() does not branch on it');
   assert.match(src, /\.bay\.unread \{/, 'the unread bay has no styling of its own');
@@ -106,13 +107,13 @@ test('the caption hides itself and never takes pointer events', () => {
 });
 
 test('a widget that toggles hidden on a styled element says so in its own CSS', () => {
-  const src = fs.readFileSync(path.join(root, 'widgets/nowplaying/index.html'), 'utf8');
+  const src = pageWithScripts(path.join(root, 'widgets/nowplaying/index.html'));
   assert.match(src, /\[hidden\]\s*\{\s*display:\s*none/, 'the clamped title cannot be hidden');
 });
 
 test('a widget naming its root with the line hides the caption from readers', () => {
   for (const f of ['nowplaying/index.html', 'github/contributions.html']) {
-    const src = fs.readFileSync(path.join(root, 'widgets', f), 'utf8');
+    const src = pageWithScripts(path.join(root, 'widgets', f));
     assert.match(
       src,
       /aria-label['"]?,\s*line\)|\bname\((?:line|failureName\(line, since\))\)/,
@@ -124,7 +125,7 @@ test('a widget naming its root with the line hides the caption from readers', ()
 });
 
 test('system summary reports its failure to the summary paragraph', () => {
-  const src = fs.readFileSync(path.join(root, 'widgets/system-summary/index.html'), 'utf8');
+  const src = pageWithScripts(path.join(root, 'widgets/system-summary/index.html'));
   assert.match(
     src,
     /sr-sum[\s\S]{0,200}sum\.textContent = failureName\(line, since\)/,
@@ -139,7 +140,7 @@ test('every widget surfaces a failure on the same terms', () => {
     const d = path.join(dir, w);
     if (!fs.statSync(d).isDirectory()) continue;
     for (const f of fs.readdirSync(d).filter(name => name.endsWith('.html'))) {
-      const src = fs.readFileSync(path.join(d, f), 'utf8');
+      const src = pageWithScripts(path.join(d, f));
       for (const gate of src.match(/if\s*\(\s*!?everOk[^)]*\)/g) || []) {
         const norm = gate.replace(/\s+/g, '');
         if (norm !== 'if(!everOk||stale)' && norm !== 'if(everOk&&!stale)') odd.push(`${w}/${f}: ${gate}`);
