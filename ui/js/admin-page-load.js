@@ -1,8 +1,9 @@
-import { initAboutLogo, initVersion } from '/js/admin-about.js?v=35df83ae';
-import { render } from '/js/admin-list.js?v=6c8bcffe';
-import { loadSettings } from '/js/admin-settings.js?v=bdee547c';
-import { syncPickerLabels } from '/js/admin-settings-controls.js?v=57176a15';
-import { apiGet, errorText, nameEditPen, toast } from '/js/admin-shared.js?v=d78607eb';
+import { initAboutLogo, initVersion } from '/js/admin-about.js?v=8ada4d5f';
+import { render } from '/js/admin-list.js?v=3565b0d8';
+import { titleSettingsPage } from '/js/admin-nav.js?v=5a609c7d';
+import { loadSettings } from '/js/admin-settings.js?v=cf8fada5';
+import { syncPickerLabels } from '/js/admin-settings-controls.js?v=c4b8ba2e';
+import { apiGet, errorText, nameEditPen, toast } from '/js/admin-shared.js?v=315941b7';
 import { collapsedFolders, state } from '/js/admin-state.js?v=064b9b85';
 import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=e1076c9c';
 import { html, setHtml } from '/js/html.js?v=c71f8903';
@@ -48,7 +49,7 @@ export function createPageLoad({ writes }) {
     saveBootHint({ lang: await initI18n(c.settings?.language || 'en') });
     document.documentElement.classList.remove('lang-pending');
     qa('.ie-row').forEach(nameEditPen);
-    document.title = t('nav.pageTitle');
+    titleSettingsPage();
     initVersion();
     initAboutLogo();
     syncPickerLabels();

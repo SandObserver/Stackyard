@@ -12,10 +12,12 @@
     "backToDashboard": "返回仪表板",
     "navigation": "设置导航",
     "backToDashboardList": "返回仪表板列表",
-    "pageTitle": "Stackyard 设置"
+    "pageTitle": "Stackyard 设置",
+    "sectionTitle": "{section} · Stackyard 设置"
   },
   "common": {
     "working": "正在处理…",
+    "required": "必填",
     "save": "保存",
     "import": "导入",
     "export": "导出",
@@ -140,7 +142,6 @@
   },
   "type": {
     "addNew": "新建",
-    "addNewNamed": "新建：{name}",
     "app": "应用",
     "widget": "小组件",
     "folder": "文件夹",
@@ -426,6 +427,7 @@
     "urlRequired": "请输入应用地址，例如 https://nas.local:8080。",
     "nameRequired": "请输入名称。",
     "fieldRequired": "请为“{field}”输入一个值。",
+    "pollRange": "请输入 {min} 到 {max} 秒之间的轮询间隔。",
     "configLoadFailed": "无法加载你的设置。{err}",
     "uploaded": "已上传 {name}",
     "uploadFailed": "无法上传文件。{err}",

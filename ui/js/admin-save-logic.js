@@ -351,11 +351,31 @@ export function activityAuth(v) {
   };
 }
 
+export const POLL_MIN = 10;
+export const POLL_MAX = 3600;
+
+/** @param {unknown} value the typed poll interval
+    @returns {number|null} whole seconds from POLL_MIN to POLL_MAX, or null */
+export function pollSeconds(value) {
+  const typed = typeof value === 'string' ? value.trim() : value;
+  if (typed === '' || typed == null) return null;
+  const n = Number(typed);
+  return Number.isInteger(n) && n >= POLL_MIN && n <= POLL_MAX ? n : null;
+}
+
+/** @param {unknown} value @returns {number} */
+function keptPoll(value) {
+  const n = Math.floor(Number(value));
+  return n > 0 ? Math.min(POLL_MAX, Math.max(POLL_MIN, n)) : 30;
+}
+
 /** @param {any} v @param {any} [orig] @param {Iterable<string>} [takenIds] */
 export function buildAppItem(v, orig, takenIds = []) {
   /* A key, not a sentence. This module stays free of imports. */
   if (!v.label) return { errorKey: 'toast.nameRequired' };
   if (!v.href) return { errorKey: 'toast.urlRequired' };
+  const poll = pollSeconds(v.actInt);
+  if (v.actEn && poll == null) return { errorKey: 'toast.pollRange' };
   const DEFCOL = '#0289ff';
   /* One badges any count above zero, which is the default, so it is not stored. */
   const custMin = Number.isFinite(v.custMin) && v.custMin > 1 ? Math.floor(v.custMin) : undefined;
@@ -405,7 +425,7 @@ export function buildAppItem(v, orig, takenIds = []) {
           extract: spaths.length === 1 ? spaths[0] : spaths.length > 1 ? spaths.map(p => ({ path: p })) : undefined,
           labels: combine ? undefined : labels,
           combine: combine || undefined,
-          interval: Math.max(10, v.actInt),
+          interval: poll ?? keptPoll(v.actInt),
           custom: combinedCustom || customObj,
         },
         staticBadge: staticBadgeObj,

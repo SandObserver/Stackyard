@@ -6,7 +6,7 @@ import {
   restoresSettings,
   revertingSaves,
   snapshotItems,
-} from '/js/admin-save-logic.js?v=7de2f6fd';
+} from '/js/admin-save-logic.js?v=f533952b';
 import {
   apiGet,
   apiPost,
@@ -17,7 +17,7 @@ import {
   ShownError,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=d78607eb';
+} from '/js/admin-shared.js?v=315941b7';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { t } from '/js/i18n.js?v=99563c71';
 import { isolate } from '/js/utils.js?v=9ed2b298';

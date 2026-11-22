@@ -1,10 +1,23 @@
 import { resolveAdminSection } from '/js/admin-logic.js?v=81fd47cf';
-import { fadeOpacity } from '/js/admin-shared.js?v=d78607eb';
+import { fadeOpacity } from '/js/admin-shared.js?v=315941b7';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=0c57b286';
+import { t } from '/js/i18n.js?v=99563c71';
 import { animateIcon } from '/js/icon-motion.js?v=0b4fc669';
 import { el, qa, storeGet, storeSet } from '/js/utils.js?v=9ed2b298';
 
 const STORE = 'admin_sec';
+
+let shown = '';
+let titled = false;
+
+/** Call once the catalog has loaded. */
+export function titleSettingsPage() {
+  titled = true;
+  const key = el('sec-' + shown)
+    ?.querySelector('.sec-title[data-i18n]')
+    ?.getAttribute('data-i18n');
+  document.title = key ? t('nav.sectionTitle', { section: t(key) }) : t('nav.pageTitle');
+}
 
 export function scrollSettingsTop() {
   scrollTo(0, 0);
@@ -23,8 +36,8 @@ export function animateNavIcons() {
 export function initNav() {
   const links = qa('.nl, .mtab');
   const sections = qa('.sec', document).map(s => s.id.replace(/^sec-/, ''));
+  shown = '';
 
-  let shown = '';
   /* Do not scroll on the restoring first call. Only a picked section. */
   function show(requested, picked, ev) {
     const id = resolveAdminSection(requested, sections);
@@ -45,6 +58,7 @@ export function initNav() {
     });
     syncGlideSelect(document, { snap: keyboard });
     storeSet(STORE, id);
+    if (titled) titleSettingsPage();
     if (picked) scrollSettingsTop();
   }
   links.forEach(l => l.addEventListener('click', e => show(l.dataset.sec, true, e)));

@@ -1,4 +1,4 @@
-import { PE_SVG, initInlineEdit, showFieldError, clearFieldError, reveal } from '/js/admin-shared.js?v=d78607eb';
+import { PE_SVG, initInlineEdit, showFieldError, clearFieldError, reveal } from '/js/admin-shared.js?v=315941b7';
 import { t } from '/js/i18n.js?v=99563c71';
 import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
 import { qa, q } from '/js/utils.js?v=9ed2b298';

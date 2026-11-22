@@ -297,6 +297,7 @@ test('no locale leaves a string empty', async () => {
    the reason it is not. */
 const NOT_COUNTED = {
   'app.pollInterval': 'wraps an editable field, minimum 10',
+  'toast.pollRange': 'the maximum is 3,600, so the singular is never reached',
   /* The sentence is split around a live input, so the surrounding words would
      have to be rebuilt on every keystroke to stay in agreement. The field's
      minimum is 10, so the singular can never be reached. */

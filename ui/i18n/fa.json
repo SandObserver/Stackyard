@@ -12,10 +12,12 @@
     "backToDashboard": "بازگشت به داشبورد",
     "navigation": "ناوبری تنظیمات",
     "backToDashboardList": "بازگشت به فهرست داشبوردها",
-    "pageTitle": "تنظیمات Stackyard"
+    "pageTitle": "تنظیمات Stackyard",
+    "sectionTitle": "{section} · تنظیمات Stackyard"
   },
   "common": {
     "working": "در حال انجام…",
+    "required": "الزامی",
     "save": "ذخیره",
     "import": "وارد کردن",
     "export": "خروجی",
@@ -141,7 +143,6 @@
   },
   "type": {
     "addNew": "افزودن جدید",
-    "addNewNamed": "افزودن جدید: {name}",
     "app": "برنامه",
     "widget": "ویجت",
     "folder": "پوشه",
@@ -434,6 +435,7 @@
     "urlRequired": "آدرس برنامه را وارد کنید، مثلا https://nas.local:8080.",
     "nameRequired": "یک نام وارد کنید.",
     "fieldRequired": "برای {field} یک مقدار وارد کنید.",
+    "pollRange": "برای بررسی دوره‌ای عددی بین {min} تا {max} ثانیه وارد کنید.",
     "configLoadFailed": "تنظیمات شما بارگذاری نشد. {err}",
     "uploaded": "فایل {name} بارگذاری شد",
     "uploadFailed": "فایل بارگذاری نشد. {err}",

@@ -456,6 +456,17 @@ export class FakeElement extends FakeEventTarget {
   remove() {
     this.parentElement?.removeChild(this);
   }
+  before(...kids) {
+    const p = this.parentElement;
+    if (!p) return;
+    for (const k of kids) p.insertBefore(typeof k === 'string' ? this.ownerDocument.createTextNode(k) : k, this);
+  }
+  after(...kids) {
+    const p = this.parentElement;
+    if (!p) return;
+    const next = p.childNodes[p.childNodes.indexOf(this) + 1] || null;
+    for (const k of kids) p.insertBefore(typeof k === 'string' ? this.ownerDocument.createTextNode(k) : k, next);
+  }
   contains(n) {
     for (let x = n; x; x = x.parentElement) if (x === this) return true;
     return false;
