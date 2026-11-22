@@ -479,9 +479,8 @@ html:not(.is-mobile) .p-type{display:none}
 .mtab-lens::before{background:var(--tab-pill);opacity:var(--f,1)}
 .mtab-lens::after{opacity:var(--g,0);background:rgba(255,255,255,.04);box-shadow:0 6px 18px rgba(0,0,0,.45),inset 0 0 0 .5px rgba(255,255,255,.28),inset 1.5px 2px 1.5px -1px rgba(255,255,255,.55),inset -1.5px -2px 1.5px -1px rgba(255,255,255,.25),inset 0 0 8px rgba(255,255,255,.08),inset 0 -8px 10px -8px rgba(0,0,0,.4)}
 html[data-theme="light"] .mtab-lens::after{background:rgba(255,255,255,.06);box-shadow:0 6px 16px rgba(0,0,0,.14),inset 0 0 0 .5px rgba(255,255,255,.55),inset 1.5px 2px 1.5px -1px rgba(255,255,255,.95),inset -1.5px -2px 1.5px -1px rgba(255,255,255,.5),inset 0 0 8px rgba(255,255,255,.22),inset 0 -8px 10px -8px rgba(0,0,0,.18)}
-.mtab-bend{position:absolute;inset:0;pointer-events:none;display:none}
-.mtabbar.glass-bending > .mtab-bend{display:block}
-.mtab-bend-in{position:absolute;inset:0;transform-origin:0 0}
+.mtabbar > .glass-lens{position:absolute;inset-inline-start:-24px;top:-24px;pointer-events:none;display:none}
+.mtabbar.glass-bending > .glass-lens{display:block}
 .mtabbar.glass-on .mtab.active{background:transparent}
 .mtabbar,.mtabbar > .mtab{touch-action:none}
 label.tog,.adm-range,.hsb-range,.segr,.segr-opt{touch-action:pinch-zoom}

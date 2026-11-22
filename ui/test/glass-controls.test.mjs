@@ -62,7 +62,8 @@ const { glassAllowed } = await import('../js/glass-controls.js');
 const { ownClick, GlassControl, CLICK_WINDOW_MS, pointOver, releasePointer } = await import('../js/glass-control.js');
 const { switchNext } = await import('../js/glass-switch.js');
 const { fillEnd } = await import('../js/glass-slider.js');
-const { indexAt, rectAt, capPath, GlassBar, tabBar } = await import('../js/glass-bar.js');
+const { indexAt, rectAt, GlassBar, tabBar } = await import('../js/glass-bar.js');
+const { pillPath, referencedIds } = await import('../js/glass-tabs.js');
 const { parseColour, over } = await import('../js/glass-paint.js');
 const { lensPicture } = await import('../js/glass-gpu.js');
 
@@ -127,27 +128,55 @@ test('the pill box follows a fractional index and keeps going past the ends', ()
   assert.equal(rectAt(RTL, 0.5).c, 120);
 });
 
-test('a cap path cuts the pill end at the given depth, on the pill outline', () => {
-  const w = 80;
-  const h = 30;
-  const cy = 15;
-  const r = 15;
-  for (const [side, dd] of [
-    [-1, 5],
-    [1, 5],
-    [-1, 20],
-  ]) {
-    const m = /^M([\d.-]+) ([\d.-]+)A[\d.]+ [\d.]+ 0 ([01]) ([01]) ([\d.-]+) ([\d.-]+)Z$/.exec(
-      capPath(side, dd, w, h, cy, 0),
+test('a pill path traces the lens outline: two straight sides and two half circles', () => {
+  const m =
+    /^M([\d.-]+) ([\d.-]+)H([\d.-]+)A([\d.]+) [\d.]+ 0 0 1 ([\d.-]+) ([\d.-]+)H([\d.-]+)A[\d.]+ [\d.]+ 0 0 1 ([\d.-]+) ([\d.-]+)Z$/.exec(
+      pillPath(100, 30, 80, 40),
     );
-    assert.ok(m, 'one arc, closed');
-    const x = Number(m[1]);
-    assert.equal(x, side < 0 ? dd : w - dd, 'the cut is dd in from the edge');
-    const xc = side < 0 ? r : w - r;
-    const y0 = Number(m[2]);
-    assert.ok(Math.abs((x - xc) ** 2 + (y0 - cy) ** 2 - r * r) < 0.1, 'the cut starts on the outline');
-    assert.equal(m[3], dd > r ? '1' : '0', 'past the cap middle the arc takes the long way');
-  }
+  assert.ok(m, 'one closed pill');
+  assert.deepEqual(m.slice(1).map(Number), [80, 10, 120, 20, 120, 50, 80, 80, 10]);
+});
+
+test('an icon copy finds the masks and clips it points at, or it would draw nothing', () => {
+  const el = (/** @type {string[]} */ values, /** @type {any[]} */ kids = []) => ({
+    attributes: values.map(value => ({ value })),
+    querySelectorAll: () => kids,
+  });
+  const icon = el(['0 0 24 24'], [el(['url(#ic-m)', 'sy-i']), el(['url("#ic-am")']), el(['#ic-part'])]);
+  assert.deepEqual([...referencedIds(/** @type {any} */ (icon))].sort(), ['ic-am', 'ic-m', 'ic-part']);
+});
+
+test('the tab bar bends its icons and labels on the GPU, not with strips of copies', () => {
+  const bar = fs.readFileSync(path.join(root, 'js/glass-bar.js'), 'utf8');
+  assert.doesNotMatch(bar, /mtab-bend/, 'strip copies split letters where they meet');
+  assert.match(bar, /lensPicture\([\s\S]*?true,\s*\)/, 'the see-through picture is uploaded premultiplied');
+  assert.match(
+    fs.readFileSync(path.join(root, 'js/glass-gpu.js'), 'utf8'),
+    /if \(uMode == 2\) \{\s*o = texture\(uScene, \(p \+ g \* pull\) \/ uSize\) \* cover;/,
+  );
+  assert.match(css, /\.mtabbar > \.glass-lens\{[^}]*inset-inline-start:-24px;top:-24px;[^}]*display:none/);
+  assert.match(css, /\.mtabbar\.glass-bending > \.glass-lens\{display:block\}/);
+});
+
+test('a see-through lens picture is uploaded premultiplied, and the setting is put back', () => {
+  /** @type {any[]} */
+  const calls = [];
+  const gl = {
+    TEXTURE_2D: 0,
+    UNPACK_PREMULTIPLY_ALPHA_WEBGL: 9,
+    createTexture: () => ({}),
+    bindTexture() {},
+    texParameteri() {},
+    texImage2D: () => calls.push('upload'),
+    pixelStorei: (/** @type {number} */ k, /** @type {boolean} */ v) => calls.push([k, v]),
+    deleteTexture() {},
+  };
+  const slot = /** @type {any} */ ({ gl, pics: new Map() });
+  lensPicture(slot, {}, 'ink', () => /** @type {any} */ ({}), true);
+  assert.deepEqual(calls, [[9, true], 'upload', [9, false]]);
+  calls.length = 0;
+  lensPicture(slot, {}, 'opaque', () => /** @type {any} */ ({}));
+  assert.deepEqual(calls, ['upload']);
 });
 
 test('a control drops only the browser click of its own gesture', () => {

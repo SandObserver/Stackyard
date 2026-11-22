@@ -14,7 +14,7 @@ import { syncGlideSelect } from '/js/glide-select.js?v=0c57b286';
 import { ensureSprite } from '/js/icon-set.js?v=361e54a5';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { el } from '/js/utils.js?v=9ed2b298';
-import { initGlassControls } from '/js/glass-controls.js?v=4d8214ad';
+import { initGlassControls } from '/js/glass-controls.js?v=bd49dbaf';
 
 ensureSprite();
 animateNavIcons();

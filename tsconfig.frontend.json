@@ -512,6 +512,12 @@
       "/js/glass-slider.js?v=*": [
         "./ui/js/glass-slider.js"
       ],
+      "/js/glass-tabs.js": [
+        "./ui/js/glass-tabs.js"
+      ],
+      "/js/glass-tabs.js?v=*": [
+        "./ui/js/glass-tabs.js"
+      ],
       "/js/glass-switch.js": [
         "./ui/js/glass-switch.js"
       ],
