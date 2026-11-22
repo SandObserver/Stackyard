@@ -423,12 +423,13 @@ html:not(.is-mobile) .p-type{display:none}
 
 /* ── Tile-group row (Add New selector, Widget Size selector) ── */
 .tile-row{padding-top:16px;padding-bottom:16px}
-.tile-grp{display:flex;flex:1;justify-content:center;gap:clamp(0px,calc(6vw - 20px),40px)}
-.tile-opt{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;background:none;border:none;border-radius:12px;padding:4px;cursor:pointer;font-family:inherit;color:var(--dm);transition:color var(--t)}
+.tile-grp{display:flex;flex:1;justify-content:center;gap:clamp(0px,calc(6vw - 20px),40px);min-inline-size:0;margin:0;padding:0;border:0}
+.tile-opt{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;background:none;border:none;border-radius:12px;padding:4px;cursor:pointer;font-family:inherit;color:var(--dm);transition:color var(--t)}
+.tile-opt input{position:absolute;opacity:0;width:0;height:0;margin:0;pointer-events:none}
 .tile-opt.on{color:var(--tx)}
 @media (hover:hover) and (pointer:fine){.tile-opt:hover{color:var(--tx)}}
 .tile-opt:active{opacity:var(--press-dim)}
-.tile-opt:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.tile-opt:has(input:focus-visible){outline:2px solid var(--ac);outline-offset:2px}
 .tile-ico{width:48px;height:48px;display:flex;align-items:center;justify-content:center;color:inherit}
 .tile-ico svg{width:38px;height:38px}
 .tile-cap{white-space:nowrap;font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline);font-weight:400;color:var(--tx);padding:3px 12px;border-radius:50px;transition:background var(--t),color var(--t)}

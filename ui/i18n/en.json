@@ -12,10 +12,12 @@
     "backToDashboard": "Back to dashboard",
     "navigation": "Settings navigation",
     "backToDashboardList": "Back to dashboard list",
-    "pageTitle": "Stackyard Settings"
+    "pageTitle": "Stackyard Settings",
+    "sectionTitle": "{section} · Stackyard Settings"
   },
   "common": {
     "working": "Working…",
+    "required": "Required",
     "save": "Save",
     "import": "Import",
     "export": "Export",
@@ -141,7 +143,6 @@
   },
   "type": {
     "addNew": "Add New",
-    "addNewNamed": "Add New: {name}",
     "app": "App",
     "widget": "Widget",
     "folder": "Folder",
@@ -434,6 +435,7 @@
     "urlRequired": "Enter the app's address, such as https://nas.local:8080.",
     "nameRequired": "Enter a name.",
     "fieldRequired": "Enter a value for {field}.",
+    "pollRange": "Enter a poll interval from {min} to {max} seconds.",
     "configLoadFailed": "Could not load your settings. {err}",
     "uploaded": "Uploaded {name}",
     "uploadFailed": "Could not upload the file. {err}",

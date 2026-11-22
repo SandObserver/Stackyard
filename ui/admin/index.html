@@ -17,7 +17,7 @@
   <script src="/js/boot-hints.js?v=6f2f5482"></script>
   <script src="/js/page-zoom.js?v=01ccc9cf"></script>
   <link rel="stylesheet" href="/css/tokens.css?v=b377f922">
-  <link rel="stylesheet" href="/css/admin.css?v=0c5a9f5d">
+  <link rel="stylesheet" href="/css/admin.css?v=f993d860">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=53b91d5f">
   <link rel="stylesheet" href="/css/config-recovery.css?v=9f8ca0ab">
 </head>
@@ -67,9 +67,9 @@
         </div>
       </div>
       <div class="grp">
-        <div class="row ie-row" id="ie-ip"><span class="rl" data-i18n="general.hostIp">Host IP</span><span class="rv is-ph" id="ie-ip-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+        <div class="row ie-row" id="ie-ip"><span class="rl" data-i18n="general.hostIp">Host IP</span><span class="rv is-ph" id="ie-ip-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button" aria-describedby="host-ip-tip"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
       </div>
-      <p class="grp-tip" data-i18n="general.hostIpTip">Lets badges fetch from your server's own address. Without it, those requests are blocked.</p>
+      <p class="grp-tip" id="host-ip-tip" data-i18n="general.hostIpTip">Lets badges fetch from your server's own address. Without it, those requests are blocked.</p>
 
       <h2 class="grp-hdr" data-i18n="common.language">Language</h2>
       <div class="grp">
@@ -100,12 +100,12 @@
       </div></div>
       <div class="reveal" id="hc-sources-wrap"><div class="reveal-in">
       <div class="grp">
-        <div class="row ie-row" id="ie-socket"><span class="rl" data-i18n="general.socketUrl">Docker Socket URL</span><span class="rv is-ph" id="ie-socket-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+        <div class="row ie-row" id="ie-socket"><span class="rl" data-i18n="general.socketUrl">Docker Socket URL</span><span class="rv is-ph" id="ie-socket-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button" aria-describedby="socket-hint"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
       </div>
       <p class="grp-tip" id="socket-hint" data-i18n-html="general.socketTip">Use the URL of a <strong>socket proxy</strong> container, never the Docker socket itself. A name such as <code>http://socket-proxy:2375</code> works only when this container and the proxy share a Docker network; an IP address works only when the proxy publishes its port beyond the host's own loopback.</p>
       <div class="grp">
         <div class="row ie-row" id="ie-pve-url"><span class="rl" data-i18n="general.proxmoxUrl">Proxmox Address</span><span class="rv is-ph" id="ie-pve-url-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
-        <div class="row ie-row" id="ie-pve-token"><span class="rl" data-i18n="general.proxmoxTokenId">Token ID</span><span class="rv is-ph" id="ie-pve-token-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+        <div class="row ie-row" id="ie-pve-token"><span class="rl" data-i18n="general.proxmoxTokenId">Token ID</span><span class="rv is-ph" id="ie-pve-token-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button" aria-describedby="pve-hint"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
         <div class="row ie-row" id="ie-pve-secret"><span class="rl" data-i18n="general.proxmoxSecret">Secret</span><span class="rv is-ph" id="ie-pve-secret-v" data-i18n="common.notSet">Not set</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
         <div class="row"><span class="rl" id="rl-srv-pve-tls" data-i18n="app.allowSelfSigned">Allow Self-Signed Certificate</span><label class="tog"><input type="checkbox" role="switch" id="srv-pve-tls" aria-labelledby="rl-srv-pve-tls"><div class="tr"></div></label></div>
         <div class="row"><span class="rl" data-i18n="general.proxmoxConnection">Connection</span><span id="pve-status" class="row-status end" role="status" data-i18n="general.proxmoxNotTested">Not tested</span><button type="button" class="row-btn" id="pve-test" data-i18n="app.test">Test</button></div>
@@ -126,11 +126,11 @@
       <div class="reveal" id="revoke-tip-wrap"><div class="reveal-in"><p class="grp-tip" id="revoke-tip" data-i18n="general.signOutEverywhereTip">Signs out every browser and device, including this one. Use it if you think a session may have been left open or compromised. Your password does not change.</p></div></div>
       <div class="reveal" id="pw-hint-wrap"><div class="reveal-in"><p class="grp-tip" id="pw-hint-static" data-i18n-html="general.passwordTip">Leave blank to keep existing password. Min 15 characters. For stronger protection, consider placing the dashboard behind a <strong>dedicated authentication proxy</strong>. This built-in password is a lightweight gate, not a full authentication layer.</p></div></div>
       <div class="grp">
-        <div class="row ie-row" id="ie-hosts"><span class="rl" data-i18n="general.allowedHosts">Allowed Addresses</span><span class="rv is-ph" id="ie-hosts-v" data-i18n="general.allowedHostsNone">Local addresses only</span><button class="pe" type="button"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
+        <div class="row ie-row" id="ie-hosts"><span class="rl" data-i18n="general.allowedHosts">Allowed Addresses</span><span class="rv is-ph" id="ie-hosts-v" data-i18n="general.allowedHostsNone">Local addresses only</span><button class="pe" type="button" aria-describedby="hosts-tip"><svg class="sy-icon" width="17" height="17" aria-hidden="true" focusable="false"><use href="#sy-solid-edit"/></svg></button></div>
         <div class="row-wrap reveal" id="hosts-add-wrap"><div class="reveal-in"><div class="row"><span class="rl" id="hosts-add-name"></span><div class="row-btns"><button class="btn bg sm" id="hosts-add" type="button" aria-describedby="hosts-add-tip" data-i18n="common.add">+ Add</button></div></div></div></div>
       </div>
       <div class="reveal" id="hosts-add-tip-wrap"><div class="reveal-in"><p class="grp-tip" id="hosts-add-tip" data-i18n="general.allowedHostsAddTip">This page is open on an address that isn’t listed. Add it so a page on another site can’t use up your sign-in attempts.</p></div></div>
-      <p class="grp-tip" data-i18n-html="general.allowedHostsTip">While no password is set, Stackyard answers only on IP addresses, local names such as <code>nas</code> or <code>nas.local</code>, and the addresses listed here. Separate them with commas.</p>
+      <p class="grp-tip" id="hosts-tip" data-i18n-html="general.allowedHostsTip">While no password is set, Stackyard answers only on IP addresses, local names such as <code>nas</code> or <code>nas.local</code>, and the addresses listed here. Separate them with commas.</p>
 
       <h2 class="grp-hdr" data-i18n="general.backup">Backup</h2>
       <div class="grp">
@@ -283,12 +283,12 @@
 
 <!-- Modal kept dormant in DOM (JS references it); removed in cleanup unit. -->
 <!-- Hidden inputs mounted into ie-rows by JS -->
-<input id="srv-ip"    type="text"     class="d-none" autocomplete="off">
-<input id="srv-socket" type="text"   class="d-none" autocomplete="off">
+<input id="srv-ip"    type="text"     class="d-none" autocomplete="off" aria-describedby="host-ip-tip">
+<input id="srv-socket" type="text"   class="d-none" autocomplete="off" aria-describedby="socket-hint">
 <input id="srv-pve-url" type="url"   class="d-none" autocomplete="off">
-<input id="srv-pve-token" type="text" class="d-none" autocomplete="off">
+<input id="srv-pve-token" type="text" class="d-none" autocomplete="off" aria-describedby="pve-hint">
 <input id="srv-pve-secret" type="password" class="d-none" autocomplete="new-password">
-<input id="srv-hosts" type="text"    class="d-none" autocomplete="off">
+<input id="srv-hosts" type="text"    class="d-none" autocomplete="off" aria-describedby="hosts-tip">
 <input id="sec-pw"    type="password" name="password" class="d-none" autocomplete="new-password" aria-describedby="sec-pw-hint">
 <input id="sec-pw2"   type="password" name="confirm" class="d-none" autocomplete="new-password">
 <p id="sr-announce" class="visually-hidden" aria-live="polite"></p>
@@ -332,6 +332,6 @@
     </form>
   </div>
 </dialog>
-<script type="module" src="/js/admin.js?v=cbaae89f"></script>
+<script type="module" src="/js/admin.js?v=80cdea8b"></script>
 </body>
 </html>

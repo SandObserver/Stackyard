@@ -168,17 +168,23 @@ export function rowBusy(node, run) {
     node.setAttribute('aria-busy', 'true');
     /** @type {HTMLElement|null} */
     let status = null;
+    let fill = 0;
     const cancel = afterDialogs(() => {
-      status = document.createElement('span');
-      status.className = 'row-status end';
-      status.setAttribute('role', 'status');
-      status.textContent = t('common.working');
-      node.closest('.row')?.querySelector('.row-btns')?.before(status);
+      const line = document.createElement('span');
+      status = line;
+      line.className = 'row-status end';
+      line.setAttribute('role', 'status');
+      node.closest('.row')?.querySelector('.row-btns')?.before(line);
+      /* Keep the delay. Text present when the region is inserted is not announced. */
+      fill = setTimeout(() => {
+        line.textContent = t('common.working');
+      }, 100);
     });
     try {
       await run(...args);
     } finally {
       cancel();
+      clearTimeout(fill);
       status?.remove();
       node.removeAttribute('aria-busy');
       node.disabled = false;
@@ -399,8 +405,7 @@ export function showFieldError(row, message, { focus = true } = {}) {
     const pen = c.classList.contains('pe');
     if (c.tagName === 'BUTTON' && !pen && !c.classList.contains('row-dd-btn')) continue;
     if (!pen) c.setAttribute('aria-invalid', 'true');
-    const ids = (c.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
-    c.setAttribute('aria-describedby', [...ids, note.id].join(' '));
+    addDescribedBy(c, note.id);
   }
   const ac = new AbortController();
   _fieldErrWatch.set(box, ac);
@@ -441,11 +446,51 @@ export function clearFieldError(row) {
   }
   for (const c of qa('[aria-invalid="true"]', row)) c.removeAttribute('aria-invalid');
   if (!noteId) return;
-  for (const c of qa('[aria-describedby]', row)) {
-    const ids = (c.getAttribute('aria-describedby') || '').split(/\s+/).filter(id => id && id !== noteId);
-    if (ids.length) c.setAttribute('aria-describedby', ids.join(' '));
-    else c.removeAttribute('aria-describedby');
+  for (const c of qa('[aria-describedby]', row)) removeDescribedBy(c, noteId);
+}
+
+/** @param {Element|null|undefined} node @param {string} id */
+export function addDescribedBy(node, id) {
+  if (!node || !id) return;
+  const ids = (node.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+  if (!ids.includes(id)) node.setAttribute('aria-describedby', [...ids, id].join(' '));
+}
+
+/** @param {Element|null|undefined} node @param {string} id */
+export function removeDescribedBy(node, id) {
+  if (!node || !id) return;
+  const ids = (node.getAttribute('aria-describedby') || '').split(/\s+/).filter(x => x && x !== id);
+  if (ids.length) node.setAttribute('aria-describedby', ids.join(' '));
+  else node.removeAttribute('aria-describedby');
+}
+
+export const REQ_MARK = html` <span class="req" aria-hidden="true">*</span>`;
+
+export const REQ_MARKS_CHANGED = 'req-marks-changed';
+const _legendRoots = new WeakSet();
+
+/** @param {HTMLElement} root */
+export function syncRequiredLegend(root) {
+  if (!_legendRoots.has(root)) {
+    _legendRoots.add(root);
+    root.addEventListener(REQ_MARKS_CHANGED, () => syncRequiredLegend(root));
   }
+  const group = qa('.req', root)
+    .find(m => !m.closest('.req-legend'))
+    ?.closest('.grp');
+  const anchor = group?.closest('.wcf-group') ?? group;
+  const legends = qa('.req-legend', root);
+  if (anchor && legends.length === 1 && anchor.nextElementSibling === legends[0]) return;
+  for (const old of legends) old.remove();
+  if (!anchor) return;
+  const legend = document.createElement('p');
+  legend.className = 'grp-tip req-legend';
+  const mark = document.createElement('span');
+  mark.className = 'req';
+  mark.setAttribute('aria-hidden', 'true');
+  mark.textContent = '*';
+  legend.append(mark, ` ${t('common.required')}`);
+  anchor.after(legend);
 }
 
 /** @param {string} text */
@@ -600,8 +645,8 @@ export function setTogDisabled(input, disabled, describedById) {
   input.setAttribute('aria-disabled', disabled ? 'true' : 'false');
   input.closest('.tog')?.classList.toggle('tog-disabled', disabled);
   if (describedById) {
-    if (disabled) input.setAttribute('aria-describedby', describedById);
-    else input.removeAttribute('aria-describedby');
+    if (disabled) addDescribedBy(input, describedById);
+    else removeDescribedBy(input, describedById);
   }
   if (input.dataset.togGuard) return;
   input.dataset.togGuard = '1';
@@ -717,7 +762,14 @@ export function initInlineEdit(
 export function nameEditPen(row) {
   const labelEl = q('.rl', row);
   const pen = q('.pe', row);
-  if (labelEl && pen) pen.setAttribute('aria-label', t('common.editNamed', { name: labelEl.textContent.trim() }));
+  if (labelEl && pen) pen.setAttribute('aria-label', t('common.editNamed', { name: spokenText(labelEl).trim() }));
+}
+
+/** @param {Node} node @returns {string} the text without its aria-hidden parts */
+function spokenText(node) {
+  if (node.nodeType === 3) return node.textContent || '';
+  if (node.nodeType !== 1 || /** @type {Element} */ (node).getAttribute('aria-hidden') === 'true') return '';
+  return [...node.childNodes].map(spokenText).join('');
 }
 
 /** The same row behaviour for elements a caller already holds. `row` needs an id.
