@@ -98,19 +98,26 @@ test('the legacy application/csp-report format is read the same way', async () =
   assert.doesNotMatch(lines[0], /secret|key=2|sample=/);
 });
 
-test('a Trusted Types report keeps its sample, an eval report does not', () => {
+test('a Trusted Types sink report keeps only the sink name, a policy report its name, an eval report no sample', () => {
   const [tt] = report.parseReports(
     'application/reports+json',
     JSON.stringify(
       modern({
         blockedURL: 'trusted-types-sink',
         effectiveDirective: 'require-trusted-types-for',
-        sample: 'Element innerHTML|<b>',
+        sample: 'Element innerHTML|<b>secret</b>',
       }),
     ),
   );
   assert.equal(tt.blocked, 'trusted-types-sink');
-  assert.equal(tt.sample, 'Element innerHTML|<b>');
+  assert.equal(tt.sample, 'Element innerHTML');
+  const [policy] = report.parseReports(
+    'application/reports+json',
+    JSON.stringify(
+      modern({ blockedURL: 'trusted-types-policy', effectiveDirective: 'trusted-types', sample: 'other-policy' }),
+    ),
+  );
+  assert.equal(policy.sample, 'other-policy');
   const [ev] = report.parseReports('application/reports+json', JSON.stringify(modern({ blockedURL: 'eval' })));
   assert.equal(ev.blocked, 'eval');
   assert.equal(ev.sample, undefined);
@@ -156,6 +163,26 @@ test('one client is limited per minute, and every client together has a cap', as
     await send(distinct(1), 'application/reports+json');
   });
   assert.deepEqual(after, [], 'the global cap holds even for a client under its own limit');
+});
+
+const many = (n, from = 0) => Array.from({ length: n }, (_, i) => modern({ lineNumber: from + i })[0]);
+
+test('every report in a body counts against the limits, so they cap logged lines', async () => {
+  const lines = await captured(async () => {
+    for (let i = 0; i < 4; i++) {
+      assert.equal((await send(many(20, i * 20), 'application/reports+json')).status, 204);
+    }
+  });
+  assert.equal(lines.length, report.PER_CLIENT_PER_MINUTE, '80 reports from one client log 60 lines');
+
+  auth._resetRateLimits();
+  report._resetLogged();
+  for (let i = 0; i < report.ALL_PER_MINUTE - 5; i++)
+    auth.rateLimit('all', 'csp-report', report.ALL_PER_MINUTE, 60_000);
+  const after = await captured(async () => {
+    assert.equal((await send(many(20), 'application/reports+json')).status, 204);
+  });
+  assert.equal(after.length, 5, 'a body of 20 logs only what is left of the global cap');
 });
 
 test('the repeat window ends, and the record of logged reports stays bounded', () => {

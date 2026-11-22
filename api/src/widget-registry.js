@@ -41,17 +41,52 @@ const VALID_FIELDTYPES = new Set([
 const DOCS_URL = 'https://stackyard.sandobserver.com/docs/create-a-widget/';
 const PAGE_MAX_BYTES = 2 * 1024 * 1024;
 const SCRIPT_TAG = /<script\b([^>]*)>/gi;
-const SCRIPT_TYPES = new Set(['', 'module', 'importmap', 'text/javascript', 'application/javascript']);
-const INLINE_HANDLER = /<[a-z][^>]*\son[a-z]+\s*=/i;
+const SCRIPT_TYPES = new Set([
+  '',
+  'module',
+  'importmap',
+  'application/ecmascript',
+  'application/javascript',
+  'application/x-ecmascript',
+  'application/x-javascript',
+  'text/ecmascript',
+  'text/javascript',
+  'text/javascript1.0',
+  'text/javascript1.1',
+  'text/javascript1.2',
+  'text/javascript1.3',
+  'text/javascript1.4',
+  'text/javascript1.5',
+  'text/jscript',
+  'text/livescript',
+  'text/x-ecmascript',
+  'text/x-javascript',
+]);
+const INLINE_HANDLER = /<[a-z][^>]*[\s/"']on[a-z]+\s*=/i;
 const SCRIPT_URL = /\s(?:href|src|action|formaction|xlink:href)\s*=\s*["']?\s*javascript:/i;
+
+/** @param {string} attrs @param {string} name @returns {string | undefined} */
+function attribute(attrs, name) {
+  const m = new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]*))`, 'i').exec(` ${attrs}`);
+  return m ? (m[1] ?? m[2] ?? m[3]) : undefined;
+}
+
+/** A script element's type, lowercased, without parameters. A language
+    attribute counts when there is no type attribute.
+    @param {string} attrs @returns {string} */
+function scriptType(attrs) {
+  const type = attribute(attrs, 'type');
+  const language = attribute(attrs, 'language')?.trim();
+  const value = type === undefined && language ? `text/${language}` : (type ?? '');
+  return value.split(';')[0].trim().toLowerCase();
+}
 
 /** Whether a page has script a policy without 'unsafe-inline' blocks. A rough
     scan of the markup, not a parse. @param {string} page */
 function hasInlineScript(page) {
   for (const [, attrs] of page.matchAll(SCRIPT_TAG)) {
     if (/\ssrc\s*=/i.test(` ${attrs}`)) continue;
-    const type = (/\stype\s*=\s*["']?([^"'\s>]*)/i.exec(` ${attrs}`)?.[1] || '').toLowerCase();
-    if (SCRIPT_TYPES.has(type)) return true;
+    if (SCRIPT_TYPES.has(scriptType(attrs))) return true;
   }
   return INLINE_HANDLER.test(page) || SCRIPT_URL.test(page);
 }

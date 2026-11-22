@@ -83,7 +83,7 @@ test('one notice per widget names the folder and each page with inline script', 
 test('the notice says what changes and where to read how to fix it', () => {
   const [line] = noticeFor('inline');
   assert.match(line, /msg="widget registry: inline script found, the next release blocks it"/);
-  assert.ok(line.includes('https://stackyard.sandobserver.com/docs/create-a-widget/'), line);
+  assert.equal(/ see (\S+?)"/.exec(line)?.[1], 'https://stackyard.sandobserver.com/docs/create-a-widget/', line);
 });
 
 test('a page that loads its script from a file, or holds only data, raises no notice', () => {
@@ -103,6 +103,36 @@ test('the scan tells inline script from a loaded file', () => {
   assert.equal(hasInlineScript('<img src="x.png" onerror="x()">'), true);
   assert.equal(hasInlineScript('<p>Turn the oven on = done</p>'), false);
   assert.equal(hasInlineScript('<form action="javascript:void 0">'), true);
+});
+
+test('the scan knows every script type a browser runs, and handlers after a slash or quote', () => {
+  const { hasInlineScript } = widgets;
+  for (const type of [
+    'text/ecmascript',
+    'application/x-javascript',
+    'application/ecmascript',
+    'application/x-ecmascript',
+    'text/javascript1.5',
+    'text/jscript',
+    'text/livescript',
+    'text/x-ecmascript',
+    'text/x-javascript',
+    'TEXT/JavaScript',
+    ' text/javascript ',
+    'text/javascript; charset=utf-8',
+    'MODULE',
+  ]) {
+    assert.equal(hasInlineScript(`<script type="${type}">x()</script>`), true, type);
+    assert.equal(hasInlineScript(`<script type='${type}'>x()</script>`), true, type);
+  }
+  assert.equal(hasInlineScript('<script type=text/ecmascript>x()</script>'), true);
+  assert.equal(hasInlineScript('<script language="javascript">x()</script>'), true);
+  assert.equal(hasInlineScript('<script language="vbscript">x()</script>'), false);
+  assert.equal(hasInlineScript('<script type="text/javascript2">x()</script>'), false);
+  assert.equal(hasInlineScript('<svg/onload=x()>'), true);
+  assert.equal(hasInlineScript('<img src="x.png"onerror="x()">'), true);
+  assert.equal(hasInlineScript("<img src='x.png'onerror=x()>"), true);
+  assert.equal(hasInlineScript('<img\tonerror=x()>'), true);
 });
 
 test('no bundled widget page has inline script', () => {

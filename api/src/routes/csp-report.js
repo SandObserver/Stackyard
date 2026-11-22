@@ -61,7 +61,11 @@ function violation(r) {
     column: count(r.columnNumber),
     disposition: r.disposition === 'enforce' ? 'enforce' : 'report',
   };
-  if (SAMPLED.has(blocked) && typeof r.sample === 'string' && r.sample) out.sample = r.sample.slice(0, SAMPLE_CHARS);
+  if (SAMPLED.has(blocked) && typeof r.sample === 'string' && r.sample) {
+    /* Log only the sink name before "|". The value after it is page content. */
+    const sample = blocked === 'trusted-types-sink' ? r.sample.split('|')[0] : r.sample;
+    out.sample = sample.slice(0, SAMPLE_CHARS);
+  }
   return Object.fromEntries(Object.entries(out).filter(([, value]) => value !== undefined && value !== ''));
 }
 
@@ -120,21 +124,27 @@ function noContent(res) {
   res.end();
 }
 
+/** Spends one report from the client's budget and the global budget.
+    @param {string} client @returns {boolean} whether both had room */
+const spend = client =>
+  !rateLimit(client, 'csp-report', PER_CLIENT_PER_MINUTE, 60_000) &&
+  !rateLimit('all', 'csp-report', ALL_PER_MINUTE, 60_000);
+
 on('POST', '/api/csp-report', async (req, res) => {
   try {
     const type = String(req.headers['content-type'] || '')
       .split(';')[0]
       .trim()
       .toLowerCase();
-    const limited =
-      rateLimit(attemptAddress(getIp(req)), 'csp-report', PER_CLIENT_PER_MINUTE, 60_000) ||
-      rateLimit('all', 'csp-report', ALL_PER_MINUTE, 60_000);
-    if (limited || !TYPES.has(type)) {
+    const client = attemptAddress(getIp(req));
+    if (!spend(client) || !TYPES.has(type)) {
       req.resume();
       return noContent(res);
     }
     const raw = (await readBodyCapped(req, REPORT_BODY_MAX_BYTES)).toString('utf8');
-    for (const v of parseReports(type, raw)) logOnce(v);
+    /* Spend one per report. Otherwise one body logs up to REPORTS_PER_BODY lines past the limits. */
+    const reports = parseReports(type, raw);
+    for (let i = 0; i < reports.length && (i === 0 || spend(client)); i++) logOnce(reports[i]);
   } catch {}
   noContent(res);
 });
