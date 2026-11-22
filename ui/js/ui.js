@@ -22,8 +22,8 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=9ed2b298';
-import { mountScaledWidget, teardownWidgets } from '/js/widget-frame.js?v=1468e826';
+} from '/js/utils.js?v=f2d28d1d';
+import { mountScaledWidget, teardownWidgets } from '/js/widget-frame.js?v=1a9c1b3a';
 import { t, currentLang } from '/js/i18n.js?v=99563c71';
 import { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
 import { DEFAULT_WIDGET_SIZE } from '/js/limits.js?v=ff61256e';

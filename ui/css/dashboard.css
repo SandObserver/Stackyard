@@ -1137,10 +1137,13 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
   color: var(--label-primary); font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight: 500; font-family: inherit; outline: none;
 }
 .setup-pw:focus { box-shadow: 0 0 0 2px var(--accent); }
+.setup-pw[aria-invalid="true"] { box-shadow: 0 0 0 2px var(--danger); }
 @media (forced-colors: active) {
   .setup-pw { border:1px solid CanvasText; }
   .setup-pw:focus { outline:2px solid Highlight; }
 }
+.setup-group { display: flex; flex-direction: column; gap: 6px; }
+.setup-label { font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); font-weight: 600; padding-inline: 8px; }
 .setup-field { position: relative; display: flex; align-items: center; }
 .setup-field .setup-pw { padding-inline-end: 52px; }
 .setup-reveal {

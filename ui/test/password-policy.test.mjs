@@ -112,7 +112,7 @@ test('every catalog states the same minimum the rules enforce', async () => {
   }
 });
 
-test('the Settings meter draws as many bars as the rules fill, and its hint is announced', async () => {
+test('the Settings meter draws as many bars as the rules fill, and its hint is not read per character', async () => {
   const full = passwordMeter('quiet otter lantern 42').lit;
   const admin = await readFile(new URL('../admin/index.html', import.meta.url), 'utf8');
   const meters = [[admin, 'sec-pw-bars', 'sec-pw-hint', 'id="sec-pw"']];
@@ -120,7 +120,7 @@ test('the Settings meter draws as many bars as the rules fill, and its hint is a
     const row = src.match(new RegExp(`id="${bars}"[^>]*>((?:<(div|span) class="pwbar"></\\2>)*)`));
     assert.ok(row, bars);
     assert.equal(row[1].match(/pwbar/g).length, full, `${bars} must have ${full} bars`);
-    assert.match(src, new RegExp(`id="${hint}"[^>]*role="status"`), `${hint} must be a status`);
+    assert.doesNotMatch(src, new RegExp(`id="${hint}"[^>]*role=`), `${hint} is read after every character`);
     assert.match(src, new RegExp(`${field}[^>]*aria-describedby="${hint}"`), `${field} must point at ${hint}`);
   }
 });

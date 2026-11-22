@@ -266,6 +266,61 @@ test('the Settings password row hides its meter when Escape restores the value',
   }
 });
 
+test('the Settings password rows sit in a form password managers can read', async () => {
+  const { catalogRoutes, fakeFetch, installDom, pageBody } = await import('./fake-dom.mjs');
+  const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+  try {
+    await (await import('../js/i18n.js')).initI18n('en');
+    const { initPasswordRows } = await import('../js/admin-settings-controls.js');
+    initPasswordRows();
+    const byId = id => dom.document.getElementById(id);
+    const form = byId('sec-pw-form');
+    assert.equal(form.tagName, 'FORM');
+    for (const [id, name] of [
+      ['sec-user', 'username'],
+      ['sec-pw', 'password'],
+      ['sec-pw2', 'confirm'],
+    ]) {
+      assert.equal(byId(id).closest('form'), form, `${id} is outside the form`);
+      assert.equal(byId(id).getAttribute('name'), name);
+    }
+    assert.equal(
+      form.dispatchEvent({ type: 'submit', bubbles: true, cancelable: true }),
+      false,
+      'a submit would leave the page',
+    );
+  } finally {
+    dom.restore();
+  }
+});
+
+test('the Settings strength hint is read when its band changes, not per character', async () => {
+  const { catalogRoutes, fakeFetch, installDom, pageBody, settle } = await import('./fake-dom.mjs');
+  const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+  try {
+    const { initI18n, t } = await import('../js/i18n.js');
+    await initI18n('en');
+    const { wirePasswordStrength } = await import('../js/admin-auth.js');
+    const byId = id => dom.document.getElementById(id);
+    const said = [];
+    const region = byId('sr-announce');
+    const type = async value => {
+      byId('sec-pw').value = value;
+      byId('sec-pw').dispatchEvent({ type: 'input', bubbles: true });
+      await settle(120);
+      if (region.textContent && region.textContent !== said.at(-1)) said.push(region.textContent);
+    };
+    byId('sec-pw').value = 'q';
+    wirePasswordStrength('sec-pw', 'sec-pw-bars', 'sec-pw-hint');
+    await type('q');
+    await type('qu');
+    await type('quiet otter lantern 42');
+    assert.deepEqual(said, [t('pwStrength.count', { count: 1 }), t('pwStrength.enough')]);
+  } finally {
+    dom.restore();
+  }
+});
+
 test('every row value in the admin page is translated', () => {
   const page = fs.readFileSync(new URL('../admin/index.html', import.meta.url), 'utf8');
   const bare = [...page.matchAll(/<span class="rv[^"]*"[^>]*>/g)].map(m => m[0]).filter(s => !/data-i18n=/.test(s));

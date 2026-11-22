@@ -4,7 +4,7 @@ import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { easing, glide, isScripted } from '/js/frame-motion.js?v=911f7c03';
 import { t } from '/js/i18n.js?v=99563c71';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
-import { el, inertAllBut, pageDir, qa, storeSet } from '/js/utils.js?v=9ed2b298';
+import { el, inertAllBut, pageDir, qa, storeSet } from '/js/utils.js?v=f2d28d1d';
 
 export const PAGE_STORE = 'dash_page';
 

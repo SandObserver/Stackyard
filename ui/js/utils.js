@@ -105,6 +105,28 @@ export const setUserText = (node, text) => {
   return node;
 };
 
+/** @type {WeakMap<Element, ReturnType<typeof setTimeout>>} */
+const liveTimers = new WeakMap();
+
+/** Clears the region first, so the same text is read again.
+    @param {Element} node @param {string} text */
+export function setLiveText(node, text) {
+  clearTimeout(liveTimers.get(node));
+  liveTimers.delete(node);
+  if (!text || node.textContent !== text) {
+    node.textContent = text;
+    return;
+  }
+  node.textContent = '';
+  liveTimers.set(
+    node,
+    setTimeout(() => {
+      liveTimers.delete(node);
+      node.textContent = text;
+    }, 50),
+  );
+}
+
 /* A centred label that ellipsises. The block's direction decides which end is
    cut, so it takes dir="auto" and no <bdi>: dir="auto" skips text inside a bdi
    and would resolve to ltr.

@@ -1,7 +1,7 @@
-import { apiGet } from '/js/admin-shared.js?v=d78607eb';
+import { apiGet } from '/js/admin-shared.js?v=7384ea00';
 import { html, setHtml } from '/js/html.js?v=c71f8903';
 import { t } from '/js/i18n.js?v=99563c71';
-import { el } from '/js/utils.js?v=9ed2b298';
+import { el } from '/js/utils.js?v=f2d28d1d';
 
 /* The arc turns once, as on the docs site, when the logo is pointed at or
    tapped. Never on its own. */

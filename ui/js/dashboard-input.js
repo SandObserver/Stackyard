@@ -1,9 +1,9 @@
 import { wheelPager } from '/js/dashboard-logic.js?v=b4828b62';
-import { overlayOpen } from '/js/dashboard-pager.js?v=a2181a99';
+import { overlayOpen } from '/js/dashboard-pager.js?v=087dbecb';
 import { isScripted } from '/js/frame-motion.js?v=911f7c03';
-import { swipePager } from '/js/ui.js?v=52370285';
-import { el, pageDir } from '/js/utils.js?v=9ed2b298';
-import { scrollsSideways } from '/js/widget-frame.js?v=1468e826';
+import { swipePager } from '/js/ui.js?v=2663fe29';
+import { el, pageDir } from '/js/utils.js?v=f2d28d1d';
+import { scrollsSideways } from '/js/widget-frame.js?v=1a9c1b3a';
 
 /* A touch produces a compatibility mouse event after it. */
 const COMPAT_POINTER_MS = 500;

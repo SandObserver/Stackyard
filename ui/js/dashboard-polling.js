@@ -1,8 +1,8 @@
 import { restoreAction } from '/js/dashboard-logic.js?v=b4828b62';
-import { overlayOpen } from '/js/dashboard-pager.js?v=a2181a99';
+import { overlayOpen } from '/js/dashboard-pager.js?v=087dbecb';
 import { liftVeil, showApiDown } from '/js/dashboard-screens.js?v=a1d32807';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
-import { el } from '/js/utils.js?v=9ed2b298';
+import { el } from '/js/utils.js?v=f2d28d1d';
 
 /** @param {{
       badges: import('/js/dashboard-badges.js?v=5b05724e').Badges,
