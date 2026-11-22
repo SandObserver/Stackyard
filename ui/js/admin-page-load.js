@@ -1,5 +1,5 @@
 import { initAboutLogo, initVersion } from '/js/admin-about.js?v=a9a3570e';
-import { render } from '/js/admin-list.js?v=eb67b743';
+import { render } from '/js/admin-list.js?v=7f843c05';
 import { loadSettings } from '/js/admin-settings.js?v=a0fc0140';
 import { syncPickerLabels } from '/js/admin-settings-controls.js?v=9081177e';
 import { apiGet, errorText, nameEditPen, toast } from '/js/admin-shared.js?v=2e433594';

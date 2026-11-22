@@ -5,7 +5,7 @@ import {
   captureActLabels,
   serializeKvRows,
 } from '/js/admin-app-form.js?v=c5d1c7f8';
-import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=eb67b743';
+import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=7f843c05';
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
 import { scrollSettingsTop } from '/js/admin-nav.js?v=cc1cebcf';
 import {
