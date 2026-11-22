@@ -219,6 +219,39 @@ test('typing inside an open folder does not open Search over it', () => {
   assert.equal(spot.open, true, 'typing on the bare page does not open Search');
 });
 
+test('Escape while composing text stays in Search', () => {
+  if (!spot.open) fire(doc.body, 'keydown', { key: 'n' });
+  const input = doc.getElementById('sin');
+  fire(input, 'keydown', { key: 'Escape', isComposing: true, keyCode: 229 });
+  assert.equal(spot.open, true, 'the IME cancel closed Search');
+  fire(input, 'keydown', { key: 'Escape' });
+  assert.equal(spot.open, false);
+});
+
+test('the result count is announced once typing pauses', t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const live = doc.getElementById('sres-live');
+  live.textContent = '';
+  const input = doc.getElementById('sin');
+  for (const v of ['n', 'na', 'nas']) {
+    input.value = v;
+    fire(input, 'input');
+    t.mock.timers.tick(100);
+  }
+  assert.equal(live.textContent, '', 'a count was announced mid-word');
+  t.mock.timers.tick(400);
+  assert.equal(live.textContent, 'home.resultCount');
+  assert.ok(doc.querySelector('#sres .sr'), 'the results waited for the announcement');
+});
+
+test('the search pill and the folder tiles say they open a dialog', () => {
+  assert.equal(pillEl().getAttribute('aria-haspopup'), 'dialog');
+  phone([{ id: 'f', type: 'folder', label: 'F', children: [] }]);
+  assert.equal(doc.querySelector('.dyn-mob-btn').getAttribute('aria-haspopup'), 'dialog');
+  const desktop = read('js/ui.js').slice(read('js/ui.js').indexOf('export function mkFolder('));
+  assert.match(desktop.slice(0, desktop.indexOf('\n}\n')), /setAttribute\('aria-haspopup', 'dialog'\)/);
+});
+
 test('the Search pill keeps a readable label on a small phone', () => {
   assert.match(css, /#mob-search-pill \.msp-label \{\s*font-size:max\(11px, calc\(12px \* var\(--sc,1\)\)\)/);
   for (const vw of [320, 360, 393, 440]) {

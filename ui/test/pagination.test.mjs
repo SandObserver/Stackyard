@@ -288,6 +288,52 @@ test('an open folder or search stops the keyboard and the mouse pager', () => {
   doc.getElementById('spot').removeAttribute('open');
 });
 
+test('the arrow keys leave a field, a modified key and an open dialog alone', () => {
+  pager.goTo(0, false);
+  const field = doc.createElement('input');
+  doc.body.appendChild(field);
+  assert.deepEqual(
+    turned(() => fire(field, 'keydown', { key: 'ArrowRight' })),
+    [],
+    'moving the caret turned the page',
+  );
+  field.remove();
+  for (const mod of ['altKey', 'ctrlKey', 'metaKey', 'shiftKey'])
+    assert.deepEqual(
+      turned(() => fire(doc.body, 'keydown', { key: 'ArrowLeft', [mod]: true })),
+      [],
+      mod,
+    );
+  for (const [tag, cls] of [
+    ['dialog', 'setup-prompt'],
+    ['div', 'cfg-recovery'],
+  ]) {
+    const node = doc.createElement(tag);
+    node.className = cls;
+    if (tag === 'dialog') node.setAttribute('open', '');
+    doc.body.appendChild(node);
+    assert.deepEqual(
+      turned(() => fire(doc.body, 'keydown', { key: 'ArrowRight' })),
+      [],
+      cls,
+    );
+    node.remove();
+  }
+});
+
+/* The page left behind turns inert, and focus inside it falls to the body. */
+test('a page turn takes focus along to the page it shows', () => {
+  pager.goTo(0, false);
+  const leaving = strip.children[0].querySelector('a[href]');
+  leaving.focus();
+  fire(leaving, 'keydown', { key: 'ArrowRight' });
+  assert.ok(strip.children[1].contains(doc.activeElement), 'focus stayed on the inert page');
+  const dot = dotButtons()[0];
+  dot.focus();
+  dot.click();
+  assert.equal(doc.activeElement, dot, 'focus outside the pages was moved');
+});
+
 const swipe = (from, to) => {
   const t = (x, id = 1) => ({ identifier: id, clientX: x, clientY: 100 });
   fire(doc.body, 'touchstart', { touches: [t(from)], changedTouches: [t(from)], timeStamp: 0 });

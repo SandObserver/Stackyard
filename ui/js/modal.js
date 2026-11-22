@@ -145,6 +145,7 @@ export function openModal({ title, className, onClose }) {
     b.className = 'btn ' + cls;
     b.textContent = label;
     b.onclick = () => {
+      if (busy) return;
       if (onAct) onAct();
       else close();
     };
@@ -166,7 +167,11 @@ export function openModal({ title, className, onClose }) {
   const setBusy = on => {
     busy = on;
     box.setAttribute('aria-busy', String(on));
-    for (const c of box.querySelectorAll('button, input')) /** @type {HTMLInputElement} */ (c).disabled = on;
+    for (const c of box.querySelectorAll('button, input')) {
+      if (on) c.setAttribute('aria-disabled', 'true');
+      else c.removeAttribute('aria-disabled');
+      if (c.tagName === 'INPUT') /** @type {HTMLInputElement} */ (c).readOnly = on;
+    }
   };
 
   return { box, body, footer, close, addAction, focus, setBusy };

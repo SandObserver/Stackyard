@@ -1,7 +1,7 @@
 import { wheelPager } from '/js/dashboard-logic.js?v=b4828b62';
-import { overlayOpen } from '/js/dashboard-pager.js?v=a2181a99';
+import { overlayOpen } from '/js/dashboard-pager.js?v=e66bde72';
 import { isScripted } from '/js/frame-motion.js?v=911f7c03';
-import { swipePager } from '/js/ui.js?v=52370285';
+import { swipePager } from '/js/ui.js?v=c7182dbd';
 import { el, pageDir } from '/js/utils.js?v=9ed2b298';
 import { scrollsSideways } from '/js/widget-frame.js?v=1468e826';
 
@@ -22,7 +22,9 @@ export function wirePageInput({ dash, goTo }) {
   const pager = /** @type {HTMLInputElement} */ (el('mob-pager'));
   pager.addEventListener('input', () => goTo(Number(pager.value) - 1, false));
   document.addEventListener('keydown', e => {
-    if (e.target === pager) return;
+    if (e.target === pager || e.defaultPrevented) return;
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    if (typesText(e.target)) return;
     /* The overlay covers the page it would scroll behind. */
     if (overlayOpen()) return;
     if (e.key === 'ArrowRight') goTo(dash.pg + pageDir());
@@ -91,6 +93,12 @@ export function wirePageInput({ dash, goTo }) {
     scripted: isScripted,
     enabled: () => !overlayOpen(),
   });
+}
+
+/** @param {EventTarget|null} target */
+function typesText(target) {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable || !!target.closest('input, textarea, select');
 }
 
 /* Keep. Without it Safari leaves the tile scaled after a new tab opens. */

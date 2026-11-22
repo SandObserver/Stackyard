@@ -425,12 +425,15 @@
     #photo-credit {
       position:fixed; z-index:300;
       inset-block-end:calc(14px + var(--safe-bottom)); inset-inline-start:calc(20px + var(--safe-left));
-      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+      display:flex; gap:.3em; white-space:nowrap;
       font-weight:500;
       font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2);
       color:var(--label-color-2); text-shadow:var(--label-shadow);
       transition:color .2s;
     }
+    #photo-credit[hidden] { display:none }
+    #photo-credit > * { flex-shrink:0 }
+    #photo-credit > a:first-child { flex-shrink:1; min-width:0; overflow:hidden; text-overflow:ellipsis }
     #photo-credit[data-place="top"] { inset-block:calc(12px + var(--safe-top)) auto }
     #photo-credit[data-tone="dark"] { color:var(--label-color-2-dark); text-shadow:var(--label-shadow-dark) }
     #photo-credit:focus-within { color:var(--label-color) }

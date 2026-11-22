@@ -5,7 +5,7 @@ import {
   folderLabelName,
   readBadgeUpdate,
 } from '/js/badge-logic.js?v=7112fd10';
-import { wireBadgePopover } from '/js/badge-popover.js?v=a7b62808';
+import { describeBadgeTile, wireBadgePopover } from '/js/badge-popover.js?v=bc59bc37';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { t } from '/js/i18n.js?v=99563c71';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
@@ -75,6 +75,7 @@ export function createBadges(dash) {
       const tile = /** @type {HTMLElement|null} */ (badge.closest('a, button, [role="button"]'));
       const tileName = tile?.dataset.tileName;
       if (tile && tileName) tile.setAttribute('aria-label', aria ? `${tileName}, ${aria}` : tileName);
+      if (tile) describeBadgeTile(tile, badge, popover ? rows : null);
       if (BSIG.get(badge) === sig) return;
       const painted = BSIG.has(badge);
       BSIG.set(badge, sig);

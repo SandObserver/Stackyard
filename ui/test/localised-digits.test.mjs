@@ -143,7 +143,7 @@ test('geometry is left in Latin digits', () => {
 /* The pill beside it is already formatted, so a Latin row reads as a mismatch. */
 test('the badge popover rows follow the locale', () => {
   const pop = read('js/badge-popover.js');
-  assert.match(pop, /import \{ formatNumber \} from '\/js\/format-number\.js/);
+  assert.match(pop, /import \{[^}]*\bformatNumber\b[^}]*\} from '\/js\/format-number\.js/);
   assert.match(pop, /typeof row\.value === 'number' \? formatNumber\(row\.value\)/);
   assert.doesNotMatch(pop, /String\(row\.value\)/);
 });

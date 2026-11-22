@@ -2,7 +2,7 @@
 /* One element for the whole dashboard. A per-tile popover outlives the tiles
    the grid rebuilds on every resize. */
 
-import { formatNumber } from '/js/format-number.js?v=263fa390';
+import { formatList, formatNumber } from '/js/format-number.js?v=263fa390';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 
 const HOVER_IN_MS = 320;
@@ -16,12 +16,21 @@ let pop = null;
 /** @type {HTMLElement|null} */
 let openFor = null;
 /** @type {HTMLElement|null} */
-let describedEl = null;
+let shownFrom = null;
 let openTimer = 0;
 let closeTimer = 0;
 let openedAt = 0;
 
 const ROWS = new WeakMap();
+/** @type {WeakMap<HTMLElement, HTMLElement>} */
+const DESC = new WeakMap();
+let descSeq = 0;
+
+/** @param {{ value: number|string, unit: string }} row */
+function valueText(row) {
+  const value = typeof row.value === 'number' ? formatNumber(row.value) : row.value;
+  return row.unit ? `${value} ${row.unit}` : String(value);
+}
 
 function ensurePop() {
   if (pop) return pop;
@@ -32,10 +41,12 @@ function ensurePop() {
   /* auto, so the browser gives the top layer, dismissal on a click outside and
      Escape. */
   pop.setAttribute('popover', 'auto');
-  /* Interactive now, so a click on it must not reach the tile underneath. */
+  /* Interactive now, so a click on it must not reach the tile underneath, and a
+     touch must not reach the folder scrim that closes on a touch outside. */
   pop.addEventListener('pointerenter', cancelClose);
   pop.addEventListener('pointerleave', scheduleClose);
   pop.addEventListener('click', e => e.stopPropagation());
+  pop.addEventListener('touchend', e => e.stopPropagation(), { passive: true });
   document.body.appendChild(pop);
   return pop;
 }
@@ -104,23 +115,24 @@ function open(badge) {
     name.textContent = row.name;
     const val = document.createElement('span');
     val.className = 'badge-pop-val';
-    const value = typeof row.value === 'number' ? formatNumber(row.value) : row.value;
-    val.textContent = row.unit ? `${value} ${row.unit}` : value;
+    val.textContent = valueText(row);
     line.append(dot, name, val);
     p.appendChild(line);
   }
   const was = openFor;
   p.getAnimations?.().forEach(a => a.cancel());
-  if (!p.matches(':popover-open')) p.showPopover();
+  /* A modal folder makes everything outside it inert, a top-layer popover too. */
+  const host = badge.closest('dialog[open]') || document.body;
+  const shown = p.matches(':popover-open');
+  if (shown && (shownFrom !== badge || p.parentElement !== host)) p.hidePopover();
+  if (p.parentElement !== host) host.appendChild(p);
+  /* Keep the source. Without it a second tap on the badge closes and reopens the popover. */
+  if (!p.matches(':popover-open')) p.showPopover({ source: badge });
+  shownFrom = badge;
   openFor = badge;
   openedAt = Date.now();
   place(badge);
   if (!was) grow(p, badge, true);
-  const tile = tileOf(badge);
-  if (tile) {
-    tile.setAttribute('aria-describedby', 'badge-pop');
-    describedEl = tile;
-  }
 }
 
 export function closeBadgePopover() {
@@ -139,10 +151,6 @@ export function closeBadgePopover() {
     else p.hidePopover();
   }
   openFor = null;
-  if (describedEl) {
-    describedEl.removeAttribute('aria-describedby');
-    describedEl = null;
-  }
 }
 
 /** @param {HTMLElement} badge */
@@ -177,9 +185,23 @@ function wireGlobals() {
   window.addEventListener('resize', () => closeBadgePopover());
   /* The browser dismisses it without telling this module, which would then
      think it is still open. */
-  ensurePop().addEventListener('toggle', e => {
-    if (/** @type {any} */ (e).newState === 'closed' && openFor) closeBadgePopover();
+  const p = ensurePop();
+  /* Not while it is shown again. The event is queued behind a hide and a show. */
+  p.addEventListener('toggle', e => {
+    if (/** @type {any} */ (e).newState === 'closed' && openFor && !p.matches(':popover-open')) closeBadgePopover();
   });
+  /* A folder removes its dialog when it closes, and the popover with it. */
+  document.addEventListener(
+    'close',
+    e => {
+      if (p.parentElement !== e.target) return;
+      closeBadgePopover();
+      p.getAnimations?.().forEach(a => a.cancel());
+      if (p.matches(':popover-open')) p.hidePopover();
+      document.body.appendChild(p);
+    },
+    true,
+  );
   /* Resolve the tile at focus time. A badge is wired before it joins its tile. */
   document.addEventListener('focusin', e => {
     const badge = badgeIn(e.target);
@@ -198,6 +220,33 @@ function badgeIn(target) {
       return /** @type {HTMLElement} */ (badge);
   }
   return null;
+}
+
+/** Describe a tile by its badge's popover rows. Null rows remove it.
+    @param {HTMLElement} tile @param {HTMLElement} badge
+    @param {Array<{ name: string, value: number|string, unit: string }>|null} rows */
+export function describeBadgeTile(tile, badge, rows) {
+  let desc = DESC.get(badge);
+  if (!rows || !rows.length) {
+    if (desc && tile.getAttribute('aria-describedby') === desc.id) tile.removeAttribute('aria-describedby');
+    desc?.remove();
+    DESC.delete(badge);
+    return;
+  }
+  if (!desc) {
+    desc = document.createElement('span');
+    desc.id = `badge-desc-${++descSeq}`;
+    desc.hidden = true;
+    DESC.set(badge, desc);
+  }
+  const parent = badge.parentElement;
+  if (parent && desc.previousElementSibling !== badge) parent.insertBefore(desc, badge.nextElementSibling);
+  /* User text. Assigned, never interpolated. */
+  desc.textContent = formatList(
+    rows.map(row => (row.value === '' ? row.name : `${row.name}: ${valueText(row)}`)),
+    'plain',
+  );
+  tile.setAttribute('aria-describedby', desc.id);
 }
 
 /** Attach or remove the popover on one badge. Null rows remove it.

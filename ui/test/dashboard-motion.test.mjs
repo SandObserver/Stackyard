@@ -490,17 +490,74 @@ test('a page turn closes the badge popover', t => {
     badge.dispatchEvent({ type: 'pointerenter', pointerType: 'mouse' });
     t.mock.timers.tick(400);
   };
+  pop.animate = undefined;
+  const shown = () => pop.hasAttribute('data-open');
   hover();
-  assert.equal(tile.getAttribute('aria-describedby'), 'badge-pop');
+  assert.equal(shown(), true);
   goTo(0, false);
-  assert.equal(tile.getAttribute('aria-describedby'), 'badge-pop', 'staying on the page closed it');
+  assert.equal(shown(), true, 'staying on the page closed it');
   goTo(1, false);
-  assert.equal(tile.getAttribute('aria-describedby'), null);
+  assert.equal(shown(), false);
   badge.dispatchEvent({ type: 'pointerenter', pointerType: 'mouse' });
   goTo(2, false);
   t.mock.timers.tick(400);
-  assert.equal(tile.getAttribute('aria-describedby'), null, 'a hover from the old page opened it on the new one');
+  assert.equal(shown(), false, 'a hover from the old page opened it on the new one');
+  delete pop.animate;
   tile.remove();
+});
+
+/* Without a source, the second tap light-dismisses it and the tap's click opens it again. */
+test('the popover is shown from the badge, and again from the next badge', t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const sources = [];
+  const show = pop.showPopover;
+  pop.showPopover = opts => {
+    sources.push(opts?.source);
+    show();
+  };
+  const tiles = [0, 1].map(() => {
+    const tile = doc.createElement('a');
+    const badge = doc.createElement('div');
+    badge.className = 'badge';
+    tile.appendChild(badge);
+    doc.body.appendChild(tile);
+    popover.wireBadgePopover(badge, [{ name: 'Queue', value: 3, unit: '', color: '' }]);
+    return { tile, badge };
+  });
+  for (const { badge } of tiles) {
+    badge.dispatchEvent({ type: 'pointerenter', pointerType: 'mouse' });
+    t.mock.timers.tick(400);
+  }
+  assert.deepEqual(
+    sources,
+    tiles.map(x => x.badge),
+  );
+  popover.closeBadgePopover();
+  pop.showPopover = show;
+  for (const { tile } of tiles) tile.remove();
+});
+
+/* A modal folder makes everything outside it inert, the top layer included. */
+test('the popover opens inside the folder that holds the badge, and leaves with it', t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  pop.animate = undefined;
+  const folder = doc.createElement('dialog');
+  const tile = doc.createElement('a');
+  const badge = doc.createElement('div');
+  badge.className = 'badge';
+  tile.appendChild(badge);
+  folder.appendChild(tile);
+  doc.body.appendChild(folder);
+  folder.showModal();
+  popover.wireBadgePopover(badge, [{ name: 'Queue', value: 3, unit: '', color: '' }]);
+  badge.dispatchEvent({ type: 'pointerenter', pointerType: 'mouse' });
+  t.mock.timers.tick(400);
+  assert.equal(pop.parentElement, folder);
+  folder.close();
+  assert.equal(pop.parentElement, doc.body, 'the folder took the popover with it');
+  assert.equal(pop.hasAttribute('data-open'), false);
+  folder.remove();
+  delete pop.animate;
 });
 
 test('a widget frame takes reduced transparency from the dashboard and glass from its card', async () => {

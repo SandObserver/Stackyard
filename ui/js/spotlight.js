@@ -8,6 +8,8 @@ import { clr, el, initial, inp as inpById, mk, q, qa, setUserText } from '/js/ut
 /* Attached to the window so a re-open can undo the previous one. */
 const _w = /** @type {any} */ (window);
 
+const LIVE_DELAY_MS = 400;
+
 const ACTIVATES_ON_SPACE = 'a[href], button, input, select, textarea, summary, [role="button"], [contenteditable]';
 
 /* `isMob` is a function, not a flag: the window can cross the breakpoint while
@@ -41,6 +43,13 @@ export function initSpotlight({
   res.setAttribute('role', 'listbox');
   res.setAttribute('aria-label', t('home.searchResults'));
 
+  let liveTimer = 0;
+  /** @param {string} text */
+  const announce = text => {
+    clearTimeout(liveTimer);
+    if (live) liveTimer = window.setTimeout(() => (live.textContent = text), LIVE_DELAY_MS);
+  };
+
   const render = query => {
     res.replaceChildren();
     const apps = getItems().filter(i => i.type === 'app' || i.type === 'folder');
@@ -58,7 +67,7 @@ export function initSpotlight({
       e.className = 'sr-empty';
       e.textContent = t('home.noResults');
       res.appendChild(e);
-      if (live) live.textContent = t('home.noResults');
+      announce(t('home.noResults'));
       inp.setAttribute('aria-activedescendant', '');
       return;
     }
@@ -183,7 +192,7 @@ export function initSpotlight({
     });
     res.appendChild(f);
     fluidHoverClear(res);
-    if (live) live.textContent = t('home.resultCount', { count: cur.length });
+    announce(t('home.resultCount', { count: cur.length }));
     inp.setAttribute('aria-expanded', 'true');
     inp.setAttribute('aria-activedescendant', cur.length ? 'sr-opt-0' : '');
   };
@@ -289,6 +298,8 @@ export function initSpotlight({
     ov.style.bottom = '';
     ov.classList.remove('kb');
     ov.close();
+    clearTimeout(liveTimer);
+    if (live) live.textContent = '';
     const gen = openGen;
     setTimeout(() => {
       if (gen !== openGen) return;
@@ -327,6 +338,7 @@ export function initSpotlight({
 
   inp.oninput = () => render(inp.value);
   inp.onkeydown = e => {
+    if (e.isComposing || e.keyCode === 229) return;
     if (e.key === 'Escape') {
       close();
       return;
@@ -344,7 +356,6 @@ export function initSpotlight({
       return;
     }
     if (e.key === 'Enter') {
-      if (e.isComposing || e.keyCode === 229) return;
       const s = qa('.sr', res)[si];
       if (s) {
         s.click();

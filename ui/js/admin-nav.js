@@ -1,5 +1,5 @@
 import { resolveAdminSection } from '/js/admin-logic.js?v=81fd47cf';
-import { fadeOpacity } from '/js/admin-shared.js?v=d78607eb';
+import { fadeOpacity } from '/js/admin-shared.js?v=c624720f';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=0c57b286';
 import { animateIcon } from '/js/icon-motion.js?v=0b4fc669';
 import { el, qa, storeGet, storeSet } from '/js/utils.js?v=9ed2b298';
