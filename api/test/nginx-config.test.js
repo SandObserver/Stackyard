@@ -171,6 +171,11 @@ test('the default policy restricts framing to same origin', () => {
   assert.match(policy, /frame-ancestors 'self'/);
 });
 
+test('the dashboard may frame a custom widget on any web origin', () => {
+  const frameSrc = policy.match(/frame-src ([^;]+);/)?.[1].split(' ');
+  assert.deepEqual(frameSrc, ["'self'", 'https:', 'http:']);
+});
+
 test('every policy in the config states a frame-ancestors', () => {
   const all = [...dashboard.matchAll(/add_header Content-Security-Policy "([^"]+)"/g)].map(m => m[1]);
   all.push(policy);
