@@ -1,12 +1,12 @@
 import { firstViewWait } from '/js/background.js?v=e1076c9c';
 import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=797944ce';
 import { createBadges } from '/js/dashboard-badges.js?v=5b05724e';
-import { createDesktopGrid } from '/js/dashboard-grid.js?v=b8a18ba0';
-import { wirePageInput, wireTileSettle } from '/js/dashboard-input.js?v=d5f89648';
-import { createLayout } from '/js/dashboard-layout.js?v=c14ab7df';
+import { createDesktopGrid } from '/js/dashboard-grid.js?v=ba4c0bbc';
+import { wirePageInput, wireTileSettle } from '/js/dashboard-input.js?v=95da3519';
+import { createLayout } from '/js/dashboard-layout.js?v=ffbbd2de';
 import { configChanged, withKnownSizes } from '/js/dashboard-logic.js?v=b4828b62';
-import { createPager } from '/js/dashboard-pager.js?v=a2181a99';
-import { createPolling } from '/js/dashboard-polling.js?v=5a2c7187';
+import { createPager } from '/js/dashboard-pager.js?v=a12777fd';
+import { createPolling } from '/js/dashboard-polling.js?v=f1dc40c2';
 import { liftVeil, showApiDown } from '/js/dashboard-screens.js?v=a1d32807';
 import { showSetupPrompt } from '/js/dashboard-setup.js?v=0d35ad7b';
 import { wireThemeChanges } from '/js/dashboard-theme.js?v=70fde525';
@@ -16,7 +16,7 @@ import { currentLang, initI18n, isSupported } from '/js/i18n.js?v=99563c71';
 import { iconChain, loadLocalIcons } from '/js/icons.js?v=76c29d43';
 import { sanitizeItemLinks } from '/js/link-url.js?v=0bffa1dd';
 import { initSpotlight } from '/js/spotlight.js?v=f2760b4d';
-import { initUI, mkFolderGlyph, openFolderDesktop, openFolderMobile } from '/js/ui.js?v=52370285';
+import { initUI, mkFolderGlyph, openFolderDesktop, openFolderMobile } from '/js/ui.js?v=915629a0';
 import { storeGet, storeSet, within } from '/js/utils.js?v=9ed2b298';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
@@ -170,7 +170,7 @@ export async function boot(dash) {
     sanitizeItemLinks(c.items || [], linkFields);
     return configChanged({ items: dash.items, settings: dash.S, _rev: dash.rev }, c);
   };
-  const polling = createPolling({ badges, differs });
+  const polling = createPolling({ badges, differs, rev: () => dash.rev });
 
   wireTileSettle();
   polling.watchVisibility();

@@ -222,7 +222,10 @@ html[data-theme="light"] {
    var(--sc) and a reader can zoom, so both have to follow the size in use.
 
    The comment on each line is the size and leading pair the design is checked
-   against. ui/test/type-scale.test.mjs holds them. */
+   against. ui/test/type-scale.test.mjs holds them.
+
+   The dashboard sizes are px. Its tiles are px, and a label sized from the
+   browser text size overflows them. */
 :root {
   --fs-large-title:34px; --lh-large-title:1.2059; --tr-large-title:0.0118em;  /* 34/41 */
   --fs-title-1:28px;     --lh-title-1:1.2143;     --tr-title-1:0.0136em;      /* 28/34 */
@@ -243,25 +246,36 @@ html[data-theme="light"] {
   --font-ui: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
+/* The same sizes in rem, for a page whose text follows the browser text size.
+   A page opts in with a class on <html>. At the default 16px they draw the px
+   sizes above. */
+html.type-rem {
+  --fs-large-title:2.125rem; --fs-title-1:1.75rem; --fs-title-2:1.375rem;
+  --fs-title-3:1.25rem; --fs-headline:1.0625rem; --fs-body:1.0625rem;
+  --fs-callout:1rem; --fs-subheadline:0.9375rem; --fs-footnote:0.8125rem;
+  --fs-caption-1:0.75rem; --fs-caption-2:0.6875rem;
+}
+
 /* ── Type step ───────────────────────────────────────────────────────────────
    The same eleven styles at smaller sizes, for a denser layout. A page opts in
-   with a class on <html>. A phone stays at the default step.
+   with a class on <html>. A phone stays at the default step. The sizes are rem,
+   so a page that takes this step also takes type-rem.
 
    Tracking is republished per step, not inherited. There is one absolute
    tracking per style, so the em that reproduces it at 17 does not at 15. */
 @media not all and (orientation:landscape) and (max-height:500px) and (pointer:coarse) {
   html.type-small:not(.is-mobile) {
-    --fs-large-title:32px; --lh-large-title:1.2188; --tr-large-title:0.0125em;  /* 32/39 */
-    --fs-title-1:26px;     --lh-title-1:1.2308;     --tr-title-1:0.0146em;      /* 26/32 */
-    --fs-title-2:20px;     --lh-title-2:1.2;        --tr-title-2:-0.013em;      /* 20/24 */
-    --fs-title-3:18px;     --lh-title-3:1.2778;     --tr-title-3:-0.025em;      /* 18/23 */
-    --fs-headline:15px;    --lh-headline:1.3333;    --tr-headline:-0.0287em;    /* 15/20 */
-    --fs-body:15px;        --lh-body:1.3333;        --tr-body:-0.0287em;        /* 15/20 */
-    --fs-callout:14px;     --lh-callout:1.3571;     --tr-callout:-0.0221em;     /* 14/19 */
-    --fs-subheadline:13px; --lh-subheadline:1.3846; --tr-subheadline:-0.0177em; /* 13/18 */
-    --fs-footnote:12px;    --lh-footnote:1.3333;    --tr-footnote:-0.0067em;    /* 12/16 */
-    --fs-caption-1:11px;   --lh-caption-1:1.1818;   --tr-caption-1:0;           /* 11/13 */
-    --fs-caption-2:11px;   --lh-caption-2:1.1818;   --tr-caption-2:0.0055em;    /* 11/13 */
+    --fs-large-title:2rem;        --lh-large-title:1.2188; --tr-large-title:0.0125em;  /* 32/39 */
+    --fs-title-1:1.625rem;        --lh-title-1:1.2308;     --tr-title-1:0.0146em;      /* 26/32 */
+    --fs-title-2:1.25rem;         --lh-title-2:1.2;        --tr-title-2:-0.013em;      /* 20/24 */
+    --fs-title-3:1.125rem;        --lh-title-3:1.2778;     --tr-title-3:-0.025em;      /* 18/23 */
+    --fs-headline:0.9375rem;      --lh-headline:1.3333;    --tr-headline:-0.0287em;    /* 15/20 */
+    --fs-body:0.9375rem;          --lh-body:1.3333;        --tr-body:-0.0287em;        /* 15/20 */
+    --fs-callout:0.875rem;        --lh-callout:1.3571;     --tr-callout:-0.0221em;     /* 14/19 */
+    --fs-subheadline:0.8125rem;   --lh-subheadline:1.3846; --tr-subheadline:-0.0177em; /* 13/18 */
+    --fs-footnote:0.75rem;        --lh-footnote:1.3333;    --tr-footnote:-0.0067em;    /* 12/16 */
+    --fs-caption-1:0.6875rem;     --lh-caption-1:1.1818;   --tr-caption-1:0;           /* 11/13 */
+    --fs-caption-2:0.6875rem;     --lh-caption-2:1.1818;   --tr-caption-2:0.0055em;    /* 11/13 */
   }
 }
 
@@ -325,7 +339,7 @@ html[data-theme="light"] {
 
 *, *::before, *::after { box-sizing:border-box; margin:0; padding:0 }
 
-:root { color-scheme:dark }
+:root { color-scheme:dark; accent-color:var(--accent) }
 html[data-theme="light"] { color-scheme:light }
 
 /* The wallpaper. Promoted to its own layer, so scrolling does not repaint
@@ -360,3 +374,21 @@ html.wall-in::before { animation:wall-in .4s ease-out }
 
 /* Sits above the wallpaper. Each page adds its own sizing. */
 body { background:transparent; position:relative; z-index:1 }
+
+/* Do not use display:none or visibility:hidden. Either one removes the element
+   from the accessibility tree, and a live region then announces nothing. */
+.visually-hidden {
+  position:absolute !important; width:1px; height:1px; margin:-1px; padding:0; border:0;
+  overflow:hidden; clip-path:inset(50%); white-space:nowrap;
+}
+
+.sy-sprite{position:absolute;width:0;height:0;overflow:hidden}
+.sy-icon{flex-shrink:0;--icon-accent:var(--accent)}
+.sy-i{fill:currentColor}
+.sy-i2{fill:currentColor;fill-opacity:.18}
+.sy-i3{fill:currentColor;fill-opacity:.4}
+.sy-a{fill:var(--icon-accent,currentColor)}
+.sy-is{stroke:currentColor}
+.sy-i3s{stroke:currentColor;stroke-opacity:.4}
+.sy-as{stroke:var(--icon-accent,currentColor)}
+@media (forced-colors:active){.sy-icon{--icon-accent:CanvasText}}

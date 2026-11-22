@@ -24,13 +24,11 @@ const ctxFor = (config, data) => ({
 const ADGUARD = { provider: 'adguard', dnsUrl: 'http://10.0.0.5:3000' };
 const TECHNITIUM = { provider: 'technitium', dnsUrl: 'http://10.0.0.5:5380', dnsTechnitiumToken: 't' };
 
-test('an AdGuard reply passes on only the counts the widget shows', async () => {
-  const r = await dataFn(
-    ctxFor(ADGUARD, { num_dns_queries: 100, num_blocked_filtering: 9, num_cached: 30, top_clients: [{ a: 1 }] }),
-  );
+test('an AdGuard reply passes on only the counts AdGuard reports', async () => {
+  const r = await dataFn(ctxFor(ADGUARD, { num_dns_queries: 100, num_blocked_filtering: 9, top_clients: [{ a: 1 }] }));
   assert.equal(r.num_dns_queries, 100);
   assert.equal(r.num_blocked_filtering, 9);
-  assert.equal(r.num_cached, 30);
+  assert.equal('num_cached' in r, false);
   assert.equal('top_clients' in r, false);
 });
 

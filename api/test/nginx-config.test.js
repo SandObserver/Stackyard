@@ -86,9 +86,20 @@ test('every icon path tries the mounted volume, then the bundled copy', () => {
   assert.match(block('/icons/'), /try_files \$uri @icon_miss;/);
   assert.match(block('@icon_miss'), /root \/usr\/share\/nginx\/html;/);
 
-  for (const name of ['= /apple-touch-icon.png', '= /apple-touch-icon-precomposed.png']) {
-    assert.match(block(name), /^\s*include \/run\/stackyard\/icons-root\.conf;$/m, name);
-    assert.match(block(name), /try_files \/favicon\.png @apple_icon_miss;/, name);
+  const apple = '~ "^/apple-touch-icon(-[0-9]{2,4}x[0-9]{2,4})?(-precomposed)?\\.png$"';
+  assert.match(block(apple), /^\s*include \/run\/stackyard\/icons-root\.conf;$/m);
+  assert.match(block(apple), /try_files \/favicon\.png @apple_icon_miss;/);
+  const pattern = new RegExp(apple.slice(3, -1));
+  for (const url of [
+    '/apple-touch-icon.png',
+    '/apple-touch-icon-precomposed.png',
+    '/apple-touch-icon-240x240.png',
+    '/apple-touch-icon-180x180-precomposed.png',
+  ]) {
+    assert.match(url, pattern, url);
+  }
+  for (const url of ['/apple-touch-icon.png.bak', '/apple-touch-icon-../x.png', '/x/apple-touch-icon.png']) {
+    assert.doesNotMatch(url, pattern, url);
   }
   assert.match(block('@apple_icon_miss'), /root \/usr\/share\/nginx\/html;/);
   assert.match(block('@apple_icon_miss'), /try_files \/icons\/favicon\.png =404;/);
@@ -169,6 +180,11 @@ test('admin refuses framing entirely, matching its X-Frame-Options DENY', () => 
 
 test('the default policy restricts framing to same origin', () => {
   assert.match(policy, /frame-ancestors 'self'/);
+});
+
+test('the dashboard may frame a custom widget on any web origin', () => {
+  const frameSrc = policy.match(/frame-src ([^;]+);/)?.[1].split(' ');
+  assert.deepEqual(frameSrc, ["'self'", 'https:', 'http:']);
 });
 
 test('every policy in the config states a frame-ancestors', () => {

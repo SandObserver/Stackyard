@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Stackyard",
   "short_name": "Stackyard",
-  "description": "Stackyard — self-hosted homelab dashboard",
+  "description": "Self-hosted homelab dashboard with app tiles, widgets and a Dock",
   "lang": "en",
   "dir": "ltr",
   "start_url": "/",
@@ -59,11 +59,12 @@
   "shortcuts": [
     {
       "name": "Settings",
+      "description": "Edit apps, widgets and the dashboard",
       "url": "/admin",
       "icons": [
         {
-          "src": "/icons/favicon-192.png",
-          "sizes": "192x192",
+          "src": "/icons/shortcut-settings-96.png",
+          "sizes": "96x96",
           "type": "image/png"
         }
       ]
