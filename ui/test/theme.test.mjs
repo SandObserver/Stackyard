@@ -203,3 +203,12 @@ test('the transparency watcher applies the setting at once', async () => {
   watchTransparency();
   assert.equal(attr, 'reduce');
 });
+
+/* A native checkbox or radio is drawn in the system blue otherwise. Both themes
+   and increased contrast redefine --accent on the root, so one declaration
+   follows all of them. */
+test('native controls take the accent colour on both pages', () => {
+  const bare = tokensCss.replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.match(bare, /(^|\n):root \{[^}]*accent-color:var\(--accent\)/);
+  assert.doesNotMatch(adminCss, /accent-color/, 'one declaration in tokens.css covers Settings');
+});
