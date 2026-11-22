@@ -122,6 +122,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show custom widgets that embed a page from another address.
 
+- The AdGuard Home DNS widget's screen-reader summary no longer reports a cached
+  count of 0.
+
 ### Security
 
 - Refuse an unsafe link in the Disk Health TrueNAS and Unraid, DNS, GitHub and
