@@ -120,6 +120,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Docker image and the demo site include the Stackyard licence and notice.
 
+- Show custom widgets that embed a page from another address.
+
 ### Security
 
 - Refuse an unsafe link in the Disk Health TrueNAS and Unraid, DNS, GitHub and
