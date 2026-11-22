@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Warn at startup about a widget page with inline script, which a later release
   blocks.
 
+- Add a Show password button to the sign-in box.
+
 ### Changed
 
 - Pick a local System Summary temperature by sensor name, starting on the CPU.
@@ -79,6 +81,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   high-density screens.
 
 - Tab bar icons and labels bend smoothly under the moving lens on phones.
+
+- Keep Set available on the first-run prompt, and move focus to the first field
+  to fix.
+
+- Show visible labels on the first-run prompt's fields.
+
+- Let password managers save the password set in Settings.
 
 ### Removed
 
@@ -182,6 +191,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep the Unsplash link in the photo credit fully visible.
 
 - Tell screen readers that the Search pill and folder tiles open a dialog.
+
+- Keep the first-run password prompt open when Escape is pressed twice.
+
+- Read the password strength hint only when its level changes.
+
+- Say a password mismatch on the first-run prompt only after the confirmation
+  field is left.
+
+- Announce a repeated sign-in or setup error again.
 
 ### Security
 
