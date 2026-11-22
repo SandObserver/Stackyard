@@ -466,11 +466,23 @@ export function removeDescribedBy(node, id) {
 
 export const REQ_MARK = html` <span class="req" aria-hidden="true">*</span>`;
 
-/** @param {ParentNode} root */
+export const REQ_MARKS_CHANGED = 'req-marks-changed';
+const _legendRoots = new WeakSet();
+
+/** @param {HTMLElement} root */
 export function syncRequiredLegend(root) {
-  for (const old of qa('.req-legend', root)) old.remove();
-  const group = root.querySelector('.req')?.closest('.grp');
-  if (!group) return;
+  if (!_legendRoots.has(root)) {
+    _legendRoots.add(root);
+    root.addEventListener(REQ_MARKS_CHANGED, () => syncRequiredLegend(root));
+  }
+  const group = qa('.req', root)
+    .find(m => !m.closest('.req-legend'))
+    ?.closest('.grp');
+  const anchor = group?.closest('.wcf-group') ?? group;
+  const legends = qa('.req-legend', root);
+  if (anchor && legends.length === 1 && anchor.nextElementSibling === legends[0]) return;
+  for (const old of legends) old.remove();
+  if (!anchor) return;
   const legend = document.createElement('p');
   legend.className = 'grp-tip req-legend';
   const mark = document.createElement('span');
@@ -478,7 +490,7 @@ export function syncRequiredLegend(root) {
   mark.setAttribute('aria-hidden', 'true');
   mark.textContent = '*';
   legend.append(mark, ` ${t('common.required')}`);
-  group.after(legend);
+  anchor.after(legend);
 }
 
 /** @param {string} text */

@@ -365,8 +365,8 @@ export function pollSeconds(value) {
 
 /** @param {unknown} value @returns {number} */
 function keptPoll(value) {
-  const n = Math.floor(Number(value));
-  return n > 0 ? Math.min(POLL_MAX, Math.max(POLL_MIN, n)) : 30;
+  const n = Number.parseInt(String(value ?? '') || '30', 10);
+  return Number.isNaN(n) ? 30 : Math.min(POLL_MAX, Math.max(POLL_MIN, n));
 }
 
 /** @param {any} v @param {any} [orig] @param {Iterable<string>} [takenIds] */
@@ -425,7 +425,7 @@ export function buildAppItem(v, orig, takenIds = []) {
           extract: spaths.length === 1 ? spaths[0] : spaths.length > 1 ? spaths.map(p => ({ path: p })) : undefined,
           labels: combine ? undefined : labels,
           combine: combine || undefined,
-          interval: poll ?? keptPoll(v.actInt),
+          interval: v.actEn ? poll : keptPoll(v.actInt),
           custom: combinedCustom || customObj,
         },
         staticBadge: staticBadgeObj,

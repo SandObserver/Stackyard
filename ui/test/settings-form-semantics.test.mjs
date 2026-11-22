@@ -95,6 +95,110 @@ test('a field hint is read with the field, and a second description is kept', as
   }
 });
 
+const manifest = name => JSON.parse(read(`widgets/${name}/widget.json`)).fields;
+
+async function finishingAnimations() {
+  const { FakeElement } = await import('./fake-dom.mjs');
+  const animate = FakeElement.prototype.animate;
+  FakeElement.prototype.animate = function () {
+    const a = { cancel() {}, finish() {}, onfinish: null, oncancel: null, finished: Promise.resolve() };
+    queueMicrotask(() => a.onfinish?.());
+    return a;
+  };
+  return () => {
+    FakeElement.prototype.animate = animate;
+  };
+}
+
+test('a group form keeps one Required note outside its rows through Add and Remove', async () => {
+  const { dom, t } = await openAdmin();
+  const unpatch = await finishingAnimations();
+  try {
+    const { renderWidgetConfigForm } = await import('../js/widget-config-form.js');
+    const { syncRequiredLegend } = await import('../js/admin-shared.js');
+    const body = dom.document.createElement('div');
+    const form = dom.document.createElement('div');
+    body.appendChild(form);
+    dom.document.body.appendChild(body);
+    renderWidgetConfigForm(form, manifest('dashboard-switch'), {});
+    syncRequiredLegend(body);
+    const legends = () => body.querySelectorAll('.req-legend');
+    const check = when => {
+      assert.equal(legends().length, 1, `${when}: ${legends().length} notes`);
+      assert.equal(legends()[0].textContent, `* ${t('common.required')}`);
+      assert.ok(legends()[0].parentElement === form, `${when}: the note sits among the rows`);
+    };
+    check('first render');
+    body.querySelector('.wcf-add-row').click();
+    check('after Add');
+    [...body.querySelectorAll('.grp-hdr-rm')].find(b => !b.disabled).click();
+    await settle(20);
+    check('after Remove');
+  } finally {
+    unpatch();
+    await settle(100);
+    dom.restore();
+  }
+});
+
+test('a group that starts empty shows the Required note once a row is added, and drops it when the last goes', async () => {
+  const { dom } = await openAdmin();
+  const unpatch = await finishingAnimations();
+  try {
+    const { renderWidgetConfigForm } = await import('../js/widget-config-form.js');
+    const { syncRequiredLegend } = await import('../js/admin-shared.js');
+    const body = dom.document.createElement('div');
+    dom.document.body.appendChild(body);
+    const group = { key: 'rows', label: 'Row', type: 'group', fields: [{ key: 'url', label: 'URL', type: 'text' }] };
+    renderWidgetConfigForm(body, [group], {});
+    syncRequiredLegend(body);
+    assert.equal(body.querySelectorAll('.req-legend').length, 0);
+    body.querySelector('.wcf-add-row').click();
+    assert.equal(body.querySelectorAll('.req-legend').length, 1, 'no note for the added required field');
+    body.querySelector('.grp-hdr-rm').click();
+    await settle(20);
+    assert.equal(body.querySelectorAll('.req-legend').length, 0, 'the note outlived the last required field');
+  } finally {
+    unpatch();
+    await settle(100);
+    dom.restore();
+  }
+});
+
+test('the hint of a select that fetches its options is read with the picker, and Fetch still reports', async () => {
+  const { dom, t } = await openAdmin();
+  try {
+    const { renderWidgetConfigForm } = await import('../js/widget-config-form.js');
+    const field = manifest('system-summary').find(f => f.key === 'beszelSystem');
+    assert.ok(field?.optionsFrom && field.hint, 'the manifest field no longer fetches with a hint');
+    const box = dom.document.createElement('div');
+    dom.document.body.appendChild(box);
+    renderWidgetConfigForm(box, [field], {}, { widgetId: 'w1', widgetType: 'system-summary' });
+    const picker = box.querySelector('.row button');
+    const ids = (picker.getAttribute('aria-describedby') || '').split(' ').filter(Boolean);
+    const hints = ids.map(id => dom.document.getElementById(id)?.textContent);
+    assert.ok(hints.includes(field.hint), `the picker is described by ${JSON.stringify(hints)}`);
+    const status = box.querySelector('.row-status');
+    assert.equal(status.getAttribute('role'), 'status');
+    assert.equal(status.textContent, '', 'the hint is shown twice');
+    const fetchBtn = box.querySelector('.row-btn');
+    fetchBtn.click();
+    assert.equal(status.textContent, t('widgetCfg.fetching'));
+    await settle(50);
+    assert.notEqual(status.textContent, t('widgetCfg.fetching'), 'Fetch never reported');
+    assert.equal(box.querySelectorAll('.grp-tip').length, 1);
+    assert.ok(
+      (picker.getAttribute('aria-describedby') || '')
+        .split(' ')
+        .some(id => dom.document.getElementById(id)?.textContent === field.hint),
+      'a Fetch unlinked the hint',
+    );
+  } finally {
+    await settle(100);
+    dom.restore();
+  }
+});
+
 test('the Settings hints are linked to the fields they explain', () => {
   const html = read('admin/index.html');
   for (const [input, tip] of [
@@ -122,6 +226,29 @@ test('a poll interval out of range is refused, not changed', async () => {
   const off = { ...base, actEn: false };
   assert.equal(buildAppItem({ ...off, actInt: '5' }).item.monitoring.activity.interval, 10);
   assert.equal(buildAppItem({ ...off, actInt: '' }).item.monitoring.activity.interval, 30);
+});
+
+test('with Live Activity off, a typed poll interval saves what it saved before', async () => {
+  const { buildAppItem } = await import('../js/admin-save-logic.js');
+  const before = typed => Math.max(10, Math.min(3600, Math.max(10, Number.parseInt(typed || '30', 10))));
+  const off = { label: 'A', href: 'http://a.local', actEn: false, actUrl: 'http://a.local/api' };
+  const now = typed => buildAppItem({ ...off, actInt: typed }).item.monitoring.activity.interval;
+  for (const [typed, saved] of [
+    ['0', 10],
+    ['-5', 10],
+    ['5', 10],
+    ['10', 10],
+    ['30', 30],
+    ['3600', 3600],
+    ['4000', 3600],
+    ['1e3', 10],
+    ['', 30],
+  ]) {
+    assert.equal(before(typed), saved, `reference for ${JSON.stringify(typed)}`);
+    assert.equal(now(typed), saved, JSON.stringify(typed));
+  }
+  assert.ok(Number.isNaN(before('abc')), 'before, a non-number saved NaN');
+  assert.equal(now('abc'), 30, 'a non-number falls back like an empty field');
 });
 
 test('saving an app with a short poll interval shows the error on the field', async () => {

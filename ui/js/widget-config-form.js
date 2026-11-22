@@ -9,6 +9,7 @@ import {
   fadeIn,
   PE_SVG,
   REQ_MARK,
+  REQ_MARKS_CHANGED,
   reveal,
   wireInlineEdit,
 } from '/js/admin-shared.js?v=315941b7';
@@ -163,13 +164,13 @@ function _loadedText(got) {
 }
 
 /** @param {(options: any[]) => void} apply */
-function _fetchRow(field, ctx, apply) {
+function _fetchRow(field, ctx, apply, { hint = true } = {}) {
   const fr = document.createElement('div');
   fr.className = 'row';
   const status = document.createElement('span');
   status.className = 'row-status';
   status.setAttribute('role', 'status');
-  status.textContent = field.hint || '';
+  status.textContent = (hint && field.hint) || '';
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'row-btn';
@@ -309,17 +310,17 @@ function _select(field, value, ctx, config = {}) {
   }
 
   if (field.optionsFrom) {
-    wrap.appendChild(
-      _fetchRow(field, ctx, options => {
-        const before = chosen;
-        opts = options;
-        chosen = lb.getValue() || chosen;
-        paint();
-        syncCarried();
-        if (chosen !== before) row.dispatchEvent(new Event('change', { bubbles: true }));
-      }),
-    );
-  } else if (field.hint) _hint(wrap, field.hint, [lb.button]);
+    const apply = options => {
+      const before = chosen;
+      opts = options;
+      chosen = lb.getValue() || chosen;
+      paint();
+      syncCarried();
+      if (chosen !== before) row.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    wrap.appendChild(_fetchRow(field, ctx, apply, { hint: false }));
+  }
+  if (field.hint) _hint(wrap, field.hint, [lb.button]);
 
   const get = () => [field.key, chosen, carryKeys.length ? carried : null];
   return { el: wrap, get, control: wrap, liveValue: () => chosen };
@@ -658,6 +659,7 @@ function _group(field, rows, size, ctx) {
       rowBuilt.push(built);
     });
     if (!fixed) addBtn.parentElement.style.display = data.length >= max ? 'none' : '';
+    wrap.dispatchEvent(new Event(REQ_MARKS_CHANGED, { bubbles: true }));
   }
 
   function captureCurrent() {
