@@ -1,4 +1,4 @@
-  import { poll, linkTo, loadStrings, wt, errorState, errorLine, placeholder, localiseDigits, cssZoom, readerHourCycle } from '/js/widget-toolbox.js?v=07da2f91';
+  import { poll, linkTo, loadStrings, wt, errorState, errorLine, placeholder, localiseDigits, cssZoom, readerHourCycle } from '/js/widget-toolbox.js?v=039ea657';
   import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
   import { visibleItems, dayOffset, kindClass } from './upnext-logic.js';
 

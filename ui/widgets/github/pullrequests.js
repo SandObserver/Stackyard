@@ -1,4 +1,4 @@
-import { poll, fetchData, getConfig, linkTo, loadStrings, wt, errorState, formatNumber, fitText, placeholder, formatList } from '/js/widget-toolbox.js?v=07da2f91';
+import { poll, fetchData, getConfig, linkTo, loadStrings, wt, errorState, formatNumber, fitText, placeholder, formatList } from '/js/widget-toolbox.js?v=039ea657';
 await loadStrings();
 
 const TICK_MS = 60000;

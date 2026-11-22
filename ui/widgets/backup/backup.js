@@ -1,4 +1,4 @@
-import { poll, fetchData, getConfig, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom, whileOnScreen, twoTap, toneForColor, failureName } from '/js/widget-toolbox.js?v=07da2f91';
+import { poll, fetchData, getConfig, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom, whileOnScreen, twoTap, toneForColor, failureName } from '/js/widget-toolbox.js?v=039ea657';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const size = new URLSearchParams(location.search).get('size') || 'small';

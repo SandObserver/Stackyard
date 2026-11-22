@@ -1,4 +1,4 @@
-import { poll, fetchData, getConfig, rollText, linkTo, raw, setHtml, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=07da2f91';
+import { poll, fetchData, getConfig, rollText, linkTo, raw, setHtml, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=039ea657';
 await loadStrings();
 /* These two are in the markup, so the widget still reads correctly in English
    if the catalog fetch fails. */
@@ -62,9 +62,10 @@ function apply(d) {
   render(model);
   showHeadline();
 
-  srEl.textContent = wt('ui.summary', '{pct}% of {total} queries blocked. Allowed {allowed}, cached {cached}, blocked {blocked}.', {
-    pct: formatNumber(pct), total: fmt(total), allowed: fmt(allowed), cached: fmt(cached), blocked: fmt(blocked),
-  });
+  const counts = { pct: formatNumber(pct), total: fmt(total), allowed: fmt(allowed), cached: fmt(cached), blocked: fmt(blocked) };
+  srEl.textContent = d.num_cached != null
+    ? wt('ui.summary', '{pct}% of {total} queries blocked. Allowed {allowed}, cached {cached}, blocked {blocked}.', counts)
+    : wt('ui.summaryUncached', '{pct}% of {total} queries blocked. Allowed {allowed}, blocked {blocked}.', counts);
 }
 
 function constLink(x0,c0,x1,c1,t) {

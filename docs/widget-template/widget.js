@@ -1,4 +1,4 @@
-import { errorState, formatNumber, linkTo, loadStrings, placeholder, poll, wt } from '/js/widget-toolbox.js?v=07da2f91';
+import { errorState, formatNumber, linkTo, loadStrings, placeholder, poll, wt } from '/js/widget-toolbox.js?v=039ea657';
 
 await loadStrings();
 

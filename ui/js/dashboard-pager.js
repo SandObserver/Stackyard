@@ -5,6 +5,7 @@ import { easing, glide, isScripted } from '/js/frame-motion.js?v=911f7c03';
 import { t } from '/js/i18n.js?v=82ba9da2';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 import { el, inertAllBut, pageDir, qa, storeSet } from '/js/utils.js?v=e9e22f08';
+import { setRefreshRate } from '/js/widget-frame.js?v=6f5b0dc5';
 
 export const PAGE_STORE = 'dash_page';
 
@@ -36,6 +37,7 @@ export function createPager(dash) {
     }
     Array.from(strip.children).forEach((page, i) => {
       const rate = i === dash.pg ? 1 : OFF_PAGE_RATE;
+      setRefreshRate(page, rate);
       qa('iframe', /** @type {HTMLElement} */ (page)).forEach(ifr => {
         const frame = /** @type {HTMLIFrameElement} */ (ifr);
         try {

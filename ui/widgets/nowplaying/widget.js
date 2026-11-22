@@ -1,4 +1,4 @@
-import { poll, fetchData, getConfig, reducedMotion, softwareRendering, linkTo, parseMarkup, raw, loadStrings, wt, wtCount, errorState, errorLine, localiseDigits, placeholder, whileOnScreen, failureName } from '/js/widget-toolbox.js?v=07da2f91';
+import { poll, fetchData, getConfig, reducedMotion, softwareRendering, linkTo, parseMarkup, raw, loadStrings, wt, wtCount, errorState, errorLine, localiseDigits, placeholder, whileOnScreen, failureName } from '/js/widget-toolbox.js?v=039ea657';
 import { CENTRE, FLANGE_R, HUB_TURN_MS, LEADER_R, PACK_MAX, REEL_BOX, Winding, packRadius, pickIndex, reelMarkup, reelRate, sessionKey, shouldAnnounce, spokenKey, stepsPerTurn, strandPath, transitionKind, withKeys } from './reel-logic.js';
 
 await loadStrings();

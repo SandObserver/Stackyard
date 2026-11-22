@@ -1,4 +1,4 @@
-  import { poll, getConfig, linkTo, loadStrings, wt, formatNumber, errorState, placeholder, toneForColor } from '/js/widget-toolbox.js?v=07da2f91';
+  import { poll, getConfig, linkTo, loadStrings, wt, formatNumber, errorState, placeholder, toneForColor } from '/js/widget-toolbox.js?v=039ea657';
   await loadStrings();
   document.getElementById('card').setAttribute('aria-label', wt('widget.label', 'Books'));
   const params=new URLSearchParams(location.search);

@@ -243,7 +243,7 @@ if(typeof MutationObserver==='function') new MutationObserver(()=>{
 }).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 async function boot(){
   const [toolbox, dates] = await Promise.all([
-    import('/js/widget-toolbox.js?v=07da2f91'),
+    import('/js/widget-toolbox.js?v=039ea657'),
     import('/js/clock-date.js?v=91a77e74'),
   ]);
   _theme=toolbox.theme;
