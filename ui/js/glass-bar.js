@@ -5,6 +5,7 @@ import { lensClaim, lensFrame, lensPicture, lensRelease } from '/js/glass-gpu.js
 import { behind, clamp, colour, css, dpr, isDark, over, pill, sized, unit } from '/js/glass-paint.js?v=800e4865';
 import { prefersReducedMotion } from '/js/glass-prefs.js?v=511e01c7';
 import { drawTabInks, pillPath, tabInks } from '/js/glass-tabs.js?v=63ac407b';
+import { holdIcons } from '/js/icon-motion.js?v=0b4fc669';
 
 /** Pointer travel in px before a press becomes a drag. */
 const DRAG_SLOP = 4;
@@ -45,7 +46,8 @@ const TINT_RAMP = 1.6;
 
 /** @typedef {{ l: number, w: number, c: number, t: number, h: number }} ItemRect left, width, centre, top, height in bar px */
 /** @typedef {{ items: () => HTMLElement[], selected: () => number, choose: (i: number) => void,
-               pill: () => HTMLElement|null, pillColour: string, P: typeof SEGMENTED, css?: boolean, reselect?: boolean }} BarKind */
+               pill: () => HTMLElement|null, pillColour: string, P: typeof SEGMENTED, css?: boolean, reselect?: boolean,
+               still?: (on: boolean) => void }} BarKind */
 
 /** Fractional item index at bar x `px`. Works for either direction of items.
     @param {ItemRect[]} r @param {number} px */
@@ -148,10 +150,11 @@ export class GlassBar extends GlassControl {
   /** @param {DOMRect} [b] */
   readInk(b = this.el.getBoundingClientRect()) {
     this.inkStale = false;
-    this.ink = tabInks(this.kind.items(), b, () => {
+    const next = tabInks(this.kind.items(), b, () => {
       this.inkStale = true;
       this.wake();
     });
+    if (!next.pending || !this.ink || this.ink.pending) this.ink = next;
   }
   /** @param {PointerEvent} e */
   down(e) {
@@ -171,6 +174,10 @@ export class GlassBar extends GlassControl {
     if (this.lifted) return;
     this.lifted = true;
     this.liftAt = performance.now();
+    if (this.kind.still) {
+      this.kind.still(true);
+      this.inkStale = true;
+    }
     this.grow.to(1, this.P.growIn);
     this.frost.to(0, this.P.frostIn);
     this.wake();
@@ -202,7 +209,10 @@ export class GlassBar extends GlassControl {
     this.lift();
     this.pos.to(i, this.P.land);
     this.landing = true;
-    if (!cancelled && (i !== this.kind.selected() || (this.kind.reselect && !p.moved))) this.kind.choose(i);
+    if (!cancelled && (i !== this.kind.selected() || (this.kind.reselect && !p.moved))) {
+      this.kind.choose(i);
+      this.inkStale = true;
+    }
     this.swallowClick();
     this.wake();
   }
@@ -236,13 +246,17 @@ export class GlassBar extends GlassControl {
       this.frost.to(1, this.P.frostOut);
     }
     const done = !this.pointer && !this.landing && [this.pos, this.grow, this.frost].every(s => s.idle);
-    if (done) this.lifted = false;
+    if (done) {
+      this.lifted = false;
+      this.kind.still?.(false);
+    }
     this.render(done);
     return !done;
   }
   stop() {
     super.stop();
     this.lifted = false;
+    this.kind.still?.(false);
     this.landing = false;
     this.grow.snap(0);
     this.frost.snap(1);
@@ -407,5 +421,6 @@ export const tabBar = bar => {
     pillColour: '--tab-pill',
     P: TAB_BAR,
     css: true,
+    still: on => holdIcons(bar, on),
   };
 };

@@ -4,13 +4,20 @@ import { dpr } from '/js/glass-paint.js?v=800e4865';
 const SVG = 'http://www.w3.org/2000/svg';
 
 /** @typedef {{ img: HTMLImageElement|null, ix: number, iy: number, iw: number, ih: number,
-               text: string, face: string, color: string, rtl: boolean, lx: number, lw: number, base: number }} TabInk */
+               ia: number, text: string, face: string, color: string, la: number, rtl: boolean, lx: number, lw: number,
+               base: number }} TabInk */
 /** @typedef {{ items: TabInk[], key: string, pending: boolean }} TabInks */
 
 /** @type {Map<string, [string, string][]>|null} */
 let iconRules = null;
 /** @type {Map<string, { img: HTMLImageElement, ready: boolean }>} */
 const icons = new Map();
+/** The `icons` key each tab icon holds per state. Only these stay cached.
+    @type {Map<string, string>} */
+const slots = new Map();
+
+/** For tests and the console. */
+export const cachedIcons = () => icons.size;
 
 function rules() {
   if (iconRules) return iconRules;
@@ -97,11 +104,14 @@ function iconSource(svg) {
 }
 
 /** @param {Element} source @param {string} color @param {string} accent @param {number} w @param {number} h
-    @param {() => void} onReady */
-function iconImage(source, color, accent, w, h, onReady) {
+    @param {string} slot @param {() => void} onReady */
+function iconImage(source, color, accent, w, h, slot, onReady) {
   const W = Math.max(1, Math.round(w * dpr()));
   const H = Math.max(1, Math.round(h * dpr()));
   const key = `${source.id || hash(new XMLSerializer().serializeToString(source))}|${color}|${accent}|${W}x${H}`;
+  const old = slots.get(slot);
+  slots.set(slot, key);
+  if (old !== undefined && old !== key && ![...slots.values()].includes(old)) icons.delete(old);
   const have = icons.get(key);
   if (have) return have.ready ? have.img : null;
   const symbol = source;
@@ -137,58 +147,99 @@ function baselineOf(label) {
   return y;
 }
 
+/** Runs `read` with every CSS transition inside `el` at its end, then puts each back.
+    @template T @param {Element} el @param {() => T} read @returns {T} */
+function atTransitionEnd(el, read) {
+  const runs = (el.getAnimations?.({ subtree: true }) ?? []).filter(a => 'transitionProperty' in a);
+  const was = runs.map(a => a.currentTime);
+  for (const a of runs) {
+    const end = Number(a.effect?.getComputedTiming().endTime);
+    if (Number.isFinite(end)) a.currentTime = end;
+  }
+  try {
+    return read();
+  } finally {
+    runs.forEach((a, i) => {
+      a.currentTime = was[i];
+    });
+  }
+}
+
 /** @param {HTMLElement[]} tabs @param {DOMRect} bar @param {() => void} onReady @returns {TabInks} */
 export function tabInks(tabs, bar, onReady) {
   /** @type {TabInk[]} */
   const items = [];
   let pending = false;
   let key = '';
-  for (const tab of tabs) {
-    const svg = /** @type {SVGSVGElement|null} */ (tab.querySelector('svg'));
-    const source = svg ? iconSource(svg) : null;
-    const label = tab.querySelector('span');
-    const ink = /** @type {TabInk} */ ({
-      img: null,
-      ix: 0,
-      iy: 0,
-      iw: 0,
-      ih: 0,
-      text: '',
-      face: '',
-      color: '',
-      rtl: false,
-      lx: 0,
-      lw: 0,
-      base: 0,
-    });
-    if (svg && source) {
-      const r = svg.getBoundingClientRect();
-      const color = getComputedStyle(svg).color;
-      const accent = accentOf(svg);
-      Object.assign(ink, { ix: r.left - bar.left, iy: r.top - bar.top, iw: r.width, ih: r.height });
-      ink.img = iconImage(source, color, accent, r.width, r.height, onReady);
-      if (!ink.img) pending = true;
-      key += `${source.id || hash(new XMLSerializer().serializeToString(source))}${color}${accent}${r.left - bar.left},${r.top - bar.top},${r.width};`;
-    }
-    if (label) {
-      const r = label.getBoundingClientRect();
-      const cs = getComputedStyle(label);
-      ink.text = label.textContent ?? '';
-      ink.face = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-      ink.color = cs.color;
-      ink.rtl = cs.direction === 'rtl';
-      Object.assign(ink, { lx: r.left - bar.left, lw: r.width, base: baselineOf(label) - bar.top });
-      key += `${ink.text}${ink.face}${ink.color}${ink.lx},${ink.base};`;
-    }
-    items.push(ink);
-  }
+  tabs.forEach((tab, n) => {
+    const read = atTransitionEnd(tab, () => readTab(tab, bar, `${n}|${tab.classList.contains('active')}`, onReady));
+    items.push(read.ink);
+    key += read.key;
+    pending ||= read.pending;
+  });
   return { items, key, pending };
+}
+
+/** @param {HTMLElement} tab @param {DOMRect} bar @param {string} slot @param {() => void} onReady */
+function readTab(tab, bar, slot, onReady) {
+  let pending = false;
+  let key = '';
+  const svg = /** @type {SVGSVGElement|null} */ (tab.querySelector('svg'));
+  const source = svg ? iconSource(svg) : null;
+  const label = tab.querySelector('span');
+  const ink = /** @type {TabInk} */ ({
+    img: null,
+    ix: 0,
+    iy: 0,
+    iw: 0,
+    ih: 0,
+    ia: 1,
+    text: '',
+    face: '',
+    color: '',
+    la: 1,
+    rtl: false,
+    lx: 0,
+    lw: 0,
+    base: 0,
+  });
+  if (svg && source) {
+    const r = svg.getBoundingClientRect();
+    const cs = getComputedStyle(svg);
+    const color = cs.color;
+    const accent = accentOf(svg);
+    Object.assign(ink, { ix: r.left - bar.left, iy: r.top - bar.top, iw: r.width, ih: r.height });
+    ink.ia = alphaOf(cs);
+    ink.img = iconImage(source, color, accent, r.width, r.height, slot, onReady);
+    if (!ink.img) pending = true;
+    key += `${source.id || hash(new XMLSerializer().serializeToString(source))}${color}${accent}${ink.ia}${r.left - bar.left},${r.top - bar.top},${r.width};`;
+  }
+  if (label) {
+    const r = label.getBoundingClientRect();
+    const cs = getComputedStyle(label);
+    ink.text = label.textContent ?? '';
+    ink.face = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    ink.color = cs.color;
+    ink.la = alphaOf(cs);
+    ink.rtl = cs.direction === 'rtl';
+    Object.assign(ink, { lx: r.left - bar.left, lw: r.width, base: baselineOf(label) - bar.top });
+    key += `${ink.text}${ink.face}${ink.color}${ink.la}${ink.lx},${ink.base};`;
+  }
+  return { ink, key, pending };
+}
+
+/** @param {CSSStyleDeclaration} cs */
+function alphaOf(cs) {
+  const v = Number.parseFloat(cs.opacity);
+  return Number.isFinite(v) ? v : 1;
 }
 
 /** @param {CanvasRenderingContext2D} gx @param {TabInk[]} items @param {number} pad */
 export function drawTabInks(gx, items, pad) {
   for (const t of items) {
+    gx.globalAlpha = t.ia;
     if (t.img) gx.drawImage(t.img, pad + t.ix, pad + t.iy, t.iw, t.ih);
+    gx.globalAlpha = t.la;
     if (!t.text) continue;
     gx.font = t.face;
     gx.fillStyle = t.color;
@@ -197,6 +248,7 @@ export function drawTabInks(gx, items, pad) {
     gx.textBaseline = 'alphabetic';
     gx.fillText(t.text, pad + (t.rtl ? t.lx + t.lw : t.lx), pad + t.base);
   }
+  gx.globalAlpha = 1;
 }
 
 /** @param {number} cx @param {number} cy @param {number} w @param {number} h */

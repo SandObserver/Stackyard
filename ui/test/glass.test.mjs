@@ -577,3 +577,43 @@ test('a new pixel density refits the glass', async () => {
   assert.equal(gpu.sizes.length, count + 1);
   assert.ok(h.media.filter(m => m.query.startsWith('(resolution:')).length > 1, 'it keeps watching');
 });
+
+test('the glass gives back its canvas memory when it turns off', async () => {
+  const off = {
+    'removing the wallpaper': h => h.glass.setWallpaper(null, 'cover'),
+    'Reduce Transparency': h => {
+      h.doc.documentElement.dataset.transparency = 'reduce';
+      h.media.find(m => m.query.includes('forced-colors')).fn();
+    },
+  };
+  for (const [name, turnOff] of Object.entries(off)) {
+    const { h, gpu } = await withGlass({ left: 0, top: 0, width: 100, height: 50 });
+    h.runIdle();
+    const ov = Object.assign(new FakeEl(), { isConnected: true });
+    const panel = new FakeEl();
+    ov.append(panel);
+    h.glass.openFolder(ov, panel);
+    const folderLayer = h.renderers[1];
+    turnOff(h);
+    await h.flush();
+    assert.equal(h.glass.stats().live, false, name);
+    assert.deepEqual(gpu.sizes.at(-1), [0, 0, 0, 0], `${name}: the base canvas keeps its pixels`);
+    assert.deepEqual(folderLayer.sizes.at(-1), [0, 0, 0, 0], `${name}: the folder canvas keeps its pixels`);
+  }
+});
+
+test('a lost folder layer comes back at its smallest size when no folder is open', async () => {
+  const h = harness();
+  await live(h);
+  h.runIdle();
+  const ov = Object.assign(new FakeEl(), { isConnected: true });
+  const panel = new FakeEl();
+  ov.append(panel);
+  h.glass.openFolder(ov, panel);
+  const folderLayer = h.renderers[1];
+  folderLayer.canvas.dispatch('webglcontextlost');
+  const before = h.renderers.length;
+  folderLayer.canvas.dispatch('webglcontextrestored');
+  const [restored] = h.renderers.slice(before);
+  assert.deepEqual(restored.sizes, [[0, 0, 0, 0]], 'a restore regrows a full-screen canvas for no folder');
+});

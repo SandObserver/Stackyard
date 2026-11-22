@@ -292,6 +292,46 @@ test('a tab bar pick arrives as a pointer click, and the current tab can be pick
   assert.equal(got[0][1].bubbles, true);
 });
 
+test('a tab picked with the lens reads the tab colours again, and the lens holds the icons still', () => {
+  /** @type {number[]} */
+  const chosen = [];
+  /** @type {boolean[]} */
+  const still = [];
+  const nav = Object.assign(fakeEl('nav'), {
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    classList: { remove() {}, toggle() {} },
+  });
+  const bar = new GlassBar(/** @type {any} */ (nav), {
+    items: () => [],
+    selected: () => 0,
+    choose: i => chosen.push(i),
+    pill: () => null,
+    pillColour: '--tab-pill',
+    P: /** @type {any} */ ({ land: [0.34, 0.9], growIn: [0.2, 0.9], frostIn: [0.12, 1] }),
+    css: true,
+  });
+  bar.wake = () => {};
+  bar.rects = LTR;
+  bar.pointer = { id: 1, x0: 90, moved: false };
+  bar.hit = 1;
+  bar.end(false);
+  assert.deepEqual(chosen, [1]);
+  assert.equal(bar.inkStale, true, 'the lens keeps the old selection colours while it lands');
+
+  const held = new GlassBar(/** @type {any} */ (nav), {
+    ...tabBar(/** @type {any} */ (nav)),
+    P: /** @type {any} */ ({ growIn: [0.2, 0.9], frostIn: [0.12, 1] }),
+    still: on => still.push(on),
+  });
+  held.wake = () => {};
+  held.lift();
+  assert.deepEqual(still, [true]);
+  assert.equal(held.inkStale, true, 'the picture is read again with the icons at rest');
+  held.stop();
+  assert.deepEqual(still, [true, false]);
+});
+
 test('colours read from computed styles, including color() and translucent layers', () => {
   assert.deepEqual(parseColour('rgb(10, 20, 30)'), [10, 20, 30, 1]);
   assert.deepEqual(parseColour('rgba(10, 20, 30, 0.5)'), [10, 20, 30, 0.5]);

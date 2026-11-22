@@ -411,6 +411,19 @@ const env = () => {
   return m;
 };
 const canPlay = () => env().hover.matches && !env().reduce.matches;
+/** @type {Set<Element>} */
+const held = new Set();
+
+/** Rests every icon inside `root` now and keeps them at rest until released.
+    @param {Element} root @param {boolean} on */
+export function holdIcons(root, on) {
+  if (!on) {
+    held.delete(root);
+    return;
+  }
+  held.add(root);
+  for (const [svg, reset] of media?.resets ?? []) if (root.contains(svg)) reset();
+}
 
 /** @param {SVGSVGElement} svg @param {string} id @param {Element} [trigger] */
 export function animateIcon(svg, id, trigger = svg) {
@@ -423,6 +436,7 @@ export function animateIcon(svg, id, trigger = svg) {
       s.transformOrigin = origin;
     }
   }
+  const stilled = () => [...held].some(r => r.contains(svg));
   /** @type {Ctx | null} */
   let ctx = null;
   let want = false;
@@ -438,7 +452,7 @@ export function animateIcon(svg, id, trigger = svg) {
   const run = async () => {
     if (busy || want === at) return;
     const dir = want;
-    if (!canPlay() || (!dir && !live.length)) {
+    if (!canPlay() || stilled() || (!dir && !live.length)) {
       settle();
       at = dir;
       return;

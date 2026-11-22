@@ -102,6 +102,7 @@ export function createGlass(env) {
 
   function loseFolderLayer() {
     if (!folder) return;
+    releaseLayer(folder);
     folder.gl = null;
     /* Keep. A restore redraws last over the open folder's CSS fill. */
     folder.last = null;
@@ -401,7 +402,11 @@ export function createGlass(env) {
       return;
     }
     dropPanel();
-    for (const layer of [base, folder]) if (layer) drawLayer(layer, [], look);
+    for (const layer of [base, folder]) {
+      if (!layer) continue;
+      drawLayer(layer, [], look);
+      releaseLayer(layer);
+    }
   }
 
   function prepareFolder() {
