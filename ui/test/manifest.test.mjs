@@ -157,8 +157,19 @@ test('the manifest stays valid and installable', () => {
   assert.ok(manifest.short_name.length <= 12, 'a long short_name is truncated on a home screen');
 });
 
-test('the page still links the manifest', () => {
-  assert.match(read('index.html'), /<link rel="manifest" href="\/manifest\.json">/);
+test('every page links the manifest', () => {
+  for (const page of ['index.html', 'admin/index.html']) {
+    assert.match(read(page), /<link rel="manifest" href="\/manifest\.json">/, `${page} cannot be installed`);
+  }
+});
+
+test('every shortcut icon exists and matches its declared size', () => {
+  for (const icon of manifest.shortcuts.flatMap(s => s.icons || [])) {
+    const file = path.join(root, icon.src.replace(/^\//, ''));
+    assert.ok(fs.existsSync(file), `${icon.src} is declared but not present`);
+    const buf = fs.readFileSync(file);
+    assert.equal(`${buf.readUInt32BE(16)}x${buf.readUInt32BE(20)}`, icon.sizes);
+  }
 });
 
 /* ── the install prompt ───────────────────────────────────────────────────── */
