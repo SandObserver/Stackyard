@@ -2,12 +2,12 @@ import { restorePage } from '/js/dashboard-logic.js?v=b4828b62';
 import { PAGE_STORE } from '/js/dashboard-pager.js?v=91eda487';
 import { tryBuild } from '/js/dashboard-screens.js?v=79b0c104';
 import { onLayoutChange } from '/js/layout.js?v=6680c0bf';
-import { buildMobile } from '/js/ui.js?v=a733af8d';
+import { buildMobile } from '/js/ui.js?v=4fb17f4d';
 import { el, loadImagesNow, storeGet } from '/js/utils.js?v=e9e22f08';
 
 /** @param {{
       dash: import('/js/dashboard-state.js?v=51013727').DashboardState,
-      grid: import('/js/dashboard-grid.js?v=bb0329ab').DesktopGrid,
+      grid: import('/js/dashboard-grid.js?v=8e55bd98').DesktopGrid,
       pager: import('/js/dashboard-pager.js?v=91eda487').Pager,
       wallpaper: import('/js/dashboard-wallpaper.js?v=a79aaf09').Wallpaper,
     }} deps */
