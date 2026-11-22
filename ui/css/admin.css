@@ -672,6 +672,10 @@ a:focus-visible,button:focus-visible,[role="button"]:focus-visible{outline:2px s
 .bg:disabled{opacity:1;color:var(--dm)}
 .bd-btn{background:var(--btn-danger-fill);color:var(--btn-danger-ink)}
 @media (hover:hover) and (pointer:fine){.bd-btn:hover:not(:disabled){background:var(--rd);color:var(--on-fill)}}
+.dlg-box[aria-busy="true"] .btn{opacity:.45;cursor:not-allowed;pointer-events:none}
+.dlg-box[aria-busy="true"] .bp{background:var(--btn-fill);color:var(--dm);opacity:1}
+.dlg-box[aria-busy="true"] .bg{opacity:1;color:var(--dm)}
+.dlg-box[aria-busy="true"] .inp{color:var(--dm)}
 .sv-btn{display:inline-grid;place-items:center}
 .sv-btn > *{grid-area:1/1}
 .sv-btn .sv-lbl{transition:opacity .15s ease}

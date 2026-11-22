@@ -1,9 +1,9 @@
-import { closeBadgePopover } from '/js/badge-popover.js?v=a7b62808';
+import { closeBadgePopover } from '/js/badge-popover.js?v=b487ef22';
 import { desktopCols, desktopPages } from '/js/dashboard-logic.js?v=b4828b62';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { currentLang, t } from '/js/i18n.js?v=82ba9da2';
 import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=ff61256e';
-import { closeFolders, mkFolder, resetMobileChrome } from '/js/ui.js?v=4fb17f4d';
+import { closeFolders, mkFolder, resetMobileChrome } from '/js/ui.js?v=ba017457';
 import {
   mkWrap as _mkWrap,
   el,
@@ -63,7 +63,7 @@ const hasDock = items => items.some(inDock);
 
 /** @param {{
       dash: import('/js/dashboard-state.js?v=51013727').DashboardState,
-      badges: import('/js/dashboard-badges.js?v=afed46bb').Badges,
+      badges: import('/js/dashboard-badges.js?v=29890539').Badges,
       goTo: (i: number) => void,
     }} deps */
 export function createDesktopGrid({ dash, badges, goTo }) {

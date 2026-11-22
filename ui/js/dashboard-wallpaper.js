@@ -15,7 +15,7 @@ import {
   toneForColor,
 } from '/js/label-contrast.js?v=a160c6d1';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
-import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=1801451c';
+import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=e6e79571';
 import { el, titleWhenTruncated } from '/js/utils.js?v=e9e22f08';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 

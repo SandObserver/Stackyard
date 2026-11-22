@@ -388,12 +388,34 @@ test('the prompt is busy while its submit runs, and a second press starts nothin
     input.onkeydown({ key: 'Enter', preventDefault() {} });
     assert.equal(calls, 1);
     assert.equal(box.getAttribute('aria-busy'), 'true');
-    assert.equal(buttons(box)[0].disabled, true);
-    assert.equal(input.disabled, true);
+    assert.equal(buttons(box)[0].getAttribute('aria-disabled'), 'true');
+    assert.equal(input.getAttribute('aria-disabled'), 'true');
+    assert.equal(input.readOnly, true);
+    buttons(box)[0].onclick();
+    assert.equal(dom.body.children.includes(box), true, 'Cancel closed a busy prompt');
 
     gate.resolve(null);
     assert.equal(await answer, 'x');
     assert.equal(box.getAttribute('aria-busy'), 'false');
+  });
+});
+
+/* A disabled control drops focus to the body, and the browser then puts it
+   nowhere when the dialog closes. */
+test('a busy prompt keeps focus in its field', async () => {
+  await withDom(async ({ promptModal }, dom) => {
+    const gate = deferred();
+    promptModal({ title: 'T', label: 'Name', confirmLabel: 'Save', cancelLabel: 'No', submit: () => gate.promise });
+    const box = dialog(dom);
+    const { input } = promptParts(box);
+    input.value = 'x';
+    input.onkeydown({ key: 'Enter', preventDefault() {} });
+    for (const c of [input, ...buttons(box)]) assert.notEqual(c.disabled, true);
+    assert.equal(dom.getActive(), input);
+    gate.resolve(null);
+    await settle();
+    assert.equal(input.readOnly, false);
+    assert.equal(input.getAttribute('aria-disabled'), null);
   });
 });
 

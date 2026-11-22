@@ -1,4 +1,4 @@
-import { apiGet } from '/js/admin-shared.js?v=2e433594';
+import { apiGet } from '/js/admin-shared.js?v=a333637b';
 import { html, setHtml } from '/js/html.js?v=48f9dc21';
 import { t } from '/js/i18n.js?v=82ba9da2';
 import { el } from '/js/utils.js?v=e9e22f08';

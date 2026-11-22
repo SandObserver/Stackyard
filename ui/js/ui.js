@@ -152,6 +152,7 @@ export function mkFolder(item) {
   a.type = 'button';
   a.className = 'icon';
   a.setAttribute('aria-label', folderName(item));
+  a.setAttribute('aria-haspopup', 'dialog');
   a.dataset.tileName = folderName(item);
   if (!showLabel) a.title = item.label || t('type.folder');
   a.onclick = () => {
@@ -593,6 +594,7 @@ function mFolder(item, cw, rh, isz, sc) {
   a.type = 'button';
   a.className = 'dyn-mob-btn';
   a.setAttribute('aria-label', folderName(item));
+  a.setAttribute('aria-haspopup', 'dialog');
   a.dataset.tileName = folderName(item);
   css(a, { '--rh': rh + 'px' });
   let _opening = false;
@@ -824,6 +826,7 @@ export function openFolderMobile(folder, tile) {
   ov.addEventListener(
     'touchend',
     e => {
+      if (/** @type {Element} */ (e.target).closest?.('[popover]')) return;
       const touch = e.changedTouches[0],
         rb = box.getBoundingClientRect();
       if (touch.clientX < rb.left || touch.clientX > rb.right || touch.clientY < rb.top || touch.clientY > rb.bottom) {

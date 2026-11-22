@@ -219,6 +219,73 @@ test('typing inside an open folder does not open Search over it', () => {
   assert.equal(spot.open, true, 'typing on the bare page does not open Search');
 });
 
+test('Escape while composing text stays in Search', () => {
+  if (!spot.open) fire(doc.body, 'keydown', { key: 'n' });
+  const input = doc.getElementById('sin');
+  fire(input, 'keydown', { key: 'Escape', isComposing: true, keyCode: 229 });
+  assert.equal(spot.open, true, 'the IME cancel closed Search');
+  fire(input, 'keydown', { key: 'Escape' });
+  assert.equal(spot.open, false);
+});
+
+test('the result count is announced once typing pauses', t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const live = doc.getElementById('sres-live');
+  live.textContent = '';
+  const input = doc.getElementById('sin');
+  for (const v of ['n', 'na', 'nas']) {
+    input.value = v;
+    fire(input, 'input');
+    t.mock.timers.tick(100);
+  }
+  assert.equal(live.textContent, '', 'a count was announced mid-word');
+  t.mock.timers.tick(400);
+  assert.equal(live.textContent, 'home.resultCount');
+  assert.ok(doc.querySelector('#sres .sr'), 'the results waited for the announcement');
+});
+
+test('a touch on the badge popover in an open phone folder keeps the folder open', async () => {
+  const { wireBadgePopover } = await import('../js/badge-popover.js');
+  const folder = { id: 'f', type: 'folder', label: 'F', children: ['p0'] };
+  phone([folder, ...apps(1)]);
+  openFolderMobile(folder);
+  const ov = doc.querySelector('.folder-overlay-mobile');
+  assert.ok(ov?.open, 'the folder did not open');
+  wireBadgePopover(doc.createElement('div'), [{ name: 'Queue', value: 3, unit: '', color: '' }]);
+  const pop = doc.getElementById('badge-pop');
+  pop.matches = sel => sel !== ':popover-open' && Object.getPrototypeOf(pop).matches.call(pop, sel);
+  pop.hidePopover = () => {};
+  ov.appendChild(pop);
+  const lift = { touches: [], changedTouches: [{ identifier: 1, clientX: 300, clientY: 700 }] };
+  const hadMatrix = 'DOMMatrixReadOnly' in globalThis;
+  /* fake-dom has no DOMMatrixReadOnly. Identity only. */
+  globalThis.DOMMatrixReadOnly ??= class {
+    a = 1;
+    e = 0;
+    f = 0;
+  };
+  try {
+    fire(pop, 'touchend', lift);
+    assert.equal(ov.open, true, 'a touch on the popover closed the folder');
+    fire(ov, 'touchend', lift);
+    assert.equal(ov.open, false, 'a touch on the scrim kept the folder open');
+  } finally {
+    if (!hadMatrix) delete globalThis.DOMMatrixReadOnly;
+    delete pop.matches;
+    delete pop.hidePopover;
+    doc.body.appendChild(pop);
+    ov.remove();
+  }
+});
+
+test('the search pill and the folder tiles say they open a dialog', () => {
+  assert.equal(pillEl().getAttribute('aria-haspopup'), 'dialog');
+  phone([{ id: 'f', type: 'folder', label: 'F', children: [] }]);
+  assert.equal(doc.querySelector('.dyn-mob-btn').getAttribute('aria-haspopup'), 'dialog');
+  const desktop = read('js/ui.js').slice(read('js/ui.js').indexOf('export function mkFolder('));
+  assert.match(desktop.slice(0, desktop.indexOf('\n}\n')), /setAttribute\('aria-haspopup', 'dialog'\)/);
+});
+
 test('the Search pill keeps a readable label on a small phone', () => {
   assert.match(css, /#mob-search-pill \.msp-label \{\s*font-size:max\(11px, calc\(12px \* var\(--sc,1\)\)\)/);
   for (const vw of [320, 360, 393, 440]) {
