@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Drop the unneeded temperature mount from the example `docker-compose.yml`.
 
-- Require Safari 26.2 or newer on macOS and iOS.
+- Test on Safari 26.2 or newer on macOS and iOS.
 
 - Bend the open folder's glass more and frost it less.
 
@@ -50,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Drop unknown keys inside the server settings on save, as unknown top-level
   settings already were.
 
-- Require Node.js 26 or later to run the API outside Docker.
+- Test the API on Node.js 26 when it runs outside Docker.
 
 - Open the Link URL when you tap the Weather, Now Playing or Downloads widget on
   a phone.
