@@ -62,6 +62,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Skip downloading the whole config on every dashboard check when nothing
   changed.
 
+- Make Settings text follow the browser's text size setting.
+
+- Draw native checkboxes and radio buttons in the accent colour.
+
 ### Removed
 
 - Remove the `WIDGETS_PATH` setting from the Compose example. Mount a custom
