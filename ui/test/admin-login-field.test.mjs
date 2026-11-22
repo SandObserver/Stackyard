@@ -196,6 +196,8 @@ test('the password can be shown, is wired once, and is hidden again after sign-i
   assert.equal(rev.listeners.click.length, 1, 'each sign-in box would toggle the field once more');
   rev.click();
   assert.equal(els['login-pw'].type, 'text');
+  for (const [k, v] of Object.entries({ spellcheck: 'false', autocapitalize: 'none', autocorrect: 'off' }))
+    assert.equal(els['login-pw'].attrs[k], v, `a shown password keeps ${k} on`);
   assert.equal(rev.attrs['aria-pressed'], 'true');
   status = 200;
   els['login-pw'].value = 'quiet otter lantern 42';

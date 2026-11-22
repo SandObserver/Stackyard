@@ -136,6 +136,44 @@ test('a mismatch is said when the confirmation is left, and goes when it is edit
   assert.equal($('setup-err').style.display, 'none');
 });
 
+test('a mismatch goes once either field matches, and is checked again on leaving either', () => {
+  const other = 'amber falcon meadow 17';
+  type('setup-pw2', other);
+  fire($('setup-pw2'), 'blur', { bubbles: false });
+  assert.equal($('setup-err').style.display, 'block');
+  assert.equal($('setup-pw2').getAttribute('aria-invalid'), 'true');
+  type('setup-pw', other);
+  assert.equal($('setup-err').style.display, 'none', 'the error stayed after the first field was made to match');
+  assert.equal($('setup-pw2').getAttribute('aria-invalid'), null);
+  assert.doesNotMatch($('setup-pw2').getAttribute('aria-describedby') || '', /setup-err/);
+  type('setup-pw', STRONG);
+  assert.equal($('setup-err').style.display, 'none', 'the mismatch shows while typing');
+  fire($('setup-pw'), 'blur', { bubbles: false });
+  assert.equal($('setup-err').style.display, 'block', 'leaving the first field did not check the match');
+  assert.equal($('setup-pw2').getAttribute('aria-invalid'), 'true');
+  type('setup-pw2', STRONG);
+  fire($('setup-pw2'), 'blur', { bubbles: false });
+  fire($('setup-pw'), 'blur', { bubbles: false });
+  assert.equal($('setup-err').style.display, 'none');
+});
+
+test('a field the reveal button shows takes no capitals, correction or spelling marks', () => {
+  const secret = [...ov.querySelectorAll('input')].filter(f => f.type === 'password');
+  assert.deepEqual(
+    secret.map(f => f.id),
+    ['setup-pw', 'setup-pw2'],
+  );
+  $('setup-reveal').click();
+  for (const f of secret) {
+    assert.equal(f.type, 'text', `${f.id} is not shown`);
+    assert.equal(f.getAttribute('spellcheck'), 'false', f.id);
+    assert.equal(f.getAttribute('autocapitalize'), 'none', f.id);
+    assert.equal(f.getAttribute('autocorrect'), 'off', f.id);
+  }
+  $('setup-reveal').click();
+  assert.equal($('setup-pw').type, 'password');
+});
+
 test('Set is off only while the request is out', async () => {
   let answer;
   setReply = () => new Promise(r => (answer = r));

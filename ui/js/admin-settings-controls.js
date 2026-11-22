@@ -60,10 +60,10 @@ export function initPasswordRows() {
   const pw = inp('sec-pw');
   const pw2 = inp('sec-pw2');
   if (!pw || !pw2) return;
+  const mismatched = () => pw.value !== '' && pw2.value !== '' && passwordMismatch(pw.value, pw2.value);
   const checkMatch = () => {
     clearFieldError(el('ie-pw2'));
-    if (pw.value && pw2.value && passwordMismatch(pw.value, pw2.value))
-      showFieldError(el('ie-pw2'), t('setup.mismatch'), { focus: false });
+    if (mismatched()) showFieldError(el('ie-pw2'), t('setup.mismatch'), { focus: false });
   };
   const settle = () => {
     el('sec-pw-bars')?.classList.add('d-none');
@@ -87,7 +87,10 @@ export function initPasswordRows() {
     onCancel: checkMatch,
   });
   el('sec-pw-form')?.addEventListener('submit', e => e.preventDefault());
-  pw.addEventListener('input', () => reveal(el('ie-pw2-wrap'), pw.value !== ''));
+  pw.addEventListener('input', () => {
+    reveal(el('ie-pw2-wrap'), pw.value !== '');
+    if (!mismatched()) clearFieldError(el('ie-pw2'));
+  });
   wireReveal(/** @type {HTMLButtonElement[]} */ (qa('#ie-pw .pw-reveal, #ie-pw2 .pw-reveal')), [pw, pw2]);
   fillUsernames();
 }

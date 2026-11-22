@@ -10,7 +10,7 @@ import { iconSvg } from '/js/icon-set.js?v=361e54a5';
 import { iconChain } from '/js/icons.js?v=76c29d43';
 import { slideBlock } from '/js/modal.js?v=84ba5279';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
-import { el, isolate, q, qa } from '/js/utils.js?v=f2d28d1d';
+import { el, isolate, plainInput, q, qa } from '/js/utils.js?v=f2d28d1d';
 
 const API = '';
 
@@ -691,13 +691,6 @@ export function swapContent(node, apply) {
 }
 
 export const PE_SVG = iconSvg('edit', 17);
-
-/** @param {HTMLInputElement} inp */
-function plainInput(inp) {
-  inp.setAttribute('autocapitalize', 'none');
-  inp.setAttribute('autocorrect', 'off');
-  inp.spellcheck = false;
-}
 
 /* `root` lets a caller wire a subtree that is not in the document yet. */
 /** A function placeholder is resolved on use, not at wiring time: this runs

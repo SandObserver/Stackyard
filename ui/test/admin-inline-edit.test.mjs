@@ -294,6 +294,57 @@ test('the Settings password rows sit in a form password managers can read', asyn
   }
 });
 
+test('the Settings mismatch goes once the passwords match, whichever row is edited', async () => {
+  const { catalogRoutes, fakeFetch, fire: send, installDom, pageBody } = await import('./fake-dom.mjs');
+  const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+  try {
+    await (await import('../js/i18n.js')).initI18n('en');
+    const { initPasswordRows } = await import('../js/admin-settings-controls.js');
+    initPasswordRows();
+    const byId = id => dom.document.getElementById(id);
+    const edit = (row, field, value, leave = true) => {
+      dom.document.querySelector(`#${row} .pe`).click();
+      byId(field).value = value;
+      send(byId(field), 'input');
+      if (leave) send(byId(field), 'keydown', { key: 'Enter' });
+    };
+    const flagged = () => byId('ie-pw2').classList.contains('row-invalid');
+    edit('ie-pw', 'sec-pw', 'amber falcon meadow 17');
+    edit('ie-pw2', 'sec-pw2', 'quiet otter lantern 42');
+    assert.equal(flagged(), true, 'leaving the confirmation did not check the match');
+    edit('ie-pw', 'sec-pw', 'quiet otter lantern 42', false);
+    assert.equal(flagged(), false, 'the error stayed after the first row was made to match');
+    send(byId('sec-pw'), 'keydown', { key: 'Enter' });
+    assert.equal(flagged(), false);
+    edit('ie-pw', 'sec-pw', 'quiet otter lantern 4', false);
+    assert.equal(flagged(), false, 'the mismatch shows while typing');
+    send(byId('sec-pw'), 'keydown', { key: 'Enter' });
+    assert.equal(flagged(), true, 'leaving the first row did not check the match');
+  } finally {
+    dom.restore();
+  }
+});
+
+test('the Settings password fields take no capitals, correction or spelling marks', async () => {
+  const { catalogRoutes, fakeFetch, installDom, pageBody } = await import('./fake-dom.mjs');
+  const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+  try {
+    await (await import('../js/i18n.js')).initI18n('en');
+    const { initPasswordRows } = await import('../js/admin-settings-controls.js');
+    initPasswordRows();
+    const byId = id => dom.document.getElementById(id);
+    dom.document.querySelector('#ie-pw .pw-reveal').click();
+    for (const id of ['sec-pw', 'sec-pw2']) {
+      assert.equal(byId(id).type, 'text', `${id} is not shown`);
+      assert.equal(byId(id).getAttribute('spellcheck'), 'false', id);
+      assert.equal(byId(id).getAttribute('autocapitalize'), 'none', id);
+      assert.equal(byId(id).getAttribute('autocorrect'), 'off', id);
+    }
+  } finally {
+    dom.restore();
+  }
+});
+
 test('the Settings strength hint is read when its band changes, not per character', async () => {
   const { catalogRoutes, fakeFetch, installDom, pageBody, settle } = await import('./fake-dom.mjs');
   const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });

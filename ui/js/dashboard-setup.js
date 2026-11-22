@@ -65,12 +65,16 @@ export function showSetupPrompt(dash) {
       if (rest) f.setAttribute('aria-describedby', rest);
       else f.removeAttribute('aria-describedby');
     };
+    /** @type {string | null} */
+    let shownKey = null;
     const hideError = () => {
+      shownKey = null;
       err.style.display = 'none';
     };
     /** @param {string} key @param {HTMLInputElement | null} at */
     const showError = (key, at) => {
       for (const f of fields) unmark(f);
+      shownKey = key;
       setLiveText(err, t(key));
       err.style.display = 'block';
       if (!at) return;
@@ -88,6 +92,12 @@ export function showSetupPrompt(dash) {
       return null;
     };
 
+    const mismatched = () => pw2.value !== '' && passwordMismatch(pw.value, pw2.value);
+    const clearMatched = () => {
+      if (shownKey !== 'setup.mismatch' || mismatched()) return;
+      unmark(pw2);
+      hideError();
+    };
     pw.addEventListener('input', paintMeter);
     for (const f of fields) {
       f.addEventListener('input', () => {
@@ -96,10 +106,12 @@ export function showSetupPrompt(dash) {
         hideError();
       });
     }
-    pw2.addEventListener('blur', () => {
-      if (pw2.value && !pw2.hasAttribute('aria-invalid') && passwordMismatch(pw.value, pw2.value))
-        showError('setup.mismatch', pw2);
-    });
+    for (const f of [pw, pw2]) {
+      f.addEventListener('input', clearMatched);
+      f.addEventListener('blur', () => {
+        if (shownKey === null && mismatched()) showError('setup.mismatch', pw2);
+      });
+    }
 
     wireReveal(rev, [pw, pw2]);
     fillUsernames(ov);

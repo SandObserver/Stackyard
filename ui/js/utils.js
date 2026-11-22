@@ -193,6 +193,13 @@ export const qa = (sel, root = document) => /** @type {HTMLElement[]} */ ([...ro
     @param {Event} e @returns {HTMLInputElement} */
 export const tgt = e => /** @type {HTMLInputElement} */ (e.target);
 
+/** @param {HTMLInputElement} field */
+export function plainInput(field) {
+  field.setAttribute('autocapitalize', 'none');
+  field.setAttribute('autocorrect', 'off');
+  field.setAttribute('spellcheck', 'false');
+}
+
 /** Focus the first candidate that is attached, enabled and rendered.
     @param {...(Element|null|undefined)} els @returns {boolean} whether one took focus */
 export function focusFirst(...els) {
