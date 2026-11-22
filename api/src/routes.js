@@ -1,5 +1,6 @@
 require('./routes/auth');
 require('./routes/config');
+require('./routes/csp-report');
 require('./routes/health');
 require('./routes/badges');
 require('./routes/system');

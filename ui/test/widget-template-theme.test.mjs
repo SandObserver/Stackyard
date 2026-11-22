@@ -1,8 +1,19 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test } from 'node:test';
+import { pageWithScripts } from './widget-source.mjs';
 
-const page = fs.readFileSync(new URL('../../docs/widget-template/index.html', import.meta.url), 'utf8');
+const pageUrl = new URL('../../docs/widget-template/index.html', import.meta.url);
+const page = pageWithScripts(pageUrl);
+
+/* A widget page with inline script stops working once its policy drops
+   'unsafe-inline'. The template is what new widgets copy. */
+test('the widget template loads its script from a file next to the page', () => {
+  const markup = fs.readFileSync(pageUrl, 'utf8');
+  assert.match(markup, /<script type="module" src="widget\.js"><\/script>/);
+  assert.deepEqual(markup.match(/<script(?![^>]*\ssrc=)[^>]*>/g), null, 'the template has an inline script');
+  assert.doesNotMatch(markup, /\son[a-z]+=/i, 'the template has an inline event handler');
+});
 
 /* The card is white in the light theme. A copied template with fixed light ink
    draws text nobody can read there. */

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
+import { pageWithScripts } from './widget-source.mjs';
 
 /* Apple's widget guidance sets 11pt as the smallest readable text, measured at
    the design size each widget page is written for. */
@@ -21,7 +22,7 @@ const pages = fs
 test('no bundled widget page sets text below 11px', () => {
   const small = [];
   for (const page of pages) {
-    const src = fs.readFileSync(new URL(page, root), 'utf8');
+    const src = pageWithScripts(new URL(page, root));
     const re = /font-size:\s*([0-9.]+)px|fontSize\s*=\s*['"`]([0-9.]+)px|TEXT_H\s*=\s*([0-9.]+)/g;
     for (const m of src.matchAll(re)) {
       const size = Number(m[1] ?? m[2] ?? m[3]);

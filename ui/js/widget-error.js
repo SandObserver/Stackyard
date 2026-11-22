@@ -5,7 +5,8 @@
    Never draw a response's error message. It names hosts, ports and status
    codes, and it is not translated. */
 
-import { ICONS, symbol } from '/js/icon-set.js?v=361e54a5';
+import { parseMarkup, raw } from '/js/html.js?v=48f9dc21';
+import { ICONS, symbol } from '/js/icon-set.js?v=beda3062';
 
 /* kind -> [glyph, catalog key, English] */
 const COPY = {
@@ -40,8 +41,7 @@ export function kindGlyph(kind, doc) {
   const id = `err-${g}`;
   const { defs, sym } = symbol(id, ICONS[id]);
   const src = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><defs>${defs}</defs>${sym.replace(/<\/?symbol[^>]*>/g, '')}</svg>`;
-  const Parser = doc.defaultView.DOMParser;
-  return doc.importNode(new Parser().parseFromString(src, 'image/svg+xml').documentElement, true);
+  return doc.importNode(parseMarkup(raw(src), 'image/svg+xml', doc.defaultView.DOMParser).documentElement, true);
 }
 
 /** The catalog key and English wording for a kind.

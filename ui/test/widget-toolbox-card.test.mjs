@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { register } from 'node:module';
+import { pageWithScripts } from './widget-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 globalThis.location = { search: '?id=test' };
@@ -25,7 +26,6 @@ test('a widget page outside a dashboard card changes nothing', () => {
 });
 
 test('the weather widget follows its own day and night on the card', async () => {
-  const fs = await import('node:fs');
-  const src = fs.readFileSync(new URL('../widgets/weather/index.html', import.meta.url), 'utf8');
+  const src = pageWithScripts(new URL('../widgets/weather/index.html', import.meta.url));
   assert.match(src, /setCardAppearance\(!lightCard\)/);
 });

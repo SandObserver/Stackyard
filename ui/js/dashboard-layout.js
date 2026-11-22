@@ -1,15 +1,15 @@
 import { restorePage } from '/js/dashboard-logic.js?v=b4828b62';
-import { PAGE_STORE } from '/js/dashboard-pager.js?v=a12777fd';
-import { tryBuild } from '/js/dashboard-screens.js?v=a1d32807';
+import { PAGE_STORE } from '/js/dashboard-pager.js?v=91eda487';
+import { tryBuild } from '/js/dashboard-screens.js?v=79b0c104';
 import { onLayoutChange } from '/js/layout.js?v=6680c0bf';
-import { buildMobile } from '/js/ui.js?v=915629a0';
-import { el, loadImagesNow, storeGet } from '/js/utils.js?v=9ed2b298';
+import { buildMobile } from '/js/ui.js?v=48c8383a';
+import { el, loadImagesNow, storeGet } from '/js/utils.js?v=e9e22f08';
 
 /** @param {{
       dash: import('/js/dashboard-state.js?v=51013727').DashboardState,
-      grid: import('/js/dashboard-grid.js?v=ba4c0bbc').DesktopGrid,
-      pager: import('/js/dashboard-pager.js?v=a12777fd').Pager,
-      wallpaper: import('/js/dashboard-wallpaper.js?v=6e8b7a83').Wallpaper,
+      grid: import('/js/dashboard-grid.js?v=aeaacf2d').DesktopGrid,
+      pager: import('/js/dashboard-pager.js?v=91eda487').Pager,
+      wallpaper: import('/js/dashboard-wallpaper.js?v=1ee9a215').Wallpaper,
     }} deps */
 export function createLayout({ dash, grid, pager, wallpaper }) {
   const { goTo } = pager;

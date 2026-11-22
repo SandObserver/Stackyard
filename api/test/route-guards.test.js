@@ -17,9 +17,17 @@ const { saveConfig } = require('../src/config');
 const { hashPassword, makeToken } = require('../src/auth');
 
 const SECRET = 'b'.repeat(64);
-const PUBLIC = new Set(['/health', '/api/auth/login', '/api/auth/check', '/api/auth/setup-password']);
+const PUBLIC = new Set([
+  '/health',
+  '/api/auth/login',
+  '/api/auth/check',
+  '/api/auth/setup-password',
+  '/api/csp-report',
+]);
+/* A browser posts a violation report with no Origin. The route stores nothing. */
+const REPORT_SINKS = new Set(['/api/csp-report']);
 const routes = _routeTable();
-const writes = routes.filter(r => r.method !== 'GET');
+const writes = routes.filter(r => r.method !== 'GET' && !REPORT_SINKS.has(r.path));
 const concrete = p => p.replace(/:[^/]+/g, 'x');
 
 let host;
@@ -99,6 +107,13 @@ test('every write refuses another origin', async () => {
     assert.match(res.body, /origin mismatch/, `${r.method} ${r.path}`);
     assert.equal(configFile(), stored, `${r.method} ${r.path} wrote the config`);
   }
+});
+
+test('the violation report route takes no session and changes nothing', async () => {
+  const stored = configFile();
+  const res = await send('POST', '/api/csp-report', { 'Content-Type': 'application/csp-report' });
+  assert.equal(res.status, 204);
+  assert.equal(configFile(), stored);
 });
 
 test('every write refuses a request with no origin', async () => {

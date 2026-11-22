@@ -1,0 +1,351 @@
+import { poll, fetchData, getConfig, reducedMotion, rollText, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, raw, setHtml } from '/js/widget-toolbox.js?v=039ea657';
+import { ensureSprite } from '/js/icon-set.js?v=beda3062';
+await loadStrings();
+document.getElementById('widget').setAttribute('aria-label', wt('widget.label', 'Weather'));
+const TICK_MS=600000;
+
+const widgetEl=document.getElementById('widget');
+const icoEl=document.getElementById('ico');
+const condEl=document.getElementById('cond');
+const tempEl=document.getElementById('temp');
+const msgEl=document.getElementById('msg');
+const srEl=document.getElementById('sr');
+const aqEl=document.getElementById('aq');
+const aqValEl=document.getElementById('aq-val');
+const aqCapIcoEl=document.getElementById('aq-cap-ico');
+const aqHitEl=document.getElementById('aq-hit');
+
+/* ---- artwork, drawn in the icon's 100-unit box ---- */
+const f=n=>+n.toFixed(3);
+function cloudPath(x,y,W){
+  const rs=.226*W,rb=.351*W,base=y+.702*W;
+  const sx=x+rs,sy=base-rs,bx=x+W-rb,by=base-rb;
+  const dx=bx-sx,dy=by-sy,d=Math.hypot(dx,dy);
+  const a=(rs*rs-rb*rb+d*d)/(2*d),h=Math.sqrt(rs*rs-a*a);
+  const px=f(sx+a*dx/d+h*dy/d),py=f(sy+a*dy/d-h*dx/d);
+  return `M${f(sx)} ${f(base)}H${f(bx)}A${f(rb)} ${f(rb)} 0 1 0 ${px} ${py}A${f(rs)} ${f(rs)} 0 0 0 ${f(x)} ${f(sy)}A${f(rs)} ${f(rs)} 0 0 0 ${f(sx)} ${f(base)}z`;
+}
+const MARIA=[[-.32,-.28,.26],[-.08,-.44,.16],[-.46,.06,.18],[.3,-.02,.2],[.4,.22,.13],[-.04,.42,.14]];
+const PITS=[[.5,-.36,.06],[.12,.08,.05],[.2,.56,.06]];
+function orb(day,cx,cy,r,dim=1){
+  const body=day
+    ?`<circle cx="${cx}" cy="${cy}" r="${r}" fill="#FF9230"/><circle cx="${cx}" cy="${cy}" r="${f(r*.95)}" fill="none" stroke="#FFD600" stroke-opacity=".55" stroke-width="${f(r*.1)}"/>`
+    :`<circle cx="${cx}" cy="${cy}" r="${r}" fill="#FFFFFF" fill-opacity=".92"/>`
+      +`<g fill="#8E8E93" opacity=".22" filter="url(#wx-soft)">${MARIA.map(([x,y,k])=>`<circle cx="${f(cx+x*r)}" cy="${f(cy+y*r)}" r="${f(k*r)}"/>`).join('')}</g>`
+      +PITS.map(([x,y,k])=>`<circle cx="${f(cx+x*r)}" cy="${f(cy+y*r)}" r="${f(k*r)}" fill="#8E8E93" fill-opacity=".35"/>`).join('');
+  return `<g class="wx-orb"${dim<1?` opacity="${dim}"`:''}>${body}</g>`;
+}
+let clipN=0;
+function glass(day,d,{cls='',layers=day?[['#8E8E93',.4]]:[['#FFFFFF',.6]],glow='',rim=1.8}={}){
+  const id=`wx-c${clipN++}`;
+  const body=[...layers,['#0091FF',.06]].map(([c,o])=>`<path d="${d}" fill="${c}" fill-opacity="${o}"/>`).join('');
+  return `<g class="${cls}"><clipPath id="${id}"><path d="${d}"/></clipPath><g clip-path="url(#${id})">${glow}${body}</g><path class="wx-rim" d="${d}" fill="none" stroke="#FFFFFF" stroke-opacity="${day?.45:.22}" stroke-width="${rim}"/></g>`;
+}
+function cloud(day,x,y,W,back,glow=''){
+  const layers=glow
+    ?(day?[['#FFFFFF',.5],['#8E8E93',.15]]:[['#8E8E93',.35]])
+    :back?(day?[['#FFFFFF',.6],['#8E8E93',.16]]:[['#FFFFFF',.85]])
+    :undefined;
+  return glass(day,cloudPath(x,y,W),{cls:`wx-cloud ${back?'wx-back':'wx-front'}`,layers,glow});
+}
+const over=(day,orbAt,x,y,W)=>orb(day,...orbAt)+cloud(day,x,y,W,false,`<g filter="url(#wx-blur)">${orb(day,...orbAt)}</g>`);
+const PC=[8,-3,84],BASE=f(PC[1]+.702*PC[2]),SKY=[78,27,31],LANE=[30,64];
+const rnd=(lo,hi)=>f(lo+Math.random()*(hi-lo));
+const LAYER='<svg viewBox="0 0 100 100">',FLAKE_Y=f(BASE+3);
+function falling(n,shape,cls,[lo,hi],{op=1,lane=LANE,shift=.5,slots=n,at=i=>i}={}){
+  const step=(lane[1]-lane[0])/slots;
+  return '</svg>'+Array.from({length:n},(_,i)=>{
+    const d=rnd(lo,hi);
+    const origin=cls==='wx-flake'?`;transform-origin:0 ${FLAKE_Y}%`:'';
+    return `<div class="wx-pos" data-lo="${lane[0]}" data-hi="${lane[1]}" style="transform:translateX(${f(lane[0]+(at(i)+shift)*step)}%)${op<1?`;opacity:${op}`:''}"><div class="${cls}" style="animation-duration:${d}s;animation-delay:-${rnd(0,d)}s${origin}">${LAYER}${shape}</svg></div></div>`;
+  }).join('')+LAYER;
+}
+const drop=(k,w)=>`<path d="M0 ${f(BASE-2)}l${f(-4.2*k)} ${f(8.5*k)}" stroke="#00D2E0" stroke-width="${w}" stroke-linecap="round"/>`;
+const rain=()=>falling(2,drop(.7,2.2),'wx-drop',[1.6,2],{op:.5})+falling(4,drop(1,3.6),'wx-drop',[.95,1.25]);
+const STILL={drop:-6,drizzle:-4.5,flake:1,pellet:-1.5};
+const mix=(lane,slots,at,part)=>({lane,slots,at,shift:.5-STILL[part]*slots/(lane[1]-lane[0])});
+const WIDE=[20,80],even=i=>2*i,odd=i=>2*i+1;
+const drops=(n,o)=>falling(n,drop(1,3.6),'wx-drop',[.95,1.25],o);
+const drizzle=(n,o)=>falling(n,drop(.38,3.2),'wx-drop',[1.5,2],o);
+const pellets=(day,n,r,dur,o)=>falling(n,`<circle cx="0" cy="${f(BASE+2)}" r="${r}" fill="${day?'#3CD3FE':'#FFFFFF'}"/>`,'wx-pellet',dur,o);
+function flake(cx,cy,r,w,c){
+  return [0,60,120].map(a=>`<path d="M${cx} ${f(cy-r)}v${f(2*r)}" transform="rotate(${a} ${cx} ${cy})" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`).join('');
+}
+const flakes=(n,r,w,c,o)=>falling(n,flake(0,FLAKE_Y,r,w,c),'wx-flake',[3.6,4.8],o);
+function snow(day){
+  const c=day?'#00D2E0':'#FFFFFF',y=FLAKE_Y;
+  return falling(2,flake(0,y,2.8,1.8,c),'wx-flake',[5.5,7.5],{op:.55})+flakes(3,4.6,2.6,c,{shift:.75});
+}
+function storm(day){
+  const z=`M4 ${f(BASE-6)}L-6 ${f(BASE+10)}L4 ${f(BASE+11)}L-8 ${f(BASE+30)}`;
+  const bolt=`</svg><div class="wx-pos wx-flip" data-lo="40" data-hi="58" style="transform:translateX(50%)"><div class="wx-bolt">${LAYER}<path class="wx-draw" pathLength="1" d="${z}" fill="none" stroke="#FFD600" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>${LAYER}`;
+  return bolt+cloud(day,...PC)+`</svg><div class="wx-flash wx-front">${LAYER}<path d="${cloudPath(...PC)}" fill="#FFFFFF"/></svg></div>${LAYER}`;
+}
+const BANDS=[[10,14,80,.5],[0,28,96,.75],[14,42,84,.9],[2,56,90,.65],[18,68,66,.4]];
+function haze(colours,op,bands=BANDS){
+  const grad=c=>`<linearGradient id="wx-fog${c.slice(1)}"><stop offset="0" stop-color="${c}" stop-opacity="0"/><stop offset=".3" stop-color="${c}"/><stop offset=".7" stop-color="${c}"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></linearGradient>`;
+  return `<defs>${colours.map(grad).join('')}<filter id="wx-haze" x="-10%" y="-80%" width="120%" height="260%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>`
+    +`<g filter="url(#wx-haze)" opacity="${op}">${bands.map(([x,y,w,o],i)=>`<rect class="wx-mist" x="${x}" y="${y}" width="${w}" height="9" rx="4.5" fill="url(#wx-fog${colours[i%colours.length].slice(1)})" fill-opacity="${o}"/>`).join('')}</g>`;
+}
+const grey=day=>day?'#8E8E93':'#FFFFFF';
+function gust(day,x,y,w,i,h){
+  const r=h/2,d=`M${x+w-r} ${y-r}A${r} ${r} 0 0 1 ${x+w-r} ${y+r}L${x} ${y+.5}A.5 .5 0 0 1 ${x} ${y-.5}z`;
+  const len=w-r-4,seg=f(len*.24),clip=`inset(${f(y-2)}% ${f(100-(x+8+len-3))}% ${f(100-(y+2))}% ${x+8}%)`;
+  return `</svg><div class="wx-gust wx-mist">${LAYER}${glass(day,d,{rim:1})}</svg><div style="clip-path:${clip}"><div class="wx-flow" style="--d:${f(-(len+seg))}%;animation-duration:${f(1.3+i*.3)}s;animation-delay:-${f(i*.5)}s">${LAYER}<path d="M${f(x+w-r+seg)} ${y}h${-seg}" stroke="#FFFFFF" stroke-opacity="${day?.95:.85}" stroke-width="1.6" stroke-linecap="round"/></svg></div></div></div>${LAYER}`;
+}
+const FUNNEL=[[50,13,38],[54,25,27],[54,37,18],[51,49,11],[47,61,6.5],[45,71,3.5]];
+function tornado(day){
+  const c=grey(day);
+  return `<g class="wx-mist">${FUNNEL.map(([cx,cy,rx])=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${f(rx*.28)}" fill="none" stroke="${c}" stroke-opacity="${day?.35:.25}" stroke-width="3.2"/>`).join('')}`
+    +FUNNEL.map(([cx,cy,rx],i)=>{const ry=f(rx*.28);return `<path class="wx-spin" pathLength="100" d="M${f(cx-rx)} ${cy}a${rx} ${ry} 0 1 0 ${f(2*rx)} 0a${rx} ${ry} 0 1 0 ${f(-2*rx)} 0" fill="none" stroke="${c}" stroke-width="3.2" stroke-linecap="round" style="animation-duration:${f(1.1+i*.12)}s"/>`;}).join('')+'</g>';
+}
+const BLUR='<defs><filter id="wx-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter><filter id="wx-soft"><feGaussianBlur stdDeviation="1"/></filter></defs>';
+
+function buildIcon(cond,day){
+  switch(cond){
+    case 'clear':     return BLUR+orb(day,50,50,42);
+    case 'few':       return BLUR+over(day,[77,35,37],2,18,96);
+    case 'scattered': return BLUR+cloud(day,2,14,96);
+    case 'broken':    return BLUR+cloud(day,36,6,78,true)+cloud(day,0,20,88,false);
+    case 'shower':    return BLUR+rain()+cloud(day,...PC);
+    case 'rain':      return BLUR+rain()+over(day,SKY,...PC);
+    case 'thunder':   return BLUR+storm(day);
+    case 'snow':      return BLUR+snow(day)+over(day,SKY,...PC);
+    case 'mist':      return BLUR+haze([grey(day)],day?.6:.7);
+    case 'drizzle':   return BLUR+drizzle(6,{shift:.25})+cloud(day,...PC);
+    case 'fdrizzle':  return BLUR+drizzle(4,mix(WIDE,6,i=>[0,2,3,5][i],'drizzle'))+flakes(2,3.2,2,'#3CD3FE',mix(WIDE,6,i=>[1,4][i],'flake'))+cloud(day,...PC);
+    case 'frain':     return BLUR+drops(3,mix(WIDE,5,even,'drop'))+flakes(2,4,2.2,'#3CD3FE',mix(WIDE,5,odd,'flake'))+cloud(day,...PC);
+    case 'sleet':     return BLUR+drops(3,mix(WIDE,6,even,'drop'))+pellets(day,3,2.3,[1.3,1.7],mix(WIDE,6,odd,'pellet'))+cloud(day,...PC);
+    case 'rainsnow':  return BLUR+drops(3,mix(WIDE,5,even,'drop'))+flakes(2,4.6,2.6,day?'#00D2E0':'#FFFFFF',mix(WIDE,5,odd,'flake'))+cloud(day,...PC);
+    case 'grains':    return BLUR+pellets(day,5,1.8,[1.6,2.2],{shift:.75})+cloud(day,...PC);
+    case 'hail':      return BLUR+pellets(day,4,2.6,[1.1,1.4],mix(WIDE,6,i=>[0,1,4,5][i],'pellet'))+storm(day);
+    case 'thinmist':  return BLUR+haze([grey(day)],day?.5:.6,[[6,30,88,.55],[16,46,78,.75],[4,62,84,.5]]);
+    case 'rime':      return BLUR+haze([grey(day),'#3CD3FE'],day?.6:.7);
+    case 'haze':      return BLUR+orb(day,50,34,24)+haze([day?'#FF9230':'#8E8E93'],day?.55:.7,[[2,32,96,.45],[12,46,84,.7],[0,60,92,.55]]);
+    case 'smoke':     return BLUR+haze([day?'#636366':'#8E8E93'],day?.75:.85);
+    case 'dust':      return BLUR+orb(day,50,34,24,day?.55:.45)+haze(['#B78A66'],.8,[[2,30,96,.55],[12,44,84,.85],[0,58,92,.7],[18,70,64,.45],[10,16,80,.35]]);
+    case 'ash':       return BLUR+orb(day,50,34,24,day?.4:.35)+haze([day?'#48484A':'#8E8E93'],day?.8:.85);
+    case 'squall':    return BLUR+gust(day,6,20,84,0,8)+gust(day,18,38,74,1,8)+gust(day,2,56,62,2,7);
+    case 'tornado':   return BLUR+tornado(day);
+  }
+  return BLUR+cloud(day,2,14,96);
+}
+
+/* WMO weather code -> {cond, label} */
+function mapCode(code,condition){
+  const is=(...c)=>c.includes(code);
+  if(code===0) return {cond:'clear',label:wt('ui.clear','Clear')};
+  if(code===1) return {cond:'few',label:wt('ui.mostlyClear','Mostly Clear')};
+  if(code===2) return {cond:'scattered',label:wt('ui.partlyCloudy','Partly Cloudy')};
+  if(code===3) return {cond:'broken',label:wt('ui.cloudy','Cloudy')};
+  if(code===4&&condition==='ash') return {cond:'ash',label:wt('ui.volcanicAsh','Volcanic Ash')};
+  if(code===4) return {cond:'smoke',label:wt('ui.smoke','Smoke')};
+  if(code===5) return {cond:'haze',label:wt('ui.haze','Haze')};
+  if(condition==='sand') return {cond:'dust',label:wt('ui.sand','Sand')};
+  if(is(6,7,8,9)||(code>=30&&code<=35)) return {cond:'dust',label:wt('ui.dust','Dust')};
+  if(code===10) return {cond:'thinmist',label:wt('ui.mist','Mist')};
+  if(code===18) return {cond:'squall',label:wt('ui.squalls','Squalls')};
+  if(code===19) return {cond:'tornado',label:wt('ui.tornado','Tornado')};
+  if(code===45) return {cond:'mist',label:wt('ui.fog','Fog')};
+  if(code===48) return {cond:'rime',label:wt('ui.rimeFog','Rime Fog')};
+  if(is(56,57)) return {cond:'fdrizzle',label:wt('ui.freezingDrizzle','Freezing Drizzle')};
+  if(code>=51&&code<=55) return {cond:'drizzle',label:wt('ui.drizzle','Drizzle')};
+  if(is(66,67)) return {cond:'frain',label:wt('ui.freezingRain','Freezing Rain')};
+  if(is(68,69)) return {cond:'rainsnow',label:wt('ui.rainAndSnow','Rain and Snow')};
+  if(code>=61&&code<=65) return {cond:'rain',label:wt('ui.rain','Rain')};
+  if(code===77) return {cond:'grains',label:wt('ui.snowGrains','Snow Grains')};
+  if(code===79) return {cond:'sleet',label:wt('ui.sleet','Sleet')};
+  if(code>=80&&code<=82) return {cond:'shower',label:wt('ui.showers','Showers')};
+  if(code>=71&&code<=76) return {cond:'snow',label:wt('ui.snow','Snow')};
+  if(code>=85&&code<=86) return {cond:'snow',label:wt('ui.snowShowers','Snow Showers')};
+  if(is(96,99)) return {cond:'hail',label:wt('ui.hailstorm','Hailstorm')};
+  if(code>=95) return {cond:'thunder',label:wt('ui.thunderstorm','Thunderstorm')};
+  return {cond:'broken',label:wt('ui.cloudy','Cloudy')};
+}
+
+/* temperature -> color, warm(amber)->cold(blue). Works in C or F by converting to C. */
+function tempColor(temp,units,lightCard){
+  const c = units==='f' ? (temp-32)*5/9 : temp;
+  /* Piecewise hue. The green band, roughly 90-140deg, is skipped entirely. */
+  let hue;
+  if(c<=10){
+    /* -10..10C : blue(210) -> teal(180) */
+    const t=Math.max(0,Math.min(1,(c+10)/20));
+    hue = 210 - 30*t;
+  } else {
+    /* 10..35C : amber(45) -> red(8), warm side, no green */
+    const t=Math.max(0,Math.min(1,(c-10)/25));
+    hue = 45 - 37*t;
+  }
+  const sat = c<=10 ? 65 : 80;
+  const light = lightCard ? 36 : 58;
+  return `hsl(${Math.round(hue)},${sat}%,${light}%)`;
+}
+
+/* ---- UV and air quality alerts ---- */
+const LEVEL_INK=[,'#FFD600','#FF9230','#FF4245','#DB34F2','#B78A66'];
+const LEVEL_INK_DAY=[,'#A88300','#E05A00','#FF4245','#DB34F2','#B78A66'];
+const BAND={
+  moderate:()=>wt('ui.moderate','moderate'),
+  high:()=>wt('ui.high','high'),
+  veryHigh:()=>wt('ui.veryHigh','very high'),
+  extreme:()=>wt('ui.extreme','extreme'),
+  sensitive:()=>wt('ui.sensitive','unhealthy for sensitive groups'),
+  unhealthy:()=>wt('ui.unhealthy','unhealthy'),
+  veryUnhealthy:()=>wt('ui.veryUnhealthy','very unhealthy'),
+  hazardous:()=>wt('ui.hazardous','hazardous'),
+  poor:()=>wt('ui.poor','poor'),
+  veryPoor:()=>wt('ui.veryPoor','very poor'),
+  extremelyPoor:()=>wt('ui.extremelyPoor','extremely poor'),
+};
+const validAlert=a=>a&&(a.kind==='uv'||a.kind==='air')&&Number.isFinite(a.value)&&Object.hasOwn(BAND,a.band)&&LEVEL_INK[a.level];
+function alertText(a){
+  const vars={value:formatNumber(a.value),level:BAND[a.band]()};
+  return a.kind==='uv'?wt('ui.uvAlert','UV index {value}, {level}',vars):wt('ui.airAlert','Air quality index {value}, {level}',vars);
+}
+let sprite=false,linked=false;
+function drawAlerts(alerts,lightCard){
+  const a=alerts[0];
+  aqEl.hidden=!a;
+  if(!linked){if(a)widgetEl.tabIndex=0;else widgetEl.removeAttribute('tabindex');}
+  if(!a)return;
+  if(!sprite){ensureSprite(document);sprite=true;}
+  aqEl.style.setProperty('--icon-accent',(lightCard?LEVEL_INK_DAY:LEVEL_INK)[a.level]);
+  const ico=()=>html`<svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-${a.kind}"/></svg>`;
+  setHtml(aqHitEl,ico());
+  setHtml(aqCapIcoEl,ico());
+  const value=formatNumber(a.value);
+  aqValEl.textContent=a.kind==='uv'?wt('ui.uvShort','UV {value}',{value}):wt('ui.airShort','AQI {value}',{value});
+}
+
+let tapType='',peekTimer=0;
+aqEl.addEventListener('pointerdown',e=>{tapType=e.pointerType;});
+aqEl.addEventListener('click',e=>{
+  if(tapType!=='touch'&&tapType!=='pen')return;
+  e.stopPropagation();
+  widgetEl.classList.remove('hush');
+  widgetEl.classList.add('peek');
+  clearTimeout(peekTimer);
+  peekTimer=setTimeout(()=>widgetEl.classList.remove('peek'),4000);
+});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  widgetEl.classList.remove('peek');
+  widgetEl.classList.add('hush');
+});
+for(const ev of ['mouseleave','focusout'])widgetEl.addEventListener(ev,()=>widgetEl.classList.remove('hush'));
+
+let iconKey='';
+function render(d){
+  state.ok();
+  const m=mapCode(d.code,d.condition);
+  const day=d.isDay!==false;
+  /* The background follows the weather region's day and night, not the
+     dashboard theme. */
+  const lightCard = day;
+  const bg = lightCard ? '#ffffff' : '#1C1C1E';
+  document.body.style.background = bg;
+  widgetEl.style.background = bg;
+  setCardAppearance(!lightCard);
+
+  const nextIcon=`${m.cond}|${day}`;
+  if(nextIcon!==iconKey){
+    iconKey=nextIcon;
+    setHtml(icoEl,raw((LAYER+buildIcon(m.cond,day)+'</svg>').replaceAll(LAYER+'</svg>','')));
+    if(ambientTimer)ambient();
+  }
+  condEl.textContent=m.label;
+  fitText(condEl,11);
+  const unitSym = d.units==='f' ? '°F' : '°C';
+  rollText(tempEl, formatNumber(Number(d.temp))+'°');
+  /* set colors directly on the elements so nothing can override them */
+  tempEl.style.color=tempColor(d.temp,d.units,lightCard);
+  condEl.style.color = lightCard ? '#2C2C2E' : '#FFFFFF';
+  widgetEl.classList.toggle('night', !lightCard);
+  const alerts = Array.isArray(d.alerts) ? d.alerts.filter(validAlert) : [];
+  drawAlerts(alerts,lightCard);
+  widgetEl.style.setProperty('--wt-cap-color', lightCard ? '#636366' : 'rgba(255,255,255,0.62)');
+
+  /* HIG: full detail available on hover + to screen readers */
+  const temp = `${formatNumber(Number(d.temp))}${unitSym}`;
+  const summary = wt('ui.summary','{place}: {condition}, {temp}',{
+    place:d.city||wt('ui.currentLocation','Current location'),
+    condition:m.label,
+    temp:d.usedFeels?wt('ui.feelsLikeTemp','{temp} (feels like)',{temp}):temp,
+  });
+  _summary = alerts.reduce((s, a) => wt('ui.withAlert', '{summary}. {alert}', { summary: s, alert: alertText(a) }), summary);
+  _sources =
+    d.source === 'openweather'
+      ? [wt('ui.sourceOpenWeather', 'Weather data provided by OpenWeather'), ...(alerts.length ? [wt('ui.sourceAir', 'Air quality by Open-Meteo.com')] : [])]
+      : d.source === 'openmeteo'
+        ? [wt('ui.sourceOpenMeteo', 'Weather data by Open-Meteo.com')]
+        : [];
+  _fetchedAt = readingTime(d);
+  describe();
+}
+
+let _summary = '', _fetchedAt = 0, _sources = [];
+function describe() {
+  if (!_summary) return;
+  const text = _sources.reduce(
+    (s, source) => wt('ui.withSource', '{text}. {source}', { text: s, source }),
+    wt('ui.updated', '{summary}. Updated {time}', { summary: _summary, time: sinceLabel(_fetchedAt) }),
+  );
+  widgetEl.setAttribute('title', text);
+  widgetEl.setAttribute('aria-label', text);
+  srEl.textContent = text;
+}
+setInterval(() => { if (document.hidden) return; describe(); }, 60000);
+
+const bounce=(t,period)=>{const x=(t/period)%2;return x<1?x:2-x;};
+/* An HTML box the size of the icon needs %, an svg part needs px, for one unit of the artwork. */
+const drift=(e,units)=>{e.style.transform=`translateX(${units.toFixed(2)}${e.tagName==='DIV'?'%':'px'})`;};
+let ambientTimer=0,onScreen=true;
+function ambient(){
+  const t=performance.now()/1000;
+  for(const e of icoEl.querySelectorAll('.wx-front'))drift(e,bounce(t,18)*5-2.5);
+  for(const e of icoEl.querySelectorAll('.wx-back'))drift(e,2.5-bounce(t,26)*5);
+  icoEl.querySelectorAll('.wx-mist').forEach((e,i)=>drift(e,bounce(t+2*i,8+3*i)*6-3));
+}
+function runAmbient(){
+  clearInterval(ambientTimer);
+  ambientTimer=0;
+  if(reducedMotion()){for(const e of icoEl.querySelectorAll('.wx-front,.wx-back,.wx-mist'))e.removeAttribute('style');return;}
+  if(onScreen){ambient();ambientTimer=setInterval(ambient,500);}
+}
+whileOnScreen(icoEl,v=>{onScreen=v;icoEl.classList.toggle('off',!v);runAmbient();});
+reducedMotion(runAmbient);
+icoEl.addEventListener('animationiteration',e=>{
+  const p=e.target.parentNode;
+  if(!p.classList.contains('wx-pos'))return;
+  const x=(+p.dataset.lo+Math.random()*(p.dataset.hi-p.dataset.lo)).toFixed(1);
+  const flip=p.classList.contains('wx-flip');
+  p.style.transform=`translateX(${x}%)${flip&&Math.random()<.5?' scaleX(-1)':''}`;
+  if(flip)p.querySelector('.wx-draw').animate([{strokeDashoffset:1},{strokeDashoffset:0}],{duration:200,easing:'ease-out'});
+});
+
+const state=errorState({root:widgetEl,content:[icoEl,condEl,tempEl,aqEl],caption:msgEl});
+
+{
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 100 100');
+  const sun=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  sun.setAttribute('cx','50'); sun.setAttribute('cy','46'); sun.setAttribute('r','26');
+  sun.setAttribute('class','ph');
+  svg.append(sun);
+  icoEl.replaceChildren(svg);
+  condEl.replaceChildren(placeholder(78,11));
+  tempEl.replaceChildren(placeholder(64,30,6));
+}
+
+const wfetch=()=>fetchData('weather');
+async function boot(){
+  const cfg=await getConfig().catch(()=>null);
+  const href=cfg&&cfg.widgetConfig&&cfg.widgetConfig.href;
+  linked=linkTo(widgetEl,href);
+  /* poll keeps the last reading through a transient failure. onError runs when
+     there is nothing good to keep. */
+  poll({ fetch:wfetch, render, interval:TICK_MS,
+    onError:({error,everOk,stale,since})=>{ if(!everOk||stale) state.fail(error,{since,inert:everOk}); } });
+}
+boot();

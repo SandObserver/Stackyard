@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { test } from 'node:test';
+import { pageWithScripts } from './widget-source.mjs';
 
-const page = fs.readFileSync(new URL('../widgets/weather/index.html', import.meta.url), 'utf8');
+const page = pageWithScripts(new URL('../widgets/weather/index.html', import.meta.url));
 const source = /function tempColor\([\s\S]*?\n\}/.exec(page)?.[0];
 const tempColor = new Function(`${source}; return tempColor;`)();
 

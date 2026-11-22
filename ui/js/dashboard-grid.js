@@ -1,9 +1,9 @@
 import { closeBadgePopover } from '/js/badge-popover.js?v=a7b62808';
 import { desktopCols, desktopPages } from '/js/dashboard-logic.js?v=b4828b62';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
-import { currentLang, t } from '/js/i18n.js?v=99563c71';
+import { currentLang, t } from '/js/i18n.js?v=82ba9da2';
 import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=ff61256e';
-import { closeFolders, mkFolder, resetMobileChrome } from '/js/ui.js?v=915629a0';
+import { closeFolders, mkFolder, resetMobileChrome } from '/js/ui.js?v=48c8383a';
 import {
   mkWrap as _mkWrap,
   el,
@@ -12,8 +12,8 @@ import {
   mk,
   renderEmptyState,
   setCentredText,
-} from '/js/utils.js?v=9ed2b298';
-import { mountScaledWidget, teardownWidgets } from '/js/widget-frame.js?v=9e82683d';
+} from '/js/utils.js?v=e9e22f08';
+import { mountScaledWidget, teardownWidgets } from '/js/widget-frame.js?v=6f5b0dc5';
 import {
   cardPreset,
   fixedAppearance,
@@ -63,7 +63,7 @@ const hasDock = items => items.some(inDock);
 
 /** @param {{
       dash: import('/js/dashboard-state.js?v=51013727').DashboardState,
-      badges: import('/js/dashboard-badges.js?v=5b05724e').Badges,
+      badges: import('/js/dashboard-badges.js?v=afed46bb').Badges,
       goTo: (i: number) => void,
     }} deps */
 export function createDesktopGrid({ dash, badges, goTo }) {

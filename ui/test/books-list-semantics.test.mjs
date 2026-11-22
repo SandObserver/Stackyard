@@ -3,13 +3,13 @@
    unpositioned focusable text with no count. */
 
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { pageWithScripts } from './widget-source.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const books = fs.readFileSync(path.join(root, 'widgets/books/index.html'), 'utf8');
+const books = pageWithScripts(path.join(root, 'widgets/books/index.html'));
 
 test('the shelf holds a real list, not a div wearing a role', () => {
   assert.match(books, /<ul class="books" id="books">/);
