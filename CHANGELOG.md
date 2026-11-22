@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Weather widget credits its data provider in Settings and in its tooltip.
 
+- Log Content Security Policy and Trusted Types violations to the container log.
+
+- Warn at startup about a widget page with inline script, which a later release
+  blocks.
+
 ### Changed
 
 - Pick a local System Summary temperature by sensor name, starting on the CPU.
@@ -65,6 +70,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make Settings text follow the browser's text size setting.
 
 - Draw native checkboxes and radio buttons in the accent colour.
+
+- Load each widget page's script from a file next to the page.
+
+- Serve only image types from the icons folder.
 
 ### Removed
 
