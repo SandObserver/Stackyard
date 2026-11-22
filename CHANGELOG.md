@@ -55,6 +55,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Settings shortcut of an installed app has its own icon.
 
+- Reload custom widgets less often while their page is out of view.
+
+- Start dashboard polling only when the tab is visible.
+
+- Skip downloading the whole config on every dashboard check when nothing
+  changed.
+
 ### Removed
 
 - Remove the `WIDGETS_PATH` setting from the Compose example. Mount a custom
