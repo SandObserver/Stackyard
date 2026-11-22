@@ -37,5 +37,8 @@ export function showPhotoCredit(el, credit) {
   if (!el) return;
   el.replaceChildren();
   el.hidden = !credit;
-  if (credit) el.append(creditLink(credit.name, credit.profile), ' / ', creditLink('Unsplash', credit.site));
+  if (!credit) return;
+  const sep = document.createElement('span');
+  sep.textContent = '/';
+  el.append(creditLink(credit.name, credit.profile), sep, creditLink('Unsplash', credit.site));
 }

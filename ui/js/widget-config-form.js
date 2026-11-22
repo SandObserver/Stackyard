@@ -3,9 +3,9 @@
 
 import { t } from '/js/i18n.js?v=82ba9da2';
 import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
-import { apiPost, fadeIn, PE_SVG, reveal, wireInlineEdit } from '/js/admin-shared.js?v=80e58470';
+import { apiPost, fadeIn, PE_SVG, reveal, wireInlineEdit } from '/js/admin-shared.js?v=04d829ce';
 import { createListbox } from '/js/listbox.js?v=c9cee787';
-import { renderColorControl } from '/js/admin-color-control.js?v=739def21';
+import { renderColorControl } from '/js/admin-color-control.js?v=5b355e67';
 import {
   seedCarried,
   applyOptionSet,
@@ -19,7 +19,7 @@ import { qi } from '/js/utils.js?v=457d9918';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { SAVED_ROW } from '/js/saved-row.js?v=44039df6';
 import { visibleFieldFlags } from '/js/widget-types.js?v=afec2dab';
-import { slideBlock } from '/js/modal.js?v=84ba5279';
+import { slideBlock } from '/js/modal.js?v=b22f3f76';
 
 /* A counter, not randomness. Six base-36 characters collide plausibly over a
    long session, and an id that changes per run cannot be asserted on. */

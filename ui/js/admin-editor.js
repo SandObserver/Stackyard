@@ -4,10 +4,10 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=006de3a6';
-import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=ec90f9bd';
+} from '/js/admin-app-form.js?v=8f54cda0';
+import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=1b7d166e';
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
-import { scrollSettingsTop } from '/js/admin-nav.js?v=53600ecb';
+import { scrollSettingsTop } from '/js/admin-nav.js?v=35242b50';
 import {
   applyEdit,
   buildAppItem,
@@ -27,16 +27,16 @@ import {
   showFieldError,
   swapContent,
   toast,
-} from '/js/admin-shared.js?v=80e58470';
+} from '/js/admin-shared.js?v=04d829ce';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=a172df0e';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=dfc61a0a';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
 import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
 import { t } from '/js/i18n.js?v=82ba9da2';
 import { animateIcon } from '/js/icon-motion.js?v=7bfd91f5';
 import { iconSvg } from '/js/icon-set.js?v=beda3062';
 import { clampName } from '/js/limits.js?v=ff61256e';
-import { confirmText, openModal as openDialog } from '/js/modal.js?v=84ba5279';
+import { confirmText, openModal as openDialog } from '/js/modal.js?v=b22f3f76';
 import { clr, el, focusFirst, initial, inp, isolate, q, qa, setUserText } from '/js/utils.js?v=457d9918';
 
 /** @typedef {{ saveOrRevert: (before: any[], done?: string|false) => Promise<boolean> }} EditorPage */
