@@ -89,6 +89,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Let password managers save the password set in Settings.
 
+- Name the open Settings section in the page title.
+
 ### Removed
 
 - Remove the `WIDGETS_PATH` setting from the Compose example. Mount a custom
@@ -200,6 +202,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   field is left.
 
 - Announce a repeated sign-in or setup error again.
+
+- Announce required fields as required, and stop reading the required star as
+  "star".
+
+- Mark the app name, app address, folder name and custom widget URL as required.
+
+- Read each field's hint together with the field in Settings.
+
+- Show an error for a poll interval outside 10 to 3600 seconds instead of
+  silently changing it.
+
+- Announce the type and size choosers as radio groups.
+
+- Announce "Working" on slow row actions.
 
 ### Security
 
