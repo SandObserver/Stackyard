@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
+import { pageWithScripts } from './widget-source.mjs';
 
-const src = fs.readFileSync(new URL('../widgets/connections/connections-map.html', import.meta.url), 'utf8');
+const src = pageWithScripts(new URL('../widgets/connections/connections-map.html', import.meta.url));
 const rule = sel => src.match(new RegExp(`${sel.replace(/[\\^$.*+?()[\]{}|:]/g, '\\$&')}\\{([^}]*)\\}`))?.[1] ?? '';
 const px = (css, prop) => Number.parseFloat(css.match(new RegExp(`(?:^|;)${prop}:(-?[\\d.]+)px`))?.[1]);
 

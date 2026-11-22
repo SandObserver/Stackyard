@@ -28,7 +28,7 @@ test('the default policy is not repeated anywhere in dashboard.conf', () => {
 test('every location that sets a CSP either includes the default or is a known exception', () => {
   const EXCEPTIONS = ['^~ /admin', '^~ /widgets/'];
 
-  const inline = [...dashboard.matchAll(/add_header Content-Security-Policy/g)];
+  const inline = [...dashboard.matchAll(/add_header Content-Security-Policy "/g)];
   assert.equal(
     inline.length,
     EXCEPTIONS.length,
@@ -344,7 +344,7 @@ test('nginx allows a wallpaper upload body as large as the API reads', () => {
    error shape. */
 test('every /api/ location answers an oversized body with the API error shape', () => {
   const locations = [...dashboard.matchAll(/location (?:(?:=|\^~) )?(\/api\/\S*) \{/g)];
-  assert.equal(locations.length, 5);
+  assert.equal(locations.length, 6);
   for (const m of locations) {
     const block = dashboard.slice(m.index, dashboard.indexOf('\n    }', m.index));
     assert.match(block, /^\s*error_page 413 @api_too_large;$/m, m[1]);
@@ -543,7 +543,7 @@ test('every /api/ location sends the locked-down API policy', () => {
   }
 
   const locations = [...dashboard.matchAll(/location (?:(?:=|\^~) )?(\/api\/\S*) \{/g)];
-  assert.equal(locations.length, 5, 'an /api/ location was added or removed; check it sends the API policy');
+  assert.equal(locations.length, 6, 'an /api/ location was added or removed; check it sends the API policy');
   for (const m of locations) {
     const block = dashboard.slice(m.index, dashboard.indexOf('\n    }', m.index));
     assert.ok(block.includes('include /etc/nginx/http.d/csp-api.conf;'), `${m[1]} sends no API policy`);
@@ -714,4 +714,110 @@ test('every location that sets a header also sets the shared security headers', 
     [],
     `These locations lose nosniff, Referrer-Policy and Permissions-Policy:\n  ${missing.join('\n  ')}`,
   );
+});
+
+/* ── violation reports and Trusted Types ─────────────────────────────────── */
+
+const REPORTING = ' report-uri /api/csp-report;';
+const reportOnly = name => {
+  const m = locationBlock(name).match(/add_header Content-Security-Policy-Report-Only "([^"]+)" always;/);
+  assert.ok(m, `${name} sends no report-only policy`);
+  return m[1];
+};
+const directives = p =>
+  p
+    .split(';')
+    .map(d => d.trim())
+    .filter(Boolean);
+
+/* The names the code creates its policies under. A name the header does not
+   list is refused once the rule is enforced. */
+const policyNames = (() => {
+  const ui = path.join(__dirname, '../../ui/js');
+  const html = /export const POLICY_NAME = '([^']+)';/.exec(fs.readFileSync(path.join(ui, 'html.js'), 'utf8'));
+  const icons = /export const SPRITE_POLICY_NAME = '([^']+)';/.exec(
+    fs.readFileSync(path.join(ui, 'icon-set.js'), 'utf8'),
+  );
+  assert.ok(html && icons, 'a Trusted Types policy name is gone from the code');
+  return [html[1], icons[1]];
+})();
+
+test('every policy names the report endpoint', () => {
+  const all = [
+    ...`${dashboard}\n${cspDefault}`.matchAll(/add_header (Content-Security-Policy(?:-Report-Only)?) "([^"]+)"/g),
+  ];
+  assert.ok(all.length >= 6, `found ${all.length} policies`);
+  for (const [, name, value] of all) assert.ok(value.endsWith(REPORTING), `${name} ${value.slice(0, 60)}...`);
+});
+
+/* A browser that reads report-to ignores report-uri, and sends report-to
+   reports only over https. With report-to, a plain-http install gets none. */
+test('no policy names a report-to group, so reports also arrive over plain http', () => {
+  assert.doesNotMatch(`${dashboard}\n${cspDefault}`, /report-to|Reporting-Endpoints/);
+});
+
+test('the dashboard and Settings report markup written outside the named policies', () => {
+  for (const name of ['= /', '^~ /admin']) {
+    assert.deepEqual(directives(reportOnly(name)), [
+      "require-trusted-types-for 'script'",
+      `trusted-types ${policyNames.join(' ')}`,
+      'report-uri /api/csp-report',
+    ]);
+  }
+});
+
+/* Report-only until the next release. A widget that breaks under it today
+   still runs. */
+test("widget pages report what the next release blocks, and still enforce today's policy", () => {
+  const enforced = directives(policyFor('^~ /widgets/'));
+  assert.ok(enforced.includes("script-src 'self' 'unsafe-inline'"), 'the enforced policy changed');
+  const want = enforced
+    .filter(d => !d.startsWith('frame-ancestors '))
+    .map(d => (d.startsWith('script-src ') ? "script-src 'self' 'report-sample'" : d));
+  const reported = directives(reportOnly('^~ /widgets/'));
+  const trusted = [`require-trusted-types-for 'script'`, `trusted-types ${policyNames.join(' ')} 'allow-duplicates'`];
+  assert.deepEqual(
+    reported,
+    [...want.slice(0, -1), ...trusted, ...want.slice(-1)],
+    'the report-only policy is the enforced one without inline script, plus Trusted Types',
+  );
+  assert.ok(!reported.some(d => d.includes('unsafe-inline') && d.startsWith('script-src')));
+});
+
+test('the report endpoint takes a small body and answers like the rest of the API', () => {
+  const block = locationBlock('= /api/csp-report');
+  const { REPORT_BODY_MAX_BYTES } = require('../src/routes/csp-report');
+  assert.equal(nginxSize(block, 'client_max_body_size'), REPORT_BODY_MAX_BYTES);
+  assert.ok(nginxSize(block, 'client_body_buffer_size') <= REPORT_BODY_MAX_BYTES);
+  assert.match(block, /proxy_pass\s+http:\/\/127\.0\.0\.1:3000;/);
+});
+
+/* An icon or a wallpaper is an image. Anything else in the folder must not be
+   served under a type a browser would run or render as a page. */
+test('the icon folder serves image types only', () => {
+  const typesOf = name => {
+    const block = locationBlock(name);
+    const m = /\n\s*types \{([^}]*)\}/.exec(block);
+    assert.ok(m, `${name} keeps the full MIME map`);
+    assert.match(block, /^\s*default_type application\/octet-stream;$/m, name);
+    return Object.fromEntries(
+      m[1]
+        .split(';')
+        .map(l => l.trim().split(/\s+/))
+        .filter(parts => parts[0])
+        .flatMap(([type, ...exts]) => exts.map(e => [e, type])),
+    );
+  };
+  const icons = typesOf('/icons/');
+  assert.deepEqual(typesOf('@icon_miss'), icons, 'the two lookups serve the same types');
+  for (const type of Object.values(icons)) assert.match(type, /^image\//);
+
+  const served = ['svg', 'png', 'ico'];
+  const sniff = fs.readFileSync(path.join(__dirname, '../src/image-sniff.js'), 'utf8');
+  for (const m of sniff.matchAll(/ext: '\.(\w+)'/g)) served.push(m[1]);
+  served.push('webp', 'avif');
+  for (const ext of served) assert.ok(icons[ext], `.${ext} is stored under /icons/ but has no type`);
+  for (const f of fs.readdirSync(path.join(__dirname, '../../ui/icons'))) {
+    assert.ok(icons[path.extname(f).slice(1)], `the bundled ${f} has no type`);
+  }
 });

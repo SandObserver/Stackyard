@@ -6,75 +6,39 @@ import { fileURLToPath } from 'node:url';
 
 /* Raw `el.innerHTML = `, `el.outerHTML = ` and `el.insertAdjacentHTML(...)` string-building is
    safe only while every interpolation remembers esc(). setHtml() + html`` from
-   utils.js remove that requirement.
+   html.js remove that requirement, and pass the markup through the page's
+   Trusted Types policy.
 
-   Two directories are scanned. ui/js is fully migrated, so its budget is empty
-   and any write there fails.
-
-   The widget writes below are static strings and computed numbers, so they are
-   safe as written and are recorded as a budget rather than migrated. What the
-   budget buys is the next write, not these. widget-toolbox.js re-exports esc,
-   html and setHtml, so a widget has the safe path available.
-
-   Lower a number when you migrate one. Never raise one.
-
-   Two things are deliberately not counted in the widget budgets:
-
-   Reads (`if (el.innerHTML)`) do not write markup.
-
-   Clears (`el.innerHTML = ''`) interpolate nothing, so there is no value to
-   escape and no way for them to be unsafe.
-
-   ui/js is held to a stricter rule than either. It mentions the property
-   nowhere outside html.js, clears included, so the check there is the presence
-   of the word rather than a judgement about what is being assigned. A clear is
-   `replaceChildren()`, which says what it does and cannot become a write by
-   someone appending an interpolation to it later. */
-const BUDGET = {
-  'widgets/backup/backup.html': 2,
-  'widgets/connections/connections-vpn.html': 1,
-  'widgets/dashboard-switch/index.html': 2,
-  'widgets/dns/index.html': 1,
-  'widgets/disk-health/index.html': 1,
-  'widgets/weather/index.html': 1,
-};
+   Under Trusted Types a string written to one of these sinks is refused, an
+   empty one included. So a clear counts as a write here: a clear is
+   `replaceChildren()`. Reads (`if (el.innerHTML)`) do not write markup. */
 
 /* setHtml's own write. It is the single sanctioned innerHTML in the codebase and
    the reason every other file can be held to zero. */
 const IMPLEMENTATION = 'html.js';
+/* The two modules that hold a Trusted Types policy, and so may parse markup. */
+const PARSERS = new Set(['html.js', 'icon-set.js']);
 
 const uiDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const jsDir = path.join(uiDir, 'js');
 const widgetsDir = path.join(uiDir, 'widgets');
-/* Matches `= ` and `+= `. The compound form appends markup and is exactly as
-   unsafe. Only the plain form can be a clear: `+= ''` writes nothing anyway. */
-const ASSIGN = /\.(?:inner|outer)HTML\s*(\+?)=(?!=)\s*/g;
-/* insertAdjacentHTML writes markup exactly like an innerHTML assignment. */
+/* Matches `= ` and `+= `, not `==`. */
+const ASSIGN = /\.(?:inner|outer)HTML\s*\+?=(?!=)/g;
 const INSERT = /\.insertAdjacentHTML\s*\(/g;
-const CLEAR = /^(?:''|""|``)\s*[;,)]/;
+const OTHER_SINKS =
+  /\.(?:setHTMLUnsafe|createContextualFragment)\s*\(|\bdocument\.write(?:ln)?\s*\(|\.srcdoc\s*=(?!=)/g;
+const PARSE = /\bparseFromString\s*\(/g;
 
-function countWrites(src) {
-  let n = 0;
-  for (const m of src.matchAll(ASSIGN)) {
-    const isPlain = m[1] === '';
-    if (!(isPlain && CLEAR.test(src.slice(m.index + m[0].length)))) n++;
-  }
-  n += (src.match(INSERT) || []).length;
-  return n;
-}
+const count = (src, re) => (src.match(re) || []).length;
+const countWrites = src => count(src, ASSIGN) + count(src, INSERT) + count(src, OTHER_SINKS);
 
-/* Widget markup lives in the .html entry files, and a widget may also ship a
-   frontend .js, so both are read. Keyed by a path relative to ui/ because two
-   widgets can have an index.html and a bare filename would collide. */
+/* Widget markup lives in the .html entry files, the code in each page's own
+   script and in any frontend module a widget ships, so both are read. Keyed by
+   a path relative to ui/ because two widgets can have an index.html and a bare
+   filename would collide. */
 function widgetFiles() {
   const out = [];
-  let dirs;
-  try {
-    dirs = fs.readdirSync(widgetsDir, { withFileTypes: true });
-  } catch {
-    return out;
-  }
-  for (const d of dirs) {
+  for (const d of fs.readdirSync(widgetsDir, { withFileTypes: true })) {
     if (!d.isDirectory()) continue;
     for (const f of fs.readdirSync(path.join(widgetsDir, d.name))) {
       if (f.endsWith('.html') || f.endsWith('.js')) {
@@ -88,47 +52,50 @@ function widgetFiles() {
 const scanned = [
   ...fs
     .readdirSync(jsDir)
-    .filter(f => f.endsWith('.js') && f !== IMPLEMENTATION)
+    .filter(f => f.endsWith('.js'))
     .map(f => [f, path.join(jsDir, f)]),
   ...widgetFiles(),
-];
+].map(([key, full]) => [key, fs.readFileSync(full, 'utf8')]);
 
-const counts = Object.fromEntries(
-  scanned.map(([key, full]) => [key, countWrites(fs.readFileSync(full, 'utf8'))]).filter(([, n]) => n > 0),
-);
+test('the scan sees the modules and the widget page scripts', () => {
+  const keys = scanned.map(([key]) => key);
+  assert.ok(keys.includes('widget-toolbox.js'));
+  assert.ok(keys.includes('widgets/weather/widget.js'));
+  assert.ok(keys.includes('widgets/clock/analog.js'));
+});
 
-test('an outerHTML write counts like an innerHTML one', () => {
+test('an outerHTML write counts like an innerHTML one, a clear included', () => {
   assert.equal(countWrites('el.outerHTML = `<b>${v}</b>`;'), 1);
-  assert.equal(countWrites("el.outerHTML = '';"), 0);
+  assert.equal(countWrites("el.innerHTML = '';"), 1);
+  assert.equal(countWrites('el.innerHTML += s;'), 1);
+  assert.equal(countWrites('if (el.innerHTML === s) x();'), 0);
+  assert.equal(countWrites('const s = el.outerHTML;'), 0);
+  assert.equal(countWrites("el.insertAdjacentHTML('beforeend', s);"), 1);
 });
 
-test('no unlisted file writes markup through innerHTML', () => {
-  const unlisted = Object.keys(counts).filter(f => !(f in BUDGET));
-  assert.deepEqual(unlisted, [], `Use setHtml(el, html\`...\`) from utils.js instead: ${unlisted.join(', ')}`);
+test('no file writes markup to an HTML sink outside setHtml', () => {
+  const offenders = scanned
+    .filter(([key]) => key !== IMPLEMENTATION)
+    .map(([key, src]) => [key, countWrites(src)])
+    .filter(([, n]) => n > 0)
+    .map(([key, n]) => `${key}: ${n}`);
+  assert.deepEqual(
+    offenders,
+    [],
+    `Use setHtml(el, html\`...\`) from the toolbox to write, or replaceChildren() to clear:\n${offenders.join('\n')}`,
+  );
 });
 
-test('no file exceeds its innerHTML budget', () => {
-  const over = Object.entries(counts)
-    .filter(([f, n]) => f in BUDGET && n > BUDGET[f])
-    .map(([f, n]) => `${f}: ${n} > ${BUDGET[f]}`);
-  assert.deepEqual(over, [], `innerHTML budget exceeded. Use setHtml(el, html\`...\`):\n${over.join('\n')}`);
+test('markup is parsed only where a Trusted Types policy is held', () => {
+  const offenders = scanned.filter(([key, src]) => !PARSERS.has(key) && count(src, PARSE) > 0).map(([key]) => key);
+  assert.deepEqual(
+    offenders,
+    [],
+    `Use parseMarkup(raw(src), type) from html.js or the toolbox: ${offenders.join(', ')}`,
+  );
 });
 
-test('the budget has no stale entries', () => {
-  /* Keeps the ratchet honest: a budget left above the real count would silently
-     hand back room to regress. Lower the number when you migrate. */
-  const stale = Object.entries(BUDGET)
-    .filter(([f, n]) => (counts[f] || 0) < n)
-    .map(([f, n]) => `${f}: budget ${n}, actual ${counts[f] || 0}`);
-  assert.deepEqual(stale, [], `Lower these budgets to match reality:\n${stale.join('\n')}`);
-});
-
-test('a fully migrated file is removed from the budget', () => {
-  const zeroed = Object.keys(BUDGET).filter(f => !(f in counts));
-  assert.deepEqual(zeroed, [], `Delete these from BUDGET so they can never regress: ${zeroed.join(', ')}`);
-});
-
-/* The budgets above ask what is being assigned. This asks nothing: outside its
+/* The check above asks what is being assigned. This asks nothing: outside its
    one implementation, ui/js does not name the property at all. That is only
    enforceable because every clear is replaceChildren(), and it is what stops a
    safe clear being edited into an unsafe write. */
@@ -136,8 +103,8 @@ test('no module outside html.js names innerHTML at all', () => {
   const offenders = [];
   for (const file of fs.readdirSync(jsDir).sort()) {
     if (!file.endsWith('.js') || file === IMPLEMENTATION) continue;
-    const src = fs.readFileSync(path.join(jsDir, file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-    const hits = (src.match(/(?:inner|outer)HTML/g) || []).length;
+    const text = fs.readFileSync(path.join(jsDir, file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const hits = (text.match(/(?:inner|outer)HTML/g) || []).length;
     if (hits) offenders.push(`js/${file}: ${hits}`);
   }
   assert.deepEqual(

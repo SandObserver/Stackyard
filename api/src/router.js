@@ -9,7 +9,7 @@ const { tryDecode } = require('./percent-decode');
 const { LOOPBACK, proxied } = require('./front-proxy');
 
 const SETUP_PATH = '/api/auth/setup-password';
-const PUBLIC_PATHS = new Set(['/health', '/api/auth/login', '/api/auth/check', SETUP_PATH]);
+const PUBLIC_PATHS = new Set(['/health', '/api/auth/login', '/api/auth/check', '/api/csp-report', SETUP_PATH]);
 
 const routes = [];
 function on(m, p, h) {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { test } from 'node:test';
+import { pageWithScripts } from './widget-source.mjs';
 import {
   ENDS,
   finishParts,
@@ -83,7 +83,7 @@ test('a finish time today shows only the clock, and a week out only the date', (
 });
 
 test('a time left reads in the interface language, each unit isolated', async () => {
-  const src = fs.readFileSync(new URL('../widgets/downloads/index.html', import.meta.url), 'utf8');
+  const src = pageWithScripts(new URL('../widgets/downloads/index.html', import.meta.url));
   const isoSrc = src.match(/const iso = (.+);\n/);
   const durationSrc = src.match(/function duration\(seconds, unitDisplay\) \{[\s\S]*?\n\}/);
   assert.ok(isoSrc && durationSrc, 'iso and duration are defined in the widget');

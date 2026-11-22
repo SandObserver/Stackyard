@@ -5,12 +5,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test } from 'node:test';
 import { register } from 'node:module';
+import { pageWithScripts } from './widget-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 Object.defineProperty(globalThis, 'navigator', { value: { language: 'en' }, configurable: true });
 const { byteScale, formatBytes, formatByteRate, formatDuration, formatNumber } = await import('../js/format-number.js');
 
-const src = fs.readFileSync(new URL('../widgets/system-summary/index.html', import.meta.url), 'utf8');
+const src = pageWithScripts(new URL('../widgets/system-summary/index.html', import.meta.url));
 
 function lift(name, sig, deps = {}) {
   const m = src.match(new RegExp(`function ${name}\\(${sig}\\) \\{[\\s\\S]*?\\n\\}`));

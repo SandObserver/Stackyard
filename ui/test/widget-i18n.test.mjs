@@ -11,11 +11,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
+import { pageWithScripts } from './widget-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+const read = p => pageWithScripts(path.join(root, p));
 
 const { widgetSrc } = await import('../js/widget-types.js');
 const { LANGUAGES } = await import('../js/i18n.js');
@@ -334,7 +335,7 @@ test('both clock styles name days and months through Intl', () => {
 });
 
 test('a books shelf label comes from the catalog, not the source key', () => {
-  const src = fs.readFileSync(path.join(root, 'widgets/books/index.html'), 'utf8');
+  const src = pageWithScripts(path.join(root, 'widgets/books/index.html'));
   assert.doesNotMatch(src, /const SRC_LABEL\s*=/, 'the labels are hardcoded again');
   for (const key of ['ui.srcRecently', 'ui.srcUnread', 'ui.reading'])
     assert.ok(src.includes(key), `${key} is never looked up`);

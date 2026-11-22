@@ -132,8 +132,14 @@ const frontendFiles = fs
     fs
       .readdirSync(path.join(WIDGETS, d.name))
       .filter(n => n.endsWith('.html'))
+      .map(n => (n === 'index.html' ? 'widget.js' : n.replace(/\.html$/, '.js')))
+      .filter(n => fs.existsSync(path.join(WIDGETS, d.name, n)))
       .map(n => [`${d.name}/${n}`, path.join(WIDGETS, d.name, n)]),
   );
+
+test('the scan reads each widget page script', () => {
+  assert.ok(frontendFiles.length >= 17, `found ${frontendFiles.length}`);
+});
 
 test('every widget frontend shows the message the server vouched for', () => {
   const offenders = [];

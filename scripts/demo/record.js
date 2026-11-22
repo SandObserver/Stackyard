@@ -2,7 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { listFiles, writeRoutes } = require('./source');
+const { demoHeaders, listFiles, writeRoutes } = require('./source');
 
 const STEP_MS = 5000;
 /* A valid address, so routes that call out reach the demo-mode refusal, not input validation. */
@@ -11,7 +11,7 @@ const PROBE_BODY = JSON.stringify({ url: 'https://example.com', name: 'demo' });
 /** @param {string} origin @param {string} target */
 async function headersOf(origin, target) {
   const r = await fetch(origin + target, { method: 'HEAD', redirect: 'manual' });
-  return r.status === 200 ? Object.fromEntries(r.headers) : null;
+  return r.status === 200 ? demoHeaders(Object.fromEntries(r.headers)) : null;
 }
 
 /** @param {string} origin @param {string} method @param {string} target @param {string|null} body */

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { test } from 'node:test';
+import { pageWithScripts } from './widget-source.mjs';
 
-const read = f => fs.readFileSync(new URL(`../widgets/${f}`, import.meta.url), 'utf8');
+const read = f => pageWithScripts(new URL(`../widgets/${f}`, import.meta.url));
 
 const nowplaying = read('nowplaying/index.html');
 
