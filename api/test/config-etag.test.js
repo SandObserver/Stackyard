@@ -22,12 +22,18 @@ test('a config read carries its revision as a strong ETag', async () => {
 
 test('a read naming the current revision gets 304 with no body', async () => {
   const etag = (await get()).headers.get('etag');
-  for (const header of [etag, `W/${etag}`, `"nope", ${etag}`]) {
+  for (const header of [etag, `W/${etag}`, `"nope", ${etag}`, '*']) {
     const res = await get({ 'If-None-Match': header });
     assert.equal(res.status, 304, header);
     assert.equal(res.headers.get('etag'), etag);
     assert.equal(await res.text(), '');
   }
+});
+
+test('a wildcard inside a list is not a wildcard', async () => {
+  const res = await get({ 'If-None-Match': '"nope", *' });
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('etag') ?? '', /^"\d+"$/);
 });
 
 test('a read naming an older revision gets the whole config', async () => {
@@ -47,7 +53,9 @@ test('a config with no usable revision is sent whole and carries no ETag', async
   const cfg = loadConfigForUpdate();
   cfg._rev = 'hand-edited';
   saveConfig(cfg, { keepRev: true });
-  const res = await get({ 'If-None-Match': '"hand-edited"' });
-  assert.equal(res.status, 200);
-  assert.equal(res.headers.get('etag'), null);
+  for (const header of ['"hand-edited"', '*']) {
+    const res = await get({ 'If-None-Match': header });
+    assert.equal(res.status, 200, header);
+    assert.equal(res.headers.get('etag'), null);
+  }
 });

@@ -118,12 +118,12 @@ function json(res, status, data, headers = {}) {
   res.end(b);
 }
 
-/** Whether an If-None-Match header names `etag`, compared weakly.
+/** Whether an If-None-Match header names `etag`, compared weakly, or is `*`.
     @param {unknown} header @param {string} etag */
-const tagMatches = (header, etag) =>
-  String(header || '')
-    .split(',')
-    .some(t => t.trim().replace(/^W\//, '') === etag);
+const tagMatches = (header, etag) => {
+  const value = String(header || '').trim();
+  return value === '*' || value.split(',').some(t => t.trim().replace(/^W\//, '') === etag);
+};
 
 /* Buffered in memory before parsing, so this is a memory limit too. */
 const BODY_LIMIT = CONFIG_MAX_BYTES;
