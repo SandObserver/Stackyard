@@ -1,9 +1,9 @@
-import { closeBadgePopover, holdBadgePopover } from '/js/badge-popover.js?v=b487ef22';
+import { closeBadgePopover, holdBadgePopover } from '/js/badge-popover.js?v=578d337c';
 import { clampPage, PAGE_TURN_MS } from '/js/dashboard-logic.js?v=b4828b62';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { easing, glide, isScripted } from '/js/frame-motion.js?v=911f7c03';
 import { t } from '/js/i18n.js?v=82ba9da2';
-import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
+import { EASE_IOS } from '/js/motion-curve.js?v=7fea8800';
 import { el, inertAllBut, pageDir, qa, storeSet } from '/js/utils.js?v=457d9918';
 import { setRefreshRate } from '/js/widget-frame.js?v=8e76d79b';
 

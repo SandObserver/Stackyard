@@ -581,6 +581,54 @@ test('a second tap on a badge closes its popover and does not open it again', t 
   }
 });
 
+test('keyboard focus shows the popover at once, moves it between tiles and hides it at once', t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const moves = [];
+  pop.animate = (frames, opts) => {
+    moves.push(opts.duration);
+    return { cancel() {}, onfinish: null };
+  };
+  const show = pop.showPopover;
+  const sources = [];
+  pop.showPopover = opts => {
+    sources.push(opts?.source);
+    show();
+  };
+  const shown = () => pop.hasAttribute('data-open');
+  const tiles = [0, 1].map(() => {
+    const tile = doc.createElement('a');
+    const badge = doc.createElement('div');
+    badge.className = 'badge';
+    tile.appendChild(badge);
+    doc.body.appendChild(tile);
+    const own = tile.matches.bind(tile);
+    tile.matches = sel => sel === ':focus-visible' || own(sel);
+    popover.wireBadgePopover(badge, [{ name: 'Queue', value: 3, unit: '', color: '' }]);
+    return { tile, badge };
+  });
+  const [a, b] = tiles;
+  try {
+    a.tile.dispatchEvent({ type: 'focusin', bubbles: true });
+    assert.equal(shown(), true, 'focus did not open the popover');
+    a.tile.dispatchEvent({ type: 'focusout', bubbles: true, relatedTarget: b.tile });
+    assert.equal(shown(), true, 'Tab to the next badged tile closed the popover first');
+    b.tile.dispatchEvent({ type: 'focusin', bubbles: true });
+    assert.deepEqual(sources, [a.badge, b.badge]);
+    b.tile.dispatchEvent({ type: 'focusout', bubbles: true, relatedTarget: doc.body });
+    assert.equal(shown(), false, 'leaving the tiles left the popover open');
+    assert.deepEqual(moves, [], 'keyboard focus animated the popover');
+    a.badge.dispatchEvent({ type: 'pointerenter', pointerType: 'mouse' });
+    t.mock.timers.tick(400);
+    assert.deepEqual(moves, [200], 'a hover no longer grows the popover in');
+  } finally {
+    popover.closeBadgePopover();
+    pop.hidePopover();
+    pop.showPopover = show;
+    delete pop.animate;
+    for (const { tile } of tiles) tile.remove();
+  }
+});
+
 /* A modal folder makes everything outside it inert, the top layer included. */
 test('the popover opens inside the folder that holds the badge, and leaves with it', t => {
   t.mock.timers.enable({ apis: ['setTimeout'] });

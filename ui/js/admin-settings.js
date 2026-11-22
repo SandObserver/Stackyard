@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=9f176f5e';
+import { renderColorControl } from '/js/admin-color-control.js?v=55a89c05';
 import { passwordRefusalKey, socketProbeAdvice } from '/js/admin-error.js?v=5abd7438';
 import {
   BLOCK,
@@ -36,7 +36,7 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=be7712ac';
+} from '/js/admin-shared.js?v=0f28a237';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { BACKDROP } from '/js/background.js?v=51e46417';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
@@ -48,7 +48,7 @@ import {
   parseHostList,
 } from '/js/host-names.js?v=98bf44d7';
 import { t } from '/js/i18n.js?v=82ba9da2';
-import { confirmText, promptModal } from '/js/modal.js?v=b22f3f76';
+import { confirmText, promptModal } from '/js/modal.js?v=93d3e755';
 import { contextWords, passwordMeter, passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
 import { setRevealed } from '/js/password-reveal.js?v=bdd477f5';
 import { el, inp, qa, setUserText } from '/js/utils.js?v=457d9918';

@@ -23,15 +23,15 @@ import {
   topLevelRows,
 } from '/js/admin-logic.js?v=81fd47cf';
 import { snapshotItems } from '/js/admin-save-logic.js?v=2a82f10d';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=be7712ac';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=0f28a237';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { sizeLabel } from '/js/admin-widget-form.js?v=55a7ca21';
+import { sizeLabel } from '/js/admin-widget-form.js?v=30b500f1';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
 import { t } from '/js/i18n.js?v=82ba9da2';
 import { iconSvg } from '/js/icon-set.js?v=beda3062';
 import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=ff61256e';
-import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
+import { EASE_IOS } from '/js/motion-curve.js?v=7fea8800';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
 import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=457d9918';
