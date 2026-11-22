@@ -3,7 +3,7 @@ import { desktopCols, desktopPages } from '/js/dashboard-logic.js?v=b4828b62';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { currentLang, t } from '/js/i18n.js?v=82ba9da2';
 import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=ff61256e';
-import { closeFolders, mkFolder, resetMobileChrome } from '/js/ui.js?v=690c5fc1';
+import { closeFolders, mkFolder, resetMobileChrome } from '/js/ui.js?v=48c8383a';
 import {
   mkWrap as _mkWrap,
   el,

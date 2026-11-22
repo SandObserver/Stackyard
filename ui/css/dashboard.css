@@ -858,7 +858,7 @@
     }
     .folder-outer {
       display:flex; flex-direction:column; align-items:center;
-      gap:16px; max-width:600px; width:90vw;
+      gap:16px; width:min-content; max-width:calc(100vw - 32px);
       margin-block:auto;
     }
     .folder-title-desktop {
@@ -867,7 +867,7 @@
     }
     .folder-box-desktop {
       position:relative; isolation:isolate;
-      border-radius:28px; padding:28px 32px 24px; width:100%;
+      border-radius:28px; padding:28px 32px 24px; width:max-content; max-width:calc(100vw - 32px);
       box-shadow:0 32px 80px rgba(0,0,0,.65);
     }
     .folder-icon-link {
