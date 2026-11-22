@@ -24,6 +24,7 @@
   "ui.cached": "کش‌شده",
   "ui.blocked": "مسدود",
   "ui.summary": "{pct}٪ از {total} درخواست مسدود شد. مجاز {allowed}، کش‌شده {cached}، مسدود {blocked}.",
+  "ui.summaryUncached": "{pct}٪ از {total} درخواست مسدود شد. مجاز {allowed}، مسدود {blocked}.",
   "provider.opt.adguard": "AdGuard Home",
   "provider.opt.pihole": "Pi-hole",
   "provider.opt.technitium": "Technitium",

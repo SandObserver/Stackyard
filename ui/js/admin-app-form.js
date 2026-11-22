@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=5277d582';
+import { renderColorControl } from '/js/admin-color-control.js?v=13051991';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=5abd7438';
 import {
   clearsStoredSecret,
@@ -30,15 +30,15 @@ import {
   syncRequiredLegend,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=315941b7';
-import { activityAuth, activityHasAuth, POLL_MAX, POLL_MIN } from '/js/admin-save-logic.js?v=f533952b';
+} from '/js/admin-shared.js?v=e5bdea20';
+import { activityAuth, activityHasAuth, POLL_MAX, POLL_MIN } from '/js/admin-save-logic.js?v=2a82f10d';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=7112fd10';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
-import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=99563c71';
-import { iconSvg } from '/js/icon-set.js?v=361e54a5';
+import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
+import { t } from '/js/i18n.js?v=82ba9da2';
+import { iconSvg } from '/js/icon-set.js?v=beda3062';
 import {
   cdnIconRef,
   iconChain,
@@ -48,9 +48,9 @@ import {
   throughServer,
 } from '/js/icons.js?v=76c29d43';
 import { DOCK_MAX } from '/js/limits.js?v=ff61256e';
-import { createListbox } from '/js/listbox.js?v=5f208483';
-import { slideBlock } from '/js/modal.js?v=84ba5279';
-import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=9ed2b298';
+import { createListbox } from '/js/listbox.js?v=3e45f323';
+import { slideBlock } from '/js/modal.js?v=b22f3f76';
+import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=e9e22f08';
 
 export function buildFolderForm(body, item) {
   const children = folderChildren(item);

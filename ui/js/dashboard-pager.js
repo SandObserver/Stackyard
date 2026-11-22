@@ -1,10 +1,11 @@
-import { closeBadgePopover } from '/js/badge-popover.js?v=a7b62808';
+import { closeBadgePopover, holdBadgePopover } from '/js/badge-popover.js?v=b487ef22';
 import { clampPage, PAGE_TURN_MS } from '/js/dashboard-logic.js?v=b4828b62';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { easing, glide, isScripted } from '/js/frame-motion.js?v=911f7c03';
-import { t } from '/js/i18n.js?v=99563c71';
+import { t } from '/js/i18n.js?v=82ba9da2';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
-import { el, inertAllBut, pageDir, qa, storeSet } from '/js/utils.js?v=9ed2b298';
+import { el, inertAllBut, pageDir, qa, storeSet } from '/js/utils.js?v=e9e22f08';
+import { setRefreshRate } from '/js/widget-frame.js?v=6f5b0dc5';
 
 export const PAGE_STORE = 'dash_page';
 
@@ -12,8 +13,9 @@ export const PAGE_STORE = 'dash_page';
    polling. Off-screen frames run at a fraction of their configured rate. */
 const OFF_PAGE_RATE = 4;
 
-export const overlayOpen = () =>
-  el('spot').hasAttribute('open') || !!document.querySelector('.folder-overlay[open], .folder-overlay-mobile[open]');
+export const overlayOpen = () => !!document.querySelector('dialog[open], .cfg-recovery');
+
+const PAGE_FOCUSABLE = 'a[href], button, iframe, [tabindex]:not([tabindex="-1"])';
 
 /** @param {import('/js/dashboard-state.js?v=51013727').DashboardState} dash */
 export function createPager(dash) {
@@ -36,6 +38,7 @@ export function createPager(dash) {
     }
     Array.from(strip.children).forEach((page, i) => {
       const rate = i === dash.pg ? 1 : OFF_PAGE_RATE;
+      setRefreshRate(page, rate);
       qa('iframe', /** @type {HTMLElement} */ (page)).forEach(ifr => {
         const frame = /** @type {HTMLIFrameElement} */ (ifr);
         try {
@@ -47,11 +50,15 @@ export function createPager(dash) {
     });
   }
 
-  /** @param {HTMLElement} strip @param {number} n @param {number} ms */
-  function slidePages(strip, n, ms) {
+  /** @param {HTMLElement} strip @param {number} n @param {number} ms
+      @param {() => void} landed runs when the strip comes to rest */
+  function slidePages(strip, n, ms, landed) {
     const shift = `translateX(${-pageDir() * n * 100}%)`;
     if (!isScripted()) {
       strip.style.transform = shift;
+      const runs = strip.getAnimations();
+      if (runs.length) Promise.allSettled(runs.map(a => a.finished)).then(landed);
+      else landed();
       return;
     }
     const m = getComputedStyle(strip).transform;
@@ -66,6 +73,7 @@ export function createPager(dash) {
       },
       () => {
         strip.style.transform = shift;
+        landed();
       },
     );
   }
@@ -78,8 +86,11 @@ export function createPager(dash) {
     if (dash.pg !== was && announce) announcePage(dash.pg, dash.totalPages);
     storeSet(PAGE_STORE, String(dash.pg));
     const strip = el('pages');
+    const focused = document.activeElement;
     syncPageInert(dash.pg);
-    slidePages(strip, dash.pg, ms);
+    const landed = holdBadgePopover();
+    followFocus(strip, dash.pg, focused);
+    slidePages(strip, dash.pg, ms, landed);
     strip.style.willChange = 'transform';
     clearTimeout(_willChangeTimer);
     _willChangeTimer = window.setTimeout(() => {
@@ -121,6 +132,19 @@ function announcePage(index, total) {
   const live = el('page-live');
   if (!live) return;
   live.textContent = t('home.pageAnnounce', { page: formatNumber(index + 1), total: formatNumber(total) });
+}
+
+/** Move focus left on a page that turned inert onto the page now shown.
+    @param {HTMLElement} strip @param {number} current @param {Element|null} focused */
+function followFocus(strip, current, focused) {
+  if (!focused || !strip.contains(focused)) return;
+  const page = strip.children[current];
+  if (!page || page.contains(focused)) return;
+  const next = [...page.querySelectorAll(PAGE_FOCUSABLE), ...document.querySelectorAll('#dots .dot.on')].find(
+    n => !(/** @type {HTMLElement} */ (n).hidden),
+  );
+  /* Keep preventScroll. A focus scroll moves the strip off its page. */
+  /** @type {HTMLElement|undefined} */ (next)?.focus({ preventScroll: true });
 }
 
 /* A page that has scrolled off is still in the DOM and still focusable, so Tab

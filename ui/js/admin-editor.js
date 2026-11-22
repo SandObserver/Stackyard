@@ -4,10 +4,10 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=eba1dba4';
-import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=3565b0d8';
+} from '/js/admin-app-form.js?v=d9885cfa';
+import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=5ade2960';
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
-import { scrollSettingsTop } from '/js/admin-nav.js?v=5a609c7d';
+import { scrollSettingsTop } from '/js/admin-nav.js?v=85a2497a';
 import {
   applyEdit,
   buildAppItem,
@@ -17,7 +17,7 @@ import {
   POLL_MIN,
   removeItem,
   snapshotItems,
-} from '/js/admin-save-logic.js?v=f533952b';
+} from '/js/admin-save-logic.js?v=2a82f10d';
 import {
   busyPress,
   clearFieldErrors,
@@ -29,18 +29,18 @@ import {
   showFieldError,
   swapContent,
   toast,
-} from '/js/admin-shared.js?v=315941b7';
+} from '/js/admin-shared.js?v=e5bdea20';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=602b7dd2';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=77cf92ae';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
-import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=99563c71';
-import { animateIcon } from '/js/icon-motion.js?v=0b4fc669';
-import { iconSvg } from '/js/icon-set.js?v=361e54a5';
+import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
+import { t } from '/js/i18n.js?v=82ba9da2';
+import { animateIcon } from '/js/icon-motion.js?v=7bfd91f5';
+import { iconSvg } from '/js/icon-set.js?v=beda3062';
 import { clampName } from '/js/limits.js?v=ff61256e';
-import { confirmText, openModal as openDialog } from '/js/modal.js?v=84ba5279';
-import { clr, el, focusFirst, initial, inp, isolate, q, qa, setUserText } from '/js/utils.js?v=9ed2b298';
+import { confirmText, openModal as openDialog } from '/js/modal.js?v=b22f3f76';
+import { clr, el, focusFirst, initial, inp, isolate, q, qa, setUserText } from '/js/utils.js?v=e9e22f08';
 
 /** @typedef {{ saveOrRevert: (before: any[], done?: string|false) => Promise<boolean> }} EditorPage */
 

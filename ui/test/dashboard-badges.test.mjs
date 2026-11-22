@@ -129,3 +129,18 @@ test('the tile name is spoken in the interface language', async () => {
 });
 
 await settle();
+
+/* VoiceOver on iOS moves without focus, so a description added on focus is never read. */
+test('the tile is described by the popover rows without any focus', async () => {
+  answers.badges = { a: { value: 3 } };
+  await badges.pollBadges();
+  const id = $('ta').getAttribute('aria-describedby');
+  assert.ok(id, 'the tile has no description');
+  const desc = $(id);
+  assert.equal(desc.hidden, true);
+  assert.equal(desc.textContent, t('status.pendingValue', { value: '3 jobs' }));
+  answers.badges = { a: { value: 0 } };
+  await badges.pollBadges();
+  assert.equal($('ta').getAttribute('aria-describedby'), null);
+  assert.equal($(id), null, 'the description outlived its badge');
+});

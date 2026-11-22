@@ -4,14 +4,14 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
+import { pageWithScripts } from './widget-source.mjs';
 
 const TOOLBOX_IMPORT = /import\('\/js\/widget-toolbox\.js\?v=[0-9a-z]+'\)/;
 const CLOCK_DATE_IMPORT = /import\('\/js\/clock-date\.js\?v=[0-9a-z]+'\)/;
 const CAPTAIN_IMPORT = /import\('\/js\/clock-captain\.js\?v=[0-9a-z]+'\)/;
 
 function pageScript(file) {
-  const src = fs.readFileSync(new URL(`../widgets/clock/${file}`, import.meta.url), 'utf8');
+  const src = pageWithScripts(new URL(`../widgets/clock/${file}`, import.meta.url));
   const body = src.match(/<script>([\s\S]*?)<\/script[^>]*>/i)[1];
   assert.match(body, TOOLBOX_IMPORT, `${file} loads the toolbox for its error line`);
   assert.match(body, /\nboot\(\);\s*$/);

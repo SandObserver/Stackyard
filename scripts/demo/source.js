@@ -27,4 +27,18 @@ function writeRoutes(apiSrc) {
   return out.sort((a, b) => a.route.localeCompare(b.route));
 }
 
-module.exports = { listFiles, routePattern, writeRoutes };
+const REPORTING = /\s*\breport-uri\s[^;]*(?:;|$)/g;
+
+/** The headers the static demo sends for a response of the image. The demo has
+    no API, so a policy there names no report address.
+    @param {Record<string, string> | null} headers */
+function demoHeaders(headers) {
+  if (!headers) return headers;
+  const out = { ...headers };
+  for (const name of ['content-security-policy', 'content-security-policy-report-only']) {
+    if (typeof out[name] === 'string') out[name] = out[name].replace(REPORTING, '').trim();
+  }
+  return out;
+}
+
+module.exports = { demoHeaders, listFiles, routePattern, writeRoutes };

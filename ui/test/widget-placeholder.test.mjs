@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { register } from 'node:module';
 import { test } from 'node:test';
+import { pageWithScripts } from './widget-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 globalThis.location = /** @type {any} */ ({ search: '?id=test' });
@@ -37,7 +37,7 @@ test('a placeholder is a hidden, sized shape, and its style is added once', () =
 });
 
 test('no widget claims a state before its data arrives', () => {
-  const page = p => fs.readFileSync(new URL(`../widgets/${p}`, import.meta.url), 'utf8');
+  const page = p => pageWithScripts(new URL(`../widgets/${p}`, import.meta.url));
   assert.doesNotMatch(page('nowplaying/index.html'), /id="title">Nothing playing</);
   assert.doesNotMatch(page('books/index.html'), /id="lbl">READING</);
   assert.doesNotMatch(page('weather/index.html'), /id="temp">--/);

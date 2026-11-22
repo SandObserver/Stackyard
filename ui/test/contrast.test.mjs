@@ -724,7 +724,7 @@ test('every literal text colour is measured or listed with its reason', () => {
 /* Opacity dims everything inside the element, ink included. A state the
    reader passes through (hover, press, drag, disabled, hidden) is not text at
    rest. */
-const TRANSIENT = /:hover|:active|:disabled|disabled|dragging|drag-ghost/;
+const TRANSIENT = /:hover|:active|:disabled|disabled|aria-busy|dragging|drag-ghost/;
 const withoutNot = selector => selector.replace(/:not\([^()]*\)/g, '');
 
 /* The value that wins in the rule: the last opacity, a percentage read as a

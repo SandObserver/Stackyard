@@ -1,0 +1,180 @@
+import { poll, fetchData, getConfig, rollText, linkTo, raw, setHtml, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=039ea657';
+await loadStrings();
+/* These two are in the markup, so the widget still reads correctly in English
+   if the catalog fetch fails. */
+document.getElementById('sub-label').textContent = wt('ui.queriesBlocked', 'Queries Blocked');
+document.getElementById('widget').setAttribute('aria-label', wt('ui.aria', 'DNS filtering'));
+const TICK_MS = 30000;
+
+let _href = '';
+let _last = null;
+
+const widgetEl = document.getElementById('widget');
+const BLOCKED_RED = '#FF4245';
+const pctEl = document.getElementById('pct');
+const svgEl = document.getElementById('svg');
+const subEl = document.getElementById('sub-label');
+const msgEl = document.getElementById('msg');
+const srEl  = document.getElementById('sr');
+
+/* Digits follow the reader's locale. The k and M suffixes do not: they are
+   symbols rather than words, and the catalogue has no translation for them. */
+function fmt(n) {
+  if (n==null||isNaN(n)) return '—';
+  if (n>=1_000_000) return formatNumber(Number((n/1_000_000).toFixed(2)))+'M';
+  if (n>=1_000)     return formatNumber(Number((n/1_000).toFixed(1)))+'k';
+  return formatNumber(n);
+}
+
+async function boot() {
+  pctEl.replaceChildren(placeholder(64, 26, 6));
+  flowEl.classList.add('ph');
+  render({ allowed: 6, cached: 3, blocked: 2 }, true);
+  const cfg = await getConfig().catch(() => null);
+  _href = cfg?.widgetConfig?.dnsHref || '';
+  const link = d => {
+    if (linkTo(widgetEl, d?.link || _href)) widgetEl.setAttribute('aria-describedby', 'sr');
+    else widgetEl.removeAttribute('aria-describedby');
+  };
+  link(null);
+  poll({ fetch:gfetch, interval:TICK_MS,
+    render:d=>{ state.ok(); link(d); apply(d); },
+    onError:({error,everOk,stale,since})=>{ if(!everOk||stale) state.fail(error,{since,inert:everOk}); } });
+  addEventListener('resize', () => { if (_last) render(_last); });
+}
+
+const state = errorState({ root: widgetEl, content: [pctEl, svgEl, document.getElementById('legend')], caption: msgEl });
+
+const gfetch = () => fetchData('stats');
+
+function apply(d) {
+  const total   = +d.num_dns_queries || 0;
+  const blocked = (+d.num_blocked_filtering || 0)
+                + (+d.num_replaced_safebrowsing || 0)
+                + (+d.num_replaced_parental || 0);
+  const cached  = +d.num_cached || 0;
+  const allowed = Math.max(0, total - blocked - cached);
+  const pct = total > 0 ? Math.round(blocked / total * 100) : 0;
+
+  flowEl.classList.remove('ph');
+  const model = { total, allowed, cached, blocked, pct };
+  _last = model;
+  render(model);
+  showHeadline();
+
+  const counts = { pct: formatNumber(pct), total: fmt(total), allowed: fmt(allowed), cached: fmt(cached), blocked: fmt(blocked) };
+  srEl.textContent = d.num_cached != null
+    ? wt('ui.summary', '{pct}% of {total} queries blocked. Allowed {allowed}, cached {cached}, blocked {blocked}.', counts)
+    : wt('ui.summaryUncached', '{pct}% of {total} queries blocked. Allowed {allowed}, blocked {blocked}.', counts);
+}
+
+function constLink(x0,c0,x1,c1,t) {
+  const h=t/2, cx=x0+(x1-x0)*0.5;
+  return `M${x0},${c0-h} C${cx},${c0-h} ${cx},${c1-h} ${x1},${c1-h} `
+       + `L${x1},${c1+h} C${cx},${c1+h} ${cx},${c0+h} ${x0},${c0+h} Z`;
+}
+
+const W = 240, H = 120, NODE_W = 8, SRC_SHARE = 0.5;
+let _segs = [];
+let _sel = -1;
+
+function render(m, ph = false) {
+  svgEl.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const segs = [
+    { key:'allowed', label:wt('ui.allowed','Allowed'), value:m.allowed, color:'#30D158' },
+    { key:'cached',  label:wt('ui.cached','Cached'),   value:m.cached,  color:'#0091FF' },
+    { key:'blocked', label:wt('ui.blocked','Blocked'), value:m.blocked, color:BLOCKED_RED },
+  ].filter(s => s.value > 0).map(s => (ph ? { ...s, color: 'currentColor' } : s));
+
+  _segs = segs;
+  if (_sel >= segs.length) _sel = -1;
+  if (!ph) renderLegend(segs);
+  if (!segs.length) { svgEl.replaceChildren(); return; }
+
+  const sum = segs.reduce((a,s)=>a+s.value,0);
+  const srcH = H * SRC_SHARE;
+  const t = segs.map(s => Math.max(2, s.value / sum * srcH));
+  const tSum = t.reduce((a,b)=>a+b,0);
+  const gap = segs.length > 1 ? (H - tSum) / (segs.length - 1) : 0;
+  const x0 = NODE_W, x1 = W - NODE_W;
+
+  let sy = (H - tSum) / 2;
+  let ty = segs.length > 1 ? 0 : (H - tSum) / 2;
+  let links = '', nodes = '';
+  segs.forEach((s,i) => {
+    s.sy = sy + t[i]/2; s.ty = ty + t[i]/2; s.t = t[i];
+    links += `<path class="link" d="${constLink(x0,s.sy,x1,s.ty,t[i])}" fill="${s.color}" fill-opacity="0.6"/>`;
+    nodes += `<rect x="${x1}" y="${ty}" width="${NODE_W}" height="${t[i]}" rx="${Math.min(4,t[i]/2)}" fill="${s.color}"/>`;
+    sy += t[i]; ty += t[i] + gap;
+  });
+  nodes = `<rect x="0" y="${(H - tSum) / 2}" width="${NODE_W}" height="${tSum}" rx="4" class="src-node"/>` + nodes;
+
+  setHtml(svgEl, raw(links + nodes));
+  highlight();
+}
+
+function renderLegend(segs) {
+  const el = document.getElementById('legend');
+  el.replaceChildren(...segs.map(s => {
+    const item = document.createElement('span');
+    const dot = document.createElement('i');
+    dot.style.setProperty('--c', s.color);
+    item.append(dot, s.label);
+    return item;
+  }));
+  el.hidden = !segs.length;
+}
+
+function ribbonY(s, x) {
+  const u = Math.min(1, Math.max(0, (x - NODE_W) / (W - 2*NODE_W)));
+  return s.sy + (s.ty - s.sy) * (3*u*u - 2*u*u*u);
+}
+
+function highlight() {
+  svgEl.querySelectorAll('.link').forEach((p,i) => {
+    p.style.opacity = _sel < 0 || i === _sel ? '1' : '0.3';
+  });
+}
+
+function showHeadline() {
+  const s = _segs[_sel];
+  if (s) {
+    pctEl.textContent = fmt(s.value);
+    pctEl.style.color = readableInk(s.color, 3);
+    subEl.textContent = s.label;
+  } else if (_last) {
+    rollText(pctEl, formatNumber(_last.pct / 100, { style: 'percent' }));
+    pctEl.style.color = readableInk(BLOCKED_RED, 3);
+    subEl.textContent = wt('ui.queriesBlocked', 'Queries Blocked');
+  }
+}
+
+function select(i) {
+  if (i === _sel) return;
+  _sel = i;
+  highlight();
+  showHeadline();
+}
+
+function pick(e) {
+  if (!_segs.length || flowEl.classList.contains('ph')) return;
+  const r = flowEl.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  const x = (e.clientX - r.left) / r.width * W;
+  const y = (e.clientY - r.top) / r.height * H;
+  let best = 0, bestD = Infinity;
+  _segs.forEach((s,i) => {
+    const d = Math.abs(ribbonY(s, x) - y) - s.t/2;
+    if (d < bestD) { bestD = d; best = i; }
+  });
+  select(best);
+}
+
+const flowEl = document.getElementById('flow');
+flowEl.addEventListener('pointermove', pick);
+flowEl.addEventListener('pointerdown', pick);
+for (const type of ['pointerleave', 'pointercancel']) flowEl.addEventListener(type, () => select(-1));
+flowEl.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') select(-1); });
+
+boot();

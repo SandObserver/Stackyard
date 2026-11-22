@@ -7,13 +7,11 @@
     <link rel="manifest" href="/manifest.json">
   <!-- Tracks --bg-base. A literal because it is read before any stylesheet. -->
   <meta name="theme-color" content="#0d1117">
-  <meta name="apple-mobile-web-app-capable" content="yes">
   <!-- Not black-translucent. The web view is then placed at the top of the
        screen but still sizes it to the screen minus the status bar, leaving a
        dead strip below the dock in a home-screen install. -->
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Stackyard">
-  <meta name="mobile-web-app-capable" content="yes">
 
     <!-- No sizes attribute: the platform accepts any size and scales it -->
   <link rel="apple-touch-icon" href="/icons/favicon.png">
@@ -24,8 +22,8 @@
   <script src="/js/boot-hints.js?v=6f2f5482" data-early></script>
   <script src="/js/page-zoom.js?v=01ccc9cf"></script>
   <title>Stackyard</title>
-  <link rel="stylesheet" href="/css/tokens.css?v=7ce70145">
-  <link rel="stylesheet" href="/css/dashboard.css?v=ca10754b">
+  <link rel="stylesheet" href="/css/tokens.css?v=b377f922">
+  <link rel="stylesheet" href="/css/dashboard.css?v=3f55d8ca">
   <link rel="stylesheet" href="/css/config-recovery.css?v=9f8ca0ab">
 </head>
 <body>
@@ -34,7 +32,7 @@
 <nav id="dots" aria-label="Dashboard pages" data-i18n-al="home.pagination" hidden></nav>
 <!-- Announces the page after a change. The dots are reachable by keyboard. -->
 <div id="page-live" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
-<button id="mob-search-pill" type="button">
+<button id="mob-search-pill" type="button" aria-haspopup="dialog">
   <span class="msp-search">
     <span class="msp-icon"><svg class="sy-icon" width="16" height="16" aria-hidden="true" focusable="false"><use href="#sy-solid-search"/></svg></span>
     <span class="msp-label" data-i18n="home.search">Search</span>
@@ -57,5 +55,5 @@
     </div>
   </div>
 </dialog>
-<script type="module" src="/js/dashboard.js?v=7b0e62db"></script>
+<script type="module" src="/js/dashboard.js?v=545b8b6c"></script>
 </body></html>

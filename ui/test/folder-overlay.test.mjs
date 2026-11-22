@@ -123,11 +123,6 @@ test('the folder box keeps pinch zoom and pages by touch-action, not by a blocki
 const motion = ui.slice(ui.indexOf('function folderMotion('), ui.indexOf('let folderOverlay = null;'));
 
 test('a folder grows from the size and place of the tile that opened it', () => {
-  assert.match(motion, /const s = from\.width \/ r\.width;/);
-  assert.match(
-    motion,
-    /from\.left \+ from\.width \/ 2 - r\.left - \(r\.width \* s\) \/ 2,\s*from\.top \+ from\.height \/ 2 - r\.top - \(r\.height \* s\) \/ 2,\s*s,?\s*\]/,
-  );
   assert.match(ui, /`translate\(\$\{v\[0\]\}px, \$\{v\[1\]\}px\) scale\(\$\{v\[2\]\}\)`/);
   assert.match(motion, /p\.style\.transformOrigin = '0 0'/);
   assert.match(motion, /duration: open \? 300 : 250/);
@@ -214,7 +209,7 @@ test('every rebuild closes an open folder first', async () => {
   dom.restore();
 });
 
-function fakeDom() {
+function fakeDom(rects = {}) {
   const animations = [];
   class Node extends EventTarget {
     constructor(tag) {
@@ -247,18 +242,25 @@ function fakeDom() {
       this.parent = null;
     }
     replaceChildren() {}
-    contains() {
-      return false;
+    contains(n) {
+      return n === this || this.children.some(c => c.contains(n));
     }
     querySelectorAll() {
       return [];
     }
+    querySelector(sel) {
+      for (const c of this.children) {
+        const hit = c.className === sel.slice(1) ? c : c.querySelector(sel);
+        if (hit) return hit;
+      }
+      return null;
+    }
     focus() {}
     getBoundingClientRect() {
-      return { left: 0, top: 0, width: 100, height: 100 };
+      return rects[this.className] ?? { left: 0, top: 0, width: 100, height: 100 };
     }
-    animate() {
-      const a = { cancel() {}, finished: new Promise(() => {}) };
+    animate(keyframes) {
+      const a = { el: this, keyframes, cancel() {}, finished: new Promise(() => {}) };
       animations.push(a);
       return a;
     }
@@ -314,6 +316,60 @@ test('closing folders for a rebuild removes the folder at once, with no shrink',
   const again = doc.body.children.find(c => c.tag === 'dialog');
   assert.ok(again?.open, 'the next folder press closed a folder that was already gone');
   closeFolders();
+});
+
+/* The zoom moves the box that holds the title and the panel. The panel can be
+   wider or narrower than that box. The tile button fills its grid cell, so the
+   panel lands on the folder glass inside it. */
+test('a desktop folder zooms its panel exactly onto the folder glass', async () => {
+  const tileRect = { left: 100, top: 300, width: 72, height: 72 };
+  for (const panelRect of [
+    { left: 394, top: 260, width: 652, height: 440 },
+    { left: 412, top: 260, width: 616, height: 476 },
+    { left: 440, top: 260, width: 560, height: 300 },
+  ]) {
+    const { doc, animations } = fakeDom({
+      icon: { left: 60, top: 272, width: 152, height: 152 },
+      'dyn-folder-box': tileRect,
+      'folder-outer': { left: 420, top: 200, width: 600, height: 560 },
+      'folder-box-desktop glass-surface': panelRect,
+    });
+    register('./js-root-hooks.mjs', import.meta.url);
+    Object.assign(globalThis, {
+      window: globalThis,
+      document: doc,
+      addEventListener() {},
+      matchMedia: () => ({ matches: false, addEventListener() {} }),
+      getComputedStyle: () => ({ opacity: '1', transform: 'none' }),
+      ResizeObserver: class {
+        observe() {}
+        disconnect() {}
+      },
+    });
+    const { initUI, openFolderDesktop, closeFolders } = await import('../js/ui.js');
+    initUI({ items: [], S: {}, BEL: new Map(), bupd() {}, breg() {}, bunreg() {} });
+    const tile = doc.createElement('button');
+    tile.className = 'icon';
+    tile.appendChild(doc.createElement('div')).className = 'dyn-folder-box';
+    doc.body.appendChild(tile);
+    openFolderDesktop({ id: 'f', children: [] }, tile);
+    const zoom = animations.find(a => a.el.className === 'folder-outer');
+    assert.ok(zoom, 'the folder did not zoom');
+    const [x, y, s] = zoom.keyframes.transform[0].match(/-?\d+(?:\.\d+)?(?:e-?\d+)?/g).map(Number);
+    const outer = { left: 420, top: 200 };
+    const left = outer.left + x + (panelRect.left - outer.left) * s;
+    const top = outer.top + y + (panelRect.top - outer.top) * s;
+    assert.ok(Math.abs(panelRect.width * s - tileRect.width) < 1e-6, `width ${panelRect.width}: not the tile width`);
+    assert.ok(
+      Math.abs(left - tileRect.left) < 1e-6,
+      `width ${panelRect.width}: starts ${left - tileRect.left}px off the tile`,
+    );
+    assert.ok(
+      Math.abs(top + (panelRect.height * s) / 2 - (tileRect.top + tileRect.height / 2)) < 1e-6,
+      `width ${panelRect.width}: not centred on the tile`,
+    );
+    closeFolders();
+  }
 });
 
 test('search opens a phone folder with the same sizes as its tile', () => {
