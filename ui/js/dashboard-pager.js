@@ -1,4 +1,4 @@
-import { closeBadgePopover } from '/js/badge-popover.js?v=bc59bc37';
+import { closeBadgePopover, holdBadgePopover } from '/js/badge-popover.js?v=bc59bc37';
 import { clampPage, PAGE_TURN_MS } from '/js/dashboard-logic.js?v=b4828b62';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { easing, glide, isScripted } from '/js/frame-motion.js?v=911f7c03';
@@ -48,11 +48,15 @@ export function createPager(dash) {
     });
   }
 
-  /** @param {HTMLElement} strip @param {number} n @param {number} ms */
-  function slidePages(strip, n, ms) {
+  /** @param {HTMLElement} strip @param {number} n @param {number} ms
+      @param {() => void} landed runs when the strip comes to rest */
+  function slidePages(strip, n, ms, landed) {
     const shift = `translateX(${-pageDir() * n * 100}%)`;
     if (!isScripted()) {
       strip.style.transform = shift;
+      const runs = strip.getAnimations();
+      if (runs.length) Promise.allSettled(runs.map(a => a.finished)).then(landed);
+      else landed();
       return;
     }
     const m = getComputedStyle(strip).transform;
@@ -67,6 +71,7 @@ export function createPager(dash) {
       },
       () => {
         strip.style.transform = shift;
+        landed();
       },
     );
   }
@@ -81,8 +86,9 @@ export function createPager(dash) {
     const strip = el('pages');
     const focused = document.activeElement;
     syncPageInert(dash.pg);
+    const landed = holdBadgePopover();
     followFocus(strip, dash.pg, focused);
-    slidePages(strip, dash.pg, ms);
+    slidePages(strip, dash.pg, ms, landed);
     strip.style.willChange = 'transform';
     clearTimeout(_willChangeTimer);
     _willChangeTimer = window.setTimeout(() => {

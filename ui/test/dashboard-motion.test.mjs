@@ -537,6 +537,49 @@ test('the popover is shown from the badge, and again from the next badge', t => 
   for (const { tile } of tiles) tile.remove();
 });
 
+/* The browser light-dismisses an auto popover on a pointerdown outside it and
+   outside its source. */
+test('a second tap on a badge closes its popover and does not open it again', t => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: Date.now() + 60_000 });
+  pop.animate = undefined;
+  const show = pop.showPopover;
+  const hide = pop.hidePopover;
+  const shows = [];
+  let source = null;
+  pop.showPopover = opts => {
+    source = opts?.source ?? null;
+    shows.push(source);
+    show();
+  };
+  const shown = () => pop.hasAttribute('data-open');
+  const tap = node => {
+    if (shown() && !pop.contains(node) && !source?.contains(node)) {
+      hide();
+      pop.dispatchEvent({ type: 'toggle', newState: 'closed' });
+    }
+    node.dispatchEvent({ type: 'click', bubbles: true, detail: 1 });
+    t.mock.timers.tick(1000);
+  };
+  const tile = doc.createElement('a');
+  const badge = doc.createElement('div');
+  badge.className = 'badge';
+  tile.appendChild(badge);
+  doc.body.appendChild(tile);
+  popover.wireBadgePopover(badge, [{ name: 'Queue', value: 3, unit: '', color: '' }]);
+  try {
+    tap(badge);
+    assert.equal(shown(), true, 'the first tap did not open it');
+    tap(badge);
+    assert.equal(shows.length, 1, 'the second tap closed the popover and opened it again');
+    assert.equal(shown(), false, 'the second tap left it open');
+  } finally {
+    popover.closeBadgePopover();
+    pop.showPopover = show;
+    delete pop.animate;
+    tile.remove();
+  }
+});
+
 /* A modal folder makes everything outside it inert, the top layer included. */
 test('the popover opens inside the folder that holds the badge, and leaves with it', t => {
   t.mock.timers.enable({ apis: ['setTimeout'] });

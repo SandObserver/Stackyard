@@ -171,10 +171,6 @@ test('a badge with a popover accepts the pointer', () => {
   );
 });
 
-test('an open popover is moved to the next badge without growing in again', () => {
-  assert.match(popover, /if \(!was\) grow\(p, badge, true\);/);
-});
-
 test('keyboard focus finds the tile when it happens, not when the badge was wired', () => {
   const wire = popover.slice(popover.indexOf('export function wireBadgePopover('));
   assert.doesNotMatch(

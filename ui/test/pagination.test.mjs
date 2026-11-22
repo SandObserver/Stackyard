@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { register } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { createDocument, fire, installDom, pageBody } from './fake-dom.mjs';
+import { createDocument, fire, installDom, pageBody, settle } from './fake-dom.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -26,6 +26,7 @@ const { initUI } = await import('../js/ui.js');
 const { pageDir } = await import('../js/utils.js');
 const { setScripted } = await import('../js/frame-motion.js');
 const { mountScaledWidget } = await import('../js/widget-frame.js');
+const popover = await import('../js/badge-popover.js');
 
 const dash = createDashboardState();
 dash.items = Array.from({ length: 40 }, (_, i) => ({
@@ -334,14 +335,91 @@ test('a page turn takes focus along to the page it shows', () => {
   assert.equal(doc.activeElement, dot, 'focus outside the pages was moved');
 });
 
-const swipe = (from, to) => {
+const swipe = (from, to, on = doc.body) => {
   const t = (x, id = 1) => ({ identifier: id, clientX: x, clientY: 100 });
-  fire(doc.body, 'touchstart', { touches: [t(from)], changedTouches: [t(from)], timeStamp: 0 });
-  fire(doc.body, 'touchmove', { touches: [t(from - 20)], changedTouches: [t(from - 20)], timeStamp: 25 });
-  fire(doc.body, 'touchmove', { touches: [t(to)], changedTouches: [t(to)], timeStamp: 50 });
-  fire(doc.body, 'touchend', { touches: [], changedTouches: [t(to)], timeStamp: 100 });
+  fire(on, 'touchstart', { touches: [t(from)], changedTouches: [t(from)], timeStamp: 0 });
+  fire(on, 'touchmove', { touches: [t(from - 20)], changedTouches: [t(from - 20)], timeStamp: 25 });
+  fire(on, 'touchmove', { touches: [t(to)], changedTouches: [t(to)], timeStamp: 50 });
+  fire(on, 'touchend', { touches: [], changedTouches: [t(to)], timeStamp: 100 });
   later();
 };
+
+const ROWS = [{ name: 'Queue', value: 3, unit: '', color: '' }];
+/** The shared popover, with the open state fake-dom cannot read. */
+function badgePop() {
+  popover.wireBadgePopover(doc.createElement('div'), ROWS);
+  const pop = doc.getElementById('badge-pop');
+  const own = pop.matches.bind(pop);
+  pop.matches = sel => (sel === ':popover-open' ? pop.hasAttribute('data-open') : own(sel));
+  pop.showPopover = () => pop.setAttribute('data-open', '');
+  pop.hidePopover = () => pop.removeAttribute('data-open');
+  pop.animate = undefined;
+  return pop;
+}
+
+/* The home pager listens on the document. A swipe it never sees end leaves the
+   strip between two pages. */
+test('a swipe that starts on the badge popover turns the page', () => {
+  pager.goTo(0, false);
+  const pop = badgePop();
+  assert.deepEqual(
+    turned(() => swipe(1200, 100, pop)),
+    [1],
+  );
+  pager.goTo(0, false);
+});
+
+test('after a keyboard page turn the badge popover opens once the page has landed', async () => {
+  pager.goTo(0, false);
+  const pop = badgePop();
+  const shown = () => pop.hasAttribute('data-open');
+  const leaving = strip.children[0].querySelector('a[href]');
+  const arrived = strip.children[1].querySelector('a[href]');
+  const badge = doc.createElement('div');
+  badge.className = 'badge';
+  arrived.appendChild(badge);
+  popover.wireBadgePopover(badge, ROWS);
+  const own = arrived.matches.bind(arrived);
+  arrived.matches = sel => sel === ':focus-visible' || own(sel);
+  arrived.focus = () => {
+    doc.activeElement = arrived;
+    fire(arrived, 'focusin');
+  };
+  let land = () => {};
+  strip.getAnimations = () => [
+    {
+      finished: new Promise(r => {
+        land = r;
+      }),
+    },
+  ];
+  try {
+    leaving.focus();
+    fire(leaving, 'keydown', { key: 'ArrowRight' });
+    assert.equal(doc.activeElement, arrived);
+    assert.equal(shown(), false, 'the popover was placed before the page slid in');
+    land();
+    await settle();
+    assert.equal(shown(), true, 'the popover did not open on the page it landed on');
+    popover.closeBadgePopover();
+    pager.goTo(0, false);
+    land();
+    await settle();
+    /* Reduced motion: the strip has no transition and lands at once. */
+    strip.getAnimations = () => [];
+    leaving.focus();
+    fire(leaving, 'keydown', { key: 'ArrowRight' });
+    assert.equal(shown(), true, 'an instant turn did not open the popover');
+  } finally {
+    popover.closeBadgePopover();
+    delete strip.getAnimations;
+    delete arrived.matches;
+    delete arrived.focus;
+    popover.wireBadgePopover(badge, null);
+    badge.remove();
+    pager.goTo(0, false);
+  }
+});
 
 /* Two touch pagers would advance two pages for one gesture. */
 test('one swipe on the page turns one page', () => {

@@ -20,6 +20,10 @@ let shownFrom = null;
 let openTimer = 0;
 let closeTimer = 0;
 let openedAt = 0;
+let holdSeq = 0;
+let held = false;
+/** @type {HTMLElement|null} */
+let heldFocus = null;
 
 const ROWS = new WeakMap();
 /** @type {WeakMap<HTMLElement, HTMLElement>} */
@@ -41,12 +45,10 @@ function ensurePop() {
   /* auto, so the browser gives the top layer, dismissal on a click outside and
      Escape. */
   pop.setAttribute('popover', 'auto');
-  /* Interactive now, so a click on it must not reach the tile underneath, and a
-     touch must not reach the folder scrim that closes on a touch outside. */
+  /* Interactive now, so a click on it must not reach the tile underneath. */
   pop.addEventListener('pointerenter', cancelClose);
   pop.addEventListener('pointerleave', scheduleClose);
   pop.addEventListener('click', e => e.stopPropagation());
-  pop.addEventListener('touchend', e => e.stopPropagation(), { passive: true });
   document.body.appendChild(pop);
   return pop;
 }
@@ -205,11 +207,29 @@ function wireGlobals() {
   /* Resolve the tile at focus time. A badge is wired before it joins its tile. */
   document.addEventListener('focusin', e => {
     const badge = badgeIn(e.target);
-    if (badge && /** @type {HTMLElement} */ (e.target).matches(':focus-visible')) open(badge);
+    if (!badge || !(/** @type {HTMLElement} */ (e.target).matches(':focus-visible'))) return;
+    if (held) heldFocus = badge;
+    else open(badge);
   });
   document.addEventListener('focusout', e => {
     if (badgeIn(e.target)) closeBadgePopover();
   });
+}
+
+/** Keep keyboard focus from opening the popover until the returned function
+    runs. A later hold voids an earlier one.
+    @returns {() => void} */
+export function holdBadgePopover() {
+  const seq = ++holdSeq;
+  held = true;
+  heldFocus = null;
+  return () => {
+    if (seq !== holdSeq) return;
+    held = false;
+    const badge = heldFocus;
+    heldFocus = null;
+    if (badge && tileOf(badge) === document.activeElement && ROWS.get(badge)) open(badge);
+  };
 }
 
 /** The wired badge of a focused tile, or null. @param {EventTarget|null} target */
