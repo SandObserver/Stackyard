@@ -24,6 +24,7 @@
   "ui.cached": "Cached",
   "ui.blocked": "Blocked",
   "ui.summary": "{pct}% of {total} queries blocked. Allowed {allowed}, cached {cached}, blocked {blocked}.",
+  "ui.summaryUncached": "{pct}% of {total} queries blocked. Allowed {allowed}, blocked {blocked}.",
   "provider.opt.adguard": "AdGuard Home",
   "provider.opt.pihole": "Pi-hole",
   "provider.opt.technitium": "Technitium",
