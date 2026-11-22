@@ -858,7 +858,7 @@
     }
     .folder-outer {
       display:flex; flex-direction:column; align-items:center;
-      gap:16px; max-width:600px; width:90vw;
+      gap:16px; width:min-content; max-width:calc(100vw - 32px);
       margin-block:auto;
     }
     .folder-title-desktop {
