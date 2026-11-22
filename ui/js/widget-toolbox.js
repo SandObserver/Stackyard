@@ -116,7 +116,11 @@ export async function fetchData(endpoint, opts = {}) {
   const qs = query ? '?' + query : '';
   let r;
   for (let tries = 0; ; tries++) {
-    r = await fetch(`/api/widget-data/${encodeURIComponent(id)}${qs}`, { cache: 'no-store', signal: opts.signal });
+    r = await fetch(`/api/widget-data/${encodeURIComponent(id)}${qs}`, {
+      cache: 'no-store',
+      signal: opts.signal,
+      priority: _rate > 1 ? 'low' : 'auto',
+    });
     if (r.status !== 202) break;
     if (tries >= PENDING_TRIES) {
       throw Object.assign(new Error('The service did not respond in time.'), { status: 202, kind: 'timeout' });

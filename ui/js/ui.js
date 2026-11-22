@@ -23,7 +23,7 @@ import {
   setCentredText,
   setUserText,
 } from '/js/utils.js?v=9ed2b298';
-import { mountScaledWidget, teardownWidgets } from '/js/widget-frame.js?v=1468e826';
+import { mountScaledWidget, teardownWidgets } from '/js/widget-frame.js?v=9e82683d';
 import { t, currentLang } from '/js/i18n.js?v=99563c71';
 import { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
 import { DEFAULT_WIDGET_SIZE } from '/js/limits.js?v=ff61256e';
