@@ -120,6 +120,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Docker image and the demo site include the Stackyard licence and notice.
 
+- Show custom widgets that embed a page from another address.
+
+- The AdGuard Home DNS widget's screen-reader summary no longer reports a cached
+  count of 0.
+
+- Size-specific Apple touch icon requests, such as
+  `/apple-touch-icon-180x180.png`, return the dashboard icon instead of 404.
+
+- The admin page shows the dashboard icon in browser tabs and Home Screen
+  bookmarks.
+
 ### Security
 
 - Refuse an unsafe link in the Disk Health TrueNAS and Unraid, DNS, GitHub and
