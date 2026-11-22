@@ -51,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Wait at least 3 seconds between widget polls, whatever interval a widget asks
   for.
 
+- Settings can be installed to the home screen as the same app as the dashboard.
+
+- The Settings shortcut of an installed app has its own icon.
+
 ### Removed
 
 - Remove the `WIDGETS_PATH` setting from the Compose example. Mount a custom
@@ -119,6 +123,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Raise destructive button text to WCAG AA contrast in light and dark mode.
 
 - The Docker image and the demo site include the Stackyard licence and notice.
+
+- Show custom widgets that embed a page from another address.
+
+- The AdGuard Home DNS widget's screen-reader summary no longer reports a cached
+  count of 0.
+
+- Size-specific Apple touch icon requests, such as
+  `/apple-touch-icon-180x180.png`, return the dashboard icon instead of 404.
+
+- The admin page shows the dashboard icon in browser tabs and Home Screen
+  bookmarks.
 
 ### Security
 
