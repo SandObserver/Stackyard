@@ -4,7 +4,7 @@ import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
 globalThis.location = { search: '?id=w1' };
-const { fetchData, readingTime } = await import('../js/widget-toolbox.js');
+const { fetchData, readingTime, setPollRate } = await import('../js/widget-toolbox.js');
 
 const reply = (status, body, headers = {}) => ({
   status,
@@ -63,4 +63,21 @@ test('a fresh reply is dated now', async () => {
   const data = await fetchData('stats');
   assert.ok(Date.now() - readingTime(data) < 1000);
   assert.ok(Date.now() - readingTime({ other: true }) < 1000);
+});
+
+test('a widget on a page out of view fetches at low priority', async () => {
+  const seen = [];
+  globalThis.fetch = async (_, opts) => {
+    seen.push(opts.priority);
+    return reply(200, { n: 1 });
+  };
+  try {
+    await fetchData('stats');
+    setPollRate(4);
+    await fetchData('stats');
+  } finally {
+    setPollRate(1);
+  }
+  await fetchData('stats');
+  assert.deepEqual(seen, ['auto', 'low', 'auto']);
 });

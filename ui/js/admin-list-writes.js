@@ -17,10 +17,10 @@ import {
   ShownError,
   toast,
   withheldText,
-} from '/js/admin-shared.js?v=7384ea00';
+} from '/js/admin-shared.js?v=80e58470';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { t } from '/js/i18n.js?v=99563c71';
-import { isolate } from '/js/utils.js?v=f2d28d1d';
+import { t } from '/js/i18n.js?v=82ba9da2';
+import { isolate } from '/js/utils.js?v=457d9918';
 
 /** @param {unknown} url @returns {Promise<boolean>} whether `url` names an uploaded wallpaper the server answers 404 for */
 async function wallpaperMissing(url) {

@@ -1,10 +1,20 @@
-import { mk } from '/js/utils.js?v=f2d28d1d';
+import { mk } from '/js/utils.js?v=457d9918';
 
 /* Live widget mounts, so a rebuild can switch off what it is about to discard.
    mountScaledWidget starts an observer, a reload timer and touch listeners that
    outlive the DOM it creates, and stranded timers keep polling the backing
    services forever. */
 const _mounts = new Set();
+
+/** @type {Map<HTMLElement, (rate: number) => void>} */
+const _rates = new Map();
+
+/** Multiplies the refresh interval of every widget mounted inside `root`.
+    @param {Element} root @param {number} rate */
+export function setRefreshRate(root, rate) {
+  const r = Number(rate) > 0 ? Number(rate) : 1;
+  for (const [card, set] of _rates) if (root.contains(card)) set(r);
+}
 
 export function teardownWidgets() {
   for (const stop of _mounts) {
@@ -398,26 +408,40 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
         frame.remove();
       }, FRAME_LOAD_WAIT_MS);
     };
-    const jit = () => Math.round(base * (1 + (Math.random() * 2 - 1) * 0.15));
+    const jit = ms => Math.round(ms * (1 + (Math.random() * 2 - 1) * 0.15));
+    let rate = 1;
+    let missed = false;
+    const first = Math.round(Math.random() * base);
+    let lastTick = Date.now() - base + first;
+    const tick = () => {
+      lastTick = Date.now();
+      if (document.hidden) missed = true;
+      else reload();
+      timer = setTimeout(tick, jit(base * rate));
+    };
     /* The handle is reassigned every tick. The cleanup must read the current
        one. */
-    let missed = false;
-    let timer = setTimeout(
-      function tick() {
-        if (document.hidden) missed = true;
-        else reload();
-        timer = setTimeout(tick, jit());
-      },
-      Math.round(Math.random() * base),
-    );
+    let timer = setTimeout(tick, first);
+    /** @param {number} r */
+    const setRate = r => {
+      if (r === rate) return;
+      rate = r;
+      clearTimeout(timer);
+      const due = lastTick + base * r - Date.now();
+      if (due <= 0) tick();
+      else timer = setTimeout(tick, jit(due));
+    };
+    _rates.set(card, setRate);
     const onShow = () => {
       if (document.hidden || !missed) return;
       missed = false;
+      lastTick = Date.now();
       reload();
     };
     document.addEventListener('visibilitychange', onShow);
     cleanups.push(() => {
       clearTimeout(timer);
+      _rates.delete(card);
       document.removeEventListener('visibilitychange', onShow);
       if (!pending) return;
       clearTimeout(pendingTimer);

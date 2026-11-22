@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
+import { pageWithScripts } from './widget-source.mjs';
 import {
   clockDateFormatter,
   clockDateParts,
@@ -52,7 +52,7 @@ test('a malformed Persian tag falls back instead of throwing', () => {
 
 test('both clock faces use the shared formatter', () => {
   for (const face of ['digital', 'analog', 'captain']) {
-    const src = fs.readFileSync(new URL(`../widgets/clock/${face}.html`, import.meta.url), 'utf8');
+    const src = pageWithScripts(new URL(`../widgets/clock/${face}.html`, import.meta.url));
     assert.match(src, /import\('\/js\/clock-date\.js\?v=[0-9a-f]+'\)/, face);
     assert.doesNotMatch(src, /new Intl\.DateTimeFormat\(_lang/, face);
   }

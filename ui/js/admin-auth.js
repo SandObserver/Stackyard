@@ -1,10 +1,10 @@
-import { announce, apiGet, apiPost } from '/js/admin-shared.js?v=7384ea00';
-import { initI18n, t } from '/js/i18n.js?v=99563c71';
+import { announce, apiGet, apiPost } from '/js/admin-shared.js?v=80e58470';
+import { initI18n, t } from '/js/i18n.js?v=82ba9da2';
 import { loginErrorAdvice } from '/js/admin-error.js?v=5abd7438';
 import { passwordMeter, contextWords, meterColor } from '/js/password-policy.js?v=e16ebd1a';
-import { el, inp as inpById, qa, setLiveText } from '/js/utils.js?v=f2d28d1d';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=797944ce';
-import { fillUsernames, setRevealed, wireReveal } from '/js/password-reveal.js?v=37f218b4';
+import { el, inp as inpById, qa, setLiveText } from '/js/utils.js?v=457d9918';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=ad222fc7';
+import { fillUsernames, setRevealed, wireReveal } from '/js/password-reveal.js?v=bdd477f5';
 
 export async function checkAuth(onLogin) {
   try {

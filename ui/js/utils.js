@@ -1,7 +1,7 @@
 import { iconChain } from '/js/icons.js?v=76c29d43';
 import { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
-import { t } from '/js/i18n.js?v=99563c71';
+import { t } from '/js/i18n.js?v=82ba9da2';
 import { pageTheme, tileColor } from '/js/palette.js?v=3fb8ae43';
 
 export const mk = (tag, a = {}) => {
@@ -86,7 +86,7 @@ export const letterTile = (l, sz, plate) => {
   e.textContent = initial(l);
   return e;
 };
-export { esc } from '/js/html.js?v=c71f8903';
+export { esc } from '/js/html.js?v=48f9dc21';
 
 /* A name the user typed has its own direction. Without that an English name
    inside a Persian dashboard lays out right-to-left and an over-long one loses

@@ -1,4 +1,4 @@
-import { wirePasswordStrength } from '/js/admin-auth.js?v=4fab8b20';
+import { wirePasswordStrength } from '/js/admin-auth.js?v=9df158ff';
 import {
   applyHealthChecks,
   savedWallpaperUrl,
@@ -6,7 +6,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=9952f399';
+} from '/js/admin-settings.js?v=c2f92edb';
 import {
   clearFieldError,
   errorText,
@@ -15,11 +15,11 @@ import {
   reveal,
   showFieldError,
   toast,
-} from '/js/admin-shared.js?v=7384ea00';
-import { LANGUAGES, t } from '/js/i18n.js?v=99563c71';
-import { createListbox } from '/js/listbox.js?v=4f8e5c94';
+} from '/js/admin-shared.js?v=80e58470';
+import { LANGUAGES, t } from '/js/i18n.js?v=82ba9da2';
+import { createListbox } from '/js/listbox.js?v=c9cee787';
 import { passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
-import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
+import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=bdd477f5';
 import {
   applyTheme,
   prefersDark,
@@ -33,7 +33,7 @@ import {
   writeMode,
   writeReduceTransparency,
 } from '/js/theme.js?v=0bbd81e8';
-import { el, inp, qa, setUserText } from '/js/utils.js?v=f2d28d1d';
+import { el, inp, qa, setUserText } from '/js/utils.js?v=457d9918';
 
 /* The pickers are built before the catalog loads, so each registers how to
    relabel itself. Without this their options read as raw keys. */

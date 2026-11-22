@@ -1,10 +1,10 @@
 // @ts-check
-import { GlassBar, segmented, tabBar } from '/js/glass-bar.js?v=5e90cf22';
-import { cancelAll, releasePointer } from '/js/glass-control.js?v=0ce42d7b';
-import { lensSupported } from '/js/glass-gpu.js?v=eab726bc';
+import { GlassBar, segmented, tabBar } from '/js/glass-bar.js?v=f450fd40';
+import { cancelAll, releasePointer } from '/js/glass-control.js?v=2995d503';
+import { lensSupported } from '/js/glass-gpu.js?v=5cefbe56';
 import { wantsPlain } from '/js/glass-prefs.js?v=511e01c7';
-import { GlassSlider } from '/js/glass-slider.js?v=e8daf74c';
-import { GlassSwitch } from '/js/glass-switch.js?v=1b43decf';
+import { GlassSlider } from '/js/glass-slider.js?v=e631393b';
+import { GlassSwitch } from '/js/glass-switch.js?v=6011ab61';
 
 /** Glass needs WebGL2 and none of the settings that ask for plain controls. */
 export function glassAllowed() {

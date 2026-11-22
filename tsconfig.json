@@ -19,5 +19,8 @@
     "ui/widgets/*/data.js",
     "ui/widgets/*/demo.js",
     "docs/widget-template/*.js"
+  ],
+  "exclude": [
+    "docs/widget-template/widget.js"
   ]
 }

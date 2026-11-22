@@ -53,8 +53,11 @@ test('no first-party markup carries a style attribute', () => {
 
 test("neither first-party policy grants 'unsafe-inline' for styles", () => {
   const conf = f => fs.readFileSync(path.resolve(root, '..', 'nginx', f), 'utf8');
-  const policies = [...conf('csp-default.conf').split('\n'), ...conf('dashboard.conf').split('\n')].filter(
-    l => l.includes('add_header Content-Security-Policy') && !l.includes("script-src 'self' 'unsafe-inline'"),
+  const dashboard = conf('dashboard.conf');
+  const widgets = dashboard.slice(dashboard.indexOf('location ^~ /widgets/ {'));
+  const firstParty = dashboard.replace(widgets.slice(0, widgets.indexOf('\n    }')), '');
+  const policies = [...conf('csp-default.conf').split('\n'), ...firstParty.split('\n')].filter(
+    l => l.includes('add_header Content-Security-Policy') && l.includes('style-src'),
   );
 
   assert.ok(policies.length >= 2, 'expected the default and admin policies');

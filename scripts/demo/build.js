@@ -9,7 +9,7 @@ const MAX_HEADER_RULES = 100;
 const MISSING = [503, JSON.stringify({ error: 'Not available in the live demo.', kind: 'blocked' })];
 const OUTBOUND_ROUTES = ['POST /api/widget-options/:id'];
 
-const { listFiles, routePattern } = require('./source');
+const { demoHeaders, listFiles, routePattern } = require('./source');
 
 const hash = s => crypto.createHash('sha256').update(s).digest('hex').slice(0, 12);
 
@@ -247,12 +247,14 @@ function build(webroot, recording, out) {
     fs.writeFileSync(file, injectScript(fs.readFileSync(file, 'utf8'), `/demo-replay/${scriptName}`));
   }
 
-  const replayHeaders = { ...recording.headers.files['/index.html'] };
+  const replayHeaders = demoHeaders(recording.headers.files['/index.html']);
   replayHeaders['cache-control'] = 'public, max-age=31536000, immutable';
   const replayFiles = Object.fromEntries(listFiles(dir, '/demo-replay').map(p => [p, replayHeaders]));
 
-  const { routes } = recording.headers;
-  const pages = routePages(recording.headers.files, routes);
+  const strip = map => Object.fromEntries(Object.entries(map).map(([p, h]) => [p, demoHeaders(h)]));
+  const recorded = strip(recording.headers.files);
+  const routes = strip(recording.headers.routes);
+  const pages = routePages(recorded, routes);
   const routeFiles = {};
   for (const [route, page] of Object.entries(pages)) {
     if (!page.startsWith('/demo-routes/')) continue;
@@ -261,10 +263,7 @@ function build(webroot, recording, out) {
     fs.copyFileSync(path.join(out, source), path.join(out, page));
     routeFiles[page] = routes[route];
   }
-  fs.writeFileSync(
-    path.join(out, '_headers'),
-    headerRules({ ...recording.headers.files, ...replayFiles, ...routeFiles }, routes),
-  );
+  fs.writeFileSync(path.join(out, '_headers'), headerRules({ ...recorded, ...replayFiles, ...routeFiles }, routes));
   fs.writeFileSync(path.join(out, '_redirects'), redirectRules(pages));
   return { pages: files.filter(p => p.endsWith('.html')).length, fixed: Object.keys(fixed).length, varying };
 }

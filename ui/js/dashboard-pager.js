@@ -2,9 +2,10 @@ import { closeBadgePopover } from '/js/badge-popover.js?v=a7b62808';
 import { clampPage, PAGE_TURN_MS } from '/js/dashboard-logic.js?v=b4828b62';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { easing, glide, isScripted } from '/js/frame-motion.js?v=911f7c03';
-import { t } from '/js/i18n.js?v=99563c71';
+import { t } from '/js/i18n.js?v=82ba9da2';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
-import { el, inertAllBut, pageDir, qa, storeSet } from '/js/utils.js?v=f2d28d1d';
+import { el, inertAllBut, pageDir, qa, storeSet } from '/js/utils.js?v=457d9918';
+import { setRefreshRate } from '/js/widget-frame.js?v=8e76d79b';
 
 export const PAGE_STORE = 'dash_page';
 
@@ -36,6 +37,7 @@ export function createPager(dash) {
     }
     Array.from(strip.children).forEach((page, i) => {
       const rate = i === dash.pg ? 1 : OFF_PAGE_RATE;
+      setRefreshRate(page, rate);
       qa('iframe', /** @type {HTMLElement} */ (page)).forEach(ifr => {
         const frame = /** @type {HTMLIFrameElement} */ (ifr);
         try {

@@ -69,10 +69,15 @@ function block(marker) {
   return out;
 }
 
+/* The dashboard takes the default step in px. Settings takes it in rem, and the
+   small step is only in rem. 16px is the browser default, so rem is size / 16. */
 const BLOCKS = {
   'Large (Default)': block('--fs-large-title:34px'),
-  Small: block('--fs-large-title:32px'),
+  Small: block('--fs-large-title:2rem'),
 };
+const UNIT = { 'Large (Default)': 'px', Small: 'rem' };
+const DEFAULT_REM = block('--fs-large-title:2.125rem');
+const sizeIn = (size, unit) => (unit === 'px' ? `${size}px` : `${size / 16}rem`);
 
 for (const [step, scale] of Object.entries(STEPS)) {
   const declared = BLOCKS[step];
@@ -91,7 +96,8 @@ for (const [step, scale] of Object.entries(STEPS)) {
     const wrong = [];
     for (const [name, size] of scale) {
       const actual = declared.get(`--fs-${name}`);
-      if (actual !== `${size}px`) wrong.push(`--fs-${name}: ${actual}, expected ${size}px`);
+      const expected = sizeIn(size, UNIT[step]);
+      if (actual !== expected) wrong.push(`--fs-${name}: ${actual}, expected ${expected}`);
     }
     assert.deepEqual(wrong, [], `\n  ${wrong.join('\n  ')}`);
   });
@@ -123,6 +129,99 @@ for (const [step, scale] of Object.entries(STEPS)) {
     assert.deepEqual(wrong, [], `\n  ${wrong.join('\n  ')}`);
   });
 }
+
+test('Large (Default): the rem sizes are the px sizes at a 16px root', () => {
+  const expected = new Map(STEPS['Large (Default)'].map(([name, size]) => [`--fs-${name}`, sizeIn(size, 'rem')]));
+  assert.deepEqual(DEFAULT_REM, expected);
+});
+
+/* The dashboard tiles are px, so its text must not follow the browser text size.
+   Settings must, so it takes both classes. */
+test('Settings text follows the browser text size and the dashboard text does not', () => {
+  const htmlClass = file => {
+    const page = fs.readFileSync(path.join(cssDir, '..', file), 'utf8');
+    return (/<html[^>]*\bclass="([^"]*)"/.exec(page)?.[1] ?? '').split(/\s+/).filter(Boolean);
+  };
+  assert.deepEqual(htmlClass('admin/index.html').sort(), ['type-rem', 'type-small']);
+  assert.deepEqual(htmlClass('index.html'), []);
+});
+
+/* A glyph drawn inside a fixed px box keeps a px size, or a larger text setting
+   pushes it out of the box. */
+const PX_GLYPH = new Set(['.rico', '.kv-box::after', '.icon-prev', '.fp-ic', '.ipv']);
+/* Tab bar labels keep a px size. A larger size overflows the four tabs in the
+   phone bar. */
+const PX_FIXED = new Set(['html.is-mobile .mtab']);
+
+test('Settings sets no text size in px outside a fixed glyph box', () => {
+  const src = fs.readFileSync(path.join(cssDir, 'admin.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const offenders = [];
+  for (const m of src.matchAll(/([^{}]*)\{([^{}]*)\}/g)) {
+    const [, sel, body] = m;
+    if (!/(^|;)\s*(font-size\s*:\s*[\d.]+px|line-height\s*:\s*[\d.]+px)/.test(body)) continue;
+    const name = sel.trim().split('\n').pop().trim();
+    if (!PX_GLYPH.has(name) && !PX_FIXED.has(name)) offenders.push(name);
+  }
+  assert.deepEqual(offenders, [], `px text size in Settings:\n  ${offenders.join('\n  ')}`);
+  const list = fs.readFileSync(path.join(cssDir, '..', 'js', 'admin-list.js'), 'utf8');
+  assert.doesNotMatch(list, /font-size:\d+px/, 'the folder chevron is text and follows the text size');
+});
+
+test('Settings leaves the root font size at the browser default', () => {
+  const settingsCss = ['tokens.css', 'admin.css', 'widget-config-form.css', 'config-recovery.css'];
+  const rootSelector = /^(html|:root)(?![^\s>+~]*::)[^\s>+~]*$/;
+  const offenders = [];
+  for (const file of settingsCss) {
+    const src = fs.readFileSync(path.join(cssDir, file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const m of src.matchAll(/([^{}]*)\{([^{}]*)\}/g)) {
+      const [, sel, body] = m;
+      if (!/(^|;)\s*font(-size)?\s*:/.test(body)) continue;
+      const roots = sel
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => rootSelector.test(s));
+      if (roots.length) offenders.push(`${file}: ${roots.join(', ')}`);
+    }
+  }
+  assert.deepEqual(offenders, [], `font size on the root:\n  ${offenders.join('\n  ')}`);
+  const page = fs.readFileSync(path.join(cssDir, '..', 'admin', 'index.html'), 'utf8');
+  assert.doesNotMatch(/<html[^>]*>/.exec(page)?.[0] ?? '', /style=/);
+});
+
+test('the phone tab labels keep a fixed size', () => {
+  const src = fs.readFileSync(path.join(cssDir, 'admin.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const tab = [...src.matchAll(/([^{}]*)\{([^{}]*)\}/g)].find(m => m[1].trim() === 'html.is-mobile .mtab')?.[2] ?? '';
+  assert.match(tab, /(^|;)font-size:10px(;|$)/);
+  assert.match(tab, /(^|;)line-height:12px(;|$)/);
+});
+
+/* balance on short centred headings, pretty on hint prose. Never on every
+   element: balance is limited to a few lines and costs layout time on long text. */
+const WRAP = {
+  'admin.css': { '.login-sub': 'balance', '.hint': 'pretty', '.grp-tip': 'pretty' },
+  'dashboard.css': {
+    '.empty-state-title': 'balance',
+    '.empty-state-sub': 'balance',
+    '.api-error-title': 'balance',
+    '.folder-title-desktop': 'balance',
+    '.api-error-sub': 'pretty',
+    '.setup-sub': 'pretty',
+  },
+};
+
+test('centred headings balance and hints wrap pretty, and nothing else', () => {
+  for (const [file, want] of Object.entries(WRAP)) {
+    const src = fs.readFileSync(path.join(cssDir, file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const got = {};
+    for (const m of src.matchAll(/([^{}]*)\{([^{}]*)\}/g)) {
+      const wrap = /text-wrap\s*:\s*(\w+)/.exec(m[2]);
+      if (wrap) got[m[1].trim().split('\n').pop().trim()] = wrap[1];
+    }
+    assert.deepEqual(got, want, file);
+  }
+  const tokensBare = tokens.replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.doesNotMatch(tokensBare, /text-wrap/);
+});
 
 /* A rule that sets a size from the scale and takes its leading from somewhere
    else looks applied and is not. Rules that set their own line-height on

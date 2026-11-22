@@ -1,4 +1,4 @@
-const { on, json, readBody, checkOrigin } = require('../router');
+const { on, json, tagMatches, readBody, checkOrigin } = require('../router');
 const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const {
   loadConfig,
@@ -61,10 +61,19 @@ function scrubSecrets(cfg) {
   return safe;
 }
 
-const clientConfig = () => ensureSystemItems(scrubSecrets(loadConfig()));
+const clientConfig = (cfg = loadConfig()) => ensureSystemItems(scrubSecrets(cfg));
 
-on('GET', '/api/config', (_, res) => {
-  json(res, 200, clientConfig());
+/** @param {any} cfg @returns {string} '' when the config carries no usable revision */
+const revTag = cfg => (Number.isSafeInteger(cfg?._rev) ? `"${cfg._rev}"` : '');
+
+on('GET', '/api/config', (req, res) => {
+  const cfg = loadConfig();
+  const etag = revTag(cfg);
+  if (etag && tagMatches(req.headers['if-none-match'], etag)) {
+    res.writeHead(304, { ETag: etag });
+    return res.end();
+  }
+  json(res, 200, clientConfig(cfg), etag ? { ETag: etag } : {});
 });
 
 on('GET', '/api/settings/unsplash-key', (_, res) => {

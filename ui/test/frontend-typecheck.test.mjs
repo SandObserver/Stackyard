@@ -54,7 +54,25 @@ test('every module under ui/js has both path entries', () => {
 
 test('the project covers ui/js and the widget helpers the pages import', () => {
   assert.deepEqual(cfg.include, ['ui/js/**/*.js', 'ui/widgets/*/*.js']);
-  assert.deepEqual(cfg.exclude, ['ui/widgets/*/data.js', 'ui/widgets/*/demo.js']);
+  assert.deepEqual(cfg.exclude.slice(0, 2), ['ui/widgets/*/data.js', 'ui/widgets/*/demo.js']);
+});
+
+/* The page scripts moved out of the widget pages unchanged and were never
+   checked. Each is listed by name, so a new page script is checked, and the
+   list can only shrink. Biome skips the same files. */
+test('only existing widget page scripts are left out of the typecheck and the formatter', () => {
+  const pageScripts = cfg.exclude.slice(2);
+  assert.ok(pageScripts.length > 0);
+  for (const file of pageScripts) {
+    const dir = path.dirname(file);
+    const stem = path.basename(file, '.js');
+    const page = path.join(root, dir, stem === 'widget' ? 'index.html' : `${stem}.html`);
+    assert.ok(fs.existsSync(path.join(root, file)), `${file} is gone; remove it from the exclude list`);
+    assert.ok(fs.existsSync(page), `${file} is not a widget page script`);
+  }
+  const biome = JSON.parse(fs.readFileSync(path.join(root, 'biome.json'), 'utf8'));
+  const unformatted = biome.overrides.find(o => o.formatter?.enabled === false);
+  assert.deepEqual(unformatted.includes, pageScripts, 'biome.json and tsconfig.frontend.json name different files');
 });
 
 /* The check is only enforced if CI runs it. */

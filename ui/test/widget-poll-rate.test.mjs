@@ -1,7 +1,7 @@
 /* The behaviour the rate drives inside a widget is covered in
    widget-toolbox-poll.test.mjs. */
 
-import { test } from 'node:test';
+import { mock, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -31,6 +31,7 @@ const frames = [frame(0), frame(1), frame(2)];
 const dash = createDashboardState();
 dash.totalPages = 3;
 const { goTo } = createPager(dash);
+const qa = (node, sel) => Array.from(node.querySelectorAll(sel));
 
 test('the toolbox exposes the rate hook the dashboard calls', () => {
   assert.match(toolbox, /window\)\.__setPollRate = setPollRate/);
@@ -66,4 +67,29 @@ test('a frame with no reachable window does not stop the others', () => {
   strip.children[0].prepend(ifr);
   goTo(2, false);
   assert.equal(frames[2].rates.at(-1), 1);
+});
+
+test('a refreshing widget on a page out of view reloads at the slow rate and catches up on return', async () => {
+  const { mountScaledWidget, teardownWidgets } = await import('../js/widget-frame.js');
+  mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  try {
+    goTo(0, false);
+    const card = dom.document.createElement('div');
+    strip.children[1].appendChild(card);
+    mountScaledWidget(card, {
+      src: 'http://svc/w',
+      title: 'w',
+      design: [400, 300],
+      iframeOpts: { refreshInterval: 1000 },
+    });
+    const loaded = () => qa(card, 'iframe').length;
+    goTo(0, false);
+    mock.timers.tick(2500);
+    assert.equal(loaded(), 1, 'an off-page widget reloaded at its full rate');
+    goTo(1, false);
+    assert.equal(loaded(), 2, 'a widget that missed its refresh did not catch up on return');
+  } finally {
+    teardownWidgets();
+    mock.timers.reset();
+  }
 });

@@ -3,9 +3,9 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
+import { pageWithScripts } from './widget-source.mjs';
 
-const src = fs.readFileSync(new URL('../widgets/clock/analog.html', import.meta.url), 'utf8');
+const src = pageWithScripts(new URL('../widgets/clock/analog.html', import.meta.url));
 
 test('the plain date is drawn before any disc', () => {
   assert.ok(src.indexOf('dateOf(null);') < src.indexOf("face.appendChild(discOf('minute'"));
@@ -53,7 +53,7 @@ test('each line of the date is its own text element', () => {
 });
 
 test('the dial date uses the same weight as the digital date', () => {
-  const digital = fs.readFileSync(new URL('../widgets/clock/digital.html', import.meta.url), 'utf8');
+  const digital = pageWithScripts(new URL('../widgets/clock/digital.html', import.meta.url));
   const weight = css => css.match(/font-weight: (\d+)/)[1];
   assert.equal(weight(src.match(/\.face text \{[^}]*\}/)[0]), weight(digital.match(/\.date-line \{[^}]*\}/)[0]));
 });

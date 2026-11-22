@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=3431e2bf';
+import { renderColorControl } from '/js/admin-color-control.js?v=739def21';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=5abd7438';
 import {
   clearsStoredSecret,
@@ -27,15 +27,15 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=7384ea00';
+} from '/js/admin-shared.js?v=80e58470';
 import { activityAuth, activityHasAuth } from '/js/admin-save-logic.js?v=7de2f6fd';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=7112fd10';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
-import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=99563c71';
-import { iconSvg } from '/js/icon-set.js?v=361e54a5';
+import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
+import { t } from '/js/i18n.js?v=82ba9da2';
+import { iconSvg } from '/js/icon-set.js?v=beda3062';
 import {
   cdnIconRef,
   iconChain,
@@ -45,9 +45,9 @@ import {
   throughServer,
 } from '/js/icons.js?v=76c29d43';
 import { DOCK_MAX } from '/js/limits.js?v=ff61256e';
-import { createListbox } from '/js/listbox.js?v=4f8e5c94';
+import { createListbox } from '/js/listbox.js?v=c9cee787';
 import { slideBlock } from '/js/modal.js?v=84ba5279';
-import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=f2d28d1d';
+import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=457d9918';
 
 export function buildFolderForm(body, item) {
   const children = folderChildren(item);

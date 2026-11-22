@@ -1,11 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { register } from 'node:module';
+import { pageWithScripts } from './widget-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
-const page = fs.readFileSync(new URL('../widgets/dns/index.html', import.meta.url), 'utf8');
+const page = pageWithScripts(new URL('../widgets/dns/index.html', import.meta.url));
 
 globalThis.location = /** @type {any} */ ({ search: '' });
 let onGlass = false;

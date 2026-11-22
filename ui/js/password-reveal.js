@@ -1,5 +1,5 @@
 // @ts-check
-import { plainInput } from '/js/utils.js?v=f2d28d1d';
+import { plainInput } from '/js/utils.js?v=457d9918';
 
 /** Show or hide every field of a pair together. Any of the buttons toggles
     all of them.

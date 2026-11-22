@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { test } from 'node:test';
+import { pageWithScripts } from './widget-source.mjs';
 
-const read = rel => fs.readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
+const read = rel => pageWithScripts(new URL(`../${rel}`, import.meta.url));
 
 test('the VPN pulse is a css animation over a static map', () => {
   const page = read('widgets/connections/connections-vpn.html');
@@ -38,7 +38,9 @@ function backupTimes(querySelector) {
     { getElementById: id => (id.startsWith('front') ? front : bmeta) },
     (_k, en) => en,
     () => '',
-    () => {},
+    (el, markup) => {
+      el.innerHTML = markup;
+    },
     () => '',
     () => '',
     {},
@@ -78,7 +80,7 @@ test('book spines carry no layer hint', () => {
 
 test('weather rebuilds the icon only when it changes', () => {
   const page = read('widgets/weather/index.html');
-  assert.match(page, /if\(nextIcon!==iconKey\)\{\s*iconKey=nextIcon;\s*icoEl\.innerHTML=/);
+  assert.match(page, /if\(nextIcon!==iconKey\)\{\s*iconKey=nextIcon;\s*setHtml\(icoEl,/);
 });
 
 test('now playing text takes its direction from its content', () => {

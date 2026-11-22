@@ -1,8 +1,8 @@
 import { setupErrorKey } from '/js/admin-error.js?v=5abd7438';
 import { landingAfterSetup } from '/js/dashboard-logic.js?v=b4828b62';
-import { html, raw, setHtml } from '/js/html.js?v=c71f8903';
-import { t } from '/js/i18n.js?v=99563c71';
-import { iconSvg } from '/js/icon-set.js?v=361e54a5';
+import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
+import { t } from '/js/i18n.js?v=82ba9da2';
+import { iconSvg } from '/js/icon-set.js?v=beda3062';
 import {
   contextWords,
   meterColor,
@@ -11,8 +11,8 @@ import {
   passwordProblem,
   REFUSAL_KEYS,
 } from '/js/password-policy.js?v=e16ebd1a';
-import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=37f218b4';
-import { q, qa, qi, setLiveText } from '/js/utils.js?v=f2d28d1d';
+import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=bdd477f5';
+import { q, qa, qi, setLiveText } from '/js/utils.js?v=457d9918';
 
 /** @param {import('/js/dashboard-state.js?v=51013727').DashboardState} dash
     @returns {Promise<void>} */
