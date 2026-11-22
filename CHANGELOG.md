@@ -75,6 +75,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Serve only image types from the icons folder.
 
+- Glass edges bend the wallpaper like the glass in iOS and stay sharp on
+  high-density screens.
+
+- Tab bar icons and labels bend smoothly under the moving lens on phones.
+
 ### Removed
 
 - Remove the `WIDGETS_PATH` setting from the Compose example. Mount a custom
