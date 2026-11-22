@@ -1,5 +1,5 @@
 import { restoreAction } from '/js/dashboard-logic.js?v=b4828b62';
-import { overlayOpen } from '/js/dashboard-pager.js?v=a2181a99';
+import { overlayOpen } from '/js/dashboard-pager.js?v=a12777fd';
 import { liftVeil, showApiDown } from '/js/dashboard-screens.js?v=a1d32807';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { el } from '/js/utils.js?v=9ed2b298';
@@ -7,8 +7,9 @@ import { el } from '/js/utils.js?v=9ed2b298';
 /** @param {{
       badges: import('/js/dashboard-badges.js?v=5b05724e').Badges,
       differs: (c: any) => boolean,
+      rev?: () => unknown,
     }} deps */
-export function createPolling({ badges, differs }) {
+export function createPolling({ badges, differs, rev = () => null }) {
   const { pollBadges, pollHealth } = badges;
   const strip = el('pages');
   /* Jittered, so several open clients do not poll on the same tick. */
@@ -17,8 +18,12 @@ export function createPolling({ badges, differs }) {
 
   const pollConfig = async () => {
     try {
-      const res = await fetch('/api/config', { cache: 'no-store' });
-      if (!res.ok) return;
+      const loaded = rev();
+      /** @type {RequestInit} */
+      const init = { cache: 'no-store', priority: 'low' };
+      if (Number.isSafeInteger(loaded)) init.headers = { 'If-None-Match': `"${loaded}"` };
+      const res = await fetch('/api/config', init);
+      if (res.status === 304 || !res.ok) return;
       if (differs(await res.json()) && !overlayOpen() && !strip.classList.contains('dragging')) location.reload();
     } catch {}
   };
@@ -28,9 +33,9 @@ export function createPolling({ badges, differs }) {
     _pollTimers = [];
   };
 
-  /* A tab that boots hidden starts here and again when first shown. */
   const startPolling = () => {
     stopPolling();
+    if (document.hidden) return;
     _repeat(pollBadges, 20_000);
     _repeat(pollHealth, 30_000);
     _repeat(pollConfig, 15_000);

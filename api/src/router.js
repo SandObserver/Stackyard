@@ -110,11 +110,20 @@ function onError(req, res, err) {
   } catch {}
 }
 
-function json(res, status, data) {
+/** @param {import('http').ServerResponse} res @param {number} status @param {any} data
+    @param {Record<string, string>} [headers] */
+function json(res, status, data, headers = {}) {
   const b = JSON.stringify(data);
-  res.writeHead(status, { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) });
+  res.writeHead(status, { ...headers, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) });
   res.end(b);
 }
+
+/** Whether an If-None-Match header names `etag`, compared weakly.
+    @param {unknown} header @param {string} etag */
+const tagMatches = (header, etag) =>
+  String(header || '')
+    .split(',')
+    .some(t => t.trim().replace(/^W\//, '') === etag);
 
 /* Buffered in memory before parsing, so this is a memory limit too. */
 const BODY_LIMIT = CONFIG_MAX_BYTES;
@@ -184,6 +193,7 @@ module.exports = {
   on,
   dispatch,
   json,
+  tagMatches,
   readBody,
   readBodyCapped,
   checkOrigin,

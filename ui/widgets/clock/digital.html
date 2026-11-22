@@ -85,7 +85,7 @@ function tick() {
 
 async function boot() {
   const [toolbox, dates] = await Promise.all([
-    import('/js/widget-toolbox.js?v=5121d788'),
+    import('/js/widget-toolbox.js?v=f293416e'),
     import('/js/clock-date.js?v=91a77e74'),
   ]);
   const settings = await dates.clockSettings(toolbox.getConfig);
