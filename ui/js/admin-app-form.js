@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=9f176f5e';
+import { renderColorControl } from '/js/admin-color-control.js?v=55a89c05';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=5abd7438';
 import {
   clearsStoredSecret,
@@ -30,7 +30,7 @@ import {
   syncRequiredLegend,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=be7712ac';
+} from '/js/admin-shared.js?v=0f28a237';
 import { activityAuth, activityHasAuth, POLL_MAX, POLL_MIN } from '/js/admin-save-logic.js?v=2a82f10d';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=7112fd10';
@@ -49,7 +49,7 @@ import {
 } from '/js/icons.js?v=76c29d43';
 import { DOCK_MAX } from '/js/limits.js?v=ff61256e';
 import { createListbox } from '/js/listbox.js?v=c9cee787';
-import { slideBlock } from '/js/modal.js?v=b22f3f76';
+import { slideBlock } from '/js/modal.js?v=93d3e755';
 import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=457d9918';
 
 export function buildFolderForm(body, item) {

@@ -1,7 +1,7 @@
 // @ts-check
 /* Structure only; callers fill the body. */
 
-import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
+import { EASE_IOS } from '/js/motion-curve.js?v=7fea8800';
 
 /* A counter, not randomness. Six base-36 characters collide plausibly over a
    long session, and an id that changes per run cannot be asserted on. */

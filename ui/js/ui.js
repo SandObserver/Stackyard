@@ -39,7 +39,7 @@ import { animate, easing, glide, isScripted, requestFrame, stopGlide } from '/js
 import { openFolderGlass } from '/js/glass.js?v=7c376881';
 import { fingerSpeed, rubberBand, settleMs, swipeSettle, SWIPE_LOCK_PX } from '/js/dashboard-logic.js?v=b4828b62';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
-import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
+import { EASE_IOS, EASE_OUT } from '/js/motion-curve.js?v=7fea8800';
 
 /* Matches the --pill-inset transition in dashboard.css. */
 const PILL_MS = 250;
@@ -457,7 +457,7 @@ function folderMotion(ov, parts, tile, panel) {
   /** @param {string} prop @param {boolean} open */
   const timing = (prop, open) =>
     still
-      ? { duration: 150, delay: 0, easing: 'ease-out' }
+      ? { duration: 150, delay: 0, easing: EASE_OUT }
       : prop === 'opacity'
         ? open
           ? { duration: 120, delay: 0, easing: FADE_EASE }

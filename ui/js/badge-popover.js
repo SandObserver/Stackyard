@@ -3,7 +3,7 @@
    the grid rebuilds on every resize. */
 
 import { formatList, formatNumber } from '/js/format-number.js?v=263fa390';
-import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
+import { EASE_IOS, EASE_OUT } from '/js/motion-curve.js?v=7fea8800';
 
 const HOVER_IN_MS = 320;
 const COMPAT_CLICK_MS = 500;
@@ -20,6 +20,7 @@ let shownFrom = null;
 let openTimer = 0;
 let closeTimer = 0;
 let openedAt = 0;
+let byFocus = false;
 let holdSeq = 0;
 let held = false;
 /** @type {HTMLElement|null} */
@@ -94,13 +95,13 @@ function grow(p, badge, opening) {
   const full = still ? { opacity: 1 } : { opacity: 1, transform: 'none' };
   return p.animate(opening ? [shut, full] : [full, shut], {
     duration: opening ? 200 : 120,
-    easing: opening ? EASE_IOS : 'ease-out',
+    easing: opening ? EASE_IOS : EASE_OUT,
     fill: opening ? 'none' : 'forwards',
   });
 }
 
-/** @param {HTMLElement} badge */
-function open(badge) {
+/** @param {HTMLElement} badge @param {boolean} [focus] shown at once, with no motion */
+function open(badge, focus = false) {
   const rows = ROWS.get(badge);
   if (!rows || !rows.length) return;
   const p = ensurePop();
@@ -133,8 +134,9 @@ function open(badge) {
   shownFrom = badge;
   openFor = badge;
   openedAt = Date.now();
+  byFocus = focus;
   place(badge);
-  if (!was) grow(p, badge, true);
+  if (!was && !focus) grow(p, badge, true);
 }
 
 export function closeBadgePopover() {
@@ -145,7 +147,7 @@ export function closeBadgePopover() {
   const from = openFor;
   if (pop?.matches(':popover-open')) {
     const p = pop;
-    const a = from ? grow(p, from, false) : null;
+    const a = from && !byFocus ? grow(p, from, false) : null;
     if (a)
       a.onfinish = () => {
         if (!openFor && p.matches(':popover-open')) p.hidePopover();
@@ -153,6 +155,7 @@ export function closeBadgePopover() {
     else p.hidePopover();
   }
   openFor = null;
+  byFocus = false;
 }
 
 /** @param {HTMLElement} badge */
@@ -207,12 +210,15 @@ function wireGlobals() {
   /* Resolve the tile at focus time. A badge is wired before it joins its tile. */
   document.addEventListener('focusin', e => {
     const badge = badgeIn(e.target);
-    if (!badge || !(/** @type {HTMLElement} */ (e.target).matches(':focus-visible'))) return;
-    if (held) heldFocus = badge;
-    else open(badge);
+    if (badge && /** @type {HTMLElement} */ (e.target).matches(':focus-visible')) {
+      if (held) heldFocus = badge;
+      else open(badge, true);
+    } else if (byFocus && openFor) closeBadgePopover();
   });
   document.addEventListener('focusout', e => {
-    if (badgeIn(e.target)) closeBadgePopover();
+    if (!badgeIn(e.target)) return;
+    if (byFocus && badgeIn(/** @type {FocusEvent} */ (e).relatedTarget)) return;
+    closeBadgePopover();
   });
 }
 
@@ -228,7 +234,7 @@ export function holdBadgePopover() {
     held = false;
     const badge = heldFocus;
     heldFocus = null;
-    if (badge && tileOf(badge) === document.activeElement && ROWS.get(badge)) open(badge);
+    if (badge && tileOf(badge) === document.activeElement && ROWS.get(badge)) open(badge, true);
   };
 }
 
