@@ -53,11 +53,28 @@ test('the region is available to a screen reader but not on screen', () => {
 test('visually-hidden keeps the element rendered', () => {
   /* display:none or visibility:hidden would remove it from the accessibility
      tree, so nothing would be announced. */
-  const css = read('css/dashboard.css');
+  const css = read('css/tokens.css');
   const block = css.slice(css.indexOf('.visually-hidden {'), css.indexOf('}', css.indexOf('.visually-hidden {')));
   assert.doesNotMatch(block, /display\s*:\s*none/);
   assert.doesNotMatch(block, /visibility\s*:\s*hidden/);
   assert.match(block, /position\s*:\s*absolute/);
+  assert.match(block, /clip-path\s*:\s*inset\(50%\)/);
+  assert.doesNotMatch(block, /(^|[\s;{])clip\s*:/, 'clip is deprecated');
+});
+
+test('both pages share one visually-hidden and one icon rule set', () => {
+  for (const file of ['css/admin.css', 'css/dashboard.css']) {
+    const css = read(file);
+    assert.doesNotMatch(css, /(?:^|[\n{}])[ \t]*\.visually-hidden\s*\{/, `${file} defines its own copy`);
+    assert.doesNotMatch(
+      css,
+      /(?:^|[\n{}])[ \t]*\.sy-(?:sprite|icon|i|i2|i3|a|is|i3s|as)\s*\{/,
+      `${file} defines its own copy`,
+    );
+  }
+  const tokens = read('css/tokens.css');
+  assert.equal(tokens.match(/(^|\n)\.visually-hidden \{/g)?.length, 1);
+  assert.equal(tokens.match(/(^|\n)\.sy-icon\{/g)?.length, 1);
 });
 
 /* ── what gets announced ──────────────────────────────────────────────────── */

@@ -250,7 +250,7 @@ function mkRow(item, { indent = false, childIdx = null, folderId = null, top = {
     nm.setAttribute('aria-expanded', String(!collapsed));
     nm.setAttribute('aria-label', t(collapsed ? 'folder.expandAria' : 'folder.collapseAria', { name: item.label }));
     const chevron = document.createElement('span');
-    chevron.style.cssText = 'font-size:10px;color:var(--dm);transition:transform .15s;flex-shrink:0;';
+    chevron.style.cssText = 'font-size:.625rem;color:var(--dm);transition:transform .15s;flex-shrink:0;';
     chevron.textContent = '▼';
     chevron.style.transform = collapsed
       ? document.dir === 'rtl'
