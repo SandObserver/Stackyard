@@ -1,9 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { register } from 'node:module';
 import { passwordMismatch } from '../js/password-policy.js';
-import { setRevealed } from '../js/password-reveal.js';
 import { ICONS, STYLES, symbol } from '../js/icon-set.js';
+
+register('./js-root-hooks.mjs', import.meta.url);
+const { setRevealed, wireReveal } = await import('../js/password-reveal.js');
 
 const read = path => readFile(new URL(path, import.meta.url), 'utf8');
 
@@ -40,6 +43,17 @@ test('every reveal button and field change together', () => {
   setRevealed(/** @type {any} */ (buttons), /** @type {any} */ (fields), false);
   assert.equal(fields[0].type, 'password');
   assert.equal(buttons[1].use.href, '#sy-solid-eye');
+});
+
+test('every field wired to a reveal button takes no capitals, correction or spelling marks', () => {
+  const fields = [0, 1].map(() => {
+    const attrs = {};
+    return { attrs, type: 'password', setAttribute: (k, v) => (attrs[k] = String(v)) };
+  });
+  const button = { ...fakeButton('#sy-solid-eye'), addEventListener() {} };
+  wireReveal(/** @type {any} */ (button), /** @type {any} */ (fields));
+  for (const f of fields)
+    assert.deepEqual(f.attrs, { autocapitalize: 'none', autocorrect: 'off', spellcheck: 'false' });
 });
 
 test('the slash cuts a gap through the eye in every style and draws outside the cut', () => {

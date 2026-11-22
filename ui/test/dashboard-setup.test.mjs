@@ -10,7 +10,7 @@ register('./js-root-hooks.mjs', import.meta.url);
 let setReply = { status: 200, body: {} };
 const fetch = fakeFetch({
   ...catalogRoutes(),
-  'POST /api/auth/set-password': () => setReply,
+  'POST /api/auth/set-password': () => (typeof setReply === 'function' ? setReply() : setReply),
   'POST /api/auth/dismiss-setup': {},
 });
 const dom = installDom({ fetch, location: 'http://nas.local/' });
@@ -42,6 +42,14 @@ test('the prompt is a modal dialog with the field focused', () => {
 
 test('Escape does not dismiss it', () => {
   assert.equal(fire(ov, 'cancel', { bubbles: false, cancelable: true }), false);
+  assert.equal(ov.getAttribute('closedby'), 'none');
+});
+
+test('a close nobody chose opens it again', () => {
+  ov.close();
+  assert.ok(ov.open, 'a second Escape left the dashboard without the prompt');
+  assert.ok(ov.isConnected);
+  assert.equal(doc.activeElement, $('setup-pw'));
 });
 
 test('it is a form with a username and a submit button for password managers', () => {
@@ -52,27 +60,132 @@ test('it is a form with a username and a submit button for password managers', (
   assert.equal($('setup-pw').getAttribute('autocomplete'), 'new-password');
 });
 
-test('the meter draws as many bars as the rules fill, and its hint is announced', () => {
-  assert.equal(ov.querySelectorAll('#setup-bars .pwbar').length, passwordMeter(STRONG).lit);
-  assert.equal($('setup-hint').getAttribute('role'), 'status');
-  assert.equal($('setup-pw').getAttribute('aria-describedby'), 'setup-hint');
+test('each field has a visible label and is required', () => {
+  const names = {
+    'setup-pw': 'setup.newPassword',
+    'setup-pw2': 'setup.confirmPassword',
+    'setup-code': 'hostBlock.code',
+  };
+  for (const [id, key] of Object.entries(names)) {
+    const label = ov.querySelector(`label[for="${id}"]`);
+    assert.ok(label, `${id} has no label`);
+    assert.equal(label.textContent, t(key));
+    assert.ok($(id).hasAttribute('required'), `${id} is not required`);
+    assert.equal($(id).getAttribute('placeholder'), null, `${id} still names itself with a placeholder`);
+  }
 });
 
-test('Set stays off until the password is strong, confirmed and the code is typed', () => {
-  assert.ok($('setup-set').disabled);
+test('the meter draws as many bars as the rules fill, and its hint is read once per band', async () => {
+  assert.equal(ov.querySelectorAll('#setup-bars .pwbar').length, passwordMeter(STRONG).lit);
+  assert.equal($('setup-hint').getAttribute('role'), null, 'a status hint is read after every character');
+  assert.equal($('setup-pw').getAttribute('aria-describedby'), 'setup-hint');
+  const live = $('setup-live');
+  assert.equal(live.getAttribute('aria-live'), 'polite');
+  assert.ok(ov.contains(live), 'a region outside the modal is inert and never read');
+  assert.equal(live.textContent, '');
+  type('setup-pw', 'q');
+  const counting = live.textContent;
+  assert.equal(counting, $('setup-hint').textContent);
+  type('setup-pw', 'qu');
+  assert.equal(live.textContent, counting, 'each character was announced');
+  assert.notEqual($('setup-hint').textContent, counting);
   type('setup-pw', STRONG);
-  assert.notEqual($('setup-hint').textContent, '');
-  assert.ok($('setup-set').disabled, 'no confirmation yet');
-  type('setup-pw2', `${STRONG}x`);
-  assert.equal($('setup-err').textContent, t('setup.mismatch'));
-  assert.ok($('setup-set').disabled, 'a mismatch can be set');
-  type('setup-pw2', STRONG);
-  assert.equal($('setup-err').textContent, '');
-  assert.ok($('setup-set').disabled, 'no setup code yet');
-  type('setup-code', ' ');
-  assert.ok($('setup-set').disabled, 'a blank code counts');
-  type('setup-code', 'ABCD-1234');
+  assert.equal(live.textContent, t('pwStrength.enough'));
+  type('setup-pw', '');
+});
+
+test('Set stays available and a submit names the first field to fix', () => {
+  const sent = () => fetch.calls.filter(c => c.url === '/api/auth/set-password').length;
   assert.equal($('setup-set').disabled, false);
+  const form = ov.querySelector('form');
+  fire(form, 'submit', { cancelable: true });
+  assert.equal(doc.activeElement, $('setup-pw'));
+  assert.equal($('setup-pw').getAttribute('aria-invalid'), 'true');
+  assert.match($('setup-pw').getAttribute('aria-describedby'), /\bsetup-err\b/);
+  assert.equal($('setup-err').textContent, t('hostBlock.tooShort'));
+  type('setup-pw', STRONG);
+  assert.equal($('setup-pw').getAttribute('aria-invalid'), null);
+  assert.equal($('setup-pw').getAttribute('aria-describedby'), 'setup-hint');
+  assert.equal($('setup-err').style.display, 'none');
+  fire(form, 'submit', { cancelable: true });
+  assert.equal(doc.activeElement, $('setup-pw2'));
+  assert.equal($('setup-err').textContent, t('setup.mismatch'));
+  type('setup-pw2', STRONG);
+  fire(form, 'submit', { cancelable: true });
+  assert.equal(doc.activeElement, $('setup-code'));
+  assert.equal($('setup-code').getAttribute('aria-invalid'), 'true');
+  assert.equal($('setup-err').textContent, t('hostBlock.codeMissing'));
+  type('setup-code', ' ');
+  fire(form, 'submit', { cancelable: true });
+  assert.equal($('setup-err').textContent, '', 'a repeated error is cleared so it is read again');
+  assert.equal(sent(), 0, 'an incomplete form was sent');
+});
+
+test('a mismatch is said when the confirmation is left, and goes when it is edited', () => {
+  type('setup-code', 'ABCD-1234');
+  type('setup-pw2', 'q');
+  assert.equal($('setup-err').style.display, 'none', 'the mismatch shows on the first character');
+  fire($('setup-pw2'), 'blur', { bubbles: false });
+  assert.equal($('setup-err').textContent, t('setup.mismatch'));
+  assert.equal($('setup-pw2').getAttribute('aria-invalid'), 'true');
+  type('setup-pw2', `${STRONG}x`);
+  assert.equal($('setup-pw2').getAttribute('aria-invalid'), null);
+  assert.equal($('setup-err').style.display, 'none');
+  type('setup-pw2', STRONG);
+  fire($('setup-pw2'), 'blur', { bubbles: false });
+  assert.equal($('setup-err').style.display, 'none');
+});
+
+test('a mismatch goes once either field matches, and is checked again on leaving either', () => {
+  const other = 'amber falcon meadow 17';
+  type('setup-pw2', other);
+  fire($('setup-pw2'), 'blur', { bubbles: false });
+  assert.equal($('setup-err').style.display, 'block');
+  assert.equal($('setup-pw2').getAttribute('aria-invalid'), 'true');
+  type('setup-pw', other);
+  assert.equal($('setup-err').style.display, 'none', 'the error stayed after the first field was made to match');
+  assert.equal($('setup-pw2').getAttribute('aria-invalid'), null);
+  assert.doesNotMatch($('setup-pw2').getAttribute('aria-describedby') || '', /setup-err/);
+  type('setup-pw', STRONG);
+  assert.equal($('setup-err').style.display, 'none', 'the mismatch shows while typing');
+  fire($('setup-pw'), 'blur', { bubbles: false });
+  assert.equal($('setup-err').style.display, 'block', 'leaving the first field did not check the match');
+  assert.equal($('setup-pw2').getAttribute('aria-invalid'), 'true');
+  type('setup-pw2', STRONG);
+  fire($('setup-pw2'), 'blur', { bubbles: false });
+  fire($('setup-pw'), 'blur', { bubbles: false });
+  assert.equal($('setup-err').style.display, 'none');
+});
+
+test('a field the reveal button shows takes no capitals, correction or spelling marks', () => {
+  const secret = [...ov.querySelectorAll('input')].filter(f => f.type === 'password');
+  assert.deepEqual(
+    secret.map(f => f.id),
+    ['setup-pw', 'setup-pw2'],
+  );
+  $('setup-reveal').click();
+  for (const f of secret) {
+    assert.equal(f.type, 'text', `${f.id} is not shown`);
+    assert.equal(f.getAttribute('spellcheck'), 'false', f.id);
+    assert.equal(f.getAttribute('autocapitalize'), 'none', f.id);
+    assert.equal(f.getAttribute('autocorrect'), 'off', f.id);
+  }
+  $('setup-reveal').click();
+  assert.equal($('setup-pw').type, 'password');
+});
+
+test('Set is off only while the request is out', async () => {
+  let answer;
+  setReply = () => new Promise(r => (answer = r));
+  type('setup-code', 'ABCD-1234');
+  fire(ov.querySelector('form'), 'submit', { cancelable: true });
+  assert.ok($('setup-set').disabled);
+  assert.ok($('setup-skip').disabled);
+  answer({ status: 400, body: { kind: 'internal', code: 'internal.unknown' } });
+  await settle();
+  assert.equal($('setup-set').disabled, false);
+  assert.equal($('setup-skip').disabled, false);
+  assert.equal($('setup-err').textContent, t('setup.failed'));
 });
 
 test('a wrong code is said in words and puts focus back on the code', async () => {

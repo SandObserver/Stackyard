@@ -1,10 +1,12 @@
 // @ts-check
+import { plainInput } from '/js/utils.js?v=457d9918';
 
 /** Show or hide every field of a pair together. Any of the buttons toggles
     all of them.
     @param {HTMLButtonElement | HTMLButtonElement[]} buttons @param {HTMLInputElement[]} fields */
 export function wireReveal(buttons, fields) {
   const all = [buttons].flat();
+  for (const f of fields) plainInput(f);
   for (const btn of all) {
     /* Keep. A tap must not take focus from the field: Settings saves a row on blur. */
     btn.addEventListener('mousedown', e => e.preventDefault());

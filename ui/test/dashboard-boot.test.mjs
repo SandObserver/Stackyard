@@ -133,7 +133,7 @@ test('the first-run prompt waits before the tiles are drawn', async () => {
     await settle(5);
     prompt = p.dom.document.querySelector('dialog.setup-prompt');
     assert.equal(p.dom.document.querySelectorAll('#pages .icon').length, 0);
-    prompt.close();
+    prompt.querySelector('#setup-skip').click();
   });
   assert.ok(prompt, 'no prompt');
   assert.equal(page.dom.document.querySelectorAll('#pages .icon').length, 1);

@@ -180,11 +180,11 @@ test('an address in the list keeps its scheme and host in a right-to-left page',
 
 /* iOS capitalises the first letter. A capitalised username fails to log in. */
 test('address, host, username and header fields take no capitals or correction', () => {
-  const shared = read('js/admin-shared.js');
-  assert.match(shared, /setAttribute\('autocapitalize', 'none'\)/);
-  assert.match(shared, /setAttribute\('autocorrect', 'off'\)/);
-  assert.match(shared, /spellcheck = false/);
-  assert.match(shared, /if \(plain\) plainInput\(inp\)/);
+  const utils = read('js/utils.js');
+  assert.match(utils, /setAttribute\('autocapitalize', 'none'\)/);
+  assert.match(utils, /setAttribute\('autocorrect', 'off'\)/);
+  assert.match(utils, /setAttribute\('spellcheck', 'false'\)/);
+  assert.match(read('js/admin-shared.js'), /if \(plain\) plainInput\(inp\)/);
   const wired = {
     'js/admin-settings-controls.js': [
       'srv-ip',

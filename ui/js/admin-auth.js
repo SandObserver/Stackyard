@@ -1,10 +1,10 @@
-import { apiGet, apiPost } from '/js/admin-shared.js?v=a333637b';
+import { announce, apiGet, apiPost } from '/js/admin-shared.js?v=04d829ce';
 import { initI18n, t } from '/js/i18n.js?v=82ba9da2';
 import { loginErrorAdvice } from '/js/admin-error.js?v=5abd7438';
 import { passwordMeter, contextWords, meterColor } from '/js/password-policy.js?v=e16ebd1a';
-import { el, inp as inpById, qa } from '/js/utils.js?v=e9e22f08';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=a4dedd1d';
-import { fillUsernames } from '/js/password-reveal.js?v=37f218b4';
+import { el, inp as inpById, qa, setLiveText } from '/js/utils.js?v=457d9918';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=ad222fc7';
+import { fillUsernames, setRevealed, wireReveal } from '/js/password-reveal.js?v=bdd477f5';
 
 export async function checkAuth(onLogin) {
   try {
@@ -36,13 +36,19 @@ export function requireLogin() {
 
 /** @type {HTMLElement|null} */
 let focusBefore = null;
+let revealWired = false;
 
 function showLoginScreen(onLogin) {
   const s = /** @type {HTMLDialogElement|null} */ (el('login-screen'));
   const btn = inpById('login-btn');
   const pw = inpById('login-pw');
   const err = el('login-err');
+  const rev = /** @type {HTMLButtonElement|null} */ (el('login-reveal'));
   let signedIn = false;
+  if (rev && pw && !revealWired) {
+    revealWired = true;
+    wireReveal(rev, [pw]);
+  }
   if (s) {
     s.oncancel = e => e.preventDefault();
     /* Keep. A browser closes a modal on repeated Escape even when cancel is
@@ -67,7 +73,7 @@ function showLoginScreen(onLogin) {
   /** @param {{ key: string, vars?: Record<string, unknown> }} advice @param {boolean} invalid */
   function showError(advice, invalid) {
     if (!err) return;
-    err.textContent = t(advice.key, advice.vars);
+    setLiveText(err, t(advice.key, advice.vars));
     err.style.display = 'block';
     if (invalid) pw?.setAttribute('aria-invalid', 'true');
     pw?.setAttribute('aria-describedby', 'login-err');
@@ -79,6 +85,7 @@ function showLoginScreen(onLogin) {
       await apiPost('/api/auth/login', { password: pw?.value || '' });
       signedIn = true;
       if (pw) pw.value = '';
+      if (rev && pw) setRevealed([rev], [pw], false);
       s?.close();
       if (focusBefore?.isConnected && focusBefore !== document.body) focusBefore.focus();
       focusBefore = null;
@@ -126,12 +133,18 @@ export function wirePasswordStrength(inputId, barsId, hintId) {
   const hint = el(hintId);
   if (!inp || !bars?.length) return;
   const words = contextWords(location.hostname);
+  let band = passwordMeter('', words).key;
   const paint = () => {
     const { lit, tone, key, vars } = passwordMeter(inp.value, words);
     bars.forEach((b, i) => {
       b.style.background = i < lit ? meterColor(tone) : '';
     });
-    if (hint) hint.textContent = t(key, vars);
+    const text = t(key, vars);
+    if (hint) hint.textContent = text;
+    if (key !== band) {
+      band = key;
+      announce(text);
+    }
   };
   inp.addEventListener('input', paint);
   paint();

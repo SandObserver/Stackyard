@@ -3,7 +3,7 @@ import { desktopCols, desktopPages } from '/js/dashboard-logic.js?v=b4828b62';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { currentLang, t } from '/js/i18n.js?v=82ba9da2';
 import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=ff61256e';
-import { closeFolders, mkFolder, resetMobileChrome } from '/js/ui.js?v=ba017457';
+import { closeFolders, mkFolder, resetMobileChrome } from '/js/ui.js?v=65c2cfed';
 import {
   mkWrap as _mkWrap,
   el,
@@ -12,8 +12,8 @@ import {
   mk,
   renderEmptyState,
   setCentredText,
-} from '/js/utils.js?v=e9e22f08';
-import { mountScaledWidget, teardownWidgets } from '/js/widget-frame.js?v=6f5b0dc5';
+} from '/js/utils.js?v=457d9918';
+import { mountScaledWidget, teardownWidgets } from '/js/widget-frame.js?v=8e76d79b';
 import {
   cardPreset,
   fixedAppearance,

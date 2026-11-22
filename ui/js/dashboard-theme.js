@@ -1,5 +1,5 @@
 import { applyTheme, prefersDark, readMode, resolveTheme, THEME_KEY } from '/js/theme.js?v=0bbd81e8';
-import { rethemeTiles } from '/js/utils.js?v=e9e22f08';
+import { rethemeTiles } from '/js/utils.js?v=457d9918';
 
 /** @param {{ refreshBadges: () => void, applyBg: () => unknown }} deps */
 export function wireThemeChanges({ refreshBadges, applyBg }) {

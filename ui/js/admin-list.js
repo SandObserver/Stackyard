@@ -11,7 +11,7 @@
    The filter and the collapsed folders are in admin-state.js, because the page
    reads and writes them too. */
 
-import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=fb8c6e81';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=ba8c1975';
 import { listGroup } from '/js/admin-drag-logic.js?v=7033af1f';
 import {
   filterActive,
@@ -23,9 +23,9 @@ import {
   topLevelRows,
 } from '/js/admin-logic.js?v=81fd47cf';
 import { snapshotItems } from '/js/admin-save-logic.js?v=7de2f6fd';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=a333637b';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=04d829ce';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { sizeLabel } from '/js/admin-widget-form.js?v=9f4ae331';
+import { sizeLabel } from '/js/admin-widget-form.js?v=dfc61a0a';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
 import { t } from '/js/i18n.js?v=82ba9da2';
@@ -34,7 +34,7 @@ import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=ff61256e';
 import { EASE_IOS } from '/js/motion-curve.js?v=43439f5c';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
-import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=e9e22f08';
+import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=457d9918';
 import { widgetGlyph } from '/js/widget-glyphs.js?v=603f2e9a';
 
 /** @type {{ openModal: (id: string|null) => void,

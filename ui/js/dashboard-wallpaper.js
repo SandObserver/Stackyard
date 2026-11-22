@@ -5,7 +5,7 @@ import {
   parseWallpaperUrl,
   rememberBackground,
   resolveBackground,
-} from '/js/background.js?v=cfacc27a';
+} from '/js/background.js?v=51e46417';
 import { glassWallpaper } from '/js/glass.js?v=7c376881';
 import {
   applyLabelTones,
@@ -16,7 +16,7 @@ import {
 } from '/js/label-contrast.js?v=a160c6d1';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { creditPlacement, showPhotoCredit } from '/js/photo-credit.js?v=e6e79571';
-import { el, titleWhenTruncated } from '/js/utils.js?v=e9e22f08';
+import { el, titleWhenTruncated } from '/js/utils.js?v=457d9918';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
 
 const CREDIT_EDGE = 20;
