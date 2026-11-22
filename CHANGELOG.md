@@ -155,6 +155,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The admin page shows the dashboard icon in browser tabs and Home Screen
   bookmarks.
 
+- Keep the side margin in an open folder on desktop when app titles are off.
+
 ### Security
 
 - Refuse an unsafe link in the Disk Health TrueNAS and Unraid, DNS, GitHub and
