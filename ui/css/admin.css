@@ -148,7 +148,10 @@ html[data-theme="light"] {
   --shadow-bar:0 8px 30px rgba(0,0,0,.18);
   --shadow-sunken:inset 1px 1px 0 rgba(0,0,0,.06),inset -1px -1px 0 rgba(255,255,255,.7);
 }
-html,body{min-height:100vh;min-height:100dvh;color:var(--tx);font-family:var(--font-ui);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body{min-height:100vh;min-height:100dvh}
+/* Do not set a font-size on html. Every rem size in Settings then draws at the wrong size. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{color:var(--tx);font-family:var(--font-ui);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);-webkit-font-smoothing:antialiased}
 /* The same colour html::before paints, and the same fallback. The pseudo is
    position:fixed, so it covers the layout viewport only. iOS collapses its
    toolbar when a menu opens, which grows the visual viewport past that by the
@@ -962,7 +965,7 @@ html.is-mobile body.authed .mtabbar{
   border:.5px solid transparent;border-radius:50px;
   padding:4px;box-shadow:var(--shadow-bar);
 }
-html.is-mobile .mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;background:none;border:none;border-radius:50px;white-space:nowrap;transition:background var(--t),color var(--t);color:var(--dm);font-size:.625rem;line-height:1.2;letter-spacing:0;font-weight:600;cursor:pointer;padding:7px 2px 6px;min-height:54px;justify-content:center;font-family:inherit}
+html.is-mobile .mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;background:none;border:none;border-radius:50px;white-space:nowrap;transition:background var(--t),color var(--t);color:var(--dm);font-size:10px;line-height:12px;letter-spacing:0;font-weight:600;cursor:pointer;padding:7px 2px 6px;min-height:54px;justify-content:center;font-family:inherit}
 html.is-mobile .mtab .ni{width:26px;height:26px;flex-shrink:0}
 /* Keep the radius above half the height. Exactly half tears in WebKit on repaint. */
 html.is-mobile .mtab.active{background:var(--tab-pill);color:var(--ac2)}

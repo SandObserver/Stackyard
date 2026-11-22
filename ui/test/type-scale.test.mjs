@@ -149,6 +149,9 @@ test('Settings text follows the browser text size and the dashboard text does no
 /* A glyph drawn inside a fixed px box keeps a px size, or a larger text setting
    pushes it out of the box. */
 const PX_GLYPH = new Set(['.rico', '.kv-box::after', '.icon-prev', '.fp-ic', '.ipv']);
+/* Tab bar labels keep a px size. A larger size overflows the four tabs in the
+   phone bar. */
+const PX_FIXED = new Set(['html.is-mobile .mtab']);
 
 test('Settings sets no text size in px outside a fixed glyph box', () => {
   const src = fs.readFileSync(path.join(cssDir, 'admin.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
@@ -157,11 +160,39 @@ test('Settings sets no text size in px outside a fixed glyph box', () => {
     const [, sel, body] = m;
     if (!/(^|;)\s*(font-size\s*:\s*[\d.]+px|line-height\s*:\s*[\d.]+px)/.test(body)) continue;
     const name = sel.trim().split('\n').pop().trim();
-    if (!PX_GLYPH.has(name)) offenders.push(name);
+    if (!PX_GLYPH.has(name) && !PX_FIXED.has(name)) offenders.push(name);
   }
   assert.deepEqual(offenders, [], `px text size in Settings:\n  ${offenders.join('\n  ')}`);
   const list = fs.readFileSync(path.join(cssDir, '..', 'js', 'admin-list.js'), 'utf8');
   assert.doesNotMatch(list, /font-size:\d+px/, 'the folder chevron is text and follows the text size');
+});
+
+test('Settings leaves the root font size at the browser default', () => {
+  const settingsCss = ['tokens.css', 'admin.css', 'widget-config-form.css', 'config-recovery.css'];
+  const rootSelector = /^(html|:root)(?![^\s>+~]*::)[^\s>+~]*$/;
+  const offenders = [];
+  for (const file of settingsCss) {
+    const src = fs.readFileSync(path.join(cssDir, file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const m of src.matchAll(/([^{}]*)\{([^{}]*)\}/g)) {
+      const [, sel, body] = m;
+      if (!/(^|;)\s*font(-size)?\s*:/.test(body)) continue;
+      const roots = sel
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => rootSelector.test(s));
+      if (roots.length) offenders.push(`${file}: ${roots.join(', ')}`);
+    }
+  }
+  assert.deepEqual(offenders, [], `font size on the root:\n  ${offenders.join('\n  ')}`);
+  const page = fs.readFileSync(path.join(cssDir, '..', 'admin', 'index.html'), 'utf8');
+  assert.doesNotMatch(/<html[^>]*>/.exec(page)?.[0] ?? '', /style=/);
+});
+
+test('the phone tab labels keep a fixed size', () => {
+  const src = fs.readFileSync(path.join(cssDir, 'admin.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const tab = [...src.matchAll(/([^{}]*)\{([^{}]*)\}/g)].find(m => m[1].trim() === 'html.is-mobile .mtab')?.[2] ?? '';
+  assert.match(tab, /(^|;)font-size:10px(;|$)/);
+  assert.match(tab, /(^|;)line-height:12px(;|$)/);
 });
 
 /* balance on short centred headings, pretty on hint prose. Never on every
