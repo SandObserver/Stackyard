@@ -169,9 +169,9 @@ function fakeIcon(id) {
   const trigger = new EventTarget();
   const point = (type, pointerType = 'mouse') => trigger.dispatchEvent(Object.assign(new Event(type), { pointerType }));
   animateIcon(svg, id, trigger);
-  return { made, enter: t => point('pointerenter', t), leave: () => point('pointerleave') };
+  return { svg, made, enter: t => point('pointerenter', t), leave: () => point('pointerleave') };
 }
-const { animateIcon } = await import('../js/icon-motion.js');
+const { animateIcon, holdIcons } = await import('../js/icon-motion.js');
 const settle = () => new Promise(r => setImmediate(r));
 
 test('a leave during the trip finishes it, plays the way back, then rests', async () => {
@@ -231,6 +231,29 @@ test('turning on reduced motion stops a trip in progress', async () => {
   await settle();
   assert.equal(icon.made.length, 2);
   media.reduce.matches = false;
+  icon.enter();
+  assert.equal(icon.made.length, 4, 'the next hover plays again');
+});
+
+test('a held icon rests at once and plays no hover until it is let go', async () => {
+  const icon = fakeIcon('dashboard');
+  const bar = { contains: n => n === icon.svg };
+  icon.enter();
+  assert.equal(icon.made.length, 2);
+  holdIcons(bar, true);
+  assert.ok(
+    icon.made.every(a => a.cancelled),
+    'the icon is back at rest under the lens',
+  );
+  icon.leave();
+  await settle();
+  icon.enter();
+  await settle();
+  assert.equal(icon.made.length, 2, 'no way back and no new hover while held');
+  holdIcons(bar, false);
+  icon.leave();
+  await settle();
+  assert.equal(icon.made.length, 2);
   icon.enter();
   assert.equal(icon.made.length, 4, 'the next hover plays again');
 });

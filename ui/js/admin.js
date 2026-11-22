@@ -1,8 +1,8 @@
 import { checkAuth, requireLogin } from '/js/admin-auth.js?v=b79663d2';
-import { initEditor, openEditor, openFolderPicker, wireListButtons } from '/js/admin-editor.js?v=407cfd6c';
+import { initEditor, openEditor, openFolderPicker, wireListButtons } from '/js/admin-editor.js?v=1bcacbfb';
 import { initList, render, wireFilter } from '/js/admin-list.js?v=63822793';
 import { createListWrites } from '/js/admin-list-writes.js?v=bae3ddd2';
-import { animateNavIcons, initNav } from '/js/admin-nav.js?v=0a742ea2';
+import { animateNavIcons, initNav } from '/js/admin-nav.js?v=3759027f';
 import { createPageLoad } from '/js/admin-page-load.js?v=91505ddd';
 import { settingsDirty } from '/js/admin-settings.js?v=768e0efc';
 import { initSettingsControls } from '/js/admin-settings-controls.js?v=365b77cd';
@@ -14,7 +14,7 @@ import { syncGlideSelect } from '/js/glide-select.js?v=0c57b286';
 import { ensureSprite } from '/js/icon-set.js?v=beda3062';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { el } from '/js/utils.js?v=e9e22f08';
-import { initGlassControls } from '/js/glass-controls.js?v=4d8214ad';
+import { initGlassControls } from '/js/glass-controls.js?v=6108958b';
 
 ensureSprite();
 animateNavIcons();
