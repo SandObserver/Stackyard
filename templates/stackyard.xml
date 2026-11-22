@@ -24,214 +24,229 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.23.0 - 2026-11-15
+### 1.24.0 - 2026-11-22
 
 ### Added
 
-- Add a Reduce Transparency switch for this device under Appearance.
+- Glass switches, sliders and segmented controls in the admin, and a glass tab
+  bar on phones.
 
-- Connections map: a failed service shows what kind of failure it is, and
-  pressing it shows the full reason.
+- The Weather widget credits its data provider in Settings and in its tooltip.
+
+- Log Content Security Policy and Trusted Types violations to the container log.
+
+- Warn at startup about a widget page with inline script, which a later release
+  blocks.
+
+- Add a Show password button to the sign-in box.
 
 ### Changed
 
-- Restyle the dock, folders, search pill, page dots and Settings header buttons
-  as clear glass with a lit rim.
+- Pick a local System Summary temperature by sensor name, starting on the CPU.
 
-- Draw the glass with refraction at its edges where the browser supports WebGL2.
+- Drop the unneeded temperature mount from the example `docker-compose.yml`.
 
-- Show held switch and brightness knobs as clear glass lenses.
+- Test on Safari 26.2 or newer on macOS and iOS.
 
-- Show translucent widget cards as glass over the wallpaper.
+- Bend the open folder's glass more and frost it less.
 
-- Refuse to start when `ICONS_PATH` or `CONFIG_PATH` is not an absolute path,
-  has a `.` or `..` part, sits inside a system folder such as `/etc` or `/usr`,
-  or would put the config file inside `ICONS_PATH`. `ICONS_PATH` must use plain
-  path characters. A folder below `/var`, `/tmp`, `/root` or `/app` is accepted
-  only on a mounted volume.
+- Show a check or a cross on the Save button after a save.
+
+- Open drop-downs out of their button, and pick an option by sliding a finger
+  over the list.
+
+- Show "Sign out all" and the dashboard Delete confirm as destructive actions.
+
+- Redraw Now Playing as a turning VHS take-up reel whose tape grows with
+  progress.
+
+- Log how long a failed widget request took and the HTTP status the service
+  returned.
+
+- Log a warning, and name the keys in the save reply, when a save drops settings
+  this release does not know.
+
+- Drop unknown keys inside the server settings on save, as unknown top-level
+  settings already were.
+
+- Test the API on Node.js 26 when it runs outside Docker.
+
+- Open the Link URL when you tap the Weather, Now Playing or Downloads widget on
+  a phone.
+
+- Wait at least 3 seconds between widget polls, whatever interval a widget asks
+  for.
+
+- Settings can be installed to the home screen as the same app as the dashboard.
+
+- The Settings shortcut of an installed app has its own icon.
+
+- Reload custom widgets less often while their page is out of view.
+
+- Start dashboard polling only when the tab is visible.
+
+- Skip downloading the whole config on every dashboard check when nothing
+  changed.
+
+- Make Settings text follow the browser's text size setting.
+
+- Draw native checkboxes and radio buttons in the accent colour.
+
+- Load each widget page's script from a file next to the page.
+
+- Serve only image types from the icons folder.
+
+- Glass edges bend the wallpaper like the glass in iOS and stay sharp on
+  high-density screens.
+
+- Tab bar icons and labels bend smoothly under the moving lens on phones.
+
+- Keep Set available on the first-run prompt, and move focus to the first field
+  to fix.
+
+- Show visible labels on the first-run prompt's fields.
+
+- Let password managers save the password set in Settings.
+
+- Name the open Settings section in the page title.
+
+- Show the badge popover without motion when keyboard focus opens it.
+
+### Removed
+
+- Remove the `WIDGETS_PATH` setting from the Compose example. Mount a custom
+  widget into the built-in widgets folder instead.
 
 ### Fixed
 
-- Enable Save after uploading a wallpaper or fetching an Image URL, including
-  when it finishes during a save.
+- With Reduce Transparency on, a held colour slider knob is solid instead of
+  see-through.
 
-- Make the Connections VPN Off state and its light-theme error text readable.
+- Keep a System Summary temperature on the same sensor after a reboot.
 
-- Show "Key rejected" or "Not set up yet" on the Connections widget instead of
-  "Service error".
+- Show the whole Unraid array in a System Summary disk slot that is blank or set
+  to /.
 
-- A colour code typed in a colour field, or a preset colour picked, is now saved
-  exactly instead of as a slightly different shade.
+- Show "Not set up yet", not "Out of reach", when a Backup slot, an Up Next
+  source or a Connections service has an address that is not valid.
 
-- A failed folder save no longer leaves an app missing from the folder it was
-  in.
+- Reach a Kopia backup server whose address has no http:// or https://.
 
-- After a drag with the mouse, the item list redraws at once, and clicking a row
-  always opens that item.
+- Report a service reply too large to read as a service error, not "Something
+  went wrong".
 
-- The sign-in password field is empty when the sign-in box appears again after a
-  session expires.
+- Keep a new secret typed into a widget's settings when the Size or View changes
+  before Save.
 
-- The Connections VPN view now draws the map for every country the Map view
-  shows, including Switzerland, Singapore, Hong Kong, Taiwan, Austria and
-  Belgium.
+- Keep each source's stored key with the right source after one is removed and
+  the Size or View changes.
 
-- A Connections VPN colour with an alpha value or in short form now shows as
-  picked.
+- Save a Settings change made while another save is still running, instead of
+  refusing it as changed elsewhere.
 
-- Book spine titles stay readable on every cover colour from the reading
-  service.
+- Show a new wallpaper behind Settings as soon as it is saved, not on the next
+  visit.
 
-- Swiping between pages on a Backup card no longer flips the card or opens the
-  backup service.
+- Show the icons and the show-password button on the setup screen for a refused
+  address or a damaged password.
 
-- Tapping a Backup card closes revealed cards in other widgets, as Disk Health
-  does.
+- Show a widget saved without a size at the same size on the dashboard as its
+  frame loads, instead of a smaller frame in a larger tile.
 
-- After the Backup widget recovers from an error, empty slots no longer announce
-  the old error or show a dash.
+- Open the link for the selected Disk Health provider when the widget is tapped
+  on a phone.
 
-- On a phone, the page dots, arrow keys and screen-reader page control no longer
-  land on an empty page after the number of home pages drops.
+- Remove the light diamond in the open folder's glass.
 
-- A folder opened from Search on a phone shows its icons at the same size as
-  when opened from its tile.
+- Now Playing no longer reads its error twice to screen readers.
 
-- Icons inside a desktop folder have the same rounded corners as on the home
-  grid.
+- Now Playing tells screen readers how long ago its server stopped answering.
 
-- A layout that fails to build shows one error screen instead of stacking a new
-  one on each rotation or resize.
+- Now Playing pauses its reel in a background tab.
 
-- The Fetch button in a widget's settings asks you to sign in again when the
-  session has expired, instead of showing an error.
+- Now Playing's time since a failure meets 4.5:1 contrast.
 
-- A select field's Fetch button shows the widget's own button label.
+- GitHub contributions, System Summary and Backup tell screen readers how long
+  ago their service stopped answering.
 
-- The pencil on widget setting rows follows the chosen icon style.
+- A finger held on a switch, slider or segmented control in Settings no longer
+  scrolls the page.
 
-- A failed Docker label import offers Open General when no Docker socket address
-  is set.
+- A swipe that starts on a switch or segmented control and ends off it no longer
+  changes the setting.
 
-- Every password screen gives the same message when the server refuses a new
-  password as too short or too long.
+- Apply the log level set in Settings to the first lines logged at startup.
 
-- Turning off Authentication on an app's Live Activity now removes the stored
-  sign-in, query parameters and headers on save, and Fetch sends none of them.
+- Raise destructive button text to WCAG AA contrast in light and dark mode.
 
-- An app with a health check address from an older release now shows its health
-  badge and Health pill.
+- The Docker image and the demo site include the Stackyard licence and notice.
 
-- The digital and Captain clocks turn the minute on time instead of up to a
-  second late.
+- Show custom widgets that embed a page from another address.
 
-- The analog clock, Connections map, Now Playing and Captain clock stop moving
-  as soon as Reduce Motion is turned on.
+- The AdGuard Home DNS widget's screen-reader summary no longer reports a cached
+  count of 0.
 
-- A dashboard or name containing a dollar sign shows correctly in widget labels.
+- Size-specific Apple touch icon requests, such as
+  `/apple-touch-icon-180x180.png`, return the dashboard icon instead of 404.
 
-- System Summary, Downloads and Disk Health show sizes and transfer rates in the
-  same decimal units, with unit names in the reader's language.
+- The admin page shows the dashboard icon in browser tabs and Home Screen
+  bookmarks.
 
-- The GitHub contributions grid shows a new day's contributions after midnight,
-  and the grid matches the total.
+- Keep the side margin in an open folder on desktop when app titles are off.
 
-- Show a running Duplicati job as running on its own card instead of another
-  job's card.
+- Stop the arrow keys from turning the page while you type in a field, hold a
+  modifier key, or have a dialog open.
 
-- Stop one failed Duplicati job from turning every Duplicati card red.
+- Keep keyboard focus on the visible page after a page turn.
 
-- Show a Duplicati sync job's own last run time, and use it for the error and
-  missed checks.
+- Stop a second tap on a badge from closing and reopening its popover.
 
-- Show a missing or removed disabled Unraid drive as failed in Disk Health and
-  count it among the failed bays.
+- Make the badge popover usable inside an open folder.
 
-- Fix System Summary and Network widgets set to Glances failing with "The
-  service sent a reply that is not JSON."
+- Let screen readers read every badge value without opening the popover.
 
-- Show the real network rate from Glances 3 instead of 0 B/s.
+- Return focus to the button that opened a prompt after the prompt finishes.
 
-- Leave no broken file behind when an icon or wallpaper upload fails on a full
-  or read-only disk, and say why it failed.
+- Keep Search open when Escape cancels text being composed.
 
-- Save an icon uploaded as ".svg" under a proper name so it appears in the icon
-  list.
+- Announce the search result count once typing pauses.
 
-- Save an icon with the extension that matches its contents.
+- Keep the Unsplash link in the photo credit fully visible.
 
-- Refuse an icon named .svg that contains no SVG image.
+- Tell screen readers that the Search pill and folder tiles open a dialog.
 
-- Save upload names with accented or non-Latin letters correctly, without
-  control characters.
+- Keep the first-run password prompt open when Escape is pressed twice.
 
-- Accept a wallpaper up to the 16 MB limit.
+- Read the password strength hint only when its level changes.
 
-- Show a readable error when a request is too large for the web server.
+- Say a password mismatch on the first-run prompt only after the confirmation
+  field is left.
 
-- Stop requests to a service by name from timing out when the DNS server never
-  answers IPv6 lookups.
+- Announce a repeated sign-in or setup error again.
 
-- Send the query string of a status check URL, so a check such as
-  `/status?check=db` reaches the right endpoint.
+- Announce required fields as required, and stop reading the required star as
+  "star".
 
-- Reuse one Pi-hole sign-in until it expires, so a slow Pi-hole no longer
-  collects open sessions until it refuses the widget.
+- Mark the app name, app address, folder name and custom widget URL as required.
 
-- Limit how many servers widgets remember details for, so previews against many
-  addresses no longer grow memory without limit.
+- Read each field's hint together with the field in Settings.
 
-- Serve uploaded icons, wallpapers and the custom favicon from `ICONS_PATH`;
-  before, they were saved but returned 404. With `ICONS_PATH=/data/icons`, one
-  volume at `/data` keeps them across updates.
+- Show an error for a poll interval outside 10 to 3600 seconds instead of
+  silently changing it.
 
-- Take ownership, on a root start, of the folders `CONFIG_PATH` and `ICONS_PATH`
-  name, and create them when missing.
+- Announce the type and size choosers as radio groups.
 
-- Keep the saved settings of a widget whose type is not installed when Host IP,
-  the port map or the certificate skip changes; its saved credentials must be
-  retyped before they are used.
-
-- With reduced motion, Settings and loading fades no longer cut instantly.
-
-- Scrolling over a Settings dialog or the sign-in screen no longer scrolls the
-  page behind it.
-
-- Return no longer commits half-composed IME text in rename, text prompts and
-  icon search.
-
-- An empty sign-in asks for the password and no longer counts toward the
-  lockout.
-
-- The sign-in error is announced with the password field, which is marked
-  invalid only for a wrong password.
-
-- System Summary writes uptime and link speed units in the interface language.
-
-- Downloads no longer shows Latin unit letters in Persian time estimates.
-
-- Screen readers announce toggles as switches and slider values with their
-  units.
-
-- Settings group and dialog titles are real headings.
-
-- The phone search pill is a button.
-
-- The glass ring on a held switch and the lens on a held slider no longer look
-  jagged on standard-resolution screens.
-
-- The colour sliders now show the glass edges on a held knob, tinted from the
-  colour under it.
+- Announce "Working" on slow row actions.
 
 ### Security
 
-- Update Node.js to 26.13.1 to fix 16 CVEs, 7 of them rated high.
+- Refuse an unsafe link in the Disk Health TrueNAS and Unraid, DNS, GitHub and
+  Backup link fields on save, as the Scrutiny link already was.
 
-- Pages no longer send their address to wallpaper and icon hosts.
+- Update nginx to 1.30.7.
 
-- Add opener, resource and stricter content security policies.
-
-- Widget pages refuse plugins and form submissions.
+- Refuse a `javascript:` or other unsafe link in the Link URL of Books,
+  Connections, Downloads, Now Playing, System Summary, Up Next and Weather.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
