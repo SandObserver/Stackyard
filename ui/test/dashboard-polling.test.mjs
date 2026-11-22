@@ -83,3 +83,41 @@ test('a changed config reloads, unless Search, a folder or a swipe is in progres
   await polling.pollConfig();
   assert.equal(dom.location.reloads, 1, 'an unchanged config reloaded');
 });
+
+test('a tab that is hidden when polling starts polls nothing until it is shown', async () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    doc.hidden = true;
+    const before = { ...runs };
+    polling.startPolling();
+    mock.timers.tick(120_000);
+    await drain();
+    assert.deepEqual(runs, before, 'a hidden tab started polling');
+    doc.hidden = false;
+    doc.dispatchEvent({ type: 'visibilitychange' });
+    mock.timers.tick(31_000);
+    await drain();
+    assert.ok(runs.health > before.health, 'showing the tab did not start polling');
+    polling.stopPolling();
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test('the config poll asks for the loaded revision, at low priority, and a 304 is no change', async () => {
+  const seen = [];
+  fetch.routes['/api/config'] = (_, opts) => {
+    seen.push(opts);
+    return { status: 304 };
+  };
+  const reloads = dom.location.reloads;
+  const revised = createPolling({ badges, differs: () => true, rev: () => 7 });
+  await revised.pollConfig();
+  assert.equal(seen[0].headers['If-None-Match'], '"7"');
+  assert.equal(seen[0].priority, 'low');
+  assert.equal(dom.location.reloads, reloads, 'an unchanged config reloaded');
+  const unrevised = createPolling({ badges, differs: () => false, rev: () => null });
+  await unrevised.pollConfig();
+  assert.equal(seen[1].headers, undefined, 'a config with no revision sent a validator');
+  fetch.routes['/api/config'] = { items: [] };
+});
