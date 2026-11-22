@@ -101,6 +101,35 @@ function fakeGl(uploadError = 0) {
   });
 }
 
+test('the rim bend follows the iOS measurement and stops at the bezel', async () => {
+  const { slabProfile } = await import('../js/glass-gpu.js');
+  const p = slabProfile(0.9);
+  assert.ok(Math.abs(p[0] * 108 - 42) < 2, `edge pull ${p[0] * 108}`);
+  assert.equal(p.at(-1), 0);
+  for (let i = 2; i < p.length; i++) assert.ok(p[i] <= p[i - 1] + 1e-6, 'the pull never grows inward past the edge');
+  assert.ok(slabProfile(1.8)[0] > p[0], 'a stronger bend is thicker glass');
+  assert.ok(slabProfile(0).every(v => v === 0));
+});
+
+test('the renderer draws at most two canvas pixels per CSS px and frees memory at size 0', async () => {
+  const { createGlassRenderer } = await import('../js/glass-gpu.js');
+  const canvas = /** @type {any} */ ({ width: 0, height: 0, getContext: () => fakeGl() });
+  const r = createGlassRenderer(canvas);
+  const before = globalThis.devicePixelRatio;
+  try {
+    globalThis.devicePixelRatio = 3;
+    r?.resize(400, 300, 10, 20);
+    assert.deepEqual([canvas.width, canvas.height], [800, 600]);
+    globalThis.devicePixelRatio = 1;
+    r?.resize(400, 300);
+    assert.deepEqual([canvas.width, canvas.height], [400, 300]);
+    r?.resize(0, 0);
+    assert.deepEqual([canvas.width, canvas.height], [1, 1]);
+  } finally {
+    globalThis.devicePixelRatio = before;
+  }
+});
+
 test('the renderer refuses a picture the GPU cannot take', async () => {
   const { createGlassRenderer } = await import('../js/glass-gpu.js');
   const canvas = gl => /** @type {any} */ ({ getContext: () => gl });
@@ -193,6 +222,7 @@ function harness({ webgl = true, accept = () => true, tokens = {} } = {}) {
   const winListeners = {};
   const bitmaps = [];
   const renderers = [];
+  const media = [];
   const frames = { fn: null };
   const log = [];
   let scripted = false;
@@ -209,7 +239,10 @@ function harness({ webgl = true, accept = () => true, tokens = {} } = {}) {
       opacity: '1',
       visibility: 'visible',
     }),
-    matchMedia: () => ({ matches: false, addEventListener() {} }),
+    matchMedia: query => ({
+      matches: false,
+      addEventListener: (_type, fn) => media.push({ query, fn }),
+    }),
     MutationObserver: class {
       constructor(cb) {
         observers.push(cb);
@@ -256,8 +289,8 @@ function harness({ webgl = true, accept = () => true, tokens = {} } = {}) {
         setBox(box) {
           r.boxes.push(box);
         },
-        resize(width, height) {
-          r.sizes.push([width, height]);
+        resize(width, height, x = 0, y = 0) {
+          r.sizes.push([width, height, x, y]);
         },
         draw(items, look) {
           r.draws.push(items);
@@ -283,6 +316,7 @@ function harness({ webgl = true, accept = () => true, tokens = {} } = {}) {
     win,
     bitmaps,
     renderers,
+    media,
     log,
     flush: () => new Promise(r => setImmediate(r)),
     img: src => ({ src, crossOrigin: null, naturalWidth: 1600, naturalHeight: 1000 }),
@@ -429,7 +463,7 @@ test('a resize fits the glass on the next frame and keeps the old picture until 
   h.resize();
   const drawsBefore = gpu.draws.length;
   h.tick();
-  assert.deepEqual(gpu.sizes.at(-1), [300, 800], 'the canvas keeps its old size and stretches');
+  assert.deepEqual(gpu.sizes.at(-1), [128, 64, 0, 0], 'the canvas covers the glass, rounded out to 64 px');
   assert.deepEqual(gpu.boxes.at(-1), wallpaperBox(1600, 1000, 'cover', 300, 800));
   assert.ok(gpu.draws.length > drawsBefore && gpu.draws.at(-1).length > 0, 'the cleared canvas is not redrawn');
   assert.equal(h.bitmaps.length, 1, 'rebuilt while still resizing');
@@ -484,4 +518,102 @@ test('the folder tokens scale its bend and frost, and 0 turns either off', async
   const unset = await folderLook({});
   assert.equal(unset.bend, 2, 'an unset token leaves the bend as it is');
   assert.ok(Math.abs(unset.frost[3] - 0.5) < 1e-9);
+});
+
+/** A live page with one glass element at rect. */
+async function withGlass(rect) {
+  const h = harness();
+  await live(h);
+  const el = Object.assign(new FakeEl(), { glass: true, isConnected: true });
+  el.getBoundingClientRect = () => ({ ...rect, right: rect.left + rect.width, bottom: rect.top + rect.height });
+  h.doc.body.append(el);
+  h.observe([{ type: 'childList', addedNodes: [el], removedNodes: [] }]);
+  h.tick();
+  return { h, el, gpu: h.renderers[0] };
+}
+
+test('the base canvas covers only the glass and sits over it', async () => {
+  const { h, gpu } = await withGlass({ left: 20, top: 700, width: 300, height: 70 });
+  assert.deepEqual(gpu.sizes.at(-1), [384, 160, 0, 640], 'rounded out to 64 px, clipped to the viewport');
+  const st = gpu.canvas.style;
+  assert.deepEqual([st.inset, st.width, st.height], ['640px auto auto 0px', '384px', '160px']);
+  assert.ok(h.renderers[0].draws.at(-1).length > 0);
+});
+
+test('while glass moves the base canvas only grows, and it shrinks back once still', async () => {
+  const { h, el, gpu } = await withGlass({ left: 0, top: 0, width: 100, height: 50 });
+  el.getBoundingClientRect = () => ({ left: 0, top: 300, width: 100, height: 50, right: 100, bottom: 350 });
+  h.tick();
+  assert.deepEqual(gpu.sizes.at(-1), [128, 384, 0, 0], 'grown to hold both places');
+  for (let i = 0; i < 8; i++) h.tick();
+  assert.deepEqual(gpu.sizes.at(-1), [128, 128, 0, 256], 'fitted to where the glass came to rest');
+  assert.ok(gpu.draws.at(-1).length > 0, 'the cleared canvas is redrawn');
+});
+
+test('the folder layer holds memory only while a folder is open', async () => {
+  const h = harness();
+  await live(h);
+  h.runIdle();
+  const folderLayer = h.renderers[1];
+  assert.equal(folderLayer.sizes.length, 0, 'a closed folder layer is never sized');
+  const ov = Object.assign(new FakeEl(), { isConnected: true });
+  const panel = new FakeEl();
+  ov.append(panel);
+  h.glass.openFolder(ov, panel);
+  assert.deepEqual(folderLayer.sizes.at(-1), [400, 800, 0, 0]);
+  panel.isConnected = false;
+  h.tick();
+  assert.deepEqual(folderLayer.sizes.at(-1), [0, 0, 0, 0]);
+});
+
+test('a new pixel density refits the glass', async () => {
+  const { h, gpu } = await withGlass({ left: 0, top: 0, width: 100, height: 50 });
+  const count = gpu.sizes.length;
+  const density = h.media.find(m => m.query.startsWith('(resolution:'));
+  assert.ok(density, 'the pixel density is watched');
+  h.win.devicePixelRatio = 2;
+  density.fn();
+  h.tick();
+  assert.equal(gpu.sizes.length, count + 1);
+  assert.ok(h.media.filter(m => m.query.startsWith('(resolution:')).length > 1, 'it keeps watching');
+});
+
+test('the glass gives back its canvas memory when it turns off', async () => {
+  const off = {
+    'removing the wallpaper': h => h.glass.setWallpaper(null, 'cover'),
+    'Reduce Transparency': h => {
+      h.doc.documentElement.dataset.transparency = 'reduce';
+      h.media.find(m => m.query.includes('forced-colors')).fn();
+    },
+  };
+  for (const [name, turnOff] of Object.entries(off)) {
+    const { h, gpu } = await withGlass({ left: 0, top: 0, width: 100, height: 50 });
+    h.runIdle();
+    const ov = Object.assign(new FakeEl(), { isConnected: true });
+    const panel = new FakeEl();
+    ov.append(panel);
+    h.glass.openFolder(ov, panel);
+    const folderLayer = h.renderers[1];
+    turnOff(h);
+    await h.flush();
+    assert.equal(h.glass.stats().live, false, name);
+    assert.deepEqual(gpu.sizes.at(-1), [0, 0, 0, 0], `${name}: the base canvas keeps its pixels`);
+    assert.deepEqual(folderLayer.sizes.at(-1), [0, 0, 0, 0], `${name}: the folder canvas keeps its pixels`);
+  }
+});
+
+test('a lost folder layer comes back at its smallest size when no folder is open', async () => {
+  const h = harness();
+  await live(h);
+  h.runIdle();
+  const ov = Object.assign(new FakeEl(), { isConnected: true });
+  const panel = new FakeEl();
+  ov.append(panel);
+  h.glass.openFolder(ov, panel);
+  const folderLayer = h.renderers[1];
+  folderLayer.canvas.dispatch('webglcontextlost');
+  const before = h.renderers.length;
+  folderLayer.canvas.dispatch('webglcontextrestored');
+  const [restored] = h.renderers.slice(before);
+  assert.deepEqual(restored.sizes, [[0, 0, 0, 0]], 'a restore regrows a full-screen canvas for no folder');
 });

@@ -1,10 +1,10 @@
 // @ts-check
 import { onFrame, requestFrame, setScripted } from '/js/frame-motion.js?v=911f7c03';
-import { createGlassRenderer } from '/js/glass-gpu.js?v=eab726bc';
+import { createGlassRenderer } from '/js/glass-gpu.js?v=5cefbe56';
 import { loadSamplingImage } from '/js/label-contrast.js?v=a160c6d1';
 
-/** @typedef {import('/js/glass-gpu.js?v=eab726bc').GlassLook} GlassLook */
-/** @typedef {import('/js/glass-gpu.js?v=eab726bc').GlassItem} GlassItem */
+/** @typedef {import('/js/glass-gpu.js?v=5cefbe56').GlassLook} GlassLook */
+/** @typedef {import('/js/glass-gpu.js?v=5cefbe56').GlassItem} GlassItem */
 /** @typedef {ReturnType<typeof createGlassRenderer>} Renderer */
 
 /* Keep in step with the rim list in dashboard.css. */
@@ -16,6 +16,7 @@ const STILL_FRAMES = 8;
 /** The GPU blur radius for a CSS blur radius. It samples a quarter-size copy. */
 const GPU_BLUR_SCALE = 0.4;
 const RESIZE_SETTLE_MS = 150;
+const BOX_STEP = 64;
 /* dashboard.css clears the folder panel's fill only while this is set. */
 const DRAWN = 'data-glass-drawn';
 
@@ -41,7 +42,7 @@ export function unitColour(text) {
   return [r / 255, g / 255, b / 255, a];
 }
 
-/** @typedef {{ canvas: HTMLCanvasElement, gl: Renderer, blur: boolean, size: [number, number],
+/** @typedef {{ canvas: HTMLCanvasElement, gl: Renderer, blur: boolean, box: number[], dpr: number, fitted: boolean,
       blurPx: number, last: { items: GlassItem[], look: GlassLook }|null }} Layer */
 
 /** @typedef {{
@@ -101,6 +102,7 @@ export function createGlass(env) {
 
   function loseFolderLayer() {
     if (!folder) return;
+    releaseLayer(folder);
     folder.gl = null;
     /* Keep. A restore redraws last over the open folder's CSS fill. */
     folder.last = null;
@@ -115,7 +117,17 @@ export function createGlass(env) {
     canvas.setAttribute('aria-hidden', 'true');
     canvas.hidden = true;
     /** @type {Layer} */
-    const layer = { canvas, gl: env.createRenderer(canvas, { blur }), blur, size: [1, 1], blurPx: 0, last: null };
+    /** @type {Layer} */
+    const layer = {
+      canvas,
+      gl: env.createRenderer(canvas, { blur }),
+      blur,
+      box: [0, 0, 0, 0],
+      dpr: 0,
+      fitted: false,
+      blurPx: 0,
+      last: null,
+    };
     if (!layer.gl) return null;
     canvas.addEventListener('webglcontextlost', e => {
       e.preventDefault();
@@ -125,7 +137,7 @@ export function createGlass(env) {
     });
     canvas.addEventListener('webglcontextrestored', () => {
       layer.gl = env.createRenderer(canvas, { blur });
-      layer.gl?.resize(...layer.size);
+      layer.gl?.resize(layer.box[2], layer.box[3], layer.box[0], layer.box[1]);
       const ok = layer.gl?.setWallpaper(wallpaper?.bitmap ?? null, wallpaper?.box ?? [0, 0, 1, 1], layer.blurPx);
       if (!ok) layer.gl = null;
       if (layer.last) layer.gl?.draw(layer.last.items, layer.last.look);
@@ -140,12 +152,67 @@ export function createGlass(env) {
     layer.gl?.draw(items, itemLook);
   }
 
+  /** Returns true when it resized, which clears the canvas. Redraw in the same frame.
+      @param {Layer} layer @param {number[]} box @param {boolean} [styled] also move the canvas element */
+  function place(layer, box, styled = false) {
+    const dpr = win.devicePixelRatio || 1;
+    if (dpr === layer.dpr && box.every((v, i) => v === layer.box[i])) return false;
+    layer.box = box;
+    layer.dpr = dpr;
+    layer.gl?.resize(box[2], box[3], box[0], box[1]);
+    if (styled) {
+      const st = layer.canvas.style;
+      st.inset = `${box[1]}px auto auto ${box[0]}px`;
+      st.width = `${box[2]}px`;
+      st.height = `${box[3]}px`;
+    }
+    return true;
+  }
+
   /** @param {Layer} layer */
   function sizeLayer(layer) {
-    const size = /** @type {[number, number]} */ ([doc.documentElement.clientWidth, win.innerHeight]);
-    if (size[0] === layer.size[0] && size[1] === layer.size[1]) return;
-    layer.size = size;
-    layer.gl?.resize(...size);
+    place(layer, [0, 0, doc.documentElement.clientWidth, win.innerHeight]);
+  }
+
+  /** @param {Layer} layer */
+  function releaseLayer(layer) {
+    place(layer, [0, 0, 0, 0]);
+  }
+
+  /** @param {GlassItem[]} items */
+  function boundsOf(items) {
+    if (!items.length) return [0, 0, 0, 0];
+    let x0 = Number.POSITIVE_INFINITY;
+    let y0 = Number.POSITIVE_INFINITY;
+    let x1 = Number.NEGATIVE_INFINITY;
+    let y1 = Number.NEGATIVE_INFINITY;
+    for (const { rect } of items) {
+      x0 = Math.min(x0, rect.left);
+      y0 = Math.min(y0, rect.top);
+      x1 = Math.max(x1, rect.left + rect.width);
+      y1 = Math.max(y1, rect.top + rect.height);
+    }
+    const vw = doc.documentElement.clientWidth;
+    const vh = win.innerHeight;
+    const left = Math.max(0, Math.floor((x0 - 1) / BOX_STEP) * BOX_STEP);
+    const top = Math.max(0, Math.floor((y0 - 1) / BOX_STEP) * BOX_STEP);
+    const right = Math.min(vw, Math.ceil((x1 + 1) / BOX_STEP) * BOX_STEP);
+    const bottom = Math.min(vh, Math.ceil((y1 + 1) / BOX_STEP) * BOX_STEP);
+    return right > left && bottom > top ? [left, top, right - left, bottom - top] : [0, 0, 0, 0];
+  }
+
+  /** @param {number[]} a @param {number[]} b */
+  function unionOf(a, b) {
+    if (!a[2] || !a[3]) return b;
+    if (!b[2] || !b[3]) return a;
+    const left = Math.min(a[0], b[0]);
+    const top = Math.min(a[1], b[1]);
+    return [left, top, Math.max(a[0] + a[2], b[0] + b[2]) - left, Math.max(a[1] + a[3], b[1] + b[3]) - top];
+  }
+
+  function settleBase() {
+    if (!base?.last) return;
+    if (place(base, boundsOf(base.last.items), true)) base.gl?.draw(base.last.items, base.last.look);
   }
 
   function readLook() {
@@ -221,6 +288,9 @@ export function createGlass(env) {
     }
     if (sig === lastSig) return false;
     lastSig = sig;
+    const need = boundsOf(items);
+    place(base, base.fitted ? unionOf(base.box, need) : need, true);
+    base.fitted = true;
     drawLayer(base, items, look);
     return true;
   }
@@ -229,6 +299,7 @@ export function createGlass(env) {
     if (!folder || !panel) return;
     if (!panel.el.isConnected) {
       drawLayer(folder, [], panel.look);
+      releaseLayer(folder);
       dropPanel();
       return;
     }
@@ -243,7 +314,8 @@ export function createGlass(env) {
   /* Call only from frame(). Resizing a canvas clears it. */
   function fitLayers() {
     resized = false;
-    for (const layer of [base, folder]) if (layer) sizeLayer(layer);
+    if (base) base.fitted = false;
+    if (folder && panel) sizeLayer(folder);
     if (!wallpaper) return;
     wallpaper.box = wallpaperBox(...wallpaper.natural, source.size, doc.documentElement.clientWidth, win.innerHeight);
     for (const layer of [base, folder]) layer?.gl?.setBox(wallpaper.box);
@@ -255,7 +327,7 @@ export function createGlass(env) {
     if (resized) fitLayers();
     paintFolder();
     if (paintBase()) still = 0;
-    else still++;
+    else if (++still === STILL_FRAMES) settleBase();
     if (still < STILL_FRAMES) env.requestFrame();
   }
 
@@ -286,8 +358,7 @@ export function createGlass(env) {
   async function upload() {
     const call = ++uploads;
     const img = source.img;
-    sizeLayer(/** @type {Layer} */ (base));
-    if (folder) sizeLayer(folder);
+    if (base) base.fitted = false;
     let next = null;
     if (img && !blocked() && base?.gl) {
       const limit = base.gl.maxSize;
@@ -331,7 +402,11 @@ export function createGlass(env) {
       return;
     }
     dropPanel();
-    for (const layer of [base, folder]) if (layer) drawLayer(layer, [], look);
+    for (const layer of [base, folder]) {
+      if (!layer) continue;
+      drawLayer(layer, [], look);
+      releaseLayer(layer);
+    }
   }
 
   function prepareFolder() {
@@ -342,7 +417,6 @@ export function createGlass(env) {
       folder = makeLayer('glass-folder-canvas', true);
       if (!folder) return;
       folder.blurPx = num(doc.body, '--folder-blur') * GPU_BLUR_SCALE;
-      sizeLayer(folder);
       if (!folder.gl?.setWallpaper(wallpaper.bitmap, wallpaper.box, folder.blurPx)) folder.gl = null;
       doc.body.append(folder.canvas);
     });
@@ -375,6 +449,7 @@ export function createGlass(env) {
         return;
       }
     }
+    sizeLayer(folder);
     ov.prepend(folder.canvas);
     ov.setAttribute(DRAWN, '');
     const r = el.getBoundingClientRect();
@@ -430,6 +505,18 @@ export function createGlass(env) {
       }, RESIZE_SETTLE_MS);
     });
     forcedColors.addEventListener('change', upload);
+    const watchDensity = () => {
+      win.matchMedia(`(resolution: ${win.devicePixelRatio || 1}dppx)`).addEventListener(
+        'change',
+        () => {
+          resized = true;
+          wake();
+          watchDensity();
+        },
+        { once: true },
+      );
+    };
+    watchDensity();
     new win.MutationObserver(upload).observe(doc.documentElement, { attributeFilter: ['data-transparency'] });
   }
 

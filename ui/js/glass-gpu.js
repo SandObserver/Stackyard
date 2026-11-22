@@ -16,9 +16,11 @@ uniform sampler2D uTex;
 uniform vec4 uRect;
 uniform vec2 uView;
 uniform float uRadius;
+#define LUT 64
 uniform float uBevel;
-uniform float uDepth;
-uniform vec3 uIor;
+uniform float uSide;
+uniform float uCap;
+uniform float uProfile[LUT];
 uniform float uAlpha;
 uniform vec4 uImg;
 uniform float uBright;
@@ -44,22 +46,13 @@ void main() {
   if (cover <= 0.0) discard;
   float d = -edge;
   vec3 col = wall(p);
-  if (d < uBevel) {
-    float t = clamp(1.0 - max(d, 0.0) / uBevel, 0.0, 0.985);
-    float rise = t / sqrt(1.0 - t * t);
-    vec2 g = vec2(
-      sdf(l + vec2(0.5, 0.0), h, r) - sdf(l - vec2(0.5, 0.0), h, r),
-      sdf(l + vec2(0.0, 0.5), h, r) - sdf(l - vec2(0.0, 0.5), h, r));
-    g = length(g) > 0.0 ? normalize(g) : vec2(0.0);
-    vec3 n = normalize(vec3(g * rise, 1.0));
-    float cap = 0.5 * min(uRect.z, uRect.w);
-    for (int i = 0; i < 3; i++) {
-      vec3 ray = refract(vec3(0.0, 0.0, -1.0), n, 1.0 / uIor[i]);
-      vec2 shift = ray.xy / max(-ray.z, 0.05) * uDepth;
-      float len = length(shift);
-      if (len > cap) shift *= cap / len;
-      col[i] = wall(p + shift)[i];
-    }
+  if (d < uBevel && uSide > 0.0) {
+    float x = clamp(max(d, 0.0) / uBevel, 0.0, 1.0) * float(LUT - 1);
+    int i = int(x);
+    float pull = min(mix(uProfile[i], uProfile[min(i + 1, LUT - 1)], fract(x)) * uSide, uCap);
+    vec2 q = abs(l) - h + r;
+    vec2 n = max(q.x, q.y) > 0.0 && min(q.x, q.y) > 0.0 ? normalize(q) : (q.x > q.y ? vec2(1.0, 0.0) : vec2(0.0, 1.0));
+    col = wall(p - n * sign(l) * pull);
   }
   col = mix(col, uFrost.rgb, uFrost.a);
   float k = cover * uAlpha;
@@ -93,6 +86,31 @@ void main() {
   }
   o = sum / total;
 }`;
+
+const SLAB = { bezel: 0.2535, base: 0.2488, rise: 0.3226 };
+const IOR = 1.5;
+const LUT = 64;
+const MAX_SIDE = 108;
+const MAX_SCALE = 2;
+const squircle = (/** @type {number} */ x) => (1 - (1 - x) ** 4) ** 0.25;
+/** @type {Map<number, Float32Array>} */
+const profiles = new Map();
+/** @param {number} bend */
+export function slabProfile(bend) {
+  let out = profiles.get(bend);
+  if (out) return out;
+  out = new Float32Array(LUT);
+  const thick = bend / 0.9;
+  const e = 1e-4;
+  for (let i = 0; i < LUT - 1; i++) {
+    const x = Math.max(i, 0.5) / (LUT - 1);
+    const slope = (SLAB.rise * thick * (squircle(Math.min(x + e, 1)) - squircle(x))) / (e * SLAB.bezel);
+    const a = Math.atan(slope);
+    out[i] = (SLAB.base + SLAB.rise * squircle(x)) * thick * Math.tan(a - Math.asin(Math.sin(a) / IOR));
+  }
+  profiles.set(bend, out);
+  return out;
+}
 
 /** @typedef {{ bend: number, dispersion: number, brightness: number, tint: number[], frost: number[] }} GlassLook */
 /** @typedef {{ rect: { left: number, top: number, width: number, height: number }, radius: number, alpha: number }} GlassItem */
@@ -158,6 +176,9 @@ export function createGlassRenderer(canvas, options = {}) {
   let img = [0, 0, 1, 1];
   /** @type {number} */
   const maxSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+  let scale = 1;
+  let origin = [0, 0];
+  let profileBend = Number.NaN;
 
   /** @param {number} w @param {number} h @param {TexImageSource|null} src */
   const texture = (w, h, src) => {
@@ -237,10 +258,14 @@ export function createGlassRenderer(canvas, options = {}) {
     setBox(box) {
       img = box;
     },
-    /** @param {number} width @param {number} height CSS px */
-    resize(width, height) {
-      canvas.width = Math.max(1, Math.round(width));
-      canvas.height = Math.max(1, Math.round(height));
+    /** @param {number} width @param {number} height @param {number} [x] @param {number} [y] CSS px */
+    resize(width, height, x = 0, y = 0) {
+      scale = Math.min(globalThis.devicePixelRatio || 1, MAX_SCALE, maxSize / Math.max(width, height, 1));
+      origin = [x, y];
+      const w = Math.max(1, Math.round(width * scale));
+      const h = Math.max(1, Math.round(height * scale));
+      if (canvas.width !== w) canvas.width = w;
+      if (canvas.height !== h) canvas.height = h;
     },
     /** @param {GlassItem[]} items @param {GlassLook} look */
     draw(items, look) {
@@ -255,19 +280,25 @@ export function createGlassRenderer(canvas, options = {}) {
       gl.vertexAttribPointer(main.aPos, 2, gl.FLOAT, false, 0, 0);
       gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.uniform2f(u.uView, canvas.width, canvas.height);
-      gl.uniform4f(u.uImg, img[0], img[1], img[2], img[3]);
+      const k = scale;
+      const [ox, oy] = origin;
+      gl.uniform4f(u.uImg, (img[0] - ox) * k, (img[1] - oy) * k, img[2] * k, img[3] * k);
       gl.uniform1f(u.uBright, look.brightness);
       gl.uniform4f(u.uTint, look.tint[0], look.tint[1], look.tint[2], look.tint[3]);
       gl.uniform4f(u.uFrost, look.frost[0], look.frost[1], look.frost[2], look.frost[3]);
-      const spread = 0.04 * look.dispersion;
-      gl.uniform3f(u.uIor, 1.5 - spread, 1.5, 1.5 + spread);
+      if (look.bend !== profileBend) {
+        gl.uniform1fv(u['uProfile[0]'], slabProfile(look.bend));
+        profileBend = look.bend;
+      }
       for (const it of items) {
         const { left, top, width, height } = it.rect;
-        const bevel = Math.max(1, Math.min(0.32 * Math.min(width, height), 36));
-        gl.uniform4f(u.uRect, left, top, width, height);
-        gl.uniform1f(u.uRadius, it.radius);
-        gl.uniform1f(u.uBevel, bevel);
-        gl.uniform1f(u.uDepth, look.bend * bevel);
+        const short = Math.min(width, height);
+        const side = Math.min(short, MAX_SIDE) * k;
+        gl.uniform4f(u.uRect, (left - ox) * k, (top - oy) * k, width * k, height * k);
+        gl.uniform1f(u.uRadius, it.radius * k);
+        gl.uniform1f(u.uBevel, Math.max(1, SLAB.bezel * side));
+        gl.uniform1f(u.uSide, look.bend > 0 ? side : 0);
+        gl.uniform1f(u.uCap, 0.5 * short * k);
         gl.uniform1f(u.uAlpha, it.alpha);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       }
@@ -358,10 +389,15 @@ void main() {
   g = length(g) > 0.0 ? normalize(g) : vec2(0.0);
   float t = clamp(1.0 - d / uBevel, 0.0, 1.0);
   float pull = pow(t, ${RIM_CURVE.toFixed(2)}) * uDepth * (g.x * g.x);
-  vec3 col;
-  col.r = sceneBlur(p + g * pull * (1.0 + uDisp)).r;
-  col.g = sceneBlur(p + g * pull).g;
-  col.b = sceneBlur(p + g * pull * (1.0 - uDisp)).b;
+  if (uMode == 2) {
+    o = texture(uScene, (p + g * pull) / uSize) * cover;
+    return;
+  }
+  vec3 col = sceneBlur(p + g * pull);
+  if (abs(pull * uDisp) * uDpr >= (uBlur >= 1.0 ? 0.02 : 0.005)) {
+    col.r = sceneBlur(p + g * pull * (1.0 + uDisp)).r;
+    col.b = sceneBlur(p + g * pull * (1.0 - uDisp)).b;
+  }
   float line = 1.0 - smoothstep(0.0, 1.6, d);
   col = pow(col, vec3(1.0 + 1.4 * line * uLine)) * (1.0 - 0.25 * line * uLine);
   col *= 1.0 - 0.09 * (1.0 - smoothstep(0.0, 7.0, d)) * uLine;
@@ -376,7 +412,7 @@ void main() {
 
 /** @typedef {{ x: number, y: number, w: number, h: number, mix?: number, bevel?: number, depth?: number, frost?: number,
                veil?: number[], blur?: number, line?: number, rim?: number, shadow?: number, disp?: number,
-               lift?: number,
+               lift?: number, ink?: boolean,
                rail?: { card: number[], x: number, y: number, w: number, h: number, rail: number[], fill: number[], fillW: number, grad: boolean } }} LensLook */
 
 /** @typedef {{ cv: HTMLCanvasElement, gl: WebGL2RenderingContext, prog: NonNullable<ReturnType<typeof compile>>,
@@ -479,8 +515,10 @@ export function lensRelease(owner) {
 }
 
 /** A scene picture kept on the GPU per owner and key, drawn the first time.
-    @param {LensSlot} s @param {object} owner @param {string} key @param {() => TexImageSource} draw */
-export function lensPicture(s, owner, key, draw) {
+    A see-through picture without `premultiplied` samples dark edges.
+    @param {LensSlot} s @param {object} owner @param {string} key @param {() => TexImageSource} draw
+    @param {boolean} [premultiplied] */
+export function lensPicture(s, owner, key, draw, premultiplied = false) {
   let id = ownerIds.get(owner);
   if (!id) {
     id = nextOwner++;
@@ -501,7 +539,9 @@ export function lensPicture(s, owner, key, draw) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  if (premultiplied) gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, draw());
+  if (premultiplied) gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
   m.set(k, t);
   if (m.size > PICTURES) {
     const [k0, t0] = /** @type {[string, WebGLTexture]} */ (m.entries().next().value);
@@ -539,7 +579,7 @@ export function lensFrame(s, a, b, w, h, dpr, look) {
     gl.activeTexture(gl.TEXTURE0);
   }
   const r = look.rail;
-  gl.uniform1i(u.uMode, r ? 1 : 0);
+  gl.uniform1i(u.uMode, r ? 1 : look.ink ? 2 : 0);
   gl.uniform1f(u.uMix, look.mix ?? 0);
   gl.uniform1f(u.uDpr, dpr);
   if (r) {

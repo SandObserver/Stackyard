@@ -1,9 +1,11 @@
 // @ts-check
 import { rubber, Spring } from '/js/frame-motion.js?v=911f7c03';
-import { AT_REST, GlassControl, lensLook } from '/js/glass-control.js?v=0ce42d7b';
-import { lensClaim, lensFrame, lensPicture, lensRelease, RIM_CURVE } from '/js/glass-gpu.js?v=eab726bc';
+import { AT_REST, GlassControl, lensLook } from '/js/glass-control.js?v=2995d503';
+import { lensClaim, lensFrame, lensPicture, lensRelease } from '/js/glass-gpu.js?v=5cefbe56';
 import { behind, clamp, colour, css, dpr, isDark, over, pill, sized, unit } from '/js/glass-paint.js?v=800e4865';
 import { prefersReducedMotion } from '/js/glass-prefs.js?v=511e01c7';
+import { drawTabInks, pillPath, tabInks } from '/js/glass-tabs.js?v=cecbcf6f';
+import { holdIcons } from '/js/icon-motion.js?v=7bfd91f5';
 
 /** Pointer travel in px before a press becomes a drag. */
 const DRAG_SLOP = 4;
@@ -35,7 +37,6 @@ const SEGMENTED = {
 };
 const TAB_BAR = { ...SEGMENTED, pressDelay: 150, widen: 1.26, taller: 9, maxStretch: 0 };
 
-const RIM_N = 5;
 const RIM_BAND = 14;
 const RIM_PULL = 6;
 /** Below this strength the bend is off. */
@@ -45,7 +46,8 @@ const TINT_RAMP = 1.6;
 
 /** @typedef {{ l: number, w: number, c: number, t: number, h: number }} ItemRect left, width, centre, top, height in bar px */
 /** @typedef {{ items: () => HTMLElement[], selected: () => number, choose: (i: number) => void,
-               pill: () => HTMLElement|null, pillColour: string, P: typeof SEGMENTED, css?: boolean, reselect?: boolean }} BarKind */
+               pill: () => HTMLElement|null, pillColour: string, P: typeof SEGMENTED, css?: boolean, reselect?: boolean,
+               still?: (on: boolean) => void }} BarKind */
 
 /** Fractional item index at bar x `px`. Works for either direction of items.
     @param {ItemRect[]} r @param {number} px */
@@ -76,18 +78,6 @@ export function rectAt(r, p) {
   };
 }
 
-/** The part of a pill's end cap within `dd` of its edge, as an SVG path.
-    @param {number} side -1 left, 1 right @param {number} dd @param {number} w @param {number} h
-    @param {number} cy @param {number} left x of the pill's left edge */
-export function capPath(side, dd, w, h, cy, left) {
-  const r = Math.min(h, w) / 2;
-  const xc = side < 0 ? r : w - r;
-  const cut = xc + side * r - side * dd;
-  const s2 = Math.sqrt(Math.max(0, r * r - (xc - cut) * (xc - cut)));
-  const x = (cut + left).toFixed(2);
-  return `M${x} ${(cy - s2).toFixed(2)}A${r.toFixed(2)} ${r.toFixed(2)} 0 ${dd > r ? 1 : 0} ${side < 0 ? 0 : 1} ${x} ${(cy + s2).toFixed(2)}Z`;
-}
-
 /** @param {HTMLElement} el @param {string} v */
 function setClip(el, v) {
   if (el.dataset.clip === v) return;
@@ -107,9 +97,9 @@ export class GlassBar extends GlassControl {
     this.cv.setAttribute('aria-hidden', 'true');
     /** @type {HTMLElement|null} */
     this.lensEl = null;
-    /** @type {HTMLElement[]} */
-    this.bends = [];
-    this.copied = '';
+    /** @type {import('/js/glass-tabs.js?v=cecbcf6f').TabInks|null} */
+    this.ink = null;
+    this.inkStale = false;
     if (kind.css) {
       this.lensEl = document.createElement('span');
       this.lensEl.className = 'mtab-lens';
@@ -119,6 +109,7 @@ export class GlassBar extends GlassControl {
       const first = el.querySelector(':scope > .mtab');
       if (first) first.before(this.lensEl);
       else el.append(this.lensEl);
+      el.append(this.cv);
     } else el.prepend(this.cv);
     this.sc = document.createElement('canvas');
     this.pos = new Spring(Math.max(0, kind.selected()));
@@ -154,6 +145,16 @@ export class GlassBar extends GlassControl {
       .getPropertyValue(this.kind.pillColour)
       .trim();
     this.col = { card, track, pill: over(colour(pillValue || '#fff'), track) };
+    if (this.kind.css) this.readInk(b);
+  }
+  /** @param {DOMRect} [b] */
+  readInk(b = this.el.getBoundingClientRect()) {
+    this.inkStale = false;
+    const next = tabInks(this.kind.items(), b, () => {
+      this.inkStale = true;
+      this.wake();
+    });
+    if (!next.pending || !this.ink || this.ink.pending) this.ink = next;
   }
   /** @param {PointerEvent} e */
   down(e) {
@@ -173,6 +174,10 @@ export class GlassBar extends GlassControl {
     if (this.lifted) return;
     this.lifted = true;
     this.liftAt = performance.now();
+    if (this.kind.still) {
+      this.kind.still(true);
+      this.inkStale = true;
+    }
     this.grow.to(1, this.P.growIn);
     this.frost.to(0, this.P.frostIn);
     this.wake();
@@ -204,7 +209,10 @@ export class GlassBar extends GlassControl {
     this.lift();
     this.pos.to(i, this.P.land);
     this.landing = true;
-    if (!cancelled && (i !== this.kind.selected() || (this.kind.reselect && !p.moved))) this.kind.choose(i);
+    if (!cancelled && (i !== this.kind.selected() || (this.kind.reselect && !p.moved))) {
+      this.kind.choose(i);
+      this.inkStale = true;
+    }
     this.swallowClick();
     this.wake();
   }
@@ -238,13 +246,17 @@ export class GlassBar extends GlassControl {
       this.frost.to(1, this.P.frostOut);
     }
     const done = !this.pointer && !this.landing && [this.pos, this.grow, this.frost].every(s => s.idle);
-    if (done) this.lifted = false;
+    if (done) {
+      this.lifted = false;
+      this.kind.still?.(false);
+    }
     this.render(done);
     return !done;
   }
   stop() {
     super.stop();
     this.lifted = false;
+    this.kind.still?.(false);
     this.landing = false;
     this.grow.snap(0);
     this.frost.snap(1);
@@ -329,89 +341,52 @@ export class GlassBar extends GlassControl {
   /** @param {number} cx @param {number} cy @param {number} w @param {number} h @param {number} strength */
   bend(cx, cy, w, h, strength) {
     const tabs = this.kind.items();
-    const on = strength > RIM_MIN;
-    this.el.classList.toggle('glass-bending', on);
-    if (!on) {
+    if (strength > RIM_MIN && this.inkStale) this.readInk();
+    const ink = this.ink;
+    const L = strength > RIM_MIN && ink && !ink.pending ? lensClaim(this, this.cv, true) : null;
+    this.el.classList.toggle('glass-bending', !!L);
+    if (!L || !ink) {
       for (const t of tabs) setClip(t, '');
+      lensRelease(this);
       return;
     }
-    if (!this.bends.length) this.makeBends();
-    this.syncBends();
-    const band = Math.min(Math.min(h, w) / 2, RIM_BAND);
-    const D = RIM_PULL * strength;
+    const CW = this.box.w + 2 * PAD;
+    const CH = this.box.h + 2 * PAD;
+    const pic = lensPicture(
+      L,
+      this,
+      ['ink', dpr(), this.box.w, this.box.h, ink.key].join('|'),
+      () => {
+        const gx = sized(this.sc, CW, CH);
+        gx.clearRect(0, 0, CW, CH);
+        drawTabInks(gx, ink.items, PAD);
+        return this.sc;
+      },
+      true,
+    );
+    lensFrame(L, pic, pic, CW, CH, dpr(), {
+      x: PAD + cx - w / 2,
+      y: PAD + cy - h / 2,
+      w,
+      h,
+      bevel: Math.min(Math.min(h, w) / 2, RIM_BAND),
+      depth: -RIM_PULL * strength,
+      ink: true,
+      shadow: 0,
+    });
     const left = cx - w / 2;
-    const pull = (/** @type {number} */ d) => D * Math.max(0, 1 - d / band) ** RIM_CURVE;
-    let k = 0;
-    for (const side of [-1, 1]) {
-      const edge = side < 0 ? left : left + w;
-      for (let j = 0; j < RIM_N; j++) {
-        const d0 = (band * j) / RIM_N;
-        const d1 = (band * (j + 1)) / RIM_N;
-        const x0 = edge - side * d0;
-        const x1 = edge - side * d1;
-        const f0 = x0 - side * pull(d0);
-        const f1 = x1 - side * pull(d1);
-        const sl = (f1 - f0) / (x1 - x0);
-        const layer = this.bends[k++];
-        setClip(
-          layer,
-          `path(evenodd, '${capPath(side, d1 + 0.5, w, h, cy, 0)}${j ? capPath(side, d0, w, h, cy, 0) : ''}')`,
-        );
-        layer.style.transform = `translateX(${left}px)`;
-        /** @type {HTMLElement} */ (layer.firstElementChild).style.transform =
-          `translateX(${x0 - left - f0 / sl}px) scaleX(${1 / sl})`;
-      }
-    }
     this.rects.forEach((rc, n) => {
       const t = tabs[n];
       if (!t) return;
-      const hit = rc.l < left + band || rc.l + rc.w > left + w - band;
-      const near = rc.l + rc.w > left && rc.l < left + w;
-      if (!hit || !near) {
+      if (rc.l + rc.w <= left || rc.l >= left + w) {
         setClip(t, '');
         return;
       }
-      const ox = left - rc.l;
-      const cyl = cy - rc.t;
       setClip(
         t,
-        `path(evenodd, 'M-50 -50H${(rc.w + 50).toFixed(0)}V${(rc.h + 50).toFixed(0)}H-50Z${capPath(-1, band, w, h, cyl, ox)}${capPath(1, band, w, h, cyl, ox)}')`,
+        `path(evenodd, 'M-50 -50H${(rc.w + 50).toFixed(0)}V${(rc.h + 50).toFixed(0)}H-50Z${pillPath(cx - rc.l, cy - rc.t, w, h)}')`,
       );
     });
-  }
-  /** Copies of the tabs, as plain spans so nothing can focus or click them. */
-  makeBends() {
-    for (let k = 0; k < 2 * RIM_N; k++) {
-      const layer = document.createElement('span');
-      layer.className = 'mtab-bend';
-      layer.setAttribute('aria-hidden', 'true');
-      const inner = document.createElement('span');
-      inner.className = 'mtab-bend-in';
-      layer.append(inner);
-      this.el.append(layer);
-      this.bends.push(layer);
-    }
-    this.copied = '';
-  }
-  syncBends() {
-    const tabs = this.kind.items();
-    const key =
-      tabs.map(t => (t.classList.contains('active') ? 1 : 0)).join('') +
-      this.rects.map(r => `${r.l.toFixed(1)},${r.w.toFixed(1)}`).join(';');
-    if (this.copied === key) return;
-    this.copied = key;
-    for (const layer of this.bends) {
-      /** @type {HTMLElement} */ (layer.firstElementChild).replaceChildren(
-        ...tabs.map((t, n) => {
-          const c = document.createElement('span');
-          c.className = t.className;
-          c.append(...[...t.childNodes].map(x => x.cloneNode(true)));
-          const rc = this.rects[n];
-          c.style.cssText = `position:absolute;left:${rc.l}px;top:${rc.t}px;width:${rc.w}px;height:${rc.h}px;margin:0`;
-          return c;
-        }),
-      );
-    }
   }
 }
 
@@ -446,5 +421,6 @@ export const tabBar = bar => {
     pillColour: '--tab-pill',
     P: TAB_BAR,
     css: true,
+    still: on => holdIcons(bar, on),
   };
 };

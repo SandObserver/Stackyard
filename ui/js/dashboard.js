@@ -1,7 +1,7 @@
-import { LANG_STORE, boot } from '/js/dashboard-boot.js?v=df2ca205';
+import { LANG_STORE, boot } from '/js/dashboard-boot.js?v=ec775cae';
 import { showBuildFailed, liftVeil } from '/js/dashboard-screens.js?v=79b0c104';
 import { createDashboardState } from '/js/dashboard-state.js?v=51013727';
-import { startGlass } from '/js/glass.js?v=ccd1be6f';
+import { startGlass } from '/js/glass.js?v=7c376881';
 import { initI18n, isSupported } from '/js/i18n.js?v=82ba9da2';
 import { ensureSprite } from '/js/icon-set.js?v=beda3062';
 import { isMobileLayout } from '/js/layout.js?v=6680c0bf';

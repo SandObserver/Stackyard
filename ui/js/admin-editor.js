@@ -7,7 +7,7 @@ import {
 } from '/js/admin-app-form.js?v=c5d1c7f8';
 import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=7f843c05';
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
-import { scrollSettingsTop } from '/js/admin-nav.js?v=cc1cebcf';
+import { scrollSettingsTop } from '/js/admin-nav.js?v=8bbc0dad';
 import {
   applyEdit,
   buildAppItem,
@@ -33,7 +33,7 @@ import { buildWidgetForm } from '/js/admin-widget-form.js?v=c456b2d5';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
 import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
 import { t } from '/js/i18n.js?v=82ba9da2';
-import { animateIcon } from '/js/icon-motion.js?v=9eb568c5';
+import { animateIcon } from '/js/icon-motion.js?v=7bfd91f5';
 import { iconSvg } from '/js/icon-set.js?v=beda3062';
 import { clampName } from '/js/limits.js?v=ff61256e';
 import { confirmText, openModal as openDialog } from '/js/modal.js?v=84ba5279';
