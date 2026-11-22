@@ -162,6 +162,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Keep the side margin in an open folder on desktop when app titles are off.
 
+- Stop the arrow keys from turning the page while you type in a field, hold a
+  modifier key, or have a dialog open.
+
+- Keep keyboard focus on the visible page after a page turn.
+
+- Stop a second tap on a badge from closing and reopening its popover.
+
+- Make the badge popover usable inside an open folder.
+
+- Let screen readers read every badge value without opening the popover.
+
+- Return focus to the button that opened a prompt after the prompt finishes.
+
+- Keep Search open when Escape cancels text being composed.
+
+- Announce the search result count once typing pauses.
+
+- Keep the Unsplash link in the photo credit fully visible.
+
+- Tell screen readers that the Search pill and folder tiles open a dialog.
+
 ### Security
 
 - Refuse an unsafe link in the Disk Health TrueNAS and Unraid, DNS, GitHub and
