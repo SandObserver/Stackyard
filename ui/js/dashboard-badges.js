@@ -5,9 +5,9 @@ import {
   folderLabelName,
   readBadgeUpdate,
 } from '/js/badge-logic.js?v=7112fd10';
-import { describeBadgeTile, wireBadgePopover } from '/js/badge-popover.js?v=bc59bc37';
+import { describeBadgeTile, wireBadgePopover } from '/js/badge-popover.js?v=b487ef22';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
-import { t } from '/js/i18n.js?v=99563c71';
+import { t } from '/js/i18n.js?v=82ba9da2';
 import { pageTheme, paletteColor } from '/js/palette.js?v=3fb8ae43';
 
 /** @param {import('/js/dashboard-state.js?v=51013727').DashboardState} dash */

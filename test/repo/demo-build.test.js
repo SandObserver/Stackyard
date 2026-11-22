@@ -14,7 +14,7 @@ const {
   restampWidgets,
   copyLicences,
 } = require('../../scripts/demo/build');
-const { writeRoutes, routePattern } = require('../../scripts/demo/source');
+const { demoHeaders, writeRoutes, routePattern } = require('../../scripts/demo/source');
 
 const ok = body => [200, JSON.stringify(body)];
 
@@ -262,4 +262,33 @@ test('the demo site carries the licence and the notice as text files', () => {
   } finally {
     fs.rmSync(out, { recursive: true, force: true });
   }
+});
+
+/* The static demo has no API. A report address there posts to a 404 on every
+   violation. */
+test('the demo sends every image policy without its report address', () => {
+  const fs = require('node:fs');
+  const root = path.join(__dirname, '..', '..');
+  const conf = ['dashboard.conf', 'csp-default.conf']
+    .map(f => fs.readFileSync(path.join(root, 'nginx', f), 'utf8'))
+    .join('\n');
+  const policies = [...conf.matchAll(/add_header (Content-Security-Policy(?:-Report-Only)?) "([^"]+)"/g)];
+  assert.ok(policies.length >= 4, 'the scan found no policies');
+  for (const [, name, value] of policies) {
+    assert.match(value, /report-uri \/api\/csp-report;/, `${name} names no report address in the image`);
+    const sent = demoHeaders({ [name.toLowerCase()]: value });
+    const policy = sent[name.toLowerCase()];
+    assert.doesNotMatch(policy, /report-uri|\/api\//, policy);
+    assert.equal(policy, value.replace(' report-uri /api/csp-report;', ''), 'only the report address is taken out');
+  }
+});
+
+test('the demo header rules carry no report address', () => {
+  const page = demoHeaders({
+    'content-security-policy': "default-src 'self'; report-uri /api/csp-report;",
+  });
+  const text = headerRules({ '/index.html': page });
+  assert.match(text, /Content-Security-Policy: default-src 'self';\n/);
+  assert.doesNotMatch(text, /report|\/api\//i);
+  assert.equal(demoHeaders(null), null);
 });

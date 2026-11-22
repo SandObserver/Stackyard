@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pageWithScripts } from './widget-source.mjs';
 
 const WIDGETS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'widgets');
-const read = p => fs.readFileSync(path.join(WIDGETS, p), 'utf8');
+const read = p => pageWithScripts(path.join(WIDGETS, p));
 
 const PINS = {
   'system-summary/index.html': 'widget',

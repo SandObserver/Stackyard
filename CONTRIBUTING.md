@@ -75,7 +75,8 @@ docker build -t stackyard:ci .
 
 A frontend test imports the module it checks. `ui/test/fake-dom.mjs` builds a
 document from the real page markup, with the window globals and a fake `fetch`.
-`ui/test/widget-source.mjs` runs a function from a widget page's inline script.
+`ui/test/widget-source.mjs` runs a function from a widget page's script file,
+and `pageWithScripts()` reads a page with its script file put back inline.
 `ui/js/admin.js` only starts the Settings page, and `ui/js/dashboard.js` only
 starts the dashboard. Put new logic in a module they import, with no side
 effects on import. `ui/test/dashboard-page.mjs` boots the dashboard modules in

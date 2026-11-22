@@ -22,9 +22,9 @@ import {
   qa,
   setCentredText,
   setUserText,
-} from '/js/utils.js?v=9ed2b298';
-import { mountScaledWidget, teardownWidgets } from '/js/widget-frame.js?v=1468e826';
-import { t, currentLang } from '/js/i18n.js?v=99563c71';
+} from '/js/utils.js?v=e9e22f08';
+import { mountScaledWidget, teardownWidgets } from '/js/widget-frame.js?v=6f5b0dc5';
+import { t, currentLang } from '/js/i18n.js?v=82ba9da2';
 import { toneForColor } from '/js/label-contrast.js?v=a160c6d1';
 import { DEFAULT_WIDGET_SIZE } from '/js/limits.js?v=ff61256e';
 import {
@@ -444,10 +444,11 @@ function folderMotion(ov, parts, tile, panel) {
     const from = !still && tile?.isConnected ? tile.getBoundingClientRect() : null;
     if (!from?.width) return [0, 0, 1];
     const r = p.getBoundingClientRect();
-    const s = from.width / r.width;
+    const b = p !== panel && p.contains(panel) ? panel.getBoundingClientRect() : r;
+    const s = from.width / b.width;
     return [
-      from.left + from.width / 2 - r.left - (r.width * s) / 2,
-      from.top + from.height / 2 - r.top - (r.height * s) / 2,
+      from.left + from.width / 2 - r.left - (b.left - r.left) * s - (b.width * s) / 2,
+      from.top + from.height / 2 - r.top - (b.top - r.top) * s - (b.height * s) / 2,
       s,
     ];
   };
@@ -583,7 +584,7 @@ export function openFolderDesktop(folder, tile) {
      tiles under the scrim were reachable by Tab and by a screen reader. */
   ov.showModal();
   ov.focus();
-  shrink = folderMotion(ov, [outer], tile, box);
+  shrink = folderMotion(ov, [outer], tile?.querySelector('.dyn-folder-box') ?? tile, box);
 }
 
 function mFolder(item, cw, rh, isz, sc) {

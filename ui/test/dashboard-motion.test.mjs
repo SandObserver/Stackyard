@@ -6,11 +6,12 @@ import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
 
 import { fakeFetch, installDom, pageBody } from './fake-dom.mjs';
+import { pageWithScripts } from './widget-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+const read = p => pageWithScripts(path.join(root, p));
 const css = read('css/dashboard.css');
 
 globalThis.location = { search: '?id=test' };
@@ -694,7 +695,7 @@ test('widget styles key reduced transparency on the attribute the frame copies',
   const dir = path.join(root, 'widgets');
   for (const name of fs.readdirSync(dir)) {
     for (const file of fs.readdirSync(path.join(dir, name)).filter(f => f.endsWith('.html'))) {
-      const html = fs.readFileSync(path.join(dir, name, file), 'utf8');
+      const html = pageWithScripts(path.join(dir, name, file));
       assert.doesNotMatch(html, /prefers-reduced-transparency/, `${name}/${file}`);
       if (/data-transparency/.test(html)) assert.match(html, /widget-theme\.js/, `${name}/${file}`);
     }

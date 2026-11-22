@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { register } from 'node:module';
+import { pageWithScripts } from './widget-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 globalThis.location = { search: '?id=test' };
@@ -85,7 +85,7 @@ test('an empty or unsafe link restores the element', () => {
   assert.equal(bad.getAttribute('role'), null);
 });
 
-const widget = p => fs.readFileSync(new URL(`../widgets/${p}`, import.meta.url), 'utf8');
+const widget = p => pageWithScripts(new URL(`../widgets/${p}`, import.meta.url));
 
 test('every widget with a configurable link uses the shared link', () => {
   for (const p of [

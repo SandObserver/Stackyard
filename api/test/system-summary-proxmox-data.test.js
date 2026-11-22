@@ -86,7 +86,7 @@ test('the node status maps onto the shape the widget renders', async () => {
 
 test('a blank or / slot reads the root filesystem under the mount the widget looks up', async () => {
   const widget = fs.readFileSync(
-    path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'index.html'),
+    path.join(__dirname, '..', '..', 'ui', 'widgets', 'system-summary', 'widget.js'),
     'utf8',
   );
   assert.match(widget, /byMount\.get\(slot\.primary \|\| '\/'\)/);

@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { test } from 'node:test';
 import { relativeLuminance, toneForLuminances } from '../js/label-contrast.js';
+import { pageWithScripts } from './widget-source.mjs';
 
-const page = fs.readFileSync(new URL('../widgets/backup/backup.html', import.meta.url), 'utf8');
+const page = pageWithScripts(new URL('../widgets/backup/backup.html', import.meta.url));
 const lift = re => {
   const m = re.exec(page)?.[0];
   assert.ok(m, `${re} is gone from the widget`);

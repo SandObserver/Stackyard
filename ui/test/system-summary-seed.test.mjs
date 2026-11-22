@@ -4,13 +4,13 @@
    which cannot be imported. */
 
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { pageWithScripts } from './widget-source.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const src = fs.readFileSync(path.join(root, 'widgets/system-summary/index.html'), 'utf8');
+const src = pageWithScripts(path.join(root, 'widgets/system-summary/index.html'));
 
 const fn = src.match(/function seedFromPast\(slot, i, past, step = 1\) \{[\s\S]*?\n\}/);
 assert.ok(fn, 'seedFromPast is defined in the widget');

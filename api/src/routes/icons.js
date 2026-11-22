@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const { on, json, checkOrigin, getIp, readBodyCapped } = require('../router');
+const { on, json, tagMatches, checkOrigin, getIp, readBodyCapped } = require('../router');
 const { IS_DEMO, DEMO_READONLY_MSG } = require('../demo');
 const { ICONS_PATH } = require('../config');
 const { fetchUnchecked } = require('../proxy');
@@ -200,11 +200,6 @@ on('GET', '/api/icons/cdn', async (req, res) => {
   if (!missed) return json(res, 502, { error: 'Icon could not be fetched', kind: KIND.UPSTREAM });
   sendIcon(req, res, missed);
 });
-
-const tagMatches = (header, etag) =>
-  String(header || '')
-    .split(',')
-    .some(t => t.trim().replace(/^W\//, '') === etag);
 
 /** @param {import('http').IncomingMessage} req @param {import('http').ServerResponse} res @param {CdnIconEntry} entry */
 function sendIcon(req, res, entry) {

@@ -861,16 +861,16 @@
     }
     .folder-outer {
       display:flex; flex-direction:column; align-items:center;
-      gap:16px; max-width:600px; width:90vw;
+      gap:16px; width:min-content; max-width:calc(100vw - 32px);
       margin-block:auto;
     }
     .folder-title-desktop {
       font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2); font-weight:600; color:rgba(255,255,255,.95);
-      text-shadow:0 1px 8px rgba(0,0,0,.6); text-align:center;
+      text-shadow:0 1px 8px rgba(0,0,0,.6); text-align:center; text-wrap:balance;
     }
     .folder-box-desktop {
       position:relative; isolation:isolate;
-      border-radius:28px; padding:28px 32px 24px; width:100%;
+      border-radius:28px; padding:28px 32px 24px; width:max-content; max-width:calc(100vw - 32px);
       box-shadow:0 32px 80px rgba(0,0,0,.65);
     }
     .folder-icon-link {
@@ -972,11 +972,11 @@
   margin-block-end: var(--sp-32);
 }
 .empty-state-title {
-  margin: 0; font-weight: 600; color: var(--label-text); text-shadow: var(--label-shadow);
+  margin: 0; text-wrap: balance; font-weight: 600; color: var(--label-text); text-shadow: var(--label-shadow);
   font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2);
 }
 .empty-state-sub {
-  margin: 0; max-width: 38ch; color: var(--label-text); text-shadow: var(--label-shadow); font-weight: 500;
+  margin: 0; text-wrap: balance; max-width: 38ch; color: var(--label-text); text-shadow: var(--label-shadow); font-weight: 500;
   font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2);
 }
 .empty-state-btn {
@@ -1019,8 +1019,8 @@
   padding-inline: max(24px, var(--safe-left), var(--safe-right)); text-align: center;
 }
 .api-error-sub { max-width: 32em }
-.api-error-title { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight: 600; margin: 0; }
-.api-error-sub   { font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color: rgba(255,255,255,.6); margin: 0; }
+.api-error-title { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight: 600; margin: 0; text-wrap: balance; }
+.api-error-sub   { font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color: rgba(255,255,255,.6); margin: 0; text-wrap: pretty; }
 .api-error-btn   {
   margin-top: 8px; padding: 13px 24px; border-radius: 999px; min-height: 48px;
   display: inline-flex; align-items: center; justify-content: center; text-decoration: none; position: relative;
@@ -1030,12 +1030,6 @@
 }
 
 /* ── Accessibility layer (added in Phase 3) ── */
-
-/* Screen-reader-only utility (used by the search results live region) */
-.visually-hidden {
-  position:absolute !important; width:1px; height:1px; padding:0; margin:-1px;
-  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
-}
 
 /* Visible keyboard focus for all interactive elements. */
 a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
@@ -1133,7 +1127,7 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
   color: var(--label-primary);
 }
 .setup-title { font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline); font-weight: var(--fw-headline); margin: 0; padding-inline: 8px; }
-.setup-sub   { font-size:var(--fs-subheadline);letter-spacing:var(--tr-subheadline); line-height: 1.4; color: rgba(235,235,245,.7); margin: 0 0 6px; padding-inline: 8px; }
+.setup-sub   { font-size:var(--fs-subheadline);letter-spacing:var(--tr-subheadline); line-height: 1.4; color: rgba(235,235,245,.7); margin: 0 0 6px; padding-inline: 8px; text-wrap: pretty; }
 .setup-pw {
   width: 100%; box-sizing: border-box; min-height: 52px; padding: 0 16px; border-radius: 26px;
   background: rgba(118,118,128,.2); border: 0;
@@ -1221,16 +1215,6 @@ html[data-theme="light"] .setup-bars .pwbar { background: rgba(0,0,0,.1); }
   .mp, .mp.on { transition:none }
 }
 
-.sy-sprite{position:absolute;width:0;height:0;overflow:hidden}
-.sy-icon{flex-shrink:0;--icon-accent:var(--accent)}
-.sy-i{fill:currentColor}
-.sy-i2{fill:currentColor;fill-opacity:.18}
-.sy-i3{fill:currentColor;fill-opacity:.4}
-.sy-a{fill:var(--icon-accent,currentColor)}
-.sy-is{stroke:currentColor}
-.sy-i3s{stroke:currentColor;stroke-opacity:.4}
-.sy-as{stroke:var(--icon-accent,currentColor)}
-@media (forced-colors:active){.sy-icon{--icon-accent:CanvasText}}
 
 .plate.plate-clear { background-image:none; box-shadow:none }
 

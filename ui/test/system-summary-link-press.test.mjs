@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { test } from 'node:test';
+import { pageWithScripts } from './widget-source.mjs';
 
-const src = fs.readFileSync(new URL('../widgets/system-summary/index.html', import.meta.url), 'utf8');
+const src = pageWithScripts(new URL('../widgets/system-summary/index.html', import.meta.url));
 
 function lift(name, sig) {
   const m = src.match(new RegExp(`function ${name}\\(${sig}\\) \\{[\\s\\S]*?\\n\\}`));

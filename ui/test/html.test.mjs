@@ -109,3 +109,82 @@ test('a boolean in an attribute needs String(), because false renders as nothing
   assert.equal(String(html`<li aria-selected="${String(false)}">`), '<li aria-selected="false">');
   assert.equal(String(html`<li aria-selected="${true}">`), '<li aria-selected="true">');
 });
+
+/* A fresh copy of the module, so it creates its policy against the given
+   trustedTypes. */
+async function withTrustedTypes(trustedTypes, fn) {
+  const had = Object.getOwnPropertyDescriptor(globalThis, 'trustedTypes');
+  globalThis.trustedTypes = trustedTypes;
+  try {
+    await fn(await import(`../js/html.js?tt=${Math.random()}`));
+  } finally {
+    if (had) Object.defineProperty(globalThis, 'trustedTypes', had);
+    else delete globalThis.trustedTypes;
+  }
+}
+
+class FakeTrustedHTML {
+  constructor(value) {
+    this.value = value;
+  }
+  toString() {
+    return this.value;
+  }
+}
+
+test('setHtml writes through the one named Trusted Types policy', async () => {
+  const created = [];
+  const trustedTypes = {
+    createPolicy(name, rules) {
+      created.push(name);
+      return { createHTML: v => new FakeTrustedHTML(rules.createHTML(v)) };
+    },
+  };
+  await withTrustedTypes(trustedTypes, mod => {
+    assert.deepEqual(created, ['stackyard-html']);
+    assert.equal(mod.POLICY_NAME, 'stackyard-html');
+    const el = { innerHTML: null };
+    mod.setHtml(el, mod.html`<b>${'a<b'}</b>`);
+    assert.ok(el.innerHTML instanceof FakeTrustedHTML, 'a plain string reached the sink');
+    assert.equal(String(el.innerHTML), '<b>a&lt;b</b>');
+    assert.throws(() => mod.setHtml(el, '<b>x</b>'), TypeError);
+  });
+});
+
+test('parseMarkup parses through the policy and refuses a plain string', async () => {
+  const trustedTypes = {
+    createPolicy: (_name, rules) => ({ createHTML: v => new FakeTrustedHTML(rules.createHTML(v)) }),
+  };
+  await withTrustedTypes(trustedTypes, mod => {
+    const seen = [];
+    class Parser {
+      parseFromString(src, type) {
+        seen.push([src, type]);
+        return { documentElement: null };
+      }
+    }
+    mod.parseMarkup(mod.raw('<svg/>'), 'image/svg+xml', Parser);
+    assert.ok(seen[0][0] instanceof FakeTrustedHTML);
+    assert.equal(String(seen[0][0]), '<svg/>');
+    assert.equal(seen[0][1], 'image/svg+xml');
+    assert.throws(() => mod.parseMarkup('<svg/>', 'image/svg+xml', Parser), TypeError);
+    assert.equal(seen.length, 1);
+  });
+});
+
+test('without Trusted Types, or when the policy is refused, markup is written as a string', async () => {
+  for (const trustedTypes of [
+    undefined,
+    {
+      createPolicy() {
+        throw new TypeError('refused');
+      },
+    },
+  ]) {
+    await withTrustedTypes(trustedTypes, mod => {
+      const el = { innerHTML: null };
+      mod.setHtml(el, mod.raw('<i>x</i>'));
+      assert.equal(el.innerHTML, '<i>x</i>');
+    });
+  }
+});

@@ -1,0 +1,570 @@
+import { poll, fetchData, getConfig, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom, whileOnScreen, twoTap, toneForColor, failureName } from '/js/widget-toolbox.js?v=039ea657';
+await loadStrings();
+document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
+const size = new URLSearchParams(location.search).get('size') || 'small';
+
+const NAMED = { green:'#30D158', yellow:'#FFD600', red:'#FF4245', blue:'#0091FF' };
+
+const IDLE_TINT = 'rgba(100,100,110,0.28)', EMPTY_TINT = 'rgba(100,100,110,0.14)';
+
+const statusInk = color => (color && toneForColor(color) === 'dark' ? '#1c1c1e' : '#fff');
+
+function statusColor(s) {
+  if(s==='healthy') return NAMED.green;
+  if(s==='warning') return NAMED.yellow;
+  if(s==='running') return NAMED.blue;
+  if(s==='error'||s==='missed') return NAMED.red;
+  return null;
+}
+
+let _cfg={}, _pollSec=60, _href='', _jobSlots=[], _hrefs=[], _links=[];
+const cardLink = idx => _links[idx] || _hrefs[idx] || '';
+
+function parseDate(v) {
+  if(!v) return null;
+  if(typeof v==='number') return new Date(v);
+  const s=String(v).trim();
+  const net=s.match(/\/Date\((-?\d+)([+-]\d{4})?\)\//);
+  if(net) return new Date(parseInt(net[1],10));
+  const c=s.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z?$/);
+  if(c){const[,yr,mo,dy,hh,mm,ss]=c;return new Date(`${yr}-${mo}-${dy}T${hh}:${mm}:${ss}Z`);}
+  const d=new Date(s); return isNaN(d)?null:d;
+}
+
+function relTime(v) {
+  const d=parseDate(v);
+  return d ? relativeTime(d.getTime()) : '—';
+}
+
+const STATUS_KEY={healthy:'ui.status.healthy',warning:'ui.status.warning',error:'ui.status.error',missed:'ui.status.missed'};
+const STATUS_EN={healthy:'healthy',warning:'warning',error:'failed',missed:'missed'};
+
+/* ── Seeded LCG ── */
+function mkRng(seed) {
+  let s=seed>>>0;
+  return ()=>{ s=(Math.imul(s,1664525)+1013904223)>>>0; return s/0x100000000; };
+}
+
+const HAIKUS = (wt('ui.haikus',
+  'Trust, but|verify.\nBackup or|regret.\nNothing lasts|forever.\nNightly run.|Morning calm.|Data lives.\n'
+  + 'Backup first.|Delete later.|Sleep better.\nLogs green.|Coffee warm.|All good.\nHope is not|a strategy.\n'
+  + 'Keep it|safe.\nExpect the|unexpected.\nWorries don\'t.|Good backups|do.\nPrepare early.|Panic rarely.|Smile.\n'
+  + 'RAID is not|a backup.\nLuck is not|a plan.\nBack it|up.\nCopy.|Verify.\nTest the|restore.\n'
+  + 'Save now.|Thank later.\nBits safe.|Mind calm.\n3-2-1.|Done.\nSleep|easy.')
+).split('\n').map(line => line.split('|')).filter(lines => lines.length >= 2);
+
+/* Safe rounded rect — avoids ctx.roundRect which has iframe bugs in WebKit */
+function rrect(ctx, x, y, w, h, r) {
+  if (w <= 0 || h <= 0) return;
+  r = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y,     x + w, y + r,     r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x,     y + h, x,     y + h - r, r);
+  ctx.lineTo(x,     y + r);
+  ctx.arcTo(x,     y,     x + r, y,         r);
+  ctx.closePath();
+}
+
+/* Text is never clipped. A haiku shows whole or not at all. */
+function pickHaiku(haikus, textW, usableW, H, top, rowStep, textH, textStep) {
+  return (haikus || []).find(lines =>
+    top + rowStep + (lines.length - 1) * textStep + textH <= H
+    && lines.every(line => textW(line) + 7 <= usableW)) || null;
+}
+
+/* ── Canvas placeholder drawing ── */
+function drawPh(canvas, haikus, isFront, seed) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2); /* cap DPR at 2 */
+  const W   = canvas.offsetWidth;
+  const H   = canvas.offsetHeight;
+  if (!W || !H) return;
+
+  /* The browser draws the canvas over whole device pixels: from the rounded
+     left edge to the rounded right edge. A backing store of any other size is
+     stretched to fit, and blurs on a 1x screen. */
+  const z = cssZoom();
+  const box = canvas.getBoundingClientRect();
+  let ox = 0, oy = 0;
+  try {
+    const f = window.frameElement && window.frameElement.getBoundingClientRect();
+    if (f) { ox = f.left; oy = f.top; }
+  } catch {}
+  const L = (ox + box.left) * dpr, T = (oy + box.top) * dpr;
+  const bw = (box.width || W * z) * dpr, bh = (box.height || H * z) * dpr;
+  canvas.width  = Math.max(1, Math.round(L + bw) - Math.round(L));
+  canvas.height = Math.max(1, Math.round(T + bh) - Math.round(T));
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  /* Layout is in CSS pixels. Every shape is snapped to whole device pixels
+     when drawn, or its edges blur on a 1x screen. */
+  const k = canvas.width / W;
+  const px = v => Math.round(v * k);
+  const bar = (x, y, w, h, r) => {
+    const X = px(x), Y = px(y);
+    const bw = Math.max(1, px(x + w) - X), bh = Math.max(1, px(y + h) - Y);
+    if (bh <= 2) ctx.fillRect(X, Y, bw, bh);
+    else { rrect(ctx, X, Y, bw, bh, r * k); ctx.fill(); }
+  };
+  const dot = (x, y, d) => {
+    const D = Math.max(1, px(d)), X = px(x), Y = px(y - d / 2);
+    if (D <= 2) { ctx.fillRect(X, Y, D, D); return; }
+    ctx.beginPath();
+    ctx.arc(X + D / 2, Y + D / 2, D / 2, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
+  /* Both faces of a card must draw the same pattern, and a redraw must repeat
+     it. Never use Math.random here. */
+  const rng = mkRng(seed);
+
+  /* Colors */
+  const dotC  = isFront ? 'rgba(0,0,0,0.08)'   : 'rgba(255,255,255,0.35)';
+  const dashC = isFront ? 'rgba(0,0,0,0.06)'   : 'rgba(255,255,255,0.28)';
+  const textC = isFront ? 'rgba(0,0,0,0.20)'   : 'rgba(255,255,255,0.50)';
+
+  const PAD    = 10;  /* horizontal padding matching card padding */
+  const usableW = W - PAD * 2;
+  const ROW_H  = 3;   /* dash height px */
+  const GAP    = 5;   /* gap between rows */
+  const STEP   = ROW_H + GAP;
+  const TEXT_H = 11;  /* font size for haiku lines */
+  const TEXT_STEP = TEXT_H + GAP;
+
+  ctx.font = `700 ${px(TEXT_H)}px -apple-system, BlinkMacSystemFont, system-ui, sans-serif`;
+  const textW = line => ctx.measureText(line).width / k;
+  const haiku = pickHaiku(haikus, textW, usableW, H, 2, STEP, TEXT_H, TEXT_STEP);
+
+  /* Build row plan */
+  const plan = [];
+  if (haiku && haiku.length > 0) {
+    const haikuPx  = haiku.length * TEXT_STEP;
+    const plainPx  = Math.max(0, H - haikuPx);
+    const plainN   = Math.floor((plainPx + GAP) / STEP);
+    /* At least 3 rows above haiku, distribute evenly between gaps */
+    const minTop   = Math.min(3, Math.max(1, Math.floor(plainN * 0.35)));
+    const between  = Math.max(1, Math.floor((plainN - minTop) / Math.max(1, haiku.length)));
+    const after    = Math.max(0, plainN - minTop - between * (haiku.length - 1));
+    for (let r=0; r<minTop; r++) plan.push({type:'plain'});
+    haiku.forEach((line, li) => {
+      plan.push({type:'text', line});
+      if (li < haiku.length-1)
+        for (let r=0; r<between; r++) plan.push({type:'plain'});
+    });
+    for (let r=0; r<after; r++) plan.push({type:'plain'});
+  } else {
+    const n = Math.floor((H+GAP)/STEP);
+    for (let r=0; r<n; r++) plan.push({type:'plain'});
+  }
+
+  /* Draw rows top to bottom */
+  let y = 2; /* top padding */
+  for (const entry of plan) {
+    if (y > H) break;
+
+    if (entry.type === 'text') {
+      const lineW = textW(entry.line);
+      ctx.textBaseline = 'top';
+      ctx.textAlign = 'left';
+      /* Small left dash */
+      const ldW = Math.min(4 + Math.floor(rng() * 10), usableW - lineW - 3);
+      ctx.fillStyle = dashC;
+      bar(PAD, y + TEXT_H/2 - 1, ldW, 2, 1);
+      /* Text */
+      ctx.fillStyle = textC;
+      ctx.fillText(entry.line, px(PAD + ldW + 3), px(y));
+      const rdX   = PAD + ldW + 3 + lineW + 3;
+      const rdW   = Math.max(4, usableW - (ldW + 3 + lineW + 3));
+      ctx.fillStyle = dashC;
+      if (rdW > 0 && rdX + rdW <= W - PAD) bar(rdX, y + TEXT_H/2 - 1, rdW, 2, 1);
+      y += TEXT_STEP;
+
+    } else {
+      /* Plain row: 1–4 dash segments with gaps */
+      let x = PAD;
+      const segs = 1 + Math.floor(rng() * 3);
+      const budgetW = usableW / segs;
+      for (let s=0; s<segs; s++) {
+        const segW = Math.floor((0.3 + rng() * 0.6) * budgetW);
+        /* Occasionally replace a dash with dots */
+        if (rng() < 0.18) {
+          const dotSz = 2 + Math.floor(rng() * 2);
+          const dotCount = 2 + Math.floor(rng() * 4);
+          ctx.fillStyle = dotC;
+          for (let d=0; d<dotCount; d++) {
+            const dx = x + d * (dotSz + 2);
+            if (dx + dotSz > W - PAD) break;
+            dot(dx, y + ROW_H/2, dotSz);
+          }
+        } else {
+          ctx.fillStyle = dashC;
+          bar(x, y, segW, ROW_H, 1.5);
+        }
+        x += budgetW; /* advance by full budget slot — gap is implicit */
+      }
+      y += STEP;
+    }
+  }
+}
+
+/* Draw once the canvas has a real size. A card whose height comes from
+   aspect-ratio layout has no size at draw time. */
+function observeDraw(canvas, haikus, isFront, seed) {
+  let lastW = 0, lastH = 0;
+  const ro = new ResizeObserver(() => {
+    const w = canvas.offsetWidth, h = canvas.offsetHeight;
+    if (!w || !h || (w === lastW && h === lastH)) return;
+    lastW = w; lastH = h;
+    drawPh(canvas, haikus, isFront, seed);
+  });
+  ro.observe(canvas);
+}
+
+/* ── Mobile detection ── */
+const _mobileParam = new URLSearchParams(location.search).get('mobile') === '1';
+let _isMobile = _mobileParam;
+let _isMobileSquare = false;
+if (_isMobile) document.body.classList.add('is-mobile');
+const _canvases = {}; /* id → {front, back} */
+
+const CARD_COUNT = size==='small' ? 1 : 3;
+
+function slotList() {
+  const base = _jobSlots.slice(0, CARD_COUNT);
+  while (base.length < CARD_COUNT) base.push(null);
+  return base;
+}
+
+function assignHaikus(slots) {
+  /* Shuffle pool randomly — different every reload */
+  const pool = HAIKUS.toSorted(() => Math.random()-0.5);
+  if (size==='small') return slots.map(j => j ? pool : null);
+  const activeIdxs = slots.map((j,i)=>j?i:-1).filter(i=>i>=0);
+  if (!activeIdxs.length) return slots.map(()=>null);
+  const chosen = activeIdxs[Math.floor(Math.random()*activeIdxs.length)];
+  return slots.map((j,i) => (i===chosen&&j) ? pool : null);
+}
+
+async function boot() {
+  _cfg=(await getConfig().catch(()=>null))?.widgetConfig||{};
+  const rawSlots = Array.isArray(_cfg.slots) ? _cfg.slots : [];
+  const count = size==='small' ? 1 : 3;
+  _jobSlots = Array.from({length: count}, (_,i) => rawSlots[i]?.jobId || null);
+  /* Per-slot click URL — each card opens its own instance's link */
+  _hrefs = Array.from({length: count}, (_,i) => {
+    const sl = rawSlots[i]; if(!sl?.provider) return '';
+    return ({ duplicati: sl.dupHref, kopia: sl.kopiaHref, pbs: sl.pbsHref, backrest: sl.backrestHref })[sl.provider] || '';
+  });
+  /* pollSec from first configured slot */
+  const firstSlot = rawSlots.find(s=>s?.provider);
+  _pollSec = Math.max(10, parseInt(firstSlot?.dupPollSec || 60, 10));
+  buildShell();
+  /* The gap shrinks to 5s while any slot reports running. */
+  const w = document.getElementById('widget');
+  whileOnScreen(w, v => w.classList.toggle('off', !v));
+  const state = errorState({
+    root: w,
+    content: () => Array.from(w.querySelectorAll('.card-wrap')),
+    caption: document.getElementById('bk-cap'),
+  });
+
+  poll({ fetch: fetchJobs, interval: d => (d?.some(j=>j&&j.status==='running') ? 5 : _pollSec) * 1000,
+    render: d => { state.ok(); apply(d); },
+    onError: ({ error, everOk, stale, since }) => {
+      if (everOk && !stale) return;
+      const line = state.fail(error, { since, inert: everOk });
+      applyError(line, failureName(line, since));
+    } });
+  setInterval(refreshTimes, 60000);
+}
+
+function buildShell() {
+  const w = document.getElementById('widget');
+  w.replaceChildren();
+  const cards = document.createElement('div');
+  cards.id = 'cards';
+  const cap = document.createElement('div');
+  cap.className = 'wt-cap bk-cap';
+  cap.id = 'bk-cap';
+  cap.hidden = true;
+  w.append(cards, cap);
+
+  const slots  = slotList();
+  const haikus = assignHaikus(slots);
+
+  /* A body wider than tall gets fixed width fractions. A square or portrait one
+     fills the width. */
+  const bodyW = document.body.clientWidth  || window.innerWidth  || 375;
+  const bodyH = document.body.clientHeight || window.innerHeight || 150;
+  const PAD   = 10, GAP = 12;
+  const inner = bodyW - PAD * 2;
+
+  /* Desktop iframes are always 150px tall. Mobile iframes are taller. */
+  if (!_isMobile && bodyH > 160) {
+    _isMobile = true;
+    document.body.classList.add('is-mobile');
+    /* Apply mobile font sizes to any already-created elements */
+  }
+  _isMobileSquare = _isMobile && (bodyH >= bodyW * 0.75);
+
+  const isMobile       = _isMobile;
+  const isMobileSquare = _isMobileSquare;
+  const isTouch        = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+
+  let cardW, cardH;
+  if (size === 'small') {
+    if (isMobileSquare) {
+      /* Mobile small: square iframe — card at 55% width, height from aspect ratio */
+      const w = Math.round(inner * 0.62);
+      const h = Math.round(w / 0.68);
+      cardW = w + 'px';
+      cardH = Math.min(h, bodyH - PAD * 2) + 'px';
+    } else if (isMobile) {
+      /* Mobile small in non-square slot — use aspect-ratio-derived width */
+      const h = bodyH - PAD * 2;
+      const w = Math.round(h * 0.68);
+      cardW = Math.min(w, inner) + 'px';
+      cardH = h + 'px';
+    } else {
+      /* Desktop small: larger page */
+      cardW = '80%';
+      cardH = null;
+    }
+  } else {
+    /* On mobile the card height is 80% of the iframe height, the same ratio the
+       small widget uses. */
+    if (isMobile) {
+      const h = Math.round((bodyH - PAD * 2) * 0.9);
+      const w = Math.round(h * 0.68);
+      cardW = w + 'px';
+      cardH = h + 'px';
+    } else {
+      cardW = `calc((100% - ${GAP * 2}px) / 3)`;
+      cardH = null;
+    }
+  }
+
+  slots.forEach((jobId, idx) => {
+    const isActive = !!jobId;
+    const seed  = idx * 9371 + 3;
+    const haiku = haikus[idx];
+
+    const wrap = document.createElement('div');
+    wrap.id = `wrap-${idx}`;
+    wrap.className = 'card-wrap' + (isActive?'':' inactive');
+    wrap.style.width = cardW;
+    wrap.style.flex  = '0 0 ' + cardW;
+    if (cardH) { wrap.style.height = cardH; wrap.style.alignSelf = 'center'; }
+
+    if (isActive) {
+      linkTo(wrap, cardLink(idx));
+      if (isTouch) {
+        const flip = on => {
+          wrap.classList.toggle('touch-revealed', on);
+          const front = wrap.querySelector('.card-front');
+          if (front) front.style.opacity = on ? '0' : '';
+        };
+        twoTap(wrap, { reveal: () => flip(true), conceal: () => flip(false), open: () => openUrl(cardLink(idx)), timeout: 3000 });
+      }
+    }
+
+    /* ── Back card ── */
+    const back = document.createElement('div');
+    back.className = 'card-back'; back.id = `back-${idx}`;
+
+    const backCanvas = document.createElement('canvas');
+    /* Same height as the front canvas. A different height changes the row plan
+       and the placeholder moves when the card is hovered. The name zone is
+       opaque and covers the extra rows. */
+    if (isMobile) backCanvas.style.height = 'calc(100% - 48px)';
+    back.appendChild(backCanvas);
+    const backZone = document.createElement('div');
+    backZone.className = 'card-name-zone';
+    if (isMobile) backZone.style.height = '100px';
+
+    const bmeta = document.createElement('div');
+    bmeta.className = 'card-back-meta'; bmeta.id = `back-meta-${idx}`;
+    setHtml(bmeta, html`&nbsp;<br>&nbsp;`);
+    if (isMobile) { bmeta.style.fontSize = '11px'; bmeta.style.marginBottom = '2px'; }
+
+    const bname = document.createElement('div');
+    bname.className = 'card-back-name'; bname.id = `back-name-${idx}`;
+    bname.textContent = isActive ? '—' : '';
+    if (isMobile) bname.style.fontSize = '15px';
+
+    backZone.append(bmeta, bname);
+    back.appendChild(backZone);
+
+    /* ── Front card ── */
+    const front = document.createElement('div');
+    front.className = 'card-front'; front.id = `front-${idx}`;
+    front.style.setProperty('--status-color', isActive ? IDLE_TINT : EMPTY_TINT);
+
+    const frontCanvas = document.createElement('canvas');
+    if (isMobile) frontCanvas.style.height = 'calc(100% - 48px)';
+    front.appendChild(frontCanvas);
+
+    const frontZone = document.createElement('div');
+    frontZone.className = 'card-front-name-zone';
+    const fname = document.createElement('div');
+    fname.className = 'card-front-name'; fname.id = `front-name-${idx}`;
+    fname.textContent = isActive ? '—' : '';
+    if (isMobile) fname.style.fontSize = '15px';
+    frontZone.appendChild(fname);
+    front.appendChild(frontZone);
+
+    wrap.append(back, front);
+    cards.appendChild(wrap);
+
+    _canvases[idx] = { front: frontCanvas, back: backCanvas, haiku, seed };
+
+    /* Draw when each canvas actually has its size (and redraw on real resize) */
+    observeDraw(frontCanvas, haiku, true,  seed);
+    observeDraw(backCanvas,  haiku, false, seed);
+  });
+
+}
+
+async function fetchJobs() {
+  return fetchData('slots');
+}
+
+let _shownJobs=null;
+
+function refreshTimes() {
+  if(!_shownJobs||document.hidden) return;
+  slotList().forEach((jobId,idx)=>{
+    const job=jobId?_shownJobs[idx]:null;
+    if(job&&!job.error&&job.status!=='running') paintTimes(idx,job);
+  });
+}
+
+function apply(jobs) {
+  _shownJobs=jobs;
+  /* jobs is indexed by slot. Map by index, never by id, or slots sharing a
+     container lose their own name and status. */
+  slotList().forEach((jobId,idx)=>{
+    applyCard(idx, jobId ? (jobs[idx]||null) : null);
+  });
+}
+
+function fitName(el, text) {
+  el.textContent = text;
+  el.classList.remove('cut');
+  el.removeAttribute('dir');
+  const base = _isMobile ? 15 : 11;
+  for (let px = base; px >= 11; px--) {
+    el.style.fontSize = px + 'px';
+    if (el.scrollWidth <= el.clientWidth) return;
+  }
+  el.classList.add('cut');
+  el.dir = 'auto';
+}
+
+function applyCard(idx, job) {
+  const back  = document.getElementById(`back-${idx}`);
+  const front = document.getElementById(`front-${idx}`);
+  const bname = document.getElementById(`back-name-${idx}`);
+  const fname = document.getElementById(`front-name-${idx}`);
+  if(!back||!front) return;
+
+  if(job && job.error) {
+    applyCardError(idx, errorLine({ kind: job.error }));
+    return;
+  }
+  _links[idx] = (job && job.link) || '';
+  const wrapEl = document.getElementById(`wrap-${idx}`);
+  if (wrapEl && !wrapEl.classList.contains('inactive')) linkTo(wrapEl, cardLink(idx));
+  if(!job) {
+    applyCardIdle(idx);
+    return;
+  }
+
+  const color = statusColor(job.status);
+  const fg    = statusInk(color);
+
+  back.style.background = color||'rgba(255,255,255,0.08)';
+  back.style.color = fg;
+  front.style.setProperty('--status-color', color||IDLE_TINT);
+
+  /* Redraw back canvas with updated text color when status changes */
+  const c = _canvases[idx];
+  if (c && c.back.offsetWidth && c.back.offsetHeight) {
+    drawPh(c.back, c.haiku, false, c.seed);
+  }
+
+  if(bname) fitName(bname, job.name||'—');
+  if(fname) fitName(fname, job.name||'—');
+
+  paintTimes(idx, job);
+  back.setAttribute('aria-hidden','true');
+}
+
+function paintTimes(idx, job) {
+  const front = document.getElementById(`front-${idx}`);
+  const bmeta = document.getElementById(`back-meta-${idx}`);
+  const running = job.status==='running';
+  const last = running ? '' : relTime(job.lastFinished);
+  const next = (!running && job.nextRun) ? relTime(job.nextRun) : '';
+  if(bmeta) {
+    if(running){
+      if(!bmeta.querySelector('.sync-icon')) setHtml(bmeta, html`<span class="sync-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5a5.5 5.5 0 0 1 4 1.73"/><path d="M13.5 2.5v2.5H11"/></svg></span>${wt('ui.runningNow','Running…')}<br>&nbsp;`);
+    } else {
+      const failed = job.status==='error' || job.status==='missed';
+      const first = failed ? wt(STATUS_KEY[job.status],STATUS_EN[job.status]) : wt('ui.lastAt','Last {when}',{when:last});
+      setHtml(bmeta, next
+        ? html`${first}<br>${wt('ui.nextAt','Next {when}',{when:next})}`
+        : html`${first}`);
+    }
+  }
+  /* Screen-reader summary on the visible face — status is otherwise colour-only */
+  front.setAttribute('role','img');
+  const status=running?wt('ui.running','running'):STATUS_KEY[job.status]?wt(STATUS_KEY[job.status],STATUS_EN[job.status]):wt('ui.unknown','unknown');
+  const parts=[wt('ui.summary','{name}: {status}',{name:job.name||wt('widget.label','Backup'),status})];
+  if(last) parts.push(wt('ui.lastAria','last run {when}',{when:last}));
+  if(next) parts.push(wt('ui.nextAria','next run {when}',{when:next}));
+  front.setAttribute('aria-label', formatList(parts,'plain'));
+}
+
+function applyCardIdle(idx) {
+  const back  = document.getElementById(`back-${idx}`);
+  const front = document.getElementById(`front-${idx}`);
+  const bname = document.getElementById(`back-name-${idx}`);
+  const bmeta = document.getElementById(`back-meta-${idx}`);
+  const fname = document.getElementById(`front-name-${idx}`);
+  const configured = !!slotList()[idx];
+  const name  = configured ? '\u2014' : '';
+  back.style.background='rgba(255,255,255,0.06)'; back.style.color='';
+  front.removeAttribute('role'); front.removeAttribute('aria-label');
+  front.style.setProperty('--status-color', configured ? IDLE_TINT : EMPTY_TINT);
+  if(bname) fitName(bname, name);
+  if(fname) fitName(fname, name);
+  if(bmeta) setHtml(bmeta, html`&nbsp;<br>&nbsp;`);
+}
+
+function applyError(line, label = line) {
+  _shownJobs=null;
+  slotList().forEach((_,idx)=>applyCardError(idx, line, label));
+}
+
+function applyCardError(idx, line, label = line) {
+  const back  = document.getElementById(`back-${idx}`);
+  const front = document.getElementById(`front-${idx}`);
+  const bname = document.getElementById(`back-name-${idx}`);
+  const bmeta = document.getElementById(`back-meta-${idx}`);
+  const fname = document.getElementById(`front-name-${idx}`);
+  /* Set both. An unset colour inherits black onto a dark card. */
+  if(back){ back.style.background='rgba(255,255,255,0.06)'; back.style.color='#fff'; }
+  if(front){ front.setAttribute('role','img'); front.setAttribute('aria-label', label); front.style.removeProperty('--status-color'); }
+  if(bname) fitName(bname, line);
+  if(bmeta) setHtml(bmeta, html`&nbsp;<br>&nbsp;`);
+  if(fname) fname.textContent = '\u2014';
+}
+
+boot();
