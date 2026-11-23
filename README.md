@@ -118,3 +118,5 @@ Notable changes are listed in [CHANGELOG.md](CHANGELOG.md); per-release notes ar
 ## License
 
 Licensed under the [Apache License 2.0](LICENSE). You are free to use, modify, fork, and build on Stackyard, including commercially. In return you must keep the existing copyright and attribution notices, and the license does not grant rights to the **Stackyard** name or logo: forks are welcome but must use their own name and not present themselves as the original project. See [NOTICE](NOTICE).
+
+Third-party names and logos in the screenshots and the demo belong to their owners. Icons come from [selfh.st/icons](https://selfh.st/icons) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)) and [dashboard-icons](https://github.com/homarr-labs/dashboard-icons) (Apache-2.0).
