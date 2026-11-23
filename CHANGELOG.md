@@ -1873,6 +1873,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.9.1] - 2026-08-30
 
+1.9.0 was tagged but never published. This release replaces it.
+
 ### Added
 
 - Live Activity can show several labelled values from one poll, each with its
