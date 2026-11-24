@@ -14,6 +14,10 @@ function watched(query) {
 export const contrastMore = watched('(prefers-contrast: more)');
 export const prefersReducedMotion = watched('(prefers-reduced-motion: reduce)');
 const plainOnly = watched('(prefers-reduced-motion: reduce), (forced-colors: active)');
+const forcedColors = watched('(forced-colors: active)');
 
 /** Reduce Transparency, Reduce Motion and forced colours each ask for plain controls. */
 export const wantsPlain = () => document.documentElement.dataset.transparency === 'reduce' || plainOnly();
+
+/** Reduce Transparency and forced colours ask for solid controls. Reduce Motion alone does not. */
+export const wantsSolid = () => document.documentElement.dataset.transparency === 'reduce' || forcedColors();

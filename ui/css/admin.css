@@ -57,6 +57,7 @@
   --icon-ring:rgba(255,255,255,.14);
   --surface-sunken:var(--sy-gray5);       /* recessed well behind the About icon */
   --tab-pill:rgba(255,255,255,.14);
+  --tab-pill-flash:rgba(255,255,255,.14);
   --sb-sel:rgba(255,255,255,.14);
   --row-sep:#38383A;
   --btn-fill:rgba(120,120,128,.32);
@@ -119,6 +120,7 @@ html[data-theme="light"] {
   --icon-ring:rgba(0,0,0,.08);
   --surface-sunken:var(--sy-gray5);
   --tab-pill:rgba(0,0,0,.07);
+  --tab-pill-flash:rgba(0,0,0,.07);
   --sb-sel:rgba(0,0,0,.07);
   --row-sep:#E6E6E6;
   --btn-fill:rgba(120,120,128,.16);
@@ -179,7 +181,7 @@ button,a,[role="button"]{touch-action:manipulation}
 @media (hover:hover) and (pointer:fine){.nl:hover{background:var(--ov-soft)}}
 .nl:not(.active):active{background:var(--fill-tertiary)}
 .nl.active{background:var(--nav-tint);font-weight:600}
-.mtab.active .ni{opacity:1}
+.mtabbar:not(.glass-lifted.glass-bending) > .mtab.active .ni{opacity:1}
 .ni{flex-shrink:0;opacity:.6}
 .nl .ni{opacity:1;color:var(--dm);margin-inline:7px}
 .nl.active .ni{color:var(--ac)}
@@ -481,12 +483,17 @@ html:not(.is-mobile) .p-type{display:none}
 .mtabbar.glass-on > .mtab-lens{display:block}
 .mtab-lens::before,.mtab-lens::after{content:'';position:absolute;inset:0;border-radius:inherit}
 .mtab-lens::before{background:var(--tab-pill);opacity:var(--f,1)}
-.mtab-lens::after{opacity:var(--g,0);background:rgba(255,255,255,.04);box-shadow:0 6px 18px rgba(0,0,0,.45),inset 0 0 0 .5px rgba(255,255,255,.28),inset 1.5px 2px 1.5px -1px rgba(255,255,255,.55),inset -1.5px -2px 1.5px -1px rgba(255,255,255,.25),inset 0 0 8px rgba(255,255,255,.08),inset 0 -8px 10px -8px rgba(0,0,0,.4)}
-html[data-theme="light"] .mtab-lens::after{background:rgba(255,255,255,.06);box-shadow:0 6px 16px rgba(0,0,0,.14),inset 0 0 0 .5px rgba(255,255,255,.55),inset 1.5px 2px 1.5px -1px rgba(255,255,255,.95),inset -1.5px -2px 1.5px -1px rgba(255,255,255,.5),inset 0 0 8px rgba(255,255,255,.22),inset 0 -8px 10px -8px rgba(0,0,0,.18)}
+.mtab-lens::after{opacity:var(--g,0);background:rgba(255,255,255,.06);box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 .5px rgba(0,0,0,.55),inset 0 0 0 .5px rgba(255,255,255,.16),inset 1px 1.5px 1px -1px rgba(255,255,255,.3),inset -1px -1.5px 1px -1px rgba(255,255,255,.14)}
+html[data-theme="light"] .mtab-lens::after{background:rgba(255,255,255,.06);box-shadow:0 6px 16px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.12),inset 0 0 0 .5px rgba(255,255,255,.6),inset 1px 1.5px 1px -1px rgba(255,255,255,.8),inset -1px -1.5px 1px -1px rgba(255,255,255,.4)}
+.mtabbar.glass-plain > .mtab-lens::after{opacity:var(--hl,0);background:var(--tab-pill-flash);box-shadow:none}
 .mtabbar > .glass-lens{position:absolute;inset-inline-start:-24px;top:-24px;pointer-events:none;display:none}
 .mtabbar.glass-bending > .glass-lens{display:block}
 .mtabbar.glass-on .mtab.active{background:transparent}
-.mtabbar,.mtabbar > .mtab{touch-action:none}
+.mtabbar,.mtabbar > .mtab{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.mtabbar::before{z-index:auto}
+.mtabbar.glass-on > .mtab,.mtabbar.glass-on > .mtab .ni{transition:none}
+.mtabbar.glass-lifted.glass-bending > .mtab.active{color:var(--dm)}
+.mtabbar.glass-lifted.glass-bending > .mtab.active .sy-icon{--icon-accent:color-mix(in srgb,currentColor 55%,transparent)}
 label.tog,.adm-range,.hsb-range,.segr,.segr-opt{touch-action:pinch-zoom}
 @media (max-width:360px){
   .row:has(>.segr){flex-wrap:wrap;padding-block:8px}
@@ -1113,7 +1120,8 @@ html[data-transparency="reduce"]{--glass-bg:var(--cp);--glass-control:var(--cp);
 /* Navigation selection. */
 .sb-nav{position:relative}
 .sb-nav>.gs-pill{background:var(--nav-tint)}
-.mtabbar>.gs-pill{background:var(--tab-pill)}
+.mtabbar>.gs-pill{background:var(--tab-pill);transition:transform .19s cubic-bezier(.22,1,.36,1)}
+.mtabbar>.gs-pill.mp-snap{transition:none}
 .sb-nav:has(> .gs-pill.on) .nl.active{background:transparent}
 .mtabbar:has(> .gs-pill.on) .mtab.active{background:transparent}
 .sb-nav.gs-moving .nl{transition:background var(--t),font-weight .12s ease .17s}

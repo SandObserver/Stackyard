@@ -235,6 +235,8 @@ test('no state is drawn by fill alone', () => {
     Object.entries({
       'admin.css .row-dd-list li.kb-active': 'the row also takes focus and shows its focus ring',
       'dashboard.css .setup-reveal[aria-pressed="true"]': 'the password fields show their text',
+      'admin.css .mtabbar.glass-lifted.glass-bending > .mtab.active':
+        'glass is off under forced colours, so the lens never lifts',
     }),
   );
   const found = fs

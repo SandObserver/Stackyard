@@ -51,6 +51,11 @@ const fakeEl = (/** @type {string} */ tag) => ({
   getContext: () => webgl,
   append() {},
   prepend() {},
+  /** @type {any[]} */
+  placedBefore: [],
+  before(/** @type {any} */ n) {
+    this.placedBefore.push(n);
+  },
 });
 globalThis.document = /** @type {any} */ ({
   documentElement: { dataset: {} },
@@ -58,11 +63,13 @@ globalThis.document = /** @type {any} */ ({
 });
 globalThis.window = /** @type {any} */ (globalThis);
 
-const { glassAllowed } = await import('../js/glass-controls.js');
+const { glassAllowed, tabBarAllowed } = await import('../js/glass-controls.js');
 const { ownClick, GlassControl, CLICK_WINDOW_MS, pointOver, releasePointer } = await import('../js/glass-control.js');
 const { switchNext } = await import('../js/glass-switch.js');
 const { fillEnd } = await import('../js/glass-slider.js');
-const { indexAt, rectAt, GlassBar, tabBar } = await import('../js/glass-bar.js');
+const { indexAt, rectAt, edgePull, nearestItem, profileBend, GlassBar, tabBar, segmented } = await import(
+  '../js/glass-bar.js'
+);
 const { pillPath, referencedIds } = await import('../js/glass-tabs.js');
 const { parseColour, over } = await import('../js/glass-paint.js');
 const { lensPicture } = await import('../js/glass-gpu.js');
@@ -81,6 +88,19 @@ test('glass is on only with WebGL2 and none of Reduce Transparency, Reduce Motio
   assert.equal(glassAllowed(), false);
   media = [];
   assert.equal(glassAllowed(), true);
+});
+
+test('the tab bar keeps its gesture under Reduce Motion, but not under Reduce Transparency or forced colours', () => {
+  media = ['prefers-reduced-motion'];
+  assert.equal(glassAllowed(), false);
+  assert.equal(tabBarAllowed(), true);
+  document.documentElement.dataset.transparency = 'reduce';
+  assert.equal(tabBarAllowed(), false);
+  delete document.documentElement.dataset.transparency;
+  media = ['forced-colors'];
+  assert.equal(tabBarAllowed(), false);
+  media = [];
+  assert.equal(tabBarAllowed(), true);
 });
 
 test('a switch decides from where the finger ended, not where the knob has got to', () => {
@@ -150,11 +170,19 @@ test('the tab bar bends its icons and labels on the GPU, not with strips of copi
   const bar = fs.readFileSync(path.join(root, 'js/glass-bar.js'), 'utf8');
   assert.doesNotMatch(bar, /mtab-bend/, 'strip copies split letters where they meet');
   assert.match(bar, /lensPicture\([\s\S]*?true,\s*\)/, 'the see-through picture is uploaded premultiplied');
+  const gpu = fs.readFileSync(path.join(root, 'js/glass-gpu.js'), 'utf8');
+  assert.match(gpu, /vec4 k = inkAt\(\(p - g \* pr\) \/ uSize\);/, 'the slab edge reads the scene from inside');
   assert.match(
-    fs.readFileSync(path.join(root, 'js/glass-gpu.js'), 'utf8'),
-    /if \(uMode == 2\) \{\s*o = texture\(uScene, \(p \+ g \* pull\) \/ uSize\) \* cover;/,
+    gpu,
+    /uSqueeze \* 4\.0 \* sx \* \(1\.0 - sx\)/,
+    'the squeeze is zero at the rim, so the bar edge joins it',
   );
   assert.match(css, /\.mtabbar > \.glass-lens\{[^}]*inset-inline-start:-24px;top:-24px;[^}]*display:none/);
+  assert.match(
+    bar,
+    /const CW = this\.box\.pw \+ 2 \* PAD;/,
+    'right to left, a border-box wide canvas sits off by the borders',
+  );
   assert.match(css, /\.mtabbar\.glass-bending > \.glass-lens\{display:block\}/);
 });
 
@@ -292,44 +320,247 @@ test('a tab bar pick arrives as a pointer click, and the current tab can be pick
   assert.equal(got[0][1].bubbles, true);
 });
 
-test('a tab picked with the lens reads the tab colours again, and the lens holds the icons still', () => {
-  /** @type {number[]} */
-  const chosen = [];
-  /** @type {boolean[]} */
-  const still = [];
-  const nav = Object.assign(fakeEl('nav'), {
+const tabNav = () =>
+  Object.assign(fakeEl('nav'), {
     querySelector: () => null,
     querySelectorAll: () => [],
-    classList: { remove() {}, toggle() {} },
+    classList: { add() {}, remove() {}, toggle() {} },
   });
+
+test('a tab bar pick waits for the lens to land, and its click is not dropped as the gesture click', () => {
+  /** @type {number[]} */
+  const chosen = [];
+  const nav = tabNav();
   const bar = new GlassBar(/** @type {any} */ (nav), {
+    ...tabBar(/** @type {any} */ (nav)),
     items: () => [],
     selected: () => 0,
     choose: i => chosen.push(i),
-    pill: () => null,
-    pillColour: '--tab-pill',
-    P: /** @type {any} */ ({ land: [0.34, 0.9], growIn: [0.2, 0.9], frostIn: [0.12, 1] }),
-    css: true,
   });
   bar.wake = () => {};
   bar.rects = LTR;
   bar.pointer = { id: 1, x0: 90, moved: false };
   bar.hit = 1;
   bar.end(false);
-  assert.deepEqual(chosen, [1]);
-  assert.equal(bar.inkStale, true, 'the lens keeps the old selection colours while it lands');
+  assert.deepEqual(chosen, [], 'nothing is picked on release');
+  assert.ok(bar.swallowUntil > 0, 'the browser click of the gesture is still dropped');
+  bar.commit();
+  assert.deepEqual(chosen, [1], 'the pick is made when the lens lands');
+  assert.equal(bar.swallowUntil, 0, 'the pick click must not be dropped as the gesture click');
+  bar.commit();
+  assert.deepEqual(chosen, [1], 'a pick is made once');
+});
 
+test('a press before the last pick landed makes that pick first', () => {
+  /** @type {number[]} */
+  const chosen = [];
+  const nav = tabNav();
+  const tabs = [0, 1, 2].map(() => ({ contains: () => false }));
+  const bar = new GlassBar(/** @type {any} */ (nav), {
+    ...tabBar(/** @type {any} */ (nav)),
+    items: () => /** @type {any} */ (tabs),
+    selected: () => 0,
+    choose: i => chosen.push(i),
+  });
+  bar.wake = () => {};
+  bar.measure = () => {
+    bar.rects = LTR;
+  };
+  bar.hold = () => {};
+  bar.chosen = 2;
+  bar.down(/** @type {any} */ ({ target: nav, clientX: 30, pointerId: 3 }));
+  assert.deepEqual(chosen, [2]);
+});
+
+test('a press on the lens, which clips the tab under it, still finds that tab', () => {
+  assert.equal(nearestItem(LTR, 95), 1);
+  assert.equal(nearestItem(LTR, -40), 0, 'never before the first item');
+  assert.equal(nearestItem(LTR, 400), 2, 'never past the last item');
+  assert.equal(nearestItem(RTL, 150), 0, 'right to left, the first item is on the right');
+  const nav = tabNav();
+  const tabs = [0, 1, 2].map(() => ({ contains: () => false }));
+  const bar = new GlassBar(/** @type {any} */ (nav), {
+    ...tabBar(/** @type {any} */ (nav)),
+    items: () => /** @type {any} */ (tabs),
+    selected: () => 0,
+  });
+  bar.wake = () => {};
+  bar.box = { left: 0, w: 180, h: 32, dx: 0, dy: 0 };
+  bar.measure = () => {
+    bar.rects = LTR;
+  };
+  bar.hold = () => {};
+  bar.down(/** @type {any} */ ({ target: nav, clientX: 150, pointerId: 4 }));
+  assert.equal(bar.hit, 2);
+  assert.equal(bar.lifted, true, 'any press lifts the lens onto the pressed tab');
+  assert.equal(bar.pos.t, 2);
+});
+
+test('a press during the settle lifts the lens again', () => {
+  const nav = tabNav();
+  const bar = new GlassBar(/** @type {any} */ (nav), tabBar(/** @type {any} */ (nav)));
+  bar.wake = () => {};
+  bar.lift();
+  bar.grow.to(0);
+  bar.landing = true;
+  bar.lift();
+  assert.equal(bar.grow.t, 1, 'a lens on its way down grows again');
+  assert.equal(bar.landing, false);
+});
+
+test('past an end tab the lens pulls the bar toward the drag, and nowhere else', () => {
+  assert.equal(edgePull(LTR, 1, 0.2), 0);
+  assert.equal(edgePull(LTR, 0, 0.2), 0);
+  assert.equal(edgePull(LTR, 2, 0.2), 0);
+  assert.ok(Math.abs(edgePull(LTR, 2.1, 0.2) - 1.2) < 1e-9, 'a tenth of a tab past the end pulls 1.2 px right');
+  assert.ok(Math.abs(edgePull(LTR, -0.1, 0.2) + 1.2) < 1e-9);
+  assert.ok(edgePull(RTL, 2.1, 0.2) < 0, 'right to left, the last tab is on the left');
+  assert.equal(edgePull(LTR.slice(0, 1), 3, 0.2), 0);
+});
+
+test('with Reduce Motion the bar does not swell', () => {
+  const nav = tabNav();
+  const bar = new GlassBar(/** @type {any} */ (nav), tabBar(/** @type {any} */ (nav)));
+  bar.wake = () => {};
+  media = ['prefers-reduced-motion'];
+  bar.lift();
+  media = [];
+  assert.equal(bar.swell.t, 0);
+  bar.stop();
+  bar.lift();
+  assert.equal(bar.swell.t, 1);
+});
+
+test('under Reduce Motion a press moves a plain pill: no lens growth, no swell, a short highlight', () => {
+  const nav = tabNav();
+  const tabs = [0, 1, 2].map(() => ({ contains: () => false }));
+  const bar = new GlassBar(/** @type {any} */ (nav), {
+    ...tabBar(/** @type {any} */ (nav)),
+    items: () => /** @type {any} */ (tabs),
+    selected: () => 0,
+    choose() {},
+  });
+  bar.wake = () => {};
+  bar.box = { left: 0, w: 180, h: 32, dx: 0, dy: 0 };
+  bar.measure = () => {
+    bar.rects = LTR;
+  };
+  bar.hold = () => {};
+  media = ['prefers-reduced-motion'];
+  bar.down(/** @type {any} */ ({ target: nav, clientX: 150, pointerId: 5 }));
+  media = [];
+  assert.equal(bar.plain, true);
+  assert.equal(bar.lifted, true);
+  assert.equal(bar.grow.t, 0, 'the pill keeps its size');
+  assert.equal(bar.swell.t, 0, 'the bar keeps its size');
+  assert.equal(bar.flash.v, 1, 'the pill lights up on the press');
+  assert.equal(bar.pos.t, 2);
+  bar.end(false);
+  assert.equal(bar.flash.t, 0, 'the highlight fades after the release');
+  assert.match(
+    css,
+    /\.mtabbar\.glass-plain > \.mtab-lens::after\{opacity:var\(--hl,0\);/,
+    'the highlight fades by opacity, not by repainting the pill colour',
+  );
+  assert.doesNotMatch(css, /\.mtab-lens::before\{[^}]*color-mix/);
+  assert.equal(bar.chosen, 2);
+});
+
+test('a segmented control pressed during the shrink keeps shrinking, as before the tab bar lens', () => {
+  const nav = tabNav();
+  const bar = new GlassBar(/** @type {any} */ (nav), {
+    ...segmented(/** @type {any} */ (nav)),
+    items: () => [],
+    selected: () => 0,
+    choose() {},
+  });
+  bar.wake = () => {};
+  bar.rects = LTR;
+  bar.lift();
+  bar.grow.to(0);
+  const liftAt = bar.liftAt;
+  bar.pointer = { id: 1, x0: 150, moved: false };
+  bar.hit = 2;
+  bar.end(false);
+  assert.equal(bar.grow.t, 0);
+  assert.equal(bar.liftAt, liftAt);
+});
+
+test('under Reduce Motion a release after a drag does not light the pill again or restart the landing wait', () => {
+  const nav = tabNav();
+  const bar = new GlassBar(/** @type {any} */ (nav), {
+    ...tabBar(/** @type {any} */ (nav)),
+    items: () => [],
+    selected: () => 0,
+    choose() {},
+  });
+  bar.wake = () => {};
+  bar.rects = LTR;
+  bar.plain = true;
+  bar.lift();
+  bar.flash.snap(0);
+  const liftAt = bar.liftAt;
+  bar.pointer = { id: 1, x0: 30, moved: true };
+  bar.pos.snap(1.9);
+  bar.end(false);
+  assert.equal(bar.flash.v, 0);
+  assert.equal(bar.liftAt, liftAt);
+});
+
+test('a resize during a gesture measures the tabs again; at rest it also puts the lens back', () => {
+  const nav = tabNav();
+  const bar = new GlassBar(/** @type {any} */ (nav), {
+    ...tabBar(/** @type {any} */ (nav)),
+    items: () => [],
+    selected: () => 0,
+    choose() {},
+  });
+  let measured = 0;
+  let woke = 0;
+  bar.measure = () => {
+    measured++;
+    bar.rects = LTR;
+  };
+  bar.wake = () => woke++;
+  bar.render = () => {};
+  bar.pointer = { id: 1, x0: 30, moved: true };
+  bar.pos.snap(1.4);
+  bar.resettle();
+  assert.equal(measured, 1, 'mid-gesture the old tab places would pick the wrong tab');
+  assert.equal(bar.pos.v, 1.4, 'the lens stays under the finger');
+  assert.equal(woke, 1);
+  bar.pointer = null;
+  bar.resettle();
+  assert.equal(measured, 2);
+  assert.equal(bar.pos.v, 0, 'at rest the lens goes back to the selected tab');
+});
+
+test('lens bends come in steps of 0.01, so their profile cache stays small', () => {
+  assert.equal(profileBend(0.123456), 0.12);
+  assert.equal(profileBend(0.355), 0.36);
+  assert.equal(new Set(Array.from({ length: 1000 }, (_, i) => profileBend(i / 1000))).size, 101);
+});
+
+test('the lens holds the tab icons still while it is up', () => {
+  /** @type {boolean[]} */
+  const still = [];
+  const nav = tabNav();
   const held = new GlassBar(/** @type {any} */ (nav), {
     ...tabBar(/** @type {any} */ (nav)),
-    P: /** @type {any} */ ({ growIn: [0.2, 0.9], frostIn: [0.12, 1] }),
     still: on => still.push(on),
   });
   held.wake = () => {};
   held.lift();
   assert.deepEqual(still, [true]);
-  assert.equal(held.inkStale, true, 'the picture is read again with the icons at rest');
   held.stop();
   assert.deepEqual(still, [true, false]);
+});
+
+test('the tab bar hands its lens to the pill without a gap, and a long press selects nothing', () => {
+  assert.match(css, /\.mtabbar>\.gs-pill\{[^}]*transition:transform [^}]*\}/, 'a pill fading in after the lens blinks');
+  assert.doesNotMatch(/\.mtabbar>\.gs-pill\{[^}]*\}/.exec(css)?.[0] ?? '', /opacity/);
+  assert.match(css, /\.mtabbar,\.mtabbar > \.mtab\{[^}]*-webkit-user-select:none;[^}]*-webkit-touch-callout:none\}/);
+  assert.match(css, /\.mtabbar\.glass-lifted\.glass-bending > \.mtab\.active\{color:var\(--dm\)\}/);
 });
 
 test('colours read from computed styles, including color() and translucent layers', () => {
@@ -385,7 +616,7 @@ test('the tab bar lens goes after the sliding pill, which moving-pill takes as t
     querySelectorAll: () => [],
     prepend: () => assert.fail('nothing goes in front of the pill'),
   });
-  new GlassBar(/** @type {any} */ (bar), {
+  const g = new GlassBar(/** @type {any} */ (bar), {
     items: () => [],
     selected: () => 0,
     choose() {},
@@ -395,6 +626,7 @@ test('the tab bar lens goes after the sliding pill, which moving-pill takes as t
     css: true,
   });
   assert.deepEqual(order, ['gs-pill', 'mtab-lens', 'mtab']);
+  assert.equal(/** @type {any} */ (g.lensEl).placedBefore[0], g.cv, 'the bent copy sits under the lens rim');
 });
 
 test('the lens shows only while a control is held, and the CSS control stays underneath', () => {

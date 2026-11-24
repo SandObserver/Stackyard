@@ -1,14 +1,18 @@
 // @ts-check
-import { GlassBar, segmented, tabBar } from '/js/glass-bar.js?v=f450fd40';
-import { cancelAll, releasePointer } from '/js/glass-control.js?v=2995d503';
-import { lensSupported } from '/js/glass-gpu.js?v=5cefbe56';
-import { wantsPlain } from '/js/glass-prefs.js?v=511e01c7';
-import { GlassSlider } from '/js/glass-slider.js?v=e631393b';
-import { GlassSwitch } from '/js/glass-switch.js?v=6011ab61';
+import { GlassBar, segmented, tabBar } from '/js/glass-bar.js?v=426627ce';
+import { cancelAll, releasePointer } from '/js/glass-control.js?v=00019b96';
+import { lensSupported } from '/js/glass-gpu.js?v=bfd7c78f';
+import { wantsPlain, wantsSolid } from '/js/glass-prefs.js?v=b53a71ac';
+import { GlassSlider } from '/js/glass-slider.js?v=d7c39ec7';
+import { GlassSwitch } from '/js/glass-switch.js?v=fa489dfb';
 
 /** Glass needs WebGL2 and none of the settings that ask for plain controls. */
 export function glassAllowed() {
   return !wantsPlain() && lensSupported();
+}
+
+export function tabBarAllowed() {
+  return !wantsSolid() && lensSupported();
 }
 
 /** @type {WeakMap<Element, GlassSwitch|GlassSlider|GlassBar>} */
@@ -70,7 +74,12 @@ function onPointerDown(e) {
   }
   const tabs = /** @type {HTMLElement|null} */ (t.closest('.mtabbar'));
   if (tabs) {
-    if (glassAllowed()) once(tabs, () => new GlassBar(tabs, tabBar(tabs))).down(e);
+    if (tabBarAllowed())
+      once(tabs, () => {
+        const bar = new GlassBar(tabs, tabBar(tabs));
+        new ResizeObserver(() => bar.resettle()).observe(tabs);
+        return bar;
+      }).down(e);
     return;
   }
   const tog = /** @type {HTMLLabelElement|null} */ (t.closest('label.tog'));
@@ -90,7 +99,7 @@ let started = false;
 export function initGlassControls() {
   if (started) return;
   started = true;
-  (window.requestIdleCallback ?? (f => setTimeout(f, 300)))(() => glassAllowed());
+  (window.requestIdleCallback ?? (f => setTimeout(f, 300)))(() => tabBarAllowed());
   document.addEventListener('pointerup', releasePointer, true);
   document.addEventListener('pointercancel', releasePointer, true);
   document.addEventListener('touchend', onTouchEnd, true);

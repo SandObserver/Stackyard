@@ -344,6 +344,11 @@ uniform float uRim;
 uniform float uShadow;
 uniform float uDisp;
 uniform float uLift;
+uniform float uSlab;
+uniform float uVert;
+uniform float uSqueeze;
+uniform float uSqueezeBand;
+uniform float uProfile[64];
 float sdf(vec2 p, vec2 h, float r) {
   vec2 q = abs(p) - h + r;
   return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
@@ -362,6 +367,10 @@ vec3 scene(vec2 p) {
   }
   vec2 uv = p / uSize;
   return mix(texture(uScene, uv).rgb, texture(uScene2, uv).rgb, uMix);
+}
+vec4 inkAt(vec2 uv) {
+  vec4 i = texture(uScene, uv);
+  return i + texture(uScene2, uv) * uMix * (1.0 - i.a);
 }
 vec3 sceneBlur(vec2 p) {
   if (uBlur < 0.05) return scene(p);
@@ -390,7 +399,23 @@ void main() {
   float t = clamp(1.0 - d / uBevel, 0.0, 1.0);
   float pull = pow(t, ${RIM_CURVE.toFixed(2)}) * uDepth * (g.x * g.x);
   if (uMode == 2) {
-    o = texture(uScene, (p + g * pull) / uSize) * cover;
+    float pr = 0.0;
+    if (uSlab > 0.0) {
+      float x = clamp(max(d, 0.0) / (${SLAB.bezel} * uSlab), 0.0, 1.0) * 63.0;
+      int i = int(x);
+      pr = min(mix(uProfile[i], uProfile[min(i + 1, 63)], fract(x)) * uSlab, r) * mix(uVert, 1.0, g.x * g.x);
+    }
+    if (uSqueeze > 0.0) {
+      float sx = clamp(d / uSqueezeBand, 0.0, 1.0);
+      pr -= uSqueeze * 4.0 * sx * (1.0 - sx) * (g.y * g.y);
+    }
+    vec4 k = inkAt((p - g * pr) / uSize);
+    if (uDisp > 0.0) {
+      vec4 kr = inkAt((p - g * pr * (1.0 + uDisp)) / uSize);
+      vec4 kb = inkAt((p - g * pr * (1.0 - uDisp)) / uSize);
+      k = vec4(kr.r, k.g, kb.b, max(k.a, max(kr.a, kb.a)));
+    }
+    o = k * cover;
     return;
   }
   vec3 col = sceneBlur(p + g * pull);
@@ -412,7 +437,7 @@ void main() {
 
 /** @typedef {{ x: number, y: number, w: number, h: number, mix?: number, bevel?: number, depth?: number, frost?: number,
                veil?: number[], blur?: number, line?: number, rim?: number, shadow?: number, disp?: number,
-               lift?: number, ink?: boolean,
+               lift?: number, ink?: boolean, slab?: { side: number, bend: number, vert?: number }, squeeze?: number, squeezeBand?: number,
                rail?: { card: number[], x: number, y: number, w: number, h: number, rail: number[], fill: number[], fillW: number, grad: boolean } }} LensLook */
 
 /** @typedef {{ cv: HTMLCanvasElement, gl: WebGL2RenderingContext, prog: NonNullable<ReturnType<typeof compile>>,
@@ -603,6 +628,11 @@ export function lensFrame(s, a, b, w, h, dpr, look) {
   gl.uniform1f(u.uShadow, look.shadow ?? 0.1);
   gl.uniform1f(u.uDisp, look.disp ?? 0.02);
   gl.uniform1f(u.uLift, look.lift ?? 0.07);
+  gl.uniform1f(u.uSlab, look.slab ? look.slab.side : 0);
+  gl.uniform1f(u.uVert, look.slab?.vert ?? 1);
+  gl.uniform1f(u.uSqueeze, look.squeeze ?? 0);
+  gl.uniform1f(u.uSqueezeBand, look.squeezeBand ?? 1);
+  if (look.slab) gl.uniform1fv(u['uProfile[0]'], slabProfile(look.slab.bend));
   const x0 = Math.max(0, Math.floor((look.x - 10) * dpr));
   const x1 = Math.min(W, Math.ceil((look.x + look.w + 10) * dpr));
   const y0 = Math.max(0, Math.floor((look.y - 8) * dpr));
