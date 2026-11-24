@@ -11,7 +11,23 @@ permissions:
   contents: read
 
 jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      ref: ${{ steps.digest.outputs.ref }}
+    steps:
+      - name: Resolve the published digest
+        id: digest
+        run: |
+          digest=$(docker buildx imagetools inspect "$IMAGE:latest" --format '{{.Manifest.Digest}}')
+          echo "ref=$IMAGE@$digest" >> "$GITHUB_OUTPUT"
+          echo "Scanning $IMAGE@$digest"
+        env:
+          IMAGE: ghcr.io/sandobserver/stackyard
+
   scan:
+    needs: resolve
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -20,20 +36,18 @@ jobs:
       matrix:
         platform: [linux/amd64, linux/arm64]
     steps:
-      - name: Pull the published image
-        run: docker pull --platform "$PLATFORM" ghcr.io/sandobserver/stackyard:latest
-        env:
-          PLATFORM: ${{ matrix.platform }}
-
       # Keep the severity and ignore-unfixed the same as the release gate.
       - name: Scan it
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: ghcr.io/sandobserver/stackyard:latest
+          image-ref: ${{ needs.resolve.outputs.ref }}
           format: table
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: '1'
+        env:
+          TRIVY_IMAGE_SRC: remote
+          TRIVY_PLATFORM: ${{ matrix.platform }}
 
       - name: Check out the repository
         if: ${{ !cancelled() }}
@@ -58,7 +72,8 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           version=$(docker run --rm --platform "$PLATFORM" --entrypoint node \
-            ghcr.io/sandobserver/stackyard:latest -p process.versions.node)
+            "$IMAGE_REF" -p process.versions.node)
           node scripts/node-security.js "$version"
         env:
           PLATFORM: ${{ matrix.platform }}
+          IMAGE_REF: ${{ needs.resolve.outputs.ref }}
