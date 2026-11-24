@@ -787,6 +787,7 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
 @media (prefers-reduced-motion: reduce){.dlg-box.closing{animation-name:fade-out;animation-duration:.12s!important}}
 @media (prefers-reduced-motion: reduce){.dlg-box[open]::backdrop{animation-duration:.18s!important}.dlg-box.closing::backdrop{animation-duration:.12s!important}}
 @media (prefers-reduced-motion: reduce){.swapping > :not(.add-new-card){animation-name:swap-in;animation-duration:var(--t-reveal)!important}}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.3s;animation-timing-function:ease}
 .dlg-box.wide{max-width:560px;max-height:80dvh}
 .dlg-hdr{overflow-wrap:anywhere;min-width:0;padding:22px 22px 12px;font-size:var(--fs-headline);line-height:var(--lh-headline);letter-spacing:var(--tr-headline);font-weight:var(--fw-headline)}
 /* flex:1 sets flex-basis:0, so the body contributes nothing to a dialog that

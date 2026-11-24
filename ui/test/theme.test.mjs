@@ -212,3 +212,42 @@ test('native controls take the accent colour on both pages', () => {
   assert.match(bare, /(^|\n):root \{[^}]*accent-color:var\(--accent\)/);
   assert.doesNotMatch(adminCss, /accent-color/, 'one declaration in tokens.css covers Settings');
 });
+
+test('a theme change crossfades when the browser can', async () => {
+  const { fadeTheme } = await import('../js/theme.js');
+  const calls = [];
+  const doc = { hidden: false, startViewTransition: fn => (calls.push('fade'), fn()) };
+  fadeTheme(() => calls.push('apply'), /** @type {any} */ (doc));
+  assert.deepEqual(calls, ['fade', 'apply']);
+  delete doc.startViewTransition;
+  fadeTheme(() => calls.push('apply'), /** @type {any} */ (doc));
+  assert.deepEqual(calls, ['fade', 'apply', 'apply'], 'no view transition, no theme change');
+});
+
+test('a hidden page fades the latest theme change once it is seen', async () => {
+  const { fadeTheme } = await import('../js/theme.js');
+  const listeners = [];
+  let fades = 0;
+  const doc = {
+    hidden: true,
+    addEventListener: (type, fn) => listeners.push({ type, fn }),
+    startViewTransition: fn => (fades++, fn()),
+  };
+  const applied = [];
+  fadeTheme(() => applied.push('dark'), /** @type {any} */ (doc));
+  fadeTheme(() => applied.push('light'), /** @type {any} */ (doc));
+  assert.deepEqual(applied, []);
+  assert.equal(listeners.length, 1, 'each hidden change added a listener');
+  assert.equal(listeners[0].type, 'visibilitychange');
+  doc.hidden = false;
+  listeners[0].fn();
+  assert.deepEqual(applied, ['light']);
+  assert.equal(fades, 1);
+});
+
+test('Settings fades a theme change for as long as the dashboard', () => {
+  const rule =
+    /::view-transition-old\(root\),\s*::view-transition-new\(root\)\s*\{\s*animation-duration:\.3s;\s*animation-timing-function:ease\s*\}/;
+  assert.match(adminCss, rule);
+  assert.match(read('../css/dashboard.css'), rule);
+});

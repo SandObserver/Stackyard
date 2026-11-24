@@ -1,11 +1,11 @@
-import { LANG_STORE, boot } from '/js/dashboard-boot.js?v=3deb73a3';
+import { LANG_STORE, boot } from '/js/dashboard-boot.js?v=27b50728';
 import { showBuildFailed, liftVeil } from '/js/dashboard-screens.js?v=79b0c104';
 import { createDashboardState } from '/js/dashboard-state.js?v=51013727';
 import { startGlass } from '/js/glass.js?v=6c1436a8';
 import { initI18n, isSupported } from '/js/i18n.js?v=82ba9da2';
 import { ensureSprite } from '/js/icon-set.js?v=beda3062';
 import { isMobileLayout } from '/js/layout.js?v=6680c0bf';
-import { watchTransparency } from '/js/theme.js?v=0bbd81e8';
+import { watchTransparency } from '/js/theme.js?v=ab9b83fd';
 import { storeGet } from '/js/utils.js?v=457d9918';
 
 ensureSprite();
