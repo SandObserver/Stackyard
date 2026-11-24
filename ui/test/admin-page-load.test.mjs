@@ -69,3 +69,19 @@ test('a failed load says so and offers a retry that reloads the page', async () 
   assert.equal(dom.location.reloads, reloads + 1);
   assert.equal(dom.document.body.classList.contains('loaded'), true);
 });
+
+test('a theme change on Settings crossfades', () => {
+  const views = [];
+  dom.document.startViewTransition = fn => {
+    views.push(fn);
+    fn();
+  };
+  dom.storage.set('sy-theme', 'light');
+  dom.window.dispatchEvent({ type: 'storage', key: 'sy-theme' });
+  assert.equal(views.length, 1, 'a change from another tab does not crossfade');
+  assert.equal(dom.document.documentElement.getAttribute('data-theme'), 'light');
+  dom.document.querySelector('#theme-list li[role="option"][data-val="dark"]').click();
+  assert.equal(views.length, 2, 'picking a mode does not crossfade');
+  assert.equal(dom.document.documentElement.getAttribute('data-theme'), 'dark');
+  delete dom.document.startViewTransition;
+});

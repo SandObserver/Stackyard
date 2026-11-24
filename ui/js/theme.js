@@ -36,6 +36,34 @@ export function applyTheme(theme, doc = document) {
   if (meta) meta.setAttribute('content', themeColor(theme));
 }
 
+/** @type {WeakMap<Document, () => void>} */
+const pendingFades = new WeakMap();
+
+/** Runs a theme change inside a crossfade.
+    @param {() => void} apply
+    @param {Document} [doc] */
+export function fadeTheme(apply, doc = document) {
+  /* A hidden page skips a view transition. Run it when the page is seen. */
+  if (doc.hidden) {
+    const waiting = pendingFades.has(doc);
+    pendingFades.set(doc, apply);
+    if (waiting) return;
+    doc.addEventListener(
+      'visibilitychange',
+      () => {
+        const next = pendingFades.get(doc);
+        pendingFades.delete(doc);
+        if (next) fadeTheme(next, doc);
+      },
+      { once: true },
+    );
+    return;
+  }
+  const d = /** @type {any} */ (doc);
+  if (typeof d.startViewTransition === 'function') d.startViewTransition(apply);
+  else apply();
+}
+
 /** The mode this device is set to.
     @param {Storage} [store] */
 export function readMode(store) {
@@ -72,7 +100,7 @@ export function watchSystemTheme(currentMode) {
   try {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const onChange = e => {
-      if (currentMode() === 'system') applyTheme(resolveTheme('system', e.matches));
+      if (currentMode() === 'system') fadeTheme(() => applyTheme(resolveTheme('system', e.matches)));
     };
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);

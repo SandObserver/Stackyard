@@ -22,6 +22,7 @@ import { passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=bdd477f5';
 import {
   applyTheme,
+  fadeTheme,
   prefersDark,
   readMode,
   readReduceTransparency,
@@ -32,7 +33,7 @@ import {
   watchTransparency,
   writeMode,
   writeReduceTransparency,
-} from '/js/theme.js?v=0bbd81e8';
+} from '/js/theme.js?v=ab9b83fd';
 import { el, inp, qa, setUserText } from '/js/utils.js?v=457d9918';
 
 /* The pickers are built before the catalog loads, so each registers how to
@@ -344,8 +345,10 @@ function initTheme() {
     options: opts(),
     value: readMode(),
     onChange: v => {
-      hidden.value = writeMode(String(v));
-      box.setValue(hidden.value);
+      fadeTheme(() => {
+        hidden.value = writeMode(String(v));
+        box.setValue(hidden.value);
+      });
     },
   });
   slot.appendChild(box.el);
@@ -365,9 +368,11 @@ function initTheme() {
   addEventListener('storage', e => {
     if (solid && e.key === TRANSPARENCY_KEY) solid.checked = readReduceTransparency();
     if (e.key !== THEME_KEY) return;
-    hidden.value = readMode();
-    box.setValue(hidden.value);
-    applyTheme(resolveTheme(hidden.value, prefersDark()));
+    fadeTheme(() => {
+      hidden.value = readMode();
+      box.setValue(hidden.value);
+      applyTheme(resolveTheme(hidden.value, prefersDark()));
+    });
   });
 }
 
