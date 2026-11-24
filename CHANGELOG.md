@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep drag-to-pick on the Settings tab bar with Reduce Motion on, as a plain
   pill.
 
+- Fade the Settings page between light and dark instead of switching at once.
+
 ### Fixed
 
 - A press on the Settings tab bar lens right after picking a tab is no longer
