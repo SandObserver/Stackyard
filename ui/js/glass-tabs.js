@@ -165,14 +165,18 @@ function atTransitionEnd(el, read) {
   }
 }
 
-/** @param {HTMLElement[]} tabs @param {DOMRect} bar @param {() => void} onReady @returns {TabInks} */
-export function tabInks(tabs, bar, onReady) {
+/** @typedef {{ color: string, accent: string }} Lit */
+/** @param {HTMLElement[]} tabs @param {{ left: number, top: number }} bar where the bar's content starts
+    @param {() => void} onReady @param {Lit} [lit] every tab in these inks @returns {TabInks} */
+export function tabInks(tabs, bar, onReady, lit) {
   /** @type {TabInk[]} */
   const items = [];
   let pending = false;
   let key = '';
   tabs.forEach((tab, n) => {
-    const read = atTransitionEnd(tab, () => readTab(tab, bar, `${n}|${tab.classList.contains('active')}`, onReady));
+    const read = atTransitionEnd(tab, () =>
+      readTab(tab, bar, `${n}|${lit ? 'lit' : tab.classList.contains('active')}`, onReady, lit),
+    );
     items.push(read.ink);
     key += read.key;
     pending ||= read.pending;
@@ -180,8 +184,8 @@ export function tabInks(tabs, bar, onReady) {
   return { items, key, pending };
 }
 
-/** @param {HTMLElement} tab @param {DOMRect} bar @param {string} slot @param {() => void} onReady */
-function readTab(tab, bar, slot, onReady) {
+/** @param {HTMLElement} tab @param {{ left: number, top: number }} bar @param {string} slot @param {() => void} onReady @param {Lit} [lit] */
+function readTab(tab, bar, slot, onReady, lit) {
   let pending = false;
   let key = '';
   const svg = /** @type {SVGSVGElement|null} */ (tab.querySelector('svg'));
@@ -206,10 +210,10 @@ function readTab(tab, bar, slot, onReady) {
   if (svg && source) {
     const r = svg.getBoundingClientRect();
     const cs = getComputedStyle(svg);
-    const color = cs.color;
-    const accent = accentOf(svg);
+    const color = lit ? lit.color : cs.color;
+    const accent = lit ? lit.accent : accentOf(svg);
     Object.assign(ink, { ix: r.left - bar.left, iy: r.top - bar.top, iw: r.width, ih: r.height });
-    ink.ia = alphaOf(cs);
+    ink.ia = lit ? 1 : alphaOf(cs);
     ink.img = iconImage(source, color, accent, r.width, r.height, slot, onReady);
     if (!ink.img) pending = true;
     key += `${source.id || hash(new XMLSerializer().serializeToString(source))}${color}${accent}${ink.ia}${r.left - bar.left},${r.top - bar.top},${r.width};`;
@@ -219,7 +223,7 @@ function readTab(tab, bar, slot, onReady) {
     const cs = getComputedStyle(label);
     ink.text = label.textContent ?? '';
     ink.face = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-    ink.color = cs.color;
+    ink.color = lit ? lit.color : cs.color;
     ink.la = alphaOf(cs);
     ink.rtl = cs.direction === 'rtl';
     Object.assign(ink, { lx: r.left - bar.left, lw: r.width, base: baselineOf(label) - bar.top });

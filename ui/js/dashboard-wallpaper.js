@@ -6,7 +6,7 @@ import {
   rememberBackground,
   resolveBackground,
 } from '/js/background.js?v=51e46417';
-import { glassWallpaper } from '/js/glass.js?v=7c376881';
+import { glassWallpaper } from '/js/glass.js?v=6c1436a8';
 import {
   applyLabelTones,
   averageColor,

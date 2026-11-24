@@ -159,3 +159,22 @@ test('the icon cache keeps one picture per tab icon and state', async () => {
   await ready(pair(9, 1));
   assert.equal(images, made, 'switching tabs back and forth decodes nothing new');
 });
+
+test('lit inks show every tab in the selected colours at full opacity', async () => {
+  const tabs = [
+    fakeTab({ icon: 'sy-lit-a', color: 'rgb(140, 140, 140)', iconOpacity: '0.6' }),
+    fakeTab({ icon: 'sy-lit-b', active: true, color: 'rgb(10, 132, 255)' }),
+  ];
+  const lit = { color: 'rgb(10, 132, 255)', accent: 'rgb(0, 122, 255)' };
+  tabInks(/** @type {any} */ (tabs), BAR, () => {}, lit);
+  await settle();
+  const ink = tabInks(/** @type {any} */ (tabs), BAR, () => {}, lit);
+  assert.equal(ink.pending, false);
+  for (const t of ink.items) {
+    assert.equal(t.color, lit.color);
+    assert.equal(t.ia, 1, 'a dimmed tab icon shows at full strength under the lens');
+  }
+  const plain = tabInks(/** @type {any} */ (tabs), BAR, () => {});
+  assert.equal(plain.items[0].color, 'rgb(140, 140, 140)', 'without lit inks each tab keeps its own colour');
+  assert.notEqual(plain.key, ink.key, 'lit and plain inks never share a picture');
+});
