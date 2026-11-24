@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Bend the Settings tab bar on phones like iOS: the glass lens lifts on any
+  press, the bar swells, and the selected colour follows the lens.
+
+- Keep drag-to-pick on the Settings tab bar with Reduce Motion on, as a plain
+  pill.
+
+### Fixed
+
+- A press on the Settings tab bar lens right after picking a tab is no longer
+  ignored.
+
+- The Settings tab bar lens no longer settles 1 px off its tab.
+
+- Rotating the phone while holding the Settings tab bar no longer picks the
+  wrong tab.
+
 ## [1.24.0] - 2026-11-22
 
 ### Added
