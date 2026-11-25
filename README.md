@@ -23,7 +23,7 @@ Most dashboards are a wall of numbers and charts. Stackyard is the opposite: a c
 
 ## Why Stackyard
 
-- **Attention goes where it's needed, not everywhere at once.** A calm grid, no charts or counters. Health badges only appear when something's wrong.
+- **Attention goes where it's needed, not everywhere at once.** A calm grid. Charts and numbers appear only where they help a glance. Health badges only appear when something's wrong.
 - **A glance should tell you more than a number would.** Widgets are small visuals, not readouts.
 - **Anything can be a badge.** Point Stackyard at any API and show what it reports as a [live activity badge](https://stackyard.sandobserver.com/docs/badges/). One poll can carry several labelled values, each with its own colour and threshold. No custom widget, no code.
 - **Configured by clicking, not by editing files.** Everything is set up in the web UI, with config import and export.
@@ -39,7 +39,7 @@ Widgets and the services they read:
 - **Now Playing**: Plex, Jellyfin, Emby, Navidrome
 - **Weather**: Open-Meteo (no API key required) or OpenWeather (free API key), with UV and air quality warnings
 - **DNS**: AdGuard, Pi-hole, Technitium, NextDNS
-- **GitHub**: contribution graph and pull requests
+- **Git**: contribution graph and pull requests from GitHub, Gitea and Forgejo, and merge requests from GitLab
 - **Books**: Audiobookshelf, Komga, Kavita
 - **System summary**: CPU, memory, disk, throughput, uptime, and network speed from SpeedTest Tracker or MySpeed. Reports on this machine, or on a host running Glances, Beszel, the Unraid API, Proxmox VE or TrueNAS
 - **Disk health**: TrueNAS, Unraid, Scrutiny
