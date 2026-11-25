@@ -161,10 +161,12 @@ test('the overlay respects the safe area on both edges', () => {
   assert.match(css, /body\.is-mob #spot #sbox \{[^}]*var\(--safe-bottom\)/);
 });
 
-test('a scroll that lifts on a result does not open it', () => {
-  const handler = js.match(/a\.addEventListener\('touchend', e => \{([\s\S]*?)\n {6}\}\);/);
-  assert.ok(handler, 'the row touch handler is gone');
-  assert.match(handler[1], /if \(moved \|\| res\.scrollTop !== top\) return;[\s\S]*doOpen\(true\)/);
+test('a scroll that lifts on a result or on Show More does not count as a tap', () => {
+  const tap = js.match(/const onTap = \(node, fn\) => \{([\s\S]*?)\n {2}\};/);
+  assert.ok(tap, 'the shared tap guard is gone');
+  assert.match(tap[1], /if \(moved \|\| res\.scrollTop !== top\) return;\s*e\.preventDefault\(\);\s*fn\(\);/);
+  assert.match(js, /onTap\(a, \(\) => doOpen\(true\)\);/, 'rows skip the guard');
+  assert.match(js, /onTap\(b, \(\) => toggle\(false\)\);/, 'Show More skips the guard');
 });
 
 test('no results is readable in both themes', () => {
@@ -243,5 +245,5 @@ test('a click on a result leaves the new tab to the link', () => {
   assert.match(js, /target: isInternal \? '_self' : '_blank'/);
   assert.match(js, /\} else if \(viaTouch && app\.href\) \{\s*window\.open\(/);
   assert.match(js, /a\.onclick = \(\) => doOpen\(false\);/);
-  assert.match(js, /e\.preventDefault\(\);\s*doOpen\(true\);/);
+  assert.match(js, /onTap\(a, \(\) => doOpen\(true\)\);/);
 });

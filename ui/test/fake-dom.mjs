@@ -653,13 +653,34 @@ function matchFrom(el, tokens, i, scope) {
   return false;
 }
 
+/* Hebrew, Arabic and the scripts between them, plus their presentation forms. */
+const RTL_CHAR = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
+
+/** @param {any} el @returns {'ltr' | 'rtl'} */
+function directionality(el) {
+  for (let at = el; at; at = at.parentElement) {
+    const dir = at.attrs.get('dir');
+    if (dir === 'rtl' || dir === 'ltr') return dir;
+    if (dir === 'auto' || (dir === undefined && at.tagName === 'BDI')) {
+      for (const ch of at.textContent) {
+        if (RTL_CHAR.test(ch)) return 'rtl';
+        if (/\p{L}/u.test(ch)) return 'ltr';
+      }
+      return 'ltr';
+    }
+  }
+  return 'ltr';
+}
+
 function matchCompound(el, simple, scope) {
   if (simple === ':scope') return el === scope;
-  const m = simple.match(/^(\*|[a-z][\w-]*)?((?:[#.][\w-]+|\[[^\]]+\]|:(?:not|is)\([^)]*\))*)$/i);
+  const m = simple.match(/^(\*|[a-z][\w-]*)?((?:[#.][\w-]+|\[[^\]]+\]|:(?:not|is|dir)\([^)]*\))*)$/i);
   if (!m) throw new Error(`fake-dom cannot read the selector "${simple}"`);
   if (m[1] && m[1] !== '*' && el.tagName.toUpperCase() !== m[1].toUpperCase()) return false;
-  for (const part of m[2].match(/[#.][\w-]+|\[[^\]]+\]|:(?:not|is)\([^)]*\)/g) || []) {
-    if (part.startsWith(':is(')) {
+  for (const part of m[2].match(/[#.][\w-]+|\[[^\]]+\]|:(?:not|is|dir)\([^)]*\)/g) || []) {
+    if (part.startsWith(':dir(')) {
+      if (directionality(el) !== part.slice(5, -1)) return false;
+    } else if (part.startsWith(':is(')) {
       if (!splitTop(part.slice(4, -1), ',').some(x => matchCompound(el, x, scope))) return false;
     } else if (part.startsWith(':not(')) {
       if (matchCompound(el, part.slice(5, -1), scope)) return false;

@@ -764,6 +764,7 @@
       border:0; background:transparent; color:rgba(235,235,245,.7);
       cursor:pointer; -webkit-tap-highlight-color:transparent;
     }
+    body:not(.is-mob) #spot-clear { margin-block:-9px }
     #spot-clear[hidden] { display:none }
     #spot-clear:active { opacity:.6 }
     #spot-clear:focus-visible { outline:2px solid var(--accent); outline-offset:-6px; border-radius:50% }
@@ -809,16 +810,20 @@
     }
     body.is-mob #sres .sr-group:first-child .sr-section { padding-top:4px }
     body.is-mob #sres .sr-group-tiles .sr-section { border-bottom:0 }
-    .sr-more {
-      font:inherit; color:inherit; background:none; border:0;
-      padding:12px 0; margin:-12px 0; cursor:pointer; -webkit-tap-highlight-color:transparent;
+    body.is-mob #sres .sr-group { position:relative }
+    body.is-mob #sres .sr-more {
+      position:absolute; top:6px; inset-inline-end:4px;
+      padding:12px; border-radius:12px;
+      font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); font-weight:600;
+      color:rgba(235,235,245,.7); cursor:pointer; -webkit-tap-highlight-color:transparent;
     }
-    .sr-more:active { opacity:.6 }
-    .sr-more:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:4px }
+    body.is-mob #sres .sr-group:first-child .sr-more { top:-8px }
+    body.is-mob #sres .sr-more:active { opacity:.6 }
+    body.is-mob #sres.kbnav .sr-more.sel { outline:2px solid var(--accent); outline-offset:-8px }
     body.is-mob #sres .sr-rows { padding-top:9px }
     body.is-mob #sres .sr-rows .sr { padding:8px 16px; gap:15px; border-radius:0 }
     body.is-mob #sres .sr-card {
-      display:grid; grid-template-columns:repeat(4, 64px); justify-content:space-between;
+      display:grid; grid-template-columns:repeat(4, minmax(0, 1fr));
       margin:3px 16px 0; padding:16px 16px 13px;
       border-radius:33px; background:rgba(255,255,255,.08);
       box-shadow:inset 0 0 0 .5px rgba(255,255,255,.06);
@@ -827,12 +832,12 @@
       display:flex; flex-direction:column; align-items:center; gap:3px;
       padding:0; border-radius:16px; min-width:0;
     }
-    body.is-mob #sres .sr-tile.sel:not(:active) { background:transparent }
+    body.is-mob #sres:not(.kbnav) .sr-tile.sel:not(:active) { background:transparent }
 
     body.is-mob #sres .sr-tile .srn {
       font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); font-weight:400;
       text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-      width:84px; margin-inline:-10px;
+      width:100%; padding-inline:2px; box-sizing:border-box;
     }
     body.is-mob #sres .sr-tile .srh { display:none }
     /* !important: beats the equally-important #sres .sri img rule below. */
@@ -1192,7 +1197,7 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
   #photo-credit { color:#FFFFFF; }
   #photo-credit[data-tone="dark"] { color:#000000; }
   .srn  { color:var(--label-primary); }
-  .srh, .sr-section { color:rgba(235,235,245,.85); }
+  .srh, .sr-section, .sr-more { color:rgba(235,235,245,.85); }
   .widget, .mob-widget-card { border-color:rgba(255,255,255,.35); }
   /* A translucent card cannot honour a contrast request and stay translucent. */
   .widget[data-card="translucent"], .mob-widget-card[data-card="translucent"] {
@@ -1451,6 +1456,7 @@ html[data-theme="light"] body.is-mob #spot[open]::before { background-color:rgba
   html[data-theme="light"] body.is-mob #spot[open]::before { background-color:rgba(242,242,247,0); backdrop-filter:blur(0px) saturate(100%) brightness(1) }
 }
 html[data-theme="light"] body.is-mob #sres .sr-section { border-bottom-color:rgba(0,0,0,.1); color:rgba(60,60,67,.85) }
+html[data-theme="light"] body.is-mob #sres .sr-more { color:rgba(60,60,67,.85) }
 html[data-theme="light"] body.is-mob #sres .sr-group-tiles .sr-section { border-bottom:0 }
 html[data-theme="light"] body.is-mob #sres .sr-card { background:rgba(255,255,255,.7); box-shadow:inset 0 0 0 .5px rgba(0,0,0,.06) }
 html[data-theme="light"] body.is-mob #sres .srh,

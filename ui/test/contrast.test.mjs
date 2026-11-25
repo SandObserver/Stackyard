@@ -478,6 +478,7 @@ const DASHBOARD_TEXT = [
   ['phone Spotlight result name', '.srn', PHONE_SPOTLIGHT, 'wallpaper'],
   ['phone Spotlight result address', 'body.is-mob #sres .srh', PHONE_SPOTLIGHT, 'wallpaper'],
   ['phone Spotlight section header', 'body.is-mob #sres .sr-section', PHONE_SPOTLIGHT, 'wallpaper'],
+  ['phone Spotlight Show More', 'body.is-mob #sres .sr-more', PHONE_SPOTLIGHT, 'wallpaper'],
   ['phone Spotlight completion', '.sg-rest', PHONE_FIELD, 'wallpaper'],
   ['phone Spotlight completion hint', '.sg-hint', PHONE_FIELD, 'wallpaper'],
   ['phone Spotlight clear button', '#spot-clear', PHONE_FIELD, 'wallpaper', [false, true], 3],

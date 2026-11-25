@@ -68,6 +68,58 @@ export function initSpotlight({
 
   const labelOf = app => String(app.label || app.id);
 
+  /** @type {WeakMap<Element, any>} */
+  const optApp = new WeakMap();
+  /** @type {WeakMap<Element, (viaKey: boolean) => void>} */
+  const moreToggle = new WeakMap();
+  let optSeq = 0;
+  const opts = () => qa('[role="option"]', res);
+
+  const dirProbe = mk('span');
+  dirProbe.setAttribute('dir', 'auto');
+  /** @param {string} s */
+  const startsRtl = s => {
+    dirProbe.textContent = s;
+    return dirProbe.matches(':dir(rtl)');
+  };
+
+  /* A scroll that lifts on the node must not count as a tap. */
+  /** @param {HTMLElement} node @param {() => void} fn */
+  const onTap = (node, fn) => {
+    let sx = 0,
+      sy = 0,
+      top = 0,
+      moved = false;
+    node.addEventListener(
+      'touchstart',
+      e => {
+        const touch = e.changedTouches[0];
+        sx = touch.clientX;
+        sy = touch.clientY;
+        top = res.scrollTop;
+        moved = e.touches.length > 1;
+      },
+      { passive: true },
+    );
+    node.addEventListener(
+      'touchmove',
+      e => {
+        const touch = e.changedTouches[0];
+        if (touch && Math.hypot(touch.clientX - sx, touch.clientY - sy) >= SWIPE_LOCK_PX) moved = true;
+      },
+      { passive: true },
+    );
+    node.addEventListener(
+      'touchend',
+      e => {
+        if (moved || res.scrollTop !== top) return;
+        e.preventDefault();
+        fn();
+      },
+      { passive: false },
+    );
+  };
+
   /** @param {any} app @param {number} i @param {boolean} tile */
   const buildRow = (app, i, tile) => {
     const isFolder = app.type === 'folder';
@@ -84,6 +136,7 @@ export function initSpotlight({
     a.setAttribute('role', 'option');
     a.setAttribute('aria-label', app.label || app.id);
     a.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+    optApp.set(a, app);
     a.style.cssText =
       (tile ? '' : 'display:flex;align-items:center;') +
       'text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent;';
@@ -99,35 +152,7 @@ export function initSpotlight({
         window.open(app.href, '_blank', 'noreferrer,noopener');
       }
     };
-    let sx = 0,
-      sy = 0,
-      top = 0,
-      moved = false;
-    a.addEventListener(
-      'touchstart',
-      e => {
-        const touch = e.changedTouches[0];
-        sx = touch.clientX;
-        sy = touch.clientY;
-        top = res.scrollTop;
-        moved = e.touches.length > 1;
-      },
-      { passive: true },
-    );
-    a.addEventListener(
-      'touchmove',
-      e => {
-        const touch = e.changedTouches[0];
-        if (touch && Math.hypot(touch.clientX - sx, touch.clientY - sy) >= SWIPE_LOCK_PX) moved = true;
-      },
-      { passive: true },
-    );
-    a.addEventListener('touchend', e => {
-      /* A scroll that lifts on a row must not open it. */
-      if (moved || res.scrollTop !== top) return;
-      e.preventDefault();
-      doOpen(true);
-    });
+    onTap(a, () => doOpen(true));
     a.onclick = () => doOpen(false);
 
     const ic = mk('div');
@@ -201,39 +226,39 @@ export function initSpotlight({
     inp.setAttribute('aria-activedescendant', cur.length ? 'sr-opt-0' : '');
   };
 
-  /** @param {string} key @param {string} title @param {boolean} more */
-  const sectionHead = (key, title, more) => {
-    const hdr = mk('div');
-    hdr.className = 'sr-section';
-    hdr.id = 'sr-sec-' + key;
-    const tt = mk('span');
-    tt.textContent = title;
-    hdr.appendChild(tt);
-    if (more) {
-      const b = mk('button', { type: 'button' });
-      b.className = 'sr-more';
-      b.textContent = expanded.has(key) ? t('home.showLess') : t('home.showMore');
-      b.setAttribute('aria-expanded', expanded.has(key) ? 'true' : 'false');
-      const toggle = () => {
-        if (expanded.has(key)) expanded.delete(key);
-        else expanded.add(key);
-        const top = res.scrollTop;
-        render(inp.value);
-        res.scrollTop = top;
-      };
-      b.addEventListener(
-        'touchend',
-        e => {
-          e.preventDefault();
-          toggle();
-        },
-        { passive: false },
-      );
-      b.addEventListener('mousedown', e => e.preventDefault());
-      b.onclick = toggle;
-      hdr.appendChild(b);
-    }
-    return hdr;
+  /* Keep this an option. A listbox group may own only options. Edit the rows
+     in place: a rebuild removes the focused node. */
+  /** @param {{key: string, items: any[], tile: boolean, limit: number}} g @param {HTMLElement} list */
+  const moreOption = (g, list) => {
+    const b = mk('div');
+    b.className = 'sr-more';
+    b.id = 'sr-more-' + g.key;
+    b.setAttribute('role', 'option');
+    b.setAttribute('aria-selected', 'false');
+    const label = () => {
+      b.textContent = expanded.has(g.key) ? t('home.showLess') : t('home.showMore');
+    };
+    label();
+    /** @param {boolean} viaKey */
+    const toggle = viaKey => {
+      const was = opts()[si];
+      if (expanded.has(g.key)) {
+        expanded.delete(g.key);
+        for (const row of Array.from(list.children).slice(g.limit)) row.remove();
+      } else {
+        expanded.add(g.key);
+        for (const app of g.items.slice(g.limit)) list.appendChild(buildRow(app, optSeq++, g.tile));
+      }
+      label();
+      const all = opts();
+      si = !viaKey && was && was.isConnected ? all.indexOf(was) : all.indexOf(b);
+      upd(viaKey);
+    };
+    moreToggle.set(b, toggle);
+    onTap(b, () => toggle(false));
+    b.addEventListener('mousedown', e => e.preventDefault());
+    b.onclick = () => toggle(false);
+    return b;
   };
 
   const renderDesktop = () => {
@@ -269,7 +294,6 @@ export function initSpotlight({
     if (apps.length) groups.push({ key: 'apps', title: t('home.apps'), items: apps, tile: false, limit: SECTION_ROWS });
     if (folders.length)
       groups.push({ key: 'folders', title: t('home.folders'), items: folders, tile: false, limit: SECTION_ROWS });
-    cur = [];
     const f = document.createDocumentFragment();
     for (const g of groups) {
       const more = g.items.length > g.limit;
@@ -277,43 +301,54 @@ export function initSpotlight({
       const grp = mk('div');
       grp.className = 'sr-group' + (g.tile ? ' sr-group-tiles' : '');
       grp.setAttribute('role', 'group');
-      grp.setAttribute('aria-labelledby', 'sr-sec-' + g.key);
-      grp.appendChild(sectionHead(g.key, g.title, more));
+      const hdr = mk('div');
+      hdr.className = 'sr-section';
+      const tt = mk('span');
+      tt.id = 'sr-sec-' + g.key;
+      tt.textContent = g.title;
+      hdr.appendChild(tt);
+      grp.setAttribute('aria-labelledby', tt.id);
       const list = mk('div');
       list.className = g.tile ? 'sr-card' : 'sr-rows';
-      for (const app of shown) {
-        list.appendChild(buildRow(app, cur.length, g.tile));
-        cur.push(app);
-      }
-      grp.appendChild(list);
+      for (const app of shown) list.appendChild(buildRow(app, optSeq++, g.tile));
+      grp.append(hdr, list);
+      if (more) grp.appendChild(moreOption(g, list));
       f.appendChild(grp);
     }
     res.appendChild(f);
   };
 
+  /* Return opens the selected option, so the completion must name it. A
+     right-to-left name cannot line up with the field. */
   const updGhost = () => {
     if (!ghost) return;
     const v = inp.value;
-    const top = cur[0];
+    const sel = opts()[si];
+    const app = sel ? optApp.get(sel) : null;
+    const name = app ? labelOf(app) : '';
     const ok =
       MOB() &&
       v.trim() === v &&
       v.length > 0 &&
-      top &&
-      labelOf(top).toLowerCase().startsWith(v.toLowerCase()) &&
+      !!app &&
+      name.toLowerCase().startsWith(v.toLowerCase()) &&
       getComputedStyle(inp).direction === 'ltr' &&
+      !startsRtl(name) &&
+      !startsRtl(name.slice(v.length)) &&
       inp.scrollWidth <= inp.clientWidth &&
       inp.selectionStart === v.length;
     ghost.hidden = !ok;
     if (!ok) return;
     const [typed, rest, hint] = /** @type {HTMLElement[]} */ (Array.from(ghost.children));
     typed.textContent = v;
-    setUserText(rest, labelOf(top).slice(v.length));
+    setUserText(rest, name.slice(v.length));
     hint.textContent = t('home.searchOpenHint');
   };
 
   const render = query => {
     res.replaceChildren();
+    res.classList.remove('kbnav');
+    optSeq = 0;
     const apps = getItems().filter(i => i.type === 'app' || i.type === 'folder');
     const qq = query.toLowerCase().trim();
     cur = qq ? apps.filter(a => labelOf(a).toLowerCase().includes(qq)) : apps;
@@ -333,6 +368,9 @@ export function initSpotlight({
     }
     if (MOB() && !qq) {
       cur = [];
+      clearTimeout(liveTimer);
+      if (live) live.textContent = '';
+      inp.setAttribute('enterkeyhint', 'search');
       inp.setAttribute('aria-expanded', 'false');
       inp.setAttribute('aria-activedescendant', '');
       updGhost();
@@ -350,17 +388,22 @@ export function initSpotlight({
     updGhost();
   };
 
-  const upd = () =>
-    res.querySelectorAll('.sr').forEach((e, i) => {
+  /** @param {boolean} [viaKey] */
+  const upd = (viaKey = true) => {
+    if (viaKey) res.classList.add('kbnav');
+    opts().forEach((e, i) => {
       const on = i === si;
       e.classList.toggle('sel', on);
       e.setAttribute('aria-selected', on ? 'true' : 'false');
       if (on) {
-        e.scrollIntoView({ block: 'nearest' });
+        if (viaKey) e.scrollIntoView({ block: 'nearest' });
         inp.setAttribute('aria-activedescendant', e.id);
-        fluidHoverKb(e);
+        if (e.classList.contains('sr')) fluidHoverKb(e);
+        else fluidHoverClear(res);
       }
     });
+    updGhost();
+  };
 
   const fieldEl = q('.spot-field', ov);
   const fieldBg = q('.spot-bg', ov);
@@ -418,7 +461,15 @@ export function initSpotlight({
   };
 
   function _applyKbLayout() {
-    if (!MOB()) return;
+    if (!MOB()) {
+      if (kbTop === -1) return;
+      stopGlide();
+      resetKbLayout();
+      ov.style.top = '';
+      ov.style.bottom = '';
+      ov.classList.remove('kb');
+      return;
+    }
     const vv = window.visualViewport;
     if (!vv) return;
     const top = Math.max(0, Math.round(vv.offsetTop));
@@ -518,7 +569,7 @@ export function initSpotlight({
     const grew = morph(true);
     ov.classList.toggle('morph', grew);
     if (grew) hideCaret();
-    if (MOB() && window.visualViewport) {
+    if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', queueKbLayout);
       window.visualViewport.addEventListener('scroll', queueKbLayout);
       _w._spotVpCleanup = () => {
@@ -666,7 +717,7 @@ export function initSpotlight({
       return;
     }
     if (e.key === 'ArrowDown') {
-      si = Math.min(si + 1, cur.length - 1);
+      si = Math.max(0, Math.min(si + 1, opts().length - 1));
       upd();
       e.preventDefault();
       return;
@@ -678,8 +729,12 @@ export function initSpotlight({
       return;
     }
     if (e.key === 'Enter') {
-      const s = qa('.sr', res)[si];
-      if (s) {
+      const s = opts()[si];
+      const toggle = s && moreToggle.get(s);
+      if (toggle) {
+        e.preventDefault();
+        toggle(true);
+      } else if (s) {
         s.click();
         close();
       }
