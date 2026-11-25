@@ -325,6 +325,8 @@ const LATIN_OK = [
   'Dock',
   'Iframe',
   'Referrer',
+  /* The Host header name is typed, not read. */
+  'Host',
   'Socket',
   'Widget',
   'http',

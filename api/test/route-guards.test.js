@@ -12,7 +12,8 @@ const assert = require('node:assert/strict');
 const http = require('node:http');
 const fs = require('node:fs');
 
-const { _routeTable } = require('../src/router');
+const { _routeTable, _resetOriginLog } = require('../src/router');
+const log = require('../src/log');
 const { saveConfig } = require('../src/config');
 const { hashPassword, makeToken } = require('../src/auth');
 
@@ -105,8 +106,26 @@ test('every write refuses another origin', async () => {
     const res = await send(r.method, concrete(r.path), { Cookie: session(), Origin: 'http://evil.example' });
     assert.equal(res.status, 403, `${r.method} ${r.path}`);
     assert.match(res.body, /origin mismatch/, `${r.method} ${r.path}`);
+    assert.equal(JSON.parse(res.body).code, 'invalid.origin', `${r.method} ${r.path}`);
     assert.equal(configFile(), stored, `${r.method} ${r.path} wrote the config`);
   }
+});
+
+test('a refused origin is logged once per reason, with both hosts', async t => {
+  _resetOriginLog();
+  const warns = [];
+  t.mock.method(log, 'warn', (msg, data) => warns.push({ msg, data }));
+  const write = writes.find(r => r.path === '/api/config');
+  for (let i = 0; i < 3; i++)
+    await send(write.method, write.path, { Cookie: session(), Origin: 'http://evil.example' });
+  await send(write.method, write.path, { Cookie: session() });
+  assert.deepEqual(
+    warns.map(w => w.data.reason),
+    ['mismatch', 'missing'],
+  );
+  assert.equal(warns[0].data.origin, 'evil.example');
+  assert.ok(warns[0].data.host);
+  assert.equal(warns[0].data.path, '/api/config');
 });
 
 test('the violation report route takes no session and changes nothing', async () => {

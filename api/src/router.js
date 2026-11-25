@@ -198,18 +198,36 @@ function getIp(req) {
 /* Every browser sends Origin on a request that changes something, including a
    same-origin one. A write arriving without it did not come from a page on this
    dashboard, so it is refused. */
+const ORIGIN_LOG_MS = 10 * 60 * 1000;
+/** @type {Map<string, number>} */
+const _originLoggedAt = new Map();
+
 function checkOrigin(req, res) {
   const origin = req.headers['origin'];
+  let originHost = '';
   if (origin) {
     try {
-      if (new URL(origin).host === req.headers['host']) return true;
+      originHost = new URL(origin).host;
+      if (originHost === req.headers['host']) return true;
     } catch {
       /* not a URL, so it names no host and cannot match one */
     }
   }
+  const reason = origin ? 'mismatch' : 'missing';
+  const now = Date.now();
+  if (now - (_originLoggedAt.get(reason) ?? -Infinity) >= ORIGIN_LOG_MS) {
+    _originLoggedAt.set(reason, now);
+    log.warn('write refused: the Origin header does not match the Host header', {
+      reason,
+      path: req.url.split('?')[0].slice(0, 100),
+      origin: originHost.slice(0, 255),
+      host: String(req.headers['host'] ?? '').slice(0, 255),
+    });
+  }
   json(res, 403, {
     error: origin ? 'Forbidden: origin mismatch' : 'Forbidden: this request needs an Origin header',
     kind: 'invalid',
+    code: 'invalid.origin',
   });
   return false;
 }
@@ -219,6 +237,7 @@ module.exports = {
   BODY_LIMIT,
   AUTH_BODY_LIMIT,
   _routeTable: () => routes.map(r => ({ method: r.m, path: r.p })),
+  _resetOriginLog: () => _originLoggedAt.clear(),
   on,
   dispatch,
   json,

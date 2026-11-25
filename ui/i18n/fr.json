@@ -275,6 +275,7 @@
     "authRequired": "Authentification requise. Activez l’option « Authentification » ci-dessous et ajoutez votre clé d’API.",
     "unreachable": "Cette adresse est injoignable depuis Docker. Essayez le nom du conteneur.",
     "privateAddress": "La plupart des services de homelab utilisent des IP privées. Définissez ALLOW_PRIVATE_IPS=true et redémarrez le conteneur.",
+    "originMismatch": "Stackyard a refusé cette modification. L’adresse du navigateur ne correspond pas à celle que reçoit Stackyard. Si un proxy inverse se trouve devant, il doit transmettre l’en-tête Host d’origine.",
     "linkLocal": "Stackyard ne se connecte jamais à cette adresse. Elle est réservée au lien local et aux métadonnées cloud.",
     "retype": "Cette configuration a changé depuis son enregistrement, les identifiants enregistrés n’ont donc pas été utilisés. Saisissez à nouveau le secret (mot de passe, clé ou jeton) pour tester ces réglages.",
     "redirect": "L’adresse a répondu par une redirection (HTTP {status}). Saisissez l’adresse vers laquelle elle pointe.",

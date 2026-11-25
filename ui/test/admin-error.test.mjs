@@ -360,3 +360,10 @@ test('the Health Check Test explains a ping that got no HTTP answer', () => {
   const fn = src.slice(src.indexOf('async function testPing'), src.indexOf('function normKvRows'));
   assert.match(fn, /r\.status \? t\('app\.httpError', \{ status: r\.status \}\) : errorText\(r\)/);
 });
+
+test('a refused origin names the proxy fix on every surface', () => {
+  const e = { kind: KIND.INVALID, code: 'invalid.origin' };
+  assert.equal(errorAdvice(e).key, 'adminError.originMismatch');
+  assert.equal(loginErrorAdvice(e).key, 'adminError.originMismatch');
+  assert.equal(setupErrorKey(e), 'adminError.originMismatch');
+});
