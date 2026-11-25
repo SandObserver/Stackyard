@@ -23,7 +23,7 @@
   <script src="/js/page-zoom.js?v=01ccc9cf"></script>
   <title>Stackyard</title>
   <link rel="stylesheet" href="/css/tokens.css?v=b377f922">
-  <link rel="stylesheet" href="/css/dashboard.css?v=cdc356bf">
+  <link rel="stylesheet" href="/css/dashboard.css?v=b556ac40">
   <link rel="stylesheet" href="/css/config-recovery.css?v=9f8ca0ab">
 </head>
 <body>
@@ -42,18 +42,25 @@
 <input id="mob-pager" class="visually-hidden" type="range" tabindex="-1" min="1" max="1" step="1" value="1" aria-label="Page" data-i18n-al="home.pageControl" hidden>
 <nav id="dock" aria-label="Dock" data-i18n-al="home.dock"></nav>
 <div id="photo-credit" role="group" aria-label="Photo credit" data-i18n-al="home.photoCredit" hidden></div>
+<div class="top-edge" aria-hidden="true"></div>
 <dialog id="spot" aria-label="Search" data-i18n-al="home.searchDialog">
+  <div class="top-edge" aria-hidden="true"></div>
   <div id="sres-live" class="visually-hidden" aria-live="polite"></div>
   <div id="sres"></div>
   <div id="sbox">
     <div class="spot-bar">
       <div class="spot-field">
+        <span class="spot-bg" aria-hidden="true"></span>
         <span class="spot-icon"><svg class="sy-icon" width="22" height="22" aria-hidden="true" focusable="false"><use href="#sy-solid-search"/></svg></span>
-        <input id="sin" type="text" placeholder="Search…" data-i18n-ph="home.searchPh" aria-label="Search apps and folders" data-i18n-al="home.searchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+        <span class="spot-input">
+          <input id="sin" type="text" placeholder="Search…" data-i18n-ph="home.searchPh" aria-label="Search apps and folders" data-i18n-al="home.searchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+          <span class="spot-ghost" aria-hidden="true"><span class="sg-typed"></span><span class="sg-rest"></span><span class="sg-hint"></span></span>
+        </span>
+        <button id="spot-clear" type="button" aria-label="Clear" data-i18n-al="home.searchClear" hidden><svg class="sy-icon" width="20" height="20" aria-hidden="true" focusable="false"><use href="#sy-solid-failure"/></svg></button>
       </div>
       <button id="spot-cancel" type="button" data-i18n="common.cancel">Cancel</button>
     </div>
   </div>
 </dialog>
-<script type="module" src="/js/dashboard.js?v=b3a64a58"></script>
+<script type="module" src="/js/dashboard.js?v=ce4fa104"></script>
 </body></html>

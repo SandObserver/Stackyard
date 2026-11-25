@@ -30,6 +30,7 @@ const SAME_ON_PURPOSE = {
     'about.support',
     'dashboard.filterApps',
     'dashboard.filterWidgets',
+    'home.apps',
     'type.app',
     'type.widget',
     'app.name',

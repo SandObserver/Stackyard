@@ -28,7 +28,10 @@ test('closing search puts focus back where it was', () => {
   assert.match(handler[1], /if \(!ov\.contains\(document\.activeElement\)\) return;/);
   assert.match(handler[1], /back\.focus\(\)/);
   assert.match(handler[1], /inp\.blur\(\)/);
-  assert.match(js, /returnFocus = document\.activeElement;\s*ov\.classList\.add\('on'\);\s*ov\.showModal\(\);/);
+  assert.match(
+    js,
+    /returnFocus = document\.activeElement;[\s\S]{0,400}?ov\.classList\.add\('on'\);\s*ov\.showModal\(\);/,
+  );
 });
 
 class FakeEl extends EventTarget {
@@ -113,7 +116,7 @@ test('a close event that lands after Search reopened leaves focus in the field',
 });
 
 test('a folder result shows the folder icon grid', () => {
-  assert.match(js, /if \(isFolder && folderGlyph\) \{[\s\S]*?folderGlyph\(app, 44\)/);
+  assert.match(js, /if \(isFolder && folderGlyph\) \{[\s\S]*?folderGlyph\(app, 64\)/);
 });
 
 test('Cancel sits beside the field, not inside the pill', () => {
@@ -126,10 +129,12 @@ test('Cancel sits beside the field, not inside the pill', () => {
   assert.match(bar[1], /id="spot-cancel"/);
 });
 
-test('Cancel is shown on every layout', () => {
-  const rule = css.match(/#spot-cancel \{([^}]*)\}/);
+test("Cancel is shown on desktop; on a phone the field's x closes an empty search", () => {
+  const rule = css.match(/\n {4}#spot-cancel \{([^}]*)\}/);
   assert.ok(rule, 'the Cancel rule is gone');
-  assert.doesNotMatch(rule[1], /display:none/, 'Cancel is hidden again');
+  assert.doesNotMatch(rule[1], /display:none/, 'Cancel is hidden on desktop');
+  assert.match(js, /clearBtn\.hidden = !query && !MOB\(\);/, 'the x must stay shown on a phone');
+  assert.match(js, /if \(!inp\.value\) \{\s*close\(\);/, 'the x no longer closes an empty search');
 });
 
 test('Cancel clears the minimum touch target on a phone', () => {

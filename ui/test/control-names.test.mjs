@@ -212,7 +212,7 @@ const spot = read('js/spotlight.js');
 test('a system result opens here, with no leaves-the-site arrow', () => {
   assert.match(spot, /app\.system === 'settings'/, 'nothing distinguishes the internal destination');
   assert.match(spot, /target: isInternal \? '_self' : '_blank'/);
-  assert.match(spot, /if \(!isInternal\) \{[\s\S]{0,200}'↗'/, 'the arrow is drawn for every result');
+  assert.match(spot, /if \(!isInternal(?: && !tile)?\) \{[\s\S]{0,200}'↗'/, 'the arrow is drawn for every result');
 });
 
 test('a system result navigates rather than opening a tab', () => {
