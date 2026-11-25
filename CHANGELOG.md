@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Show an inline completion in phone search that Return opens.
+
 ### Changed
 
 - Bend the Settings tab bar on phones like iOS: the glass lens lifts on any
@@ -17,6 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fade the Settings page between light and dark instead of switching at once.
 
+- Redesign search on phones: the field grows from the Search pill, follows the
+  keyboard, and results show a Top Hit card with Apps and Folders sections.
+
+- Show names that start with the query first in phone search.
+
+- Close an empty search with the field's x on phones.
+
 ### Fixed
 
 - A press on the Settings tab bar lens right after picking a tab is no longer
@@ -26,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Rotating the phone while holding the Settings tab bar no longer picks the
   wrong tab.
+
+- Reset the search overlay's edges when the window crosses to the desktop layout
+  while search is open.
 
 ## [1.24.0] - 2026-11-22
 
