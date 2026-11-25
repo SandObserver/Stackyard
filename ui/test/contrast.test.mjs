@@ -440,7 +440,8 @@ const WALLPAPERS = [
 
 const SETUP = ['.setup-prompt', '.setup-card'];
 const SPOTLIGHT = ['body:not(.is-mob) #spot', 'body:not(.is-mob) #sres'];
-const PHONE_SPOTLIGHT = ['#spot'];
+const PHONE_SPOTLIGHT = ['body.is-mob #spot[open]::before'];
+const PHONE_FIELD = [...PHONE_SPOTLIGHT, 'body.is-mob #spot .spot-bg'];
 
 /* [what, ink selector, layers from the bottom up, backdrop, themes]. A
    backdrop of `wallpaper` is measured over black and over white. An ink given
@@ -471,22 +472,21 @@ const DASHBOARD_TEXT = [
   [
     'phone Spotlight placeholder',
     ['#spot #sin::placeholder', 'body.is-mob #spot #sin::placeholder'],
-    [...PHONE_SPOTLIGHT, 'body.is-mob #spot .spot-field'],
+    PHONE_FIELD,
     'wallpaper',
   ],
   ['phone Spotlight result name', '.srn', PHONE_SPOTLIGHT, 'wallpaper'],
+  ['phone Spotlight result address', 'body.is-mob #sres .srh', PHONE_SPOTLIGHT, 'wallpaper'],
+  ['phone Spotlight section header', 'body.is-mob #sres .sr-section', PHONE_SPOTLIGHT, 'wallpaper'],
+  ['phone Spotlight Show More', 'body.is-mob #sres .sr-more', PHONE_SPOTLIGHT, 'wallpaper'],
+  ['phone Spotlight completion', '.sg-rest', PHONE_FIELD, 'wallpaper'],
+  ['phone Spotlight completion hint', '.sg-hint', PHONE_FIELD, 'wallpaper'],
+  ['phone Spotlight clear button', '#spot-clear', PHONE_FIELD, 'wallpaper', [false, true], 3],
   ['Spotlight query', '#sin', SPOTLIGHT, 'wallpaper'],
   ['Spotlight Cancel', '#spot-cancel', SPOTLIGHT, 'wallpaper'],
   ['Spotlight placeholder', '#sin::placeholder', SPOTLIGHT, 'wallpaper'],
   ['Spotlight search icon', '.spot-icon', SPOTLIGHT, 'wallpaper', [false, true], 3],
-  [
-    'phone Spotlight search icon',
-    '.spot-icon',
-    [...PHONE_SPOTLIGHT, 'body.is-mob #spot .spot-field'],
-    'wallpaper',
-    [false, true],
-    3,
-  ],
+  ['phone Spotlight search icon', '.spot-icon', PHONE_FIELD, 'wallpaper', [false, true], 3],
   ['first-run show-password icon', '.setup-reveal', SETUP, 'wallpaper', [false, true], 3],
   ['badge list value', '.badge-pop', ['.badge-pop'], 'wallpaper'],
   ['badge list name', '.badge-pop-name', ['.badge-pop'], 'wallpaper'],
@@ -513,7 +513,11 @@ for (const light of [false, true]) {
       const inkColour = rgbaOf(resolve, paint(light, inkSelector, 'color'));
       for (const base of bases) {
         const surface = layers.reduce(
-          (under, sel) => layer(rgbaOf(resolve, paint(light, sel, 'background')), filtered(light, sel, under)),
+          (under, sel) =>
+            layer(
+              rgbaOf(resolve, paint(light, sel, 'background', true) || paint(light, sel, 'background-color')),
+              filtered(light, sel, under),
+            ),
           base,
         );
         const r = ratio(toHex(layer(inkColour, surface)), toHex(surface));

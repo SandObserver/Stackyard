@@ -592,12 +592,11 @@
       max-width:none; max-height:none; width:auto; height:auto;
       margin:0; padding:0; border:0; color:inherit;
       display:none; opacity:0;
-      transition:opacity .15s ease-out;
     }
     #spot::backdrop { background:none }
     #spot.on  { display:flex;
                 flex-direction:column; }
-    #spot.vis { opacity:1 }
+    #spot[open] { opacity:1 }
 
     /* ── Spotlight — mobile layout (default, overridden for desktop below) ── */
     #spot {
@@ -614,11 +613,65 @@
       min-height:0;
     }
     body.is-mob #spot.kb #sres { padding-top:12px; }
+    body.is-mob #spot { background:none; backdrop-filter:none; opacity:1; transition:none; }
+    /* Keep. Without it Safari clips the fixed scrim to the dialog box, which
+       shrinks for the keyboard and moves when Safari scrolls. */
+    body.is-mob #spot { overflow:visible }
+    /* Keep fixed. Safari's see-through bar above the keyboard sits outside
+       the overlay. */
+    body.is-mob #spot::before {
+      content:''; position:fixed; inset:0; z-index:-1;
+      background-color:rgba(0,0,0,0);
+      backdrop-filter:blur(0px) saturate(100%) brightness(1);
+      transition:background-color .28s cubic-bezier(.23,1,.32,1), backdrop-filter .28s cubic-bezier(.23,1,.32,1);
+    }
+    /* Fade the blur, never opacity. Safari draws no backdrop blur below
+       opacity 1. */
+    body.is-mob #spot[open]::before {
+      background-color:rgba(0,0,0,.62);
+      backdrop-filter:blur(20px) saturate(180%) brightness(.76);
+      transition-duration:.3s;
+    }
+    @starting-style {
+      body.is-mob #spot[open]::before { background-color:rgba(0,0,0,0); backdrop-filter:blur(0px) saturate(100%) brightness(1) }
+    }
+    @starting-style {
+      body.is-mob #spot[open]:not(.typed) #sres { transform:scale(.96) }
+    }
+    /* Keep both strips the same colour. iOS tints the status bar from the
+       frontmost full-width fixed box at the top edge and switches at once when
+       that box changes. The open dialog is in the top layer, so it needs its own.
+       background-clip:text paints nothing but keeps the colour readable. */
+    .top-edge { display:none }
+    body.is-mob .top-edge {
+      display:block; position:fixed; inset:0 0 auto; height:11px; z-index:2147483647;
+      pointer-events:none; background-color:var(--bg-base); background-clip:text;
+    }
+    body.is-mob #spot #sres {
+      padding-top:calc(var(--safe-top) + 8px);
+      padding-bottom:calc(var(--safe-bottom) + 84px);
+      scroll-padding-bottom:calc(var(--safe-bottom) + 84px);
+      opacity:0; transform:scale(.96); transform-origin:50% 0;
+      transition:opacity .2s cubic-bezier(.23,1,.32,1), transform .25s cubic-bezier(.23,1,.32,1);
+    }
+    body.is-mob #spot.kb #sres { padding-bottom:72px; scroll-padding-bottom:72px }
+    body.is-mob #spot[open] #sres { opacity:1; transform:none }
+    body.is-mob #spot.typed #sres { transform:none }
+    body.is-mob #spot:not(.morph) #sbox { opacity:0; transition:opacity .2s cubic-bezier(.23,1,.32,1) }
+    body.is-mob #spot[open]:not(.morph) #sbox { opacity:1 }
+    /* Keep after the open-state rules above. Equal specificity, so source order decides. */
+    @starting-style {
+      body.is-mob #spot[open] #sres { opacity:0 }
+      body.is-mob #spot[open]:not(.morph) #sbox { opacity:0 }
+    }
+    body.is-mob #spot #sbox { position:absolute; inset-inline:0; bottom:0 }
+    body.is-mob #spot.kb #sbox { padding-bottom:8px }
+    body.is-mob #spot #spot-cancel { display:none }
     /* Search bar pinned to bottom on mobile */
     body.is-mob #spot #sbox {
       flex-shrink:0;
       padding-block:10px calc(var(--safe-bottom) + 12px);
-      padding-inline:max(16px, var(--sa-left,0px)) max(16px, var(--sa-right,0px));
+      padding-inline:max(8px, var(--sa-left,0px)) max(8px, var(--sa-right,0px));
       box-sizing:border-box;
     }
     /* ── Spotlight — desktop overrides ── */
@@ -663,12 +716,18 @@
       padding:0; gap:8px;
     }
     body.is-mob #spot .spot-field {
-      display:flex; align-items:center; gap:8px;
+      position:relative; isolation:isolate;
+      display:flex; align-items:center; gap:9px;
       flex:1; min-width:0; min-height:48px;
-      background:rgba(30,30,32,.72);
-      box-shadow:inset 0 0 0 .5px rgba(255,255,255,.12);
-      border-radius:999px; padding:0 16px;
+      border-radius:999px; padding-inline:12px 14px;
       box-sizing:border-box;
+    }
+    .spot-bg { display:none }
+    body.is-mob #spot .spot-bg {
+      display:block; position:absolute; inset:0; z-index:-1;
+      border-radius:999px; pointer-events:none;
+      background:rgba(30,30,32,.92);
+      box-shadow:inset 0 0 0 .5px rgba(255,255,255,.14), 0 4px 24px rgba(0,0,0,.25);
     }
     .spot-icon {
       color:rgba(255,255,255,.45); flex-shrink:0;
@@ -684,6 +743,31 @@
       min-height:26px; padding:0; margin:0; width:100%;
     }
     body.is-mob #spot #sin { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); }
+    body.is-mob #spot .spot-icon svg { width:20px; height:20px }
+    .spot-input { position:relative; flex:1; min-width:0; display:flex; align-items:center; }
+    .spot-ghost {
+      position:absolute; inset:0; display:flex; align-items:center;
+      pointer-events:none; white-space:pre; overflow:hidden;
+      font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);
+    }
+    .spot-ghost[hidden] { display:none }
+    .sg-typed { color:transparent }
+    .sg-rest { color:rgba(255,255,255,.92); background:color-mix(in srgb, var(--accent) 38%, transparent); border-radius:3px }
+    .sg-hint { color:rgba(235,235,245,.7) }
+    body.is-mob #spot .spot-field:focus-within { outline:none }
+    body.is-mob #spot .spot-field:focus-within .spot-bg {
+      box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55), 0 4px 24px rgba(0,0,0,.25);
+    }
+    #spot-clear {
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+      width:44px; height:44px; margin-inline-end:-12px; padding:0;
+      border:0; background:transparent; color:rgba(235,235,245,.7);
+      cursor:pointer; -webkit-tap-highlight-color:transparent;
+    }
+    body:not(.is-mob) #spot-clear { margin-block:-9px }
+    #spot-clear[hidden] { display:none }
+    #spot-clear:active { opacity:.6 }
+    #spot-clear:focus-visible { outline:2px solid var(--accent); outline-offset:-6px; border-radius:50% }
     /* One default, not a rule per field. The user agent's placeholder assumes a
        light page and fails contrast on every surface here. Rules below override
        it where a field genuinely differs. */
@@ -713,14 +797,51 @@
 
     /* ── Mobile result rows — only apply on mobile ── */
     body.is-mob #sres .sr { padding:calc(10px * var(--sc,1)) calc(14px * var(--sc,1)); gap:calc(12px * var(--sc,1)); }
-    body.is-mob #sres .sr + .sr { border-top:0.5px solid rgba(255,255,255,.10); }
-    body.is-mob #sres .sr-section { display:none; }
     body.is-mob #sres .srn { font-size:calc(var(--fs-body) * var(--sc,1));line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight:500; }
-    body.is-mob #sres .srh { display:none; }
+    body.is-mob #sres .srh { font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); color:rgba(235,235,245,.7); }
     body.is-mob #sres .sra { display:none; }
-    body.is-mob #sres .sri { width:calc(44px * var(--sc,1)); height:calc(44px * var(--sc,1)); border-radius:calc(10px * var(--sc,1)); }
+    body.is-mob #sres .sri { width:64px; height:64px; border-radius:16px; }
+    body.is-mob #sres .sr-section {
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      margin-inline:16px; padding:18px 0 8px;
+      border-bottom:.5px solid rgba(255,255,255,.14);
+      font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); font-weight:600;
+      color:rgba(235,235,245,.7);
+    }
+    body.is-mob #sres .sr-group:first-child .sr-section { padding-top:4px }
+    body.is-mob #sres .sr-group-tiles .sr-section { border-bottom:0 }
+    body.is-mob #sres .sr-group { position:relative }
+    body.is-mob #sres .sr-more {
+      position:absolute; top:6px; inset-inline-end:4px;
+      padding:12px; border-radius:12px;
+      font-size:var(--fs-subheadline);line-height:var(--lh-subheadline);letter-spacing:var(--tr-subheadline); font-weight:600;
+      color:rgba(235,235,245,.7); cursor:pointer; -webkit-tap-highlight-color:transparent;
+    }
+    body.is-mob #sres .sr-group:first-child .sr-more { top:-8px }
+    body.is-mob #sres .sr-more:active { opacity:.6 }
+    body.is-mob #sres.kbnav .sr-more.sel { outline:2px solid var(--accent); outline-offset:-8px }
+    body.is-mob #sres .sr-rows { padding-top:9px }
+    body.is-mob #sres .sr-rows .sr { padding:8px 16px; gap:15px; border-radius:0 }
+    body.is-mob #sres .sr-card {
+      display:grid; grid-template-columns:repeat(4, minmax(0, 1fr));
+      margin:3px 16px 0; padding:16px 16px 13px;
+      border-radius:33px; background:rgba(255,255,255,.08);
+      box-shadow:inset 0 0 0 .5px rgba(255,255,255,.06);
+    }
+    body.is-mob #sres .sr.sr-tile {
+      display:flex; flex-direction:column; align-items:center; gap:3px;
+      padding:0; border-radius:16px; min-width:0;
+    }
+    body.is-mob #sres:not(.kbnav) .sr-tile.sel:not(:active) { background:transparent }
+
+    body.is-mob #sres .sr-tile .srn {
+      font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); font-weight:400;
+      text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      width:100%; padding-inline:2px; box-sizing:border-box;
+    }
+    body.is-mob #sres .sr-tile .srh { display:none }
     /* !important: beats the equally-important #sres .sri img rule below. */
-    body.is-mob #sres .sri img { width:calc(30px * var(--sc,1)) !important; height:calc(30px * var(--sc,1)) !important; }
+    body.is-mob #sres .sri img { width:45px !important; height:45px !important; }
 
     /* ── Spotlight result rows ── */
     .sr-empty {
@@ -1076,7 +1197,7 @@ body.is-mob .spot-field:focus-within { outline:2px solid var(--accent); outline-
   #photo-credit { color:#FFFFFF; }
   #photo-credit[data-tone="dark"] { color:#000000; }
   .srn  { color:var(--label-primary); }
-  .srh, .sr-section { color:rgba(235,235,245,.85); }
+  .srh, .sr-section, .sr-more { color:rgba(235,235,245,.85); }
   .widget, .mob-widget-card { border-color:rgba(255,255,255,.35); }
   /* A translucent card cannot honour a contrast request and stay translucent. */
   .widget[data-card="translucent"], .mob-widget-card[data-card="translucent"] {
@@ -1245,7 +1366,7 @@ html[data-theme="light"] body:not(.is-mob) #sres {
   background:rgba(255,255,255,.92); border-color:rgba(0,0,0,.1); box-shadow:0 20px 60px rgba(0,0,0,.18);
 }
 html[data-theme="light"] .spot-bar { border-bottom-color:rgba(0,0,0,.08) }
-html[data-theme="light"] body.is-mob #spot .spot-field { background:rgba(118,118,128,.14) }
+html[data-theme="light"] body.is-mob #spot .spot-bg { background:rgba(228,228,233,.94) }
 html[data-theme="light"] .spot-icon { color:rgba(60,60,67,.66) }
 html[data-theme="light"] #sin, html[data-theme="light"] .srn { color:var(--label-primary) }
 html[data-theme="light"] #sin::placeholder,
@@ -1324,6 +1445,37 @@ html[data-transparency="reduce"] #dots { --dots-fill:var(--glass-clear); --dots-
 html[data-transparency="reduce"][data-theme="light"] #dots { --dots-ink:rgba(0,0,0,.85); --dots-ring:rgba(0,0,0,.55) }
 html[data-transparency="reduce"] :is(.widget, .mob-widget-card)[data-card="translucent"] {
   background:var(--glass-card-solid); backdrop-filter:none;
+}
+
+
+/* Keep below the page rules above. Equal specificity, so order decides. */
+html[data-theme="light"] body.is-mob #spot { background:none; backdrop-filter:none }
+html[data-theme="light"] body.is-mob #spot::before { background-color:rgba(242,242,247,0) }
+html[data-theme="light"] body.is-mob #spot[open]::before { background-color:rgba(242,242,247,.9); backdrop-filter:blur(20px) saturate(180%) brightness(1) }
+@starting-style {
+  html[data-theme="light"] body.is-mob #spot[open]::before { background-color:rgba(242,242,247,0); backdrop-filter:blur(0px) saturate(100%) brightness(1) }
+}
+html[data-theme="light"] body.is-mob #sres .sr-section { border-bottom-color:rgba(0,0,0,.1); color:rgba(60,60,67,.85) }
+html[data-theme="light"] body.is-mob #sres .sr-more { color:rgba(60,60,67,.85) }
+html[data-theme="light"] body.is-mob #sres .sr-group-tiles .sr-section { border-bottom:0 }
+html[data-theme="light"] body.is-mob #sres .sr-card { background:rgba(255,255,255,.7); box-shadow:inset 0 0 0 .5px rgba(0,0,0,.06) }
+html[data-theme="light"] body.is-mob #sres .srh,
+html[data-theme="light"] #spot-clear { color:rgba(60,60,67,.85) }
+html[data-theme="light"] .sg-rest { color:var(--label-primary); background:color-mix(in srgb, var(--accent) 26%, transparent) }
+html[data-theme="light"] body.is-mob #spot .spot-field:focus-within .spot-bg { box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.45), 0 4px 24px rgba(0,0,0,.12) }
+html[data-theme="light"] .sg-hint { color:rgba(60,60,67,.85) }
+html[data-transparency="reduce"] body.is-mob #spot { background:none }
+html[data-transparency="reduce"] body.is-mob #spot::before { backdrop-filter:none; transition:background-color .28s cubic-bezier(.23,1,.32,1) }
+html[data-transparency="reduce"] body.is-mob #spot[open]::before { background-color:rgba(0,0,0,.82); backdrop-filter:none }
+html[data-transparency="reduce"][data-theme="light"] body.is-mob #spot[open]::before { background-color:rgba(242,242,247,.94) }
+@starting-style {
+  html[data-transparency="reduce"] body.is-mob #spot[open]::before { background-color:rgba(0,0,0,0) }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.is-mob #spot #sres, body.is-mob #spot[open]:not(.typed) #sres { transform:none }
+}
+@media (forced-colors: active) {
+  body.is-mob #spot .spot-field:focus-within { outline:2px solid CanvasText }
 }
 
 /* Registered, so a transition can animate it. */
