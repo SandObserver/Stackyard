@@ -82,6 +82,7 @@ test('an unauthenticated request is tagged as an auth failure', async () => {
   const r = await post('/api/ping', { url: upstreamBase }, { cookie: null });
   assert.equal(r.status, 401);
   assert.equal(r.body.kind, KIND.AUTH);
+  assert.equal(r.body.code, 'auth.session');
   assert.equal(r.body.auth, true, 'the existing auth flag must survive');
   assert.equal(r.body.error, 'Unauthorised', 'the existing message must survive');
 });

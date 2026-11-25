@@ -69,6 +69,7 @@ test('what ctx.fail throws carries the message through to the response', () => {
   const body = errorBody(thrown);
   assert.equal(body.error, 'TrueNAS auth failed, check API key');
   assert.equal(body.kind, KIND.AUTH);
+  assert.equal(body.code, 'auth.upstream');
 });
 
 test('ctx exposes the kinds so a widget can classify without importing', () => {

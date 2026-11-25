@@ -1,6 +1,6 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
 
-import { errorAdvice } from '/js/admin-error.js?v=5abd7438';
+import { errorAdvice } from '/js/admin-error.js?v=08a3f8cb';
 import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=81fd47cf';
 import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=5f7d1e49';
 import { formatList, formatNumber } from '/js/format-number.js?v=263fa390';

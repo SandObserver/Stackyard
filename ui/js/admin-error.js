@@ -18,6 +18,7 @@ export const KIND = Object.freeze({
 export const TONE = Object.freeze({ WARN: 'warn', ERROR: 'error' });
 
 const BY_CODE = Object.freeze({
+  'auth.upstream': 'adminError.keyRejected',
   'blocked.private-address': 'adminError.privateAddress',
   'blocked.link-local': 'adminError.linkLocal',
   'invalid.retype': 'adminError.retype',
@@ -150,7 +151,7 @@ export function badgeErrorAdvice(e) {
   const { kind, code, detail } = read;
   const status = detail && typeof detail.status === 'number' ? detail.status : null;
 
-  if (kind === KIND.AUTH) {
+  if (kind === KIND.AUTH && code !== 'auth.upstream') {
     return { tone: TONE.ERROR, code, key: 'adminError.sessionExpired', openAuth: false, sessionExpired: true };
   }
 
@@ -158,7 +159,8 @@ export function badgeErrorAdvice(e) {
     return { tone: TONE.WARN, code, key: 'adminError.authRequired', openAuth: true, sessionExpired: false };
   }
 
-  const warn = kind === KIND.NETWORK || kind === KIND.TIMEOUT || code === 'blocked.private-address';
+  const warn =
+    kind === KIND.NETWORK || kind === KIND.TIMEOUT || kind === KIND.AUTH || code === 'blocked.private-address';
   return { ...adviceFor(read), code, tone: warn ? TONE.WARN : TONE.ERROR, openAuth: false, sessionExpired: false };
 }
 

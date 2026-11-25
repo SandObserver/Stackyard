@@ -271,6 +271,7 @@
   },
   "adminError": {
     "sessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión para continuar.",
+    "keyRejected": "El servicio rechazó la clave o la contraseña. Revísala en este formulario.",
     "authRequired": "Se requiere autenticación. Activa Autenticación abajo y añade tu clave de API.",
     "unreachable": "No se puede llegar a esta dirección desde Docker. Prueba con el nombre del contenedor.",
     "privateAddress": "La mayoría de los servicios de homelab están en IP privadas. Define ALLOW_PRIVATE_IPS=true y reinicia el contenedor.",

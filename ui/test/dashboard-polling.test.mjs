@@ -104,6 +104,14 @@ test('a tab that is hidden when polling starts polls nothing until it is shown',
   }
 });
 
+test('a config poll that finds the session ended reloads to sign in', async () => {
+  fetch.routes['/api/config'] = { status: 401, body: { kind: 'auth', code: 'auth.session', auth: true } };
+  const reloads = dom.location.reloads;
+  await createPolling({ badges, differs: () => false }).pollConfig();
+  assert.equal(dom.location.reloads, reloads + 1);
+  fetch.routes['/api/config'] = { items: [] };
+});
+
 test('the config poll asks for the loaded revision, at low priority, and a 304 is no change', async () => {
   const seen = [];
   fetch.routes['/api/config'] = (_, opts) => {

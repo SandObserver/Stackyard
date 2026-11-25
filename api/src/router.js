@@ -79,7 +79,8 @@ function route(req, res) {
   }
 
   if (!PUBLIC_PATHS.has(u.pathname)) {
-    if (!isAuthenticated(req)) return json(res, 401, { error: 'Unauthorised', auth: true, kind: 'auth' });
+    if (!isAuthenticated(req))
+      return json(res, 401, { error: 'Unauthorised', auth: true, kind: 'auth', code: 'auth.session' });
     /* Before the handler. A handler that issues its own cookie must replace this
        one. */
     refreshSession(req, res);
