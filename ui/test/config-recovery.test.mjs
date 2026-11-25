@@ -67,10 +67,26 @@ test('the steps name the backup when one was written', () => {
     'configRecovery.stepStartOver',
     'configRecovery.stepCheck',
   ]);
+  const newer = recoverySteps({ reason: 'newer', file: 'apps.json', backup: null }).map(s => s.key);
+  assert.deepEqual(newer, [
+    'configRecovery.stepNewer',
+    'configRecovery.stepExport',
+    'configRecovery.stepStartOver',
+    'configRecovery.stepCheck',
+  ]);
+});
+
+test('a file from a newer version gets its own reason and screen', () => {
+  const body = { code: DAMAGE_CODES.newer, detail: { file: 'apps.json' } };
+  assert.equal(readConfigDamage(body).reason, 'newer');
+  const screen = screenFor(body);
+  assert.equal(screen.why.key, 'configRecovery.whyNewer');
+  assert.equal(screen.setup, false);
+  assert.ok(en.configRecovery.whyNewer.includes('{file}'));
 });
 
 test('every placeholder a step fills is in its English text', () => {
-  for (const reason of ['corrupt', 'unreadable']) {
+  for (const reason of ['corrupt', 'unreadable', 'newer']) {
     for (const backup of ['b', null]) {
       for (const { key, vars } of recoverySteps({ reason, file: 'f', backup })) {
         const text = en.configRecovery[key.split('.')[1]];
