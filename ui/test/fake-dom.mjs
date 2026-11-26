@@ -782,13 +782,13 @@ function put(saved, key, value) {
 
 /** A fetch that answers from a route table and records every call.
     @param {Record<string, any>} routes "METHOD /path" or "/path" to a value, a
-      status-bearing reply ({ status, body }) or a function (url, opts) returning either */
+      status-bearing reply ({ status, body, headers }) or a function (url, opts) returning either */
 export function fakeFetch(routes = {}) {
   const calls = [];
-  const reply = (status, body) => ({
+  const reply = (status, body, headers = {}) => ({
     ok: status >= 200 && status < 300,
     status,
-    headers: new Map(),
+    headers: new Map(Object.entries(headers)),
     json: async () => (body === undefined ? null : structuredClone(body)),
     text: async () => (typeof body === 'string' ? body : JSON.stringify(body ?? null)),
   });
@@ -805,9 +805,9 @@ export function fakeFetch(routes = {}) {
       got &&
       typeof got === 'object' &&
       'status' in got &&
-      Object.keys(got).every(k => k === 'status' || k === 'body')
+      Object.keys(got).every(k => k === 'status' || k === 'body' || k === 'headers')
     )
-      return reply(got.status, got.body);
+      return reply(got.status, got.body, got.headers);
     return reply(200, got);
   };
   fetch.calls = calls;

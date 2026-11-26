@@ -129,3 +129,16 @@ test('the config poll asks for the loaded revision, at low priority, and a 304 i
   assert.equal(seen[1].headers, undefined, 'a config with no revision sent a validator');
   fetch.routes['/api/config'] = { items: [] };
 });
+
+test('a tab still open after an upgrade reloads once the API runs a new version', async () => {
+  const versions = ['1.0.0', '1.0.0', '1.1.0'];
+  fetch.routes['/api/config'] = () => ({ status: 304, headers: { 'X-Stackyard-Version': versions.shift() } });
+  const reloads = dom.location.reloads;
+  const p = createPolling({ badges, differs: () => false, rev: () => 1 });
+  await p.pollConfig();
+  await p.pollConfig();
+  assert.equal(dom.location.reloads, reloads, 'the same version reloaded');
+  await p.pollConfig();
+  assert.equal(dom.location.reloads, reloads + 1);
+  fetch.routes['/api/config'] = { items: [] };
+});

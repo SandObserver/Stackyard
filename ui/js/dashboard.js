@@ -1,4 +1,4 @@
-import { LANG_STORE, boot } from '/js/dashboard-boot.js?v=3ba1674f';
+import { LANG_STORE, boot } from '/js/dashboard-boot.js?v=5453af67';
 import { showBuildFailed, liftVeil } from '/js/dashboard-screens.js?v=79b0c104';
 import { createDashboardState } from '/js/dashboard-state.js?v=51013727';
 import { startGlass } from '/js/glass.js?v=6c1436a8';

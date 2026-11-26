@@ -306,6 +306,9 @@
     "socketMissing": "Activa Comprobaciones de estado en General e introduce la URL del socket de Docker.",
     "noConnection": "Nada respondió en esa dirección. Comprueba que el proxy de socket esté en marcha.",
     "offline": "Stackyard no responde. Comprueba que el contenedor esté en marcha y vuelve a intentarlo.",
+    "deviceOffline": "Este dispositivo no tiene conexión. Revisa su conexión de red y vuelve a intentarlo.",
+    "busy": "Stackyard está comprobando otros inicios de sesión. Espera un momento y vuelve a intentarlo.",
+    "missingId": "Un elemento no tiene id ni tipo. Corrige el archivo y vuelve a importarlo.",
     "duplicateId": "Dos elementos comparten el id {id}. Cada elemento necesita su propio id.",
     "duplicateRowId": "Dos filas de {id} comparten el id. Elimina una y guarda de nuevo.",
     "missingChildren": "La carpeta {id} incluye elementos que no están en el archivo.",
@@ -650,6 +653,7 @@
     "subtitle": "Inicia sesión para continuar",
     "password": "Contraseña",
     "signIn": "Iniciar sesión",
+    "forgot": "¿Olvidaste tu contraseña?",
     "incorrect": "Contraseña incorrecta.",
     "empty": "Introduce tu contraseña."
   },

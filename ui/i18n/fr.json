@@ -306,6 +306,9 @@
     "socketMissing": "Activez Vérifications de l’état dans Général et saisissez l’URL du socket Docker.",
     "noConnection": "Rien n’a répondu à cette adresse. Vérifiez que le proxy de socket est démarré.",
     "offline": "Stackyard ne répond pas. Vérifiez que le conteneur est démarré, puis réessayez.",
+    "deviceOffline": "Cet appareil est hors ligne. Vérifiez sa connexion réseau, puis réessayez.",
+    "busy": "Stackyard vérifie d’autres connexions. Patientez un instant, puis réessayez.",
+    "missingId": "Un élément n’a pas d’identifiant ou de type. Corrigez le fichier, puis importez-le de nouveau.",
     "duplicateId": "Deux éléments partagent l’identifiant {id}. Chaque élément doit avoir son propre identifiant.",
     "duplicateRowId": "Deux lignes de {id} partagent le même identifiant. Supprimez-en une, puis enregistrez à nouveau.",
     "missingChildren": "Le dossier {id} contient des éléments absents du fichier.",
@@ -650,6 +653,7 @@
     "subtitle": "Connectez-vous pour continuer",
     "password": "Mot de passe",
     "signIn": "Se connecter",
+    "forgot": "Mot de passe oublié ?",
     "incorrect": "Mot de passe incorrect.",
     "empty": "Saisissez votre mot de passe."
   },

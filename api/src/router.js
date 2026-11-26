@@ -39,10 +39,13 @@ const _requestIds = new WeakMap();
 /** @param {import('http').ServerResponse} res @returns {string} */
 const requestIdOf = res => _requestIds.get(res) || '';
 
+const VERSION = process.env.APP_VERSION || require('../package.json').version;
+
 function dispatch(req, res) {
   const id = randomBytes(4).toString('hex');
   _requestIds.set(res, id);
   res.setHeader('X-Request-Id', id);
+  res.setHeader('X-Stackyard-Version', VERSION);
   Promise.resolve()
     .then(() => route(req, res))
     .catch(err => onError(req, res, err));

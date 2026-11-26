@@ -107,8 +107,13 @@ on('POST', '/api/config', async (req, res) => {
   try {
     const data = JSON.parse(await readBody(req));
     if (tooDeep(data))
-      return json(res, 400, { error: `config nests deeper than ${MAX_DEPTH} levels`, kind: KIND.INVALID });
-    if (!Array.isArray(data?.items)) return json(res, 400, { error: 'items must be an array', kind: KIND.INVALID });
+      return json(res, 400, {
+        error: `config nests deeper than ${MAX_DEPTH} levels`,
+        kind: KIND.INVALID,
+        code: 'invalid.not-a-config',
+      });
+    if (!Array.isArray(data?.items))
+      return json(res, 400, { error: 'items must be an array', kind: KIND.INVALID, code: 'invalid.not-a-config' });
     if (Number(data._schemaVersion) > SCHEMA_VERSION)
       return json(res, 400, {
         error: 'this config was made by a newer release',
@@ -117,7 +122,7 @@ on('POST', '/api/config', async (req, res) => {
       });
     /* An array or a primitive here drops the stored password on write. */
     if (data.settings != null && (typeof data.settings !== 'object' || Array.isArray(data.settings)))
-      return json(res, 400, { error: 'settings must be an object', kind: KIND.INVALID });
+      return json(res, 400, { error: 'settings must be an object', kind: KIND.INVALID, code: 'invalid.not-a-config' });
     const size = configSize(data);
     /* Keep the growth check. Refusing a stored size blocks every save, deletes included. */
     if (size > ITEMS_MAX && size > configSize(loadConfig()))
@@ -128,7 +133,12 @@ on('POST', '/api/config', async (req, res) => {
         detail: { max: ITEMS_MAX },
       });
     const bad = data.items.find(i => !i || typeof i.id !== 'string' || !i.id || typeof i.type !== 'string' || !i.type);
-    if (bad) return json(res, 400, { error: 'every item needs a non-empty id and type', kind: KIND.INVALID });
+    if (bad)
+      return json(res, 400, {
+        error: 'every item needs a non-empty id and type',
+        kind: KIND.INVALID,
+        code: 'invalid.missing-id',
+      });
     const storedConfig = loadConfig();
     const storedById = new Map((storedConfig.items || []).map(i => [i.id, i]));
     for (const item of data.items) {
@@ -221,6 +231,8 @@ on('POST', '/api/config', async (req, res) => {
         return json(res, 400, {
           error: `${item.id}: ${badRow.field}[${badRow.index}] is not a { key, value, secret } entry`,
           kind: KIND.INVALID,
+          code: 'invalid.bad-item',
+          detail: { id: item.id },
         });
       }
     }
@@ -239,6 +251,7 @@ on('POST', '/api/config', async (req, res) => {
       return json(res, 409, {
         error: 'This config was changed somewhere else. Reload the page and try again.',
         kind: KIND.INVALID,
+        code: 'invalid.stale',
       });
     const redirected = rewriteChanged(data.settings?.server, existing.settings?.server);
     if (existing.settings?.background?.apiKey && !data.settings?.background?.apiKey && !redirected) {
@@ -267,7 +280,13 @@ on('POST', '/api/config', async (req, res) => {
       if (Array.isArray(kept)) server.allowedHosts = kept;
     } else {
       const list = normalizeHostList(server.allowedHosts);
-      if (!list) return json(res, 400, { error: 'allowedHosts must be a list of host names', kind: KIND.INVALID });
+      if (!list)
+        return json(res, 400, {
+          error: 'allowedHosts must be a list of host names',
+          kind: KIND.INVALID,
+          code: 'invalid.bad-setting',
+          detail: { id: 'allowedHosts' },
+        });
       server.allowedHosts = list;
     }
     const proxmoxDropped = preserveProxmox(server, existing.settings?.server, redirected);

@@ -367,3 +367,28 @@ test('a refused origin names the proxy fix on every surface', () => {
   assert.equal(loginErrorAdvice(e).key, 'adminError.originMismatch');
   assert.equal(setupErrorKey(e), 'adminError.originMismatch');
 });
+
+test('a busy password check asks for a moment instead of blaming the container', () => {
+  const e = { kind: KIND.BLOCKED, code: 'blocked.busy' };
+  assert.equal(loginErrorAdvice(e).key, 'adminError.busy');
+  assert.equal(setupErrorKey(e), 'adminError.busy');
+});
+
+test('a device that knows it is offline says so', () => {
+  const had = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  Object.defineProperty(globalThis, 'navigator', { value: { onLine: false }, configurable: true });
+  try {
+    assert.equal(errorAdvice(new TypeError('Failed to fetch')).key, 'adminError.deviceOffline');
+    assert.equal(loginErrorAdvice(new TypeError('Failed to fetch')).key, 'adminError.deviceOffline');
+  } finally {
+    if (had) Object.defineProperty(globalThis, 'navigator', had);
+    else delete globalThis.navigator;
+  }
+  assert.equal(errorAdvice(new TypeError('Failed to fetch')).key, 'adminError.offline');
+});
+
+test('a refused save names its reason', () => {
+  assert.equal(errorAdvice({ kind: KIND.INVALID, code: 'invalid.stale' }).key, 'toast.dashboardChangedElsewhere');
+  assert.equal(errorAdvice({ kind: KIND.INVALID, code: 'invalid.not-a-config' }).key, 'toast.importNotStackyard');
+  assert.equal(errorAdvice({ kind: KIND.INVALID, code: 'invalid.missing-id' }).key, 'adminError.missingId');
+});

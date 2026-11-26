@@ -300,6 +300,9 @@
     "socketMissing": "Schalte unter „Allgemein“ die Zustandsprüfungen ein und gib die Docker-Socket-URL ein.",
     "noConnection": "Unter dieser Adresse hat nichts geantwortet. Prüfe, ob der Socket-Proxy läuft.",
     "offline": "Stackyard antwortet nicht. Prüfe, ob der Container läuft, und versuche es dann erneut.",
+    "deviceOffline": "Dieses Gerät ist offline. Prüfe seine Netzwerkverbindung und versuche es dann erneut.",
+    "busy": "Stackyard prüft gerade andere Anmeldungen. Warte einen Moment und versuche es dann erneut.",
+    "missingId": "Ein Eintrag hat keine ID oder keinen Typ. Korrigiere die Datei und importiere sie dann erneut.",
     "duplicateId": "Zwei Einträge haben dieselbe ID {id}. Jeder Eintrag braucht eine eigene ID.",
     "duplicateRowId": "Zwei Zeilen in {id} haben dieselbe ID. Entferne eine davon und speichere erneut.",
     "missingChildren": "Der Ordner {id} verweist auf Einträge, die nicht in der Datei sind.",
@@ -633,6 +636,7 @@
     "subtitle": "Melde dich an, um fortzufahren",
     "password": "Passwort",
     "signIn": "Anmelden",
+    "forgot": "Passwort vergessen?",
     "incorrect": "Falsches Passwort.",
     "empty": "Gib dein Passwort ein."
   },

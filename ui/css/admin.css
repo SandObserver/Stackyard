@@ -871,6 +871,9 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
 @media (hover:hover) and (pointer:fine){.login-btn:hover{background:var(--ac2)}}
 .login-btn:active:not(:disabled){opacity:var(--press-dim)}
 .login-btn:disabled{background:var(--btn-fill);color:var(--dm);cursor:default}
+.login-forgot{align-self:center;min-height:44px;display:inline-flex;align-items:center;padding-inline:8px;color:var(--ac);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);text-decoration:none;border-radius:8px}
+@media (hover:hover) and (pointer:fine){.login-forgot:hover{text-decoration:underline}}
+.login-forgot:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .login-err{color:var(--rd);font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote);text-align:center;display:none}
 
 /* ── Form inside push edit view (#ev-body) — restyle to match PSD ── */

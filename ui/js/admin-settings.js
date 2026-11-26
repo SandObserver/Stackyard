@@ -1,5 +1,5 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=0eda17fe';
-import { passwordRefusalKey, socketProbeAdvice } from '/js/admin-error.js?v=0709ebe3';
+import { renderColorControl } from '/js/admin-color-control.js?v=56d76fea';
+import { passwordRefusalKey, socketProbeAdvice } from '/js/admin-error.js?v=7cdb5c55';
 import {
   BLOCK,
   clearsStoredPassword,
@@ -36,7 +36,7 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=0421657c';
+} from '/js/admin-shared.js?v=00e90a7b';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { BACKDROP } from '/js/background.js?v=51e46417';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
@@ -633,7 +633,8 @@ async function writeWallpaper(sent, form) {
 /** @param {unknown} e @returns {string} the message for a section changed elsewhere, or '' */
 function staleText(e) {
   const err = /** @type {any} */ (e);
-  return err?.status === 409 && !err?.code ? t('toast.settingsChangedElsewhere') : '';
+  const stale = err?.code === 'invalid.stale' || (err?.status === 409 && !err?.code);
+  return stale ? t('toast.settingsChangedElsewhere') : '';
 }
 const RETRY_IN_DIALOG = new Set(['invalid.current-password', 'blocked.rate-limit']);
 
