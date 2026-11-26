@@ -6,15 +6,16 @@ import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
 import {
   addDescribedBy,
   apiPost,
+  appendReference,
   fadeIn,
   PE_SVG,
   REQ_MARK,
   REQ_MARKS_CHANGED,
   reveal,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=00e90a7b';
+} from '/js/admin-shared.js?v=04f5a4db';
 import { createListbox } from '/js/listbox.js?v=c9cee787';
-import { renderColorControl } from '/js/admin-color-control.js?v=56d76fea';
+import { renderColorControl } from '/js/admin-color-control.js?v=e008b68e';
 import {
   seedCarried,
   applyOptionSet,
@@ -23,7 +24,7 @@ import {
   groupBounds,
   isPlainField,
 } from '/js/admin-logic.js?v=81fd47cf';
-import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=7cdb5c55';
+import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=82e9f883';
 import { qi } from '/js/utils.js?v=457d9918';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { SAVED_ROW } from '/js/saved-row.js?v=44039df6';
@@ -195,6 +196,7 @@ function _fetchRow(field, ctx, apply, { hint = true } = {}) {
       const advice = optionsErrorAdvice(e);
       status.textContent = t(advice.key, advice.vars);
       status.className = 'row-status ' + (advice.tone === TONE.WARN ? 'warn' : 'err');
+      appendReference(status, e);
     } finally {
       btn.disabled = false;
     }

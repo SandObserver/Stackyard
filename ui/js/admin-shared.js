@@ -1,8 +1,8 @@
 /* Stateless helpers shared by the admin modules. Mutable state stays out. */
 
-import { errorAdvice } from '/js/admin-error.js?v=7cdb5c55';
+import { errorAdvice } from '/js/admin-error.js?v=82e9f883';
 import { recoversSession, toastHoldMs } from '/js/admin-logic.js?v=81fd47cf';
-import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=c096c04c';
+import { blockingScreenFor, recoveryShown, showBlockingScreen } from '/js/config-recovery.js?v=990582b9';
 import { formatList, formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
 import { t } from '/js/i18n.js?v=82ba9da2';
@@ -534,7 +534,7 @@ export function clearFieldErrors(root) {
    the kind and the screen says something true but never the specific sentence. */
 /** An error carrying the API's structured fields.
     @typedef {Error & { status?: number, kind?: string, code?: string,
-                        detail?: Record<string, unknown> }} ApiError */
+                        detail?: Record<string, unknown>, requestId?: string }} ApiError */
 
 /** @param {number} status @param {any} body @returns {ApiError} */
 function tagged(status, body) {
@@ -545,7 +545,33 @@ function tagged(status, body) {
   if (body && typeof body.kind === 'string') e.kind = body.kind;
   if (body && typeof body.code === 'string') e.code = body.code;
   if (body && body.detail && typeof body.detail === 'object') e.detail = body.detail;
+  if (body && typeof body.requestId === 'string') e.requestId = body.requestId;
   return e;
+}
+
+/** The code and request id a failure carries, for a support request, or ''.
+    @param {unknown} e @returns {string} */
+export function errorReference(e) {
+  const x = /** @type {{ code?: unknown, requestId?: unknown }} */ (e && typeof e === 'object' ? e : {});
+  const parts = [];
+  if (typeof x.code === 'string' && /^[a-z]+(\.[a-z-]+)?$/.test(x.code)) parts.push(x.code);
+  if (typeof x.requestId === 'string' && /^[0-9a-f]{8}$/.test(x.requestId)) parts.push(x.requestId);
+  return parts.join(' · ');
+}
+
+/** Adds a collapsed Details line with the failure's code and request id.
+    @param {HTMLElement | null} st @param {unknown} e */
+export function appendReference(st, e) {
+  const ref = errorReference(e);
+  if (!st || !ref) return;
+  const more = document.createElement('details');
+  more.className = 'st-ref';
+  const summary = document.createElement('summary');
+  summary.textContent = t('common.details');
+  const code = document.createElement('code');
+  code.textContent = ref;
+  more.append(summary, code);
+  st.append(more);
 }
 
 /** An error whose message is already a sentence in the reader's language. */

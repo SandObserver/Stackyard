@@ -1,4 +1,4 @@
-  import { widgetId, getConfig, loadStrings, wt, errorState, raw, setHtml } from '/js/widget-toolbox.js?v=039ea657';
+  import { widgetId, getConfig, loadStrings, wt, errorState, raw, setHtml } from '/js/widget-toolbox.js?v=6c1a1c45';
   await loadStrings();
   import { buildModel, fitName, textDirection } from '/js/dashboard-switch-model.js?v=a2176749';
 

@@ -1,5 +1,5 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=56d76fea';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=7cdb5c55';
+import { renderColorControl } from '/js/admin-color-control.js?v=e008b68e';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=82e9f883';
 import {
   clearsStoredSecret,
   failureIsMissingApiPath,
@@ -14,6 +14,7 @@ import {
   addDescribedBy,
   apiGet,
   apiPost,
+  appendReference,
   clearFieldError,
   errorAction,
   errorText,
@@ -30,10 +31,10 @@ import {
   syncRequiredLegend,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=00e90a7b';
-import { activityAuth, activityHasAuth, POLL_MAX, POLL_MIN } from '/js/admin-save-logic.js?v=2a82f10d';
+} from '/js/admin-shared.js?v=04f5a4db';
+import { activityAuth, activityHasAuth, POLL_MAX, POLL_MIN } from '/js/admin-save-logic.js?v=d26de8dd';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=7112fd10';
+import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=889eeef7';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
@@ -1016,9 +1017,13 @@ async function testPing() {
   try {
     const r = await apiPost('/api/ping', { url, skipTls });
     if (r.ok) setStatus(st, 'ok', t('app.reachable', { status: r.status }));
-    else setStatus(st, 'err', r.status ? t('app.httpError', { status: r.status }) : errorText(r));
+    else {
+      setStatus(st, 'err', r.status ? t('app.httpError', { status: r.status }) : errorText(r));
+      appendReference(st, r);
+    }
   } catch (e) {
     setStatus(st, 'err', errorText(e));
+    appendReference(st, e);
   }
 }
 
@@ -1170,6 +1175,7 @@ async function fetchBadge() {
     const missingPath = failureIsMissingApiPath(url, advice);
     const tone = missingPath || advice.tone === TONE.WARN ? 'warn' : 'err';
     setStatus(st, tone, missingPath ? t('app.needsApiPathError') : t(advice.key, advice.vars));
+    appendReference(st, e);
     if (advice.openAuth && !missingPath) {
       const authCb = inpById('auth-en');
       const authSub = el('auth-sub');

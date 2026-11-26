@@ -25,6 +25,7 @@
     "addLabel": "添加",
     "back": "返回",
     "cancel": "取消",
+    "details": "详细信息",
     "delete": "删除",
     "language": "语言",
     "showPassword": "显示密码",
@@ -260,6 +261,8 @@
   "adminError": {
     "sessionExpired": "会话已过期，请重新登录。",
     "keyRejected": "服务拒绝了该密钥或密码，请在此表单中检查。",
+    "permissionMissing": "密钥有效，但缺少此小组件需要的权限。请检查它的角色或权限范围。",
+    "rateLimited": "服务正在限制请求。请等待几分钟后再试。",
     "authRequired": "需要身份验证。请开启下方的“身份验证”开关并填写 API 密钥。",
     "unreachable": "无法从 Docker 访问该地址。请改用容器名称。",
     "privateAddress": "大多数家庭实验室服务使用私有 IP。请设置 ALLOW_PRIVATE_IPS=true 并重启容器。",

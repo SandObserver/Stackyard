@@ -1,4 +1,4 @@
-import { poll, fetchData, getConfig, rollText, linkTo, raw, setHtml, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=039ea657';
+import { poll, fetchData, getConfig, rollText, linkTo, raw, setHtml, loadStrings, wt, formatNumber, errorState, readableInk, placeholder } from '/js/widget-toolbox.js?v=6c1a1c45';
 await loadStrings();
 /* These two are in the markup, so the widget still reads correctly in English
    if the catalog fetch fails. */

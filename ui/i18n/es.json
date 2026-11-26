@@ -25,6 +25,7 @@
     "addLabel": "Añadir",
     "back": "Atrás",
     "cancel": "Cancelar",
+    "details": "Detalles",
     "delete": "Eliminar",
     "language": "Idioma",
     "showPassword": "Mostrar contraseña",
@@ -272,6 +273,8 @@
   "adminError": {
     "sessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión para continuar.",
     "keyRejected": "El servicio rechazó la clave o la contraseña. Revísala en este formulario.",
+    "permissionMissing": "La clave funciona, pero le falta un permiso que este widget necesita. Revisa su rol o sus alcances.",
+    "rateLimited": "El servicio está limitando las solicitudes. Espera unos minutos y vuelve a intentarlo.",
     "authRequired": "Se requiere autenticación. Activa Autenticación abajo y añade tu clave de API.",
     "unreachable": "No se puede llegar a esta dirección desde Docker. Prueba con el nombre del contenedor.",
     "privateAddress": "La mayoría de los servicios de homelab están en IP privadas. Define ALLOW_PRIVATE_IPS=true y reinicia el contenedor.",

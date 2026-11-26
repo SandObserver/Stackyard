@@ -76,7 +76,10 @@ test('a reply cut off mid-body fails at once as a network error', { timeout: 500
   const err = await fetchUnchecked(`http://127.0.0.1:${port}/`, { timeout: 5000 }).catch(e => e);
   assert.ok(Date.now() - t0 < 2000, `took ${Date.now() - t0} ms`);
   assert.equal(err.code, 'ECONNRESET');
-  assert.deepEqual({ kind: errorBody(err).kind, code: errorBody(err).code }, { kind: 'network', code: 'network.reset' });
+  assert.deepEqual(
+    { kind: errorBody(err).kind, code: errorBody(err).code },
+    { kind: 'network', code: 'network.reset' },
+  );
 });
 
 test('a refused connection is not labelled as a certificate problem', { timeout: 5000 }, async () => {

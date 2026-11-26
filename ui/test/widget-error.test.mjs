@@ -212,8 +212,8 @@ test('every failure glyph is an icon from the shared set', async () => {
 test('a certificate, rate limit or permission failure gets its own line', async () => {
   const { errorState } = await import('../js/widget-error.js');
   const dom = installDom({ markup: '<div id="root"><p>data</p><div id="cap"></div></div>' });
-  const root = dom.document.getElementById('root');
-  const state = errorState({ root, caption: dom.document.getElementById('cap') });
+  const host = dom.document.getElementById('root');
+  const state = errorState({ root: host, caption: dom.document.getElementById('cap') });
   assert.equal(state.fail({ kind: 'network', code: 'network.self-signed' }), 'Certificate problem');
   assert.equal(state.fail({ kind: 'upstream', code: 'upstream.rate-limit' }), 'Too many requests');
   assert.equal(state.fail({ kind: 'auth', code: 'auth.permission' }), 'Missing permission');

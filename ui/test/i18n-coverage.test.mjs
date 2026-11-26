@@ -48,6 +48,8 @@ const SAME_ON_PURPOSE = {
     'status.containerState',
     'widgetCfg.name',
     'general.importExport',
+    /* German software says Details for this disclosure. */
+    'common.details',
     /* German software says Backup, as the Backup widget does. */
     'general.backup',
     /* Colour names German writes the same way. */

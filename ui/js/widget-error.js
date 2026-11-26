@@ -56,11 +56,11 @@ export function errorKind(err) {
 /** @param {string} kind @param {Document} doc @returns {Element} */
 export function kindGlyph(kind, doc) {
   const [g] = COPY[kind] || COPY[FALLBACK];
-  return glyph(g, doc);
+  return glyphFor(g, doc);
 }
 
 /** @param {string} g @param {Document} doc @returns {Element} */
-function glyph(g, doc) {
+function glyphFor(g, doc) {
   const id = `err-${g}`;
   const { defs, sym } = symbol(id, ICONS[id]);
   const src = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><defs>${defs}</defs>${sym.replace(/<\/?symbol[^>]*>/g, '')}</svg>`;
@@ -167,7 +167,7 @@ export function errorState(opts = {}) {
       const line = t(key, text);
       const dim = info.inert !== false;
       for (const el of contentOf()) el.classList.toggle('wt-inert', dim);
-      paint(glyph(g, doc), line, info.since || '');
+      paint(glyphFor(g, doc), line, info.since || '');
       return line;
     },
     /** @param {string} text */

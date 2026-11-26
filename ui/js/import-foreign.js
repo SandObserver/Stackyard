@@ -3,7 +3,7 @@
    only: a widget in the source becomes a plain app tile, never a Stackyard
    widget. Keep this module free of the DOM and of the network. */
 
-import { buildAppItem, newItemId } from '/js/admin-save-logic.js?v=2a82f10d';
+import { buildAppItem, newItemId } from '/js/admin-save-logic.js?v=d26de8dd';
 import { isSafeLinkUrl } from '/js/link-url.js?v=0bffa1dd';
 import { clampName } from '/js/limits.js?v=bc10e843';
 

@@ -1,5 +1,5 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=56d76fea';
-import { passwordRefusalKey, socketProbeAdvice } from '/js/admin-error.js?v=7cdb5c55';
+import { renderColorControl } from '/js/admin-color-control.js?v=e008b68e';
+import { passwordRefusalKey, socketProbeAdvice } from '/js/admin-error.js?v=82e9f883';
 import {
   BLOCK,
   clearsStoredPassword,
@@ -17,7 +17,7 @@ import {
   generalServerFields,
   labelsWith,
   planFieldSave,
-} from '/js/admin-save-logic.js?v=2a82f10d';
+} from '/js/admin-save-logic.js?v=d26de8dd';
 import {
   announce,
   apiGet,
@@ -36,7 +36,7 @@ import {
   swapContent,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=00e90a7b';
+} from '/js/admin-shared.js?v=04f5a4db';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { BACKDROP } from '/js/background.js?v=51e46417';
 import { formatNumber } from '/js/format-number.js?v=263fa390';

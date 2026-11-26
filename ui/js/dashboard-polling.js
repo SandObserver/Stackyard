@@ -1,11 +1,11 @@
 import { restoreAction } from '/js/dashboard-logic.js?v=b4828b62';
-import { overlayOpen } from '/js/dashboard-pager.js?v=d5f72484';
+import { overlayOpen } from '/js/dashboard-pager.js?v=3b37950f';
 import { liftVeil, showApiDown } from '/js/dashboard-screens.js?v=79b0c104';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { el } from '/js/utils.js?v=457d9918';
 
 /** @param {{
-      badges: import('/js/dashboard-badges.js?v=a6f982e9').Badges,
+      badges: import('/js/dashboard-badges.js?v=910ee473').Badges,
       differs: (c: any) => boolean,
       rev?: () => unknown,
     }} deps */

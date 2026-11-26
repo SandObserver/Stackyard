@@ -25,6 +25,7 @@
     "addLabel": "Hinzufügen",
     "back": "Zurück",
     "cancel": "Abbrechen",
+    "details": "Details",
     "delete": "Löschen",
     "language": "Sprache",
     "showPassword": "Passwort anzeigen",
@@ -266,6 +267,8 @@
   "adminError": {
     "sessionExpired": "Deine Sitzung ist abgelaufen. Melde dich erneut an, um fortzufahren.",
     "keyRejected": "Der Dienst hat den Schlüssel oder das Passwort abgelehnt. Prüfe die Angabe in diesem Formular.",
+    "permissionMissing": "Der Schlüssel funktioniert, aber ihm fehlt eine Berechtigung, die dieses Widget braucht. Prüfe seine Rolle oder Bereiche.",
+    "rateLimited": "Der Dienst begrenzt die Anfragen. Warte ein paar Minuten und versuche es dann erneut.",
     "authRequired": "Authentifizierung erforderlich. Schalte unten „Authentifizierung“ ein und trage deinen API-Schlüssel ein.",
     "unreachable": "Diese Adresse ist aus Docker nicht erreichbar. Versuch es mit dem Containernamen.",
     "privateAddress": "Die meisten Homelab-Dienste laufen unter privaten IP-Adressen. Setze ALLOW_PRIVATE_IPS=true und starte den Container neu.",

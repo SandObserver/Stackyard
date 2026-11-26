@@ -25,6 +25,7 @@
     "addLabel": "Add",
     "back": "Back",
     "cancel": "Cancel",
+    "details": "Details",
     "delete": "Delete",
     "language": "Language",
     "showPassword": "Show password",
@@ -266,6 +267,8 @@
   "adminError": {
     "sessionExpired": "Your session has expired. Sign in again to continue.",
     "keyRejected": "The service rejected the key or password. Check it in this form.",
+    "permissionMissing": "The key works, but it lacks a permission this widget needs. Check its role or scopes.",
+    "rateLimited": "The service is limiting requests. Wait a few minutes, then try again.",
     "authRequired": "Authentication required. Enable the Authentication toggle below and add your API key.",
     "unreachable": "Can't reach this address from Docker. Try using the container name.",
     "privateAddress": "Most homelab services live on private IPs. Set ALLOW_PRIVATE_IPS=true and restart the container.",

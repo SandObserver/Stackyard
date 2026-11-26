@@ -641,7 +641,8 @@ async function proxmoxGet(ctx, path) {
     skipTls: config.proxmoxSkipTls === true,
   });
   if (r.status === 401) ctx.fail('Proxmox refused the token', { kind: ctx.KIND.AUTH });
-  if (r.status === 403) ctx.fail('The token needs the PVEAuditor role', { kind: ctx.KIND.AUTH, code: 'auth.permission' });
+  if (r.status === 403)
+    ctx.fail('The token needs the PVEAuditor role', { kind: ctx.KIND.AUTH, code: 'auth.permission' });
   if (r.status >= 400) ctx.fail('Proxmox HTTP ' + r.status);
   if (!r.data || typeof r.data !== 'object' || !('data' in r.data)) ctx.fail('That address is not Proxmox');
   return r.data.data;
