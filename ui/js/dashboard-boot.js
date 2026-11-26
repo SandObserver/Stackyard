@@ -1,14 +1,14 @@
 import { firstViewWait } from '/js/background.js?v=51e46417';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=ab902aaa';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=c096c04c';
 import { createBadges } from '/js/dashboard-badges.js?v=a6f982e9';
 import { createDesktopGrid } from '/js/dashboard-grid.js?v=0425794e';
 import { wirePageInput, wireTileSettle } from '/js/dashboard-input.js?v=db5fe5a7';
 import { createLayout } from '/js/dashboard-layout.js?v=34f27397';
 import { configChanged, withKnownSizes } from '/js/dashboard-logic.js?v=b4828b62';
 import { createPager } from '/js/dashboard-pager.js?v=d5f72484';
-import { createPolling } from '/js/dashboard-polling.js?v=7e016d7a';
+import { createPolling } from '/js/dashboard-polling.js?v=cb1008fa';
 import { liftVeil, showApiDown } from '/js/dashboard-screens.js?v=79b0c104';
-import { showSetupPrompt } from '/js/dashboard-setup.js?v=89025610';
+import { showSetupPrompt } from '/js/dashboard-setup.js?v=308efba0';
 import { wireThemeChanges } from '/js/dashboard-theme.js?v=a6ef3613';
 import { createWallpaper } from '/js/dashboard-wallpaper.js?v=9158baca';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
