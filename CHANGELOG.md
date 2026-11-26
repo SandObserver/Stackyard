@@ -56,6 +56,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Warn at start about environment values Stackyard cannot use.
 
+- Import the usable files when one of several import files cannot be read.
+
+- Keep an icon or wallpaper upload going after the session expires.
+
+- Refuse a file over the upload limit before sending it.
+
 ## [1.24.0] - 2026-11-22
 
 ### Added
