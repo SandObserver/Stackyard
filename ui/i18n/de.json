@@ -622,6 +622,9 @@
     "skipUnreadable": "dieser Eintrag hat nicht die Form, die das Dateiformat erlaubt",
     "skipUnparsable": "Zeile {detail} konnte nicht gelesen werden",
     "skipNoNameOrGroup": "der Container hat kein Label homepage.name oder homepage.group",
+    "skipFileYaml": "Zeile {detail} enthält YAML, das der Import nicht lesen kann",
+    "skipFileTooLarge": "zu viele Einträge für einen Import",
+    "skipFileUnknown": "keine gethomepage- oder Dashy-Konfiguration",
     "monitors": "· fragt {url} ab"
   },
   "login": {

@@ -8,7 +8,7 @@ register('./js-root-hooks.mjs', import.meta.url);
 /* toast writes into an element; nothing here asserts on it. */
 globalThis.document = { getElementById: () => null, querySelectorAll: () => [], addEventListener() {} };
 
-const { apiGet, apiPost, setReauthHandler } = await import('../js/admin-shared.js');
+const { apiGet, apiPost, apiUpload, setReauthHandler } = await import('../js/admin-shared.js');
 
 /* A session that expired under someone who was still working. The first request
    answers 401, and whatever the queue does next decides whether their work
@@ -186,4 +186,22 @@ test('a widget option Fetch refused for good keeps the structured error', async 
   assert.equal(e.kind, 'network');
   assert.equal(e.code, 'network.refused');
   assert.deepEqual(e.detail, { port: 80 });
+});
+
+test('an upload signs back in and sends the same file again', async () => {
+  const calls = fakeFetch([401, 200]);
+  setReauthHandler(async () => true);
+  const form = /** @type {any} */ ({});
+  const out = await apiUpload('/api/icons/upload', form, /** @type {any} */ ({ size: 10 }), 100);
+  assert.equal(calls.length, 2);
+  assert.deepEqual(out, { ok: true });
+});
+
+test('a file over the limit is refused before it is sent', async () => {
+  const calls = fakeFetch([200]);
+  await assert.rejects(
+    apiUpload('/api/icons/upload', /** @type {any} */ ({}), /** @type {any} */ ({ size: 101 }), 100),
+    e => e.code === 'invalid.too-large',
+  );
+  assert.equal(calls.length, 0);
 });

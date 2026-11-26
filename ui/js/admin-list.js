@@ -11,7 +11,7 @@
    The filter and the collapsed folders are in admin-state.js, because the page
    reads and writes them too. */
 
-import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=a9aede9a';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=a6c18449';
 import { listGroup } from '/js/admin-drag-logic.js?v=7033af1f';
 import {
   filterActive,
@@ -23,14 +23,14 @@ import {
   topLevelRows,
 } from '/js/admin-logic.js?v=81fd47cf';
 import { snapshotItems } from '/js/admin-save-logic.js?v=2a82f10d';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=39ca44cc';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=2c7a9e54';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { sizeLabel } from '/js/admin-widget-form.js?v=fbf07bd0';
+import { sizeLabel } from '/js/admin-widget-form.js?v=e266d9c2';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
 import { t } from '/js/i18n.js?v=82ba9da2';
 import { iconSvg } from '/js/icon-set.js?v=beda3062';
-import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=ff61256e';
+import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=bc10e843';
 import { EASE_IOS } from '/js/motion-curve.js?v=7fea8800';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';

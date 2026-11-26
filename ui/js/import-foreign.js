@@ -5,7 +5,7 @@
 
 import { buildAppItem, newItemId } from '/js/admin-save-logic.js?v=2a82f10d';
 import { isSafeLinkUrl } from '/js/link-url.js?v=0bffa1dd';
-import { clampName } from '/js/limits.js?v=ff61256e';
+import { clampName } from '/js/limits.js?v=bc10e843';
 
 export const SKIP = Object.freeze({
   NO_LABEL: 'no-label',
@@ -16,6 +16,9 @@ export const SKIP = Object.freeze({
   UNREADABLE: 'unreadable',
   UNPARSABLE: 'unparsable',
   NO_NAME_OR_GROUP: 'no-name-or-group',
+  FILE_YAML: 'file-yaml',
+  FILE_TOO_LARGE: 'file-too-large',
+  FILE_UNKNOWN: 'file-unknown',
 });
 
 /* An alias is the same object as its anchor, so a short file can list millions

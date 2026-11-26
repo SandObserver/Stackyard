@@ -622,6 +622,9 @@
     "skipUnreadable": "این ورودی ساختاری ندارد که قالب فایل بپذیرد",
     "skipUnparsable": "خط {detail} خوانده نشد",
     "skipNoNameOrGroup": "کانتینر لیبل homepage.name یا homepage.group ندارد",
+    "skipFileYaml": "YAML در خط {detail} قابل خواندن نیست",
+    "skipFileTooLarge": "موارد زیادی برای وارد کردن دارد",
+    "skipFileUnknown": "پیکربندی gethomepage یا Dashy نیست",
     "monitors": "· بررسی {url}"
   },
   "login": {

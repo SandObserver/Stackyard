@@ -2,6 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const { ICON_MAX_BYTES, WALLPAPER_MAX_BYTES } = require('../../ui/js/limits.js');
 
 const NGINX_DIR = path.join(__dirname, '../../nginx');
 const read = f => fs.readFileSync(path.join(NGINX_DIR, f), 'utf8');
@@ -327,17 +328,17 @@ test('nginx sets a body size limit at all', () => {
   assert.ok(limit, 'unset means nginx quietly applies its own 1 MB default');
 });
 
-function streamCap(file, name) {
+/** @param {string} file @param {string} name @param {number} maxBytes the limit from ui/js/limits.js */
+function streamCap(file, name, maxBytes) {
   const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'routes', file), 'utf8');
-  const max = new RegExp(`${name}_MAX_BYTES = (\\d+) \\* 1024 \\* 1024;`).exec(src);
   const factor = new RegExp(`${name}_STREAM_MAX_BYTES = Math\\.round\\(${name}_MAX_BYTES \\* ([\\d.]+)\\);`).exec(src);
-  assert.ok(max && factor, `${name} limits not found in routes/${file}`);
-  return Math.round(Number(max[1]) * 1024 * 1024 * Number(factor[1]));
+  assert.ok(factor, `${name} limits not found in routes/${file}`);
+  return Math.round(maxBytes * Number(factor[1]));
 }
 
 test('nginx allows at least as much as the API does', () => {
   const nginxLimit = nginxSize(dashboard, 'client_max_body_size');
-  const iconCap = streamCap('icons.js', 'ICON');
+  const iconCap = streamCap('icons.js', 'ICON', ICON_MAX_BYTES);
 
   assert.ok(nginxLimit >= BODY_LIMIT, `nginx allows ${nginxLimit} but the API accepts bodies up to ${BODY_LIMIT}`);
   assert.ok(nginxLimit >= iconCap, `nginx allows ${nginxLimit} but the icon upload reads up to ${iconCap}`);
@@ -352,7 +353,7 @@ test('nginx allows a wallpaper upload body as large as the API reads', () => {
   const block = /location\s*=\s*\/api\/wallpaper\/upload\s*\{([\s\S]*?)\n {4}\}/.exec(dashboard);
   assert.ok(block, 'the wallpaper upload has no location of its own');
   const routeLimit = nginxSize(block[1], 'client_max_body_size');
-  const apiCap = streamCap('wallpaper.js', 'UPLOAD');
+  const apiCap = streamCap('wallpaper.js', 'UPLOAD', WALLPAPER_MAX_BYTES);
   assert.equal(routeLimit, apiCap, `nginx allows ${routeLimit} but the API reads up to ${apiCap}`);
 });
 

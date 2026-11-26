@@ -622,6 +622,9 @@
     "skipUnreadable": "this entry is not in a shape the file format allows",
     "skipUnparsable": "line {detail} could not be read",
     "skipNoNameOrGroup": "the container has no homepage.name or homepage.group label",
+    "skipFileYaml": "the importer cannot read the YAML on line {detail}",
+    "skipFileTooLarge": "too many entries to import",
+    "skipFileUnknown": "not a gethomepage or Dashy config",
     "monitors": "· polls {url}"
   },
   "login": {

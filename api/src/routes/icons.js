@@ -75,7 +75,7 @@ function iconContent(filename, data) {
   return { ext: '.svg', data: Buffer.from(svg, 'utf8') };
 }
 
-const ICON_MAX_BYTES = 2 * 1024 * 1024;
+const { ICON_MAX_BYTES } = require('../../../ui/js/limits.js');
 const ICON_STREAM_MAX_BYTES = Math.round(ICON_MAX_BYTES * 1.25);
 const { rateLimit } = require('../auth');
 const { parseMultipartFile } = require('../parse-multipart');

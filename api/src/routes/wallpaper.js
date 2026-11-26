@@ -15,7 +15,7 @@ const { writeFileAtomic, ICONS_WRITE_FAILURES } = require('../atomic-write');
 const WALLPAPER_DIR = () => path.join(ICONS_PATH, 'wallpaper');
 const WALLPAPER_URL_BASE = '/icons/wallpaper/';
 
-const UPLOAD_MAX_BYTES = 16 * 1024 * 1024;
+const { WALLPAPER_MAX_BYTES: UPLOAD_MAX_BYTES } = require('../../../ui/js/limits.js');
 /* Keep client_max_body_size on /api/wallpaper/upload equal to this. nginx
    refuses a larger body before the request reaches this code. */
 const UPLOAD_STREAM_MAX_BYTES = Math.round(UPLOAD_MAX_BYTES * 1.25);

@@ -1,6 +1,6 @@
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
 import { importCounts, restoresSettings } from '/js/admin-save-logic.js?v=2a82f10d';
-import { apiGet, errorAction, errorText, rowBusy, ShownError, toast } from '/js/admin-shared.js?v=39ca44cc';
+import { apiGet, errorAction, errorText, rowBusy, ShownError, toast } from '/js/admin-shared.js?v=2c7a9e54';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { t } from '/js/i18n.js?v=82ba9da2';
@@ -14,8 +14,8 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=c42e5f43';
-import { CONFIG_MAX_BYTES } from '/js/limits.js?v=ff61256e';
+} from '/js/import-foreign.js?v=f5aff185';
+import { CONFIG_MAX_BYTES } from '/js/limits.js?v=bc10e843';
 import { confirmModal } from '/js/modal.js?v=93d3e755';
 import { el, isolate, setUserText, tgt } from '/js/utils.js?v=457d9918';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=39538b71';
@@ -36,6 +36,9 @@ const SKIP_TEXT = {
   [SKIP.UNREADABLE]: 'importForeign.skipUnreadable',
   [SKIP.UNPARSABLE]: 'importForeign.skipUnparsable',
   [SKIP.NO_NAME_OR_GROUP]: 'importForeign.skipNoNameOrGroup',
+  [SKIP.FILE_YAML]: 'importForeign.skipFileYaml',
+  [SKIP.FILE_TOO_LARGE]: 'importForeign.skipFileTooLarge',
+  [SKIP.FILE_UNKNOWN]: 'importForeign.skipFileUnknown',
 };
 const NOTE_TEXT = {
   [NOTE.ICON_DROPPED]: 'importForeign.noteIcon',
@@ -139,6 +142,14 @@ export function wireTransfer(page) {
       const items = [],
         skipped = [],
         notes = [];
+      /* With several files, one that cannot be used is listed as skipped and
+         the others still import. */
+      const several = files.length > 1;
+      /** @param {File} file @param {string} reason @param {string} toastText @param {string} [detail] */
+      const refuse = (file, reason, toastText, detail = '') => {
+        if (!several) throw new ShownError(toastText);
+        skipped.push({ reason, name: file.name, group: '', detail });
+      };
       for (const file of files) {
         let doc, parseErrors;
         try {
@@ -146,20 +157,30 @@ export function wireTransfer(page) {
              whole file cost the reader every other service in it. */
           ({ doc, errors: parseErrors } = parseYamlTolerant(await file.text()));
         } catch (err) {
-          if (err instanceof YamlLiteError)
-            throw new ShownError(t('toast.importYamlUnsupported', { file: isolate(file.name), line: err.line }));
-          if (err instanceof YamlTooLargeError)
-            throw new ShownError(t('toast.importTooLarge', { file: isolate(file.name) }));
+          if (err instanceof YamlLiteError) {
+            const text = t('toast.importYamlUnsupported', { file: isolate(file.name), line: err.line });
+            refuse(file, SKIP.FILE_YAML, text, String(err.line));
+            continue;
+          }
+          if (err instanceof YamlTooLargeError) {
+            refuse(file, SKIP.FILE_TOO_LARGE, t('toast.importTooLarge', { file: isolate(file.name) }));
+            continue;
+          }
           throw err;
+        }
+        const kind = detectSource(doc);
+        if (!kind) {
+          refuse(file, SKIP.FILE_UNKNOWN, t('toast.importUnknownFormat', { file: isolate(file.name) }));
+          continue;
         }
         let out;
         try {
-          const kind = detectSource(doc);
-          if (!kind) throw new ShownError(t('toast.importUnknownFormat', { file: isolate(file.name) }));
           out = convert(kind, doc, taken, t('importForeign.untitledFolder'));
         } catch (err) {
-          if (err instanceof ImportTooLargeError)
-            throw new ShownError(t('toast.importTooLarge', { file: isolate(file.name) }));
+          if (err instanceof ImportTooLargeError) {
+            refuse(file, SKIP.FILE_TOO_LARGE, t('toast.importTooLarge', { file: isolate(file.name) }));
+            continue;
+          }
           throw err;
         }
         items.push(...out.items);

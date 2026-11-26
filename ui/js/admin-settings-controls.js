@@ -1,4 +1,4 @@
-import { wirePasswordStrength } from '/js/admin-auth.js?v=d7dfac01';
+import { wirePasswordStrength } from '/js/admin-auth.js?v=a8170d6c';
 import {
   applyHealthChecks,
   savedWallpaperUrl,
@@ -6,17 +6,19 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=7d56c393';
+} from '/js/admin-settings.js?v=4c55256f';
 import {
+  apiPost,
+  apiUpload,
   clearFieldError,
   errorText,
   initInlineEdit,
-  responseError,
   reveal,
   showFieldError,
   toast,
-} from '/js/admin-shared.js?v=39ca44cc';
+} from '/js/admin-shared.js?v=2c7a9e54';
 import { LANGUAGES, t } from '/js/i18n.js?v=82ba9da2';
+import { WALLPAPER_MAX_BYTES } from '/js/limits.js?v=bc10e843';
 import { createListbox } from '/js/listbox.js?v=c9cee787';
 import { passwordMismatch } from '/js/password-policy.js?v=e16ebd1a';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=bdd477f5';
@@ -238,9 +240,7 @@ function initWallpaperUpload() {
     try {
       const form = new FormData();
       form.append('wallpaper', file, file.name);
-      const r = await fetch('/api/wallpaper/upload', { method: 'POST', body: form });
-      if (!r.ok) throw await responseError(r);
-      const d = await r.json();
+      const d = await apiUpload('/api/wallpaper/upload', form, file, WALLPAPER_MAX_BYTES);
       setWallpaperUrl(d.url);
       toast(t('toast.wallpaperStored'));
     } catch (e) {
@@ -261,13 +261,7 @@ function initWallpaperUpload() {
 async function fetchWallpaperLink(url) {
   if (!url || url.startsWith('/icons/')) return;
   try {
-    const r = await fetch('/api/wallpaper/fetch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url }),
-    });
-    if (!r.ok) throw await responseError(r);
-    const d = await r.json();
+    const d = await apiPost('/api/wallpaper/fetch', { url });
     setWallpaperUrl(d.url);
     toast(t('toast.wallpaperStored'));
   } catch (e) {

@@ -74,6 +74,32 @@ async function upload(page, button, file, route) {
   return res;
 }
 
+/** Picks a file the page refuses on its own, and reports whether anything was sent.
+    @param {import('@playwright/test').Page} page @param {string} button @param {string} file @param {string} route */
+async function pickRefused(page, button, file, route) {
+  let sent = false;
+  const watch = r => {
+    if (r.url().endsWith(route)) sent = true;
+  };
+  page.on('request', watch);
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator(button).click()]);
+  await chooser.setFiles(file);
+  await expect(page.locator('#toast')).toHaveClass(/\berr\b/);
+  page.off('request', watch);
+  return sent;
+}
+
+/** @param {import('@playwright/test').APIRequestContext} request @param {string} route
+    @param {string} field @param {string} name @param {number} bytes */
+async function postOversize(request, route, field, name, bytes) {
+  const data = Buffer.alloc(bytes);
+  encodePng(1, 1, [0, 0, 0]).copy(data);
+  return request.post(route, {
+    headers: { Origin: BASE_URL },
+    multipart: { [field]: { name, mimeType: 'image/png', buffer: data } },
+  });
+}
+
 /** @param {import('@playwright/test').Page} page */
 async function openAppEditor(page) {
   await openDashboardList(page);
@@ -120,16 +146,21 @@ test('an uploaded icon is stored, served and shown on the dashboard', async ({ p
   await expect.poll(() => tile.evaluate(img => /** @type {HTMLImageElement} */ (img).naturalWidth)).toBe(48);
 });
 
+test('an icon over the limit is refused with a message before it is sent', async ({ page, request }, testInfo) => {
+  await openAppEditor(page);
+  const file = oversizePng(testInfo, 'e2e-big-api.png', ICON_MAX_BYTES + 1);
+  expect(await pickRefused(page, '#ip-upload-lbl', file, '/api/icons/upload')).toBe(false);
+  await expect(page.locator('#toast')).toHaveText(`Could not upload the file. ${TOO_LARGE}`);
+  const files = (await (await request.get('/api/icons/local')).json()).files;
+  expect(files.filter(f => f.startsWith('e2e-big-api'))).toEqual([]);
+});
+
 for (const [limit, name, bytes, status] of [
   ['the API', 'e2e-big-api', ICON_MAX_BYTES + 1, 400],
   ['nginx', 'e2e-big-nginx', SITE_BODY_LIMIT + 1, 413],
 ]) {
-  test(`an icon over the limit ${limit} sets is refused with a message`, async ({ page, request }, testInfo) => {
-    await openAppEditor(page);
-    const res = await upload(page, '#ip-upload-lbl', oversizePng(testInfo, `${name}.png`, bytes), '/api/icons/upload');
-    await expectTooLarge(res, status);
-    await expect(page.locator('#toast')).toHaveClass(/\berr\b/);
-    await expect(page.locator('#toast')).toHaveText(`Could not upload the file. ${TOO_LARGE}`);
+  test(`an icon over the limit ${limit} sets is refused with the API error shape`, async ({ request }) => {
+    await expectTooLarge(await postOversize(request, '/api/icons/upload', 'icon', `${name}.png`, bytes), status);
     const files = (await (await request.get('/api/icons/local')).json()).files;
     expect(files.filter(f => f.startsWith(name))).toEqual([]);
   });
@@ -163,12 +194,21 @@ test('an uploaded wallpaper is stored, served and shown on the dashboard', async
     .toContain(url);
 });
 
-test('a wallpaper over the limit the API sets is refused with a message', async ({ page, request }, testInfo) => {
+test('a wallpaper over the limit the API sets is refused with the API error shape', async ({ request }) => {
+  const res = await postOversize(
+    request,
+    '/api/wallpaper/upload',
+    'wallpaper',
+    'e2e-big-wall.png',
+    UPLOAD_MAX_BYTES + 1,
+  );
+  await expectTooLarge(res, 400);
+});
+
+test('a wallpaper over the limit is refused with a message before it is sent', async ({ page, request }, testInfo) => {
   await openAppearance(page);
   const file = oversizePng(testInfo, 'e2e-big-wall.png', UPLOAD_MAX_BYTES + 1);
-  const res = await upload(page, '#bg-upload-lbl', file, '/api/wallpaper/upload');
-  await expectTooLarge(res, 400);
-  await expect(page.locator('#toast')).toHaveClass(/\berr\b/);
+  expect(await pickRefused(page, '#bg-upload-lbl', file, '/api/wallpaper/upload')).toBe(false);
   await expect(page.locator('#toast')).toHaveText(`Could not save the wallpaper. ${TOO_LARGE}`);
   await expect(page.locator('#ie-bgurl-v')).toHaveText('/icons/wallpaper/none.png');
   expect((await readConfig(request)).settings.background.url).toBe('/icons/wallpaper/none.png');

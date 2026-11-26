@@ -1,5 +1,5 @@
 // @ts-check
-import { DEFAULT_WIDGET_SIZE } from '/js/limits.js?v=ff61256e';
+import { DEFAULT_WIDGET_SIZE } from '/js/limits.js?v=bc10e843';
 
 /* Layout geometry, keyed by widget family size, never by widget. */
 export const WIDGET_HEIGHTS = { small: 150, medium: 150, large: 330, xlarge: 510 };

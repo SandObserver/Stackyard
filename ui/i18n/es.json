@@ -639,6 +639,9 @@
     "skipUnreadable": "esta entrada no tiene la forma que permite el formato del archivo",
     "skipUnparsable": "no se pudo leer la línea {detail}",
     "skipNoNameOrGroup": "el contenedor no tiene la etiqueta homepage.name o homepage.group",
+    "skipFileYaml": "la línea {detail} usa YAML que el importador no puede leer",
+    "skipFileTooLarge": "demasiadas entradas para importarlas",
+    "skipFileUnknown": "no es una configuración de gethomepage ni de Dashy",
     "monitors": "· sondea {url}"
   },
   "login": {

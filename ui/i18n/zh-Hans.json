@@ -605,6 +605,9 @@
     "skipUnreadable": "此条目不符合该文件格式允许的结构",
     "skipUnparsable": "无法读取第 {detail} 行",
     "skipNoNameOrGroup": "容器没有 homepage.name 或 homepage.group 标签",
+    "skipFileYaml": "第 {detail} 行使用了导入程序无法读取的 YAML",
+    "skipFileTooLarge": "条目太多，无法导入",
+    "skipFileUnknown": "不是 gethomepage 或 Dashy 配置",
     "monitors": "· 轮询 {url}"
   },
   "login": {

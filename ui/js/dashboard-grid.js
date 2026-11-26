@@ -2,8 +2,8 @@ import { closeBadgePopover } from '/js/badge-popover.js?v=578d337c';
 import { desktopCols, desktopPages } from '/js/dashboard-logic.js?v=b4828b62';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { currentLang, t } from '/js/i18n.js?v=82ba9da2';
-import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=ff61256e';
-import { closeFolders, mkFolder, resetMobileChrome } from '/js/ui.js?v=72f26e23';
+import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=bc10e843';
+import { closeFolders, mkFolder, resetMobileChrome } from '/js/ui.js?v=399bb265';
 import {
   mkWrap as _mkWrap,
   el,
@@ -23,7 +23,7 @@ import {
   WIDGET_HEIGHTS,
   WIDGET_ROWS,
   widgetSrc,
-} from '/js/widget-types.js?v=afec2dab';
+} from '/js/widget-types.js?v=66b4b73d';
 
 /* A widget tile's corner, at design size. WIDGET_DESIGN's small is 170 square
    against the reference's 165, so this is its 28 unchanged. */
