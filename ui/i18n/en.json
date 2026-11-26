@@ -355,6 +355,11 @@
     "emptyAction": "Open settings",
     "emptyImportLink": "Import a backup, Homepage or Dashy config"
   },
+  "bootFailed": {
+    "title": "Stackyard Couldn't Start",
+    "why": "This browser could not run Stackyard. Reload the page. If that does not help, update the browser or open Stackyard in another one.",
+    "reload": "Reload"
+  },
   "configRecovery": {
     "title": "Stackyard cannot use its settings file",
     "whyCorrupt": "The settings file <code>{file}</code> is damaged. It no longer holds valid settings.",

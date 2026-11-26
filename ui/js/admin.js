@@ -16,6 +16,8 @@ import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { el } from '/js/utils.js?v=457d9918';
 import { initGlassControls } from '/js/glass-controls.js?v=06fcd355';
 
+/** @type {any} */ (window).__bootStarted = true;
+
 ensureSprite();
 animateNavIcons();
 

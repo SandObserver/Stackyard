@@ -348,3 +348,27 @@ test('a hidden tab does not reload its widgets, and catches up on return', async
   }
   assert.equal(h.docListeners.size, 0, 'teardown leaves a visibility listener');
 });
+
+test('a refreshed frame whose module failed does not replace the working one', async () => {
+  const h = harness();
+  try {
+    const { mountScaledWidget, teardownWidgets } = await import('../js/widget-frame.js');
+    const card = h.card();
+    mountScaledWidget(card, {
+      ...OPTS,
+      src: '/widgets/dns/index.html?id=w',
+      iframeOpts: { refreshInterval: 250 },
+    });
+    const frames = (node = card) => node.children.flatMap(c => (c.tagName === 'iframe' ? [c] : frames(c)));
+    const [first] = frames();
+    await new Promise(resolve => h.realSetTimeout(resolve, 400));
+    const next = frames().find(f => f !== first);
+    assert.ok(next, 'no refresh frame was made');
+    next.contentWindow = { __widgetBootError: true };
+    next.fire('load');
+    assert.deepEqual(frames(), [first]);
+    teardownWidgets();
+  } finally {
+    h.done();
+  }
+});

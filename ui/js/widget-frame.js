@@ -1,10 +1,35 @@
+import { t } from '/js/i18n.js?v=82ba9da2';
 import { mk } from '/js/utils.js?v=457d9918';
+import { errorState } from '/js/widget-error.js?v=7af0beb3';
 
 /* Live widget mounts, so a rebuild can switch off what it is about to discard.
    mountScaledWidget starts an observer, a reload timer and touch listeners that
    outlive the DOM it creates, and stranded timers keep polling the backing
    services forever. */
 const _mounts = new Set();
+
+/** @param {HTMLIFrameElement} frame @returns {boolean} */
+function bootFailed(frame) {
+  try {
+    return /** @type {any} */ (frame.contentWindow).__widgetBootError === true;
+  } catch {
+    return false;
+  }
+}
+
+/** @param {HTMLIFrameElement} frame */
+function showBroken(frame) {
+  try {
+    const body = frame.contentDocument && frame.contentDocument.body;
+    if (!body) return;
+    /** @param {string} key @param {string} fallback */
+    const translate = (key, fallback) => {
+      const text = t(`widget.${key}`);
+      return text === `widget.${key}` ? fallback : text;
+    };
+    errorState({ root: body, place: 'center', t: translate }).fail({ kind: 'internal' });
+  } catch {}
+}
 
 /** @type {Map<HTMLElement, (rate: number) => void>} */
 const _rates = new Map();
@@ -349,10 +374,24 @@ export function mountScaledWidget(card, { src, title, design, iframeOpts, overla
     frame.style.pointerEvents = '';
     fit();
   };
+  /** @param {HTMLIFrameElement} frame */
+  const dropPending = frame => {
+    clearTimeout(pendingTimer);
+    pending = null;
+    unwire(frame);
+    frame.remove();
+  };
   /** @param {Event} e */
   function onLoad(e) {
     const frame = /** @type {HTMLIFrameElement} */ (e.currentTarget);
-    if (frame === pending) swapIn(frame);
+    const broken = bootFailed(frame);
+    if (frame === pending) {
+      if (broken) {
+        dropPending(frame);
+        return;
+      }
+      swapIn(frame);
+    } else if (broken) showBroken(frame);
     applyDir(frame);
     applyZoom(frame);
     if (zoomable) attachWheel(frame);

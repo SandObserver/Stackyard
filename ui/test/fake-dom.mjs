@@ -984,7 +984,10 @@ const UI_DIR = new URL('../', import.meta.url);
 export function pageBody(page) {
   const html = readFileSync(new URL(page, UI_DIR), 'utf8');
   const open = html.indexOf('<body');
-  return html.slice(html.indexOf('>', open) + 1, html.lastIndexOf('</body>'));
+  /* A browser with scripts on never parses <noscript> content into elements. */
+  return html
+    .slice(html.indexOf('>', open) + 1, html.lastIndexOf('</body>'))
+    .replace(/<noscript>[\s\S]*?<\/noscript>/g, '');
 }
 
 /** fakeFetch routes that serve the shipped English catalog, so t() returns real sentences. */

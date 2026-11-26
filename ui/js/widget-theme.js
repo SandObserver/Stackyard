@@ -75,4 +75,23 @@
   }
   /* The dashboard calls this when its theme changes, so the frame is kept. */
   /** @type {any} */ (window).__applyHostTheme = apply;
+  /* The dashboard reads this when the frame loads. A frame whose module failed
+     must not replace a working one. */
+  let loaded = false;
+  try {
+    window.addEventListener('load', () => {
+      loaded = true;
+    });
+    window.addEventListener(
+      'error',
+      e => {
+        if (loaded) return;
+        const target = /** @type {any} */ (e.target);
+        if (e instanceof ErrorEvent || (target instanceof HTMLScriptElement && target.type === 'module')) {
+          /** @type {any} */ (window).__widgetBootError = true;
+        }
+      },
+      true,
+    );
+  } catch {}
 })();

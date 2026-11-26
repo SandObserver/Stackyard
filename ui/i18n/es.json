@@ -362,6 +362,11 @@
     "emptyAction": "Abrir ajustes",
     "emptyImportLink": "Importar una copia de seguridad o una configuración de Homepage o Dashy"
   },
+  "bootFailed": {
+    "title": "Stackyard no pudo iniciarse",
+    "why": "Este navegador no pudo ejecutar Stackyard. Recarga la página. Si no funciona, actualiza el navegador o abre Stackyard en otro.",
+    "reload": "Recargar"
+  },
   "configRecovery": {
     "title": "Stackyard no puede usar su archivo de ajustes",
     "whyCorrupt": "El archivo de ajustes <code>{file}</code> está dañado. Ya no contiene ajustes válidos.",

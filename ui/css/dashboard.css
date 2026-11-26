@@ -77,6 +77,7 @@
     }
     body.ready::before { animation:none; opacity:0; }
     body.api-down::before { animation:none; opacity:0; }
+    html.boot-failed body::before { animation:none; opacity:0; }
 
     /* ── Page strip ── */
     #pages {
