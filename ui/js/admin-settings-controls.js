@@ -6,7 +6,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=882c01f7';
+} from '/js/admin-settings.js?v=7d56c393';
 import {
   clearFieldError,
   errorText,
