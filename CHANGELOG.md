@@ -62,6 +62,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Refuse a file over the upload limit before sending it.
 
+- Show a rejected widget key in widget settings instead of an expired session.
+
+- Send an open dashboard to sign-in when its session ends.
+
 ## [1.24.0] - 2026-11-22
 
 ### Added
