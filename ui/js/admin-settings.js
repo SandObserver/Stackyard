@@ -282,6 +282,12 @@ export function loadSettings(c, page) {
   apiGet('/api/settings/unsplash-key')
     .then(d => showUnsplashKeyState(!!d.configured))
     .catch(() => {});
+  apiGet('/api/settings/log-level')
+    .then(d => {
+      const note = el('log-level-env');
+      if (note) note.hidden = !d.env;
+    })
+    .catch(() => {});
   const brEl = inp('bg-br');
   function updateSliderFill(slider) {
     if (!slider) return;

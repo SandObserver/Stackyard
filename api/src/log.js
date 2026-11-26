@@ -13,7 +13,8 @@ function _apply(name) {
   }
   return false;
 }
-_apply(process.env.LOG_LEVEL);
+const ENV_LEVEL = String(process.env.LOG_LEVEL || '').toLowerCase();
+const FROM_ENV = _apply(ENV_LEVEL);
 
 const CAUSE_DEPTH = 4;
 
@@ -110,8 +111,13 @@ const log = {
   print(text) {
     process.stdout.write(String(text) + '\n');
   },
+  /* LOG_LEVEL wins over the level saved in Settings. */
   setLevel(name) {
-    return _apply(name);
+    return FROM_ENV ? false : _apply(name);
+  },
+  /** @returns {string | null} the level LOG_LEVEL set, or null when it set none */
+  envLevel() {
+    return FROM_ENV ? ENV_LEVEL : null;
   },
   reason,
 };

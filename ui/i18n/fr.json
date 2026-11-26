@@ -48,6 +48,7 @@
     "hideHealthy": "Masquer le badge d’état sain",
     "socketUrl": "URL du socket Docker",
     "loggingTip": "Avec le niveau Erreurs, seuls les avertissements et les erreurs sont journalisés. Les événements de sécurité le sont toujours.",
+    "loggingFromEnv": "LOG_LEVEL est défini pour le conteneur, ce réglage n’a donc aucun effet.",
     "socketTip": "Utilisez l’URL d’un conteneur <strong>proxy de socket</strong>, jamais le socket Docker lui-même. Un nom tel que <code>http://socket-proxy:2375</code> ne fonctionne que si ce conteneur et le proxy partagent un réseau Docker ; une adresse IP ne fonctionne que si le proxy publie son port au-delà de la boucle locale de l’hôte.",
     "security": "Sécurité",
     "signOutEverywhereTip": "Déconnecte tous les navigateurs et appareils, y compris celui-ci. Utile si une session a pu rester ouverte ou être compromise. Votre mot de passe ne change pas.",

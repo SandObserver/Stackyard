@@ -6,6 +6,7 @@ const { refusedHost } = require('./host-check');
 const setupCode = require('./setup-code');
 const log = require('./log');
 const { tryDecode } = require('./percent-decode');
+const { randomBytes } = require('node:crypto');
 const { LOOPBACK, proxied } = require('./front-proxy');
 
 const SETUP_PATH = '/api/auth/setup-password';
@@ -32,7 +33,16 @@ function on(m, p, h) {
 
 /* Keep dispatch synchronous for http.createServer. A throwing handler must fail
    its own request, not the process. */
+/** @type {WeakMap<import('http').ServerResponse, string>} */
+const _requestIds = new WeakMap();
+
+/** @param {import('http').ServerResponse} res @returns {string} */
+const requestIdOf = res => _requestIds.get(res) || '';
+
 function dispatch(req, res) {
+  const id = randomBytes(4).toString('hex');
+  _requestIds.set(res, id);
+  res.setHeader('X-Request-Id', id);
   Promise.resolve()
     .then(() => route(req, res))
     .catch(err => onError(req, res, err));
@@ -96,8 +106,20 @@ function route(req, res) {
   json(res, 404, { error: 'Not found', kind: 'invalid' });
 }
 
+/* Never log the first stack line. It repeats the message, and a SyntaxError
+   message quotes the body it failed on, passwords and keys included. */
+function stackFrames(err) {
+  return typeof err?.stack === 'string' ? err.stack.split('\n').slice(1, 9).join('\n') : undefined;
+}
+
 function onError(req, res, err) {
-  log.error('request handler failed', { method: req.method, url: req.url, error: err?.message });
+  log.error('request handler failed', {
+    request: requestIdOf(res),
+    method: req.method,
+    path: String(req.url || '').split('?')[0],
+    error: err instanceof SyntaxError ? 'not valid JSON' : err?.message,
+    stack: stackFrames(err),
+  });
   if (res.headersSent) {
     try {
       res.end();
@@ -113,7 +135,12 @@ function onError(req, res, err) {
 /** @param {import('http').ServerResponse} res @param {number} status @param {any} data
     @param {Record<string, string>} [headers] */
 function json(res, status, data, headers = {}) {
-  const b = JSON.stringify(data);
+  const id = requestIdOf(res);
+  const tagged =
+    status >= 400 && id && data && typeof data === 'object' && ('error' in data || 'kind' in data)
+      ? { ...data, requestId: id }
+      : data;
+  const b = JSON.stringify(tagged);
   res.writeHead(status, { ...headers, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) });
   res.end(b);
 }
@@ -187,6 +214,7 @@ function checkOrigin(req, res) {
 }
 
 module.exports = {
+  requestIdOf,
   BODY_LIMIT,
   AUTH_BODY_LIMIT,
   _routeTable: () => routes.map(r => ({ method: r.m, path: r.p })),

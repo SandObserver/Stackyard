@@ -3,9 +3,9 @@ import { initEditor, openEditor, openFolderPicker, wireListButtons } from '/js/a
 import { initList, render, wireFilter } from '/js/admin-list.js?v=a791e0ce';
 import { createListWrites } from '/js/admin-list-writes.js?v=21cd883d';
 import { animateNavIcons, initNav } from '/js/admin-nav.js?v=54b402c7';
-import { createPageLoad } from '/js/admin-page-load.js?v=bebed9b3';
-import { settingsDirty } from '/js/admin-settings.js?v=882c01f7';
-import { initSettingsControls } from '/js/admin-settings-controls.js?v=2a5e53bc';
+import { createPageLoad } from '/js/admin-page-load.js?v=6e0dfe1a';
+import { settingsDirty } from '/js/admin-settings.js?v=7d56c393';
+import { initSettingsControls } from '/js/admin-settings-controls.js?v=add16b2a';
 import { setReauthHandler } from '/js/admin-shared.js?v=39ca44cc';
 import { wireTransfer } from '/js/admin-transfer.js?v=6e1054e7';
 import { recoveryShown } from '/js/config-recovery.js?v=5f7d1e49';

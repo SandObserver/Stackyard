@@ -76,6 +76,10 @@ on('GET', '/api/config', (req, res) => {
   json(res, 200, clientConfig(cfg), etag ? { ETag: etag } : {});
 });
 
+on('GET', '/api/settings/log-level', (_, res) => {
+  json(res, 200, { env: log.envLevel() });
+});
+
 on('GET', '/api/settings/unsplash-key', (_, res) => {
   json(res, 200, { configured: !!loadConfig().settings?.background?.apiKey });
 });
