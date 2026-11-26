@@ -64,13 +64,20 @@ test('buildAppItem saves a Proxmox check as the guest id alone', () => {
   assert.deepEqual(item.monitoring.healthcheck, { enabled: true, container: '', pingUrl: '', proxmoxGuest: 100 });
 });
 
-test('buildAppItem leaves a check off when no guest is chosen', () => {
-  const { item } = buildAppItem(
+test('buildAppItem refuses a health check with nothing to check', () => {
+  const res = buildAppItem(
     { label: 'HA', href: 'http://x', hcEn: true, hcCon: '', hcPing: '', hcPve: 0, scol: 'dark', spaths: [] },
     null,
   );
+  assert.deepEqual(res, { errorKey: 'app.hcTargetRequired' });
+});
+
+test('buildAppItem saves a check that is off without a target', () => {
+  const { item } = buildAppItem(
+    { label: 'HA', href: 'http://x', hcEn: false, hcCon: '', hcPing: '', hcPve: 0, scol: 'dark', spaths: [] },
+    null,
+  );
   assert.equal(item.monitoring.healthcheck.enabled, false);
-  assert.equal(item.monitoring.healthcheck.proxmoxGuest, undefined);
 });
 
 test('buildAppItem preserves an existing id and defaults color to dark', () => {

@@ -3,6 +3,7 @@ const http = require('node:http');
 const path = require('node:path');
 const { before, after } = require('node:test');
 const { tmpDir } = require('./tmp');
+const { withRev } = require('./config-rev');
 
 const SRC = path.join(__dirname, '..', 'src') + path.sep;
 
@@ -81,7 +82,12 @@ function startApp({ env = {}, config, widgetData = false, label = 'app' } = {}) 
     @returns {Promise<{ status: number, headers: import('node:http').IncomingHttpHeaders, text: string, body: any }>} */
 function request(base, method, pathname, { body, headers = {}, cookie, origin = base, host } = {}) {
   const raw = body == null || typeof body === 'string' || Buffer.isBuffer(body);
-  const data = body == null ? null : raw ? body : JSON.stringify(body);
+  const data =
+    body == null
+      ? null
+      : raw
+        ? body
+        : JSON.stringify(method === 'POST' && pathname === '/api/config' ? withRev(body) : body);
   const sent = { ...headers };
   if (origin) sent.Origin = origin;
   if (host) sent.Host = host;

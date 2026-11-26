@@ -193,6 +193,8 @@
     "dockFull": "Dock lleno ({max}/{max}). Quita primero una aplicación del Dock.",
     "badge": "Insignia",
     "healthCheck": "Comprobación de estado",
+    "hcTargetRequired": "Rellena este campo o desactiva la comprobación de estado.",
+    "hcGuestRequired": "Elige un invitado o desactiva la comprobación de estado.",
     "healthGlobalOff": "Las comprobaciones de estado están desactivadas. Actívalas en General.",
     "type": "Tipo",
     "container": "Contenedor",

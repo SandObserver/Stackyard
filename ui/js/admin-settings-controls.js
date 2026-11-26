@@ -1,4 +1,4 @@
-import { wirePasswordStrength } from '/js/admin-auth.js?v=26c3d65e';
+import { wirePasswordStrength } from '/js/admin-auth.js?v=2507f132';
 import {
   applyHealthChecks,
   savedWallpaperUrl,
@@ -6,7 +6,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=5e2c2bd7';
+} from '/js/admin-settings.js?v=48c16a90';
 import {
   apiPost,
   apiUpload,
@@ -16,7 +16,7 @@ import {
   reveal,
   showFieldError,
   toast,
-} from '/js/admin-shared.js?v=04f5a4db';
+} from '/js/admin-shared.js?v=38e3b4db';
 import { LANGUAGES, t } from '/js/i18n.js?v=82ba9da2';
 import { WALLPAPER_MAX_BYTES } from '/js/limits.js?v=bc10e843';
 import { createListbox } from '/js/listbox.js?v=c9cee787';

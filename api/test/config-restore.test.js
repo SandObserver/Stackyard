@@ -5,6 +5,7 @@ const { test, before } = require('node:test');
 const assert = require('node:assert/strict');
 
 const { saveConfig, loadConfig, migrate } = require('../src/config');
+const { withRev } = require('../test-support/config-rev');
 
 before(async () => {
   saveConfig(migrate({ items: [], settings: { theme: 'light' } }));
@@ -14,20 +15,22 @@ test('a write carrying an older schema version is migrated', async () => {
   const res = await fetch(`${api.base}/api/config`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Origin: api.base },
-    body: JSON.stringify({
-      _schemaVersion: 6,
-      items: [
-        { id: 'g', type: 'widget', widgetType: 'github', widgetSize: 'xlarge' },
-        {
-          id: 'a',
-          type: 'app',
-          label: 'A',
-          href: 'https://a.invalid',
-          badge: { enabled: true, url: 'https://a.invalid/x' },
-        },
-      ],
-      settings: { theme: 'dark' },
-    }),
+    body: JSON.stringify(
+      withRev({
+        _schemaVersion: 6,
+        items: [
+          { id: 'g', type: 'widget', widgetType: 'github', widgetSize: 'xlarge' },
+          {
+            id: 'a',
+            type: 'app',
+            label: 'A',
+            href: 'https://a.invalid',
+            badge: { enabled: true, url: 'https://a.invalid/x' },
+          },
+        ],
+        settings: { theme: 'dark' },
+      }),
+    ),
   });
   assert.equal(res.status, 200);
   const cfg = loadConfig();

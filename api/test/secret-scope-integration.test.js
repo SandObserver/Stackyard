@@ -13,6 +13,7 @@ const assert = require('node:assert/strict');
 const http = require('node:http');
 
 const { saveConfig, loadConfig } = require('../src/config');
+const { withRev } = require('../test-support/config-rev');
 
 const SECRET_VALUE = 'STORED-CREDENTIAL-DO-NOT-LEAK';
 
@@ -93,7 +94,8 @@ after(async () => {
 });
 
 function request(method, pathname, body, { origin = api.base } = {}) {
-  const data = body == null ? '' : JSON.stringify(body);
+  const data =
+    body == null ? '' : JSON.stringify(method === 'POST' && pathname === '/api/config' ? withRev(body) : body);
   const u = new URL(api.base + pathname);
   const headers = { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) };
   if (origin) headers.Origin = origin;

@@ -25,7 +25,13 @@ const { pruneWallpapers } = require('./wallpaper');
 const { normalizeHostList } = require('../../../ui/js/host-names.js');
 const { normalizeSettings } = require('../../../ui/js/settings-schema.js');
 const { scrubProxmox, preserveProxmox } = require('../proxmox');
-const { badItemFields, takesReservedId, firstBadFolderChild, badSettings } = require('../config-validate');
+const {
+  badItemFields,
+  takesReservedId,
+  firstBadFolderChild,
+  badSettings,
+  healthcheckWithoutTarget,
+} = require('../config-validate');
 
 /* Real configs nest under 10 levels. Far deeper input is written to disk and
    then breaks every read of the config. */
@@ -61,7 +67,11 @@ function scrubSecrets(cfg) {
   return safe;
 }
 
-const clientConfig = (cfg = loadConfig()) => ensureSystemItems(scrubSecrets(cfg));
+const clientConfig = (cfg = loadConfig()) => {
+  const out = ensureSystemItems(scrubSecrets(cfg));
+  if (!Number.isSafeInteger(out._rev)) out._rev = 0;
+  return out;
+};
 
 /** @param {any} cfg @returns {string} '' when the config carries no usable revision */
 const revTag = cfg => (Number.isSafeInteger(cfg?._rev) ? `"${cfg._rev}"` : '');
@@ -120,6 +130,12 @@ on('POST', '/api/config', async (req, res) => {
         kind: KIND.INVALID,
         code: 'invalid.newer-config',
       });
+    if (data._rev == null)
+      return json(res, 428, {
+        error: 'send the _rev from GET /api/config; a save replaces the whole config',
+        kind: KIND.INVALID,
+        code: 'invalid.missing-rev',
+      });
     /* An array or a primitive here drops the stored password on write. */
     if (data.settings != null && (typeof data.settings !== 'object' || Array.isArray(data.settings)))
       return json(res, 400, { error: 'settings must be an object', kind: KIND.INVALID, code: 'invalid.not-a-config' });
@@ -152,6 +168,17 @@ on('POST', '/api/config', async (req, res) => {
           kind: KIND.INVALID,
           code: 'invalid.bad-item',
           detail: { id: item.id, field },
+        });
+      }
+      if (
+        healthcheckWithoutTarget(item) &&
+        !(stored && stableEqual(valueAt(stored, 'monitoring.healthcheck'), valueAt(item, 'monitoring.healthcheck')))
+      ) {
+        return json(res, 400, {
+          error: `${item.id}: monitoring.healthcheck is enabled without a container, pingUrl or proxmoxGuest`,
+          kind: KIND.INVALID,
+          code: 'invalid.healthcheck-target',
+          detail: { id: item.id },
         });
       }
       if (takesReservedId(item) && !(stored && takesReservedId(stored))) {
@@ -246,8 +273,7 @@ on('POST', '/api/config', async (req, res) => {
       });
     const dropped = normalizeSettings(data.settings);
     const existing = loadConfigForUpdate();
-    /* Stale-write check. A client that sends no _rev overwrites. */
-    if (data._rev != null && Number(data._rev) !== (Number(existing._rev) || 0))
+    if (Number(data._rev) !== (Number(existing._rev) || 0))
       return json(res, 409, {
         error: 'This config was changed somewhere else. Reload the page and try again.',
         kind: KIND.INVALID,
@@ -336,6 +362,7 @@ on('POST', '/api/config', async (req, res) => {
     const { items } = clientConfig();
     json(res, 200, {
       ok: true,
+      rev: data._rev,
       items,
       ...(withheld.length ? { withheld } : {}),
       ...(dropped.length ? { dropped } : {}),

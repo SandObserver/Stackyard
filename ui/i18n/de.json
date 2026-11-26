@@ -190,6 +190,8 @@
     "dockFull": "Dock voll ({max}/{max}). Entferne zuerst eine App.",
     "badge": "Badge",
     "healthCheck": "Zustandsprüfung",
+    "hcTargetRequired": "Fülle dieses Feld aus oder schalte die Zustandsprüfung aus.",
+    "hcGuestRequired": "Wähle einen Gast oder schalte die Zustandsprüfung aus.",
     "healthGlobalOff": "Zustandsprüfungen sind aus. Schalte sie unter „Allgemein“ ein.",
     "type": "Typ",
     "container": "Container",

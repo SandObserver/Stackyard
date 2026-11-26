@@ -190,6 +190,8 @@
     "dockFull": "Dock full ({max}/{max}). Remove an app first.",
     "badge": "Badge",
     "healthCheck": "Health Check",
+    "hcTargetRequired": "Fill this in, or turn off Health Check.",
+    "hcGuestRequired": "Choose a guest, or turn off Health Check.",
     "healthGlobalOff": "Health checks are off. Turn them on in General.",
     "type": "Type",
     "container": "Container",

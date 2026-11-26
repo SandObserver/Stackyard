@@ -17,7 +17,7 @@ export const KIND = Object.freeze({
 
 export const TONE = Object.freeze({ WARN: 'warn', ERROR: 'error' });
 
-const BY_CODE = Object.freeze({
+export const BY_CODE = Object.freeze({
   'auth.upstream': 'adminError.keyRejected',
   'auth.permission': 'adminError.permissionMissing',
   'upstream.rate-limit': 'adminError.rateLimited',
@@ -52,6 +52,7 @@ const BY_CODE = Object.freeze({
   'invalid.reserved-id': 'adminError.reservedId',
   'invalid.bad-setting': 'adminError.badSetting',
   'invalid.dock-full': 'app.dockFull',
+  'invalid.healthcheck-target': 'app.hcTargetRequired',
   'invalid.config-too-large': 'adminError.configTooLarge',
   'invalid.newer-config': 'adminError.newerConfig',
   'internal.disk-full': 'adminError.diskFull',

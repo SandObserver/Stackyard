@@ -11,12 +11,13 @@ const http = require('node:http');
 
 const { saveConfig, loadConfig } = require('../src/config');
 const { hashPassword } = require('../src/auth');
+const { withRev } = require('../test-support/config-rev');
 
 /* Host and Origin both name the attacker's site, as a browser sends them after
    DNS rebinding. */
 function request(method, pathName, host, body, cookie) {
   return new Promise((resolve, reject) => {
-    const payload = body === undefined ? null : JSON.stringify(body);
+    const payload = body === undefined ? null : JSON.stringify(pathName === '/api/config' ? withRev(body) : body);
     const req = http.request(
       {
         host: '127.0.0.1',

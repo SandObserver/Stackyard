@@ -27,6 +27,7 @@ const { test, before } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 const { unfinishedUpload } = require('../test-support/unfinished-upload');
+const { withRev } = require('../test-support/config-rev');
 
 const { startApp } = require('../test-support/app');
 const api = startApp({
@@ -59,7 +60,8 @@ before(async () => {
    same-origin write and what the origin check now requires. Pass `origin: null`
    for the case of a request that states none. */
 function req(method, pathname, opts = {}) {
-  const { cookie, body, origin = api.base, host } = opts;
+  const { cookie, origin = api.base, host } = opts;
+  const body = method === 'POST' && pathname === '/api/config' ? withRev(opts.body) : opts.body;
   const data = body != null ? JSON.stringify(body) : null;
   const u = new URL(api.base + pathname);
   return new Promise((resolve, reject) => {
@@ -852,15 +854,79 @@ test('GET /api/config/export lists the same items as GET /api/config', async () 
 test('POST /api/config drops unknown settings and preserves the stored auth secret', async () => {
   const r = await req('POST', '/api/config', {
     cookie: validCookie,
-    body: { items: [], settings: { theme: 'dark', bogusKey: 1, logLevel: 'loud' } },
+    body: { items: [], settings: { theme: 'dark', bogusKey: 1 } },
   });
   assert.equal(r.status, 200);
-  // the existing secret was re-merged, so the session still authenticates
+  assert.deepEqual(r.body.dropped, ['bogusKey']);
   assert.equal((await req('GET', '/api/config', { cookie: validCookie })).status, 200);
   const exp = await req('GET', '/api/config/export', { cookie: validCookie });
-  assert.equal(exp.body.settings.bogusKey, undefined); // unknown key stripped
-  assert.equal(exp.body.settings.logLevel, undefined); // invalid level stripped
-  assert.equal(exp.body.settings.theme, 'dark'); // known key kept
+  assert.equal(exp.body.settings.bogusKey, undefined);
+  assert.equal(exp.body.settings.theme, 'dark');
+});
+
+test('POST /api/config refuses a known setting with a value it cannot use', async () => {
+  for (const [settings, id] of [
+    [{ logLevel: 'loud' }, 'logLevel'],
+    [{ language: 'German' }, 'language'],
+  ]) {
+    const onDisk = fs.readFileSync(process.env.CONFIG_PATH, 'utf8');
+    const r = await req('POST', '/api/config', { cookie: validCookie, body: { items: [], settings } });
+    assert.equal(r.status, 400, id);
+    assert.equal(r.body.code, 'invalid.bad-setting');
+    assert.deepEqual(r.body.detail, { id });
+    assert.equal(fs.readFileSync(process.env.CONFIG_PATH, 'utf8'), onDisk);
+  }
+  const ok = await req('POST', '/api/config', {
+    cookie: validCookie,
+    body: { items: [], settings: { language: 'de' } },
+  });
+  assert.equal(ok.status, 200);
+});
+
+test('POST /api/config refuses a health check with nothing to check', async () => {
+  const app = healthcheck => ({
+    id: 'hc',
+    type: 'app',
+    label: 'Sonarr',
+    href: 'http://s',
+    monitoring: { healthcheck },
+  });
+  const r = await req('POST', '/api/config', {
+    cookie: validCookie,
+    body: { items: [app({ enabled: true })], settings: {} },
+  });
+  assert.equal(r.status, 400);
+  assert.equal(r.body.code, 'invalid.healthcheck-target');
+  assert.deepEqual(r.body.detail, { id: 'hc' });
+  for (const target of [{ pingUrl: 'http://s' }, { container: 'sonarr' }, { proxmoxGuest: 101 }]) {
+    const ok = await req('POST', '/api/config', {
+      cookie: validCookie,
+      body: { items: [app({ enabled: true, ...target })], settings: {} },
+    });
+    assert.equal(ok.status, 200, JSON.stringify(target));
+  }
+  const off = await req('POST', '/api/config', {
+    cookie: validCookie,
+    body: { items: [app({ enabled: false })], settings: {} },
+  });
+  assert.equal(off.status, 200);
+});
+
+test('a stored health check with nothing to check does not block other saves', async () => {
+  const stuck = {
+    id: 'hc-old',
+    type: 'app',
+    label: 'Old',
+    href: 'http://o',
+    monitoring: { healthcheck: { enabled: true } },
+  };
+  fs.writeFileSync(process.env.CONFIG_PATH, JSON.stringify({ ...loadConfig(), items: [stuck] }));
+  loadConfigForUpdate();
+  const r = await req('POST', '/api/config', {
+    cookie: validCookie,
+    body: { items: [stuck, { id: 'new', type: 'app', label: 'New', href: 'http://n' }], settings: {} },
+  });
+  assert.equal(r.status, 200);
 });
 
 test('POST /api/config rejects a stale _rev with 409', async () => {
@@ -900,9 +966,32 @@ test('every API answer names the running version', async () => {
   assert.match(String(r.headers['x-stackyard-version']), /\S/);
 });
 
-test('POST /api/config without a _rev overwrites regardless', async () => {
-  const r = await req('POST', '/api/config', { cookie: validCookie, body: { items: [], settings: {} } });
-  assert.equal(r.status, 200);
+test('POST /api/config without a _rev is refused and writes nothing', async () => {
+  const onDisk = fs.readFileSync(process.env.CONFIG_PATH, 'utf8');
+  const r = await req('POST', '/api/config', {
+    cookie: validCookie,
+    body: { items: [], settings: {}, _rev: undefined },
+  });
+  assert.equal(r.status, 428);
+  assert.equal(r.body.code, 'invalid.missing-rev');
+  assert.equal(fs.readFileSync(process.env.CONFIG_PATH, 'utf8'), onDisk);
+});
+
+test('a config save returns the new _rev and GET /api/config always carries one', async () => {
+  const read = await req('GET', '/api/config', { cookie: validCookie });
+  assert.ok(Number.isSafeInteger(read.body._rev));
+  const saved = await req('POST', '/api/config', {
+    cookie: validCookie,
+    body: { items: [], settings: {}, _rev: read.body._rev },
+  });
+  assert.equal(saved.status, 200);
+  assert.equal(saved.body.rev, read.body._rev + 1);
+  const again = await req('POST', '/api/config', {
+    cookie: validCookie,
+    body: { items: [], settings: {}, _rev: saved.body.rev },
+  });
+  assert.equal(again.status, 200);
+  assert.equal(again.body.rev, saved.body.rev + 1);
 });
 
 test('GET /api/config/export omits _rev', async () => {

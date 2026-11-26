@@ -7,6 +7,7 @@ const assert = require('node:assert/strict');
 const { saveConfig } = require('../src/config');
 const { preserveAllSecrets } = require('../src/config-secrets');
 const { ITEMS_MAX } = require('../../ui/js/limits.js');
+const { withRev } = require('../test-support/config-rev');
 
 const apps = n => Array.from({ length: n }, (_, i) => ({ id: `a${i}`, type: 'app', label: 'A' }));
 
@@ -18,7 +19,7 @@ const post = items =>
   fetch(`${app.base}/api/config`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Origin: app.base },
-    body: JSON.stringify({ items, settings: {} }),
+    body: JSON.stringify(withRev({ items, settings: {} })),
   });
 
 test('a list over the item limit is refused and names the limit', async () => {

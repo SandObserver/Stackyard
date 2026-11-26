@@ -14,13 +14,14 @@ async function seedConfig(request, config) {
     throw new Error(`${BASE_URL} refused the saved session. Seed with a request context that carries it.`);
   }
   expect(stored.ok(), `reading config before seeding failed: ${stored.status()}`).toBeTruthy();
-  if (!mayReplace(await stored.json())) {
+  const current = await stored.json();
+  if (!mayReplace(current)) {
     throw new Error(
       `${BASE_URL} holds items the suite did not write. Seeding replaces the whole config. ` +
         'Point BASE_URL at a throwaway container, or set E2E_ALLOW_WIPE=1.',
     );
   }
-  const body = { _schemaVersion: 3, items: [], settings: {}, ...config, [SEED_MARK]: true };
+  const body = { _schemaVersion: 3, items: [], settings: {}, ...config, _rev: current._rev, [SEED_MARK]: true };
   /* A write must state its origin. This request context is not a page. */
   const res = await request.post('/api/config', { data: body, headers: { Origin: BASE_URL } });
   expect(res.ok(), `seeding failed: ${res.status()} ${await res.text()}`).toBeTruthy();
