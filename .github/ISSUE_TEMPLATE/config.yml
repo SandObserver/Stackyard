@@ -1,5 +1,11 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Troubleshooting
+    url: https://stackyard.sandobserver.com/docs/troubleshooting/
+    about: Fixes for the common problems, ordered by what you see.
+  - name: Error messages
+    url: https://stackyard.sandobserver.com/docs/troubleshooting/messages/
+    about: What each message means and what to check.
   - name: Security vulnerability
     url: https://github.com/SandObserver/stackyard/security/policy
     about: Do not open a public issue for security problems. Report them privately as described in SECURITY.md.
