@@ -9,7 +9,7 @@ const { test, before, beforeEach, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 
-const { saveConfig, loadConfig } = require('../src/config');
+const { saveConfig, loadConfig, SCHEMA_VERSION } = require('../src/config');
 const { hashPassword, clearAttempts } = require('../src/auth');
 
 let original;
@@ -100,6 +100,32 @@ test('a file that cannot be read keeps sign-in on and refuses every write', asyn
   assert.equal((await request('GET', '/api/config')).status, 503);
   assert.ok(fs.statSync(CFG).isDirectory());
   assert.equal(backups().length, 0);
+});
+
+test('a file saved by a newer version is never migrated or saved', async () => {
+  const newer = JSON.stringify({ ...original, _schemaVersion: SCHEMA_VERSION + 1, _rev: 7 });
+  fs.writeFileSync(CFG, newer);
+  expireCache();
+
+  for (const [method, p, body] of [
+    ['GET', '/api/config'],
+    ['GET', '/api/auth/check'],
+    ['POST', '/api/auth/login', { password: 'correct-horse' }],
+    ['POST', '/api/config', { items: [], settings: {} }],
+  ]) {
+    const r = await request(method, p, body);
+    assert.equal(r.status, 503, `${method} ${p}`);
+    assert.equal(r.body.code, 'internal.config-newer', `${method} ${p}`);
+    assert.deepEqual(r.body.detail, { file: 'apps.json' });
+  }
+  assert.equal(loadConfig().items.length, 0);
+  assert.throws(() => saveConfig({ items: [], settings: {} }));
+  assert.equal(fs.readFileSync(CFG, 'utf8'), newer);
+  assert.equal(backups().length, 0);
+
+  fs.writeFileSync(CFG, JSON.stringify({ ...original, _schemaVersion: SCHEMA_VERSION }));
+  expireCache();
+  assert.equal((await request('GET', '/api/config')).status, 401);
 });
 
 test('health still answers while the file is damaged', async () => {

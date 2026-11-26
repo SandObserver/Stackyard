@@ -1,5 +1,5 @@
 import { firstViewWait } from '/js/background.js?v=51e46417';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=ad222fc7';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=5f7d1e49';
 import { createBadges } from '/js/dashboard-badges.js?v=a6f982e9';
 import { createDesktopGrid } from '/js/dashboard-grid.js?v=30b298f8';
 import { wirePageInput, wireTileSettle } from '/js/dashboard-input.js?v=970b209f';

@@ -264,7 +264,7 @@ const { HELP_URL } = require('../../ui/js/config-recovery-logic.js');
 
 /* Set while the file on disk cannot be used. Do not save then: the blank
    config has sign-in off and replaces the owner's settings and password. */
-/** @type {{ reason: 'unreadable' | 'corrupt', file: string, backup?: string } | null} */
+/** @type {{ reason: 'unreadable' | 'corrupt' | 'newer', file: string, backup?: string } | null} */
 let _damage = null;
 /** @type {string | null} */
 let _damageLogged = null;
@@ -289,7 +289,7 @@ function _clearDamage() {
   _damageLogged = null;
 }
 
-/** @returns {{ reason: 'unreadable' | 'corrupt', file: string, backup?: string } | null} */
+/** @returns {{ reason: 'unreadable' | 'corrupt' | 'newer', file: string, backup?: string } | null} */
 function configDamage() {
   if (IS_DEMO) return null;
   loadConfig();
@@ -368,6 +368,14 @@ function _readDisk() {
   const shaped = _normalizeShape(parsed);
   if (!shaped) {
     _markDamaged('corrupt', 'wrong shape', _backupCorrupt(raw));
+    return null;
+  }
+
+  /* Never migrate or save a newer file. That lowers its version, and the next
+     upgrade migrates the data a second time. */
+  const version = Number(shaped._schemaVersion);
+  if (version > SCHEMA_VERSION) {
+    _markDamaged('newer', `schema version ${version}, this version reads up to ${SCHEMA_VERSION}`);
     return null;
   }
 

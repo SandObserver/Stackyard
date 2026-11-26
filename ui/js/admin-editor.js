@@ -4,10 +4,10 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=b37bb1ab';
-import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=d1cefe2a';
+} from '/js/admin-app-form.js?v=0b5ab9e3';
+import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=a791e0ce';
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
-import { scrollSettingsTop } from '/js/admin-nav.js?v=465fb192';
+import { scrollSettingsTop } from '/js/admin-nav.js?v=54b402c7';
 import {
   applyEdit,
   buildAppItem,
@@ -29,9 +29,9 @@ import {
   showFieldError,
   swapContent,
   toast,
-} from '/js/admin-shared.js?v=0f28a237';
+} from '/js/admin-shared.js?v=39ca44cc';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=30b500f1';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=fbf07bd0';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7112fd10';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';

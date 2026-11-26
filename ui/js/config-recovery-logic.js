@@ -10,6 +10,7 @@ export const PASSWORD_HELP_URL = `${DOCS}#no-password-works`;
 export const DAMAGE_CODES = Object.freeze({
   corrupt: 'internal.config-corrupt',
   unreadable: 'internal.config-unreadable',
+  newer: 'internal.config-newer',
 });
 
 // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are what it refuses
@@ -32,7 +33,7 @@ export function readHostBlock(body) {
 
 /** The damage an API error body reports, or null when it reports none.
     @param {unknown} body
-    @returns {{ reason: 'corrupt' | 'unreadable', file: string, backup: string | null } | null} */
+    @returns {{ reason: 'corrupt' | 'unreadable' | 'newer', file: string, backup: string | null } | null} */
 export function readConfigDamage(body) {
   if (!body || typeof body !== 'object') return null;
   const b = /** @type {Record<string, any>} */ (body);
@@ -41,7 +42,7 @@ export function readConfigDamage(body) {
   const detail = b.detail && typeof b.detail === 'object' ? b.detail : {};
   const file = typeof detail.file === 'string' && FILE_NAME.test(detail.file) ? detail.file : 'apps.json';
   const backup = typeof detail.backup === 'string' && FILE_NAME.test(detail.backup) ? detail.backup : null;
-  return { reason: /** @type {'corrupt' | 'unreadable'} */ (reason), file, backup };
+  return { reason: /** @type {'corrupt' | 'unreadable' | 'newer'} */ (reason), file, backup };
 }
 
 /** Translated markup with each name escaped once. The names are filled in after
@@ -66,7 +67,10 @@ export function fillNames(translate, vars, sanitize, escapeName) {
 export function recoverySteps({ reason, file, backup }) {
   const steps = [];
   if (reason === 'unreadable') steps.push({ key: 'configRecovery.stepPermissions', vars: { file } });
-  else {
+  else if (reason === 'newer') {
+    steps.push({ key: 'configRecovery.stepNewer' });
+    steps.push({ key: 'configRecovery.stepExport', vars: { file } });
+  } else {
     steps.push(
       backup
         ? { key: 'configRecovery.stepRepairBackup', vars: { file, backup } }
@@ -95,13 +99,19 @@ export function pickLanguage(preferred, supported) {
   return 'en';
 }
 
+const WHY = Object.freeze({
+  corrupt: 'configRecovery.whyCorrupt',
+  unreadable: 'configRecovery.whyUnreadable',
+  newer: 'configRecovery.whyNewer',
+});
+
 /** What the screen shows for an API error body, or null when the body is not
     one that stops the whole page.
     @param {unknown} body @param {string} [fallbackHost] the page's own address */
 export function screenFor(body, fallbackHost = '') {
   const damage = readConfigDamage(body);
   if (damage) {
-    const why = damage.reason === 'unreadable' ? 'configRecovery.whyUnreadable' : 'configRecovery.whyCorrupt';
+    const why = WHY[damage.reason];
     return {
       title: 'configRecovery.title',
       why: { key: why, vars: { file: damage.file } },
