@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reset the search overlay's edges when the window crosses to the desktop layout
   while search is open.
 
+- Stop an older version from rewriting a settings file saved by a newer one.
+
 ## [1.24.0] - 2026-11-22
 
 ### Added
