@@ -1,0 +1,101 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly.
+labels: [bug]
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you file
+      options:
+        - label: I searched the existing issues.
+          required: true
+        - label: I read [Troubleshooting](https://stackyard.sandobserver.com/docs/troubleshooting/) and [Error messages](https://stackyard.sandobserver.com/docs/troubleshooting/messages/).
+          required: true
+        - label: I removed passwords, API keys, tokens and private host names from everything below.
+          required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you expected, and what happened instead. Quote any message exactly.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Stackyard version
+      description: Shown in Settings, About.
+      placeholder: 1.24.0
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Install method
+      options:
+        - Docker Compose
+        - docker run
+        - Unraid
+        - TrueNAS
+        - Portainer
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: proxy
+    attributes:
+      label: Reverse proxy in front of Stackyard
+      options:
+        - None
+        - Caddy
+        - Traefik
+        - Nginx Proxy Manager
+        - nginx
+        - Cloudflare Tunnel
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: after-update
+    attributes:
+      label: Did this start after an update?
+      options:
+        - "No"
+        - "Yes"
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: service
+    attributes:
+      label: Widget or app, and the service's version
+      description: Only if the problem is with one widget or app.
+      placeholder: DNS widget, Pi-hole 6.1
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment variables you set
+      description: Names and values, without secrets. For example ALLOW_PRIVATE_IPS, TRUST_PROXY, TRUSTED_PROXY, LOG_LEVEL.
+      render: shell
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      description: For anything you see in the page. Set the browser zoom to 100% first.
+      placeholder: Safari 26.2 on iPhone
+  - type: textarea
+    id: logs
+    attributes:
+      label: Container log
+      description: From `docker logs <container>` around the time it happened. Include the request id if the page showed one.
+      render: shell

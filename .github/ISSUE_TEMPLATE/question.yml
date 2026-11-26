@@ -1,0 +1,24 @@
+name: Question
+description: Ask how to set something up, or whether Stackyard can do something.
+labels: [question]
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you ask
+      options:
+        - label: I searched the existing issues and the [documentation](https://stackyard.sandobserver.com/docs/).
+          required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What you are trying to do, and what you tried.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Stackyard version
+      description: Shown in Settings, About.
+      placeholder: 1.24.0
