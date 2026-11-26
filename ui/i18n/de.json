@@ -550,6 +550,9 @@
     "errBlocked": "Anfrage blockiert",
     "errInvalid": "Noch nicht eingerichtet",
     "errUpstream": "Dienstfehler",
+    "errCert": "Zertifikatsproblem",
+    "errRateLimit": "Zu viele Anfragen",
+    "errPermission": "Berechtigung fehlt",
     "errInternal": "Etwas ist schiefgelaufen"
   },
   "widgetCfg": {

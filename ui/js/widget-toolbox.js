@@ -129,9 +129,12 @@ export async function fetchData(endpoint, opts = {}) {
   }
   if (!r.ok) {
     const d = await r.json().catch(() => ({}));
-    const e = /** @type {Error & { status?: number, kind?: string }} */ (new Error(d.error || 'HTTP ' + r.status));
+    const e = /** @type {Error & { status?: number, kind?: string, code?: string }} */ (
+      new Error(d.error || 'HTTP ' + r.status)
+    );
     e.status = r.status;
     if (typeof d.kind === 'string') e.kind = d.kind;
+    if (typeof d.code === 'string') e.code = d.code;
     throw e;
   }
   const data = await r.json();

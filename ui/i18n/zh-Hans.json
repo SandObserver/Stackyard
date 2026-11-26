@@ -537,6 +537,9 @@
     "errBlocked": "请求被阻止",
     "errInvalid": "尚未配置",
     "errUpstream": "服务出错",
+    "errCert": "证书问题",
+    "errRateLimit": "请求过多",
+    "errPermission": "缺少权限",
     "errInternal": "出了点问题"
   },
   "widgetCfg": {

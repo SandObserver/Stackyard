@@ -550,6 +550,9 @@
     "errBlocked": "Request blocked",
     "errInvalid": "Not set up yet",
     "errUpstream": "Service error",
+    "errCert": "Certificate problem",
+    "errRateLimit": "Too many requests",
+    "errPermission": "Missing permission",
     "errInternal": "Something went wrong"
   },
   "widgetCfg": {

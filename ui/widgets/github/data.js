@@ -40,9 +40,16 @@ function prFilters(config) {
   return Array.isArray(raw) ? raw : [raw];
 }
 
+/** @param {any} r */
+function rateLimited(r) {
+  return r.status === 429 || (r.status === 403 && String(r.headers?.['x-ratelimit-remaining']) === '0');
+}
+
 function replyStatus(ctx, r, name) {
   if (r.status === 401) ctx.fail(`Invalid ${name} token`, { kind: ctx.KIND.AUTH });
-  if (r.status === 403) ctx.fail(`${name} refused the token, check its scopes`, { kind: ctx.KIND.AUTH });
+  if (rateLimited(r)) ctx.fail(`${name} rate limit reached`, { kind: ctx.KIND.UPSTREAM, code: 'upstream.rate-limit' });
+  if (r.status === 403)
+    ctx.fail(`${name} refused the token, check its scopes`, { kind: ctx.KIND.AUTH, code: 'auth.permission' });
   if (r.status === 404)
     ctx.fail(`${name} has no such user or API, check the URL and username`, { kind: ctx.KIND.INVALID });
   if (r.status >= 400) ctx.fail(`${name} HTTP ${r.status}`);
@@ -74,10 +81,12 @@ async function contributions(ctx, token, username) {
       'User-Agent': 'stackyard-dashboard/1.0',
     },
     body: JSON.stringify({ query, variables: { login: username } }),
+    withHeaders: true,
     timeout: 10000,
   });
 
   if (r.status === 401) ctx.fail('Invalid GitHub token', { kind: ctx.KIND.AUTH });
+  if (rateLimited(r)) ctx.fail('GitHub rate limit reached', { kind: ctx.KIND.UPSTREAM, code: 'upstream.rate-limit' });
   if (r.data && r.data.errors) ctx.fail('GitHub rejected the query — check the token scopes');
   if (r.status >= 400) ctx.fail('GitHub HTTP ' + r.status);
 
@@ -110,10 +119,12 @@ async function pullRequests(ctx, token, username, config) {
       'X-GitHub-Api-Version': '2022-11-28',
       'User-Agent': 'stackyard-dashboard/1.0',
     },
+    withHeaders: true,
     timeout: 10000,
   });
 
   if (r.status === 401) ctx.fail('Invalid GitHub token', { kind: ctx.KIND.AUTH });
+  if (rateLimited(r)) ctx.fail('GitHub rate limit reached', { kind: ctx.KIND.UPSTREAM, code: 'upstream.rate-limit' });
   if (r.status === 422) ctx.fail('Invalid search query — check username', { kind: ctx.KIND.INVALID });
   if (r.status >= 400) ctx.fail('GitHub HTTP ' + r.status);
   if (!Array.isArray(r.data?.items)) ctx.fail('GitHub returned no search results');

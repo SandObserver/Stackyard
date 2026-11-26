@@ -76,7 +76,7 @@ test('a reply cut off mid-body fails at once as a network error', { timeout: 500
   const err = await fetchUnchecked(`http://127.0.0.1:${port}/`, { timeout: 5000 }).catch(e => e);
   assert.ok(Date.now() - t0 < 2000, `took ${Date.now() - t0} ms`);
   assert.equal(err.code, 'ECONNRESET');
-  assert.deepEqual({ kind: errorBody(err).kind, code: errorBody(err).code }, { kind: 'network', code: 'network' });
+  assert.deepEqual({ kind: errorBody(err).kind, code: errorBody(err).code }, { kind: 'network', code: 'network.reset' });
 });
 
 test('a refused connection is not labelled as a certificate problem', { timeout: 5000 }, async () => {
@@ -84,7 +84,7 @@ test('a refused connection is not labelled as a certificate problem', { timeout:
   servers.pop().close();
   const err = await fetchUnchecked(`http://127.0.0.1:${probe}/`, { timeout: BUDGET }).catch(e => e);
   assert.equal(err.code, 'ECONNREFUSED');
-  assert.equal(errorBody(err).code, 'network');
+  assert.equal(errorBody(err).code, 'network.refused');
 });
 
 /* Keep the timer. A pending mocked lookup holds no handle and the run exits early. */

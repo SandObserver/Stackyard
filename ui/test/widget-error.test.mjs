@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire, register } from 'node:module';
+import { installDom } from './fake-dom.mjs';
 import { pageWithScripts } from './widget-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
@@ -206,4 +207,16 @@ test('every failure glyph is an icon from the shared set', async () => {
   const glyphs = [...src.matchAll(/^\s+\w+: \['(\w+)', 'err/gm)].map(m => m[1]);
   assert.ok(glyphs.length >= 6);
   for (const g of glyphs) assert.ok(ICONS['err-' + g], g);
+});
+
+test('a certificate, rate limit or permission failure gets its own line', async () => {
+  const { errorState } = await import('../js/widget-error.js');
+  const dom = installDom({ markup: '<div id="root"><p>data</p><div id="cap"></div></div>' });
+  const root = dom.document.getElementById('root');
+  const state = errorState({ root, caption: dom.document.getElementById('cap') });
+  assert.equal(state.fail({ kind: 'network', code: 'network.self-signed' }), 'Certificate problem');
+  assert.equal(state.fail({ kind: 'upstream', code: 'upstream.rate-limit' }), 'Too many requests');
+  assert.equal(state.fail({ kind: 'auth', code: 'auth.permission' }), 'Missing permission');
+  assert.equal(state.fail({ kind: 'auth', code: 'auth.upstream' }), 'Key rejected');
+  assert.equal(state.fail({ kind: 'network', code: 'network.refused' }), 'Out of reach');
 });

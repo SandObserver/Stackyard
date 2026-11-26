@@ -10,7 +10,18 @@ const CONTRIBUTIONS = { ...PRS, githubView: 'contributions' };
 
 const ctxFor = (config, reply) => ({ config, fetchJSON: async () => reply, ...errorParts() });
 
-for (const status of [403, 429, 500, 502]) {
+test('GitHub answering with its rate limit fails with the rate-limit code', async () => {
+  for (const reply of [
+    { status: 429, data: {} },
+    { status: 403, data: {}, headers: { 'x-ratelimit-remaining': '0' } },
+  ]) {
+    for (const config of [PRS, CONTRIBUTIONS]) {
+      await assert.rejects(dataFn(ctxFor(config, reply)), e => e.apiCode === 'upstream.rate-limit');
+    }
+  }
+});
+
+for (const status of [403, 500, 502]) {
   test(`a pull request search answered ${status} fails instead of showing no pull requests`, async () => {
     await assert.rejects(dataFn(ctxFor(PRS, { status, data: { message: 'API rate limit exceeded' } })), /HTTP/);
   });

@@ -75,7 +75,7 @@ test('errorBody replaces the original message with one chosen by kind', () => {
   assert.deepEqual(errorBody(e), {
     error: 'Could not reach the service.',
     kind: KIND.NETWORK,
-    code: KIND.NETWORK,
+    code: 'network.refused',
     detail: { code: 'ECONNREFUSED' },
   });
 });
@@ -87,8 +87,12 @@ test('a refinement of the kind travels as a dotted code', () => {
   const blocked = Object.assign(new Error('x'), { name: 'SsrfBlockedError', detail: { reason: 'private-address' } });
   assert.equal(errorBody(blocked).code, 'blocked.private-address');
 
-  const tls = Object.assign(new Error('x'), { code: 'DEPTH_ZERO_SELF_SIGNED_CERT' });
+  const selfSigned = Object.assign(new Error('x'), { code: 'DEPTH_ZERO_SELF_SIGNED_CERT' });
+  assert.equal(errorBody(selfSigned).code, 'network.self-signed');
+  const tls = Object.assign(new Error('x'), { code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' });
   assert.equal(errorBody(tls).code, 'network.tls-untrusted');
+  const slow = Object.assign(new Error('x'), { code: 'ETIMEDOUT' });
+  assert.equal(errorBody(slow).code, 'timeout.no-answer');
 
   const tagged = Object.assign(new Error('x'), { kind: KIND.UPSTREAM, apiCode: 'upstream.redirect' });
   assert.equal(errorBody(tagged).code, 'upstream.redirect');
@@ -98,7 +102,9 @@ test('a refinement of the kind travels as a dotted code', () => {
    send the client ECONNREFUSED as something to translate. */
 test('a syscall name on the error is never mistaken for the API code', () => {
   const e = Object.assign(new Error('x'), { code: 'ECONNREFUSED' });
-  assert.equal(errorBody(e).code, KIND.NETWORK);
+  assert.equal(errorBody(e).code, 'network.refused');
+  const unknown = Object.assign(new Error('x'), { code: 'ENETDOWN' });
+  assert.equal(errorBody(unknown).code, KIND.NETWORK);
 });
 
 test('every error body carries a code, and it starts with its kind', () => {

@@ -1,6 +1,7 @@
 const { on, json, getIp, readBody, checkOrigin } = require('../router');
 const { rateLimit } = require('../auth');
 const { KIND } = require('../api-error');
+const failureLog = require('../failure-log');
 const LIMITS = require('../poll-limits');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -41,10 +42,29 @@ function socketProxyUrl(cfg) {
   return cfg.settings?.server?.socketProxyUrl || SOCKET_PROXY_URL_DEFAULT;
 }
 
+/* A symbol key, so no container name can collide with it. */
+const SOCKET_FAILED = Symbol('socket failed');
+
+/** @param {string} code */
+function socketFailed(code) {
+  const out = Object.create(null);
+  out[SOCKET_FAILED] = code;
+  return out;
+}
+
 async function fetchContainerHealth(socketUrl) {
+  const logKey = `containers:${socketUrl}`;
   try {
     const r = await dockerGet(socketUrl, '/containers/json?all=true');
-    if (!Array.isArray(r.data)) return Object.create(null);
+    if (r.status === 401 || r.status === 403) {
+      failureLog.failed(logKey, 'container health fetch failed', {}, `socket proxy answered ${r.status}`);
+      return socketFailed('upstream.refused');
+    }
+    if (!Array.isArray(r.data)) {
+      failureLog.failed(logKey, 'container health fetch failed', {}, 'the reply is not a container list');
+      return socketFailed('upstream.not-docker');
+    }
+    failureLog.recovered(logKey, 'container health fetch recovered', {});
     /* Null prototype. Keys are container names, so on an ordinary object a
        container called "constructor" matches an inherited value and one that
        does not exist reports healthy. */
@@ -64,8 +84,8 @@ async function fetchContainerHealth(socketUrl) {
     }
     return out;
   } catch (e) {
-    log.error('container health fetch failed', { error: e.message });
-    return Object.create(null);
+    failureLog.failed(logKey, 'container health fetch failed', {}, e.message);
+    return socketFailed(errorBody(e).code);
   }
 }
 
@@ -321,6 +341,7 @@ on('GET', '/api/health', async (req, res) => {
           unhealthy = !c || c.unhealthy;
           detail.state = c?.state || 'unknown';
           detail.status = c?.status || '';
+          if (containers[SOCKET_FAILED]) detail.containerCode = containers[SOCKET_FAILED];
         }
         if (ping) {
           /* status 0 is a host that never answered. A status of any kind means
@@ -333,6 +354,7 @@ on('GET', '/api/health', async (req, res) => {
           }
           detail.pingStatus = r.status;
           detail.pingError = r.error;
+          if (r.code) detail.pingCode = r.code;
         }
         if (vmid != null) {
           const r = guestsReady

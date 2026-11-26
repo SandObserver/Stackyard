@@ -550,6 +550,9 @@
     "errBlocked": "درخواست مسدود شد",
     "errInvalid": "هنوز تنظیم نشده",
     "errUpstream": "خطای سرویس",
+    "errCert": "مشکل گواهی",
+    "errRateLimit": "درخواست‌های بیش از حد",
+    "errPermission": "مجوز کافی نیست",
     "errInternal": "مشکلی پیش آمد"
   },
   "widgetCfg": {

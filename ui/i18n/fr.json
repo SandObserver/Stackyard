@@ -563,6 +563,9 @@
     "errBlocked": "Requête bloquée",
     "errInvalid": "Pas encore configuré",
     "errUpstream": "Erreur du service",
+    "errCert": "Problème de certificat",
+    "errRateLimit": "Trop de requêtes",
+    "errPermission": "Autorisation manquante",
     "errInternal": "Une erreur est survenue"
   },
   "widgetCfg": {
