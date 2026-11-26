@@ -48,6 +48,7 @@
     "hideHealthy": "隐藏健康徽章",
     "socketUrl": "Docker 套接字代理地址",
     "loggingTip": "设为“错误”时只记录警告和错误。安全事件始终记录。",
+    "loggingFromEnv": "已为容器设置 LOG_LEVEL，因此此设置不起作用。",
     "socketTip": "请使用<strong>套接字代理</strong>容器的地址，而不是 Docker 套接字本身。像 <code>http://socket-proxy:2375</code> 这样的名称只有在本容器与代理位于同一个 Docker 网络时才有效；IP 地址只有在代理将端口发布到主机回环之外时才有效。",
     "security": "安全",
     "signOutEverywhereTip": "退出所有浏览器和设备，包括当前设备。如果怀疑某个会话未关闭或已泄露，可以使用此功能。密码不会更改。",

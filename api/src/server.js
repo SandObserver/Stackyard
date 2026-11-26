@@ -66,6 +66,9 @@ function onListening() {
     node: process.version,
   });
 
+  for (const line of require('./env-warnings').envWarnings(process.env, log.envLevel()))
+    log.warn(line.msg, line.fields);
+
   if (process.env.TRUST_PROXY === 'true') {
     if (process.env.TRUSTED_PROXY)
       log.warn(

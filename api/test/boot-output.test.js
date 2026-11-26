@@ -138,8 +138,25 @@ test('the widget registry inventory is still available at debug', async () => {
 test('a log level saved in Settings applies to the first boot logs', async () => {
   const config = path.join(tmpDir('boot-stored-level'), 'apps.json');
   fs.writeFileSync(config, JSON.stringify({ items: [], settings: { logLevel: 'debug' } }));
-  const out = await boot({ CONFIG_PATH: config });
+  const out = await boot({ CONFIG_PATH: config, LOG_LEVEL: '' });
   assert.match(out, /DBG msg="widget registry loaded"/);
+});
+
+test('LOG_LEVEL wins over the level saved in Settings', async () => {
+  const config = path.join(tmpDir('boot-env-level'), 'apps.json');
+  fs.writeFileSync(config, JSON.stringify({ items: [], settings: { logLevel: 'debug' } }));
+  const out = await boot({ CONFIG_PATH: config, LOG_LEVEL: 'info' });
+  assert.doesNotMatch(out, /DBG /);
+});
+
+test('an environment value Stackyard cannot use is named at start', async () => {
+  const out = await boot({ LOG_LEVEL: 'verbose', SESSION_MAX_AGE_DAYS: 'x', ALLOW_PRIVATE_IPS: 'yes' });
+  assert.match(
+    out,
+    /WRN msg="LOG_LEVEL is not debug, info, warn or error; the level from Settings is used" value=verbose/,
+  );
+  assert.match(out, /WRN msg="SESSION_MAX_AGE_DAYS is not a number above 0; sessions last 12 hours" value=x/);
+  assert.match(out, /WRN msg="ALLOW_PRIVATE_IPS is not true or false; private addresses stay blocked" value=yes/);
 });
 
 test('TRUST_PROXY with TRUSTED_PROXY set warns exactly once', async () => {

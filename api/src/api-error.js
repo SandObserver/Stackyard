@@ -5,7 +5,7 @@
    `code` is a stable identifier. Renaming one changes what every client shows.
    `error` is prose for a log. It is never translated, so no client renders it. */
 
-const { json } = require('./router');
+const { json, requestIdOf } = require('./router');
 const log = require('./log');
 
 const KIND = Object.freeze({
@@ -158,7 +158,16 @@ function fail(res, e, opts = {}) {
     /* A SyntaxError message quotes the text it failed on, which can be a
        password or an API key. */
     const logged = e instanceof SyntaxError ? 'not valid JSON' : thrown.message;
-    log.error('request failed', { kind: body.kind, status: code, error: logged });
+    const req = /** @type {{ method?: string, url?: string } | undefined} */ (/** @type {any} */ (res).req);
+    log.error('request failed', {
+      request: requestIdOf(res),
+      method: req?.method,
+      path: req?.url ? String(req.url).split('?')[0] : undefined,
+      kind: body.kind,
+      code: body.code,
+      status: code,
+      error: logged,
+    });
   }
 
   json(res, code, Object.assign({}, extra, body));

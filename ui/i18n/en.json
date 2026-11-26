@@ -48,6 +48,7 @@
     "hideHealthy": "Hide Healthy Badge",
     "socketUrl": "Docker Socket URL",
     "loggingTip": "Setting this to Errors logs warnings and errors only. Security events are always logged.",
+    "loggingFromEnv": "LOG_LEVEL is set for the container, so this setting has no effect.",
     "socketTip": "Use the URL of a <strong>socket proxy</strong> container, never the Docker socket itself. A name such as <code>http://socket-proxy:2375</code> works only when this container and the proxy share a Docker network; an IP address works only when the proxy publishes its port beyond the host’s own loopback.",
     "security": "Security",
     "signOutEverywhereTip": "Signs out every browser and device, including this one. Use it if you think a session may have been left open or compromised. Your password does not change.",

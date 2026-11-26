@@ -342,6 +342,16 @@ function _tightenEarlierFiles() {
   }
 }
 
+/** Where JSON.parse stopped, as " at line L column C", or "" when it gave no
+    position. Only the numbers are taken from the message.
+    @param {string} raw @param {unknown} e */
+function jsonErrorAt(raw, e) {
+  const at = /\bat position (\d+)/.exec(String(/** @type {any} */ (e)?.message))?.[1];
+  if (at === undefined) return '';
+  const before = raw.slice(0, Number(at)).split('\n');
+  return ` at line ${before.length} column ${before[before.length - 1].length + 1}`;
+}
+
 function _readDisk() {
   let raw;
   try {
@@ -359,9 +369,9 @@ function _readDisk() {
   let parsed;
   try {
     parsed = JSON.parse(raw);
-  } catch {
+  } catch (e) {
     /* Never log the parser's message. It quotes the file, secrets included. */
-    _markDamaged('corrupt', 'not valid JSON', _backupCorrupt(raw));
+    _markDamaged('corrupt', `not valid JSON${jsonErrorAt(raw, e)}`, _backupCorrupt(raw));
     return null;
   }
 

@@ -48,6 +48,7 @@
     "hideHealthy": "Ocultar insignia de estado correcto",
     "socketUrl": "URL del socket de Docker",
     "loggingTip": "Con el nivel en Errores solo se registran advertencias y errores. Los eventos de seguridad siempre se registran.",
+    "loggingFromEnv": "LOG_LEVEL está definido para el contenedor, así que este ajuste no tiene efecto.",
     "socketTip": "Usa la URL de un contenedor <strong>proxy de socket</strong>, nunca el socket de Docker. Un nombre como <code>http://socket-proxy:2375</code> solo funciona si este contenedor y el proxy comparten una red de Docker; una dirección IP solo funciona si el proxy publica su puerto fuera de la interfaz de loopback del host.",
     "security": "Seguridad",
     "signOutEverywhereTip": "Cierra la sesión en todos los navegadores y dispositivos, incluido este. Útil si crees que una sesión quedó abierta o comprometida. Tu contraseña no cambia.",

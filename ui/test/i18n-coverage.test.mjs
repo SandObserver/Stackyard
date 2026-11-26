@@ -353,6 +353,9 @@ const LATIN_OK = [
   'ALLOW',
   'PRIVATE',
   'IPS',
+  /* The LOG_LEVEL variable name is typed, not read. */
+  'LOG',
+  'LEVEL',
   'true',
   'chars',
   'rrggbb',
