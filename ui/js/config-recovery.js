@@ -2,7 +2,7 @@
 import { esc, html, raw, setHtml } from '/js/html.js?v=48f9dc21';
 import { LANGUAGES, initI18n, t } from '/js/i18n.js?v=82ba9da2';
 import { sanitizeI18nMarkup } from '/js/i18n-markup.js?v=8af955bf';
-import { setupErrorKey } from '/js/admin-error.js?v=08a3f8cb';
+import { setupErrorKey } from '/js/admin-error.js?v=0709ebe3';
 import { fillNames, pickLanguage, screenFor } from '/js/config-recovery-logic.js?v=b5057623';
 import { contextWords, passwordMismatch, passwordProblem, REFUSAL_KEYS } from '/js/password-policy.js?v=e16ebd1a';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=bdd477f5';

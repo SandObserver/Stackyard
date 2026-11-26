@@ -1,9 +1,9 @@
-import { announce, apiGet, apiPost } from '/js/admin-shared.js?v=fc3e9049';
+import { announce, apiGet, apiPost } from '/js/admin-shared.js?v=0421657c';
 import { initI18n, t } from '/js/i18n.js?v=82ba9da2';
-import { loginErrorAdvice } from '/js/admin-error.js?v=08a3f8cb';
+import { loginErrorAdvice } from '/js/admin-error.js?v=0709ebe3';
 import { passwordMeter, contextWords, meterColor } from '/js/password-policy.js?v=e16ebd1a';
 import { el, inp as inpById, qa, setLiveText } from '/js/utils.js?v=457d9918';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=17cd0093';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=ab902aaa';
 import { fillUsernames, setRevealed, wireReveal } from '/js/password-reveal.js?v=bdd477f5';
 
 export async function checkAuth(onLogin) {

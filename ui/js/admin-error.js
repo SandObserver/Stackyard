@@ -20,6 +20,7 @@ export const TONE = Object.freeze({ WARN: 'warn', ERROR: 'error' });
 const BY_CODE = Object.freeze({
   'auth.upstream': 'adminError.keyRejected',
   'blocked.private-address': 'adminError.privateAddress',
+  'invalid.origin': 'adminError.originMismatch',
   'blocked.link-local': 'adminError.linkLocal',
   'invalid.retype': 'adminError.retype',
   'upstream.redirect': 'adminError.redirect',
@@ -174,6 +175,7 @@ export function loginErrorAdvice(e) {
   const { kind, code, detail } = readError(e);
   if (code === 'blocked.rate-limit') return rateLimitAdvice(detail);
   if (kind === KIND.AUTH) return { key: 'login.incorrect' };
+  if (code === 'invalid.origin') return { key: BY_CODE[code] };
   if (unanswered(e)) return { key: 'adminError.offline' };
   return { key: 'adminError.genericInternal' };
 }
@@ -202,6 +204,6 @@ export function setupErrorKey(e) {
   if (kind === KIND.AUTH) return 'toast.passwordChangedElsewhere';
   const refusal = passwordRefusalKey(e);
   if (refusal) return refusal;
-  if (code.startsWith('internal.') && BY_CODE[code]) return BY_CODE[code];
+  if ((code.startsWith('internal.') || code === 'invalid.origin') && BY_CODE[code]) return BY_CODE[code];
   return 'setup.failed';
 }
