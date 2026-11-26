@@ -158,6 +158,16 @@ test('our own expired session does not offer an upstream API key', () => {
   assert.equal(a.key, 'adminError.sessionExpired');
 });
 
+test('a service that rejects a widget key does not report an expired session', () => {
+  for (const advise of [badgeErrorAdvice, optionsErrorAdvice]) {
+    const a = advise({ kind: KIND.AUTH, code: 'auth.upstream' });
+    assert.equal(a.key, 'adminError.keyRejected');
+    assert.equal(a.tone, TONE.WARN);
+    assert.notEqual(a.sessionExpired, true);
+  }
+  assert.equal(badgeErrorAdvice({ kind: KIND.AUTH, code: 'auth.session' }).sessionExpired, true);
+});
+
 /* A private address is what most homelab installs point a badge at, and one
    setting unblocks it. It is a fixable setting, not a hard error. */
 test('a blocked private address names the setting that allows it', () => {

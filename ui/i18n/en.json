@@ -265,6 +265,7 @@
   },
   "adminError": {
     "sessionExpired": "Your session has expired. Sign in again to continue.",
+    "keyRejected": "The service rejected the key or password. Check it in this form.",
     "authRequired": "Authentication required. Enable the Authentication toggle below and add your API key.",
     "unreachable": "Can't reach this address from Docker. Try using the container name.",
     "privateAddress": "Most homelab services live on private IPs. Set ALLOW_PRIVATE_IPS=true and restart the container.",

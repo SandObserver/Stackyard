@@ -84,6 +84,7 @@ function codeFor(kind, detail, e) {
   if (kind === KIND.NETWORK && detail && TLS_CODES.has(/** @type {string} */ (detail.code))) {
     return `${kind}.tls-untrusted`;
   }
+  if (kind === KIND.AUTH) return 'auth.upstream';
   return kind;
 }
 

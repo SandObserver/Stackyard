@@ -265,6 +265,7 @@
   },
   "adminError": {
     "sessionExpired": "Deine Sitzung ist abgelaufen. Melde dich erneut an, um fortzufahren.",
+    "keyRejected": "Der Dienst hat den Schlüssel oder das Passwort abgelehnt. Prüfe die Angabe in diesem Formular.",
     "authRequired": "Authentifizierung erforderlich. Schalte unten „Authentifizierung“ ein und trage deinen API-Schlüssel ein.",
     "unreachable": "Diese Adresse ist aus Docker nicht erreichbar. Versuch es mit dem Containernamen.",
     "privateAddress": "Die meisten Homelab-Dienste laufen unter privaten IP-Adressen. Setze ALLOW_PRIVATE_IPS=true und starte den Container neu.",

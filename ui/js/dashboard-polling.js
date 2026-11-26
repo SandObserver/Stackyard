@@ -23,6 +23,10 @@ export function createPolling({ badges, differs, rev = () => null }) {
       const init = { cache: 'no-store', priority: 'low' };
       if (Number.isSafeInteger(loaded)) init.headers = { 'If-None-Match': `"${loaded}"` };
       const res = await fetch('/api/config', init);
+      if (res.status === 401) {
+        location.reload();
+        return;
+      }
       if (res.status === 304 || !res.ok) return;
       if (differs(await res.json()) && !overlayOpen() && !strip.classList.contains('dragging')) location.reload();
     } catch {}

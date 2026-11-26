@@ -1,9 +1,9 @@
-import { initAboutLogo, initVersion } from '/js/admin-about.js?v=5c45936b';
-import { render } from '/js/admin-list.js?v=7420dbfd';
-import { titleSettingsPage } from '/js/admin-nav.js?v=33e2c962';
-import { loadSettings } from '/js/admin-settings.js?v=4c55256f';
-import { syncPickerLabels } from '/js/admin-settings-controls.js?v=9306d0ed';
-import { apiGet, errorText, nameEditPen, toast } from '/js/admin-shared.js?v=2c7a9e54';
+import { initAboutLogo, initVersion } from '/js/admin-about.js?v=517f1c89';
+import { render } from '/js/admin-list.js?v=71c919a2';
+import { titleSettingsPage } from '/js/admin-nav.js?v=ec90e324';
+import { loadSettings } from '/js/admin-settings.js?v=8b583d13';
+import { syncPickerLabels } from '/js/admin-settings-controls.js?v=b5e94cef';
+import { apiGet, errorText, nameEditPen, toast } from '/js/admin-shared.js?v=fc3e9049';
 import { collapsedFolders, state } from '/js/admin-state.js?v=064b9b85';
 import { applyBackground, firstViewWait, rememberBackground, resolveBackground } from '/js/background.js?v=51e46417';
 import { html, setHtml } from '/js/html.js?v=48f9dc21';
