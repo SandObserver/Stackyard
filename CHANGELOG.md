@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add a request id to every API answer and its log line.
 
+- Add a link to password help on the sign-in screen.
+
 ### Changed
 
 - Bend the Settings tab bar on phones like iOS: the glass lens lifts on any
@@ -68,6 +70,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Explain a sign-in or save refused because a reverse proxy rewrote the Host
   header.
+
+- Name the reason a settings save or import was refused.
+
+- Ask to wait when sign-in is busy, and say when the device is offline.
+
+- Reload an open dashboard after Stackyard is updated.
 
 ## [1.24.0] - 2026-11-22
 
