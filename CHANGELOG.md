@@ -43,6 +43,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stop an older version from rewriting a settings file saved by a newer one.
 
+- Explain a dashboard or Settings page whose scripts cannot start, instead of
+  loading forever.
+
+- Keep a widget's working frame when a refresh of it fails to start.
+
 ## [1.24.0] - 2026-11-22
 
 ### Added
