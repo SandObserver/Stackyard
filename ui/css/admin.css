@@ -523,6 +523,11 @@ label.tog,.adm-range,.hsb-range,.segr,.segr-opt{touch-action:pinch-zoom}
 .row-invalid .rl{color:var(--danger)}
 .row-status.warn{color:var(--warning)}
 .st-ico{display:inline-flex;vertical-align:-2px;margin-inline-end:4px}
+.st-ref{display:inline;margin-inline-start:6px;color:var(--dm)}
+.st-ref summary{display:inline;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.st-ref summary:active{opacity:var(--press-dim)}
+.st-ref summary:focus-visible{outline:2px solid var(--ac);outline-offset:2px;border-radius:4px}
+.st-ref code{display:block;margin-top:2px;font-family:monospace;user-select:all;overflow-wrap:anywhere;direction:ltr;unicode-bidi:isolate}
 .st-act{min-height:24px;padding:2px 10px;border:0;border-radius:999px;background:var(--fill-tertiary);color:var(--tx);font:inherit;font-weight:600;cursor:pointer}
 .st-act:active{opacity:var(--press-dim)}
 .grp-tip.warn{color:var(--warning)}

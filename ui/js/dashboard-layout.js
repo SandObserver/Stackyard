@@ -1,14 +1,14 @@
 import { restorePage } from '/js/dashboard-logic.js?v=b4828b62';
-import { PAGE_STORE } from '/js/dashboard-pager.js?v=d5f72484';
+import { PAGE_STORE } from '/js/dashboard-pager.js?v=3b37950f';
 import { tryBuild } from '/js/dashboard-screens.js?v=79b0c104';
 import { onLayoutChange } from '/js/layout.js?v=6680c0bf';
-import { buildMobile } from '/js/ui.js?v=399bb265';
+import { buildMobile } from '/js/ui.js?v=70d40c34';
 import { el, loadImagesNow, storeGet } from '/js/utils.js?v=457d9918';
 
 /** @param {{
       dash: import('/js/dashboard-state.js?v=51013727').DashboardState,
-      grid: import('/js/dashboard-grid.js?v=0425794e').DesktopGrid,
-      pager: import('/js/dashboard-pager.js?v=d5f72484').Pager,
+      grid: import('/js/dashboard-grid.js?v=1dff8705').DesktopGrid,
+      pager: import('/js/dashboard-pager.js?v=3b37950f').Pager,
       wallpaper: import('/js/dashboard-wallpaper.js?v=9158baca').Wallpaper,
     }} deps */
 export function createLayout({ dash, grid, pager, wallpaper }) {

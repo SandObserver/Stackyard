@@ -8,7 +8,7 @@ register('./js-root-hooks.mjs', import.meta.url);
 /* toast writes into an element; nothing here asserts on it. */
 globalThis.document = { getElementById: () => null, querySelectorAll: () => [], addEventListener() {} };
 
-const { apiGet, apiPost, apiUpload, setReauthHandler } = await import('../js/admin-shared.js');
+const { apiGet, apiPost, apiUpload, errorReference, setReauthHandler } = await import('../js/admin-shared.js');
 
 /* A session that expired under someone who was still working. The first request
    answers 401, and whatever the queue does next decides whether their work
@@ -204,4 +204,17 @@ test('a file over the limit is refused before it is sent', async () => {
     e => e.code === 'invalid.too-large',
   );
   assert.equal(calls.length, 0);
+});
+
+test('a failure names its code and request id, and nothing that is not one', async () => {
+  fakeFetch([]);
+  globalThis.fetch = async () => ({
+    ok: false,
+    status: 502,
+    json: async () => ({ error: 'x', kind: 'network', code: 'network.refused', requestId: '3f9a1c07' }),
+  });
+  const e = await apiPost('/api/widget-options', {}).catch(err => err);
+  assert.equal(errorReference(e), 'network.refused · 3f9a1c07');
+  assert.equal(errorReference({ code: 'ECONNREFUSED 10.0.0.1', requestId: '<b>' }), '');
+  assert.equal(errorReference({ code: 'network' }), 'network');
 });

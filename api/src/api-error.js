@@ -7,6 +7,7 @@
 
 const { json, requestIdOf } = require('./router');
 const log = require('./log');
+const { NET_CODES } = require('./net-codes');
 
 const KIND = Object.freeze({
   NETWORK: 'network',
@@ -68,6 +69,7 @@ class WidgetError extends Error {
     this.vouchedMessage = message;
     this.kind = opts.kind || KIND.UPSTREAM;
     if (opts.detail) this.detail = opts.detail;
+    if (typeof opts.code === 'string' && opts.code) this.apiCode = opts.code;
   }
 }
 
@@ -81,10 +83,13 @@ function codeFor(kind, detail, e) {
     return /** @type {any} */ (e).apiCode;
   }
   if (kind === KIND.BLOCKED && detail && typeof detail.reason === 'string') return `${kind}.${detail.reason}`;
-  if (kind === KIND.NETWORK && detail && TLS_CODES.has(/** @type {string} */ (detail.code))) {
-    return `${kind}.tls-untrusted`;
+  if (kind === KIND.NETWORK && detail) {
+    const name = /** @type {string} */ (detail.code);
+    if (Object.hasOwn(NET_CODES, name)) return NET_CODES[name];
+    if (TLS_CODES.has(name)) return `${kind}.tls-untrusted`;
   }
   if (kind === KIND.AUTH) return 'auth.upstream';
+  if (kind === KIND.TIMEOUT) return 'timeout.no-answer';
   return kind;
 }
 

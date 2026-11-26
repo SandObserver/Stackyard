@@ -19,7 +19,25 @@ const COPY = {
   internal: ['odd', 'errInternal', 'Something went wrong'],
 };
 
+/* code -> a line more precise than its kind's */
+const BY_CODE = {
+  'network.self-signed': ['blocked', 'errCert', 'Certificate problem'],
+  'network.self-signed-public': ['blocked', 'errCert', 'Certificate problem'],
+  'network.tls-expired': ['blocked', 'errCert', 'Certificate problem'],
+  'network.tls-untrusted': ['blocked', 'errCert', 'Certificate problem'],
+  'upstream.rate-limit': ['slow', 'errRateLimit', 'Too many requests'],
+  'blocked.rate-limit': ['slow', 'errRateLimit', 'Too many requests'],
+  'auth.permission': ['key', 'errPermission', 'Missing permission'],
+};
+
 const FALLBACK = 'internal';
+
+/** @param {unknown} err @returns {string[]} [glyph, catalog key, English] */
+function copyFor(err) {
+  const code = err && typeof err === 'object' ? /** @type {{ code?: unknown }} */ (err).code : undefined;
+  if (typeof code === 'string' && Object.hasOwn(BY_CODE, code)) return BY_CODE[code];
+  return COPY[errorKind(err)] || COPY[FALLBACK];
+}
 
 /** The kind the API sent, or the nearest one a bare fetch failure implies.
     @param {unknown} err @returns {string} */
@@ -38,6 +56,11 @@ export function errorKind(err) {
 /** @param {string} kind @param {Document} doc @returns {Element} */
 export function kindGlyph(kind, doc) {
   const [g] = COPY[kind] || COPY[FALLBACK];
+  return glyphFor(g, doc);
+}
+
+/** @param {string} g @param {Document} doc @returns {Element} */
+function glyphFor(g, doc) {
   const id = `err-${g}`;
   const { defs, sym } = symbol(id, ICONS[id]);
   const src = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><defs>${defs}</defs>${sym.replace(/<\/?symbol[^>]*>/g, '')}</svg>`;
@@ -140,12 +163,11 @@ export function errorState(opts = {}) {
         @param {unknown} err @param {{ since?: string, inert?: boolean }} [info]
         @returns {string} the line drawn, for an accessible name */
     fail(err, info = {}) {
-      const kind = errorKind(err);
-      const { key, text } = errorCopy(kind);
+      const [g, key, text] = copyFor(err);
       const line = t(key, text);
       const dim = info.inert !== false;
       for (const el of contentOf()) el.classList.toggle('wt-inert', dim);
-      paint(kindGlyph(kind, doc), line, info.since || '');
+      paint(glyphFor(g, doc), line, info.since || '');
       return line;
     },
     /** @param {string} text */

@@ -19,6 +19,8 @@ export const TONE = Object.freeze({ WARN: 'warn', ERROR: 'error' });
 
 const BY_CODE = Object.freeze({
   'auth.upstream': 'adminError.keyRejected',
+  'auth.permission': 'adminError.permissionMissing',
+  'upstream.rate-limit': 'adminError.rateLimited',
   'blocked.private-address': 'adminError.privateAddress',
   'invalid.origin': 'adminError.originMismatch',
   'blocked.busy': 'adminError.busy',
@@ -161,7 +163,7 @@ export function badgeErrorAdvice(e) {
   const { kind, code, detail } = read;
   const status = detail && typeof detail.status === 'number' ? detail.status : null;
 
-  if (kind === KIND.AUTH && code !== 'auth.upstream') {
+  if (kind === KIND.AUTH && (code === KIND.AUTH || code === 'auth.session')) {
     return { tone: TONE.ERROR, code, key: 'adminError.sessionExpired', openAuth: false, sessionExpired: true };
   }
 

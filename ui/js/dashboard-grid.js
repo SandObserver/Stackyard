@@ -3,7 +3,7 @@ import { desktopCols, desktopPages } from '/js/dashboard-logic.js?v=b4828b62';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { currentLang, t } from '/js/i18n.js?v=82ba9da2';
 import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=bc10e843';
-import { closeFolders, mkFolder, resetMobileChrome } from '/js/ui.js?v=399bb265';
+import { closeFolders, mkFolder, resetMobileChrome } from '/js/ui.js?v=70d40c34';
 import {
   mkWrap as _mkWrap,
   el,
@@ -13,7 +13,7 @@ import {
   renderEmptyState,
   setCentredText,
 } from '/js/utils.js?v=457d9918';
-import { mountScaledWidget, teardownWidgets } from '/js/widget-frame.js?v=ee03dead';
+import { mountScaledWidget, teardownWidgets } from '/js/widget-frame.js?v=803ef3fd';
 import {
   cardPreset,
   fixedAppearance,
@@ -63,7 +63,7 @@ const hasDock = items => items.some(inDock);
 
 /** @param {{
       dash: import('/js/dashboard-state.js?v=51013727').DashboardState,
-      badges: import('/js/dashboard-badges.js?v=a6f982e9').Badges,
+      badges: import('/js/dashboard-badges.js?v=910ee473').Badges,
       goTo: (i: number) => void,
     }} deps */
 export function createDesktopGrid({ dash, badges, goTo }) {

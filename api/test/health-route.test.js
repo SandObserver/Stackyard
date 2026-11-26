@@ -178,3 +178,23 @@ test('a stalled socket proxy delays the health reply by at most the batch timeou
   assert.equal(r.pingStatus, 200, 'the ping ran while the proxy stalled');
   assert.equal(r.state, 'unknown');
 });
+
+async function deadUrl() {
+  const s = http.createServer();
+  const url = await listen(s);
+  await close(s);
+  return url;
+}
+
+test('a socket proxy that does not answer is named, not reported as a missing container', async () => {
+  configure({ container: 'myapp' }, await deadUrl());
+  const r = (await health()).a1;
+  assert.equal(r.state, 'unknown');
+  assert.equal(r.containerCode, 'network.refused');
+});
+
+test('a ping that is refused sends the reason as a code', async () => {
+  configure(checks({ pingUrl: `${await deadUrl()}/` }), '');
+  const r = (await health()).a1;
+  assert.equal(r.pingCode, 'network.refused');
+});

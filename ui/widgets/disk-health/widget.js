@@ -1,4 +1,4 @@
-import { poll, fetchData, openUrl, html, setHtml, loadStrings, wt, wtCount, formatNumber, formatList, formatBytes, errorState, cssZoom, twoTap } from '/js/widget-toolbox.js?v=039ea657';
+import { poll, fetchData, openUrl, html, setHtml, loadStrings, wt, wtCount, formatNumber, formatList, formatBytes, errorState, cssZoom, twoTap } from '/js/widget-toolbox.js?v=6c1a1c45';
 await loadStrings();
 document.getElementById('root').setAttribute('aria-label', wt('ui.diskHealth','Disk health'));
 const params    = new URLSearchParams(location.search);

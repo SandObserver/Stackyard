@@ -25,6 +25,7 @@
     "addLabel": "Ajouter",
     "back": "Retour",
     "cancel": "Annuler",
+    "details": "Détails",
     "delete": "Supprimer",
     "language": "Langue",
     "showPassword": "Afficher le mot de passe",
@@ -272,6 +273,8 @@
   "adminError": {
     "sessionExpired": "Votre session a expiré. Reconnectez-vous pour continuer.",
     "keyRejected": "Le service a refusé la clé ou le mot de passe. Vérifiez-les dans ce formulaire.",
+    "permissionMissing": "La clé fonctionne, mais il lui manque une autorisation dont ce widget a besoin. Vérifiez son rôle ou ses portées.",
+    "rateLimited": "Le service limite les requêtes. Patientez quelques minutes, puis réessayez.",
     "authRequired": "Authentification requise. Activez l’option « Authentification » ci-dessous et ajoutez votre clé d’API.",
     "unreachable": "Cette adresse est injoignable depuis Docker. Essayez le nom du conteneur.",
     "privateAddress": "La plupart des services de homelab utilisent des IP privées. Définissez ALLOW_PRIVATE_IPS=true et redémarrez le conteneur.",
@@ -563,6 +566,9 @@
     "errBlocked": "Requête bloquée",
     "errInvalid": "Pas encore configuré",
     "errUpstream": "Erreur du service",
+    "errCert": "Problème de certificat",
+    "errRateLimit": "Trop de requêtes",
+    "errPermission": "Autorisation manquante",
     "errInternal": "Une erreur est survenue"
   },
   "widgetCfg": {

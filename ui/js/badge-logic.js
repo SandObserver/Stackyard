@@ -34,6 +34,22 @@ const EN = {
   'adminError.notProxmox': 'Something answered there, but it is not Proxmox.',
   'adminError.proxmoxMissing': 'Enter the Proxmox address, token ID and secret under Health Checks in General.',
   'adminError.timedOut': 'The service did not answer in time.',
+  'adminError.refused': 'The host refused the connection. Check the port.',
+  'adminError.hostNotFound': 'The host name could not be found.',
+  'adminError.hostUnreachable': 'The host could not be reached on the network.',
+  'adminError.connectionReset': 'The service closed the connection before it answered.',
+  'adminError.notHttp': 'The service did not answer in HTTP. Check http or https and the port.',
+  'adminError.selfSigned':
+    'The service uses a self-signed certificate. Turn on “Allow self-signed certificate” to accept it.',
+  'adminError.selfSignedPublic':
+    'The service uses a self-signed certificate. Allowing a self-signed certificate only applies to addresses on your own network.',
+  'adminError.tlsExpired': "The service's certificate has expired.",
+  'adminError.tlsUntrusted': "The service's certificate could not be verified.",
+  'adminError.tlsIgnored':
+    'The certificate could not be verified. Allowing a self-signed certificate only applies to addresses on your own network, so it was not used here.',
+  'adminError.noConnection': 'Nothing answered at that address. Check that the socket proxy is running.',
+  'adminError.socketRefused': 'The socket proxy refused the request.',
+  'adminError.notSocketProxy': 'Something answered there, but it is not a Docker socket proxy.',
 };
 
 const GUEST_STATES = {
@@ -46,6 +62,29 @@ const PROXMOX_ERRORS = {
   'upstream.proxmox-refused': 'adminError.proxmoxRefused',
   'upstream.proxmox-permission': 'adminError.proxmoxPermission',
   'upstream.not-proxmox': 'adminError.notProxmox',
+};
+
+/* Reasons a ping or the socket proxy failed, by API code. */
+const REACH_ERRORS = {
+  'network.refused': 'adminError.refused',
+  'network.not-found': 'adminError.hostNotFound',
+  'network.unreachable': 'adminError.hostUnreachable',
+  'network.reset': 'adminError.connectionReset',
+  'network.not-http': 'adminError.notHttp',
+  'network.self-signed': 'adminError.selfSigned',
+  'network.self-signed-public': 'adminError.selfSignedPublic',
+  'network.tls-expired': 'adminError.tlsExpired',
+  'network.tls-untrusted': 'adminError.tlsUntrusted',
+  'network.tls-ignored': 'adminError.tlsIgnored',
+  'timeout.no-answer': 'adminError.timedOut',
+};
+
+const SOCKET_ERRORS = {
+  ...REACH_ERRORS,
+  network: 'adminError.noConnection',
+  'network.refused': 'adminError.noConnection',
+  'upstream.refused': 'adminError.socketRefused',
+  'upstream.not-docker': 'adminError.notSocketProxy',
 };
 
 const CONTAINER_STATES = {
@@ -130,7 +169,10 @@ export function healthReason(detail, translate) {
   const parts = [];
 
   /* 'unknown' is the server's sentinel for a container it could not find. */
-  if (detail.state === 'unknown') {
+  const socketKey = typeof detail.containerCode === 'string' ? SOCKET_ERRORS[detail.containerCode] : undefined;
+  if (detail.state === 'unknown' && detail.containerCode) {
+    parts.push(_clip(tr(socketKey || 'adminError.noConnection'), REASON_MAX));
+  } else if (detail.state === 'unknown') {
     parts.push(tr('status.containerNotFound'));
   } else if (detail.state && detail.state !== 'running') {
     const known = CONTAINER_STATES[detail.state];
@@ -145,7 +187,9 @@ export function healthReason(detail, translate) {
   /* Give the room to the translated words and trim the upstream ones. The error
      text comes from the network layer and is never translated, so clipping the
      composed sentence cuts the half a reader can actually use. */
-  if (detail.pingError) {
+  const reachKey = typeof detail.pingCode === 'string' ? REACH_ERRORS[detail.pingCode] : undefined;
+  if (reachKey) parts.push(_clip(tr(reachKey), REASON_MAX));
+  else if (detail.pingError) {
     const around = tr('status.pingFailed', { error: '' }).length;
     const room = Math.max(8, REASON_MAX - around);
     parts.push(_clip(tr('status.pingFailed', { error: _clip(detail.pingError, room) }), REASON_MAX));

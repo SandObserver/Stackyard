@@ -392,3 +392,13 @@ test('a refused save names its reason', () => {
   assert.equal(errorAdvice({ kind: KIND.INVALID, code: 'invalid.not-a-config' }).key, 'toast.importNotStackyard');
   assert.equal(errorAdvice({ kind: KIND.INVALID, code: 'invalid.missing-id' }).key, 'adminError.missingId');
 });
+
+test('a missing permission or a rate limit gets its own advice, never an expired session', () => {
+  const perm = optionsErrorAdvice({ kind: KIND.AUTH, code: 'auth.permission' });
+  assert.equal(perm.key, 'adminError.permissionMissing');
+  assert.equal(perm.tone, TONE.WARN);
+  assert.equal(badgeErrorAdvice({ kind: KIND.AUTH, code: 'auth.permission' }).sessionExpired, false);
+  assert.equal(optionsErrorAdvice({ kind: KIND.UPSTREAM, code: 'upstream.rate-limit' }).key, 'adminError.rateLimited');
+  assert.equal(badgeErrorAdvice({ kind: KIND.AUTH, code: 'auth.session' }).sessionExpired, true);
+  assert.equal(badgeErrorAdvice({ kind: KIND.AUTH }).sessionExpired, true);
+});

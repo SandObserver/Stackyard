@@ -4,7 +4,7 @@
 import { esc, html, parseMarkup, raw, setHtml } from '/js/html.js?v=48f9dc21';
 import { isSafeLinkUrl } from '/js/link-url.js?v=0bffa1dd';
 import { jitter } from '/js/jitter.js?v=087a1fcf';
-import { errorState as _errorState, errorKind, errorCopy, kindGlyph } from '/js/widget-error.js?v=7af0beb3';
+import { errorState as _errorState, errorKind, errorCopy, kindGlyph } from '/js/widget-error.js?v=08df6ac3';
 import { formatNumber, numberSymbols, setNumberLanguage } from '/js/format-number.js?v=263fa390';
 
 export { esc, html, parseMarkup, raw, setHtml };
@@ -129,9 +129,12 @@ export async function fetchData(endpoint, opts = {}) {
   }
   if (!r.ok) {
     const d = await r.json().catch(() => ({}));
-    const e = /** @type {Error & { status?: number, kind?: string }} */ (new Error(d.error || 'HTTP ' + r.status));
+    const e = /** @type {Error & { status?: number, kind?: string, code?: string }} */ (
+      new Error(d.error || 'HTTP ' + r.status)
+    );
     e.status = r.status;
     if (typeof d.kind === 'string') e.kind = d.kind;
+    if (typeof d.code === 'string') e.code = d.code;
     throw e;
   }
   const data = await r.json();

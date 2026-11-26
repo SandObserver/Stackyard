@@ -874,3 +874,27 @@ test('a folder never shows the field path of an unnamed label', () => {
   assert.equal(folderLabelName('Sonarr', { path: 'totalRecords' }), 'Sonarr');
   assert.equal(folderLabelName('Sonarr', { name: '  ', unit: 'GB', path: 'totalRecords' }), 'Sonarr');
 });
+
+test('a ping failure reads as a translated reason, not English from the network layer', () => {
+  const reason = healthReason(
+    { pingStatus: 0, pingError: 'Connection refused.', pingCode: 'network.refused' },
+    k => `T:${k}`,
+  );
+  assert.equal(reason, 'T:adminError.refused');
+  assert.match(
+    healthReason({ pingStatus: 0, pingError: 'x', pingCode: 'network.new' }, k => k),
+    /status\.pingFailed/,
+  );
+});
+
+test('a socket proxy failure is named instead of a missing container', () => {
+  assert.equal(
+    healthReason({ state: 'unknown', containerCode: 'upstream.not-docker' }),
+    'Something answered there, but it is not a Docker socket proxy.',
+  );
+  assert.equal(
+    healthReason({ state: 'unknown', containerCode: 'network.refused' }, k => k),
+    'adminError.noConnection',
+  );
+  assert.equal(healthReason({ state: 'unknown' }), 'Container not found');
+});
