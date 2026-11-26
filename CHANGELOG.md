@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show an inline completion in phone search that Return opens.
 
+- Add a request id to every API answer and its log line.
+
 ### Changed
 
 - Bend the Settings tab bar on phones like iOS: the glass lens lifts on any
@@ -27,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show names that start with the query first in phone search.
 
 - Close an empty search with the field's x on phones.
+
+- Let `LOG_LEVEL` override the Logging Level setting.
 
 ### Fixed
 
@@ -47,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   loading forever.
 
 - Keep a widget's working frame when a refresh of it fails to start.
+
+- Log where a broken settings file stops being valid JSON.
+
+- Warn at start about environment values Stackyard cannot use.
 
 ## [1.24.0] - 2026-11-22
 
