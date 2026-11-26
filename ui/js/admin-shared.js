@@ -628,6 +628,18 @@ export const apiPost = async (p, b, recover = true) => {
   return body;
 };
 
+/** Posts a file. A file over `maxBytes` is refused before it is sent.
+    @param {string} p @param {FormData} form @param {File} file @param {number} maxBytes
+    @param {boolean} [recover] */
+export const apiUpload = async (p, form, file, maxBytes, recover = true) => {
+  if (file.size > maxBytes) throw tagged(413, { kind: 'invalid', code: 'invalid.too-large' });
+  const r = await fetch(API + p, { method: 'POST', body: form });
+  if (recover && recoversSession(p, r.status) && (await reauthenticate()))
+    return apiUpload(p, form, file, maxBytes, false);
+  if (!r.ok) throw await responseError(r);
+  return r.json();
+};
+
 /** @param {any} body a config write's reply
     @returns {string} the notice naming the credentials it withheld, or '' */
 export function withheldText(body) {

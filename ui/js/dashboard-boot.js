@@ -20,7 +20,7 @@ import { initUI, mkFolderGlyph, openFolderDesktop, openFolderMobile } from '/js/
 import { storeGet, storeSet, within } from '/js/utils.js?v=457d9918';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
-import { WIDGET_COLS } from '/js/widget-types.js?v=afec2dab';
+import { WIDGET_COLS } from '/js/widget-types.js?v=66b4b73d';
 
 export const LANG_STORE = 'dash_lang';
 

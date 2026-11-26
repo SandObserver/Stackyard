@@ -103,6 +103,23 @@ test('an import file whose aliases expand past the entry budget is refused', asy
   expect(hrefs.filter(h => h.includes('.invalid') && !h.includes('example'))).toEqual([]);
 });
 
+test('a file that cannot be imported is listed as skipped, and the other files still import', async ({ page }) => {
+  await openDashboardList(page);
+  await page.locator('#imp-foreign').setInputFiles([
+    {
+      name: 'services.yaml',
+      mimeType: 'application/yaml',
+      buffer: Buffer.from('- Media:\n    - Plex:\n        href: http://plex.invalid\n'),
+    },
+    { name: 'notes.yaml', mimeType: 'application/yaml', buffer: Buffer.from('hello: world\n') },
+  ]);
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('heading', { level: 3, name: 'Apps to add (1)' })).toBeVisible();
+  await expect(dialog.getByRole('heading', { level: 3, name: 'Not imported (1)' })).toBeVisible();
+  await expect(dialog.getByText('not a gethomepage or Dashy config')).toBeVisible();
+  await expect(dialog.getByText('notes.yaml')).toBeVisible();
+});
+
 test('a saved change survives a reload', async ({ page }) => {
   await openDashboardList(page);
   await page.locator('#btn-add').click();

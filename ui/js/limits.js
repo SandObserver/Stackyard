@@ -23,3 +23,7 @@ export function clampName(name) {
 }
 
 export const CONFIG_MAX_BYTES = 2 * 1024 * 1024;
+
+export const ICON_MAX_BYTES = 2 * 1024 * 1024;
+
+export const WALLPAPER_MAX_BYTES = 16 * 1024 * 1024;

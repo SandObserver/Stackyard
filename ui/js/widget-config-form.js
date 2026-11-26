@@ -27,7 +27,7 @@ import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=5abd7438';
 import { qi } from '/js/utils.js?v=457d9918';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { SAVED_ROW } from '/js/saved-row.js?v=44039df6';
-import { visibleFieldFlags } from '/js/widget-types.js?v=afec2dab';
+import { visibleFieldFlags } from '/js/widget-types.js?v=66b4b73d';
 import { slideBlock } from '/js/modal.js?v=93d3e755';
 
 /* A counter, not randomness. Six base-36 characters collide plausibly over a

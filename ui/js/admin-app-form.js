@@ -21,7 +21,7 @@ import {
   initInlineEdit,
   PE_SVG,
   REQ_MARK,
-  responseError,
+  apiUpload,
   reveal,
   setStatus,
   setTogDisabled,
@@ -47,7 +47,7 @@ import {
   splitIconRef,
   throughServer,
 } from '/js/icons.js?v=76c29d43';
-import { DOCK_MAX } from '/js/limits.js?v=ff61256e';
+import { DOCK_MAX, ICON_MAX_BYTES } from '/js/limits.js?v=bc10e843';
 import { createListbox } from '/js/listbox.js?v=c9cee787';
 import { slideBlock } from '/js/modal.js?v=93d3e755';
 import { clr, el, focusFirst, initial, inp as inpById, isolate, qa, qi, q as qSel, tgt } from '/js/utils.js?v=457d9918';
@@ -819,9 +819,7 @@ function wireIcon() {
       try {
         const form = new FormData();
         form.append('icon', file, file.name);
-        const r = await fetch('/api/icons/upload', { method: 'POST', body: form });
-        if (!r.ok) throw await responseError(r);
-        const d = await r.json();
+        const d = await apiUpload('/api/icons/upload', form, file, ICON_MAX_BYTES);
         await loadLocalIcons();
         state.siurl = d.filename;
         const ipIn = inpById('ip-in');

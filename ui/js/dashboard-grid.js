@@ -23,7 +23,7 @@ import {
   WIDGET_HEIGHTS,
   WIDGET_ROWS,
   widgetSrc,
-} from '/js/widget-types.js?v=afec2dab';
+} from '/js/widget-types.js?v=66b4b73d';
 
 /* A widget tile's corner, at design size. WIDGET_DESIGN's small is 170 square
    against the reference's 165, so this is its 28 unchanged. */

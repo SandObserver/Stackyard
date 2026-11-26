@@ -639,6 +639,9 @@
     "skipUnreadable": "cette entrée n’a pas la forme autorisée par le format du fichier",
     "skipUnparsable": "la ligne {detail} n’a pas pu être lue",
     "skipNoNameOrGroup": "le conteneur n’a pas de label homepage.name ou homepage.group",
+    "skipFileYaml": "la ligne {detail} utilise du YAML que l’importation ne sait pas lire",
+    "skipFileTooLarge": "trop d’entrées pour être importé",
+    "skipFileUnknown": "pas une configuration gethomepage ou Dashy",
     "monitors": "· interroge {url}"
   },
   "login": {

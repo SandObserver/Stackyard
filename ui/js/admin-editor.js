@@ -38,7 +38,7 @@ import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
 import { t } from '/js/i18n.js?v=82ba9da2';
 import { animateIcon } from '/js/icon-motion.js?v=7bfd91f5';
 import { iconSvg } from '/js/icon-set.js?v=beda3062';
-import { clampName } from '/js/limits.js?v=ff61256e';
+import { clampName } from '/js/limits.js?v=bc10e843';
 import { confirmText, openModal as openDialog } from '/js/modal.js?v=93d3e755';
 import { clr, el, focusFirst, initial, inp, isolate, q, qa, setUserText } from '/js/utils.js?v=457d9918';
 
