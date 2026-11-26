@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Let `LOG_LEVEL` override the Logging Level setting.
 
+- Refuse a language or log level Stackyard cannot use instead of dropping it.
+
 ### Fixed
 
 - A press on the Settings tab bar lens right after picking a tab is no longer
@@ -86,6 +88,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   proxy failure instead of a missing container.
 
 - Show certificate, rate limit and permission failures on widgets.
+
+- Refuse a config save that has no revision instead of overwriting the
+  dashboard.
+
+- Show an error when a health check is turned on with nothing to check, instead
+  of saving it as off.
 
 ## [1.24.0] - 2026-11-22
 
