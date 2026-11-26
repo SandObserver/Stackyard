@@ -66,6 +66,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Send an open dashboard to sign-in when its session ends.
 
+- Explain a sign-in or save refused because a reverse proxy rewrote the Host
+  header.
+
 ## [1.24.0] - 2026-11-22
 
 ### Added
