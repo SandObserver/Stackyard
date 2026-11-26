@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add a link to password help on the sign-in screen.
 
+- Show the error code and request id under a failed test in Settings.
+
 ### Changed
 
 - Bend the Settings tab bar on phones like iOS: the glass lens lifts on any
@@ -76,6 +78,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ask to wait when sign-in is busy, and say when the device is offline.
 
 - Reload an open dashboard after Stackyard is updated.
+
+- Name the real cause of a failed connection test instead of suggesting the
+  container name.
+
+- Show a translated reason for a failed app health check, and name a socket
+  proxy failure instead of a missing container.
+
+- Show certificate, rate limit and permission failures on widgets.
 
 ## [1.24.0] - 2026-11-22
 
