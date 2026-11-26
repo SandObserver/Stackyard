@@ -1,3 +1,5 @@
+const { SETTINGS, TOP } = require('../../ui/js/settings-schema.js');
+
 const VALID_WIDGET_SIZES = new Set(['small', 'medium', 'large', 'xlarge']);
 const TEXT_FIELDS = ['label', 'href', 'url', 'iconUrl', 'color', 'widgetType'];
 
@@ -43,7 +45,29 @@ function badSettings(settings) {
   else if (!isText(settings.background?.url)) bad.push('background.url');
   if (!isBlock(settings.server)) bad.push('server');
   else if (!isBlock(settings.server?.proxmox)) bad.push('server.proxmox');
+  for (const spec of SETTINGS) {
+    if (!spec.normalize) continue;
+    const block = spec.place === TOP ? settings : settings.server;
+    if (!isPlainObject(block)) continue;
+    const value = block[spec.key];
+    if (absent(value) || value === '' || spec.normalize(value) !== undefined) continue;
+    bad.push(spec.place === TOP ? spec.key : `server.${spec.key}`);
+  }
   return bad;
 }
 
-module.exports = { VALID_WIDGET_SIZES, badItemFields, takesReservedId, firstBadFolderChild, badSettings };
+/** @param {any} item @returns {boolean} */
+function healthcheckWithoutTarget(item) {
+  const hc = isPlainObject(item?.monitoring) ? item.monitoring.healthcheck : undefined;
+  if (!isPlainObject(hc) || hc.enabled !== true) return false;
+  return !hc.container && !hc.pingUrl && !hc.proxmoxGuest;
+}
+
+module.exports = {
+  VALID_WIDGET_SIZES,
+  badItemFields,
+  takesReservedId,
+  firstBadFolderChild,
+  badSettings,
+  healthcheckWithoutTarget,
+};

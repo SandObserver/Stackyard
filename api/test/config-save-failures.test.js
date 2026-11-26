@@ -10,6 +10,7 @@ const assert = require('node:assert/strict');
 
 const { saveConfig, configFileIsMount, CONFIG_PATH, SCHEMA_VERSION } = require('../src/config');
 const { BODY_LIMIT } = require('../src/router');
+const { withRev } = require('../test-support/config-rev');
 
 const post = raw =>
   fetch(`${app.base}/api/config`, {
@@ -17,7 +18,7 @@ const post = raw =>
     headers: { 'Content-Type': 'application/json', Origin: app.base },
     body: raw,
   });
-const save = () => post(JSON.stringify({ items: [{ id: 'a', type: 'app' }], settings: {} }));
+const save = () => post(JSON.stringify(withRev({ items: [{ id: 'a', type: 'app' }], settings: {} })));
 const failWrite = code =>
   mock.method(fs, 'renameSync', () => {
     throw Object.assign(new Error(`${code}: /secret/path`), { code });
@@ -64,7 +65,10 @@ test('a config from a newer schema is refused', async () => {
 });
 
 test('a config at the current schema is accepted', async () => {
-  assert.equal((await post(JSON.stringify({ _schemaVersion: SCHEMA_VERSION, items: [], settings: {} }))).status, 200);
+  assert.equal(
+    (await post(JSON.stringify(withRev({ _schemaVersion: SCHEMA_VERSION, items: [], settings: {} })))).status,
+    200,
+  );
 });
 
 test('a null body is refused as invalid', async () => {

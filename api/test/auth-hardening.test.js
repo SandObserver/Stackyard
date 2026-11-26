@@ -7,6 +7,7 @@ const http = require('node:http');
 
 const { loadConfig, saveConfig } = require('../src/config');
 const { hashPassword, verifyPassword, makeToken } = require('../src/auth');
+const { withRev } = require('../test-support/config-rev');
 
 /* ── verifyPassword ───────────────────────────────────────────────────────── */
 
@@ -71,7 +72,7 @@ function sessionCookie() {
 }
 
 function post(pathname, body, opts = {}) {
-  const data = JSON.stringify(body);
+  const data = JSON.stringify(pathname === '/api/config' ? withRev(body) : body);
   const u = new URL(app.base + pathname);
   return new Promise((resolve, reject) => {
     const r = http.request(

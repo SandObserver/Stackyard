@@ -14,6 +14,7 @@ const app = startApp({ env: { WIDGETS_PATH: widgetsDir, CONFIG_PATH: path.join(r
 const { saveConfig, loadConfig, HELD_PATH } = require('../src/config');
 const { loadRegistry } = require('../src/widget-registry');
 const log = require('../src/log');
+const { withRev } = require('../test-support/config-rev');
 
 const MANIFEST = {
   name: 'retired',
@@ -71,7 +72,7 @@ async function request(method, route, body) {
   return fetch(`${app.base}${route}`, {
     method,
     headers: body ? { 'Content-Type': 'application/json', Origin: app.base } : {},
-    body: body ? JSON.stringify(body) : undefined,
+    body: body ? JSON.stringify(method === 'POST' && route === '/api/config' ? withRev(body) : body) : undefined,
   });
 }
 

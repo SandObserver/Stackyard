@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 
 const { loadConfig, saveConfig } = require('../src/config');
 const { NAME_MAX } = require('../../ui/js/limits.js');
+const { withRev } = require('../test-support/config-rev');
 
 before(async () => {
   saveConfig({ items: [], settings: {} });
@@ -15,14 +16,16 @@ test('a saved name is cut to the name limit', async () => {
   const r = await fetch(`${app.base}/api/config`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Origin: app.base },
-    body: JSON.stringify({
-      items: [
-        { id: 'a', type: 'app', label: long, href: 'http://a.lan' },
-        { id: 'f', type: 'folder', label: long, children: ['a'] },
-        { id: 'b', type: 'app', label: 'Short', href: 'http://b.lan' },
-      ],
-      settings: {},
-    }),
+    body: JSON.stringify(
+      withRev({
+        items: [
+          { id: 'a', type: 'app', label: long, href: 'http://a.lan' },
+          { id: 'f', type: 'folder', label: long, children: ['a'] },
+          { id: 'b', type: 'app', label: 'Short', href: 'http://b.lan' },
+        ],
+        settings: {},
+      }),
+    ),
   });
   assert.equal(r.status, 200);
   const labels = loadConfig()

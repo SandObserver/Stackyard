@@ -24,7 +24,7 @@ test.afterEach(async ({ request }) => {
   const foreign = cfg.items.filter(i => !i.system && !IDS.includes(i.id));
   expect.soft(foreign, 'the container holds items this spec did not write').toEqual([]);
   const res = await request.post('/api/config', {
-    data: { _schemaVersion: 3, items: [], settings: {}, [SEED_MARK]: true },
+    data: { _schemaVersion: 3, items: [], settings: {}, _rev: cfg._rev, [SEED_MARK]: true },
     headers: { Origin: BASE_URL },
   });
   expect(res.ok()).toBeTruthy();

@@ -1,4 +1,4 @@
-import { setupErrorKey } from '/js/admin-error.js?v=82e9f883';
+import { setupErrorKey } from '/js/admin-error.js?v=54e71016';
 import { landingAfterSetup } from '/js/dashboard-logic.js?v=b4828b62';
 import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
 import { t } from '/js/i18n.js?v=82ba9da2';

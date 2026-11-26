@@ -4,10 +4,10 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=e2d91eee';
-import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=eae8ebfc';
+} from '/js/admin-app-form.js?v=7f6b494c';
+import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=92e180a6';
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
-import { scrollSettingsTop } from '/js/admin-nav.js?v=9cf6f66e';
+import { scrollSettingsTop } from '/js/admin-nav.js?v=4efb1dec';
 import {
   applyEdit,
   buildAppItem,
@@ -17,7 +17,7 @@ import {
   POLL_MIN,
   removeItem,
   snapshotItems,
-} from '/js/admin-save-logic.js?v=d26de8dd';
+} from '/js/admin-save-logic.js?v=6b052e5e';
 import {
   busyPress,
   clearFieldErrors,
@@ -29,9 +29,9 @@ import {
   showFieldError,
   swapContent,
   toast,
-} from '/js/admin-shared.js?v=04f5a4db';
+} from '/js/admin-shared.js?v=38e3b4db';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=8455bc79';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=be965ffa';
 import { BADGE_DEFAULT } from '/js/badge-logic.js?v=889eeef7';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
@@ -445,6 +445,11 @@ export function readItem(orig) {
       q('#poll-row > .row'),
       t('toast.pollRange', { min: formatNumber(POLL_MIN), max: formatNumber(POLL_MAX) }),
     );
+    return;
+  }
+  if (res.errorKey === 'app.hcTargetRequired') {
+    const row = isPve ? q('#hc-pve-row > .row') : el(isPing ? 'ie-hc-ping' : 'ie-hc-con');
+    showFieldError(row, t(isPve ? 'app.hcGuestRequired' : 'app.hcTargetRequired'));
     return;
   }
   if (res.errorKey) {

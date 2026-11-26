@@ -21,6 +21,7 @@ const { saveConfig, loadConfig } = require('../src/config');
 const { hashPassword, makeToken } = require('../src/auth');
 const { KIND } = require('../src/api-error');
 const log = require('../src/log');
+const { withRev } = require('../test-support/config-rev');
 
 const SECRET = 'b'.repeat(64);
 let cookie;
@@ -41,7 +42,7 @@ before(async () => {
 });
 
 function post(pathname, body, opts = {}) {
-  const data = opts.raw ? body : JSON.stringify(body);
+  const data = opts.raw ? body : JSON.stringify(pathname === '/api/config' ? withRev(body) : body);
   const u = new URL(app.base + pathname);
   return new Promise((resolve, reject) => {
     const r = http.request(

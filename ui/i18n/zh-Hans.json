@@ -187,6 +187,8 @@
     "dockFull": "程序坞已满（{max}/{max}）。请先从程序坞移除一个应用。",
     "badge": "徽章",
     "healthCheck": "健康检查",
+    "hcTargetRequired": "请填写此项，或关闭健康检查。",
+    "hcGuestRequired": "请选择一个虚拟机，或关闭健康检查。",
     "healthGlobalOff": "健康检查已关闭。请在“通用”中开启。",
     "type": "类型",
     "container": "容器",

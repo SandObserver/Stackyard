@@ -1,7 +1,7 @@
 // @ts-check
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
 import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=889eeef7';
-import { generalKeysIn, SERVER, TOP } from '/js/settings-schema.js?v=b9da9301';
+import { generalKeysIn, SERVER, TOP } from '/js/settings-schema.js?v=1d21e821';
 
 /* Keep this module free of the DOM. The DOM reads stay in doSave. */
 
@@ -376,6 +376,7 @@ export function buildAppItem(v, orig, takenIds = []) {
   if (!v.href) return { errorKey: 'toast.urlRequired' };
   const poll = pollSeconds(v.actInt);
   if (v.actEn && poll == null) return { errorKey: 'toast.pollRange' };
+  if (v.hcEn && !v.hcCon && !v.hcPing && !v.hcPve) return { errorKey: 'app.hcTargetRequired' };
   const DEFCOL = '#0289ff';
   /* One badges any count above zero, which is the default, so it is not stored. */
   const custMin = Number.isFinite(v.custMin) && v.custMin > 1 ? Math.floor(v.custMin) : undefined;
@@ -413,7 +414,7 @@ export function buildAppItem(v, orig, takenIds = []) {
       skipTlsVerify: v.skipTlsVerify || undefined,
       monitoring: {
         healthcheck: {
-          enabled: v.hcEn && (!!v.hcCon || !!v.hcPing || !!v.hcPve),
+          enabled: !!v.hcEn,
           container: v.hcCon,
           pingUrl: v.hcPing,
           proxmoxGuest: v.hcPve || undefined,

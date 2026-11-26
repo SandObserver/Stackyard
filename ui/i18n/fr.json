@@ -193,6 +193,8 @@
     "dockFull": "Dock plein ({max}/{max}). Retirez d’abord une application.",
     "badge": "Badge",
     "healthCheck": "Vérification de l’état",
+    "hcTargetRequired": "Remplissez ce champ ou désactivez la vérification de l’état.",
+    "hcGuestRequired": "Choisissez un invité ou désactivez la vérification de l’état.",
     "healthGlobalOff": "Les vérifications de l’état sont désactivées. Activez-les dans Général.",
     "type": "Type",
     "container": "Conteneur",

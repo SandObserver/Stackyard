@@ -222,7 +222,7 @@ test('a config save is rejected when an item carries an unsafe link', async () =
 
   const post = body =>
     new Promise((resolve, reject) => {
-      const data = JSON.stringify(body);
+      const data = JSON.stringify({ _rev: require('../src/config').loadConfigForUpdate()._rev || 0, ...body });
       const u = new URL(base + '/api/config');
       const r = http.request(
         {
@@ -367,7 +367,7 @@ test('a config save is rejected when a badge row is malformed', async () => {
 
   const post = body =>
     new Promise((resolve, reject) => {
-      const data = JSON.stringify(body);
+      const data = JSON.stringify({ _rev: require('../src/config').loadConfigForUpdate()._rev || 0, ...body });
       const u = new URL(base + '/api/config');
       const r = http.request(
         {
@@ -437,7 +437,7 @@ test('a config save is rejected when two items share an id', async () => {
 
   const post = body =>
     new Promise((resolve, reject) => {
-      const data = JSON.stringify(body);
+      const data = JSON.stringify({ _rev: require('../src/config').loadConfigForUpdate()._rev || 0, ...body });
       const u = new URL(base + '/api/config');
       const r = http.request(
         {
@@ -529,7 +529,7 @@ test('a config save is rejected when a folder points at an item that is not ther
 
   const post = body =>
     new Promise((resolve, reject) => {
-      const data = JSON.stringify(body);
+      const data = JSON.stringify({ _rev: require('../src/config').loadConfigForUpdate()._rev || 0, ...body });
       const u = new URL(base + '/api/config');
       const r = http.request(
         {

@@ -7,7 +7,7 @@
 export const TOP = 'top';
 export const SERVER = 'server';
 
-const LOG_LEVELS = ['debug', 'info', 'error'];
+export const LOG_LEVELS = ['debug', 'info', 'error'];
 const LANGUAGE_TAG = /^[a-z]{2,3}(-[A-Za-z]{2,4})?$/;
 
 /** @typedef {{ key: string, place: 'top' | 'server', general?: boolean, widgets?: boolean,
