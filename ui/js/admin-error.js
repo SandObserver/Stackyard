@@ -21,6 +21,10 @@ const BY_CODE = Object.freeze({
   'auth.upstream': 'adminError.keyRejected',
   'blocked.private-address': 'adminError.privateAddress',
   'invalid.origin': 'adminError.originMismatch',
+  'blocked.busy': 'adminError.busy',
+  'invalid.not-a-config': 'toast.importNotStackyard',
+  'invalid.missing-id': 'adminError.missingId',
+  'invalid.stale': 'toast.dashboardChangedElsewhere',
   'blocked.link-local': 'adminError.linkLocal',
   'invalid.retype': 'adminError.retype',
   'upstream.redirect': 'adminError.redirect',
@@ -133,10 +137,15 @@ function unanswered(e) {
   return e instanceof TypeError && !(/** @type {any} */ (e).kind);
 }
 
+/* navigator.onLine is only a hint: it is true on a network with no route to
+   Stackyard. Only its false is trusted. */
+const offlineKey = () =>
+  /** @type {any} */ (globalThis).navigator?.onLine === false ? 'adminError.deviceOffline' : 'adminError.offline';
+
 /** What to show for a failed request to the API's own routes.
     @param {unknown} e @returns {{ key: string, vars?: Record<string, unknown> }} */
 export function errorAdvice(e) {
-  if (unanswered(e)) return { key: 'adminError.offline' };
+  if (unanswered(e)) return { key: offlineKey() };
   return adviceFor(readError(e));
 }
 
@@ -175,8 +184,8 @@ export function loginErrorAdvice(e) {
   const { kind, code, detail } = readError(e);
   if (code === 'blocked.rate-limit') return rateLimitAdvice(detail);
   if (kind === KIND.AUTH) return { key: 'login.incorrect' };
-  if (code === 'invalid.origin') return { key: BY_CODE[code] };
-  if (unanswered(e)) return { key: 'adminError.offline' };
+  if (code === 'invalid.origin' || code === 'blocked.busy') return { key: BY_CODE[code] };
+  if (unanswered(e)) return { key: offlineKey() };
   return { key: 'adminError.genericInternal' };
 }
 
@@ -204,6 +213,7 @@ export function setupErrorKey(e) {
   if (kind === KIND.AUTH) return 'toast.passwordChangedElsewhere';
   const refusal = passwordRefusalKey(e);
   if (refusal) return refusal;
-  if ((code.startsWith('internal.') || code === 'invalid.origin') && BY_CODE[code]) return BY_CODE[code];
+  const shown = code.startsWith('internal.') || code === 'invalid.origin' || code === 'blocked.busy';
+  if (shown && BY_CODE[code]) return BY_CODE[code];
   return 'setup.failed';
 }

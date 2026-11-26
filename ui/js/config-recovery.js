@@ -69,7 +69,7 @@ export async function showBlockingScreen(screenText) {
       render(body, more, help, next);
       status.textContent = t(next.still);
     } catch {
-      status.textContent = t('home.apiDownTitle');
+      status.textContent = t('adminError.offline');
     } finally {
       btn.disabled = false;
     }
@@ -168,7 +168,7 @@ async function submitSetup(e, form) {
     const key = setupErrorKey(await res.json().catch(() => null));
     refuse(key, key === 'hostBlock.codeWrong' ? code : password);
   } catch {
-    error.textContent = t('home.apiDownTitle');
+    error.textContent = t('adminError.offline');
   } finally {
     submit.disabled = false;
   }

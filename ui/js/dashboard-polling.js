@@ -16,6 +16,8 @@ export function createPolling({ badges, differs, rev = () => null }) {
   let _pollTimers = [];
   const _repeat = (fn, base) => _pollTimers.push(repeatJittered(fn, base));
 
+  /** @type {string | null} */
+  let version = null;
   const pollConfig = async () => {
     try {
       const loaded = rev();
@@ -24,6 +26,13 @@ export function createPolling({ badges, differs, rev = () => null }) {
       if (Number.isSafeInteger(loaded)) init.headers = { 'If-None-Match': `"${loaded}"` };
       const res = await fetch('/api/config', init);
       if (res.status === 401) {
+        location.reload();
+        return;
+      }
+      const running = res.headers?.get?.('X-Stackyard-Version') || null;
+      if (running && version === null) version = running;
+      /* An upgrade must reload a long-open tab. Its scripts do not match the new API. */
+      if (running && running !== version && !overlayOpen() && !strip.classList.contains('dragging')) {
         location.reload();
         return;
       }

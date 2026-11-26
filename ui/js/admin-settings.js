@@ -633,7 +633,8 @@ async function writeWallpaper(sent, form) {
 /** @param {unknown} e @returns {string} the message for a section changed elsewhere, or '' */
 function staleText(e) {
   const err = /** @type {any} */ (e);
-  return err?.status === 409 && !err?.code ? t('toast.settingsChangedElsewhere') : '';
+  const stale = err?.code === 'invalid.stale' || (err?.status === 409 && !err?.code);
+  return stale ? t('toast.settingsChangedElsewhere') : '';
 }
 const RETRY_IN_DIALOG = new Set(['invalid.current-password', 'blocked.rate-limit']);
 

@@ -878,6 +878,26 @@ test('POST /api/config rejects a stale _rev with 409', async () => {
   });
   assert.equal(conflict.status, 409);
   assert.match(conflict.body.error, /changed somewhere else/);
+  assert.equal(conflict.body.code, 'invalid.stale');
+});
+
+test('every refused config save names a code the UI can translate', async () => {
+  const cases = [
+    [{ items: {} }, 'invalid.not-a-config'],
+    [{ items: [], settings: [] }, 'invalid.not-a-config'],
+    [{ items: [{ id: '', type: 'app' }] }, 'invalid.missing-id'],
+    [{ items: [], settings: { server: { allowedHosts: 'nope' } } }, 'invalid.bad-setting'],
+  ];
+  for (const [body, code] of cases) {
+    const r = await req('POST', '/api/config', { cookie: validCookie, body });
+    assert.equal(r.status, 400, JSON.stringify(body));
+    assert.equal(r.body.code, code, JSON.stringify(body));
+  }
+});
+
+test('every API answer names the running version', async () => {
+  const r = await req('GET', '/api/auth/check', {});
+  assert.match(String(r.headers['x-stackyard-version']), /\S/);
 });
 
 test('POST /api/config without a _rev overwrites regardless', async () => {

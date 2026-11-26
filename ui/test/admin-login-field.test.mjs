@@ -3,6 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
@@ -205,4 +206,12 @@ test('the password can be shown, is wired once, and is hidden again after sign-i
   await new Promise(r => setTimeout(r, 0));
   assert.equal(els['login-pw'].type, 'password');
   assert.equal(rev.attrs['aria-pressed'], 'false');
+});
+
+test('the sign-in screen links to the forgotten password help', async () => {
+  const { PASSWORD_HELP_URL } = await import('../js/config-recovery-logic.js');
+  const admin = readFileSync(new URL('../admin/index.html', import.meta.url), 'utf8');
+  const link = admin.match(/<a id="login-forgot"[^>]*>/)?.[0] || '';
+  assert.ok(link.includes(`href="${PASSWORD_HELP_URL}"`), link);
+  assert.match(link, /rel="noopener"/);
 });
