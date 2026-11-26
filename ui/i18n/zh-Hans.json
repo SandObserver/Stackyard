@@ -348,6 +348,11 @@
     "emptyAction": "打开设置",
     "emptyImportLink": "导入备份或 Homepage、Dashy 配置"
   },
+  "bootFailed": {
+    "title": "Stackyard 无法启动",
+    "why": "此浏览器无法运行 Stackyard。请重新加载页面。如果仍然无效，请更新浏览器或在其他浏览器中打开 Stackyard。",
+    "reload": "重新加载"
+  },
   "configRecovery": {
     "title": "Stackyard 无法使用其设置文件",
     "whyCorrupt": "设置文件 <code>{file}</code> 已损坏，其中不再包含有效的设置。",

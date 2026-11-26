@@ -362,6 +362,11 @@
     "emptyAction": "Ouvrir les réglages",
     "emptyImportLink": "Importer une sauvegarde ou une configuration Homepage ou Dashy"
   },
+  "bootFailed": {
+    "title": "Stackyard n’a pas pu démarrer",
+    "why": "Ce navigateur n’a pas pu exécuter Stackyard. Rechargez la page. Si cela ne suffit pas, mettez à jour le navigateur ou ouvrez Stackyard dans un autre.",
+    "reload": "Recharger"
+  },
   "configRecovery": {
     "title": "Stackyard ne peut pas utiliser son fichier de réglages",
     "whyCorrupt": "Le fichier de réglages <code>{file}</code> est endommagé. Il ne contient plus de réglages valides.",

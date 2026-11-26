@@ -8,6 +8,8 @@ import { isMobileLayout } from '/js/layout.js?v=6680c0bf';
 import { watchTransparency } from '/js/theme.js?v=ab9b83fd';
 import { storeGet } from '/js/utils.js?v=457d9918';
 
+/** @type {any} */ (window).__bootStarted = true;
+
 ensureSprite();
 
 if (!('GestureEvent' in window)) {

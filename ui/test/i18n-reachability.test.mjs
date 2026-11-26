@@ -17,6 +17,9 @@ const uiDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 /* Keys built at runtime rather than written out. Each needs a reason: the test
    cannot see them, so this list is where they are accounted for. */
 const DYNAMIC = {
+  'bootFailed.title': 'boot-hints.js reads the catalog object',
+  'bootFailed.why': 'boot-hints.js reads the catalog object',
+  'bootFailed.reload': 'boot-hints.js reads the catalog object',
   'widget.errNetwork': 'error kind table',
   'widget.errTimeout': 'error kind table',
   'widget.errAuth': 'error kind table',
