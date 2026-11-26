@@ -2,8 +2,8 @@ import { closeBadgePopover } from '/js/badge-popover.js?v=578d337c';
 import { desktopCols, desktopPages } from '/js/dashboard-logic.js?v=b4828b62';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { currentLang, t } from '/js/i18n.js?v=82ba9da2';
-import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=ff61256e';
-import { closeFolders, mkFolder, resetMobileChrome } from '/js/ui.js?v=72f26e23';
+import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=bc10e843';
+import { closeFolders, mkFolder, resetMobileChrome } from '/js/ui.js?v=399bb265';
 import {
   mkWrap as _mkWrap,
   el,

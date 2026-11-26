@@ -1,4 +1,4 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=d94b8287';
+import { renderColorControl } from '/js/admin-color-control.js?v=6b7f51ae';
 import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=5abd7438';
 import {
   clearsStoredSecret,
@@ -30,7 +30,7 @@ import {
   syncRequiredLegend,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=39ca44cc';
+} from '/js/admin-shared.js?v=2c7a9e54';
 import { activityAuth, activityHasAuth, POLL_MAX, POLL_MIN } from '/js/admin-save-logic.js?v=2a82f10d';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=7112fd10';

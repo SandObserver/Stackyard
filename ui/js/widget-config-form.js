@@ -12,9 +12,9 @@ import {
   REQ_MARKS_CHANGED,
   reveal,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=39ca44cc';
+} from '/js/admin-shared.js?v=2c7a9e54';
 import { createListbox } from '/js/listbox.js?v=c9cee787';
-import { renderColorControl } from '/js/admin-color-control.js?v=d94b8287';
+import { renderColorControl } from '/js/admin-color-control.js?v=6b7f51ae';
 import {
   seedCarried,
   applyOptionSet,

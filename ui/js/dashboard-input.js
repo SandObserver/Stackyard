@@ -1,7 +1,7 @@
 import { wheelPager } from '/js/dashboard-logic.js?v=b4828b62';
 import { overlayOpen } from '/js/dashboard-pager.js?v=d5f72484';
 import { isScripted } from '/js/frame-motion.js?v=911f7c03';
-import { swipePager } from '/js/ui.js?v=72f26e23';
+import { swipePager } from '/js/ui.js?v=399bb265';
 import { el, pageDir } from '/js/utils.js?v=457d9918';
 import { scrollsSideways } from '/js/widget-frame.js?v=ee03dead';
 
