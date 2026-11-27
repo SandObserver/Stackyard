@@ -203,11 +203,19 @@ function kavitaSeries(s) {
     kind: 'series',
   };
 }
+function kavitaItemName(it) {
+  const series = String(it.seriesName || '').trim();
+  const title = String(it.title || '').trim();
+  if (!series) return title;
+  if (!title || title === series) return series;
+  return `${series}, ${title}`;
+}
+
 async function kavitaList(ctx, base, hdr, shelf) {
   if (shelf.source === 'list' && shelf.listId) {
     const r = await jget(ctx, base, `/api/ReadingList/items?readingListId=${enc(shelf.listId)}`, hdr);
     return (Array.isArray(r.data) ? r.data : []).map(it => ({
-      name: it.seriesName || it.title,
+      name: kavitaItemName(it),
       pages: it.pagesTotal,
       pagesRead: it.pagesRead,
       primaryColor: it.primaryColor,
