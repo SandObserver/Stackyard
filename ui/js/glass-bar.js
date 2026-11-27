@@ -6,7 +6,7 @@ import { behind, clamp, colour, css, dpr, isDark, over, pill, sized, unit } from
 import { prefersReducedMotion } from '/js/glass-prefs.js?v=b53a71ac';
 import { drawTabInks, pillPath, tabInks } from '/js/glass-tabs.js?v=f20d2f91';
 import { syncGlideSelect } from '/js/glide-select.js?v=0c57b286';
-import { holdIcons } from '/js/icon-motion.js?v=306f09d6';
+import { holdIcons } from '/js/icon-motion.js?v=1b661278';
 
 /** Pointer travel in px before a press becomes a drag. */
 const DRAG_SLOP = 4;

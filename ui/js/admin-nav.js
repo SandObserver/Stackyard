@@ -1,8 +1,8 @@
 import { resolveAdminSection } from '/js/admin-logic.js?v=81fd47cf';
-import { fadeOpacity } from '/js/admin-shared.js?v=674bbb0b';
+import { fadeOpacity } from '/js/admin-shared.js?v=12fb8c08';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=0c57b286';
 import { t } from '/js/i18n.js?v=82ba9da2';
-import { animateIcon, pickIcon } from '/js/icon-motion.js?v=306f09d6';
+import { animateIcon, pickIcon } from '/js/icon-motion.js?v=1b661278';
 import { el, qa, storeGet, storeSet } from '/js/utils.js?v=457d9918';
 
 const STORE = 'admin_sec';

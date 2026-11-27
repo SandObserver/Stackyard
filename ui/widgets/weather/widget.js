@@ -1,5 +1,5 @@
-import { poll, fetchData, getConfig, reducedMotion, rollText, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, raw, setHtml } from '/js/widget-toolbox.js?v=4b06c339';
-import { ensureSprite } from '/js/icon-set.js?v=1e268244';
+import { poll, fetchData, getConfig, reducedMotion, rollText, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, raw, setHtml } from '/js/widget-toolbox.js?v=91dc2dae';
+import { ensureSprite } from '/js/icon-set.js?v=da154c4a';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('widget.label', 'Weather'));
 const TICK_MS=600000;

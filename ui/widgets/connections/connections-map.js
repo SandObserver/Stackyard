@@ -1,4 +1,4 @@
-import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, rgbOf, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen, reducedMotion, errorLine, errorGlyph } from '/js/widget-toolbox.js?v=4b06c339';
+import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, rgbOf, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen, reducedMotion, errorLine, errorGlyph } from '/js/widget-toolbox.js?v=91dc2dae';
 import * as M from './world-map.js';
 await loadStrings();
 document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World map of connections'));

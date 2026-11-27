@@ -13,9 +13,9 @@ import {
   REQ_MARKS_CHANGED,
   reveal,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=674bbb0b';
-import { createListbox } from '/js/listbox.js?v=4c9c6a24';
-import { renderColorControl } from '/js/admin-color-control.js?v=02a3035a';
+} from '/js/admin-shared.js?v=12fb8c08';
+import { createListbox } from '/js/listbox.js?v=bd1d196c';
+import { renderColorControl } from '/js/admin-color-control.js?v=0271cce2';
 import {
   seedCarried,
   applyOptionSet,
