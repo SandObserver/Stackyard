@@ -290,7 +290,7 @@ test('Kavita list shelf reads its items and takes the list title when the shelf 
   assert.deepEqual(
     r.shelves[0].books.map(b => [b.title, b.progress]),
     [
-      ['Monster', 0.25],
+      ['Monster, Vol 1', 0.25],
       ['Side Story', null],
     ],
   );
@@ -318,4 +318,23 @@ test('Kavita reading lists feed the list picker', async () => {
 test('Kavita without a token in the sign-in reply reports an auth failure', async () => {
   const ctx = ctxFor(KAVITA, () => ({ status: 200, data: {} }));
   await assert.rejects(dataFn(ctx), err => err.kind === 'auth');
+});
+
+test('Kavita list items of one series keep their volume apart', async () => {
+  const { ctx } = kavitaCtx(
+    { shelves: [{ source: 'list', listId: '1' }] },
+    {
+      '/api/ReadingList/items': [
+        { id: 1, seriesName: 'Night Shift', title: 'Volume 1', volumeNumber: '1', chapterNumber: '-100000' },
+        { id: 2, seriesName: 'Night Shift', title: 'Volume 2', volumeNumber: '2', chapterNumber: '-100000' },
+        { id: 3, seriesName: 'Mort', title: 'Mort' },
+      ],
+      '/api/ReadingList/lists': [{ id: 1, title: 'Weekend' }],
+    },
+  );
+  const r = await dataFn(ctx);
+  assert.deepEqual(
+    r.shelves[0].books.map(b => b.title),
+    ['Night Shift, Volume 1', 'Night Shift, Volume 2', 'Mort'],
+  );
 });
