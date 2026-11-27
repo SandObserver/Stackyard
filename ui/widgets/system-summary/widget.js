@@ -356,6 +356,7 @@ function readingFor(slot, data) {
   if (slot.type === 'iowait') return reading(data.iowait);
   if (slot.type === 'procs') return reading(data.procs);
   if (slot.type === 'temp') {
+    if (isRemote() && !slot.sensor) return reading(data.temp);
     return reading(data.temps?.[tempKey(slot)]);
   }
   return null;
@@ -510,13 +511,16 @@ function applyThroughput(d) {
 
 async function fetchSpeed() {
   const d = await fetchData('speed');
-  if (!d || d.download == null) throw new Error('no speed data');
+  if (!d || (d.download == null && d.failed !== true)) throw new Error('no speed data');
   return d;
 }
 
 function applySpeed(d) {
-  const dn = document.getElementById('net-dn'); if (dn) dn.textContent = fmtMbps(d.download);
-  const up = document.getElementById('net-up'); if (up) up.textContent = fmtMbps(d.upload);
+  const failed = d.failed === true;
+  const row = document.getElementById('net-val'); if (row) row.classList.toggle('net-failed', failed);
+  const dn = document.getElementById('net-dn');
+  if (dn) dn.textContent = failed ? wt('ui.testFailed', 'Last test failed') : fmtMbps(d.download);
+  const up = document.getElementById('net-up'); if (up) up.textContent = failed ? '' : fmtMbps(d.upload);
 }
 
 boot();

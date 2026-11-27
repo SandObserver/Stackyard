@@ -31,7 +31,7 @@ const valueText = lift('valueText', 'type, v', { formatNumber: n => String(n) })
 const scaleFor = lift('scaleFor', 'type, vals');
 let remote = false;
 const tempKey = lift('tempKey', 'slot', { isRemote: () => remote });
-const readingFor = lift('readingFor', 'slot, data', { reading, tempKey });
+const readingFor = lift('readingFor', 'slot, data', { reading, tempKey, isRemote: () => remote });
 const share = liftConst('share', { reading });
 const sizeParts = lift('sizeParts', 'd', { reading, share, byteScale, formatBytes, formatNumber });
 const sizeText = liftConst('sizeText');
@@ -74,7 +74,16 @@ test('a temperature slot reads the sensor field of its own source only', () => {
   assert.equal(readingFor({ type: 'temp', sensor: 'Core 0' }, { temps: { 0: 40, 'Core 0': 41 } }), 40);
   remote = true;
   assert.equal(readingFor(slot, { temps }), 41);
-  assert.equal(readingFor({ type: 'temp', localSensor: 'cpu' }, { temps: { 0: 40, cpu: 43 } }), 40);
+  assert.equal(readingFor({ type: 'temp', localSensor: 'cpu' }, { temp: 40, temps: { 0: 40, cpu: 43 } }), 40);
+  remote = false;
+});
+
+test('a remote temperature slot with no sensor reads the default the source picked', () => {
+  remote = true;
+  const data = { temp: 56, temps: { 'iwlwifi_1 0': 44, 'Package id 0': 56 } };
+  assert.equal(readingFor({ type: 'temp' }, data), 56);
+  assert.equal(readingFor({ type: 'temp', sensor: 'iwlwifi_1 0' }, data), 44);
+  assert.equal(readingFor({ type: 'temp' }, { temps: {} }), null);
   remote = false;
 });
 

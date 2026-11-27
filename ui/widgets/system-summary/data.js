@@ -168,6 +168,9 @@ async function speed(ctx) {
   if (r.status === 401) ctx.fail('MySpeed returned 401, check password', { kind: ctx.KIND.AUTH });
   const row = Array.isArray(r.data) ? r.data[0] : r.data;
   if (!row) ctx.fail('No result from MySpeed');
+  /* A failed MySpeed test stores -1 for every value. */
+  const failed = Boolean(row.error) || [row.download, row.upload, row.ping].some(v => typeof v === 'number' && v < 0);
+  if (failed) return { download: null, upload: null, ping: null, failed: true, ts: row.created };
   return { download: row.download, upload: row.upload, ping: row.ping, failed: false, ts: row.created };
 }
 
@@ -252,6 +255,17 @@ function glancesUptime(text) {
   return Number(m[1] || 0) * 86400 + Number(m[2]) * 3600 + Number(m[3]) * 60 + Number(m[4]);
 }
 
+const CPU_SENSOR = /package|tctl|tdie|cpu|core/i;
+
+function cpuFirst(labels) {
+  return [...labels.filter(l => CPU_SENSOR.test(l)), ...labels.filter(l => !CPU_SENSOR.test(l))];
+}
+
+function defaultTemp(temps) {
+  const label = cpuFirst(Object.keys(temps))[0];
+  return label === undefined ? null : temps[label];
+}
+
 function glancesTemps(sensors) {
   const out = {};
   for (const s of Array.isArray(sensors) ? sensors : []) {
@@ -264,7 +278,7 @@ function glancesTemps(sensors) {
 
 async function glancesSensorOptions(ctx) {
   const temps = glancesTemps(await glancesGet(ctx, 'sensors'));
-  return { options: Object.keys(temps).map(label => ({ value: label, label })) };
+  return { options: cpuFirst(Object.keys(temps)).map(label => ({ value: label, label })) };
 }
 
 async function systemSummaryGlances(ctx) {
@@ -298,11 +312,10 @@ async function systemSummaryGlances(ctx) {
   });
 
   const temps = glancesTemps(sensors);
-  const firstTemp = Object.values(temps)[0];
   return {
     cpu: typeof cpu?.total === 'number' ? cpu.total : null,
     ram: typeof mem?.percent === 'number' ? mem.percent : null,
-    temp: firstTemp ?? null,
+    temp: defaultTemp(temps),
     temps,
     disks,
     iowait: typeof cpu?.iowait === 'number' ? cpu.iowait : null,
@@ -425,7 +438,7 @@ async function beszelSensorOptions(ctx) {
   if (!id) ctx.fail('Choose a system first.', { kind: ctx.KIND.INVALID });
   const stats = await beszelLatest(ctx, base, id);
   const temps = stats && typeof stats.t === 'object' ? stats.t : {};
-  return { options: Object.keys(temps).map(label => ({ value: label, label })) };
+  return { options: cpuFirst(Object.keys(temps)).map(label => ({ value: label, label })) };
 }
 
 /* The root filesystem is the one Beszel reports directly. Every other one is
@@ -478,7 +491,7 @@ async function systemSummaryBeszel(ctx) {
   return {
     cpu: typeof stats.cpu === 'number' ? stats.cpu : null,
     ram: typeof stats.mp === 'number' ? stats.mp : null,
-    temp: Object.values(temps)[0] ?? null,
+    temp: defaultTemp(temps),
     temps,
     disks,
     iowait,
@@ -550,7 +563,7 @@ async function unraidSensorOptions(ctx) {
      rather than failing, so an empty picker would look like a broken key. */
   if (!temperature) ctx.fail('Turn on temperature reporting in Unraid first.', { kind: ctx.KIND.INVALID });
   const temps = unraidTemps(temperature);
-  return { options: Object.keys(temps).map(name => ({ value: name, label: name })) };
+  return { options: cpuFirst(Object.keys(temps)).map(name => ({ value: name, label: name })) };
 }
 
 const KB = 1024;
@@ -601,7 +614,7 @@ async function systemSummaryUnraid(ctx) {
   return {
     cpu: typeof data.metrics?.cpu?.percentTotal === 'number' ? data.metrics.cpu.percentTotal : null,
     ram: typeof data.metrics?.memory?.percentTotal === 'number' ? data.metrics.memory.percentTotal : null,
-    temp: Object.values(temps)[0] ?? null,
+    temp: defaultTemp(temps),
     temps,
     disks: [...mounts].map(mount => ({ mount, ...unraidDisk(data, mount) })),
     iowait: null,
