@@ -1,4 +1,4 @@
-import { poll, fetchData, getConfig, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom, whileOnScreen, twoTap, toneForColor, failureName } from '/js/widget-toolbox.js?v=91dc2dae';
+import { poll, fetchData, getConfig, openUrl, linkTo, html, setHtml, loadStrings, wt, errorState, errorLine, formatList, relativeTime, cssZoom, whileOnScreen, twoTap, toneForColor, failureName } from '/js/widget-toolbox.js?v=0e14d130';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('ui.backupStatus', 'Backup status'));
 const size = new URLSearchParams(location.search).get('size') || 'small';
@@ -475,7 +475,7 @@ function applyCard(idx, job) {
   if(!back||!front) return;
 
   if(job && job.error) {
-    applyCardError(idx, errorLine({ kind: job.error }));
+    applyCardError(idx, errorLine({ kind: job.error, code: job.errorCode }));
     return;
   }
   _links[idx] = (job && job.link) || '';

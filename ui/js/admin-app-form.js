@@ -1,5 +1,5 @@
-import { renderColorControl } from '/js/admin-color-control.js?v=0271cce2';
-import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=54e71016';
+import { renderColorControl } from '/js/admin-color-control.js?v=983f3bc2';
+import { badgeErrorAdvice, TONE } from '/js/admin-error.js?v=98a82d49';
 import {
   clearsStoredSecret,
   failureIsMissingApiPath,
@@ -31,10 +31,10 @@ import {
   syncRequiredLegend,
   toast,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=12fb8c08';
-import { activityAuth, activityHasAuth, POLL_MAX, POLL_MIN } from '/js/admin-save-logic.js?v=6b052e5e';
+} from '/js/admin-shared.js?v=3f6bd8c1';
+import { activityAuth, activityHasAuth, POLL_MAX, POLL_MIN } from '/js/admin-save-logic.js?v=7fa325ac';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=889eeef7';
+import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=7a1f7e8e';
 import { fluidHoverClear, fluidHoverKb } from '/js/fluid-hover.js?v=eb6cc81c';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';

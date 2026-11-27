@@ -612,6 +612,7 @@ const ADMIN_LAYERED = [
   ['a placeholder in a field on a card', '--dm-strong', ['--cp', '--btn-fill']],
   ['the sign-in and set-password explanation', '--dm-strong', ['--pane', '--scrim-strong', '--glass-bg']],
   ['the sign-in password placeholder', '--dm-strong', ['--pane', '--scrim-strong', '--glass-bg', '--btn-fill']],
+  ['the forgotten password link', '--ac2', ['--pane', '--scrim-strong', '--glass-bg']],
   ['the sidebar version', '--dm-strong', ['--sb']],
   ['the Retry label', '--tx', ['--cp', '--btn-fill']],
 ];
@@ -641,6 +642,7 @@ test('the measured Settings rules name the measured tokens', () => {
     ['.kv-k::placeholder', 'color', 'var(--dm-strong)'],
     ['.icon-srch::placeholder', 'color', 'var(--dm-strong)'],
     ['.login-sub', 'color', 'var(--dm-strong)'],
+    ['.login-forgot', 'color', 'var(--ac2)'],
     ['.sb-ver', 'color', 'var(--dm-strong)'],
     ['.p-hd', 'color', 'var(--chip-hd-fg)'],
     ['.p-hd', 'background', 'var(--chip-hd-bg)'],

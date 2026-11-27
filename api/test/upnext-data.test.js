@@ -231,7 +231,7 @@ test('data: one app failing leaves the rest and names it; all failing reports th
     return sonarrServe([ep('Northbound', '2026-10-25T21:00:00Z', 2, 4)])(url);
   });
   const out = await data(ctx);
-  assert.deepEqual(out.missing, [{ app: 'lidarr', kind: 'auth' }]);
+  assert.deepEqual(out.missing, [{ app: 'lidarr', kind: 'auth', code: 'auth.upstream' }]);
   assert.equal(out.items.length, 1);
 
   const down = ctxFor({ sources }, () => {
@@ -335,7 +335,7 @@ test('worst case: a timeout or refusal names that app, and a failed longer read 
     },
   );
   const out = await data(ctx);
-  assert.deepEqual(out.missing, [{ app: 'lidarr', kind: 'network' }]);
+  assert.deepEqual(out.missing, [{ app: 'lidarr', kind: 'network', code: 'network.refused' }]);
   assert.equal(out.days, 14, 'the empty state must not claim 90 days');
   assert.deepEqual(
     out.items.map(i => i.title),
@@ -389,7 +389,7 @@ test('data: a timeout from the proxy or the widget budget is named a timeout', a
     },
   );
   const out = await data(ctx);
-  assert.deepEqual(out.missing, [{ app: 'radarr', kind: 'timeout' }]);
+  assert.deepEqual(out.missing, [{ app: 'radarr', kind: 'timeout', code: 'timeout.no-answer' }]);
 });
 
 test('time zones: a day item outlives UTC midnight until its day ends at UTC-12', () => {

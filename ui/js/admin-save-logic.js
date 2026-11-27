@@ -1,6 +1,6 @@
 // @ts-check
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
-import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=889eeef7';
+import { BADGE_DEFAULT, MAX_LABELS } from '/js/badge-logic.js?v=7a1f7e8e';
 import { generalKeysIn, SERVER, TOP } from '/js/settings-schema.js?v=1d21e821';
 
 /* Keep this module free of the DOM. The DOM reads stay in doSave. */

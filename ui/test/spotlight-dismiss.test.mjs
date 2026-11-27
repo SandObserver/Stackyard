@@ -116,8 +116,8 @@ test('a close event that lands after Search reopened leaves focus in the field',
   assert.equal(document.activeElement, pill, 'a plain close no longer puts focus back');
 });
 
-test('a folder result shows the folder icon grid', () => {
-  assert.match(js, /if \(isFolder && folderGlyph\) \{[\s\S]*?folderGlyph\(app, 64\)/);
+test('a folder result draws its icon grid at the size of the result box', () => {
+  assert.match(js, /if \(isFolder && folderGlyph\) \{[\s\S]*?folderGlyph\(app, MOB\(\) \? 64 : 44\)/);
 });
 
 test('Cancel sits beside the field, not inside the pill', () => {

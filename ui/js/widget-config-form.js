@@ -13,9 +13,9 @@ import {
   REQ_MARKS_CHANGED,
   reveal,
   wireInlineEdit,
-} from '/js/admin-shared.js?v=12fb8c08';
+} from '/js/admin-shared.js?v=3f6bd8c1';
 import { createListbox } from '/js/listbox.js?v=bd1d196c';
-import { renderColorControl } from '/js/admin-color-control.js?v=0271cce2';
+import { renderColorControl } from '/js/admin-color-control.js?v=983f3bc2';
 import {
   seedCarried,
   applyOptionSet,
@@ -24,7 +24,7 @@ import {
   groupBounds,
   isPlainField,
 } from '/js/admin-logic.js?v=81fd47cf';
-import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=54e71016';
+import { optionsErrorAdvice, TONE } from '/js/admin-error.js?v=98a82d49';
 import { qi } from '/js/utils.js?v=457d9918';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { SAVED_ROW } from '/js/saved-row.js?v=44039df6';

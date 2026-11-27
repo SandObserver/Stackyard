@@ -123,6 +123,33 @@ test('every import dialog section title is a heading under the dialog title', as
   }
 });
 
+test('an import where every file is refused lists each file and its reason', async () => {
+  const { catalogRoutes, fakeFetch, installDom, pageBody, settle } = await import('./fake-dom.mjs');
+  const dom = installDom({ markup: pageBody('admin/index.html'), fetch: fakeFetch(catalogRoutes()) });
+  try {
+    await (await import('../js/i18n.js')).initI18n('en');
+    const { reviewImport } = await import('../js/admin-transfer.js');
+    const done = reviewImport(
+      [],
+      [
+        { name: 'notes.yaml', group: '', reason: 'file-unknown' },
+        { name: 'big.yaml', group: '', reason: 'file-too-large' },
+      ],
+      [],
+      'toast.importForeignNothing',
+    );
+    await settle();
+    await done;
+    const dlg = dom.document.querySelector('dialog.dlg-box');
+    assert.ok(dlg, 'no dialog listed the refused files');
+    const text = dlg.textContent;
+    assert.ok(text.includes('notes.yaml') && text.includes('big.yaml'), 'a refused file is missing');
+    assert.equal(dlg.querySelectorAll('button').length, 1, 'a dialog with nothing to import offers only Close');
+  } finally {
+    dom.restore();
+  }
+});
+
 /* ── widget frame names ───────────────────────────────────────────────────── */
 
 /* Two widgets of one type share a manifest label, and the frame list then holds

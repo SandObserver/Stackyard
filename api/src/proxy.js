@@ -443,10 +443,7 @@ function fetchJSON(raw, opts = {}) {
       done(reject, new Error('Timed out'));
     });
     req.on('error', (/** @type {unknown} */ e) => {
-      if (skipIgnored && TLS_ERROR_CODES.has(errCode(e) ?? '')) {
-        /** @type {{ vouchedMessage?: string }} */ (e).vouchedMessage = SKIP_TLS_IGNORED_MESSAGE;
-        /** @type {{ apiCode?: string }} */ (e).apiCode = 'network.tls-ignored';
-      }
+      tagTlsError(e, skipIgnored, u.hostname);
       done(reject, e);
     });
     if (bodyBuf) req.write(bodyBuf);
@@ -529,10 +526,7 @@ function openWebSocket(raw, opts = {}) {
       settle(resolve, conn);
     });
     req.on('error', (/** @type {unknown} */ e) => {
-      if (skipIgnored && TLS_ERROR_CODES.has(errCode(e) ?? '')) {
-        /** @type {{ vouchedMessage?: string }} */ (e).vouchedMessage = SKIP_TLS_IGNORED_MESSAGE;
-        /** @type {{ apiCode?: string }} */ (e).apiCode = 'network.tls-ignored';
-      }
+      tagTlsError(e, skipIgnored, u.hostname);
       settle(reject, e);
     });
     req.end();
@@ -601,14 +595,30 @@ function pingErrorText(e) {
    syscall name there. */
 const PING_CODES = require('./net-codes').NET_CODES;
 
+/** The API code for a TLS failure, or null for any other error.
+    @param {unknown} e @param {boolean} skipIgnored @param {string} hostname @returns {string | null} */
+function tlsCode(e, skipIgnored, hostname) {
+  const code = errCode(e) ?? '';
+  if (!TLS_ERROR_CODES.has(code)) return null;
+  if (skipIgnored) return 'network.tls-ignored';
+  const mapped = PING_CODES[code] || 'network.tls-untrusted';
+  return mapped === 'network.self-signed' && !isInternalHost(hostname) ? 'network.self-signed-public' : mapped;
+}
+
+/** @param {unknown} e @param {boolean} skipIgnored @param {string} hostname */
+function tagTlsError(e, skipIgnored, hostname) {
+  const code = tlsCode(e, skipIgnored, hostname);
+  if (!code || !e || typeof e !== 'object') return;
+  /** @type {{ apiCode?: string }} */ (e).apiCode = code;
+  if (code === 'network.tls-ignored')
+    /** @type {{ vouchedMessage?: string }} */ (e).vouchedMessage = SKIP_TLS_IGNORED_MESSAGE;
+}
+
 /** @param {unknown} e @param {boolean} skipIgnored @param {string} hostname @returns {string} */
 function pingCode(e, skipIgnored, hostname) {
+  const tls = tlsCode(e, skipIgnored, hostname);
+  if (tls) return tls;
   const code = errCode(e) ?? '';
-  if (TLS_ERROR_CODES.has(code)) {
-    if (skipIgnored) return 'network.tls-ignored';
-    const mapped = PING_CODES[code] || 'network.tls-untrusted';
-    return mapped === 'network.self-signed' && !isInternalHost(hostname) ? 'network.self-signed-public' : mapped;
-  }
   if (code.startsWith('HPE_')) return 'network.not-http';
   return PING_CODES[code] || 'network';
 }

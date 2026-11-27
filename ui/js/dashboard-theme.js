@@ -1,4 +1,4 @@
-import { applyTheme, fadeTheme, prefersDark, readMode, resolveTheme, THEME_KEY } from '/js/theme.js?v=ab9b83fd';
+import { applyTheme, fadeTheme, prefersDark, readMode, resolveTheme, THEME_KEY } from '/js/theme.js?v=4e6279e8';
 import { rethemeTiles } from '/js/utils.js?v=457d9918';
 
 /** @param {{ refreshBadges: () => void, applyBg: () => unknown }} deps */

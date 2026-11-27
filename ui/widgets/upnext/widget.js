@@ -1,4 +1,4 @@
-  import { poll, linkTo, loadStrings, wt, errorState, errorLine, placeholder, localiseDigits, cssZoom, readerHourCycle } from '/js/widget-toolbox.js?v=91dc2dae';
+  import { poll, linkTo, loadStrings, wt, errorState, errorLine, placeholder, localiseDigits, cssZoom, readerHourCycle } from '/js/widget-toolbox.js?v=0e14d130';
   import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
   import { visibleItems, dayOffset, kindClass } from './upnext-logic.js';
 
@@ -154,14 +154,16 @@
     }
     if (missing.length) {
       const kinds = [...new Set(missing.map((m) => m.kind))];
-      const line = note.fail({ kind: kinds.length === 1 ? kinds[0] : 'network' }, { inert: false });
+      const codes = [...new Set(missing.map((m) => m.code))];
+      const one = kinds.length === 1 ? { kind: kinds[0], code: codes.length === 1 ? codes[0] : undefined } : { kind: 'network' };
+      const line = note.fail(one, { inert: false });
       const apps = [...new Set(missing.map((m) => APP[m.app] || m.app))];
       const b = noteEl.querySelector('b');
       b.textContent = wt('ui.appProblem', '{app} · {problem}', { app: apps.join(', '), problem: line });
       if (kinds.length > 1) {
         b.setAttribute('aria-hidden', 'true');
         noteEl.append(el('span', 'sr', missing
-          .map((m) => wt('ui.appProblem', '{app} · {problem}', { app: APP[m.app] || m.app, problem: errorLine({ kind: m.kind }) }))
+          .map((m) => wt('ui.appProblem', '{app} · {problem}', { app: APP[m.app] || m.app, problem: errorLine({ kind: m.kind, code: m.code }) }))
           .join(', ')));
       }
     } else note.ok();

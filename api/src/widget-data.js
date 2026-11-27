@@ -15,7 +15,7 @@ const { IS_DEMO } = require('./demo');
 const demoData = require('./demo-data');
 const log = require('./log');
 const failureLog = require('./failure-log');
-const { classify, fail, KIND, WidgetError } = require('./api-error');
+const { classify, codeOf, fail, KIND, WidgetError } = require('./api-error');
 const { rateLimit } = require('./auth');
 const LIMITS = require('./poll-limits');
 const { serviceBase, serviceLink } = require('../../ui/js/service-link.js');
@@ -111,6 +111,7 @@ const withinBudget =
     @property {(message: string, opts?: { kind?: string, detail?: object }) => never} fail throws a WidgetError
     @property {typeof KIND} KIND
     @property {typeof classify} classify
+    @property {typeof codeOf} codeOf the API code for a caught error, for a partial failure the widget draws itself
     @property {typeof log} log
     @property {(handlers: Record<string, (ctx: WidgetCtx) => any>,
       opts?: { field?: string, default?: string, onError?: (e: any, ctx: WidgetCtx) => any }) => Promise<any>} dispatchProvider */
@@ -146,6 +147,7 @@ function dataFnContext(wc, endpoint, searchParams, fetch, row = null, trace = nu
     },
     KIND,
     classify,
+    codeOf,
     log,
     dispatchProvider: (handlers, opts) => dispatchProvider(ctx, handlers, opts),
   };

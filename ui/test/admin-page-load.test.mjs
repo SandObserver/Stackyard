@@ -85,3 +85,15 @@ test('a theme change on Settings crossfades', () => {
   assert.equal(dom.document.documentElement.getAttribute('data-theme'), 'dark');
   delete dom.document.startViewTransition;
 });
+
+test('a theme change from another tab while Settings is hidden updates the mode at once and paints on return', () => {
+  dom.document.hidden = true;
+  dom.storage.set('sy-theme', 'light');
+  dom.window.dispatchEvent({ type: 'storage', key: 'sy-theme' });
+  const picked = dom.document.querySelector('#theme-list li[aria-selected="true"]');
+  assert.equal(picked?.dataset.val, 'light', 'the picker kept the old mode while hidden');
+  dom.document.getElementById('toast')?.classList.remove('show');
+  dom.document.hidden = false;
+  dom.document.dispatchEvent({ type: 'visibilitychange' });
+  assert.equal(dom.document.documentElement.getAttribute('data-theme'), 'light');
+});

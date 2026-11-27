@@ -53,9 +53,10 @@ export function errorKind(err) {
   return err ? 'network' : FALLBACK;
 }
 
-/** @param {string} kind @param {Document} doc @returns {Element} */
-export function kindGlyph(kind, doc) {
-  const [g] = COPY[kind] || COPY[FALLBACK];
+/** The glyph for a failure, by its code when one is known, else its kind.
+    @param {unknown} err @param {Document} doc @returns {Element} */
+export function errorGlyphFor(err, doc) {
+  const [g] = copyFor(err);
   return glyphFor(g, doc);
 }
 
@@ -67,10 +68,11 @@ function glyphFor(g, doc) {
   return doc.importNode(parseMarkup(raw(src), 'image/svg+xml', doc.defaultView.DOMParser).documentElement, true);
 }
 
-/** The catalog key and English wording for a kind.
-    @param {string} kind @returns {{ key: string, text: string }} */
-export function errorCopy(kind) {
-  const [, key, text] = COPY[kind] || COPY[FALLBACK];
+/** The catalog key and English wording for a failure, by its code when one
+    is known, else its kind.
+    @param {unknown} err @returns {{ key: string, text: string }} */
+export function errorCopyFor(err) {
+  const [, key, text] = copyFor(err);
   return { key, text };
 }
 

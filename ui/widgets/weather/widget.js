@@ -1,4 +1,4 @@
-import { poll, fetchData, getConfig, reducedMotion, rollText, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, raw, setHtml } from '/js/widget-toolbox.js?v=91dc2dae';
+import { poll, fetchData, getConfig, reducedMotion, rollText, linkTo, loadStrings, wt, formatNumber, errorState, setCardAppearance, placeholder, sinceLabel, readingTime, whileOnScreen, fitText, html, raw, setHtml } from '/js/widget-toolbox.js?v=0e14d130';
 import { ensureSprite } from '/js/icon-set.js?v=da154c4a';
 await loadStrings();
 document.getElementById('widget').setAttribute('aria-label', wt('widget.label', 'Weather'));

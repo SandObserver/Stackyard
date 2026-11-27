@@ -99,7 +99,7 @@ test('a certificate failure nobody asked to skip is not explained away', async t
   captureRequest(t);
   const err = await _internals.fetchJSON('https://api.github.com/x', { skipTls: false }).catch(e => e);
   assert.equal(err.vouchedMessage, undefined);
-  assert.equal(err.apiCode, undefined);
+  assert.equal(err.apiCode, 'network.self-signed-public');
 });
 
 test('pingUrl scopes the flag the same way and says so on a certificate failure', async t => {

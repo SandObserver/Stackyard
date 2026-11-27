@@ -72,8 +72,7 @@ services:
       # it. See https://stackyard.sandobserver.com/docs/security/.
       - ALLOW_PRIVATE_IPS=${ALLOW_PRIVATE_IPS:-}
       # Log verbosity: debug, info, warn or error, where warn and error behave
-      # the same. Settings, General sets this too, and that wins once the config
-      # has loaded.
+      # the same. When set, it overrides the level in Settings, General.
       - LOG_LEVEL=${LOG_LEVEL:-}
       # Run as a read-only public showcase. See https://stackyard.sandobserver.com/docs/contributing/releasing/.
       - DEMO_MODE=${DEMO_MODE:-}

@@ -353,9 +353,12 @@ async function slots(config, ctx) {
 
   const result = Array(list.length).fill(null);
   /* A card for an instance that stopped answering must not keep its last status. */
-  const failSlots = (gs, kind) => {
-    for (const { i } of gs) result[i] = { error: kind };
+  /** @param {any[]} gs @param {string} kind @param {string} [code] */
+  const failSlots = (gs, kind, code) => {
+    for (const { i } of gs) result[i] = code ? { error: kind, errorCode: code } : { error: kind };
   };
+  /** @param {any[]} gs @param {unknown} e */
+  const failSlotsWith = (gs, e) => failSlots(gs, ctx.classify(e).kind, ctx.codeOf(e));
 
   const dupDone = Promise.all(
     Object.values(dupGroups).map(async ({ base, pass, slots: gs }) => {
@@ -392,7 +395,7 @@ async function slots(config, ctx) {
       } catch (e) {
         /* One unreachable instance must leave the rest of the widget intact. */
         ctx.log.warn('backup: duplicati group failed', { base, error: e.message });
-        failSlots(gs, ctx.classify(e).kind);
+        failSlotsWith(gs, e);
       }
     }),
   );
@@ -421,7 +424,7 @@ async function slots(config, ctx) {
         });
       } catch (e) {
         ctx.log.warn('backup: kopia group failed', { url, error: e.message });
-        failSlots(gs, ctx.classify(e).kind);
+        failSlotsWith(gs, e);
       }
     }),
   );
@@ -502,13 +505,13 @@ async function slots(config, ctx) {
               };
             } catch (e) {
               ctx.log.warn('backup: proxmox backup server slot failed', { url: row.pbsUrl, error: e.message });
-              result[i] = { error: ctx.classify(e).kind };
+              result[i] = { error: ctx.classify(e).kind, errorCode: ctx.codeOf(e) };
             }
           }),
         );
       } catch (e) {
         ctx.log.warn('backup: proxmox backup server group failed', { url: row.pbsUrl, error: e.message });
-        failSlots(gs, ctx.classify(e).kind);
+        failSlotsWith(gs, e);
       }
     }),
   );
@@ -536,7 +539,7 @@ async function slots(config, ctx) {
         });
       } catch (e) {
         ctx.log.warn('backup: backrest group failed', { url, error: e.message });
-        failSlots(gs, ctx.classify(e).kind);
+        failSlotsWith(gs, e);
       }
     }),
   );

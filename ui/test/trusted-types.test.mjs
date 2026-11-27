@@ -85,10 +85,10 @@ test('without Trusted Types the sprite is parsed from a string', async () => {
 test('a failure glyph is parsed through the policy with the target document parser', async () => {
   const tt = fakeTrustedTypes();
   await withGlobals({ trustedTypes: tt }, async () => {
-    const { kindGlyph } = await import(`../js/widget-error.js?tt=${Math.random()}`);
+    const { errorGlyphFor } = await import(`../js/widget-error.js?tt=${Math.random()}`);
     const seen = [];
     const doc = { defaultView: { DOMParser: fakeParser(seen) }, importNode: n => n };
-    const glyph = kindGlyph('network', doc);
+    const glyph = errorGlyphFor({ kind: 'network' }, doc);
     assert.equal(glyph.type, 'image/svg+xml');
     assert.equal(seen.length, 1);
     assert.ok(seen[0] instanceof FakeTrustedHTML);

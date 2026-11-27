@@ -140,8 +140,9 @@ function onError(req, res, err) {
     @param {Record<string, string>} [headers] */
 function json(res, status, data, headers = {}) {
   const id = requestIdOf(res);
+  const failed = status >= 400 || data?.ok === false;
   const tagged =
-    status >= 400 && id && data && typeof data === 'object' && ('error' in data || 'kind' in data)
+    failed && id && data && typeof data === 'object' && ('error' in data || 'kind' in data)
       ? { ...data, requestId: id }
       : data;
   const b = JSON.stringify(tagged);

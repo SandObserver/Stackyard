@@ -1,4 +1,4 @@
-import { contrastInk, cardContrast, rollText, colorOrFallback, columns, barFill, setBar, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, byteScale, formatBytes, formatByteRate, formatDuration, errorState, cssZoom, linkTo, openUrl, formatList, getConfig, failureName } from '/js/widget-toolbox.js?v=91dc2dae';
+import { contrastInk, cardContrast, rollText, colorOrFallback, columns, barFill, setBar, poll, fetchData, html, setHtml, loadStrings, wt, formatNumber, byteScale, formatBytes, formatByteRate, formatDuration, errorState, cssZoom, linkTo, openUrl, formatList, getConfig, failureName } from '/js/widget-toolbox.js?v=0e14d130';
 await loadStrings();
 const REFRESH_SECONDS = ['5', '10', '30', '60'];
 const SPEED_MS = 60000;

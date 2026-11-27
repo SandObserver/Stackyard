@@ -4,7 +4,7 @@ import {
   computeBadgeVisual,
   folderLabelName,
   readBadgeUpdate,
-} from '/js/badge-logic.js?v=889eeef7';
+} from '/js/badge-logic.js?v=7a1f7e8e';
 import { describeBadgeTile, wireBadgePopover } from '/js/badge-popover.js?v=578d337c';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { t } from '/js/i18n.js?v=82ba9da2';

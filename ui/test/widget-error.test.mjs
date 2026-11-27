@@ -10,7 +10,7 @@ import { pageWithScripts } from './widget-source.mjs';
 register('./js-root-hooks.mjs', import.meta.url);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const { errorKind, errorCopy } = await import('../js/widget-error.js');
+const { errorKind, errorCopyFor } = await import('../js/widget-error.js');
 const { KINDS } = createRequire(import.meta.url)('../../api/src/api-error.js');
 
 test('the kind the API sent wins', () => {
@@ -45,7 +45,7 @@ test('nothing at all is an internal failure, not a network one', () => {
 test('every kind has its own catalog key and English', () => {
   const keys = new Set();
   for (const kind of KINDS) {
-    const { key, text } = errorCopy(kind);
+    const { key, text } = errorCopyFor({ kind });
     assert.match(key, /^err[A-Z]/, `${kind} has no key`);
     assert.ok(text.length > 0, `${kind} has no English`);
     keys.add(key);
@@ -54,7 +54,16 @@ test('every kind has its own catalog key and English', () => {
 });
 
 test('an unknown kind still gets usable copy', () => {
-  assert.deepEqual(errorCopy('banana'), errorCopy('internal'));
+  const { key, text } = errorCopyFor({ kind: 'banana' });
+  assert.match(key, /^err[A-Z]/);
+  assert.ok(text.length > 0);
+});
+
+test('a known code picks its own line over its kind', () => {
+  assert.equal(errorCopyFor({ kind: 'network', code: 'network.self-signed' }).key, 'errCert');
+  assert.equal(errorCopyFor({ kind: 'blocked', code: 'blocked.rate-limit' }).key, 'errRateLimit');
+  assert.equal(errorCopyFor({ kind: 'auth', code: 'auth.permission' }).key, 'errPermission');
+  assert.equal(errorCopyFor({ kind: 'network', code: 'network.refused' }).key, 'errNetwork');
 });
 
 test('no widget renders a response error message', () => {

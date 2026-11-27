@@ -1,6 +1,6 @@
 import {
   poll, getConfig, loadStrings, wt, wtCount, formatNumber, formatList, localiseDigits, formatByteRate, formatDuration, linkTo, errorState, readingTime, fitText, placeholder, readerHourCycle,
-} from '/js/widget-toolbox.js?v=91dc2dae';
+} from '/js/widget-toolbox.js?v=0e14d130';
 import { ensureSprite } from '/js/icon-set.js?v=da154c4a';
 import { variations, finishedToday, hoursMinutes, leftover, lidOpen, finishParts } from './belt-logic.js';
 

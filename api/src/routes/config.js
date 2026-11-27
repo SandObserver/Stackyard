@@ -67,9 +67,14 @@ function scrubSecrets(cfg) {
   return safe;
 }
 
+/* The client and the stale check must read a stored revision the same way. A
+   mismatch refuses every save. */
+/** @param {any} cfg @returns {number} */
+const revOf = cfg => (Number.isSafeInteger(cfg?._rev) ? cfg._rev : 0);
+
 const clientConfig = (cfg = loadConfig()) => {
   const out = ensureSystemItems(scrubSecrets(cfg));
-  if (!Number.isSafeInteger(out._rev)) out._rev = 0;
+  out._rev = revOf(out);
   return out;
 };
 
@@ -273,7 +278,7 @@ on('POST', '/api/config', async (req, res) => {
       });
     const dropped = normalizeSettings(data.settings);
     const existing = loadConfigForUpdate();
-    if (Number(data._rev) !== (Number(existing._rev) || 0))
+    if (Number(data._rev) !== revOf(existing))
       return json(res, 409, {
         error: 'This config was changed somewhere else. Reload the page and try again.',
         kind: KIND.INVALID,

@@ -11,7 +11,7 @@
    The filter and the collapsed folders are in admin-state.js, because the page
    reads and writes them too. */
 
-import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=fad288b6';
+import { initDrag, redrawHeld, wireDockZone, wireRowDrag } from '/js/admin-drag.js?v=abd9f54f';
 import { listGroup } from '/js/admin-drag-logic.js?v=7033af1f';
 import {
   filterActive,
@@ -22,10 +22,10 @@ import {
   shownChildren,
   topLevelRows,
 } from '/js/admin-logic.js?v=81fd47cf';
-import { snapshotItems } from '/js/admin-save-logic.js?v=6b052e5e';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=12fb8c08';
+import { snapshotItems } from '/js/admin-save-logic.js?v=7fa325ac';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=3f6bd8c1';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { sizeLabel } from '/js/admin-widget-form.js?v=78a58597';
+import { sizeLabel } from '/js/admin-widget-form.js?v=6200c958';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
 import { t } from '/js/i18n.js?v=82ba9da2';

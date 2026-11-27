@@ -1,22 +1,22 @@
 import { firstViewWait } from '/js/background.js?v=51e46417';
-import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=afc17900';
-import { createBadges } from '/js/dashboard-badges.js?v=910ee473';
-import { createDesktopGrid } from '/js/dashboard-grid.js?v=0a398fe4';
-import { wirePageInput, wireTileSettle } from '/js/dashboard-input.js?v=22afcbba';
-import { createLayout } from '/js/dashboard-layout.js?v=780223ca';
+import { blockingScreenFor, showBlockingScreen } from '/js/config-recovery.js?v=6c6c458b';
+import { createBadges } from '/js/dashboard-badges.js?v=963d90c2';
+import { createDesktopGrid } from '/js/dashboard-grid.js?v=3ba8cc10';
+import { wirePageInput, wireTileSettle } from '/js/dashboard-input.js?v=90ab2da9';
+import { createLayout } from '/js/dashboard-layout.js?v=3837b602';
 import { configChanged, withKnownSizes } from '/js/dashboard-logic.js?v=b4828b62';
-import { createPager } from '/js/dashboard-pager.js?v=cb716ff3';
-import { createPolling } from '/js/dashboard-polling.js?v=d3573c0e';
+import { createPager } from '/js/dashboard-pager.js?v=f82605c1';
+import { createPolling } from '/js/dashboard-polling.js?v=83d2bbc3';
 import { liftVeil, showApiDown } from '/js/dashboard-screens.js?v=79b0c104';
-import { showSetupPrompt } from '/js/dashboard-setup.js?v=3bb0ea39';
-import { wireThemeChanges } from '/js/dashboard-theme.js?v=a6ef3613';
+import { showSetupPrompt } from '/js/dashboard-setup.js?v=5a10f428';
+import { wireThemeChanges } from '/js/dashboard-theme.js?v=eabc0240';
 import { createWallpaper } from '/js/dashboard-wallpaper.js?v=9158baca';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { currentLang, initI18n, isSupported } from '/js/i18n.js?v=82ba9da2';
 import { iconChain, loadLocalIcons } from '/js/icons.js?v=76c29d43';
 import { sanitizeItemLinks } from '/js/link-url.js?v=0bffa1dd';
-import { initSpotlight } from '/js/spotlight.js?v=fc26dffa';
-import { initUI, mkFolderGlyph, openFolderDesktop, openFolderMobile } from '/js/ui.js?v=fc97dc41';
+import { initSpotlight } from '/js/spotlight.js?v=86abd0cc';
+import { initUI, mkFolderGlyph, openFolderDesktop, openFolderMobile } from '/js/ui.js?v=af49ad13';
 import { storeGet, storeSet, within } from '/js/utils.js?v=457d9918';
 import { startWakeLock } from '/js/wake-lock.js?v=6b9591cf';
 import { saveBootHint } from '/js/wallpaper-cache.js?v=cd968718';
@@ -84,6 +84,8 @@ export async function boot(dash) {
   }
 
   let apiFailed = false;
+  /** @type {string | null} */
+  let bootVersion = null;
   /** @type {Promise<unknown>|null} */
   let wallpaperShown = null;
   const showWallpaperOnce = () => (wallpaperShown ??= applyBg());
@@ -92,6 +94,7 @@ export async function boot(dash) {
     if (got.e) throw got.e;
     const res = got.v;
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    bootVersion = res.headers.get('X-Stackyard-Version');
     const c = await res.json();
     dash.items = withKnownSizes(c.items || [], WIDGET_COLS.desktop);
     dash.S = c.settings || {};
@@ -170,7 +173,7 @@ export async function boot(dash) {
     sanitizeItemLinks(c.items || [], linkFields);
     return configChanged({ items: dash.items, settings: dash.S, _rev: dash.rev }, c);
   };
-  const polling = createPolling({ badges, differs, rev: () => dash.rev });
+  const polling = createPolling({ badges, differs, rev: () => dash.rev, version: bootVersion });
 
   wireTileSettle();
   polling.watchVisibility();
