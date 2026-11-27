@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show the error code and request id under a failed test in Settings.
 
+- Give the Settings tab bar icons a short spring when a tab is picked.
+
 ### Changed
 
 - Bend the Settings tab bar on phones like iOS: the glass lens lifts on any
