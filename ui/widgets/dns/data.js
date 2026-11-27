@@ -129,15 +129,59 @@ async function piHoleStats(ctx, base, headers, fetchJSON, mayRetry = false) {
   return out;
 }
 
+const TECHNITIUM_SERIES = {
+  num_dns_queries: ['Total'],
+  num_blocked_filtering: ['Blocked', 'Dropped'],
+  num_cached: ['Cached'],
+};
+
+function technitiumChart(data) {
+  const chart = data?.response?.mainChartData;
+  if (!Array.isArray(chart?.labels) || !Array.isArray(chart?.datasets)) return null;
+  return chart;
+}
+
+function technitiumSum(chart, names, from) {
+  let total = 0;
+  for (const set of chart.datasets) {
+    if (!names.includes(set?.label) || !Array.isArray(set.data)) continue;
+    for (let i = from; i < set.data.length; i++) total += +set.data[i] || 0;
+  }
+  return total;
+}
+
+/* Technitium keeps the current hour of LastDay at zero until the hour ends.
+   Fill that hour from the per-minute LastHour chart, or the card lags by up to
+   an hour and a new server shows no queries. */
+function technitiumWithCurrentHour(counts, dayData, hourData) {
+  const day = technitiumChart(dayData);
+  const hour = technitiumChart(hourData);
+  if (!day || !hour || !day.labels.length) return counts;
+  const start = Date.parse(day.labels.at(-1));
+  if (!Number.isFinite(start)) return counts;
+  const from = hour.labels.findIndex(l => Date.parse(l) >= start);
+  if (from < 0) return counts;
+  const out = { ...counts };
+  for (const [key, names] of Object.entries(TECHNITIUM_SERIES)) {
+    const closed = technitiumSum(day, names, day.labels.length - 1);
+    const live = technitiumSum(hour, names, from);
+    out[key] = Math.max(0, counts[key] - closed) + Math.max(closed, live);
+  }
+  return out;
+}
+
 async function technitium(ctx, base, config, fetchJSON) {
   if (!config.dnsTechnitiumToken) ctx.fail('API token not configured', { kind: ctx.KIND.INVALID });
-  const url =
+  const url = type =>
     base +
     '/api/dashboard/stats/get' +
     '?token=' +
     encodeURIComponent(config.dnsTechnitiumToken) +
-    '&type=LastDay&utc=true';
-  const r = await fetchJSON(url, { timeout: 8000 });
+    `&type=${type}&utc=true`;
+  const [r, hour] = await Promise.all([
+    fetchJSON(url('LastDay'), { timeout: 8000 }),
+    fetchJSON(url('LastHour'), { timeout: 8000 }).catch(() => null),
+  ]);
   if (r.status >= 400) ctx.fail('Technitium HTTP ' + r.status);
   /* Technitium wraps stats under response.stats and reports status as a string. */
   if (r.data && r.data.status && r.data.status !== 'ok') {
@@ -145,11 +189,13 @@ async function technitium(ctx, base, config, fetchJSON) {
   }
   const s = (r.data && (r.data.stats || (r.data.response && r.data.response.stats))) || r.data || {};
   if (typeof s.totalQueries !== 'number') ctx.fail('Technitium sent a reply without query counts');
-  return {
+  const counts = {
     num_dns_queries: +s.totalQueries || 0,
     num_blocked_filtering: (+s.totalBlocked || 0) + (+s.totalDropped || 0),
     num_cached: +s.totalCached || 0,
   };
+  const hourOk = hour && hour.status < 400 && hour.data?.status === 'ok';
+  return technitiumWithCurrentHour(counts, r.data, hourOk ? hour.data : null);
 }
 
 async function nextDns(ctx, config, fetchJSON) {
