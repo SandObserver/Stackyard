@@ -103,6 +103,7 @@
   "network.stToken.label": "API 令牌",
   "network.stToken.hint": "可选。留空则使用旧的兼容路由。",
   "ui.noData": "暂无数据",
+  "ui.testFailed": "上次测速失败",
   "ui.mbps": "{value} Mbps",
   "ui.gbps": "{value} Gbps"
 }

@@ -199,3 +199,37 @@ test('the local source is still the default when no provider is saved', async ()
   assert.equal(r.cpu, 5);
   assert.equal(r.procs, 200);
 });
+
+test('a temperature slot with no sensor reads the CPU, not the first sensor listed', async () => {
+  const saved = PLUGINS.sensors;
+  PLUGINS.sensors = [
+    { label: 'iwlwifi_1 0', value: 44, unit: 'C', type: 'temperature_core' },
+    { label: 'Package id 0', value: 56, unit: 'C', type: 'temperature_core' },
+    { label: 'Core 0', value: 53, unit: 'C', type: 'temperature_core' },
+  ];
+  try {
+    const { ctx } = ctxFor('cpu-first', { slots: [{ type: 'temp' }] });
+    assert.equal((await dataFn(ctx)).temp, 56);
+    const picker = ctxFor('cpu-first-picker', {}, { endpoint: 'sensors' });
+    assert.deepEqual(
+      (await dataFn(picker.ctx)).options.map(o => o.value),
+      ['Package id 0', 'Core 0', 'iwlwifi_1 0'],
+    );
+  } finally {
+    PLUGINS.sensors = saved;
+  }
+});
+
+test('with no CPU sensor the first temperature stands', async () => {
+  const saved = PLUGINS.sensors;
+  PLUGINS.sensors = [
+    { label: 'acpitz 0', value: 40, unit: 'C' },
+    { label: 'nvme Composite', value: 35, unit: 'C' },
+  ];
+  try {
+    const { ctx } = ctxFor('no-cpu', { slots: [{ type: 'temp' }] });
+    assert.equal((await dataFn(ctx)).temp, 40);
+  } finally {
+    PLUGINS.sensors = saved;
+  }
+});

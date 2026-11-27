@@ -103,6 +103,7 @@
   "network.stToken.label": "توکن API",
   "network.stToken.hint": "اختیاری. برای استفاده از مسیر سازگاری قدیمی خالی بگذارید.",
   "ui.noData": "داده‌ای نیست",
+  "ui.testFailed": "آخرین تست ناموفق بود",
   "ui.mbps": "{value} مگابیت/ثانیه",
   "ui.gbps": "{value} گیگابیت/ثانیه"
 }

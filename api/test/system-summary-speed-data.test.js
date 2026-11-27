@@ -105,3 +105,40 @@ test('a thrown fetch propagates rather than becoming a successful result', async
   };
   await assert.rejects(dataFn(ctx), /connect ECONNREFUSED/);
 });
+
+test('a failed myspeed test reports a failure instead of negative speeds', async () => {
+  const { ctx } = ctxFor(
+    { enabled: true, url: 'http://ms:5216', provider: 'myspeed' },
+    {
+      status: 200,
+      data: [
+        {
+          id: 1,
+          serverId: 0,
+          ping: -1,
+          download: -1,
+          upload: -1,
+          error: 'Validation error',
+          type: 'custom',
+          time: null,
+          created: '2026-11-27T22:54:15.757Z',
+        },
+      ],
+    },
+  );
+  assert.deepEqual(await dataFn(ctx), {
+    download: null,
+    upload: null,
+    ping: null,
+    failed: true,
+    ts: '2026-11-27T22:54:15.757Z',
+  });
+});
+
+test('a myspeed row with an error but no negative values still counts as failed', async () => {
+  const { ctx } = ctxFor(
+    { enabled: true, url: 'http://ms:5216', provider: 'myspeed' },
+    { status: 200, data: [{ download: 0, upload: 0, ping: 0, error: 'timeout', created: 'x' }] },
+  );
+  assert.equal((await dataFn(ctx)).failed, true);
+});

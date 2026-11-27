@@ -103,6 +103,7 @@
   "network.stToken.label": "Jeton d’API",
   "network.stToken.hint": "Facultatif. Laissez vide pour utiliser l’ancienne route de compatibilité.",
   "ui.noData": "Aucune donnée",
+  "ui.testFailed": "Le dernier test a échoué",
   "ui.mbps": "{value} Mbit/s",
   "ui.gbps": "{value} Gbit/s"
 }

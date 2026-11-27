@@ -103,6 +103,7 @@
   "network.stToken.label": "Token de API",
   "network.stToken.hint": "Opcional. Déjalo vacío para usar la ruta de compatibilidad anterior.",
   "ui.noData": "Sin datos",
+  "ui.testFailed": "La última prueba falló",
   "ui.mbps": "{value} Mbps",
   "ui.gbps": "{value} Gbps"
 }

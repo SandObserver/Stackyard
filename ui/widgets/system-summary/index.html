@@ -53,6 +53,7 @@
   .net { grid-column: 1 / -1; display: flex; gap: 12px; font-size: 11px; font-weight: 500;
     color: #8E8E93; white-space: nowrap; }
   .net-item { display: inline-flex; align-items: center; gap: 2px; }
+  .net-failed .net-item svg, .net-failed .net-item + .net-item { display: none; }
 
   html[data-theme="light"], html[data-theme="light"] body { background: #FFFFFF; }
   html[data-theme="light"] .lbl, html[data-theme="light"] .net, html[data-theme="light"] .sizes,
@@ -87,6 +88,6 @@
 <div class="widget" id="widget" aria-hidden="true" dir="ltr"></div>
 <div id="cap"></div>
 <div id="ss-link" aria-labelledby="sr-sum"></div>
-<script type="module" src="widget.js?v=04d40470"></script>
+<script type="module" src="widget.js?v=0302d000"></script>
 </body>
 </html>

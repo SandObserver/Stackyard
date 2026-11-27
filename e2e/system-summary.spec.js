@@ -157,3 +157,43 @@ test('a Persian uptime reads right to left, each figure before its unit', async 
   });
   expect(rightToLeft).toEqual(['۳', 'روز', '۴', 'ساعت']);
 });
+
+test('a failed speed test says so instead of showing speeds', async ({ page, request }) => {
+  const item = widget('ss-speed', 'medium');
+  item.widgetConfig = {
+    ...item.widgetConfig,
+    network: { enabled: true, mode: 'speed', provider: 'myspeed', url: 'http://myspeed.invalid' },
+  };
+  await seedConfig(request, { items: [item] });
+  await dismissSetupPrompt(request);
+  await page.route('**/api/badges', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+  await page.route('**/api/health', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+  const failed = { download: null, upload: null, ping: null, failed: true, ts: '2026-11-27T22:54:15Z' };
+  await page.route('**/api/widget-data/ss-*', r =>
+    r.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(r.request().url().includes('endpoint=speed') ? failed : stats),
+    }),
+  );
+  await page.goto('/');
+  const frame = page.frameLocator('iframe[src*="ss-speed"]');
+  await expect(frame.locator('#net-dn')).toHaveText('Last test failed');
+  await expect(frame.locator('#net-up')).toBeHidden();
+  await expect(frame.locator('#net-val svg')).toHaveCount(2);
+  for (const arrow of await frame.locator('#net-val svg').all()) await expect(arrow).toBeHidden();
+});
+
+test('a remote temperature slot with no sensor chosen shows the default reading', async ({ page, request }) => {
+  const item = widget('ss-temp', 'medium');
+  item.widgetConfig = {
+    statProvider: 'glances',
+    glancesUrl: 'http://glances.invalid:61208',
+    slots: [{ type: 'temp' }],
+  };
+  await seedConfig(request, { items: [item] });
+  await dismissSetupPrompt(request);
+  await stub(page, false, { cpu: 5, ram: 30, temp: 56, temps: { 'iwlwifi_1 0': 44, 'Package id 0': 56 }, disks: [] });
+  await page.goto('/');
+  await expect(page.frameLocator('iframe[src*="ss-temp"]').locator('.val').first()).toContainText('56');
+});
