@@ -7,12 +7,9 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readInlined } from './css-source.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const css = fs.readFileSync(path.join(root, 'css', 'admin.css'), 'utf8');
+const css = readInlined('admin.css');
 const rules = css.split('\n').filter(l => l.startsWith('#ev-body'));
 
 test('no editor spacing rule depends on a sibling combinator', () => {

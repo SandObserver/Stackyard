@@ -10,12 +10,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { readInlined } from './css-source.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 
-const admin = read('css/admin.css');
-const dashboard = read('css/dashboard.css');
+const admin = readInlined('admin.css');
+const dashboard = readInlined('dashboard.css', { colours: true });
 
 /* A bare element default is what makes the set closed: a field added later is
    covered before anyone thinks about it. */

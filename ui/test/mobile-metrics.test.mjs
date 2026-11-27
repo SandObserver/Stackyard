@@ -13,10 +13,14 @@ import {
 } from '../js/mobile-metrics.js';
 import { register } from 'node:module';
 import { installDom, pageBody } from './fake-dom.mjs';
+import { inlineTokens } from './css-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+const read = p => {
+  const src = fs.readFileSync(path.join(root, p), 'utf8');
+  return p.endsWith('.css') ? inlineTokens(src) : src;
+};
 
 test('sc is 1 at the base width and scales linearly up to the cap', () => {
   assert.equal(mobileMetrics(393).sc, 1);

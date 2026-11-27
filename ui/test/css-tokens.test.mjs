@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { declarations } from './css-source.mjs';
 
 /* The token layer: a palette named by hue, and roles named by job that point at
    it. Two classes of bug this guards.
@@ -134,6 +135,50 @@ test('no theme colour literal outside tokens.css', () => {
   );
 });
 
+/* The functional forms the hex check above cannot see. A shadow is depth, not
+   theme, so it may draw in neutral black or white. */
+const COLOUR_FN = /\b(?:rgba?|hsla?|hwb|oklch|oklab|lab|lch|color)\((?:[^()]|\([^()]*\))*\)/g;
+const NEUTRAL = /^rgba?\(\s*(?:0[\s,]+0[\s,]+0|255[\s,]+255[\s,]+255)\b/;
+const SHADOW = /^(?:box-shadow|text-shadow)$/;
+
+function colourFunctions(css) {
+  const found = [];
+  for (const d of declarations(css)) {
+    if (d.prop.startsWith('--')) continue;
+    for (const [lit] of d.value.matchAll(COLOUR_FN)) {
+      if (SHADOW.test(d.prop) && NEUTRAL.test(lit)) continue;
+      found.push(`line ${d.line}: ${d.prop}: ${lit}`);
+    }
+  }
+  return found;
+}
+
+test('no colour function outside tokens.css', () => {
+  const offenders = [];
+  for (const f of files) {
+    if (f === 'tokens.css') continue;
+    for (const hit of colourFunctions(fs.readFileSync(path.join(cssDir, f), 'utf8'))) offenders.push(`${f} ${hit}`);
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    `Colour written as a literal. Use a role from tokens.css, or declare a page-scoped token in that file's :root:\n${offenders.join('\n')}`,
+  );
+});
+
+test('the colour function check reads every form', () => {
+  assert.deepEqual(colourFunctions('a{color:rgb(1 2 3 / .5)}').length, 1);
+  assert.deepEqual(colourFunctions('a{background:linear-gradient(oklch(.7 .1 200), red)}').length, 1);
+  assert.deepEqual(colourFunctions('a{border:1px solid var(--x, hsl(0 0% 50%))}').length, 1);
+  assert.deepEqual(colourFunctions('a{box-shadow:0 1px 2px rgba(10,20,30,.2)}').length, 1);
+  assert.deepEqual(colourFunctions('@media (x){a{b{color:rgba(0,0,0,.5)}}}').length, 1);
+  assert.deepEqual(
+    colourFunctions('a{box-shadow:0 1px 2px rgba(0,0,0,.2), inset 0 0 0 1px rgb(255 255 255 / .1)}'),
+    [],
+  );
+  assert.deepEqual(colourFunctions('a{--t:rgba(1,2,3,.4)}'), []);
+});
+
 /* The rules both pages need live in one file, not written out in each. */
 test('the shared root rules are defined once, in tokens.css', () => {
   for (const sel of ['html::before', '*, *::before, *::after']) {
@@ -197,11 +242,34 @@ test('every Save is the same button', () => {
   for (const s of saves) assert.match(s, /class="btn bp /, `a Save is not the primary button: ${s}`);
 });
 
-/* ── Spacing ──────────────────────────────────────────────────────────────── */
+/* [id, why it is a second primary in its view]. Adding one is a design
+   decision, not a fix for this test. */
+const SECOND_PRIMARY = [['btn-add', 'the icon-only Add beside Save in the dashboard list']];
 
-/* The spacing scale is declared. The conversion of the stylesheets is
-   deliberate and gradual, so these pin the tokens and the documentation to each
-   other rather than banning literals. */
+/* A view runs from one section header to the next header or the section end. */
+test('a Settings view has one primary action', () => {
+  const html = read2('admin/index.html');
+  const listed = new Set(SECOND_PRIMARY.map(([id]) => id));
+  const starts = [...html.matchAll(/class="sec-hdr"/g)].map(m => m.index);
+  assert.ok(starts.length >= 5, `expected a header per view, found ${starts.length}`);
+  const found = new Set();
+  for (const [i, at] of starts.entries()) {
+    const end = Math.min(starts[i + 1] ?? html.length, html.indexOf('</section>', at));
+    const ids = [...html.slice(at, end).matchAll(/<button[^>]*class="[^"]*\bbp\b[^"]*"[^>]*>/g)].map(
+      m => /id="([^"]+)"/.exec(m[0])?.[1] ?? m[0],
+    );
+    for (const id of ids) found.add(id);
+    const counted = ids.filter(id => !listed.has(id));
+    assert.ok(counted.length <= 1, `${counted.length} primary actions in one view: ${counted.join(', ')}`);
+  }
+  assert.deepEqual(
+    [...listed].filter(id => !found.has(id)),
+    [],
+    'SECOND_PRIMARY names a button that is not primary',
+  );
+});
+
+/* ── Spacing ──────────────────────────────────────────────────────────────── */
 
 const SPACING = [2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 44];
 
@@ -230,4 +298,114 @@ test('every custom property a stylesheet falls back to is declared', () => {
     }
   }
   assert.deepEqual(missing, [], `A fallback that is not declared resolves to nothing:\n  ${missing.join('\n  ')}`);
+});
+
+/* Margins, paddings and gaps name a step. Insets and sizes are geometry and
+   are not read. */
+const SPACING_PROP = /^(?:margin|padding|gap|row-gap|column-gap|scroll-margin|scroll-padding)(?:-[a-z-]+)?$/;
+const PX = /(?<![\w.-])(-?\d*\.?\d+)px(?![\w])/g;
+
+function spacingLiterals(css) {
+  const found = [];
+  for (const d of declarations(css)) {
+    if (d.prop.startsWith('--') || !SPACING_PROP.test(d.prop)) continue;
+    for (const [, n] of d.value.matchAll(PX))
+      if (Number(n) !== 0) found.push({ px: `${n}px`, line: d.line, prop: d.prop });
+  }
+  return found;
+}
+
+test('a spacing value on the scale names its step', () => {
+  const offenders = [];
+  for (const f of files) {
+    if (f === 'tokens.css') continue;
+    for (const { px, line, prop } of spacingLiterals(fs.readFileSync(path.join(cssDir, f), 'utf8'))) {
+      const n = Math.abs(Number.parseFloat(px));
+      if (!SPACING.includes(n)) continue;
+      offenders.push(`${f} line ${line}: ${prop} ${px} is var(--sp-${n})${px.startsWith('-') ? ' negated' : ''}`);
+    }
+  }
+  assert.deepEqual(offenders, [], `Name the step:\n  ${offenders.join('\n  ')}`);
+});
+
+/* Spacing that sits off the scale, per file and value. Moving a rule onto the
+   scale lowers a count here; a value not listed fails. */
+const OFF_SCALE = {
+  'admin.css': {
+    '-14px': 2,
+    '1px': 4,
+    '3px': 7,
+    '5px': 7,
+    '7px': 7,
+    '9px': 1,
+    '11px': 3,
+    '13px': 3,
+    '14px': 13,
+    '18px': 8,
+    '19px': 2,
+    '22px': 4,
+    '26px': 2,
+    '28px': 2,
+    '34px': 1,
+    '36px': 1,
+    '40px': 1,
+    '48px': 2,
+    '52px': 1,
+    '132px': 1,
+  },
+  'config-recovery.css': { '52px': 1 },
+  'dashboard.css': {
+    '-14px': 2,
+    '-9px': 1,
+    '1px': 2,
+    '3px': 4,
+    '5px': 4,
+    '7px': 1,
+    '9px': 2,
+    '13px': 4,
+    '14px': 5,
+    '15px': 3,
+    '18px': 4,
+    '22px': 3,
+    '28px': 1,
+    '52px': 2,
+    '68px': 1,
+    '70px': 1,
+    '72px': 2,
+    '80px': 1,
+    '84px': 2,
+    '108px': 1,
+    '204px': 1,
+  },
+  'widget-config-form.css': { '28px': 1 },
+};
+
+test('spacing off the scale does not grow', () => {
+  const actual = {};
+  for (const f of files) {
+    if (f === 'tokens.css') continue;
+    for (const { px } of spacingLiterals(fs.readFileSync(path.join(cssDir, f), 'utf8'))) {
+      if (SPACING.includes(Math.abs(Number.parseFloat(px)))) continue;
+      actual[f] ??= {};
+      actual[f][px] = (actual[f][px] ?? 0) + 1;
+    }
+  }
+  const changes = [];
+  for (const f of new Set([...Object.keys(actual), ...Object.keys(OFF_SCALE)])) {
+    for (const px of new Set([...Object.keys(actual[f] ?? {}), ...Object.keys(OFF_SCALE[f] ?? {})])) {
+      const was = OFF_SCALE[f]?.[px] ?? 0;
+      const now = actual[f]?.[px] ?? 0;
+      if (now > was) changes.push(`${f}: ${now - was} more ${px}. Use a step from --sp-*`);
+      else if (now < was) changes.push(`${f}: ${px} fell to ${now}. Lower OFF_SCALE to match`);
+    }
+  }
+  assert.deepEqual(changes, [], changes.join('\n'));
+});
+
+test('the spacing check reads every form', () => {
+  const px = css => spacingLiterals(css).map(s => s.px);
+  assert.deepEqual(px('a{padding:8px calc(var(--safe-top) + 13px) 0}'), ['8px', '13px']);
+  assert.deepEqual(px('a{margin-inline:-4px;gap:var(--x, 6px)}'), ['-4px', '6px']);
+  assert.deepEqual(px('@media (min-width:600px){a{b{padding-top:3px}}}'), ['3px']);
+  assert.deepEqual(px('a{border:1.5px solid;inset:4px;width:8px;--g:8px;margin:.5px 0}'), ['.5px']);
 });

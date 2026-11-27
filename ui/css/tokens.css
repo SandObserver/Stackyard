@@ -73,10 +73,7 @@
   --sy-radius-group:26px;
 
   /* Spacing. Named by value, because --sp-3 would say nothing about what it is.
-     These are the steps the stylesheets already use; the two files hold about
-     three hundred spacing literals and a fifth of them sit off any rhythm, so
-     the scale is declared here and rules move onto it as they are touched
-     rather than in one pass. */
+     ui/test/css-tokens.test.mjs holds the values still off the scale. */
   --sp-2:2px;
   --sp-4:4px;
   --sp-6:6px;

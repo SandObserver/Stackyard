@@ -473,3 +473,23 @@ test('an irreversible confirmation gives Cancel the first focus', async () => {
     assert.equal(dom.getActive(), buttons(dialog(dom))[1]);
   });
 });
+
+test('a dialog has at most one primary action', async () => {
+  await withDom(async ({ confirmModal, confirmText, promptModal }, dom) => {
+    const cases = [
+      [1, () => confirmModal({ title: 'T', body: dom.el('p'), confirmLabel: 'Go', cancelLabel: 'No' })],
+      [
+        0,
+        () => confirmModal({ title: 'T', body: dom.el('p'), confirmLabel: 'Go', cancelLabel: 'No', destructive: true }),
+      ],
+      [1, () => confirmText({ title: 'T', text: 'x', confirmLabel: 'Go', cancelLabel: 'No' })],
+      [1, () => promptModal({ title: 'T', label: 'Name', confirmLabel: 'Save', cancelLabel: 'No' })],
+    ];
+    for (const [want, show] of cases) {
+      show();
+      const primary = [...buttons(dialog(dom))].filter(b => /(^|\s)bp(\s|$)/.test(b.className));
+      assert.equal(primary.length, want);
+      pressEscape(dialog(dom));
+    }
+  });
+});

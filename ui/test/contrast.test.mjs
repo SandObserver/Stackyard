@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { readInlined } from './css-source.mjs';
 
 /* WCAG contrast for the admin greys, computed from the stylesheets. A ratio
    measured by hand goes stale when the palette moves under it.
@@ -14,8 +15,8 @@ const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'cs
 const read = f => fs.readFileSync(path.join(dir, f), 'utf8');
 
 const tokens = read('tokens.css');
-const admin = read('admin.css');
-const dashboard = read('dashboard.css');
+const admin = readInlined('admin.css');
+const dashboard = readInlined('dashboard.css');
 
 /* ── resolving a token to a hex value ─────────────────────────────────────── */
 
@@ -553,7 +554,7 @@ for (const light of [false, true]) {
     /* Dark: the reduce rule unsets the tone's ring and ink, so the .dot fallback draws it. */
     const dot = light
       ? colour(declared(`${reduce} #dots`, '--dots-ring'))
-      : colour(/var\(--dots-ink,(rgba\([^)]*\))\)/.exec(declared('.dot', 'border'))[1]);
+      : colour(/var\(--dots-ink,(var\(--[\w-]+\))\)/.exec(declared('.dot', 'border'))[1]);
     const cases = [
       ['search pill label', pill, fill('--glass-clear'), 4.5],
       ['page dot', dot, fill('--glass-clear'), 3],
@@ -671,10 +672,6 @@ const UNMEASURED_INK = [
   ['.sy-icon.about-ri (dark)', 'an icon on a filled tile, measured with the filled controls'],
   ['.dyn-mob-label (dark)', 'a tile name over the wallpaper; its tone is picked per wallpaper at run time'],
   ['.dyn-fold-label (dark)', 'a tile name over the wallpaper; its tone is picked per wallpaper at run time'],
-  ['.folder-title-desktop (dark)', 'white with a text shadow over the wallpaper; the shadow is not modelled'],
-  ['.dyn-fold-inner-label (dark)', 'white with a text shadow over the wallpaper; the shadow is not modelled'],
-  ['textarea::placeholder (dark)', 'one rule with input::placeholder, which is measured'],
-  ['textarea::placeholder (light)', 'one rule with input::placeholder, which is measured'],
 ];
 
 const LITERAL_INK =
