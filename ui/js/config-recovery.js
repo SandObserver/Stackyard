@@ -6,7 +6,7 @@ import { setupErrorKey } from '/js/admin-error.js?v=54e71016';
 import { fillNames, pickLanguage, screenFor } from '/js/config-recovery-logic.js?v=b5057623';
 import { contextWords, passwordMismatch, passwordProblem, REFUSAL_KEYS } from '/js/password-policy.js?v=e16ebd1a';
 import { fillUsernames, wireReveal } from '/js/password-reveal.js?v=bdd477f5';
-import { ensureSprite, iconSvg } from '/js/icon-set.js?v=beda3062';
+import { ensureSprite, iconSvg } from '/js/icon-set.js?v=1e268244';
 
 let _shown = false;
 export const recoveryShown = () => _shown;

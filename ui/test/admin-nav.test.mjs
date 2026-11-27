@@ -43,6 +43,34 @@ test('a first visit with no remembered section does not warn', async () => {
   assert.deepEqual(old.shown, first.shown);
 });
 
+test('picking a tab bar tab plays its icon; the first load and the keyboard do not', async () => {
+  const { dom } = await openSettings({ hash: '#general' });
+  const doc = dom.document;
+  const svg = doc.querySelector('.mtab[data-sec="dashboard"] svg');
+  const base = Object.getPrototypeOf(Object.getPrototypeOf(svg));
+  const owner = Object.hasOwn(base, 'animate') ? base : Object.getPrototypeOf(base);
+  const own = owner.animate;
+  let played = 0;
+  owner.animate = function (...a) {
+    if (this.getAttribute?.('data-part')) played++;
+    return own.apply(this, a);
+  };
+  try {
+    assert.equal(played, 0, 'nothing plays on load');
+    doc.querySelector('.mtab[data-sec="dashboard"]').dispatchEvent({ type: 'click', bubbles: true, detail: 0 });
+    assert.equal(played, 0, 'a keyboard pick plays nothing');
+    doc.querySelector('.mtab[data-sec="general"]').click();
+    assert.ok(played > 0, 'a tap plays the picked icon');
+    const after = played;
+    doc.querySelector('.mtab[data-sec="general"]').click();
+    assert.equal(played, after, 'picking the shown tab again plays nothing');
+    doc.querySelector('.nl[data-sec="dashboard"]').click();
+    assert.equal(played, after, 'the sidebar plays nothing');
+  } finally {
+    owner.animate = own;
+  }
+});
+
 test('the import link opens the settings section that holds import', async () => {
   const empty = installDom({ markup: pageBody('index.html') });
   try {

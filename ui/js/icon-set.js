@@ -355,7 +355,7 @@ export const ICONS = {
       line('M3 9l1 1M21 9l-1 1M3 21l1-1M21 21l-1-1'),
     ],
   },
-  info: free(face(), line('M12 11v5'), detail(11, 7, 2, 2, 1)),
+  info: free(face(), line('M12 11v5', 'ink', { part: 'stem' }), detail(11, 7, 2, 2, 1, 'ink', { part: 'dot' })),
   success: free(face(), line('M8 12l3 3 6-6')),
   failure: free(face(), line('M9 9l6 6M15 9l-6 6')),
   check: { shapes: [line('M5 13l4 4 10-10')] },

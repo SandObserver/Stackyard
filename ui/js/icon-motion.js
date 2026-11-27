@@ -1,7 +1,7 @@
 // @ts-check
 
 import { parseMarkup, raw } from '/js/html.js?v=48f9dc21';
-import { ICONS, symbol } from '/js/icon-set.js?v=beda3062';
+import { ICONS, symbol } from '/js/icon-set.js?v=1e268244';
 
 const IN_OUT = 'cubic-bezier(.77,0,.175,1)';
 const CUBIC = 'cubic-bezier(.65,0,.35,1)';
@@ -356,6 +356,53 @@ export const MOTION = {
   },
 };
 
+/** @param {string} prop @param {(v: number) => string} fmt @param {number} a @returns {Keyframe[]} */
+const kick = (prop, fmt, a) =>
+  [
+    [0, 0],
+    [0.3, a],
+    [0.58, -0.3 * a],
+    [0.8, 0.1 * a],
+    [1, 0],
+  ].map(([offset, k]) => ({ [prop]: fmt(r3(k)), offset, easing: 'ease-in-out' }));
+/** @param {number} x @param {number} y */
+const nudge = (x, y) => kick('translate', k => px(r3(k * x), r3(k * y)), 1);
+const PICK_MS = 600;
+const LENS_CLEAR_MS = 100;
+/** @type {WeakMap<SVGSVGElement, number>} */
+const pickEnds = new WeakMap();
+
+/** @typedef {{ icon?: string, origin?: Record<string, [box: string, origin: string]>,
+               steps: [part: string, frames: Keyframe[], delay?: number][] }} Pick */
+/** @type {Record<string, Pick>} */
+export const PICK = {
+  general: {
+    origin: { knob: CENTRE },
+    steps: [
+      ['knob', nudge(-4, 0)],
+      ['knob', kick('scale', k => `${r3(1 + 0.12 * k)} ${r3(1 - 0.06 * k)}`, 1)],
+    ],
+  },
+  appearance: {
+    origin: { half: ['view-box', '12px 12px'] },
+    steps: [['half', kick('rotate', k => `${k}deg`, 32)]],
+  },
+  dashboard: {
+    steps: [
+      ['left', nudge(2.5, 0)],
+      ['right', nudge(-2.5, 0), 50],
+    ],
+  },
+  about: {
+    icon: 'info',
+    origin: { stem: ['fill-box', 'bottom'] },
+    steps: [
+      ['dot', nudge(0, -3)],
+      ['stem', kick('scale', k => `1 ${r3(1 + 0.14 * k)}`, 1), 30],
+    ],
+  },
+};
+
 let seq = 0;
 
 /** @param {SVGSVGElement} svg @param {string} id @returns {boolean} */
@@ -424,6 +471,31 @@ export function holdIcons(root, on) {
   }
   held.add(root);
   for (const [svg, reset] of media?.resets ?? []) if (root.contains(svg)) reset();
+}
+
+/** @param {SVGSVGElement} svg @param {string} id */
+export function pickIcon(svg, id) {
+  const p = PICK[id];
+  const icon = p?.icon ?? id;
+  if (!p || !ICONS[icon] || typeof svg.animate !== 'function' || env().reduce.matches) return;
+  const now = performance.now();
+  if (now < (pickEnds.get(svg) ?? 0)) return;
+  if (!svg.querySelector('[data-part]') && !inline(svg, icon)) return;
+  for (const [part, [box, origin]] of Object.entries(p.origin || {})) {
+    for (const el of svg.querySelectorAll(`[data-part="${part}"]`)) {
+      const s = /** @type {SVGElement} */ (el).style;
+      s.transformBox = box;
+      s.transformOrigin = origin;
+    }
+  }
+  let end = now;
+  for (const [part, frames, delay = 0] of p.steps) {
+    const wait = LENS_CLEAR_MS + delay;
+    end = Math.max(end, now + wait + PICK_MS);
+    for (const el of svg.querySelectorAll(`[data-part="${part}"]`))
+      el.animate(frames, { duration: PICK_MS, delay: wait });
+  }
+  pickEnds.set(svg, end);
 }
 
 /** @param {SVGSVGElement} svg @param {string} id @param {Element} [trigger] */
