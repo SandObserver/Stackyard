@@ -159,7 +159,12 @@ test('the manifest stays valid and installable', () => {
 
 test('every page links the manifest', () => {
   for (const page of ['index.html', 'admin/index.html']) {
-    assert.match(read(page), /<link rel="manifest" href="\/manifest\.json">/, `${page} cannot be installed`);
+    assert.match(read(page), /<link rel="manifest" href="\/manifest\.json"[ >]/, `${page} cannot be installed`);
+    assert.match(
+      read(page),
+      /<link rel="manifest" href="\/manifest\.json" crossorigin="use-credentials">/,
+      `${page} fetches the manifest without cookies, so a sign-in proxy redirects it and installing fails`,
+    );
   }
 });
 
