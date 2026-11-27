@@ -16,9 +16,13 @@ import { register } from 'node:module';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { installDom, pageBody } from './fake-dom.mjs';
+import { inlineTokens } from './css-source.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+const read = p => {
+  const src = fs.readFileSync(path.join(root, p), 'utf8');
+  return p.endsWith('.css') ? inlineTokens(src) : src;
+};
 const ui = read('js/ui.js');
 register('./js-root-hooks.mjs', import.meta.url);
 const { inertAllBut } = await import('../js/utils.js');

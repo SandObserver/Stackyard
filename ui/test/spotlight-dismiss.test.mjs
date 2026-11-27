@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
 import { fakeFetch, installDom, pageBody, settle } from './fake-dom.mjs';
+import { readInlined } from './css-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 
@@ -12,7 +13,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 
 const html = read('index.html');
-const css = read('css/dashboard.css');
+const css = readInlined('dashboard.css', { colours: true });
 const js = read('js/spotlight.js');
 
 test('the Search pill is a button that cannot be text-selected', () => {

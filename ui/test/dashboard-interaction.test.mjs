@@ -5,11 +5,12 @@ import path from 'node:path';
 import { register } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { fakeFetch, fire, installDom, pageBody } from './fake-dom.mjs';
+import { readInlined } from './css-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
-const css = read('css/dashboard.css').replace(/\/\*[\s\S]*?\*\//g, '');
+const css = readInlined('dashboard.css').replace(/\/\*[\s\S]*?\*\//g, '');
 
 const fetch = fakeFetch({ '/api/config': { items: [], settings: {} }, '/api/badges': {}, '/api/health': {} });
 const dom = installDom({ markup: pageBody('index.html'), fetch, location: 'http://nas.local/' });

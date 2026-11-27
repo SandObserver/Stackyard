@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { register } from 'node:module';
 
 import { installDom, pageBody } from './fake-dom.mjs';
+import { inlineTokens } from './css-source.mjs';
 
 register('./js-root-hooks.mjs', import.meta.url);
 const dom = installDom({ markup: pageBody('index.html') });
@@ -44,7 +45,10 @@ const pill = () => doc.getElementById('mob-search-pill');
 const { relativeLuminance, contrastRatio, toneForLuminances } = await import('../js/label-contrast.js');
 
 const uiDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const read = p => fs.readFileSync(path.join(uiDir, p), 'utf8');
+const read = p => {
+  const src = fs.readFileSync(path.join(uiDir, p), 'utf8');
+  return p.endsWith('.css') ? inlineTokens(src) : src;
+};
 
 test('a config holding only the system settings item is empty', () => {
   assert.equal(isDashboardEmpty([{ id: 'settings', type: 'app', system: 'settings' }]), true);

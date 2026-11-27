@@ -3,12 +3,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { readInlined } from './css-source.mjs';
 
 /* Control geometry against the kit. These are measured values, not
    preferences. */
 
 const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'css');
-const admin = fs.readFileSync(path.join(dir, 'admin.css'), 'utf8');
+const admin = readInlined('admin.css');
 const tokens = fs.readFileSync(path.join(dir, 'tokens.css'), 'utf8');
 
 /* Match whole selectors. A substring match finds `.pe{` inside `.ie-row.editing .pe{`. */
