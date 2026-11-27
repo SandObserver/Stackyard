@@ -1,5 +1,5 @@
 // @ts-check
-import { GlassBar, segmented, tabBar } from '/js/glass-bar.js?v=cda9ea1f';
+import { GlassBar, segmented, tabBar } from '/js/glass-bar.js?v=b7c7fa8a';
 import { cancelAll, releasePointer } from '/js/glass-control.js?v=00019b96';
 import { lensSupported } from '/js/glass-gpu.js?v=bfd7c78f';
 import { wantsPlain, wantsSolid } from '/js/glass-prefs.js?v=b53a71ac';

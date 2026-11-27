@@ -1,6 +1,6 @@
 import { t } from '/js/i18n.js?v=82ba9da2';
 import { mk } from '/js/utils.js?v=457d9918';
-import { errorState } from '/js/widget-error.js?v=8d2b2535';
+import { errorState } from '/js/widget-error.js?v=563d383e';
 
 /* Live widget mounts, so a rebuild can switch off what it is about to discard.
    mountScaledWidget starts an observer, a reload timer and touch listeners that

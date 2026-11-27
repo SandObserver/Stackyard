@@ -1,7 +1,7 @@
 // @ts-check
 
 import { parseMarkup, raw } from '/js/html.js?v=48f9dc21';
-import { ICONS, symbol } from '/js/icon-set.js?v=1e268244';
+import { ICONS, symbol } from '/js/icon-set.js?v=da154c4a';
 
 const IN_OUT = 'cubic-bezier(.77,0,.175,1)';
 const CUBIC = 'cubic-bezier(.65,0,.35,1)';
@@ -45,10 +45,10 @@ function ticks(from, step, count) {
 }
 
 const BRANCH = [
-  [17, 14],
-  [11, 14],
-  [7, 14],
-  [7, 10],
+  [18, 14],
+  [12, 14],
+  [8, 14],
+  [8, 10],
 ];
 const onBranch = t =>
   [0, 1].map(
@@ -66,13 +66,13 @@ const merge = Array.from({ length: 17 }, (_, i) => {
   const a = u < 0.72 ? 1 : Math.max(0, 1 - (u - 0.72) / 0.28);
   return {
     commit: {
-      translate: px(r3(x - 17), r3(y - 14)),
+      translate: px(r3(x - 18), r3(y - 14)),
       scale: `${r3(0.4 + 0.6 * a)}`,
       opacity: `${r3(a)}`,
       offset: u,
       easing: 'linear',
     },
-    branch: { clipPath: `inset(-3px ${r3(((17 - x) / 10) * 100)}% -3px -3px)`, offset: u, easing: 'linear' },
+    branch: { clipPath: `inset(-3px ${r3(((18 - x) / 10) * 100)}% -3px -3px)`, offset: u, easing: 'linear' },
   };
 });
 const GROWN = 'inset(-3px 0% -3px -3px)';

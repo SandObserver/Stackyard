@@ -23,19 +23,19 @@ import {
   topLevelRows,
 } from '/js/admin-logic.js?v=81fd47cf';
 import { snapshotItems } from '/js/admin-save-logic.js?v=6b052e5e';
-import { announce, paintIcon, toast } from '/js/admin-shared.js?v=674bbb0b';
+import { announce, paintIcon, toast } from '/js/admin-shared.js?v=12fb8c08';
 import { collapsedFolders, filter, state } from '/js/admin-state.js?v=064b9b85';
-import { sizeLabel } from '/js/admin-widget-form.js?v=a559d8c3';
+import { sizeLabel } from '/js/admin-widget-form.js?v=78a58597';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
 import { t } from '/js/i18n.js?v=82ba9da2';
-import { iconSvg } from '/js/icon-set.js?v=1e268244';
+import { iconSvg } from '/js/icon-set.js?v=da154c4a';
 import { DEFAULT_WIDGET_SIZE, DOCK_MAX } from '/js/limits.js?v=bc10e843';
 import { EASE_IOS } from '/js/motion-curve.js?v=7fea8800';
 import { pageTheme } from '/js/palette.js?v=3fb8ae43';
 import { SETTINGS_ICON, SETTINGS_ICON_LIGHT } from '/js/settings-icon.js?v=4079b66a';
 import { clr, el, focusFirst, initial, isolate, qa, setUserText } from '/js/utils.js?v=457d9918';
-import { widgetGlyph } from '/js/widget-glyphs.js?v=2cc94cd2';
+import { widgetGlyph } from '/js/widget-glyphs.js?v=9e3f946a';
 
 /** @type {{ openModal: (id: string|null) => void,
              openFolderPicker: (folderId: string) => void,

@@ -1,5 +1,5 @@
 import { restoreAction } from '/js/dashboard-logic.js?v=b4828b62';
-import { overlayOpen } from '/js/dashboard-pager.js?v=ac8720aa';
+import { overlayOpen } from '/js/dashboard-pager.js?v=cb716ff3';
 import { liftVeil, showApiDown } from '/js/dashboard-screens.js?v=79b0c104';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { el } from '/js/utils.js?v=457d9918';

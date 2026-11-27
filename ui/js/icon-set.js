@@ -181,12 +181,12 @@ function logoIcon() {
 
 const LOGO = logoIcon();
 
-const CLOUD = 'M6 20h10a4 4 0 0 0 0-8 5 5 0 0 0-9.6 1.2A3.5 3.5 0 0 0 6 20z';
+const CLOUD = 'M5 19h10a4 4 0 0 0 0-8 5 5 0 0 0-9.6 1.2A3.5 3.5 0 0 0 5 19z';
 const EYE = 'M3 12s4-7 9-7 9 7 9 7-4 7-9 7-9-7-9-7z';
 const DROP = 'M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z';
 const RAYS = 'M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1 1M18 18l1 1M5 19l1-1M18 6l1-1';
 const PENCIL = 'M15 4l5 5L9 20H4v-5z';
-const TRIANGLE = 'M12 4l9 16H3z';
+const TRIANGLE = 'M12 3l9 16H3z';
 const PLAY = 'M10 9v6l5-3z';
 /* Keep the same path commands as PAUSE in icon-motion.js. A mismatch makes the morph jump. */
 const PLAY_HALVES = 'M10 9L12.5 10.5L12.5 13.5L10 15ZM12.5 10.5L15 12L15 12L12.5 13.5Z';
@@ -242,9 +242,9 @@ export const ICONS = {
   clock: free(face(), line('M12 12l3 3'), line('M12 12V6', 'accent', { part: 'minute' })),
   connections: {
     shapes: [
-      line('M12 5 5 19M12 5l7 14M5 19h14'),
-      dot(5, 19, T.NODE),
-      dot(19, 19, T.NODE),
+      line('M12 5 5 17M12 5l7 12M5 17h14'),
+      dot(5, 17, T.NODE),
+      dot(19, 17, T.NODE),
       { ...dot(12, 5, T.NODE, 'accent'), part: 'server' },
     ],
   },
@@ -267,11 +267,11 @@ export const ICONS = {
   ),
   github: {
     shapes: [
-      line('M7 5v14'),
-      dot(7, 5, T.NODE),
-      dot(7, 19, T.NODE),
-      line('M7 10c0 4 4 4 10 4', 'ink', { part: 'branch' }),
-      { ...dot(17, 14, T.NODE, 'accent'), part: 'commit', fixedHole: true },
+      line('M8 5v14'),
+      dot(8, 5, T.NODE),
+      dot(8, 19, T.NODE),
+      line('M8 10c0 4 4 4 10 4', 'ink', { part: 'branch' }),
+      { ...dot(18, 14, T.NODE, 'accent'), part: 'commit', fixedHole: true },
     ],
   },
   downloads: {
@@ -303,25 +303,25 @@ export const ICONS = {
   ),
   system: {
     shapes: [
-      line('M3 16l5-5 4 4 5-5', 'ink', { part: 'line' }),
-      line('M3 16L8 11L12 15L17 10L21 14L26 9', 'ink', {
+      line('M3 15l5-5 4 4 5-5', 'ink', { part: 'line' }),
+      line('M3 15L8 10L12 14L17 9L21 13L26 8', 'ink', {
         only: 'motion',
         part: 'trend',
         hidden: true,
-        clip: [3, -10, 14, 44],
+        clip: [3, -11, 14, 44],
         clipCaps: [
-          [3, 16],
-          [17, 10],
+          [3, 15],
+          [17, 9],
         ],
       }),
-      { ...dot(19, 6, T.NODE, 'accent'), part: 'dot' },
-      bar(3, 20, 18, 'ink'),
+      { ...dot(19, 5, T.NODE, 'accent'), part: 'dot' },
+      bar(3, 19, 18, 'ink'),
     ],
-    filled: { shapes: [shape('M3 20v-2l5-5 4 4 5-5v8z', 'ink', { rj: true }), dot(19, 7, T.NODE, 'accent')] },
+    filled: { shapes: [shape('M3 19v-2l5-5 4 4 5-5v8z', 'ink', { rj: true }), dot(19, 6, T.NODE, 'accent')] },
   },
   weather: {
     inkMask: false,
-    shapes: [shape(CLOUD, 'ink', { part: 'cloud' }), circle(17, 8, 4, 'accent')],
+    shapes: [shape(CLOUD, 'ink', { part: 'cloud' }), circle(16, 7, 4, 'accent')],
     accentCut: [{ ...shape(CLOUD), grow: T.G, part: 'cloud' }],
   },
 
@@ -349,10 +349,10 @@ export const ICONS = {
   docs: free(frame(6, 3, 12, 18), bar(9, 7, 6, 'ink'), bar(9, 11, 6, 'ink'), bar(9, 15, 4, 'ink')),
   bug: {
     shapes: [
-      shape('M9 6a3 3 0 0 1 6 0z'),
-      shape('M6 14a6 6 0 0 1 12 0v2a6 6 0 0 1-12 0z'),
-      line('M12 11v8', 'cut'),
-      line('M3 9l1 1M21 9l-1 1M3 21l1-1M21 21l-1-1'),
+      shape('M9 5a3 3 0 0 1 6 0z'),
+      shape('M6 13a6 6 0 0 1 12 0v2a6 6 0 0 1-12 0z'),
+      line('M12 10v8', 'cut'),
+      line('M3 8l1 1M21 8l-1 1M3 20l1-1M21 20l-1-1'),
     ],
   },
   info: free(face(), line('M12 11v5', 'ink', { part: 'stem' }), detail(11, 7, 2, 2, 1, 'ink', { part: 'dot' })),
@@ -364,8 +364,8 @@ export const ICONS = {
   link: { shapes: [line('M9 17H7a5 5 0 0 1 0-10h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8')] },
   menu: { shapes: [bar(4, 7, 16, 'ink'), bar(4, 11, 16, 'ink'), bar(4, 15, 16, 'ink')] },
   warning: {
-    ...free(line(TRIANGLE), line('M12 10v4'), detail(11, 16, 2, 2, 1)),
-    filled: { shapes: [shape(TRIANGLE, 'ink', { rj: true }), line('M12 10v4', 'cut'), detail(11, 16, 2, 2, 1, 'cut')] },
+    ...free(line(TRIANGLE), line('M12 9v4'), detail(11, 15, 2, 2, 1)),
+    filled: { shapes: [shape(TRIANGLE, 'ink', { rj: true }), line('M12 9v4', 'cut'), detail(11, 15, 2, 2, 1, 'cut')] },
   },
   heart: { shapes: [shape('M12 21C5 16 3 13 3 9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 4-2 7-9 12z')] },
   grip: {
@@ -416,7 +416,7 @@ export const ICONS = {
   'logo-arc': { inkMask: false, shapes: LOGO.shapes.slice(3) },
   start: {
     inkMask: false,
-    shapes: [line('M12 2v9M8 7l4 4 4-4', 'accent'), rect(2, 14, 20, 8, 4), { ...bar(5, 17, 6), part: 'bar' }],
+    shapes: [line('M12 2v8M8 6l4 4 4-4', 'accent'), rect(2, 13, 20, 6, 3), { ...bar(5, 15, 6), part: 'bar' }],
   },
   run: free(frame(3, 5, 18, 14), line('M7 9l3 3-3 3', 'accent', { part: 'prompt' }), bar(13, 14, 5, 'ink')),
   create: {
