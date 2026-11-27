@@ -104,6 +104,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Count the current hour in Technitium DNS totals.
 
+- Show "Last test failed" instead of negative speeds when the latest speed test
+  failed.
+
+- Show a CPU temperature in a remote temperature slot saved without a sensor.
+
 ## [1.24.0] - 2026-11-22
 
 ### Added
