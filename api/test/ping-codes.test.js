@@ -88,3 +88,18 @@ for (const url of ['192.168.1.10:8080', 'nas.local:8080', 'ftp://nas/', 'http://
     assert.deepEqual([r.ok, r.status, r.kind, r.code], [false, 0, 'invalid', 'invalid.url']);
   });
 }
+
+for (const [host, apiCode] of [
+  ['example.com', 'network.self-signed-public'],
+  ['192.168.1.10', 'network.self-signed'],
+]) {
+  test(`a fetch to ${host} with a self-signed certificate reports ${apiCode}`, async t => {
+    failWith(t, https, 'DEPTH_ZERO_SELF_SIGNED_CERT');
+    const { errorBody } = require('../src/api-error');
+    const e = await _internals.fetchJSON(`https://${host}/`, { timeout: 500 }).then(
+      () => assert.fail('the fetch resolved'),
+      err => err,
+    );
+    assert.equal(errorBody(e).code, apiCode);
+  });
+}

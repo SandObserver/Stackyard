@@ -4,10 +4,10 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=50e64800';
-import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=04a0acc4';
+} from '/js/admin-app-form.js?v=dbebed7c';
+import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=d6f94458';
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
-import { scrollSettingsTop } from '/js/admin-nav.js?v=54745026';
+import { scrollSettingsTop } from '/js/admin-nav.js?v=c43548e2';
 import {
   applyEdit,
   buildAppItem,
@@ -17,7 +17,7 @@ import {
   POLL_MIN,
   removeItem,
   snapshotItems,
-} from '/js/admin-save-logic.js?v=6b052e5e';
+} from '/js/admin-save-logic.js?v=7fa325ac';
 import {
   busyPress,
   clearFieldErrors,
@@ -29,10 +29,10 @@ import {
   showFieldError,
   swapContent,
   toast,
-} from '/js/admin-shared.js?v=12fb8c08';
+} from '/js/admin-shared.js?v=3f6bd8c1';
 import { state } from '/js/admin-state.js?v=064b9b85';
-import { buildWidgetForm } from '/js/admin-widget-form.js?v=78a58597';
-import { BADGE_DEFAULT } from '/js/badge-logic.js?v=889eeef7';
+import { buildWidgetForm } from '/js/admin-widget-form.js?v=6200c958';
+import { BADGE_DEFAULT } from '/js/badge-logic.js?v=7a1f7e8e';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { html, raw, setHtml } from '/js/html.js?v=48f9dc21';
 import { t } from '/js/i18n.js?v=82ba9da2';

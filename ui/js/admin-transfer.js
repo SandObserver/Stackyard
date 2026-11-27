@@ -1,6 +1,6 @@
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
-import { importCounts, restoresSettings } from '/js/admin-save-logic.js?v=6b052e5e';
-import { apiGet, errorAction, errorText, rowBusy, ShownError, toast } from '/js/admin-shared.js?v=12fb8c08';
+import { importCounts, restoresSettings } from '/js/admin-save-logic.js?v=7fa325ac';
+import { apiGet, errorAction, errorText, rowBusy, ShownError, toast } from '/js/admin-shared.js?v=3f6bd8c1';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
 import { t } from '/js/i18n.js?v=82ba9da2';
@@ -14,9 +14,9 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=cb4cf5b4';
+} from '/js/import-foreign.js?v=00ed36e8';
 import { CONFIG_MAX_BYTES } from '/js/limits.js?v=bc10e843';
-import { confirmModal } from '/js/modal.js?v=93d3e755';
+import { confirmModal, openModal } from '/js/modal.js?v=93d3e755';
 import { el, isolate, setUserText, tgt } from '/js/utils.js?v=457d9918';
 import { parseYamlTolerant, YamlLiteError, YamlTooLargeError } from '/js/yaml-lite.js?v=39538b71';
 
@@ -240,8 +240,25 @@ function dlgSection(parent, heading, rows) {
 export async function reviewImport(items, skipped, notes, nothingKey) {
   const apps = items.filter(i => i.type === 'app').length;
   const folders = items.length - apps;
-  if (!apps) {
+  if (!apps && !skipped.length) {
     toast(t(nothingKey), 'err');
+    return;
+  }
+  const skippedRows = skipped.map(s => ({
+    name: s.name,
+    group: s.group,
+    why: t(SKIP_TEXT[s.reason], { detail: s.detail || '' }),
+  }));
+  if (!apps) {
+    const body = document.createElement('div');
+    const lead = document.createElement('p');
+    lead.className = 'dlg-lead';
+    lead.textContent = t(nothingKey);
+    body.appendChild(lead);
+    dlgSection(body, t('importForeign.notImported'), skippedRows);
+    const m = openModal({ title: t('importForeign.title'), className: 'wide' });
+    m.body.appendChild(body);
+    m.focus(m.addAction(t('common.close'), 'bp sm', m.close));
     return;
   }
 
@@ -280,11 +297,7 @@ export async function reviewImport(items, skipped, notes, nothingKey) {
     t('importForeign.changed'),
     notes.map(n => ({ name: n.name, group: n.group, why: t(NOTE_TEXT[n.code], { detail: n.detail || '' }) })),
   );
-  dlgSection(
-    body,
-    t('importForeign.notImported'),
-    skipped.map(s => ({ name: s.name, group: s.group, why: t(SKIP_TEXT[s.reason], { detail: s.detail || '' }) })),
-  );
+  dlgSection(body, t('importForeign.notImported'), skippedRows);
 
   /* Never take certificate skipping from the file on its say-so. It stays off
      unless it is turned on here. */

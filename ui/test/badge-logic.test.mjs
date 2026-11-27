@@ -898,3 +898,10 @@ test('a socket proxy failure is named instead of a missing container', () => {
   );
   assert.equal(healthReason({ state: 'unknown' }), 'Container not found');
 });
+
+test('a socket proxy that answers with an HTTP error names the status', () => {
+  assert.equal(
+    healthReason({ state: 'unknown', containerCode: 'upstream.status', containerStatus: 503 }),
+    'The socket proxy answered with an error (HTTP 503).',
+  );
+});

@@ -1,4 +1,4 @@
-import { readableInk, rgbOf, poll, fetchData, linkTo, esc, raw, setHtml, loadStrings, wt, wtCount, formatNumber, errorLine, placeholder, whileOnScreen } from '/js/widget-toolbox.js?v=91dc2dae';
+import { readableInk, rgbOf, poll, fetchData, linkTo, esc, raw, setHtml, loadStrings, wt, wtCount, formatNumber, errorLine, placeholder, whileOnScreen } from '/js/widget-toolbox.js?v=0e14d130';
 import { cellsOf, toGrid } from './world-map.js';
 await loadStrings();
 document.getElementById('wrap').setAttribute('aria-label', wt('ui.vpnStatus', 'VPN status'));
@@ -90,7 +90,7 @@ document.getElementById('wrap').setAttribute('aria-label', wt('ui.vpnStatus', 'V
     document.documentElement.style.setProperty('--accentglow', rgba(color,.8));
 
     /* Never draw d.error. It names hosts and status codes. */
-    const errLine=isErr?errorLine({ kind:d.errorKind }):'';
+    const errLine=isErr?errorLine({ kind:d.errorKind, code:d.errorCode }):'';
 
     let stateCls,stateTxt;
     if(isErr){stateCls='err';stateTxt=wt('ui.unavailable','Unavailable');}
@@ -167,6 +167,6 @@ document.getElementById('wrap').setAttribute('aria-label', wt('ui.vpnStatus', 'V
   poll({ fetch:vfetch, interval:30000,
     render:d=>{ render(d); linkTo(wrap,d.href||''); },
     onError:({error,everOk,stale})=>{
-      if(!everOk||stale) render({error:true,errorKind:error&&error.kind,connected:false});
+      if(!everOk||stale) render({error:true,errorKind:error&&error.kind,errorCode:error&&error.code,connected:false});
     } });
 })();

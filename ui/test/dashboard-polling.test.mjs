@@ -142,3 +142,12 @@ test('a tab still open after an upgrade reloads once the API runs a new version'
   assert.equal(dom.location.reloads, reloads + 1);
   fetch.routes['/api/config'] = { items: [] };
 });
+
+test('an upgrade before the first poll still reloads a tab that booted on the old version', async () => {
+  fetch.routes['/api/config'] = () => ({ status: 304, headers: { 'X-Stackyard-Version': '1.1.0' } });
+  const reloads = dom.location.reloads;
+  const p = createPolling({ badges, differs: () => false, rev: () => 1, version: '1.0.0' });
+  await p.pollConfig();
+  assert.equal(dom.location.reloads, reloads + 1);
+  fetch.routes['/api/config'] = { items: [] };
+});

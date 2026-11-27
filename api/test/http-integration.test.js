@@ -910,6 +910,11 @@ test('POST /api/config refuses a health check with nothing to check', async () =
     body: { items: [app({ enabled: false })], settings: {} },
   });
   assert.equal(off.status, 200);
+  const legacy = await req('POST', '/api/config', {
+    cookie: validCookie,
+    body: { items: [{ ...app({ enabled: true }), container: 'sonarr' }], settings: {} },
+  });
+  assert.equal(legacy.status, 200, 'an app-level container is the target the health route checks');
 });
 
 test('a stored health check with nothing to check does not block other saves', async () => {
@@ -945,6 +950,20 @@ test('POST /api/config rejects a stale _rev with 409', async () => {
   assert.equal(conflict.status, 409);
   assert.match(conflict.body.error, /changed somewhere else/);
   assert.equal(conflict.body.code, 'invalid.stale');
+});
+
+test('a stored _rev that is not an integer does not refuse every save', async () => {
+  fs.writeFileSync(process.env.CONFIG_PATH, JSON.stringify({ ...loadConfig(), _rev: '12' }));
+  loadConfigForUpdate();
+  const read = await req('GET', '/api/config', { cookie: validCookie });
+  assert.equal(read.body._rev, 0);
+  const saved = await req('POST', '/api/config', {
+    cookie: validCookie,
+    body: { items: [], settings: {}, _rev: read.body._rev },
+  });
+  assert.equal(saved.status, 200);
+  const again = await req('GET', '/api/config', { cookie: validCookie });
+  assert.ok(Number.isSafeInteger(again.body._rev) && again.body._rev > 0, 'the save did not store an integer _rev');
 });
 
 test('every refused config save names a code the UI can translate', async () => {

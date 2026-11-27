@@ -1,4 +1,4 @@
-import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, fitText, cssZoom, failureName } from '/js/widget-toolbox.js?v=91dc2dae';
+import { poll, fetchData, linkTo, loadStrings, wt, formatNumber, errorState, fitText, cssZoom, failureName } from '/js/widget-toolbox.js?v=0e14d130';
 import { slotWeeks, isoDay } from '/js/contribution-calendar.js?v=8ea71e8f';
 await loadStrings();
 

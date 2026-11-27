@@ -4,7 +4,7 @@
 import { esc, html, parseMarkup, raw, setHtml } from '/js/html.js?v=48f9dc21';
 import { isSafeLinkUrl } from '/js/link-url.js?v=0bffa1dd';
 import { jitter } from '/js/jitter.js?v=087a1fcf';
-import { errorState as _errorState, errorKind, errorCopy, kindGlyph } from '/js/widget-error.js?v=563d383e';
+import { errorState as _errorState, errorCopyFor, errorGlyphFor } from '/js/widget-error.js?v=a33d5243';
 import { formatNumber, numberSymbols, setNumberLanguage } from '/js/format-number.js?v=263fa390';
 
 export { esc, html, parseMarkup, raw, setHtml };
@@ -892,10 +892,10 @@ export function placeholder(width, height = 10, radius = 4) {
 }
 
 /** The reader's wording for a failure, for a widget that draws its own state.
-    @param {unknown} err a caught error, or { kind } from a response
+    @param {unknown} err a caught error, or { kind, code } from a response
     @returns {string} */
 export function errorLine(err) {
-  const { key, text } = errorCopy(errorKind(err));
+  const { key, text } = errorCopyFor(err);
   return _t(key, text);
 }
 
@@ -906,10 +906,10 @@ export function failureName(line, since) {
 }
 
 /** The glyph the shared error caption draws for a failure.
-    @param {unknown} err a caught error, or { kind } from a response
+    @param {unknown} err a caught error, or { kind, code } from a response
     @returns {Element} */
 export function errorGlyph(err) {
-  return kindGlyph(errorKind(err), document);
+  return errorGlyphFor(err, document);
 }
 
 /** Calls onChange(true) while el is on screen in a visible tab and

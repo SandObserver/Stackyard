@@ -244,6 +244,7 @@ test('ping keeps its ok:false shape and gains a kind', async () => {
   assert.equal(r.body.status, 0);
   assert.equal(r.body.kind, KIND.NETWORK);
   assert.equal(r.body.code, 'network.refused');
+  assert.match(r.body.requestId, /^[0-9a-f]{8}$/);
 });
 
 /* ── config ───────────────────────────────────────────────────────────────── */

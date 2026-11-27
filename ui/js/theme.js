@@ -99,8 +99,8 @@ export function prefersDark() {
 export function watchSystemTheme(currentMode) {
   try {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = e => {
-      if (currentMode() === 'system') fadeTheme(() => applyTheme(resolveTheme('system', e.matches)));
+    const onChange = () => {
+      if (currentMode() === 'system') fadeTheme(() => applyTheme(resolveTheme(currentMode(), mq.matches)));
     };
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);

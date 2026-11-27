@@ -60,7 +60,7 @@ function badSettings(settings) {
 function healthcheckWithoutTarget(item) {
   const hc = isPlainObject(item?.monitoring) ? item.monitoring.healthcheck : undefined;
   if (!isPlainObject(hc) || hc.enabled !== true) return false;
-  return !hc.container && !hc.pingUrl && !hc.proxmoxGuest;
+  return !hc.container && !item.container && !hc.pingUrl && !hc.proxmoxGuest;
 }
 
 module.exports = {

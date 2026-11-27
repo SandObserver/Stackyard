@@ -52,7 +52,7 @@ export const BY_CODE = Object.freeze({
   'invalid.reserved-id': 'adminError.reservedId',
   'invalid.bad-setting': 'adminError.badSetting',
   'invalid.dock-full': 'app.dockFull',
-  'invalid.healthcheck-target': 'app.hcTargetRequired',
+  'invalid.healthcheck-target': 'adminError.healthcheckTarget',
   'invalid.config-too-large': 'adminError.configTooLarge',
   'invalid.newer-config': 'adminError.newerConfig',
   'internal.disk-full': 'adminError.diskFull',
@@ -142,7 +142,8 @@ function unanswered(e) {
 
 /* navigator.onLine is only a hint: it is true on a network with no route to
    Stackyard. Only its false is trusted. */
-const offlineKey = () =>
+/** @returns {string} the catalogue key for a request nothing answered */
+export const offlineKey = () =>
   /** @type {any} */ (globalThis).navigator?.onLine === false ? 'adminError.deviceOffline' : 'adminError.offline';
 
 /** What to show for a failed request to the API's own routes.

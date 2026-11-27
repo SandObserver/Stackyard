@@ -146,7 +146,9 @@ module.exports = async function (ctx) {
       results.filter(r => !r.error).map(r => r.found),
       now,
     ),
-    missing: results.filter(r => r.error).map(r => ({ app: r.row.app, kind: ctx.classify(r.error).kind })),
+    missing: results
+      .filter(r => r.error)
+      .map(r => ({ app: r.row.app, kind: ctx.classify(r.error).kind, code: ctx.codeOf(r.error) })),
     days,
     calendar: first ? ctx.serviceLink(first.href, first.url, '/calendar') : '',
   };

@@ -1,4 +1,4 @@
-const { on, json, readBody, getIp, checkOrigin } = require('../router');
+const { on, json, readBody, getIp, checkOrigin, requestIdOf } = require('../router');
 const { loadConfig } = require('../config');
 const { fetchChecked, fetchUnchecked, pingChecked, statusDesc } = require('../proxy');
 const { rateLimit } = require('../auth');
@@ -29,12 +29,22 @@ on('POST', '/api/ping', async (req, res) => {
     if (limited) return json(res, 429, { ok: false, error: limited, kind: KIND.BLOCKED, code: 'blocked.rate-limit' });
     const { url, skipTls = false } = JSON.parse(await readBody(req));
     if (!url) return json(res, 400, { ok: false, error: 'url required', kind: KIND.INVALID });
-    json(res, 200, await pingChecked(url, PING_MS, skipTls === true));
+    const r = await pingChecked(url, PING_MS, skipTls === true);
+    if (!r.ok) logFailedTest(res, r);
+    json(res, 200, r);
   } catch (e) {
     if (e.status === 403) return fail(res, e, { extra: { ok: false } });
-    json(res, 200, Object.assign({ ok: false, status: 0 }, errorBody(e)));
+    const r = Object.assign({ ok: false, status: 0 }, errorBody(e));
+    logFailedTest(res, r);
+    json(res, 200, r);
   }
 });
+
+/** @param {import('http').ServerResponse} res
+    @param {{ status?: number, kind?: string, code?: string }} r */
+function logFailedTest(res, r) {
+  log.warn('connection test failed', { request: requestIdOf(res), kind: r.kind, code: r.code, status: r.status });
+}
 
 /** Why a resolved response cannot give a reading, as an error to report, or
     null. A failed poll must not read as a number.

@@ -198,3 +198,15 @@ test('a ping that is refused sends the reason as a code', async () => {
   const r = (await health()).a1;
   assert.equal(r.pingCode, 'network.refused');
 });
+
+test('a socket proxy that answers with an HTTP error is named by its status', async () => {
+  const { url } = await fakeUpstream((_, res) => {
+    res.writeHead(503, { 'Content-Type': 'text/html' });
+    res.end('<html>503 Service Unavailable</html>');
+  });
+  configure({ container: 'myapp' }, url);
+  const r = (await health()).a1;
+  assert.equal(r.state, 'unknown');
+  assert.equal(r.containerCode, 'upstream.status');
+  assert.equal(r.containerStatus, 503);
+});

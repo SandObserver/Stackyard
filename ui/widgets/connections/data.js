@@ -167,6 +167,7 @@ async function vpnView(ctx) {
       } catch (e) {
         out.error = errorText(e);
         out.errorKind = ctx.classify(e).kind;
+        out.errorCode = ctx.codeOf(e);
       }
       if (ipRes) {
         if (authErr(ipRes)) {
@@ -236,6 +237,7 @@ async function vpnView(ctx) {
   } catch (e) {
     out.error = errorText(e);
     out.errorKind = ctx.classify(e).kind;
+    out.errorCode = ctx.codeOf(e);
   }
 
   return out;
@@ -392,6 +394,7 @@ async function mapView(ctx) {
       } catch (e) {
         o.error = errorText(e);
         o.errorKind = ctx.classify(e).kind;
+        o.errorCode = ctx.codeOf(e);
       }
       return o;
     }),

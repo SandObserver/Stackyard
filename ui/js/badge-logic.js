@@ -50,6 +50,7 @@ const EN = {
   'adminError.noConnection': 'Nothing answered at that address. Check that the socket proxy is running.',
   'adminError.socketRefused': 'The socket proxy refused the request.',
   'adminError.notSocketProxy': 'Something answered there, but it is not a Docker socket proxy.',
+  'adminError.socketStatus': 'The socket proxy answered with an error (HTTP {status}).',
 };
 
 const GUEST_STATES = {
@@ -170,7 +171,9 @@ export function healthReason(detail, translate) {
 
   /* 'unknown' is the server's sentinel for a container it could not find. */
   const socketKey = typeof detail.containerCode === 'string' ? SOCKET_ERRORS[detail.containerCode] : undefined;
-  if (detail.state === 'unknown' && detail.containerCode) {
+  if (detail.state === 'unknown' && detail.containerCode === 'upstream.status' && detail.containerStatus) {
+    parts.push(_clip(tr('adminError.socketStatus', { status: detail.containerStatus }), REASON_MAX));
+  } else if (detail.state === 'unknown' && detail.containerCode) {
     parts.push(_clip(tr(socketKey || 'adminError.noConnection'), REASON_MAX));
   } else if (detail.state === 'unknown') {
     parts.push(tr('status.containerNotFound'));

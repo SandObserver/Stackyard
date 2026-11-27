@@ -1,15 +1,16 @@
 import { restoreAction } from '/js/dashboard-logic.js?v=b4828b62';
-import { overlayOpen } from '/js/dashboard-pager.js?v=cb716ff3';
+import { overlayOpen } from '/js/dashboard-pager.js?v=f82605c1';
 import { liftVeil, showApiDown } from '/js/dashboard-screens.js?v=79b0c104';
 import { repeatJittered } from '/js/jitter.js?v=087a1fcf';
 import { el } from '/js/utils.js?v=457d9918';
 
 /** @param {{
-      badges: import('/js/dashboard-badges.js?v=910ee473').Badges,
+      badges: import('/js/dashboard-badges.js?v=963d90c2').Badges,
       differs: (c: any) => boolean,
       rev?: () => unknown,
+      version?: string | null,
     }} deps */
-export function createPolling({ badges, differs, rev = () => null }) {
+export function createPolling({ badges, differs, rev = () => null, version: booted = null }) {
   const { pollBadges, pollHealth } = badges;
   const strip = el('pages');
   /* Jittered, so several open clients do not poll on the same tick. */
@@ -17,7 +18,7 @@ export function createPolling({ badges, differs, rev = () => null }) {
   const _repeat = (fn, base) => _pollTimers.push(repeatJittered(fn, base));
 
   /** @type {string | null} */
-  let version = null;
+  let version = booted;
   const pollConfig = async () => {
     try {
       const loaded = rev();

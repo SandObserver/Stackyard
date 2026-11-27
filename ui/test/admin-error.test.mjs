@@ -18,6 +18,7 @@ import {
   errorAdvice,
   KIND,
   loginErrorAdvice,
+  offlineKey,
   optionsErrorAdvice,
   passwordRefusalKey,
   readError,
@@ -380,11 +381,17 @@ test('a device that knows it is offline says so', () => {
   try {
     assert.equal(errorAdvice(new TypeError('Failed to fetch')).key, 'adminError.deviceOffline');
     assert.equal(loginErrorAdvice(new TypeError('Failed to fetch')).key, 'adminError.deviceOffline');
+    assert.equal(offlineKey(), 'adminError.deviceOffline', 'the recovery screen reads the same check');
   } finally {
     if (had) Object.defineProperty(globalThis, 'navigator', had);
     else delete globalThis.navigator;
   }
   assert.equal(errorAdvice(new TypeError('Failed to fetch')).key, 'adminError.offline');
+});
+
+test('a health check with nothing to check names the item, not a field', () => {
+  const advice = errorAdvice({ kind: KIND.INVALID, code: 'invalid.healthcheck-target', detail: { id: 'hc' } });
+  assert.deepEqual(advice, { key: 'adminError.healthcheckTarget', vars: { id: 'hc' } });
 });
 
 test('a refused save names its reason', () => {

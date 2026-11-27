@@ -1,4 +1,4 @@
-import { wirePasswordStrength } from '/js/admin-auth.js?v=829c4635';
+import { wirePasswordStrength } from '/js/admin-auth.js?v=9cb3d41b';
 import {
   applyHealthChecks,
   savedWallpaperUrl,
@@ -6,7 +6,7 @@ import {
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=cab79a0a';
+} from '/js/admin-settings.js?v=e274f7a1';
 import {
   apiPost,
   apiUpload,
@@ -16,7 +16,7 @@ import {
   reveal,
   showFieldError,
   toast,
-} from '/js/admin-shared.js?v=12fb8c08';
+} from '/js/admin-shared.js?v=3f6bd8c1';
 import { LANGUAGES, t } from '/js/i18n.js?v=82ba9da2';
 import { WALLPAPER_MAX_BYTES } from '/js/limits.js?v=bc10e843';
 import { createListbox } from '/js/listbox.js?v=bd1d196c';
@@ -35,7 +35,7 @@ import {
   watchTransparency,
   writeMode,
   writeReduceTransparency,
-} from '/js/theme.js?v=ab9b83fd';
+} from '/js/theme.js?v=4e6279e8';
 import { el, inp, qa, setUserText } from '/js/utils.js?v=457d9918';
 
 /* The pickers are built before the catalog loads, so each registers how to
@@ -362,11 +362,9 @@ function initTheme() {
   addEventListener('storage', e => {
     if (solid && e.key === TRANSPARENCY_KEY) solid.checked = readReduceTransparency();
     if (e.key !== THEME_KEY) return;
-    fadeTheme(() => {
-      hidden.value = readMode();
-      box.setValue(hidden.value);
-      applyTheme(resolveTheme(hidden.value, prefersDark()));
-    });
+    hidden.value = readMode();
+    box.setValue(hidden.value);
+    fadeTheme(() => applyTheme(resolveTheme(hidden.value, prefersDark())));
   });
 }
 

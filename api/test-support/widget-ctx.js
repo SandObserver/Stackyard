@@ -5,7 +5,7 @@
    wrong. The real implementations rather than stand-ins, so a test observes the
    same WidgetError the route would. */
 
-const { classify, KIND, WidgetError } = require('../src/api-error');
+const { classify, codeOf, KIND, WidgetError } = require('../src/api-error');
 
 const errorParts = () => ({
   fail: (message, opts) => {
@@ -13,6 +13,7 @@ const errorParts = () => ({
   },
   KIND,
   classify,
+  codeOf,
 });
 
 /* The ctx the route builds, with the real fetcher, so the runtime's reply

@@ -1,5 +1,8 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+
+/** The cards without their error codes, for tests about the kind. */
+const withoutCodes = v => JSON.parse(JSON.stringify(v, (k, x) => (k === 'errorCode' ? undefined : x)));
 const path = require('node:path');
 
 const dataFn = require(path.join(__dirname, '..', '..', 'ui', 'widgets', 'backup', 'data.js'));
@@ -158,7 +161,7 @@ test('slots marks a slot failed when its job is no longer listed', async () => {
     '/api/v1/backups': { status: 200, data: [] },
     '/api/v1/sources': { status: 200, data: { sources: [{ source: { host: 'h', userName: 'u', path: '/data' } }] } },
   });
-  assert.deepEqual(await dataFn(ctx), [{ error: KIND.INVALID }, { error: KIND.INVALID }]);
+  assert.deepEqual(withoutCodes(await dataFn(ctx)), [{ error: KIND.INVALID }, { error: KIND.INVALID }]);
 });
 
 test('slots collapses same-instance slots into one round of upstream calls', async () => {
@@ -187,7 +190,16 @@ test('an unreachable instance marks its slots failed instead of failing the requ
       throw Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' });
     },
   });
-  assert.deepEqual(await dataFn(ctx), [{ error: KIND.NETWORK }]);
+  assert.deepEqual(withoutCodes(await dataFn(ctx)), [{ error: KIND.NETWORK }]);
+});
+
+test('a failed slot carries the code that names the cause', async () => {
+  const { ctx } = ctxFor({ slots: [{ provider: 'duplicati', dupUrl: 'http://d:8200', jobId: '1' }] }, 'slots', {
+    '/api/v1/auth/login': () => {
+      throw Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' });
+    },
+  });
+  assert.deepEqual(await dataFn(ctx), [{ error: KIND.NETWORK, errorCode: 'network.refused' }]);
 });
 
 for (const [name, status, kind] of [
@@ -200,7 +212,7 @@ for (const [name, status, kind] of [
       '/api/v1/serverstate': { status, data: null },
       '/api/v1/backups': { status, data: null },
     });
-    assert.deepEqual(await dataFn(ctx), [{ error: kind }]);
+    assert.deepEqual(withoutCodes(await dataFn(ctx)), [{ error: kind }]);
   });
 }
 
@@ -223,9 +235,9 @@ test('a failing Kopia instance marks only its own slots failed', async () => {
     },
   });
   const out = await dataFn(ctx);
-  assert.deepEqual(out[0], { error: KIND.UPSTREAM });
+  assert.deepEqual(withoutCodes(out[0]), { error: KIND.UPSTREAM });
   assert.equal(out[1].name, '/data');
-  assert.deepEqual(out[2], { error: KIND.NETWORK });
+  assert.deepEqual(withoutCodes(out[2]), { error: KIND.NETWORK });
 });
 
 for (const [name, status, kind] of [
@@ -237,7 +249,7 @@ for (const [name, status, kind] of [
     const { ctx } = ctxFor({ slots: [{ provider: 'duplicati', dupUrl, jobId: '1' }] }, 'slots', {
       '/api/v1/auth/login': { status, data: null },
     });
-    assert.deepEqual(await dataFn(ctx), [{ error: kind }]);
+    assert.deepEqual(withoutCodes(await dataFn(ctx)), [{ error: kind }]);
   });
 }
 
@@ -252,7 +264,7 @@ test('an instance that times out marks its cards as timed out', async () => {
     ],
   };
   const { ctx } = ctxFor(config, 'slots', { '/api/v1/auth/login': timedOut, '/api/v1/sources': timedOut });
-  assert.deepEqual(await dataFn(ctx), [{ error: KIND.TIMEOUT }, { error: KIND.TIMEOUT }]);
+  assert.deepEqual(withoutCodes(await dataFn(ctx)), [{ error: KIND.TIMEOUT }, { error: KIND.TIMEOUT }]);
 });
 
 test('each slot links to its own job page when the service address works in a browser', async () => {
@@ -311,7 +323,7 @@ test('a stalled Duplicati does not hold back the Kopia cards', async () => {
   assert.equal(kopiaAsked, true, 'Kopia is asked while Duplicati still stalls');
   release();
   const cards = await out;
-  assert.deepEqual(cards[0], { error: KIND.TIMEOUT });
+  assert.deepEqual(withoutCodes(cards[0]), { error: KIND.TIMEOUT });
   assert.equal(cards[1].name, '/data');
 });
 
@@ -332,12 +344,12 @@ test('a token refresh that fails is not tried again on the next poll', async t =
 
   up = false;
   t.mock.timers.tick(5 * 60 * 1000);
-  assert.deepEqual(await dataFn(ctx), [{ error: KIND.TIMEOUT }]);
+  assert.deepEqual(withoutCodes(await dataFn(ctx)), [{ error: KIND.TIMEOUT }]);
   const refreshes = () => calls.filter(c => c.url.endsWith('/auth/refresh')).length;
   const tried = refreshes();
   assert.ok(tried > 0);
 
-  assert.deepEqual(await dataFn(ctx), [{ error: KIND.TIMEOUT }]);
+  assert.deepEqual(withoutCodes(await dataFn(ctx)), [{ error: KIND.TIMEOUT }]);
   assert.equal(refreshes(), tried, 'the next poll logs in without the old refresh nonce');
 });
 
@@ -579,8 +591,8 @@ test('one failing PBS request marks only its own card', async () => {
   );
   const out = await dataFn(ctx);
   assert.equal(out[0].status, 'healthy');
-  assert.deepEqual(out[1], { error: KIND.UPSTREAM });
-  assert.deepEqual(out[2], { error: KIND.UPSTREAM });
+  assert.deepEqual(withoutCodes(out[1]), { error: KIND.UPSTREAM });
+  assert.deepEqual(withoutCodes(out[2]), { error: KIND.UPSTREAM });
 });
 
 test('a PBS group moved to another namespace is followed, and found there on the next poll', async () => {
@@ -630,20 +642,20 @@ test('a PBS group that now appears in two namespaces is not guessed', async () =
     groups: { '': [], a: [group('vm', '302', NOW_S - 60)], b: [group('vm', '302', NOW_S - 60)] },
   });
   const out = await dataFn(pbsCtx({ slots: [{ ...PBS_ROW, jobId: 'main::vm/302' }] }, 'slots', server).ctx);
-  assert.deepEqual(out, [{ error: KIND.INVALID }]);
+  assert.deepEqual(withoutCodes(out), [{ error: KIND.INVALID }]);
 });
 
 test('a PBS group that is gone everywhere stays not found', async () => {
   const server = pbsServer({ namespaces: ['', 'a'], groups: { '': [], a: [] } });
   const out = await dataFn(pbsCtx({ slots: [{ ...PBS_ROW, jobId: 'main::vm/303' }] }, 'slots', server).ctx);
-  assert.deepEqual(out, [{ error: KIND.INVALID }]);
+  assert.deepEqual(withoutCodes(out), [{ error: KIND.INVALID }]);
 });
 
 test('a PBS reply in the wrong shape marks its card as an upstream error', async () => {
   const { ctx } = pbsCtx({ slots: [{ ...PBS_ROW, jobId: 'main::vm/100' }] }, 'slots', p =>
     p === '/admin/datastore/main/groups' ? { status: 200, data: { data: { 'vm/100': {} } } } : null,
   );
-  assert.deepEqual(await dataFn(ctx), [{ error: KIND.UPSTREAM }]);
+  assert.deepEqual(withoutCodes(await dataFn(ctx)), [{ error: KIND.UPSTREAM }]);
 });
 
 test('an impossible PBS timestamp reads as unknown, not as a failed card', async () => {
@@ -742,7 +754,7 @@ test('a PBS group that is gone marks its slot invalid', async () => {
     if (p === '/nodes/localhost/tasks') return { status: 200, data: { data: [] } };
   });
   const out = await dataFn(ctx);
-  assert.deepEqual(out, [{ error: KIND.INVALID }]);
+  assert.deepEqual(withoutCodes(out), [{ error: KIND.INVALID }]);
 });
 
 const BACKREST_SUMMARY = {
@@ -805,7 +817,7 @@ test('a Backrest slot shows its plan with last and next run and a plan link', as
     nextRun: new Date(1900000000000).toISOString(),
     link: 'http://10.0.0.8:9898/#/plan/photos',
   });
-  assert.deepEqual(out[1], { error: KIND.INVALID });
+  assert.deepEqual(withoutCodes(out[1]), { error: KIND.INVALID });
 });
 
 test('a Backrest login refused marks its cards as an auth failure', async () => {
@@ -814,7 +826,7 @@ test('a Backrest login refused marks its cards as an auth failure', async () => 
     'slots',
     { '/v1.Backrest/GetSummaryDashboard': { status: 401, data: null } },
   );
-  assert.deepEqual(await dataFn(ctx), [{ error: KIND.AUTH }]);
+  assert.deepEqual(withoutCodes(await dataFn(ctx)), [{ error: KIND.AUTH }]);
 });
 
 test('an impossible Backrest next run reads as unknown and keeps the card', async () => {
@@ -835,7 +847,7 @@ test('a Backrest reply in the wrong shape marks its cards as an upstream error',
     'slots',
     { '/v1.Backrest/GetSummaryDashboard': { status: 200, data: { planSummaries: { photos: {} } } } },
   );
-  assert.deepEqual(await dataFn(ctx), [{ error: KIND.UPSTREAM }]);
+  assert.deepEqual(withoutCodes(await dataFn(ctx)), [{ error: KIND.UPSTREAM }]);
 });
 
 test('a Backrest with no plans lists none', async () => {

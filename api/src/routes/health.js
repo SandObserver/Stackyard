@@ -45,10 +45,10 @@ function socketProxyUrl(cfg) {
 /* A symbol key, so no container name can collide with it. */
 const SOCKET_FAILED = Symbol('socket failed');
 
-/** @param {string} code */
-function socketFailed(code) {
+/** @param {string} code @param {number} [status] */
+function socketFailed(code, status) {
   const out = Object.create(null);
-  out[SOCKET_FAILED] = code;
+  out[SOCKET_FAILED] = status ? { code, status } : { code };
   return out;
 }
 
@@ -59,6 +59,10 @@ async function fetchContainerHealth(socketUrl) {
     if (r.status === 401 || r.status === 403) {
       failureLog.failed(logKey, 'container health fetch failed', {}, `socket proxy answered ${r.status}`);
       return socketFailed('upstream.refused');
+    }
+    if (r.status >= 400) {
+      failureLog.failed(logKey, 'container health fetch failed', {}, `socket proxy answered ${r.status}`);
+      return socketFailed('upstream.status', r.status);
     }
     if (!Array.isArray(r.data)) {
       failureLog.failed(logKey, 'container health fetch failed', {}, 'the reply is not a container list');
@@ -341,7 +345,11 @@ on('GET', '/api/health', async (req, res) => {
           unhealthy = !c || c.unhealthy;
           detail.state = c?.state || 'unknown';
           detail.status = c?.status || '';
-          if (containers[SOCKET_FAILED]) detail.containerCode = containers[SOCKET_FAILED];
+          const socket = containers[SOCKET_FAILED];
+          if (socket) {
+            detail.containerCode = socket.code;
+            if (socket.status) detail.containerStatus = socket.status;
+          }
         }
         if (ping) {
           /* status 0 is a host that never answered. A status of any kind means

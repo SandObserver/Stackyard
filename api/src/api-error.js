@@ -135,6 +135,13 @@ function safeMessage(kind) {
   return SAFE_MESSAGES[kind] || SAFE_MESSAGES[KIND.INTERNAL];
 }
 
+/** The API code for a caught error, as errorBody would send it.
+    @param {unknown} e @returns {string} */
+function codeOf(e) {
+  const { kind, detail } = classify(e);
+  return codeFor(kind, detail, e);
+}
+
 function errorBody(e, overrides = {}) {
   const { kind, detail } = classify(e);
   const finalKind = overrides.kind || kind;
@@ -187,6 +194,7 @@ module.exports = {
   hasVouchedMessage,
   classify,
   codeFor,
+  codeOf,
   errorBody,
   safeMessage,
   SAFE_MESSAGES,

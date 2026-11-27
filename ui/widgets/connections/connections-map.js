@@ -1,4 +1,4 @@
-import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, rgbOf, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen, reducedMotion, errorLine, errorGlyph } from '/js/widget-toolbox.js?v=91dc2dae';
+import { poll, fetchData, openUrl, html, setHtml, colorOrFallback, rgbOf, loadStrings, wt, errorState, theme, formatNumber, formatList, cssZoom, linkTo, whileOnScreen, reducedMotion, errorLine, errorGlyph } from '/js/widget-toolbox.js?v=0e14d130';
 import * as M from './world-map.js';
 await loadStrings();
 document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World map of connections'));
@@ -45,10 +45,10 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
     const taken=new Set();
     for(const s of services){
       const svc=s.svc, col=colourOf(svc.color);
-      s.chip={name:s.name,color:rgbCss(col),role:s.role,adminUrl:svc.adminUrl||'',error:svc.error?String(svc.error):'',errorKind:svc.errorKind||'internal',kind:'',spoken:''};
+      s.chip={name:s.name,color:rgbCss(col),role:s.role,adminUrl:svc.adminUrl||'',error:svc.error?String(svc.error):'',errorKind:svc.errorKind||'internal',errorCode:svc.errorCode,kind:'',spoken:''};
       legend.push(s.chip);
       if(svc.error){
-        s.chip.kind=errorLine({kind:s.chip.errorKind});
+        s.chip.kind=errorLine({kind:s.chip.errorKind,code:s.chip.errorCode});
         s.chip.spoken=s.chip.kind+'. '+s.chip.error.replace(/\.$/,'');
         continue;
       }
@@ -93,7 +93,7 @@ document.getElementById('c').setAttribute('aria-label', wt('ui.worldMap', 'World
     return dot;
   }
   function glyphFor(l){
-    const g=errorGlyph({kind:l.errorKind});
+    const g=errorGlyph({kind:l.errorKind,code:l.errorCode});
     g.classList.add('why');
     return g;
   }

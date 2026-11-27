@@ -166,7 +166,7 @@ export function initSpotlight({
     } else if (isFolder && folderGlyph) {
       ic.style.background = 'transparent';
       ic.style.position = 'relative';
-      ic.appendChild(folderGlyph(app, 64));
+      ic.appendChild(folderGlyph(app, MOB() ? 64 : 44));
     } else if (app.iconUrl) {
       const img = mk('img', { alt: '', loading: 'lazy' });
       img.setAttribute('aria-hidden', 'true');
