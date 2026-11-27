@@ -40,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Refuse a language or log level Stackyard cannot use instead of dropping it.
 
+- Balance seven icons optically so they look centred in their buttons and
+  plates.
+
 ### Fixed
 
 - A press on the Settings tab bar lens right after picking a tab is no longer
