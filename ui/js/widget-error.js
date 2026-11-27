@@ -6,7 +6,7 @@
    codes, and it is not translated. */
 
 import { parseMarkup, raw } from '/js/html.js?v=48f9dc21';
-import { ICONS, symbol } from '/js/icon-set.js?v=beda3062';
+import { ICONS, symbol } from '/js/icon-set.js?v=1e268244';
 
 /* kind -> [glyph, catalog key, English] */
 const COPY = {

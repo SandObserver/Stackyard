@@ -1,7 +1,7 @@
 import {
   poll, getConfig, loadStrings, wt, wtCount, formatNumber, formatList, localiseDigits, formatByteRate, formatDuration, linkTo, errorState, readingTime, fitText, placeholder, readerHourCycle,
-} from '/js/widget-toolbox.js?v=6c1a1c45';
-import { ensureSprite } from '/js/icon-set.js?v=beda3062';
+} from '/js/widget-toolbox.js?v=4b06c339';
+import { ensureSprite } from '/js/icon-set.js?v=1e268244';
 import { variations, finishedToday, hoursMinutes, leftover, lidOpen, finishParts } from './belt-logic.js';
 
 const SVG = 'http://www.w3.org/2000/svg';

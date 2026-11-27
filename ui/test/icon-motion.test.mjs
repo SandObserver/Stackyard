@@ -1,10 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { register } from 'node:module';
 
 register('./js-root-hooks.mjs', import.meta.url);
 const { ICONS, STYLES, symbol } = await import('../js/icon-set.js');
-const { MOTION } = await import('../js/icon-motion.js');
+const { MOTION, PICK } = await import('../js/icon-motion.js');
 
 const WEIGHTS = { light: 1.5, regular: 2, bold: 2.5 };
 
@@ -74,6 +75,35 @@ test('the Now Playing morph keeps the path commands of its play shape', () => {
   const own = moving('nowplaying').sym.match(/<path d="([^"]+)" data-part="play"/)[1];
   const [, { morph }] = MOTION.nowplaying.go.find(([, f]) => 'morph' in f);
   assert.equal(cmds(morph), cmds(own));
+});
+
+test('every pick motion names an icon and parts the moving copy draws', () => {
+  for (const [id, p] of Object.entries(PICK)) {
+    const icon = p.icon ?? id;
+    assert.ok(ICONS[icon], `${id} has no icon ${icon}`);
+    const { defs, sym } = symbol(icon, ICONS[icon], 'solid', false, 2, { motion: true });
+    for (const part of new Set([...p.steps.map(([name]) => name), ...Object.keys(p.origin || {})])) {
+      assert.match(defs + sym, new RegExp(`data-part="${part}"`), `${id} has no part ${part}`);
+    }
+  }
+});
+
+test('every pick motion starts and ends at rest', () => {
+  const REST = { translate: /^0px 0px$/, rotate: /^0deg$/, scale: /^1( 1)?$/ };
+  for (const [id, p] of Object.entries(PICK)) {
+    for (const [part, frames] of p.steps) {
+      for (const f of [frames[0], frames.at(-1)]) {
+        for (const [k, re] of Object.entries(REST)) if (k in f) assert.match(String(f[k]), re, `${id} ${part} ${k}`);
+      }
+    }
+  }
+});
+
+test('every tab bar tab has a pick motion', () => {
+  const html = fs.readFileSync(new URL('../admin/index.html', import.meta.url), 'utf8');
+  const tabs = [...html.matchAll(/class="mtab" data-sec="([^"]+)"/g)].map(m => m[1]);
+  assert.ok(tabs.length > 0);
+  for (const sec of tabs) assert.ok(PICK[sec], `${sec} has no pick motion`);
 });
 
 const MOTION_KEYS = ['part', 'only', 'hidden', 'clip', 'clipCaps', 'fixedHole'];
@@ -171,7 +201,7 @@ function fakeIcon(id) {
   animateIcon(svg, id, trigger);
   return { svg, made, enter: t => point('pointerenter', t), leave: () => point('pointerleave') };
 }
-const { animateIcon, holdIcons } = await import('../js/icon-motion.js');
+const { animateIcon, holdIcons, pickIcon } = await import('../js/icon-motion.js');
 const settle = () => new Promise(r => setImmediate(r));
 
 test('a leave during the trip finishes it, plays the way back, then rests', async () => {
@@ -272,4 +302,60 @@ test('every inline copy gets its own mask and clip ids', () => {
   assert.ok(ids[0].length > 0);
   for (const list of ids) for (const v of list) assert.match(v, /^sy-solid-app-x\d+-/);
   assert.equal(new Set([...ids[0], ...ids[1]]).size, ids[0].length + ids[1].length);
+});
+
+function pickedParts(id, svg = pickSvg()) {
+  const made = [];
+  svg.made = made;
+  pickIcon(svg, id);
+  return made;
+}
+function pickSvg() {
+  const svg = {
+    animate() {},
+    querySelector: () => ({}),
+    querySelectorAll: sel => [
+      {
+        style: {},
+        animate: (kf, opts) => svg.made.push({ part: sel.match(/data-part="([^"]+)"/)[1], kf, opts }),
+      },
+    ],
+  };
+  return svg;
+}
+
+test('a pick plays once and leaves the icon at rest, on touch screens too', () => {
+  media.hover.matches = false;
+  const made = pickedParts('dashboard');
+  media.hover.matches = true;
+  assert.deepEqual(
+    made.map(a => a.part),
+    ['left', 'right'],
+  );
+  for (const a of made) {
+    assert.equal(a.opts.fill, undefined, 'no held end pose');
+    assert.equal(a.opts.iterations, undefined);
+  }
+});
+
+test('with reduced motion on, a pick plays nothing', () => {
+  media.reduce.matches = true;
+  const made = pickedParts('dashboard');
+  media.reduce.matches = false;
+  assert.equal(made.length, 0);
+});
+
+test('a tab with no pick motion plays nothing', () => {
+  assert.equal(pickedParts('folder').length, 0);
+});
+
+test('a pick waits for the lens picture to clear', () => {
+  for (const a of pickedParts('dashboard')) assert.ok(a.opts.delay >= 100, `${a.part} starts under the lens`);
+});
+
+test('a pick during a running pick of the same icon does not restart it', () => {
+  const svg = pickSvg();
+  assert.ok(pickedParts('dashboard', svg).length > 0);
+  assert.equal(pickedParts('dashboard', svg).length, 0);
+  assert.ok(pickedParts('dashboard').length > 0, 'another icon still plays');
 });

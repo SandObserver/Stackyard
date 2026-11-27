@@ -1,20 +1,20 @@
-import { checkAuth, requireLogin } from '/js/admin-auth.js?v=2507f132';
-import { initEditor, openEditor, openFolderPicker, wireListButtons } from '/js/admin-editor.js?v=e3b0c737';
-import { initList, render, wireFilter } from '/js/admin-list.js?v=92e180a6';
-import { createListWrites } from '/js/admin-list-writes.js?v=21616a4b';
-import { animateNavIcons, initNav } from '/js/admin-nav.js?v=4efb1dec';
-import { createPageLoad } from '/js/admin-page-load.js?v=c73d78d3';
-import { settingsDirty } from '/js/admin-settings.js?v=48c16a90';
-import { initSettingsControls } from '/js/admin-settings-controls.js?v=80df39c1';
-import { setReauthHandler } from '/js/admin-shared.js?v=38e3b4db';
-import { wireTransfer } from '/js/admin-transfer.js?v=f67f05f1';
-import { recoveryShown } from '/js/config-recovery.js?v=346cd09d';
+import { checkAuth, requireLogin } from '/js/admin-auth.js?v=3e879922';
+import { initEditor, openEditor, openFolderPicker, wireListButtons } from '/js/admin-editor.js?v=b96512bc';
+import { initList, render, wireFilter } from '/js/admin-list.js?v=8b0c9f55';
+import { createListWrites } from '/js/admin-list-writes.js?v=1b721691';
+import { animateNavIcons, initNav } from '/js/admin-nav.js?v=5a3fd4fb';
+import { createPageLoad } from '/js/admin-page-load.js?v=cf172f93';
+import { settingsDirty } from '/js/admin-settings.js?v=7ba65299';
+import { initSettingsControls } from '/js/admin-settings-controls.js?v=6d13763f';
+import { setReauthHandler } from '/js/admin-shared.js?v=674bbb0b';
+import { wireTransfer } from '/js/admin-transfer.js?v=38c74021';
+import { recoveryShown } from '/js/config-recovery.js?v=ebb72f77';
 import { initFluidHover } from '/js/fluid-hover.js?v=eb6cc81c';
 import { syncGlideSelect } from '/js/glide-select.js?v=0c57b286';
-import { ensureSprite } from '/js/icon-set.js?v=beda3062';
+import { ensureSprite } from '/js/icon-set.js?v=1e268244';
 import { isMobileLayout, onLayoutChange } from '/js/layout.js?v=6680c0bf';
 import { el } from '/js/utils.js?v=457d9918';
-import { initGlassControls } from '/js/glass-controls.js?v=06fcd355';
+import { initGlassControls } from '/js/glass-controls.js?v=6af34299';
 
 /** @type {any} */ (window).__bootStarted = true;
 

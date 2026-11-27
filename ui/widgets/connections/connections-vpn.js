@@ -1,4 +1,4 @@
-import { readableInk, rgbOf, poll, fetchData, linkTo, esc, raw, setHtml, loadStrings, wt, wtCount, formatNumber, errorLine, placeholder, whileOnScreen } from '/js/widget-toolbox.js?v=6c1a1c45';
+import { readableInk, rgbOf, poll, fetchData, linkTo, esc, raw, setHtml, loadStrings, wt, wtCount, formatNumber, errorLine, placeholder, whileOnScreen } from '/js/widget-toolbox.js?v=4b06c339';
 import { cellsOf, toGrid } from './world-map.js';
 await loadStrings();
 document.getElementById('wrap').setAttribute('aria-label', wt('ui.vpnStatus', 'VPN status'));

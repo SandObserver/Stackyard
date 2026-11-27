@@ -1,8 +1,8 @@
 import { resolveAdminSection } from '/js/admin-logic.js?v=81fd47cf';
-import { fadeOpacity } from '/js/admin-shared.js?v=38e3b4db';
+import { fadeOpacity } from '/js/admin-shared.js?v=674bbb0b';
 import { initGlideSelect, syncGlideSelect } from '/js/glide-select.js?v=0c57b286';
 import { t } from '/js/i18n.js?v=82ba9da2';
-import { animateIcon } from '/js/icon-motion.js?v=7bfd91f5';
+import { animateIcon, pickIcon } from '/js/icon-motion.js?v=306f09d6';
 import { el, qa, storeGet, storeSet } from '/js/utils.js?v=457d9918';
 
 const STORE = 'admin_sec';
@@ -39,7 +39,7 @@ export function initNav() {
   shown = '';
 
   /* Do not scroll on the restoring first call. Only a picked section. */
-  function show(requested, picked, ev) {
+  function show(requested, picked, ev, from) {
     const id = resolveAdminSection(requested, sections);
     if (id === null) return;
     if (requested && id !== requested) console.warn('admin: unknown section', requested, '- showing', id);
@@ -56,12 +56,16 @@ export function initNav() {
       if (on) l.setAttribute('aria-current', 'page');
       else l.removeAttribute('aria-current');
     });
+    if (changed && !keyboard && from?.classList.contains('mtab')) {
+      const svg = from.querySelector('svg.ni');
+      if (svg instanceof SVGSVGElement) pickIcon(svg, id);
+    }
     syncGlideSelect(document, { snap: keyboard });
     storeSet(STORE, id);
     if (titled) titleSettingsPage();
     if (picked) scrollSettingsTop();
   }
-  links.forEach(l => l.addEventListener('click', e => show(l.dataset.sec, true, e)));
+  links.forEach(l => l.addEventListener('click', e => show(l.dataset.sec, true, e, l)));
   addEventListener('hashchange', () => show(location.hash.slice(1), true));
   show(location.hash.slice(1) || storeGet(STORE));
   initGlideSelect();
