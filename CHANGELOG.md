@@ -100,6 +100,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show an error when a health check is turned on with nothing to check, instead
   of saving it as off.
 
+- Load the install manifest behind a sign-in proxy such as Authelia.
+
 ## [1.24.0] - 2026-11-22
 
 ### Added
