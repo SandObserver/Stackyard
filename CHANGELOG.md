@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Redesign search on phones: the field grows from the Search pill, follows the
   keyboard, and results show a Top Hit card with Apps and Folders sections.
 
-- Show names that start with the query first in phone search.
+- Show only names that start with the query in phone search, when any do.
 
 - Close an empty search with the field's x on phones.
 
