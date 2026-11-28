@@ -1167,8 +1167,9 @@
   font-size:var(--fs-title-2);line-height:var(--lh-title-2);letter-spacing:var(--tr-title-2);
 }
 .empty-state-btn {
-  margin-block-start: var(--sp-32); padding: 15px var(--sp-32);
-  border-radius: 999px; min-height: 52px;
+  --pill-h: 52px;
+  margin-block-start: var(--sp-32); padding: 15px calc(var(--sp-32) + var(--pill-h) * var(--pill-curve));
+  border-radius: 999px; min-height: var(--pill-h);
   position: relative;
   background: var(--glass-fill-dark); border: .5px solid transparent;
   backdrop-filter: var(--glass-blur);
@@ -1209,7 +1210,8 @@
 .api-error-title { font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body); font-weight: 600; margin: 0; text-wrap: balance; }
 .api-error-sub   { font-size:var(--fs-footnote);line-height:var(--lh-footnote);letter-spacing:var(--tr-footnote); color: var(--api-error-ink-secondary); margin: 0; text-wrap: pretty; }
 .api-error-btn   {
-  margin-top: var(--sp-8); padding: 13px var(--sp-24); border-radius: 999px; min-height: 48px;
+  --pill-h: 48px;
+  margin-top: var(--sp-8); padding: 13px calc(var(--sp-24) + var(--pill-h) * var(--pill-curve)); border-radius: 999px; min-height: var(--pill-h);
   display: inline-flex; align-items: center; justify-content: center; text-decoration: none; position: relative;
   background: var(--glass-fill); border: .5px solid transparent;
   backdrop-filter: var(--glass-blur); font-weight: 500;

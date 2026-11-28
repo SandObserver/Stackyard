@@ -69,6 +69,7 @@
   --bg-base:#0d1117;
 
   --sy-radius-window:34px;
+  --pill-curve:calc((1 - pi / 4) / 2);
   --sy-radius-md:10px;
   --sy-radius-group:26px;
 
