@@ -437,6 +437,38 @@ test('two quick switch changes in Settings both save', async ({ page, request })
   await expect(typeSearch).not.toBeChecked();
 });
 
+test('the App Names menu shows the saved choice and saves a new one', async ({ page, request }) => {
+  await seedConfig(request, {
+    items: [app('alpha', 'Alpha')],
+    settings: { showLabels: { desktop: false, ios: true } },
+  });
+  await page.goto('/admin/');
+  await page.locator('body.authed').waitFor({ state: 'attached' });
+  await page.locator('.nl[data-sec="appearance"]').click();
+  const btn = page.locator('#labels-btn');
+  await expect(btn).toHaveAccessibleName('Show App Names Phones Only');
+  await btn.click();
+  await page.locator('#labels-list li[data-val="never"]').click();
+  await expect
+    .poll(async () => (await readConfig(request)).settings.showLabels)
+    .toEqual({ desktop: false, ios: false });
+  await expect(btn).toHaveAccessibleName('Show App Names Never');
+});
+
+test('a failed App Names save puts the previous choice back', async ({ page }) => {
+  await page.route('**/api/config', route =>
+    route.request().method() === 'POST' ? route.fulfill({ status: 500, json: { error: 'x' } }) : route.fallback(),
+  );
+  await page.goto('/admin/');
+  await page.locator('body.authed').waitFor({ state: 'attached' });
+  await page.locator('.nl[data-sec="appearance"]').click();
+  const btn = page.locator('#labels-btn');
+  await btn.click();
+  await page.locator('#labels-list li[data-val="always"]').click();
+  await expect(page.locator('#toast')).toHaveClass(/\berr\b/);
+  await expect(btn).toHaveAccessibleName('Show App Names Desktop Only');
+});
+
 test('the menu stays put when the version arrives', async ({ page }) => {
   let release = () => {};
   const held = new Promise(r => {

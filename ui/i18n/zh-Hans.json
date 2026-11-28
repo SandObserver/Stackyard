@@ -85,9 +85,12 @@
     "proxmoxConnected_other": "已连接 · {count} 台虚拟机"
   },
   "appearance": {
-    "appTitle": "应用标题",
-    "showTitleDesktop": "在桌面端显示应用标题",
-    "showTitleMobile": "在移动端显示应用标题",
+    "showAppNames": "显示应用名称",
+    "appNamesAlways": "始终",
+    "appNamesDesktop": "仅桌面端",
+    "appNamesPhone": "仅移动端",
+    "appNamesNever": "从不",
+    "appNamesTip": "移动端设置也适用于较窄的浏览器窗口。",
     "display": "显示",
     "keepAwake": "保持屏幕常亮",
     "keepAwakeTip": "打开仪表板期间屏幕不会变暗或锁定。浏览器仅在 HTTPS 下允许该功能，因此在普通 HTTP 地址上无效。",

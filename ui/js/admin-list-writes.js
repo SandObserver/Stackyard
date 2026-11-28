@@ -6,7 +6,7 @@ import {
   restoresSettings,
   revertingSaves,
   snapshotItems,
-} from '/js/admin-save-logic.js?v=7fa325ac';
+} from '/js/admin-save-logic.js?v=1e1d8599';
 import {
   apiGet,
   apiPost,

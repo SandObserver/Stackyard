@@ -126,7 +126,7 @@ test('each header Save is driven by its own unsaved-change check', () => {
   /* Forcing the reset there swallows a choice made while it was in flight. */
   assert.match(src, /syncAuthFromServer\(\)\.then\(\(\) => _srvTrack\?\.reset\(false\)\)/);
   const reader = src.slice(src.indexOf('const readServerForm'), src.indexOf('const readWallpaperForm'));
-  assert.doesNotMatch(reader, /set-lbl|set-awake/, 'a save-on-change switch must not light Save');
+  assert.doesNotMatch(reader, /set-labels|set-awake/, 'a save-on-change switch must not light Save');
   assert.match(fs.readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8'), /addEventListener\('beforeunload'/);
 });
 

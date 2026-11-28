@@ -1,12 +1,13 @@
 import { wirePasswordStrength } from '/js/admin-auth.js?v=9cb3d41b';
 import {
   applyHealthChecks,
+  saveLabelsMode,
   savedWallpaperUrl,
   showBgFields,
   showWallpaperFile,
   wireProxmox,
   wireUnsplashKey,
-} from '/js/admin-settings.js?v=e274f7a1';
+} from '/js/admin-settings.js?v=cb017dac';
 import {
   apiPost,
   apiUpload,
@@ -271,6 +272,36 @@ async function fetchWallpaperLink(url) {
   }
 }
 
+function initAppNames() {
+  const slot = el('labels-slot');
+  const hidden = inp('set-labels');
+  if (!slot || !hidden) return;
+  const opts = () => [
+    { value: 'always', label: t('appearance.appNamesAlways') },
+    { value: 'desktop', label: t('appearance.appNamesDesktop') },
+    { value: 'phone', label: t('appearance.appNamesPhone') },
+    { value: 'never', label: t('appearance.appNamesNever') },
+  ];
+  const box = createListbox({
+    id: 'labels',
+    label: t('appearance.showAppNames'),
+    options: opts(),
+    value: hidden.value || 'desktop',
+    onChange: v => {
+      const previous = hidden.value;
+      const mode = String(v);
+      if (mode === previous) return;
+      hidden.value = mode;
+      saveLabelsMode(box.el, mode, previous, m => box.setValue(m));
+    },
+  });
+  slot.appendChild(box.el);
+  relabel(() => {
+    box.setLabel(t('appearance.showAppNames'));
+    box.setOptions(opts(), hidden.value);
+  });
+}
+
 function initLogLevel() {
   const slot = el('log-level-slot');
   const hidden = inp('log-level');
@@ -378,6 +409,7 @@ export function initSettingsControls() {
   initBgType();
   initBgFit();
   initWallpaperUpload();
+  initAppNames();
   initLogLevel();
   initLanguage();
   initTheme();

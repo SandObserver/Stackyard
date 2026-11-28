@@ -233,10 +233,19 @@ export function advancedBase(base, keys, server) {
   return next;
 }
 
-/** The label setting with one switch moved and the other kept from the server.
-    @param {any} current @param {'desktop'|'ios'} key @param {boolean} value */
-export function labelsWith(current, key, value) {
-  return { desktop: current?.desktop !== false, ios: current?.ios === true, [key]: value };
+/** @typedef {'always'|'desktop'|'phone'|'never'} LabelsMode */
+
+/** @param {any} showLabels the saved setting @returns {LabelsMode} */
+export function labelsMode(showLabels) {
+  const desktop = showLabels?.desktop !== false;
+  const phone = showLabels?.ios === true;
+  if (desktop) return phone ? 'always' : 'desktop';
+  return phone ? 'phone' : 'never';
+}
+
+/** @param {string} mode @returns {{ desktop: boolean, ios: boolean }} */
+export function labelsFromMode(mode) {
+  return { desktop: mode === 'always' || mode === 'desktop', ios: mode === 'always' || mode === 'phone' };
 }
 
 /** Run writes one at a time, in the order asked. A write asked for while

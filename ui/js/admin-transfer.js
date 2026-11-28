@@ -1,5 +1,5 @@
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
-import { importCounts, restoresSettings } from '/js/admin-save-logic.js?v=7fa325ac';
+import { importCounts, restoresSettings } from '/js/admin-save-logic.js?v=1e1d8599';
 import { apiGet, errorAction, errorText, rowBusy, ShownError, toast } from '/js/admin-shared.js?v=3f6bd8c1';
 import { state } from '/js/admin-state.js?v=064b9b85';
 import { formatNumber } from '/js/format-number.js?v=263fa390';
@@ -14,7 +14,7 @@ import {
   NOTE,
   parseErrorsAsSkipped,
   SKIP,
-} from '/js/import-foreign.js?v=00ed36e8';
+} from '/js/import-foreign.js?v=10b60b3f';
 import { CONFIG_MAX_BYTES } from '/js/limits.js?v=bc10e843';
 import { confirmModal, openModal } from '/js/modal.js?v=93d3e755';
 import { el, isolate, setUserText, tgt } from '/js/utils.js?v=457d9918';
