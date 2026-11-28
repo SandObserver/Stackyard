@@ -421,3 +421,10 @@ test('drop-down width limit does not use a percentage of its own wrapper', () =>
   const rule = read('css/admin.css').match(/\.row-dd\{[^}]*\}/)[0];
   assert.doesNotMatch(rule, /max-width:[\d.]+%/);
 });
+
+test('an option label cannot be selected', () => {
+  assert.match(
+    css,
+    /,\.row-dd-list \[role="option"\]\{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none\}/,
+  );
+});
