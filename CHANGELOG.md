@@ -124,6 +124,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stop Settings menus cutting off the chosen value on narrow screens.
 
+- Stop the Unraid template saying most homelabs need Allow Private IPs.
+
 ## [1.24.0] - 2026-11-22
 
 ### Added
