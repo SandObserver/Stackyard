@@ -51,6 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Replace the two App Title switches in Appearance with one Show App Names menu.
 
+- Require the current `_rev` in API config saves.
+
 ### Fixed
 
 - A press on the Settings tab bar lens right after picking a tab is no longer
