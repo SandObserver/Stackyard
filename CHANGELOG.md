@@ -47,6 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show an ocean coast wallpaper in the demo and the install screenshots.
 
+- Replace the two App Title switches in Appearance with one Show App Names menu.
+
 ### Fixed
 
 - A press on the Settings tab bar lens right after picking a tab is no longer
@@ -119,6 +121,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   card's top edge.
 
 - Stop Safari from highlighting drop-down option text in Admin.
+
+- Stop Settings menus cutting off the chosen value on narrow screens.
 
 ## [1.24.0] - 2026-11-22
 
