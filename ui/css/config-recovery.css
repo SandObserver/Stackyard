@@ -30,7 +30,7 @@
   direction: ltr; unicode-bidi: isolate; overflow-wrap: anywhere;
 }
 .cfg-recovery-btn {
-  align-self: flex-start; margin-top: var(--sp-8); min-height: 48px; padding: var(--sp-12) var(--sp-24);
+  align-self: flex-start; margin-top: var(--sp-8); --pill-h: 48px; min-height: var(--pill-h); padding: var(--sp-12) calc(var(--sp-24) + var(--pill-h) * var(--pill-curve));
   border: none; border-radius: 999px; background: var(--accent); color: var(--on-fill); cursor: pointer;
   font-family: inherit; font-size: var(--fs-headline); line-height: var(--lh-headline); letter-spacing: var(--tr-headline);
   font-weight: var(--fw-headline);

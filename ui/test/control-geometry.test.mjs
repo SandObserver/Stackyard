@@ -222,8 +222,31 @@ test('a small button stays small on touch', () => {
   const bare = admin.replace(/\/\*[\s\S]*?\*\//g, '');
   const m = /\.btn\.sm \{([^}]*)\}/.exec(bare);
   assert.ok(m, 'the touch rule for a small button is gone');
-  assert.match(m[1], /min-height:30px/, 'the drawn box stays 30');
+  assert.match(m[1], /--pill-h:30px/, 'the drawn box stays 30');
+  assert.match(m[1], /min-height:var\(--pill-h\)/, 'the drawn box stays 30');
   assert.match(bare, /\.btn\.sm::after \{[^}]*height:44px/, 'the hit area has to be extended instead');
+});
+
+test('a pill adds the width its round ends take to its side padding', () => {
+  assert.match(tokens, /--pill-curve:calc\(\(1 - pi \/ 4\) \/ 2\)/);
+  for (const selector of [
+    '.btn',
+    '.sm',
+    '.chip',
+    '.row-btn',
+    '.st-act',
+    '.toast-act',
+    '.albl-add',
+    '.sec-hdr-actions .btn',
+  ]) {
+    assert.match(rule(admin, selector), /padding[^;]*var\(--pill-curve\)/, `${selector} pads for its round ends`);
+  }
+});
+
+test('the back button centres its icon in the round end', () => {
+  const back = rule(admin, '.ev-back');
+  assert.match(back, /padding-inline:calc\(\(var\(--pill-h\) - var\(--pill-icon\)\) \/ 2\)/);
+  assert.match(back, /--pill-icon:18px/);
 });
 
 test('the sidebar is 320 with 44 items and a pill selection', () => {
