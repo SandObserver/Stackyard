@@ -115,6 +115,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Tell volumes of one series apart on a Kavita reading list shelf.
 
+- Keep rain, snow, storm, Mostly Clear and Tornado weather icons clear of the
+  card's top edge.
+
 ## [1.24.0] - 2026-11-22
 
 ### Added
