@@ -165,7 +165,7 @@ html:has(dialog:modal){overflow:hidden}
 button,a,[role="button"]{touch-action:manipulation}
 
 /* ── Outer: wallpaper shows here, panel centered ── */
-.nl,.mtab,.btn,.chip,.row-btn,.row-dd-btn,.tile-opt,.rord,.segr-opt,.tog,.fp-row,.rmove-btn,.ract-edit,.ev-back,.m-back,.row-link,.row.drow{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.nl,.mtab,.btn,.chip,.row-btn,.row-dd-btn,.tile-opt,.rord,.segr-opt,.tog,.fp-row,.rmove-btn,.ract-edit,.ev-back,.m-back,.row-link,.row.drow,.row-dd-list [role="option"]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .adm-outer{min-height:100dvh;display:flex;align-items:flex-start;justify-content:center;padding:var(--sp-44) 0}
 
 /* ── Panel card ── */
