@@ -118,6 +118,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep rain, snow, storm, Mostly Clear and Tornado weather icons clear of the
   card's top edge.
 
+- Stop Safari from highlighting drop-down option text in Admin.
+
 ## [1.24.0] - 2026-11-22
 
 ### Added
