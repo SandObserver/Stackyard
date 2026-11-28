@@ -45,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Balance the side padding of pill buttons next to their round ends.
 
+- Show an ocean coast wallpaper in the demo and the install screenshots.
+
 ### Fixed
 
 - A press on the Settings tab bar lens right after picking a tab is no longer
