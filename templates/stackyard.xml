@@ -24,229 +24,128 @@
   <DonateText>If Stackyard is useful to you, you can buy me a coffee.</DonateText>
   <DonateLink>https://buymeacoffee.com/sandobserver</DonateLink>
   <Changes>
-### 1.24.0 - 2026-11-22
+### 1.25.0 - 2026-11-28
 
 ### Added
 
-- Glass switches, sliders and segmented controls in the admin, and a glass tab
-  bar on phones.
+- Show an inline completion in phone search that Return opens.
 
-- The Weather widget credits its data provider in Settings and in its tooltip.
+- Add a request id to every API answer and its log line.
 
-- Log Content Security Policy and Trusted Types violations to the container log.
+- Add a link to password help on the sign-in screen.
 
-- Warn at startup about a widget page with inline script, which a later release
-  blocks.
+- Show the error code and request id under a failed test in Settings.
 
-- Add a Show password button to the sign-in box.
+- Give the Settings tab bar icons a short spring when a tab is picked.
 
 ### Changed
 
-- Pick a local System Summary temperature by sensor name, starting on the CPU.
+- Bend the Settings tab bar on phones like iOS: the glass lens lifts on any
+  press, the bar swells, and the selected colour follows the lens.
 
-- Drop the unneeded temperature mount from the example `docker-compose.yml`.
+- Keep drag-to-pick on the Settings tab bar with Reduce Motion on, as a plain
+  pill.
 
-- Test on Safari 26.2 or newer on macOS and iOS.
+- Fade the Settings page between light and dark instead of switching at once.
 
-- Bend the open folder's glass more and frost it less.
+- Redesign search on phones: the field grows from the Search pill, follows the
+  keyboard, and results show a Top Hit card with Apps and Folders sections.
 
-- Show a check or a cross on the Save button after a save.
+- Show only names that start with the query in phone search, when any do.
 
-- Open drop-downs out of their button, and pick an option by sliding a finger
-  over the list.
+- Close an empty search with the field's x on phones.
 
-- Show "Sign out all" and the dashboard Delete confirm as destructive actions.
+- Let `LOG_LEVEL` override the Logging Level setting.
 
-- Redraw Now Playing as a turning VHS take-up reel whose tape grows with
-  progress.
+- Refuse a language or log level Stackyard cannot use instead of dropping it.
 
-- Log how long a failed widget request took and the HTTP status the service
-  returned.
+- Balance seven icons optically so they look centred in their buttons and
+  plates.
 
-- Log a warning, and name the keys in the save reply, when a save drops settings
-  this release does not know.
+- Balance the side padding of pill buttons next to their round ends.
 
-- Drop unknown keys inside the server settings on save, as unknown top-level
-  settings already were.
+- Show an ocean coast wallpaper in the demo and the install screenshots.
 
-- Test the API on Node.js 26 when it runs outside Docker.
+- Replace the two App Title switches in Appearance with one Show App Names menu.
 
-- Open the Link URL when you tap the Weather, Now Playing or Downloads widget on
-  a phone.
-
-- Wait at least 3 seconds between widget polls, whatever interval a widget asks
-  for.
-
-- Settings can be installed to the home screen as the same app as the dashboard.
-
-- The Settings shortcut of an installed app has its own icon.
-
-- Reload custom widgets less often while their page is out of view.
-
-- Start dashboard polling only when the tab is visible.
-
-- Skip downloading the whole config on every dashboard check when nothing
-  changed.
-
-- Make Settings text follow the browser's text size setting.
-
-- Draw native checkboxes and radio buttons in the accent colour.
-
-- Load each widget page's script from a file next to the page.
-
-- Serve only image types from the icons folder.
-
-- Glass edges bend the wallpaper like the glass in iOS and stay sharp on
-  high-density screens.
-
-- Tab bar icons and labels bend smoothly under the moving lens on phones.
-
-- Keep Set available on the first-run prompt, and move focus to the first field
-  to fix.
-
-- Show visible labels on the first-run prompt's fields.
-
-- Let password managers save the password set in Settings.
-
-- Name the open Settings section in the page title.
-
-- Show the badge popover without motion when keyboard focus opens it.
-
-### Removed
-
-- Remove the `WIDGETS_PATH` setting from the Compose example. Mount a custom
-  widget into the built-in widgets folder instead.
+- Require the current `_rev` in API config saves.
 
 ### Fixed
 
-- With Reduce Transparency on, a held colour slider knob is solid instead of
-  see-through.
+- A press on the Settings tab bar lens right after picking a tab is no longer
+  ignored.
 
-- Keep a System Summary temperature on the same sensor after a reboot.
+- The Settings tab bar lens no longer settles 1 px off its tab.
 
-- Show the whole Unraid array in a System Summary disk slot that is blank or set
-  to /.
+- Rotating the phone while holding the Settings tab bar no longer picks the
+  wrong tab.
 
-- Show "Not set up yet", not "Out of reach", when a Backup slot, an Up Next
-  source or a Connections service has an address that is not valid.
+- Reset the search overlay's edges when the window crosses to the desktop layout
+  while search is open.
 
-- Reach a Kopia backup server whose address has no http:// or https://.
+- Stop an older version from rewriting a settings file saved by a newer one.
 
-- Report a service reply too large to read as a service error, not "Something
-  went wrong".
+- Explain a dashboard or Settings page whose scripts cannot start, instead of
+  loading forever.
 
-- Keep a new secret typed into a widget's settings when the Size or View changes
-  before Save.
+- Keep a widget's working frame when a refresh of it fails to start.
 
-- Keep each source's stored key with the right source after one is removed and
-  the Size or View changes.
+- Log where a broken settings file stops being valid JSON.
 
-- Save a Settings change made while another save is still running, instead of
-  refusing it as changed elsewhere.
+- Warn at start about environment values Stackyard cannot use.
 
-- Show a new wallpaper behind Settings as soon as it is saved, not on the next
-  visit.
+- Import the usable files when one of several import files cannot be read.
 
-- Show the icons and the show-password button on the setup screen for a refused
-  address or a damaged password.
+- Keep an icon or wallpaper upload going after the session expires.
 
-- Show a widget saved without a size at the same size on the dashboard as its
-  frame loads, instead of a smaller frame in a larger tile.
+- Refuse a file over the upload limit before sending it.
 
-- Open the link for the selected Disk Health provider when the widget is tapped
-  on a phone.
+- Show a rejected widget key in widget settings instead of an expired session.
 
-- Remove the light diamond in the open folder's glass.
+- Send an open dashboard to sign-in when its session ends.
 
-- Now Playing no longer reads its error twice to screen readers.
+- Explain a sign-in or save refused because a reverse proxy rewrote the Host
+  header.
 
-- Now Playing tells screen readers how long ago its server stopped answering.
+- Name the reason a settings save or import was refused.
 
-- Now Playing pauses its reel in a background tab.
+- Ask to wait when sign-in is busy, and say when the device is offline.
 
-- Now Playing's time since a failure meets 4.5:1 contrast.
+- Reload an open dashboard after Stackyard is updated.
 
-- GitHub contributions, System Summary and Backup tell screen readers how long
-  ago their service stopped answering.
+- Name the real cause of a failed connection test instead of suggesting the
+  container name.
 
-- A finger held on a switch, slider or segmented control in Settings no longer
-  scrolls the page.
+- Show a translated reason for a failed app health check, and name a socket
+  proxy failure instead of a missing container.
 
-- A swipe that starts on a switch or segmented control and ends off it no longer
-  changes the setting.
+- Show certificate, rate limit and permission failures on widgets.
 
-- Apply the log level set in Settings to the first lines logged at startup.
+- Refuse a config save that has no revision instead of overwriting the
+  dashboard.
 
-- Raise destructive button text to WCAG AA contrast in light and dark mode.
+- Show an error when a health check is turned on with nothing to check, instead
+  of saving it as off.
 
-- The Docker image and the demo site include the Stackyard licence and notice.
+- Load the install manifest behind a sign-in proxy such as Authelia.
 
-- Show custom widgets that embed a page from another address.
+- Count the current hour in Technitium DNS totals.
 
-- The AdGuard Home DNS widget's screen-reader summary no longer reports a cached
-  count of 0.
+- Show "Last test failed" instead of negative speeds when the latest speed test
+  failed.
 
-- Size-specific Apple touch icon requests, such as
-  `/apple-touch-icon-180x180.png`, return the dashboard icon instead of 404.
+- Show a CPU temperature in a remote temperature slot saved without a sensor.
 
-- The admin page shows the dashboard icon in browser tabs and Home Screen
-  bookmarks.
+- Tell volumes of one series apart on a Kavita reading list shelf.
 
-- Keep the side margin in an open folder on desktop when app titles are off.
+- Keep rain, snow, storm, Mostly Clear and Tornado weather icons clear of the
+  card's top edge.
 
-- Stop the arrow keys from turning the page while you type in a field, hold a
-  modifier key, or have a dialog open.
+- Stop Safari from highlighting drop-down option text in Admin.
 
-- Keep keyboard focus on the visible page after a page turn.
+- Stop Settings menus cutting off the chosen value on narrow screens.
 
-- Stop a second tap on a badge from closing and reopening its popover.
-
-- Make the badge popover usable inside an open folder.
-
-- Let screen readers read every badge value without opening the popover.
-
-- Return focus to the button that opened a prompt after the prompt finishes.
-
-- Keep Search open when Escape cancels text being composed.
-
-- Announce the search result count once typing pauses.
-
-- Keep the Unsplash link in the photo credit fully visible.
-
-- Tell screen readers that the Search pill and folder tiles open a dialog.
-
-- Keep the first-run password prompt open when Escape is pressed twice.
-
-- Read the password strength hint only when its level changes.
-
-- Say a password mismatch on the first-run prompt only after the confirmation
-  field is left.
-
-- Announce a repeated sign-in or setup error again.
-
-- Announce required fields as required, and stop reading the required star as
-  "star".
-
-- Mark the app name, app address, folder name and custom widget URL as required.
-
-- Read each field's hint together with the field in Settings.
-
-- Show an error for a poll interval outside 10 to 3600 seconds instead of
-  silently changing it.
-
-- Announce the type and size choosers as radio groups.
-
-- Announce "Working" on slow row actions.
-
-### Security
-
-- Refuse an unsafe link in the Disk Health TrueNAS and Unraid, DNS, GitHub and
-  Backup link fields on save, as the Scrutiny link already was.
-
-- Update nginx to 1.30.7.
-
-- Refuse a `javascript:` or other unsafe link in the Link URL of Books,
-  Connections, Downloads, Now Playing, System Summary, Up Next and Weather.
+- Stop the Unraid template saying most homelabs need Allow Private IPs.
   </Changes>
   <Config Name="WebUI Port" Target="80" Default="8700" Mode="tcp" Description="Port the dashboard is reached on." Type="Port" Display="always" Required="true" Mask="false">8700</Config>
   <Config Name="Config Storage" Target="/data" Default="/mnt/user/appdata/stackyard/data" Mode="rw" Description="Dashboard configuration. Keep this, or every setting is lost on update." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/stackyard/data</Config>
