@@ -4,7 +4,7 @@ import { pageWithScripts } from './widget-source.mjs';
 
 const page = pageWithScripts(new URL('../widgets/weather/index.html', import.meta.url));
 const art = /\/\* ---- artwork[\s\S]*?\nfunction buildIcon\([\s\S]*?\n\}/.exec(page)?.[0];
-const { buildIcon, cloudPath } = new Function(`${art}; return { buildIcon, cloudPath };`)();
+const { buildIcon, cloudPath, FIT, PC } = new Function(`${art}; return { buildIcon, cloudPath, FIT, PC };`)();
 
 const CONDITIONS = [
   'clear',
@@ -58,6 +58,16 @@ test('every weather code the providers send has its own artwork', () => {
   assert.deepEqual(mapCode(4, 'ash'), { cond: 'ash', label: 'Volcanic Ash' });
   assert.deepEqual(mapCode(7, 'sand'), { cond: 'dust', label: 'Sand' });
   assert.deepEqual(mapCode(19), { cond: 'tornado', label: 'Tornado' });
+});
+
+test('artwork that reaches the top of its box is scaled down to clear the card corner', () => {
+  for (const cond of FIT) assert.ok(CONDITIONS.includes(cond), `${cond} is not a condition`);
+  const high = cloudPath(...PC);
+  for (const cond of CONDITIONS)
+    if (buildIcon(cond, true).includes(high))
+      assert.ok(FIT.has(cond), `${cond} draws the high cloud but is not scaled`);
+  assert.match(page, /\.ico\.fit\{[^}]*scale\(/);
+  assert.match(page, /classList\.toggle\('fit',FIT\.has\(m\.cond\)\)/);
 });
 
 test('the cloud rests both puffs on a flat base', () => {

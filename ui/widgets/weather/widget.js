@@ -50,6 +50,7 @@ function cloud(day,x,y,W,back,glow=''){
 }
 const over=(day,orbAt,x,y,W)=>orb(day,...orbAt)+cloud(day,x,y,W,false,`<g filter="url(#wx-blur)">${orb(day,...orbAt)}</g>`);
 const PC=[8,-3,84],BASE=f(PC[1]+.702*PC[2]),SKY=[78,27,31],LANE=[30,64];
+const FIT=new Set(['few','shower','rain','thunder','snow','drizzle','fdrizzle','frain','sleet','rainsnow','grains','hail','tornado']);
 const rnd=(lo,hi)=>f(lo+Math.random()*(hi-lo));
 const LAYER='<svg viewBox="0 0 100 100">',FLAKE_Y=f(BASE+3);
 function falling(n,shape,cls,[lo,hi],{op=1,lane=LANE,shift=.5,slots=n,at=i=>i}={}){
@@ -252,6 +253,7 @@ function render(d){
   if(nextIcon!==iconKey){
     iconKey=nextIcon;
     setHtml(icoEl,raw((LAYER+buildIcon(m.cond,day)+'</svg>').replaceAll(LAYER+'</svg>','')));
+    icoEl.classList.toggle('fit',FIT.has(m.cond));
     if(ambientTimer)ambient();
   }
   condEl.textContent=m.label;
