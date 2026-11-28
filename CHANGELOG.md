@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Balance seven icons optically so they look centred in their buttons and
   plates.
 
+- Balance the side padding of pill buttons next to their round ends.
+
 ### Fixed
 
 - A press on the Settings tab bar lens right after picking a tab is no longer
