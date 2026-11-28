@@ -17,7 +17,7 @@
   <script src="/js/boot-hints.js?v=c37d60eb"></script>
   <script src="/js/page-zoom.js?v=01ccc9cf"></script>
   <link rel="stylesheet" href="/css/tokens.css?v=2219bfa8">
-  <link rel="stylesheet" href="/css/admin.css?v=620d5feb">
+  <link rel="stylesheet" href="/css/admin.css?v=0e2f465c">
   <link rel="stylesheet" href="/css/widget-config-form.css?v=223c09c6">
   <link rel="stylesheet" href="/css/config-recovery.css?v=354ee5be">
 </head>
@@ -149,12 +149,15 @@
         <a class="m-back" href="/" aria-label="Back to dashboard" data-i18n-al="nav.backToDashboard"><svg class="sy-icon" width="18" height="18" aria-hidden="true" focusable="false"><use href="#sy-solid-back"/></svg></a><h1 class="sec-title" data-i18n="nav.appearance">Appearance</h1>
         <div class="sec-hdr-actions"><button class="btn bp sm sv-btn" id="bg-save" type="button"><span class="sv-lbl" data-i18n="common.save">Save</span><svg class="sv-i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle class="sv-c" cx="6" cy="12.5" r="1.3"/><circle class="sv-c" cx="12" cy="12.5" r="1.3"/><circle class="sv-c" cx="18" cy="12.5" r="1.3"/><path class="sv-k" pathLength="1" d="M6 12.5L10.5 17L18.5 8"/><path class="sv-x" pathLength="1" d="M12 12.5L7.5 8"/><path class="sv-x" pathLength="1" d="M12 12.5L16.5 17"/><path class="sv-x" pathLength="1" d="M12 12.5L16.5 8"/><path class="sv-x" pathLength="1" d="M12 12.5L7.5 17"/></svg></button></div>
       </div>
-      <h2 class="grp-hdr" data-i18n="appearance.appTitle">App Title</h2>
-      <div class="grp">
-        <div class="row"><span class="rl" id="rl-set-lbl-d" data-i18n="appearance.showTitleDesktop">Show App Title on Desktop</span><label class="tog"><input type="checkbox" role="switch" id="set-lbl-d" aria-labelledby="rl-set-lbl-d"><div class="tr"></div></label></div>
-        <div class="row"><span class="rl" id="rl-set-lbl-m" data-i18n="appearance.showTitleMobile">Show App Title on Mobile</span><label class="tog"><input type="checkbox" role="switch" id="set-lbl-m" aria-labelledby="rl-set-lbl-m"><div class="tr"></div></label></div>
-      </div>
       <h2 class="grp-hdr" data-i18n="appearance.display">Display</h2>
+      <div class="grp">
+        <div class="row">
+          <span class="rl" data-i18n="appearance.showAppNames">Show App Names</span>
+          <div id="labels-slot"></div>
+          <input type="hidden" id="set-labels" value="desktop">
+        </div>
+      </div>
+      <p class="grp-tip" data-i18n="appearance.appNamesTip">The phone setting also applies to narrow browser windows.</p>
       <div class="grp">
         <div class="row">
           <span class="rl" data-i18n="appearance.displayMode">Settings Display Mode</span>
@@ -342,6 +345,6 @@
     </div>
   </div>
 </noscript>
-<script type="module" src="/js/admin.js?v=99e765f7"></script>
+<script type="module" src="/js/admin.js?v=d93c89a7"></script>
 </body>
 </html>

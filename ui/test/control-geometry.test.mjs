@@ -28,7 +28,7 @@ function rule(css, selector) {
 }
 
 test('a row is 52, and a row carrying two lines is 68', () => {
-  assert.match(rule(admin, '.row'), /min-height:52px/);
+  assert.match(rule(admin, '.row'), /--row-h:52px;.*min-height:var\(--row-h\)/);
   assert.match(rule(admin, '.row.drow'), /min-height:68px/);
 });
 

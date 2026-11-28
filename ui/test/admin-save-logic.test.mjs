@@ -828,10 +828,25 @@ test('applyGeneralFields writes log level at the top level', async () => {
   assert.deepEqual(settings, { logLevel: 'error', server: {} });
 });
 
-test('labelsWith moves one switch and keeps the other from the server', async () => {
-  const { labelsWith } = await import('../js/admin-save-logic.js');
-  assert.deepEqual(labelsWith({ desktop: false, ios: true }, 'ios', false), { desktop: false, ios: false });
-  assert.deepEqual(labelsWith(undefined, 'ios', true), { desktop: true, ios: true });
+test('labelsMode reads every saved app-name setting as one menu choice', async () => {
+  const { labelsMode } = await import('../js/admin-save-logic.js');
+  assert.equal(labelsMode(undefined), 'desktop');
+  assert.equal(labelsMode({}), 'desktop');
+  assert.equal(labelsMode(false), 'desktop');
+  assert.equal(labelsMode({ desktop: true, ios: true }), 'always');
+  assert.equal(labelsMode({ desktop: true, ios: false }), 'desktop');
+  assert.equal(labelsMode({ desktop: false, ios: true }), 'phone');
+  assert.equal(labelsMode({ desktop: false, ios: false }), 'never');
+  assert.equal(labelsMode({ desktop: false }), 'never');
+});
+
+test('labelsFromMode writes each menu choice back as the saved setting', async () => {
+  const { labelsFromMode, labelsMode } = await import('../js/admin-save-logic.js');
+  assert.deepEqual(labelsFromMode('always'), { desktop: true, ios: true });
+  assert.deepEqual(labelsFromMode('desktop'), { desktop: true, ios: false });
+  assert.deepEqual(labelsFromMode('phone'), { desktop: false, ios: true });
+  assert.deepEqual(labelsFromMode('never'), { desktop: false, ios: false });
+  for (const mode of ['always', 'desktop', 'phone', 'never']) assert.equal(labelsMode(labelsFromMode(mode)), mode);
 });
 
 test('advancedBase moves only the fields written', async () => {

@@ -87,9 +87,12 @@
     "proxmoxConnected_other": "Conectado · {count} invitados"
   },
   "appearance": {
-    "appTitle": "Título de la aplicación",
-    "showTitleDesktop": "Mostrar título de la aplicación en escritorio",
-    "showTitleMobile": "Mostrar título de la aplicación en móvil",
+    "showAppNames": "Mostrar nombres de las aplicaciones",
+    "appNamesAlways": "Siempre",
+    "appNamesDesktop": "Solo escritorio",
+    "appNamesPhone": "Solo móviles",
+    "appNamesNever": "Nunca",
+    "appNamesTip": "La opción para móviles también se aplica a las ventanas estrechas del navegador.",
     "display": "Pantalla",
     "keepAwake": "Mantener la pantalla encendida",
     "keepAwakeTip": "Evita que la pantalla se atenúe o se bloquee mientras el panel está abierto. Los navegadores solo lo permiten mediante HTTPS, así que no tiene efecto en una dirección HTTP simple.",

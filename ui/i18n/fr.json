@@ -87,9 +87,12 @@
     "proxmoxConnected_other": "Connecté · {count} invités"
   },
   "appearance": {
-    "appTitle": "Titre de l’application",
-    "showTitleDesktop": "Afficher le titre de l’application sur ordinateur",
-    "showTitleMobile": "Afficher le titre de l’application sur mobile",
+    "showAppNames": "Afficher le nom des applications",
+    "appNamesAlways": "Toujours",
+    "appNamesDesktop": "Sur ordinateur",
+    "appNamesPhone": "Sur mobile",
+    "appNamesNever": "Jamais",
+    "appNamesTip": "Le réglage mobile s’applique aussi aux fenêtres de navigateur étroites.",
     "display": "Affichage",
     "keepAwake": "Garder l’écran allumé",
     "keepAwakeTip": "Empêche l’écran de s’assombrir ou de se verrouiller tant que le tableau de bord est ouvert. Les navigateurs ne l’autorisent qu’en HTTPS, cela reste donc sans effet sur une adresse HTTP simple.",

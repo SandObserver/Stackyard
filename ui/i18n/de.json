@@ -86,9 +86,12 @@
     "proxmoxConnected_other": "Verbunden · {count} Gäste"
   },
   "appearance": {
-    "appTitle": "App-Titel",
-    "showTitleDesktop": "App-Titel auf dem Desktop anzeigen",
-    "showTitleMobile": "App-Titel auf Mobilgeräten anzeigen",
+    "showAppNames": "App-Namen anzeigen",
+    "appNamesAlways": "Immer",
+    "appNamesDesktop": "Nur Desktop",
+    "appNamesPhone": "Nur Smartphone",
+    "appNamesNever": "Nie",
+    "appNamesTip": "Die Smartphone-Einstellung gilt auch für schmale Browserfenster.",
     "display": "Anzeige",
     "keepAwake": "Bildschirm aktiv lassen",
     "keepAwakeTip": "Verhindert, dass sich der Bildschirm abdunkelt oder sperrt, solange das Dashboard geöffnet ist. Browser erlauben das nur über HTTPS, bei einer einfachen HTTP-Adresse bleibt es wirkungslos.",

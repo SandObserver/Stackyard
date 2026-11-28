@@ -86,9 +86,12 @@
     "proxmoxConnected_other": "Connected · {count} guests"
   },
   "appearance": {
-    "appTitle": "App Title",
-    "showTitleDesktop": "Show App Title on Desktop",
-    "showTitleMobile": "Show App Title on Mobile",
+    "showAppNames": "Show App Names",
+    "appNamesAlways": "Always",
+    "appNamesDesktop": "Desktop Only",
+    "appNamesPhone": "Phones Only",
+    "appNamesNever": "Never",
+    "appNamesTip": "The phone setting also applies to narrow browser windows.",
     "display": "Display",
     "keepAwake": "Keep Screen Awake",
     "keepAwakeTip": "Stops the screen dimming or locking while the dashboard is open. Browsers only allow this over HTTPS, so it has no effect on a plain HTTP address.",

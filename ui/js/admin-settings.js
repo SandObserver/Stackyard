@@ -15,9 +15,10 @@ import {
   applyGeneralFields,
   configWrites,
   generalServerFields,
-  labelsWith,
+  labelsFromMode,
+  labelsMode,
   planFieldSave,
-} from '/js/admin-save-logic.js?v=7fa325ac';
+} from '/js/admin-save-logic.js?v=1e1d8599';
 import {
   announce,
   apiGet,
@@ -248,16 +249,8 @@ function renderBgColor(value) {
 export function loadSettings(c, page) {
   _page = page;
   const s = c.settings || {};
-  const ld = inp('set-lbl-d');
-  const lm = inp('set-lbl-m');
-  if (ld) {
-    ld.checked = s.showLabels?.desktop !== false;
-    ld.addEventListener('change', saveLabels);
-  }
-  if (lm) {
-    lm.checked = s.showLabels?.ios === true;
-    lm.addEventListener('change', saveLabels);
-  }
+  const labels = inp('set-labels');
+  if (labels) labels.value = labelsMode(s.showLabels);
   const aw = inp('set-awake');
   if (aw) {
     aw.checked = s.keepAwake === true;
@@ -543,14 +536,10 @@ export function showBgFields(type) {
   });
 }
 /** @param {Event} [e] */
-/** Save a switch's change, and put it back if the save fails and no later
-    click has moved it since.
-    @param {Event} e @param {(c: any) => void} apply */
-function saveSwitchChange(e, apply) {
-  const toggled = /** @type {HTMLInputElement} */ (e.target);
-  const value = toggled.checked;
+/** @param {Element} node @param {(c: any) => void} apply @param {() => void} revert */
+function saveChange(node, apply, revert) {
   return configWrites.run(async () => {
-    const own = sectionSave(toggled);
+    const own = sectionSave(node);
     /* A Save press in flight or just failed owns the mark. */
     const taken = () => own?.getAttribute('aria-busy') === 'true' || !!own?.classList.contains('failed');
     try {
@@ -562,22 +551,40 @@ function saveSwitchChange(e, apply) {
       if (taken()) announce(t('toast.saved'));
       else confirmSaved(own);
     } catch (err) {
-      /* Assigning `checked` fires no event, so this does not loop. */
-      if (toggled.checked === value) toggled.checked = !value;
+      revert();
       if (!taken()) failedSave(own);
       toast(t('toast.saveFailed', { err: errorText(err) }), 'err', errorAction(err));
     }
   });
 }
 
-/** @param {Event} e */
-function saveLabels(e) {
+/** Save a switch's change, and put it back if the save fails and no later
+    click has moved it since.
+    @param {Event} e @param {(c: any) => void} apply */
+function saveSwitchChange(e, apply) {
   const toggled = /** @type {HTMLInputElement} */ (e.target);
-  const key = toggled.id === 'set-lbl-d' ? 'desktop' : 'ios';
   const value = toggled.checked;
-  return saveSwitchChange(e, settings => {
-    settings.showLabels = labelsWith(settings.showLabels, key, value);
+  /* Assigning `checked` fires no event, so this does not loop. */
+  return saveChange(toggled, apply, () => {
+    if (toggled.checked === value) toggled.checked = !value;
   });
+}
+
+/** @param {Element} node @param {string} mode @param {string} previous
+    @param {(mode: string) => void} show */
+export function saveLabelsMode(node, mode, previous, show) {
+  const field = inp('set-labels');
+  return saveChange(
+    node,
+    settings => {
+      settings.showLabels = labelsFromMode(mode);
+    },
+    () => {
+      if (field?.value !== mode) return;
+      field.value = previous;
+      show(previous);
+    },
+  );
 }
 
 /** A switch whose whole value is one boolean setting.

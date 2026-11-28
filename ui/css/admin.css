@@ -217,7 +217,7 @@ button,a,[role="button"]{touch-action:manipulation}
 .grp-tip code{font-family:monospace;font-size:var(--fs-caption-2);line-height:var(--lh-caption-2);letter-spacing:var(--tr-caption-2)}
 
 /* ── Rows ── */
-.row{display:flex;align-items:center;gap:var(--sp-10);padding:0 var(--sp-16);min-height:52px;position:relative}
+.row{--row-h:52px;display:flex;align-items:center;gap:var(--sp-10);padding:0 var(--sp-16);min-height:var(--row-h);position:relative}
 /* The separator belongs between two visible rows. :last-child is a DOM
    position, and a group's trailing rows can be hidden. Hidden rows carry
    .d-none, never an inline display. */
@@ -275,6 +275,11 @@ button,a,[role="button"]{touch-action:manipulation}
 
 /* ── Custom dropdown ── */
 .row-dd{position:relative;flex:0 1 auto;min-width:0;max-width:60vw}
+.row:has(.row-dd){flex-wrap:wrap;align-items:baseline;align-content:center;gap:var(--sp-4) calc(var(--sp-10) + var(--sp-8));padding-block:calc((var(--row-h) - 1lh) / 2)}
+.row:has(.row-dd) > .rl{flex:1 1 auto}
+.row > .row-dd,.row > :has(> .row-dd){min-width:0;max-width:calc(100% + var(--sp-8));margin-inline-start:calc(var(--sp-8) * -1)}
+.row > * > .row-dd{max-width:100%}
+.row:has(.row-dd) .row-dd-btn{margin-block:calc(var(--sp-4) * -1)}
 .row>div:has(>.row-dd){min-width:0}
 .row-dd-btn{display:flex;align-items:center;gap:var(--sp-6);background:transparent;border:none;color:var(--dm);font-size:var(--fs-body);line-height:var(--lh-body);letter-spacing:var(--tr-body);font-family:inherit;cursor:pointer;padding:var(--sp-4) var(--sp-8);border-radius:6px;max-width:100%;transition:color var(--t),opacity var(--t)}
 .row-dd-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -932,6 +937,7 @@ html.is-mobile body.authed #toast{inset-inline:21px;bottom:95px;max-width:none}
   .al-search { min-height:44px; }
   .tog { min-height:44px; }
   .row-dd-btn { min-height:44px; }
+  .row:has(.row-dd) .row-dd-btn { margin-block:calc((1lh - var(--sp-44)) / 2); }
   .row-dd-list li[role="option"] { min-height:44px; }
   /* The element selector outranks the 36px rule in the mobile block below,
      which this block precedes. */

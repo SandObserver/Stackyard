@@ -4,8 +4,8 @@ import {
   buildSettingsTileForm,
   captureActLabels,
   serializeKvRows,
-} from '/js/admin-app-form.js?v=dbebed7c';
-import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=d6f94458';
+} from '/js/admin-app-form.js?v=fdb35a18';
+import { focusRow, isReordering, setReordering } from '/js/admin-list.js?v=2503f403';
 import { folderChildren } from '/js/admin-logic.js?v=81fd47cf';
 import { scrollSettingsTop } from '/js/admin-nav.js?v=c43548e2';
 import {
@@ -17,7 +17,7 @@ import {
   POLL_MIN,
   removeItem,
   snapshotItems,
-} from '/js/admin-save-logic.js?v=7fa325ac';
+} from '/js/admin-save-logic.js?v=1e1d8599';
 import {
   busyPress,
   clearFieldErrors,
